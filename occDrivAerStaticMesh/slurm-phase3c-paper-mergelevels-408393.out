@@ -1,0 +1,86 @@
+
+The following have been reloaded with a version change:
+  1) cuda/13.0.2 => cuda/13.1.1
+
+Not expanding variables or dictionary directives
+startFrom       startTime;
+Not expanding variables or dictionary directives
+startTime       1000;
+Not expanding variables or dictionary directives
+stopAt          endTime;
+Not expanding variables or dictionary directives
+endTime         1050;
+Not expanding variables or dictionary directives
+writeInterval   50;
+Phase 3c: 50 iterations/variant from restart 1000; variants: ml1 ml2 ml3 ml4
+================================================================
+ ml1 : localized MG solver, CACHED, plain Pgm (mergeLevels=1 baseline)
+   -> paperParamStudyResults/mergelevels/ml1-20260710-062540.log
+================================================================
+   | Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002513125664423827, Final residual = 1.36336280847718e-05, No Iterations 2, Solve time = 72.922 ms
+   | bounding k, min: -0.0026504212657505466 max: 870.0243468500736 average: 9.133407292078616
+   | [mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+   | Writing p
+   | Writing U
+   | Writing turbulence variables
+   | ExecutionTime = 152.84 s  ClockTime = 155 s
+   | 
+   | Finalizing NeoN
+   | Finalising parallel run
+   exit=0  wall=159s  steps=50
+================================================================
+ ml2 : localized MG solver, CACHED, MergedPgm mergeLevels=2
+   -> paperParamStudyResults/mergelevels/ml2-20260710-062819.log
+================================================================
+   | [gpu-nvidia-h200-2:732414] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed14preconditioner7SchwarzIdilE8generateESt10shared_ptrIKNS_5LinOpEE+0xd9)[0x7fb1ea4963f9]
+   | [gpu-nvidia-h200-2:732414] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed14preconditioner7SchwarzIdilEC1EPKNS4_7FactoryENS_23LinOpGenerateComponentsE+0x1c4)[0x7fb1e9ee5fe4]
+   | [gpu-nvidia-h200-2:732414] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_12experimental11distributed14preconditioner7SchwarzIdilE7FactoryES5_NS5_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7fb1e9ee6164]
+   | [gpu-nvidia-h200-2:732414] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7fb1e93b1700]
+   | [gpu-nvidia-h200-2:732414] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 1 with PID 732415 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=53s  steps=1
+================================================================
+ ml3 : localized MG solver, CACHED, MergedPgm mergeLevels=3
+   -> paperParamStudyResults/mergelevels/ml3-20260710-062912.log
+================================================================
+   | [gpu-nvidia-h200-2:732521] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed14preconditioner7SchwarzIdilE8generateESt10shared_ptrIKNS_5LinOpEE+0xd9)[0x7f1f79c9a3f9]
+   | [gpu-nvidia-h200-2:732521] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed14preconditioner7SchwarzIdilEC1EPKNS4_7FactoryENS_23LinOpGenerateComponentsE+0x1c4)[0x7f1f796e9fe4]
+   | [gpu-nvidia-h200-2:732521] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_12experimental11distributed14preconditioner7SchwarzIdilE7FactoryES5_NS5_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f1f796ea164]
+   | [gpu-nvidia-h200-2:732521] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f1f78bb5700]
+   | [gpu-nvidia-h200-2:732521] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 2 with PID 732523 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=54s  steps=1
+================================================================
+ ml4 : localized MG solver, CACHED, MergedPgm mergeLevels=4
+   -> paperParamStudyResults/mergelevels/ml4-20260710-063006.log
+================================================================
+   | [gpu-nvidia-h200-2:732646] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed14preconditioner7SchwarzIdilE8generateESt10shared_ptrIKNS_5LinOpEE+0xd9)[0x7f64a89e63f9]
+   | [gpu-nvidia-h200-2:732646] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed14preconditioner7SchwarzIdilEC1EPKNS4_7FactoryENS_23LinOpGenerateComponentsE+0x1c4)[0x7f64a8435fe4]
+   | [gpu-nvidia-h200-2:732646] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_12experimental11distributed14preconditioner7SchwarzIdilE7FactoryES5_NS5_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f64a8436164]
+   | [gpu-nvidia-h200-2:732646] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f64a7901700]
+   | [gpu-nvidia-h200-2:732646] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 1 with PID 732647 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=53s  steps=1
+
+######################## SUMMARY ########################
+run                         steps   p_iters/it     p_ms/solve       cont       exec_s     s/step
+ml1                            50           23            734 3.1706087389509617e-06       152.84      3.057
+ml2                             1            -              -          -            -          -
+ml3                             1            -              -          -            -          -
+ml4                             1            -              -          -            -          -
+#########################################################
+per-run logs under: paperParamStudyResults/mergelevels/
+
+logs under: paperParamStudyResults/mergelevels/   |   compare s/step AND p_iters/cont across mergeLevels 1..4

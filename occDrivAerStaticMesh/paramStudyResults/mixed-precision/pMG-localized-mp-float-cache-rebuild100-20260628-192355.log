@@ -1,0 +1,219 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jun 28 2026
+Time   : 19:23:55
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 734627
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+[2] [stack trace]
+[2] =============
+[2] #1  Foam::sigFpe::sigHandler(int) in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[2] #2  ?[0] [stack trace]
+[0] =============
+[1] [stack trace]
+[1] =============
+[0] #1  [1] #1  Foam::sigFpe::sigHandler(int)Foam::sigFpe::sigHandler(int)[3] [stack trace]
+[3] =============
+[3] #1  Foam::sigFpe::sigHandler(int) in /lib64/libc.so.6
+[2] #3  Kokkos::Impl::ParallelFor<__nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, Kokkos::Cuda>::execute() const in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[0] #2  ? in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[1] #2  ? in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[3] #2  ? in /lib64/libc.so.6
+ in /lib64/libc.so.6
+[0] #3  Kokkos::Impl::ParallelFor<__nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, Kokkos::Cuda>::execute() const[1] #3  Kokkos::Impl::ParallelFor<__nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, Kokkos::Cuda>::execute() const in /lib64/libc.so.6
+[3] #3  Kokkos::Impl::ParallelFor<__nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, Kokkos::Cuda>::execute() const at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/Cuda/Kokkos_Cuda_Parallel_Range.hpp:101
+[0] #4  void Kokkos::parallel_for<Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, void>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> > const&, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const> const&) at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/Cuda/Kokkos_Cuda_Parallel_Range.hpp:101
+ at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/Cuda/Kokkos_Cuda_Parallel_Range.hpp:101
+[2] #4  void Kokkos::parallel_for<Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, void>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> > const&, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const> const&)[3] #4  void Kokkos::parallel_for<Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, void>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> > const&, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const> const&) at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/Cuda/Kokkos_Cuda_Parallel_Range.hpp:101
+[1] #4  void Kokkos::parallel_for<Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> >, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const>, void>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Kokkos::RangePolicy<Kokkos::Cuda, Kokkos::IndexType<int> > const&, __nv_hdl_wrapper_t<false, false, false, __nv_dl_tag<void (*)(NeoN::Vector<int>&, NeoN::View<int const>, std::pair<int, int>), &(void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)), 1u>, void (int), NeoN::View<int>, NeoN::View<int const> const> const&) at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_Tools_Generic.hpp:471
+ at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_Tools_Generic.hpp:471
+ at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_Tools_Generic.hpp:471
+[0] #5  void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>) at [1] #5  ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_Tools_Generic.hpp:471
+void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)[3] #5  void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>)[2] #5  void NeoN::setContainer<NeoN::Vector, int>(NeoN::Vector<int>&, NeoN::View<std::type_identity<int>::type const>, std::pair<int, int>) at  at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_HostSharedPtr.hpp:79
+~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_HostSharedPtr.hpp:79
+[3] #6  [2] #6  NeoN::Vector<int>::operator=(NeoN::Vector<int> const&)NeoN::Vector<int>::operator=(NeoN::Vector<int> const&) at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_HostSharedPtr.hpp:79
+ at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/kokkos-src/core/src/impl/Kokkos_HostSharedPtr.hpp:79
+[1] #6  NeoN::Vector<int>::operator=(NeoN::Vector<int> const&)[0] #6  NeoN::Vector<int>::operator=(NeoN::Vector<int> const&) at  at ~/code/NeoN/src/core/vector/vector.cpp:126
+~/code/NeoN/src/core/vector/vector.cpp:126
+[0] #7  NeoN::BoundaryMesh::computeRowOrderWriteIndex()[3] #7  NeoN::BoundaryMesh::computeRowOrderWriteIndex() at ~/code/NeoN/src/core/vector/vector.cpp:126
+ at ~/code/NeoN/src/core/vector/vector.cpp:126
+[2] #7  NeoN::BoundaryMesh::computeRowOrderWriteIndex()[1] #7  NeoN::BoundaryMesh::computeRowOrderWriteIndex() at  at ~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:167 (discriminator 4)
+~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:167 (discriminator 4)
+ at ~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:167 (discriminator 4)
+ at ~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:167 (discriminator 4)
+[0] #8  [3] #8  [1] #8  NeoN::BoundaryMesh::BoundaryMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vector<int>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<double>, std::vector<int, std::allocator<int> >, int, std::vector<int, std::allocator<int> >)NeoN::BoundaryMesh::BoundaryMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vector<int>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<double>, std::vector<int, std::allocator<int> >, int, std::vector<int, std::allocator<int> >)NeoN::BoundaryMesh::BoundaryMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vector<int>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<double>, std::vector<int, std::allocator<int> >, int, std::vector<int, std::allocator<int> >)[2] #8  NeoN::BoundaryMesh::BoundaryMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vector<int>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<double>, std::vector<int, std::allocator<int> >, int, std::vector<int, std::allocator<int> >) at  at ~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:39
+ at ~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:39
+~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:39
+[2] #9  [3] #9  [0] #9  NeoFOAM::readOpenFOAMMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::fvMesh const&, bool)NeoFOAM::readOpenFOAMMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::fvMesh const&, bool)NeoFOAM::readOpenFOAMMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::fvMesh const&, bool) at ~/code/NeoN/src/mesh/unstructured/boundaryMesh.cpp:39
+[1] #9  NeoFOAM::readOpenFOAMMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::fvMesh const&, bool) at ~/code/NeoFOAM/src/datastructures/meshAdapter.cpp:219 (discriminator 24)
+[2] #10  NeoFOAM::MeshAdapter::MeshAdapter(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::IOobject const&, bool) at ~/code/NeoFOAM/src/datastructures/meshAdapter.cpp:219 (discriminator 24)
+ at ~/code/NeoFOAM/src/datastructures/meshAdapter.cpp:219 (discriminator 24)
+[3] #10  NeoFOAM::MeshAdapter::MeshAdapter(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::IOobject const&, bool)[1] #10  NeoFOAM::MeshAdapter::MeshAdapter(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::IOobject const&, bool) at ~/code/NeoFOAM/src/datastructures/meshAdapter.cpp:219 (discriminator 24)
+[0] #10  NeoFOAM::MeshAdapter::MeshAdapter(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::IOobject const&, bool) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[0] #11  NeoFOAM::createMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[3] #11  NeoFOAM::createMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[2] #11  NeoFOAM::createMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[1] #11  NeoFOAM::createMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:176 (discriminator 2)
+[0] #12  NeoFOAM::createAdapterRunTime(Foam::Time const&, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:176 (discriminator 2)
+[2] #12  NeoFOAM::createAdapterRunTime(Foam::Time const&, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:176 (discriminator 2)
+[3] #12  NeoFOAM::createAdapterRunTime(Foam::Time const&, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:176 (discriminator 2)
+[1] #12  NeoFOAM::createAdapterRunTime(Foam::Time const&, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:199 (discriminator 1)
+[2] #13  NeoFOAM::createAdapterRunTime(Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:199 (discriminator 1)
+[3] #13  NeoFOAM::createAdapterRunTime(Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:199 (discriminator 1)
+[0] #13  NeoFOAM::createAdapterRunTime(Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:199 (discriminator 1)
+[1] #13  NeoFOAM::createAdapterRunTime(Foam::Time const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:513
+[3] #14  main at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:513
+[2] #14  main at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:513
+[0] #14  main at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:513
+[1] #14  main at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:78
+[0] #15  ? at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:78
+ in [3] #15  ?/lib64/libc.so.6
+[0] #16  __libc_start_main at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:78
+[2] #15  ? in /lib64/libc.so.6
+[0] #17  _start in /lib64/libc.so.6
+[3] #16  __libc_start_main in /lib64/libc.so.6
+[2] #16  __libc_start_main in /lib64/libc.so.6
+[3] #17  _start in /lib64/libc.so.6
+[2] #17  _start in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[0] =============
+[gpu-nvidia-h200-3:734627] *** Process received signal ***
+[gpu-nvidia-h200-3:734627] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:734627] Signal code:  (-6)
+[gpu-nvidia-h200-3:734627] Failing at address: 0x40f000b35a3
+[gpu-nvidia-h200-3:734627] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f721a01cc30]
+[gpu-nvidia-h200-3:734627] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f721a06a02c]
+[gpu-nvidia-h200-3:734627] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f721a01cb86]
+[gpu-nvidia-h200-3:734627] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7f721a01cc30]
+[gpu-nvidia-h200-3:734627] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK6Kokkos4Impl11ParallelForI18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS4_4ViewIKiEESt4pairIiiEEXadL_ZNS4_12setContainerIS5_iEEvRT_IT0_ENS8_IKNSt13type_identityISH_E4typeEEESC_EELj1EEFviEJNS8_IiEEKSA_EENS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEESV_E7executeEv+0x19b)[0x7f727864836b]
+[gpu-nvidia-h200-3:734627] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN6Kokkos12parallel_forINS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEE18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS8_4ViewIKiEESt4pairIiiEEXadL_ZNS8_12setContainerIS9_iEEvRT_IT0_ENSC_IKNSt13type_identityISL_E4typeEEESG_EELj1EEFviEJNSC_IiEEKSE_EEvEEvRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKT_RKSL_+0xef)[0x7f72786485af]
+[gpu-nvidia-h200-3:734627] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12setContainerINS_6VectorEiEEvRT_IT0_ENS_4ViewIKNSt13type_identityIS3_E4typeEEESt4pairIiiE+0x198)[0x7f7278648a28]
+[gpu-nvidia-h200-3:734627] [ 7]  in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[3] =============
+[gpu-nvidia-h200-3:734630] *** Process received signal ***
+[gpu-nvidia-h200-3:734630] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:734630] Signal code:  (-6)
+[gpu-nvidia-h200-3:734630] Failing at address: 0x40f000b35a6
+[gpu-nvidia-h200-3:734630] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7fad8dc51c30]
+[gpu-nvidia-h200-3:734630] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7fad8dc9f02c]
+[gpu-nvidia-h200-3:734630] [ 2] /lib64/libc.so.6(raise+0x16)[0x7fad8dc51b86]
+[gpu-nvidia-h200-3:734630] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7fad8dc51c30]
+[gpu-nvidia-h200-3:734630] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN6VectorIiEaSERKS1_+0xb0)[0x7f7278648c20]
+[gpu-nvidia-h200-3:734627] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK6Kokkos4Impl11ParallelForI18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS4_4ViewIKiEESt4pairIiiEEXadL_ZNS4_12setContainerIS5_iEEvRT_IT0_ENS8_IKNSt13type_identityISH_E4typeEEESC_EELj1EEFviEJNS8_IiEEKSA_EENS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEESV_E7executeEv+0x19b)[0x7fadec27d36b]
+[gpu-nvidia-h200-3:734630] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMesh25computeRowOrderWriteIndexEv+0x2cd)[0x7f72787b5bad]
+[gpu-nvidia-h200-3:734627] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN6Kokkos12parallel_forINS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEE18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS8_4ViewIKiEESt4pairIiiEEXadL_ZNS8_12setContainerIS9_iEEvRT_IT0_ENSC_IKNSt13type_identityISL_E4typeEEESG_EELj1EEFviEJNSC_IiEEKSE_EEvEEvRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKT_RKSL_+0xef)[0x7fadec27d5af]
+[gpu-nvidia-h200-3:734630] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMeshC1ERKSt7variantIJNS_14SerialExecutorENS_11CPUExecutorENS_11GPUExecutorEEENS_6VectorIiEENS8_INS_4Vec3EEESB_SB_NS8_IdEESB_SB_SC_SC_St6vectorIiSaIiEEiSF_+0x2bf)[0x7f72787b5f6f]
+[gpu-nvidia-h200-3:734627] [10]  in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[2] =============
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM16readOpenFOAMMeshESt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam6fvMeshEb+0x5c0)[0x7f7283800000]
+[gpu-nvidia-h200-3:734627] [11] [gpu-nvidia-h200-3:734629] *** Process received signal ***
+[gpu-nvidia-h200-3:734629] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:734629] Signal code:  (-6)
+[gpu-nvidia-h200-3:734629] Failing at address: 0x40f000b35a5
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM11MeshAdapterC2ESt7variantIJN4NeoN14SerialExecutorENS2_11CPUExecutorENS2_11GPUExecutorEEERKN4Foam8IOobjectEb+0xde)[0x7f728380070e]
+[gpu-nvidia-h200-3:734627] [12] [gpu-nvidia-h200-3:734629] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f4add7dcc30]
+[gpu-nvidia-h200-3:734629] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f4add82a02c]
+[gpu-nvidia-h200-3:734629] [ 2] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM10createMeshERKSt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam4TimeE+0x125)[0x7f72837b9465]
+[gpu-nvidia-h200-3:734627] [13] /lib64/libc.so.6(raise+0x16)[0x7f4add7dcb86]
+[gpu-nvidia-h200-3:734629] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7f4add7dcc30]
+[gpu-nvidia-h200-3:734629] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeESt7variantIJN4NeoN14SerialExecutorENS5_11CPUExecutorENS5_11GPUExecutorEEE+0xd1)[0x7f72837bc461]
+[gpu-nvidia-h200-3:734627] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeE+0x50)[0x7f72837bca80]
+[gpu-nvidia-h200-3:734627] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x225)[0x53d1b5]
+[gpu-nvidia-h200-3:734627] [16] /lib64/libc.so.6(+0x2a610)[0x7f721a007610]
+[gpu-nvidia-h200-3:734627] [17] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f721a0076c0]
+[gpu-nvidia-h200-3:734627] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x53f045]
+[gpu-nvidia-h200-3:734627] *** End of error message ***
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12setContainerINS_6VectorEiEEvRT_IT0_ENS_4ViewIKNSt13type_identityIS3_E4typeEEESt4pairIiiE+0x198)[0x7fadec27da28]
+[gpu-nvidia-h200-3:734630] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK6Kokkos4Impl11ParallelForI18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS4_4ViewIKiEESt4pairIiiEEXadL_ZNS4_12setContainerIS5_iEEvRT_IT0_ENS8_IKNSt13type_identityISH_E4typeEEESC_EELj1EEFviEJNS8_IiEEKSA_EENS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEESV_E7executeEv+0x19b)[0x7f4b3be0836b]
+[gpu-nvidia-h200-3:734629] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN6VectorIiEaSERKS1_+0xb0)[0x7fadec27dc20]
+[gpu-nvidia-h200-3:734630] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN6Kokkos12parallel_forINS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEE18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS8_4ViewIKiEESt4pairIiiEEXadL_ZNS8_12setContainerIS9_iEEvRT_IT0_ENSC_IKNSt13type_identityISL_E4typeEEESG_EELj1EEFviEJNSC_IiEEKSE_EEvEEvRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKT_RKSL_+0xef)[0x7f4b3be085af]
+[gpu-nvidia-h200-3:734629] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMesh25computeRowOrderWriteIndexEv+0x2cd)[0x7fadec3eabad]
+[gpu-nvidia-h200-3:734630] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12setContainerINS_6VectorEiEEvRT_IT0_ENS_4ViewIKNSt13type_identityIS3_E4typeEEESt4pairIiiE+0x198)[0x7f4b3be08a28]
+[gpu-nvidia-h200-3:734629] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMeshC1ERKSt7variantIJNS_14SerialExecutorENS_11CPUExecutorENS_11GPUExecutorEEENS_6VectorIiEENS8_INS_4Vec3EEESB_SB_NS8_IdEESB_SB_SC_SC_St6vectorIiSaIiEEiSF_+0x2bf)[0x7fadec3eaf6f]
+[gpu-nvidia-h200-3:734630] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM16readOpenFOAMMeshESt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam6fvMeshEb+0x5c0)[0x7fadf7435000]
+[gpu-nvidia-h200-3:734630] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM11MeshAdapterC2ESt7variantIJN4NeoN14SerialExecutorENS2_11CPUExecutorENS2_11GPUExecutorEEERKN4Foam8IOobjectEb+0xde)[0x7fadf743570e]
+[gpu-nvidia-h200-3:734630] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM10createMeshERKSt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam4TimeE+0x125)[0x7fadf73ee465]
+[gpu-nvidia-h200-3:734630] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeESt7variantIJN4NeoN14SerialExecutorENS5_11CPUExecutorENS5_11GPUExecutorEEE+0xd1)[0x7fadf73f1461]
+[gpu-nvidia-h200-3:734630] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeE+0x50)[0x7fadf73f1a80]
+[gpu-nvidia-h200-3:734630] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN6VectorIiEaSERKS1_+0xb0)[0x7f4b3be08c20]
+[gpu-nvidia-h200-3:734629] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x225)[0x53d1b5]
+[gpu-nvidia-h200-3:734630] [16] /lib64/libc.so.6(+0x2a610)[0x7fad8dc3c610]
+[gpu-nvidia-h200-3:734630] [17] /lib64/libc.so.6(__libc_start_main+0x80)[0x7fad8dc3c6c0]
+[gpu-nvidia-h200-3:734630] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x53f045]
+[gpu-nvidia-h200-3:734630] *** End of error message ***
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMesh25computeRowOrderWriteIndexEv+0x2cd)[0x7f4b3bf75bad]
+[gpu-nvidia-h200-3:734629] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMeshC1ERKSt7variantIJNS_14SerialExecutorENS_11CPUExecutorENS_11GPUExecutorEEENS_6VectorIiEENS8_INS_4Vec3EEESB_SB_NS8_IdEESB_SB_SC_SC_St6vectorIiSaIiEEiSF_+0x2bf)[0x7f4b3bf75f6f]
+[gpu-nvidia-h200-3:734629] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM16readOpenFOAMMeshESt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam6fvMeshEb+0x5c0)[0x7f4b46fc0000]
+[gpu-nvidia-h200-3:734629] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM11MeshAdapterC2ESt7variantIJN4NeoN14SerialExecutorENS2_11CPUExecutorENS2_11GPUExecutorEEERKN4Foam8IOobjectEb+0xde)[0x7f4b46fc070e]
+[gpu-nvidia-h200-3:734629] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM10createMeshERKSt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam4TimeE+0x125)[0x7f4b46f79465]
+[gpu-nvidia-h200-3:734629] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeESt7variantIJN4NeoN14SerialExecutorENS5_11CPUExecutorENS5_11GPUExecutorEEE+0xd1)[0x7f4b46f7c461]
+[gpu-nvidia-h200-3:734629] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeE+0x50)[0x7f4b46f7ca80]
+[gpu-nvidia-h200-3:734629] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x225)[0x53d1b5]
+[gpu-nvidia-h200-3:734629] [16] /lib64/libc.so.6(+0x2a610)[0x7f4add7c7610]
+[gpu-nvidia-h200-3:734629] [17] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f4add7c76c0]
+[gpu-nvidia-h200-3:734629] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x53f045]
+[gpu-nvidia-h200-3:734629] *** End of error message ***
+ at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:78
+[1] #15  ? in /lib64/libc.so.6
+[1] #16  __libc_start_main in /lib64/libc.so.6
+[1] #17  _start in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[1] =============
+[gpu-nvidia-h200-3:734628] *** Process received signal ***
+[gpu-nvidia-h200-3:734628] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:734628] Signal code:  (-6)
+[gpu-nvidia-h200-3:734628] Failing at address: 0x40f000b35a4
+[gpu-nvidia-h200-3:734628] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7fde15b69c30]
+[gpu-nvidia-h200-3:734628] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7fde15bb702c]
+[gpu-nvidia-h200-3:734628] [ 2] /lib64/libc.so.6(raise+0x16)[0x7fde15b69b86]
+[gpu-nvidia-h200-3:734628] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7fde15b69c30]
+[gpu-nvidia-h200-3:734628] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK6Kokkos4Impl11ParallelForI18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS4_4ViewIKiEESt4pairIiiEEXadL_ZNS4_12setContainerIS5_iEEvRT_IT0_ENS8_IKNSt13type_identityISH_E4typeEEESC_EELj1EEFviEJNS8_IiEEKSA_EENS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEESV_E7executeEv+0x19b)[0x7fde7419536b]
+[gpu-nvidia-h200-3:734628] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN6Kokkos12parallel_forINS_11RangePolicyIJNS_4CudaENS_9IndexTypeIiEEEEE18__nv_hdl_wrapper_tILb0ELb0ELb0E11__nv_dl_tagIPFvRN4NeoN6VectorIiEENS8_4ViewIKiEESt4pairIiiEEXadL_ZNS8_12setContainerIS9_iEEvRT_IT0_ENSC_IKNSt13type_identityISL_E4typeEEESG_EELj1EEFviEJNSC_IiEEKSE_EEvEEvRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKT_RKSL_+0xef)[0x7fde741955af]
+[gpu-nvidia-h200-3:734628] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12setContainerINS_6VectorEiEEvRT_IT0_ENS_4ViewIKNSt13type_identityIS3_E4typeEEESt4pairIiiE+0x198)[0x7fde74195a28]
+[gpu-nvidia-h200-3:734628] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN6VectorIiEaSERKS1_+0xb0)[0x7fde74195c20]
+[gpu-nvidia-h200-3:734628] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMesh25computeRowOrderWriteIndexEv+0x2cd)[0x7fde74302bad]
+[gpu-nvidia-h200-3:734628] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryMeshC1ERKSt7variantIJNS_14SerialExecutorENS_11CPUExecutorENS_11GPUExecutorEEENS_6VectorIiEENS8_INS_4Vec3EEESB_SB_NS8_IdEESB_SB_SC_SC_St6vectorIiSaIiEEiSF_+0x2bf)[0x7fde74302f6f]
+[gpu-nvidia-h200-3:734628] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM16readOpenFOAMMeshESt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam6fvMeshEb+0x5c0)[0x7fde7f34d000]
+[gpu-nvidia-h200-3:734628] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM11MeshAdapterC2ESt7variantIJN4NeoN14SerialExecutorENS2_11CPUExecutorENS2_11GPUExecutorEEERKN4Foam8IOobjectEb+0xde)[0x7fde7f34d70e]
+[gpu-nvidia-h200-3:734628] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM10createMeshERKSt7variantIJN4NeoN14SerialExecutorENS1_11CPUExecutorENS1_11GPUExecutorEEERKN4Foam4TimeE+0x125)[0x7fde7f306465]
+[gpu-nvidia-h200-3:734628] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeESt7variantIJN4NeoN14SerialExecutorENS5_11CPUExecutorENS5_11GPUExecutorEEE+0xd1)[0x7fde7f309461]
+[gpu-nvidia-h200-3:734628] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoFOAM.so(_ZN7NeoFOAM20createAdapterRunTimeERKN4Foam4TimeE+0x50)[0x7fde7f309a80]
+[gpu-nvidia-h200-3:734628] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x225)[0x53d1b5]
+[gpu-nvidia-h200-3:734628] [16] /lib64/libc.so.6(+0x2a610)[0x7fde15b54610]
+[gpu-nvidia-h200-3:734628] [17] /lib64/libc.so.6(__libc_start_main+0x80)[0x7fde15b546c0]
+[gpu-nvidia-h200-3:734628] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x53f045]
+[gpu-nvidia-h200-3:734628] *** End of error message ***
+--------------------------------------------------------------------------
+
+prterun noticed that process rank 2 with PID 734629 on node gpu-nvidia-h200-3 exited on
+signal 8 (Floating point exception).
+--------------------------------------------------------------------------

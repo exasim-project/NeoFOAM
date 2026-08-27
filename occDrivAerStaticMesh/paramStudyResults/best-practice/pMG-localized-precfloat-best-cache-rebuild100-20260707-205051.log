@@ -1,0 +1,685 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jul 07 2026
+Time   : 20:50:52
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 763743
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 30 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Schwarz(Multigrid))':
+{
+    cacheSolver: true
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    preconditionerRebuildInterval: 100
+    relTol: 0.010000
+    reportName: config(Cg+Schwarz(Multigrid))
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49243125, Boundary: 1362247
+Selecting patchDistMethod meshWave
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+[mem] setup.end: DEVICE_POOL current=12979 MB  actual(reserved)=38146 MB  highWater=19132 MB
+Starting time loop
+Time = 1
+[mem] step-start: DEVICE_POOL current=12979 MB  actual(reserved)=38146 MB  highWater=19132 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0019489065525709068, Final residual = 0.00023894260930874348, No Iterations 3, Solve time = 248.896 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.16486923046353993, Final residual = 0.008211493751426525, No Iterations 3, Solve time = 248.896 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.10478437836867475, Final residual = 0.004988202514505261, No Iterations 3, Solve time = 248.896 ms
+[mem] after-UEqn: DEVICE_POOL current=15473 MB  actual(reserved)=38146 MB  highWater=20761 MB
+[GinkgoSolver] p-cache: rebuild(generate) solve=1 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 1, Final residual = 0.009839663691436708, No Iterations 83, Solve time = 2315.14 ms
+time step continuity errors : sum local = 6.57105021585901e-05, global = 1.6451253031083575e-08, cumulative = 1.6451253031083575e-08
+[mem] after-pEqn: DEVICE_POOL current=16941 MB  actual(reserved)=38146 MB  highWater=20761 MB
+[GinkgoSolver] p-cache: rebuild(generate) solve=1 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.9999999999999999, Final residual = 0.030747684381483672, No Iterations 1, Solve time = 53.144 ms
+bounding omega, min: -52.86784217054367 max: 46109492.9142401 average: 2443.2089483114355
+[GinkgoSolver] p-cache: rebuild(generate) solve=1 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.9999999999999735, Final residual = 0.04385992279677702, No Iterations 1, Solve time = 52.993 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=21935 MB
+ExecutionTime = 55.85 s  ClockTime = 56 s
+
+Time = 2
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=21935 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0012911736255240627, Final residual = 5.911223762865358e-05, No Iterations 5, Solve time = 343.663 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.06540643760001097, Final residual = 0.0029850434771808224, No Iterations 5, Solve time = 343.663 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.040817662329278616, Final residual = 0.000908021874640138, No Iterations 5, Solve time = 343.663 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=2 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.03891473630162502, Final residual = 0.0003755807298694963, No Iterations 88, Solve time = 2423.015 ms
+time step continuity errors : sum local = 4.1247407857488295e-05, global = -1.0546847621716945e-06, cumulative = -1.0382335091406108e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=2 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.008194562010410997, Final residual = 0.000477997283879069, No Iterations 1, Solve time = 55.08 ms
+bounding omega, min: -1384.2914601674327 max: 45305778.899069704 average: 2705.6444556055244
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=2 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.07500459740156747, Final residual = 0.004455173864075181, No Iterations 1, Solve time = 53.674 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 62.29 s  ClockTime = 63 s
+
+Time = 3
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0008085014202313673, Final residual = 4.7534744466943695e-05, No Iterations 6, Solve time = 389.626 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.032498815068088154, Final residual = 0.0006332913662726421, No Iterations 6, Solve time = 389.626 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.01818190630514341, Final residual = 0.0002673521694442339, No Iterations 6, Solve time = 389.626 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=3 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.0176176344790349, Final residual = 0.00016445565744621852, No Iterations 86, Solve time = 2371.119 ms
+time step continuity errors : sum local = 3.245884001125618e-05, global = -8.280271014424445e-07, cumulative = -1.8662606105830554e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=3 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0035207069806278066, Final residual = 0.0002899348082692557, No Iterations 1, Solve time = 55.079 ms
+bounding omega, min: -11.965339112133904 max: 45385840.44170091 average: 3322.2184410110335
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=3 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.01399741292311677, Final residual = 0.0010053587686996305, No Iterations 1, Solve time = 50.107 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 66.31 s  ClockTime = 67 s
+
+Time = 4
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.000558285853167027, Final residual = 4.703486233941467e-05, No Iterations 4, Solve time = 276.607 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.020250988808174678, Final residual = 0.002687865953676705, No Iterations 4, Solve time = 276.607 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.010477675729914837, Final residual = 0.0007741088603824834, No Iterations 4, Solve time = 276.607 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=4 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.01251528566045096, Final residual = 0.00011700315946178333, No Iterations 49, Solve time = 1366.792 ms
+time step continuity errors : sum local = 2.9998642956201687e-05, global = 3.726468618416981e-06, cumulative = 1.8602080078339255e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=4 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0017242503501809653, Final residual = 4.831124440864749e-05, No Iterations 2, Solve time = 87 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=4 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.004640837541829386, Final residual = 0.00039336391775803415, No Iterations 1, Solve time = 53.707 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 69.25 s  ClockTime = 70 s
+
+Time = 5
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00048432314730407957, Final residual = 3.771062475391391e-05, No Iterations 4, Solve time = 288.055 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.018507119870558936, Final residual = 0.0011831656714570472, No Iterations 4, Solve time = 288.055 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.008307826128061377, Final residual = 0.000812265754634499, No Iterations 4, Solve time = 288.055 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=5 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.010701162986028696, Final residual = 9.170245880843884e-05, No Iterations 58, Solve time = 1612.275 ms
+time step continuity errors : sum local = 2.5723821408353303e-05, global = -1.5969644698430552e-07, cumulative = 1.7005115608496199e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=5 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0009944329747806184, Final residual = 9.814554193856227e-05, No Iterations 1, Solve time = 67.86 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=5 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0023565063709800843, Final residual = 0.00022365696601861328, No Iterations 1, Solve time = 49.994 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 72.41 s  ClockTime = 73 s
+
+Time = 6
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.000435927100149319, Final residual = 2.620336518456894e-05, No Iterations 5, Solve time = 332.434 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.017914234865251687, Final residual = 0.001684618218526436, No Iterations 5, Solve time = 332.434 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0067239069006425735, Final residual = 0.0005104469892333184, No Iterations 5, Solve time = 332.434 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=6 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.011376612186659458, Final residual = 0.00010578904941471231, No Iterations 84, Solve time = 2315.864 ms
+time step continuity errors : sum local = 2.8738859610684254e-05, global = -8.463422087958104e-08, cumulative = 1.6158773399700388e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=6 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0006247307267631045, Final residual = 2.4311526910719807e-05, No Iterations 2, Solve time = 76.276 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=6 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0016242585077378808, Final residual = 0.00015489307556238948, No Iterations 1, Solve time = 53.923 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 76.34999999999999 s  ClockTime = 77 s
+
+Time = 7
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00037541844516603135, Final residual = 2.355004852683229e-05, No Iterations 5, Solve time = 328.871 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.015179572887767575, Final residual = 0.0012007848413021767, No Iterations 5, Solve time = 328.871 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.005129269300660781, Final residual = 0.00027715125717043973, No Iterations 5, Solve time = 328.871 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=7 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.01234940615766169, Final residual = 0.00012192353244187818, No Iterations 82, Solve time = 2263.906 ms
+time step continuity errors : sum local = 2.9943834620992985e-05, global = -2.0950467503840088e-07, cumulative = 1.406372664931638e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=7 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0004898483855934431, Final residual = 1.5230740296140802e-05, No Iterations 2, Solve time = 77.075 ms
+bounding omega, min: -1227.7818366817253 max: 45358183.941512875 average: 5415.604749170778
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=7 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0011596779156495172, Final residual = 2.4108771257156132e-05, No Iterations 3, Solve time = 99.821 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 80.27 s  ClockTime = 81 s
+
+Time = 8
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0003155650626204036, Final residual = 2.494686950299919e-05, No Iterations 5, Solve time = 356.073 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.011321434130867716, Final residual = 0.00028252429245139766, No Iterations 5, Solve time = 356.073 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0036073447437618535, Final residual = 0.00019645084540502206, No Iterations 5, Solve time = 356.073 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=8 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.013207430908477761, Final residual = 0.00012955632893992572, No Iterations 76, Solve time = 2098.618 ms
+time step continuity errors : sum local = 2.7831798504797025e-05, global = -8.968146618641866e-07, cumulative = 5.095580030674513e-07
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=8 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.00035962410891302607, Final residual = 1.2434744128413563e-05, No Iterations 2, Solve time = 90.09 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=8 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0008654369174198217, Final residual = 5.2435614297979545e-05, No Iterations 2, Solve time = 73.096 ms
+bounding k, min: -0.012731769903214563 max: 585.0325254159532 average: 0.4568397298880429
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 84.02 s  ClockTime = 85 s
+
+Time = 9
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00027381520321885814, Final residual = 7.342585647862407e-06, No Iterations 5, Solve time = 345.577 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.009217334055450641, Final residual = 0.00043796167072162923, No Iterations 5, Solve time = 345.577 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.002636999907374962, Final residual = 0.00015506970088075285, No Iterations 5, Solve time = 345.577 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=9 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.013682509483043497, Final residual = 0.00012939362786186225, No Iterations 39, Solve time = 1100.738 ms
+time step continuity errors : sum local = 2.459241162690385e-05, global = -9.708629878178408e-07, cumulative = -4.6130498475038946e-07
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=9 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0002780542393996099, Final residual = 1.063200914364126e-05, No Iterations 2, Solve time = 86.793 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=9 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0006654333735692451, Final residual = 3.884214583367784e-05, No Iterations 2, Solve time = 77.802 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 86.77 s  ClockTime = 88 s
+
+Time = 10
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00025271897570175683, Final residual = 3.2114250659888577e-06, No Iterations 6, Solve time = 417.126 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.010048459672485847, Final residual = 0.00040559911268096637, No Iterations 6, Solve time = 417.126 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0024927214652779523, Final residual = 4.173847134447517e-05, No Iterations 6, Solve time = 417.126 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=10 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.013688512378280358, Final residual = 0.00013112651095113792, No Iterations 76, Solve time = 2106.163 ms
+time step continuity errors : sum local = 2.308563725056793e-05, global = 1.4524333784716925e-06, cumulative = 9.91128393721303e-07
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=10 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0002245580183450979, Final residual = 9.223212444871861e-06, No Iterations 2, Solve time = 91.219 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=10 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0005268153905088865, Final residual = 3.274977862794487e-05, No Iterations 2, Solve time = 75.996 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 90.58 s  ClockTime = 91 s
+
+Time = 11
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0002396515341671954, Final residual = 1.1132550484591309e-05, No Iterations 5, Solve time = 343.427 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.011026865660502295, Final residual = 0.00032133662918487263, No Iterations 5, Solve time = 343.427 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0025433107908322296, Final residual = 7.25602527734995e-05, No Iterations 5, Solve time = 343.427 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=11 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.013107033275054542, Final residual = 0.00013090461595839528, No Iterations 76, Solve time = 2102.576 ms
+time step continuity errors : sum local = 2.394611434543123e-05, global = 8.313294237991227e-07, cumulative = 1.8224578175204258e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=11 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.00018509619600557014, Final residual = 8.098337007584909e-06, No Iterations 2, Solve time = 91.242 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=11 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0004395116243171433, Final residual = 2.8281614455824247e-05, No Iterations 2, Solve time = 72.476 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 94.33 s  ClockTime = 95 s
+
+Time = 12
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00022768033935056118, Final residual = 1.4764633855910689e-05, No Iterations 4, Solve time = 303.764 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.010993966098069404, Final residual = 0.0007931657340076953, No Iterations 4, Solve time = 303.764 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.002475333443438705, Final residual = 0.00012075293218382572, No Iterations 4, Solve time = 303.764 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=12 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.012002062866859462, Final residual = 0.00011679315353814873, No Iterations 62, Solve time = 1720.502 ms
+time step continuity errors : sum local = 2.3520806770683518e-05, global = 2.469069848376929e-06, cumulative = 4.2915276658973545e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=12 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.00015606429544774112, Final residual = 7.141607806862376e-06, No Iterations 2, Solve time = 87.406 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=12 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003876212914960151, Final residual = 2.5726212199014918e-05, No Iterations 2, Solve time = 76.058 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 97.65000000000001 s  ClockTime = 98 s
+
+Time = 13
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00021554690870500493, Final residual = 9.366339564469948e-06, No Iterations 4, Solve time = 304.352 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.010243566444108787, Final residual = 0.0005796304508550105, No Iterations 4, Solve time = 304.352 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0022913202503927832, Final residual = 0.00010840957659743459, No Iterations 4, Solve time = 304.352 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=13 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.010549218902790038, Final residual = 9.935359854572727e-05, No Iterations 59, Solve time = 1640.642 ms
+time step continuity errors : sum local = 2.238402518025002e-05, global = 1.7517513266584963e-06, cumulative = 6.04327899255585e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=13 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.000134959051169089, Final residual = 6.423267860480754e-06, No Iterations 2, Solve time = 86.941 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=13 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003677447568563106, Final residual = 2.5883104937487816e-05, No Iterations 2, Solve time = 73.266 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 100.89 s  ClockTime = 102 s
+
+Time = 14
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0002054518519323248, Final residual = 1.3555290558246015e-05, No Iterations 4, Solve time = 297.761 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.009287826843871031, Final residual = 0.0012624103945494945, No Iterations 4, Solve time = 297.761 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0020926081138582216, Final residual = 0.00021453008461317852, No Iterations 4, Solve time = 297.761 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=14 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.009176818888384279, Final residual = 9.097141510032807e-05, No Iterations 32, Solve time = 911.769 ms
+time step continuity errors : sum local = 2.2765763847795694e-05, global = 8.770767449214617e-07, cumulative = 6.920355737477312e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=14 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.00012046454288387082, Final residual = 5.8775859152821265e-06, No Iterations 2, Solve time = 90.846 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=14 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003602581509447902, Final residual = 2.909637181181377e-05, No Iterations 2, Solve time = 76.571 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 103.38 s  ClockTime = 104 s
+
+Time = 15
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00019739863338131972, Final residual = 1.4971949075661983e-05, No Iterations 4, Solve time = 283.618 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.008578744146376726, Final residual = 0.0005109916211435641, No Iterations 4, Solve time = 283.618 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0019475692806973784, Final residual = 0.00010376079458617746, No Iterations 4, Solve time = 283.618 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=15 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.008313890232256564, Final residual = 8.242146745268359e-05, No Iterations 56, Solve time = 1560.836 ms
+time step continuity errors : sum local = 2.2056363880903362e-05, global = -3.3468076199358313e-06, cumulative = 3.5735481175414808e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=15 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.00010975517418746688, Final residual = 5.422930516768127e-06, No Iterations 2, Solve time = 86.836 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=15 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003546805775194199, Final residual = 9.49627156520922e-06, No Iterations 3, Solve time = 96.553 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 106.55 s  ClockTime = 107 s
+
+Time = 16
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001907812005656229, Final residual = 5.011982139114932e-06, No Iterations 5, Solve time = 340.962 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.008181865609125207, Final residual = 0.00021407426083957346, No Iterations 5, Solve time = 340.962 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0018872952284414786, Final residual = 7.506275162089213e-05, No Iterations 5, Solve time = 340.962 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=16 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.007700355934411854, Final residual = 7.279391887279847e-05, No Iterations 34, Solve time = 963.483 ms
+time step continuity errors : sum local = 2.0564275669890156e-05, global = 1.0730419410492748e-06, cumulative = 4.646590058590755e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=16 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.00010124342654955682, Final residual = 5.116188858667004e-06, No Iterations 2, Solve time = 91.056 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=16 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035204187220962396, Final residual = 2.7339621773954308e-05, No Iterations 2, Solve time = 72.909 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 109.18 s  ClockTime = 110 s
+
+Time = 17
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00018366627140518487, Final residual = 4.437168522796359e-06, No Iterations 6, Solve time = 410.651 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007885429676366696, Final residual = 0.00014035970322909784, No Iterations 6, Solve time = 410.651 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0018189284591224692, Final residual = 0.00016872082278438985, No Iterations 6, Solve time = 410.651 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=17 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.00724409079757717, Final residual = 6.422230535650093e-05, No Iterations 52, Solve time = 1452.884 ms
+time step continuity errors : sum local = 1.8857722055748863e-05, global = -2.5827232432073448e-06, cumulative = 2.0638668153834106e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=17 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 9.438027303233542e-05, Final residual = 4.818838984514702e-06, No Iterations 2, Solve time = 86.622 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=17 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035060560889492106, Final residual = 8.394183216423718e-06, No Iterations 3, Solve time = 95.344 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 112.36 s  ClockTime = 113 s
+
+Time = 18
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00017618873197835968, Final residual = 2.1688346679617013e-05, No Iterations 4, Solve time = 285.323 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0075748381589464935, Final residual = 0.0003904466154403029, No Iterations 4, Solve time = 285.323 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001739016477061477, Final residual = 0.00014872507348750384, No Iterations 4, Solve time = 285.323 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=18 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.006939719756622361, Final residual = 6.809069415842496e-05, No Iterations 22, Solve time = 639.139 ms
+time step continuity errors : sum local = 2.055073817375208e-05, global = 7.200558027605188e-07, cumulative = 2.7839226181439294e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=18 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 8.848965911217318e-05, Final residual = 4.641580775956924e-06, No Iterations 2, Solve time = 77.139 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=18 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035172589562203763, Final residual = 3.459672546323224e-05, No Iterations 2, Solve time = 73.526 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 114.59 s  ClockTime = 116 s
+
+Time = 19
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00016983822590587643, Final residual = 1.919048541779872e-05, No Iterations 4, Solve time = 286.243 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007345683901786273, Final residual = 0.0004504937140328362, No Iterations 4, Solve time = 286.243 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001691355827437749, Final residual = 7.833751660250302e-05, No Iterations 4, Solve time = 286.243 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=19 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.0066888695371752445, Final residual = 6.62917362463757e-05, No Iterations 24, Solve time = 693.821 ms
+time step continuity errors : sum local = 2.024224092181732e-05, global = 2.9831131090559693e-07, cumulative = 3.0822339290495265e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=19 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 8.321475903096501e-05, Final residual = 4.396082286578599e-06, No Iterations 2, Solve time = 91.84 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=19 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035038716606758386, Final residual = 8.68284167448734e-06, No Iterations 3, Solve time = 96.253 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 116.92 s  ClockTime = 118 s
+
+Time = 20
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00016318338338536535, Final residual = 8.379868605875821e-06, No Iterations 4, Solve time = 290.636 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007226513510222929, Final residual = 0.000300467069761302, No Iterations 4, Solve time = 290.636 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001683738710512873, Final residual = 6.758330478138555e-05, No Iterations 4, Solve time = 290.636 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=20 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.006496816785154973, Final residual = 6.379254977346974e-05, No Iterations 54, Solve time = 1509.965 ms
+time step continuity errors : sum local = 1.963047790216405e-05, global = 2.5410909254258737e-07, cumulative = 3.336343021592114e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=20 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 7.818821678556457e-05, Final residual = 4.209008131376471e-06, No Iterations 2, Solve time = 90.026 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=20 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003506996774110402, Final residual = 8.299422138056252e-06, No Iterations 3, Solve time = 97.524 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 120.05 s  ClockTime = 121 s
+
+Time = 21
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00015865000640264472, Final residual = 1.1211673985128783e-05, No Iterations 3, Solve time = 242.021 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007224213748363105, Final residual = 0.0006141988301273546, No Iterations 3, Solve time = 242.021 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017055263300314375, Final residual = 0.00015585440038337668, No Iterations 3, Solve time = 242.021 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=21 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.006209792210482216, Final residual = 6.0026579676403474e-05, No Iterations 24, Solve time = 696.922 ms
+time step continuity errors : sum local = 1.892258896631545e-05, global = -2.1167814416345874e-07, cumulative = 3.1246648774286553e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=21 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 7.378371141639023e-05, Final residual = 4.032114510322913e-06, No Iterations 2, Solve time = 90.152 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=21 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035208173700732807, Final residual = 8.416836109159437e-06, No Iterations 3, Solve time = 94.708 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 122.3 s  ClockTime = 123 s
+
+Time = 22
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001555407264459685, Final residual = 9.629435995891665e-06, No Iterations 3, Solve time = 230.391 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007182413914458031, Final residual = 0.0005879227904282952, No Iterations 3, Solve time = 230.391 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017302062885651095, Final residual = 0.00014499247508164965, No Iterations 3, Solve time = 230.391 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=22 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.006086640270200744, Final residual = 6.0706502013877826e-05, No Iterations 23, Solve time = 669.208 ms
+time step continuity errors : sum local = 1.923799998660988e-05, global = -3.3439874720691033e-07, cumulative = 2.790266130221745e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=22 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 6.98689496509121e-05, Final residual = 3.8824404126887936e-06, No Iterations 2, Solve time = 76.207 ms
+bounding omega, min: -165.4838890290613 max: 45356470.468598895 average: 7030.760756853006
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=22 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035471783590441784, Final residual = 8.610662723854716e-06, No Iterations 3, Solve time = 100.61 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 124.55 s  ClockTime = 126 s
+
+Time = 23
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00015311207732527333, Final residual = 9.603768997492789e-06, No Iterations 3, Solve time = 236.349 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007086730018445332, Final residual = 0.0005649291556114351, No Iterations 3, Solve time = 236.349 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017455565437133895, Final residual = 0.00014105681830506913, No Iterations 3, Solve time = 236.349 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=23 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.0059727171231035315, Final residual = 5.89956811929408e-05, No Iterations 22, Solve time = 638.251 ms
+time step continuity errors : sum local = 1.8775830585473252e-05, global = -4.2261668521153854e-07, cumulative = 2.3676494450102064e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=23 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 6.631507757788944e-05, Final residual = 3.7381478945033355e-06, No Iterations 2, Solve time = 76.371 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=23 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00035708339985288405, Final residual = 8.77932909939104e-06, No Iterations 3, Solve time = 96.376 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 126.76 s  ClockTime = 128 s
+
+Time = 24
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00015113761644557978, Final residual = 1.0269662268157233e-05, No Iterations 3, Solve time = 246.166 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00694099764454993, Final residual = 0.0005379904075641312, No Iterations 3, Solve time = 246.166 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017502166302842666, Final residual = 0.00013988529636839127, No Iterations 3, Solve time = 246.166 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=24 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.005872070137843447, Final residual = 5.719047076938942e-05, No Iterations 20, Solve time = 583.99 ms
+time step continuity errors : sum local = 1.8238753438293977e-05, global = -4.13832230295606e-07, cumulative = 1.9538172147146004e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=24 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 6.307531254386636e-05, Final residual = 3.5921196682918004e-06, No Iterations 2, Solve time = 86.442 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=24 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003602017021352238, Final residual = 8.881599463510902e-06, No Iterations 3, Solve time = 96.17 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 128.91 s  ClockTime = 130 s
+
+Time = 25
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001489321095727167, Final residual = 1.2394795334242718e-05, No Iterations 3, Solve time = 222.553 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0067773111224858, Final residual = 0.0005087032976599054, No Iterations 3, Solve time = 222.553 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017484631390068488, Final residual = 0.0001386715672925668, No Iterations 3, Solve time = 222.553 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=25 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.005788110418765076, Final residual = 5.7485892679427884e-05, No Iterations 18, Solve time = 528.151 ms
+time step continuity errors : sum local = 1.8321322940810818e-05, global = -2.4032228761727876e-07, cumulative = 1.7134949270973217e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=25 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 6.0223965227093154e-05, Final residual = 3.4526699885642603e-06, No Iterations 2, Solve time = 77.623 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=25 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.000363535360245077, Final residual = 9.043047958123468e-06, No Iterations 3, Solve time = 96.436 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 131.01 s  ClockTime = 132 s
+
+Time = 26
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00014666380516339454, Final residual = 7.9547057799681e-06, No Iterations 3, Solve time = 238.976 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006629277802384304, Final residual = 0.0004865428833820664, No Iterations 3, Solve time = 238.976 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017492329064048755, Final residual = 0.00013918346915175157, No Iterations 3, Solve time = 238.976 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=26 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.005712362007686639, Final residual = 5.7043365137005e-05, No Iterations 22, Solve time = 641.085 ms
+time step continuity errors : sum local = 1.8135380717973408e-05, global = -4.080254327309091e-08, cumulative = 1.6726923838242307e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=26 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 5.7696794094123836e-05, Final residual = 3.3464475662827923e-06, No Iterations 2, Solve time = 78.438 ms
+bounding omega, min: -50345.7170800539 max: 45356130.187250584 average: 7145.156407511938
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=26 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.000367576383562685, Final residual = 9.27233059308242e-06, No Iterations 3, Solve time = 99.563 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 133.22 s  ClockTime = 134 s
+
+Time = 27
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00014442848804267777, Final residual = 7.8796748619143e-06, No Iterations 3, Solve time = 226.256 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006495419059292851, Final residual = 0.0004668579774342869, No Iterations 3, Solve time = 226.256 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017517454773120444, Final residual = 0.00013936791315408574, No Iterations 3, Solve time = 226.256 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=27 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.005652999789522753, Final residual = 5.637153975923452e-05, No Iterations 25, Solve time = 720.046 ms
+time step continuity errors : sum local = 1.7826905814870948e-05, global = 7.826792353802427e-08, cumulative = 1.750960307362255e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=27 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 5.544243710190771e-05, Final residual = 3.2517464196313386e-06, No Iterations 2, Solve time = 87.196 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=27 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00037257954574091383, Final residual = 9.829531774654093e-06, No Iterations 3, Solve time = 99.514 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 135.5 s  ClockTime = 137 s
+
+Time = 28
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001421700118489518, Final residual = 1.1067524258878488e-05, No Iterations 3, Solve time = 230.269 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006369116682376674, Final residual = 0.0004560355340060346, No Iterations 3, Solve time = 230.269 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017535086990366634, Final residual = 0.00013895420032835208, No Iterations 3, Solve time = 230.269 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=28 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.005657005781604435, Final residual = 5.576603081814162e-05, No Iterations 26, Solve time = 749.047 ms
+time step continuity errors : sum local = 1.737097614022477e-05, global = 1.745875161613423e-07, cumulative = 1.925547823523597e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=28 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 5.3460668715021135e-05, Final residual = 3.166265016564957e-06, No Iterations 2, Solve time = 86.041 ms
+bounding omega, min: -207.57773449735328 max: 45356030.91192035 average: 7192.471507649629
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=28 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0003773577352432006, Final residual = 9.720805116828948e-06, No Iterations 3, Solve time = 99.549 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 137.83 s  ClockTime = 139 s
+
+Time = 29
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00013934732041584076, Final residual = 7.293061549756651e-06, No Iterations 3, Solve time = 228.071 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006250454641748143, Final residual = 0.00044674561442365217, No Iterations 3, Solve time = 228.071 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001753793265927762, Final residual = 0.0001379773379195061, No Iterations 3, Solve time = 228.071 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=29 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.00568878698959623, Final residual = 5.659802679032802e-05, No Iterations 25, Solve time = 722.835 ms
+time step continuity errors : sum local = 1.7249762276718726e-05, global = 2.870425460797188e-07, cumulative = 2.212590369603316e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=29 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 5.189196437286143e-05, Final residual = 3.109979416494438e-06, No Iterations 2, Solve time = 76.714 ms
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=29 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00038393398168532855, Final residual = 9.888516404333924e-06, No Iterations 3, Solve time = 99.321 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+ExecutionTime = 140.12 s  ClockTime = 141 s
+
+Time = 30
+[mem] step-start: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00013664214188988244, Final residual = 1.1383105527251397e-05, No Iterations 3, Solve time = 240.467 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006150920252220143, Final residual = 0.0004458265995768937, No Iterations 3, Solve time = 240.467 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017546022964558677, Final residual = 0.00013644671086096425, No Iterations 3, Solve time = 240.467 ms
+[mem] after-UEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=30 rebuildInterval=100
+config(Cg+Schwarz(Multigrid)):  Solving for p, Initial residual = 0.005715239704977171, Final residual = 5.651578703187498e-05, No Iterations 24, Solve time = 692.717 ms
+time step continuity errors : sum local = 1.6840451992998007e-05, global = 4.0556023706717575e-07, cumulative = 2.6181506066704917e-06
+[mem] after-pEqn: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=30 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 5.079986126055999e-05, Final residual = 3.054220605723044e-06, No Iterations 2, Solve time = 86.95 ms
+bounding omega, min: -141.0875473327492 max: 45356088.56653916 average: 7233.5411505715565
+[GinkgoSolver] p-cache: reuse(update_matrix_value) solve=30 rebuildInterval=0
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00039152821662798734, Final residual = 1.0269918242042816e-05, No Iterations 3, Solve time = 95.533 ms
+[mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+Writing p
+Writing U
+Writing turbulence variables
+ExecutionTime = 143.18 s  ClockTime = 145 s
+
+[mem] wrote 1010 samples to memoryTimeline.csv
+Finalizing NeoN
+Finalising parallel run

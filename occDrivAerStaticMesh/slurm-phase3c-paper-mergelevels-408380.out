@@ -1,0 +1,86 @@
+
+The following have been reloaded with a version change:
+  1) cuda/13.0.2 => cuda/13.1.1
+
+Not expanding variables or dictionary directives
+startFrom       startTime;
+Not expanding variables or dictionary directives
+startTime       1000;
+Not expanding variables or dictionary directives
+stopAt          endTime;
+Not expanding variables or dictionary directives
+endTime         1050;
+Not expanding variables or dictionary directives
+writeInterval   50;
+Phase 3c: 50 iterations/variant from restart 1000; variants: ml1 ml2 ml3 ml4
+================================================================
+ ml1 : localized MG solver, CACHED, plain Pgm (mergeLevels=1 baseline)
+   -> paperParamStudyResults/mergelevels/ml1-20260710-060211.log
+================================================================
+   | [gpu-nvidia-h200-2:729155] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x180c)[0x54d02c]
+   | [gpu-nvidia-h200-2:729155] [22] /lib64/libc.so.6(+0x2a610)[0x7f242db92610]
+   | [gpu-nvidia-h200-2:729155] [23] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f242db926c0]
+   | [gpu-nvidia-h200-2:729155] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x54e045]
+   | [gpu-nvidia-h200-2:729155] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 2 with PID 729157 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=52s  steps=1
+================================================================
+ ml2 : localized MG solver, CACHED, MergedPgm mergeLevels=2
+   -> paperParamStudyResults/mergelevels/ml2-20260710-060303.log
+================================================================
+   | [gpu-nvidia-h200-2:729274] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x180c)[0x54d02c]
+   | [gpu-nvidia-h200-2:729274] [22] /lib64/libc.so.6(+0x2a610)[0x7feb7d48b610]
+   | [gpu-nvidia-h200-2:729274] [23] /lib64/libc.so.6(__libc_start_main+0x80)[0x7feb7d48b6c0]
+   | [gpu-nvidia-h200-2:729274] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x54e045]
+   | [gpu-nvidia-h200-2:729274] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 2 with PID 729276 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=51s  steps=1
+================================================================
+ ml3 : localized MG solver, CACHED, MergedPgm mergeLevels=3
+   -> paperParamStudyResults/mergelevels/ml3-20260710-060354.log
+================================================================
+   | [gpu-nvidia-h200-2:729390] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x180c)[0x54d02c]
+   | [gpu-nvidia-h200-2:729390] [22] /lib64/libc.so.6(+0x2a610)[0x7f1344650610]
+   | [gpu-nvidia-h200-2:729390] [23] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f13446506c0]
+   | [gpu-nvidia-h200-2:729390] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x54e045]
+   | [gpu-nvidia-h200-2:729390] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 2 with PID 729392 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=51s  steps=1
+================================================================
+ ml4 : localized MG solver, CACHED, MergedPgm mergeLevels=4
+   -> paperParamStudyResults/mergelevels/ml4-20260710-060445.log
+================================================================
+   | [gpu-nvidia-h200-2:729526] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x180c)[0x54d02c]
+   | [gpu-nvidia-h200-2:729526] [22] /lib64/libc.so.6(+0x2a610)[0x7fe8da469610]
+   | [gpu-nvidia-h200-2:729526] [23] /lib64/libc.so.6(__libc_start_main+0x80)[0x7fe8da4696c0]
+   | [gpu-nvidia-h200-2:729526] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x54e045]
+   | [gpu-nvidia-h200-2:729526] *** End of error message ***
+   | --------------------------------------------------------------------------
+   | 
+   | prterun noticed that process rank 2 with PID 729528 on node gpu-nvidia-h200-2 exited on
+   | signal 6 (Aborted).
+   | --------------------------------------------------------------------------
+   exit=134  wall=51s  steps=1
+
+######################## SUMMARY ########################
+run                         steps   p_iters/it     p_ms/solve       cont       exec_s     s/step
+ml1                             1            -              -          -            -          -
+ml2                             1            -              -          -            -          -
+ml3                             1            -              -          -            -          -
+ml4                             1            -              -          -            -          -
+#########################################################
+per-run logs under: paperParamStudyResults/mergelevels/
+
+logs under: paperParamStudyResults/mergelevels/   |   compare s/step AND p_iters/cont across mergeLevels 1..4

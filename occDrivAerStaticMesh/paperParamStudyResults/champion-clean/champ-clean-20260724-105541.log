@@ -1,0 +1,214 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jul 24 2026
+Time   : 10:55:43
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 3547724
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 2 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Multigrid)':
+{
+    cacheSolver: true
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    preconditionerRebuildInterval: 0
+    relTol: 0.010000
+    reportName: config(Cg+Multigrid)
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: false
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49243125, Boundary: 1362247
+Selecting patchDistMethod meshWave
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: false
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: false
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Starting time loop
+Time = 1051
+[mem] step-start: DEVICE_POOL current=12979 MB  actual(reserved)=38146 MB  highWater=19132 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.138773099436374e-05, Final residual = 3.3128387725961887e-06, No Iterations 3, Solve time = 67.506 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004403238680958118, Final residual = 0.0001535895533134376, No Iterations 3, Solve time = 67.506 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011397400823179122, Final residual = 5.832562849764373e-05, No Iterations 3, Solve time = 67.506 ms
+[mem] after-UEqn: DEVICE_POOL current=15847 MB  actual(reserved)=38146 MB  highWater=21135 MB
+[nonlocal] OUTPUT(ginkgo) non-local Csr: rows=16333691 ncols=77242 nnz=85143
+  OUTPUT local-row 936023 cols(compressed,sorted?): 1617 1652
+  OUTPUT local-row 936025 cols(compressed,sorted?): 1617 1651
+  OUTPUT local-row 938187 cols(compressed,sorted?): 1616 1650
+  OUTPUT local-row 938189 cols(compressed,sorted?): 1616 1649
+  OUTPUT local-row 940559 cols(compressed,sorted?): 1641 1677
+  OUTPUT local-row 940561 cols(compressed,sorted?): 1641 1678
+  OUTPUT local-row 942975 cols(compressed,sorted?): 1640 1676
+  OUTPUT local-row 942977 cols(compressed,sorted?): 1640 1675
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013256944227604164, Final residual = 1.1065017612362506e-05, No Iterations 7, Solve time = 188.836 ms
+time step continuity errors : sum local = 2.7605384282311554e-06, global = -5.720331161673674e-09, cumulative = -5.720331161673674e-09
+[mem] after-pEqn: DEVICE_POOL current=17315 MB  actual(reserved)=38146 MB  highWater=21135 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3535567056505369e-05, Final residual = 9.66989578955999e-07, No Iterations 2, Solve time = 16.156 ms
+bounding omega, min: -47620.411811400256 max: 45355982.60706698 average: 6371.521267802339
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.000252706358147736, Final residual = 1.4870324045144713e-05, No Iterations 2, Solve time = 16.095 ms
+bounding k, min: -0.00966183737456977 max: 920.0227904218793 average: 9.131309744247798
+[mem] after-turb: DEVICE_POOL current=19500 MB  actual(reserved)=38146 MB  highWater=22309 MB
+ExecutionTime = 43.78 s  ClockTime = 44 s
+
+Time = 1052
+[mem] step-start: DEVICE_POOL current=19500 MB  actual(reserved)=38146 MB  highWater=22309 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.102267399944378e-05, Final residual = 3.171712189851163e-06, No Iterations 3, Solve time = 50.96 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004412755005495013, Final residual = 0.0001445499910522897, No Iterations 3, Solve time = 50.96 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011386587451209255, Final residual = 4.1166385804583144e-05, No Iterations 3, Solve time = 50.96 ms
+[mem] after-UEqn: DEVICE_POOL current=19500 MB  actual(reserved)=38146 MB  highWater=24788 MB
+[nonlocal] OUTPUT(ginkgo) non-local Csr: rows=16333691 ncols=77242 nnz=85143
+  OUTPUT local-row 936023 cols(compressed,sorted?): 1617 1652
+  OUTPUT local-row 936025 cols(compressed,sorted?): 1617 1651
+  OUTPUT local-row 938187 cols(compressed,sorted?): 1616 1650
+  OUTPUT local-row 938189 cols(compressed,sorted?): 1616 1649
+  OUTPUT local-row 940559 cols(compressed,sorted?): 1641 1677
+  OUTPUT local-row 940561 cols(compressed,sorted?): 1641 1678
+  OUTPUT local-row 942975 cols(compressed,sorted?): 1640 1676
+  OUTPUT local-row 942977 cols(compressed,sorted?): 1640 1675
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013015415259547147, Final residual = 1.0989149436437299e-05, No Iterations 7, Solve time = 183.964 ms
+time step continuity errors : sum local = 2.7429046392258025e-06, global = -8.62811005798988e-09, cumulative = -1.4348441219663554e-08
+[mem] after-pEqn: DEVICE_POOL current=19500 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3465332550379394e-05, Final residual = 9.164473168232216e-07, No Iterations 2, Solve time = 13.811 ms
+bounding omega, min: -47129.59695755236 max: 45355982.62119606 average: 6371.182149820865
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025274401854243143, Final residual = 1.5123885700863587e-05, No Iterations 2, Solve time = 13.821 ms
+bounding k, min: -0.003860001321662268 max: 909.1546500330817 average: 9.13166950172191
+[mem] after-turb: DEVICE_POOL current=19500 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Writing p
+Writing U
+Writing turbulence variables
+ExecutionTime = 45.84 s  ClockTime = 47 s
+
+Finalizing NeoN
+Finalising parallel run

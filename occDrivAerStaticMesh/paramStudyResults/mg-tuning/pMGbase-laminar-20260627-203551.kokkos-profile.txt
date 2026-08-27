@@ -1,0 +1,420 @@
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.422021313 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 2.5% 0.0% 0.1% 1.44e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.77e+02 sec 65.8% 1.1% 0.0% 9.0% 1.56e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.4% 0.0% 99.6% 2.91e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 7.33e-01 sec 0.3% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |-> 7.78e+01 sec 29.0% 5.3% 0.0% 94.7% 1.01e+02 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 7.33e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 6.94e-01 sec 0.3% 100.0% 0.0% ------ 2599 fill [for]
+|   |   |-> 6.90e-01 sec 0.3% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 2.97e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 3.53e+00 sec 1.3% 15.6% 0.0% 84.4% 5.69e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.43e-01 sec 0.1% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |-> 1.36e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 0.5% 0.0% 99.5% 5.39e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.37e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.37e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.59e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.59e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.48e+00 sec 2.8% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 2.98e+00 sec 1.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 2.98e+00 sec 1.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.36e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.36e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.22e+00 sec 0.5% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|-> 1.04e+00 sec 0.4% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 6.90e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.90e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 3.43e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.43e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.03e+00 sec 0.4% 100.0% 0.0% ------ 7297 fill [for]
+|   |-> 6.94e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.94e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.timeStep [region]
+|-> 7.33e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 3.63e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.97e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 2.97e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 2.97e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.90e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1290728.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.5% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10434744 kB
+
+END KOKKOS PROFILING REPORT.
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.452038259 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 2.5% 0.0% 0.1% 1.26e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.77e+02 sec 65.8% 1.1% 0.0% 9.0% 1.38e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.3% 0.0% 99.7% 2.59e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 7.15e-01 sec 0.3% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |-> 7.79e+01 sec 29.0% 5.1% 0.0% 94.9% 8.74e+01 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 7.25e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 6.87e-01 sec 0.3% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 6.63e-01 sec 0.2% 100.0% 0.0% ------ 2599 fill [for]
+|   |   |-> 2.94e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 3.64e+00 sec 1.4% 15.0% 0.0% 85.0% 4.12e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.47e-01 sec 0.1% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 0.5% 0.0% 99.5% 4.71e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.39e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.39e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.58e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.58e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.48e+00 sec 2.8% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 3.09e+00 sec 1.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 3.09e+00 sec 1.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.19e+00 sec 0.4% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 7.15e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 7.15e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|-> 1.05e+00 sec 0.4% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 6.87e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.87e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 3.47e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.47e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 9.95e-01 sec 0.4% 100.0% 0.0% ------ 7297 fill [for]
+|   |-> 6.63e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.63e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.timeStep [region]
+|-> 7.25e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.25e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.25e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 3.66e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.94e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 2.94e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 2.94e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.78e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1287766.1 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.4% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10369924 kB
+
+END KOKKOS PROFILING REPORT.
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.489853422 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 5.7% 0.0% 0.1% 1.29e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.77e+02 sec 65.8% 3.6% 0.0% 6.9% 1.43e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.9% 0.0% 99.1% 2.62e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |   |-> 3.96e-01 sec 0.1% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |   |   |-> 2.69e-01 sec 0.1% 100.0% 0.0% ------ 943 fill [for]
+|   |   |-> 1.28e+00 sec 0.5% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |   |-> 8.73e-01 sec 0.3% 100.0% 0.0% ------ 3660 fill [for]
+|   |   |-> 8.20e-01 sec 0.3% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |   |-> 3.96e-01 sec 0.1% 100.0% 0.0% ------ 2250 computeGradBoundaryRefGrad [for]
+|   |   |-> 3.34e-01 sec 0.1% 100.0% 0.0% ------ 1560 parallelFor [for]
+|   |-> 7.79e+01 sec 29.0% 9.3% 0.0% 90.7% 8.74e+01 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.68e+00 sec 0.6% 100.0% 0.0% ------ 2629 fill [for]
+|   |   |-> 1.05e+00 sec 0.4% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 5.35e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |   |-> 4.64e-01 sec 0.2% 100.0% 0.0% ------ 30 computeLaplacianImplicitCorrection [for]
+|   |   |-> 4.37e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |-> 3.66e+00 sec 1.4% 31.9% 0.0% 68.1% 4.27e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.43e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 1.6% 0.0% 98.4% 4.98e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.06e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.06e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.21e+01 sec 4.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.21e+01 sec 4.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.40e+00 sec 2.8% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 3.06e+00 sec 1.1% 100.0% 0.0% ------ 7633 fill [for]
+|   |-> 1.68e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.68e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.timeStep [region]
+|   |-> 8.73e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 8.73e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.timeStep [region]
+|   |-> 2.69e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 2.69e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector [region]
+|   |       |-> 2.69e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.timeStep [region]
+|-> 2.49e+00 sec 0.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 2.49e+00 sec 0.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.11e+00 sec 0.8% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 1.28e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.28e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|   |-> 4.37e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.37e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|   |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|       |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|           |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.72e+00 sec 0.6% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 1.05e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.05e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 6.43e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.43e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 8.20e-01 sec 0.3% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |-> 8.20e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.pressureCorrector [region]
+|       |-> 8.20e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.timeStep [region]
+|-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 5.35e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 5.35e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 5.35e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 5.33e-01 sec 0.2% 100.0% 0.0% ------ 2118 parallelFor [for]
+|   |-> 3.34e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1560 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.34e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1560 neoSimpleFoam.timeStep [region]
+|-> 5.03e-01 sec 0.2% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+|   |-> 4.64e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.64e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 4.95e-01 sec 0.2% 100.0% 0.0% ------ 3000 computeGradBoundaryRefGrad [for]
+|   |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2250 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2250 neoSimpleFoam.timeStep [region]
+|-> 3.61e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 3.14e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLocalLaplacianCoefficients [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1287078.3 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.4% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10364856 kB
+
+END KOKKOS PROFILING REPORT.
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.536912866 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 6.3% 0.0% 0.1% 1.48e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.76e+02 sec 65.7% 4.3% 0.0% 6.2% 1.61e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.9% 0.0% 99.1% 2.96e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |   |-> 4.13e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |   |   |-> 2.71e-01 sec 0.1% 100.0% 0.0% ------ 943 fill [for]
+|   |   |-> 1.32e+00 sec 0.5% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |   |-> 1.31e+00 sec 0.5% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |   |-> 8.82e-01 sec 0.3% 100.0% 0.0% ------ 3660 fill [for]
+|   |   |-> 6.76e-01 sec 0.3% 100.0% 0.0% ------ 3960 computeGradBoundaryRefGrad [for]
+|   |   |-> 3.08e-01 sec 0.1% 100.0% 0.0% ------ 1590 setGradientValue [for]
+|   |   |-> 3.05e-01 sec 0.1% 100.0% 0.0% ------ 2100 parallelFor [for]
+|   |-> 7.80e+01 sec 29.1% 9.4% 0.0% 90.6% 1.01e+02 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.72e+00 sec 0.6% 100.0% 0.0% ------ 2629 fill [for]
+|   |   |-> 1.06e+00 sec 0.4% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 5.48e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |   |-> 4.28e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |   |-> 4.27e-01 sec 0.2% 100.0% 0.0% ------ 30 computeLaplacianImplicitCorrection [for]
+|   |-> 3.60e+00 sec 1.3% 39.1% 0.0% 60.9% 5.83e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.49e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |   |-> 2.88e-01 sec 0.1% 100.0% 0.0% ------ 1320 computeGradTensorBoundaryReconstruct [for]
+|   |-> 1.40e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 1.9% 0.0% 98.1% 5.69e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.07e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.07e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.09e+01 sec 4.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.09e+01 sec 4.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.37e+00 sec 2.7% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 3.12e+00 sec 1.2% 100.0% 0.0% ------ 7633 fill [for]
+|   |-> 1.72e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.72e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.timeStep [region]
+|   |-> 8.82e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 8.82e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.timeStep [region]
+|   |-> 2.71e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 2.71e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector [region]
+|   |       |-> 2.71e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.timeStep [region]
+|-> 2.19e+00 sec 0.8% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 2.19e+00 sec 0.8% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.16e+00 sec 0.8% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 1.32e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.32e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|   |-> 4.28e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.28e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|   |-> 4.13e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|       |-> 4.13e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|           |-> 4.13e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.74e+00 sec 0.6% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 1.06e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.06e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 6.49e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.49e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.40e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.40e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.31e+00 sec 0.5% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |-> 1.31e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.31e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.timeStep [region]
+|-> 7.90e-01 sec 0.3% 100.0% 0.0% ------ 5280 computeGradBoundaryRefGrad [for]
+|   |-> 6.76e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3960 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 6.76e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3960 neoSimpleFoam.timeStep [region]
+|-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 5.48e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 5.48e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 5.48e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 4.94e-01 sec 0.2% 100.0% 0.0% ------ 2658 parallelFor [for]
+|   |-> 3.05e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2100 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.05e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2100 neoSimpleFoam.timeStep [region]
+|-> 4.60e-01 sec 0.2% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+|   |-> 4.27e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.27e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 4.55e-01 sec 0.2% 100.0% 0.0% ------ 4004 computeGradTensorBoundaryReconstruct [for]
+|   |-> 2.88e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1320 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 2.88e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1320 neoSimpleFoam.timeStep [region]
+|-> 4.06e-01 sec 0.2% 100.0% 0.0% ------ 3256 setGradientValue [for]
+|   |-> 3.08e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1590 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.08e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1590 neoSimpleFoam.timeStep [region]
+|-> 3.62e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 3.23e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLocalLaplacianCoefficients [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1290464.5 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.5% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10433616 kB
+
+END KOKKOS PROFILING REPORT.

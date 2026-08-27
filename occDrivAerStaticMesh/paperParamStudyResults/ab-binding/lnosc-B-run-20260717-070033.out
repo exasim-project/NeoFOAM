@@ -1,0 +1,41 @@
+
+The following have been reloaded with a version change:
+  1) cuda/13.0.2 => cuda/13.1.1
+
+Not expanding variables or dictionary directives
+startFrom       startTime;
+Not expanding variables or dictionary directives
+startTime       1000;
+Not expanding variables or dictionary directives
+stopAt          endTime;
+Not expanding variables or dictionary directives
+endTime         1050;
+Not expanding variables or dictionary directives
+writeInterval   50;
+Phase 3i (LOCALIZED Cg+Schwarz{MG}; 2-D max_levels x coarse rel-tol): 50 iters/variant from restart 1000
+  LEVELS={6}  TOLS={0.1}  cap=50
+================================================================
+ L6e1 : LOCALIZED Cg+Schwarz{MG}, CACHED, pgmMerge2, local-MG max_levels=6, coarse rel-tol=0.1
+   -> paperParamStudyResults/localized-coarse-reltol-abB/L6e1-20260717-070033.log
+================================================================
+   | Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025365903836911197, Final residual = 1.4009205807448707e-05, No Iterations 2, Solve time = 13.573 ms
+   | bounding k, min: -0.003382590965814662 max: 870.6460849703489 average: 9.132912424813936
+   | [mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+   | Writing p
+   | Writing U
+   | Writing turbulence variables
+   | ExecutionTime = 81.40000000000001 s  ClockTime = 84 s
+   | 
+   | Finalizing NeoN
+   | Finalising parallel run
+   exit=0  wall=87s  steps=50
+
+######################## SUMMARY ########################
+run                         steps   p_iters/it     p_ms/solve       cont       exec_s     s/step
+L6e1                           50           31            202 3.0481565832196954e-06 81.40000000000001      1.628
+#########################################################
+per-run logs under: paperParamStudyResults/localized-coarse-reltol-abB/
+
+logs under: paperParamStudyResults/localized-coarse-reltol-abB/   |   read: ./peek-grid.py localized-coarse-reltol
+  KEY QUESTION: does localized still beat the global branch on the CURRENT build (§4.11f was cross-build)?
+localized grid done

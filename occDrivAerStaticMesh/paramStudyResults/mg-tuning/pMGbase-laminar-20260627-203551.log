@@ -1,0 +1,765 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jun 27 2026
+Time   : 20:35:51
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 3866394
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 30 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Multigrid)':
+{
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    relTol: 0.010000
+    reportName: config(Cg+Multigrid)
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49243125, Boundary: 1362247
+Starting time loop
+Time = 1
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0019405128607238665, Final residual = 0.0001148201194943713, No Iterations 4, Solve time = 95.361 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.164994479279562, Final residual = 0.016400912557012662, No Iterations 2, Solve time = 49.079 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.10481043750985866, Final residual = 0.004989898955583967, No Iterations 3, Solve time = 61.644 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 1, Final residual = 0.008794067701050057, No Iterations 38, Solve time = 3654.579 ms
+time step continuity errors : sum local = 5.965459980961845e-05, global = -4.338237630500016e-07, cumulative = -4.338237630500016e-07
+ExecutionTime = 18.23 s  ClockTime = 19 s
+
+Time = 2
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0012575468941070551, Final residual = 0.00011379086499285795, No Iterations 4, Solve time = 77.396 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.06759400182155094, Final residual = 0.0034654941655628646, No Iterations 4, Solve time = 76.649 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.04065687568928567, Final residual = 0.0035768857924895806, No Iterations 3, Solve time = 62.802 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.04121716515435592, Final residual = 0.0003743965032119297, No Iterations 37, Solve time = 3543.913 ms
+time step continuity errors : sum local = 4.011602409269096e-05, global = 1.022077339105051e-06, cumulative = 5.882535760550493e-07
+ExecutionTime = 26.35 s  ClockTime = 27 s
+
+Time = 3
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0008058793670565356, Final residual = 5.925665213426062e-05, No Iterations 4, Solve time = 77.558 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.03323064418359032, Final residual = 0.0024900034606777266, No Iterations 4, Solve time = 77.271 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.018727828963972223, Final residual = 0.0016113518919492636, No Iterations 4, Solve time = 77.447 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.018595906553893603, Final residual = 0.00018248717402777304, No Iterations 36, Solve time = 3474.238 ms
+time step continuity errors : sum local = 3.54744953710376e-05, global = 1.2281263286262667e-06, cumulative = 1.816379904681316e-06
+ExecutionTime = 34.45 s  ClockTime = 35 s
+
+Time = 4
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0005711025652515768, Final residual = 3.816921363144235e-05, No Iterations 4, Solve time = 77.575 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.020573529932094183, Final residual = 0.0006010533428838916, No Iterations 5, Solve time = 91.633 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.011001856694668336, Final residual = 0.0007873732997047397, No Iterations 4, Solve time = 77.453 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.012901449044963577, Final residual = 0.0001235251568424206, No Iterations 41, Solve time = 3950.563 ms
+time step continuity errors : sum local = 3.156901027852383e-05, global = -1.8605705848982886e-07, cumulative = 1.6303228461914872e-06
+ExecutionTime = 43.01 s  ClockTime = 44 s
+
+Time = 5
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0004887654484209669, Final residual = 3.937604966206557e-05, No Iterations 4, Solve time = 77.187 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.01837459845778082, Final residual = 0.0005747452800368766, No Iterations 5, Solve time = 91.749 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.008429627870250297, Final residual = 0.0005463000759426027, No Iterations 6, Solve time = 105.809 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.01097780561414117, Final residual = 0.00010785262507936022, No Iterations 39, Solve time = 3762.477 ms
+time step continuity errors : sum local = 3.010261127714515e-05, global = 6.018569860918244e-07, cumulative = 2.2321798322833114e-06
+ExecutionTime = 51.45 s  ClockTime = 52 s
+
+Time = 6
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00043605897253738035, Final residual = 3.742625081539072e-05, No Iterations 4, Solve time = 77.583 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.017675163228261095, Final residual = 0.001002096889311865, No Iterations 4, Solve time = 75.813 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.006854780262008047, Final residual = 0.00047217840345788013, No Iterations 4, Solve time = 76.542 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.011528533774450206, Final residual = 0.00010016878927018296, No Iterations 37, Solve time = 3554.664 ms
+time step continuity errors : sum local = 2.733756196727729e-05, global = 8.625952288765028e-07, cumulative = 3.0947750611598144e-06
+ExecutionTime = 59.65 s  ClockTime = 61 s
+
+Time = 7
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00037608602085901756, Final residual = 2.2941786859793773e-05, No Iterations 5, Solve time = 91.311 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.015094358671969383, Final residual = 0.000817197012241683, No Iterations 4, Solve time = 76.414 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.005217383177874484, Final residual = 0.000367426932162287, No Iterations 4, Solve time = 76.246 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.012547986726402024, Final residual = 0.00012068641725568494, No Iterations 34, Solve time = 3284.44 ms
+time step continuity errors : sum local = 2.988374586225373e-05, global = 8.403809644108149e-07, cumulative = 3.935156025570629e-06
+ExecutionTime = 67.54000000000001 s  ClockTime = 69 s
+
+Time = 8
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00031834240110930364, Final residual = 1.715136138129972e-05, No Iterations 5, Solve time = 121.681 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.011499395792383772, Final residual = 0.0010120242208673685, No Iterations 4, Solve time = 126.448 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0037325228879908964, Final residual = 0.0002851704722637434, No Iterations 4, Solve time = 104.899 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.01348371084259742, Final residual = 0.00013186707386194583, No Iterations 30, Solve time = 3037.267 ms
+time step continuity errors : sum local = 2.8513093029329303e-05, global = 6.550106846469525e-07, cumulative = 4.590166710217582e-06
+ExecutionTime = 75 s  ClockTime = 77 s
+
+Time = 9
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00027404974747741184, Final residual = 1.8743464359475947e-05, No Iterations 4, Solve time = 126.599 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00938835059465049, Final residual = 0.0005362935148337833, No Iterations 4, Solve time = 116.964 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0027378767752853045, Final residual = 0.00019063710673611272, No Iterations 4, Solve time = 144.939 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.014201311167663941, Final residual = 0.00013258255614308228, No Iterations 33, Solve time = 3432.745 ms
+time step continuity errors : sum local = 2.4908184815781842e-05, global = -9.898933978545274e-07, cumulative = 3.6002733123630542e-06
+ExecutionTime = 83.06 s  ClockTime = 87 s
+
+Time = 10
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0002537287001286483, Final residual = 1.2090893801893724e-05, No Iterations 4, Solve time = 192.076 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.009956270829752622, Final residual = 0.0005587630486607485, No Iterations 4, Solve time = 400.223 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0025409244029877334, Final residual = 0.00020195807952314235, No Iterations 4, Solve time = 181.465 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.014214333057802798, Final residual = 0.00013672584286307169, No Iterations 36, Solve time = 3938.825 ms
+time step continuity errors : sum local = 2.3678752541704075e-05, global = -1.6316034830959716e-06, cumulative = 1.9686698292670826e-06
+ExecutionTime = 92.23999999999999 s  ClockTime = 100 s
+
+Time = 11
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00024279695095210535, Final residual = 1.2558346429353085e-05, No Iterations 4, Solve time = 119.303 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.010875126077228901, Final residual = 0.00040554233463369836, No Iterations 6, Solve time = 153.812 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.002587570356097336, Final residual = 0.00018635485357473264, No Iterations 4, Solve time = 124.085 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.013755387106628545, Final residual = 0.00013494354028299914, No Iterations 36, Solve time = 3738.614 ms
+time step continuity errors : sum local = 2.3865158425528348e-05, global = -1.5571404234350561e-06, cumulative = 4.1152940583202653e-07
+ExecutionTime = 100.36 s  ClockTime = 110 s
+
+Time = 12
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00023049174439582055, Final residual = 2.0678543407221497e-05, No Iterations 4, Solve time = 132.637 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.010860979517869032, Final residual = 0.0006915298231898008, No Iterations 4, Solve time = 132.991 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0025173025325347805, Final residual = 0.00016583784399268922, No Iterations 4, Solve time = 107.401 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.012605298246938198, Final residual = 0.00011693698467639909, No Iterations 36, Solve time = 4666.151 ms
+time step continuity errors : sum local = 2.276968439088265e-05, global = -1.245487497494636e-06, cumulative = -8.339580916626094e-07
+ExecutionTime = 109.65 s  ClockTime = 122 s
+
+Time = 13
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0002176899218711414, Final residual = 2.006384804082002e-05, No Iterations 3, Solve time = 170.662 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.010173015182124387, Final residual = 0.0010166478195232866, No Iterations 3, Solve time = 100.684 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0023255787238438057, Final residual = 0.00017533422044968357, No Iterations 4, Solve time = 108.221 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.010980236847432875, Final residual = 0.0001093003773567985, No Iterations 32, Solve time = 3622.6 ms
+time step continuity errors : sum local = 2.4064332123269078e-05, global = -8.06003340766569e-07, cumulative = -1.6399614324291783e-06
+ExecutionTime = 117.65 s  ClockTime = 133 s
+
+Time = 14
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00020753322580065536, Final residual = 1.2099565026305976e-05, No Iterations 4, Solve time = 121.457 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.009328586077046726, Final residual = 0.0005815827613476001, No Iterations 4, Solve time = 132.158 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.002114907993752807, Final residual = 0.00016175395862493214, No Iterations 4, Solve time = 529.408 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.009498704566879401, Final residual = 9.059326691939272e-05, No Iterations 31, Solve time = 5117.115 ms
+time step continuity errors : sum local = 2.230680648753911e-05, global = 6.946868360755066e-08, cumulative = -1.5704927488216277e-06
+ExecutionTime = 127.42 s  ClockTime = 146 s
+
+Time = 15
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00019902915675949144, Final residual = 9.730453594162795e-06, No Iterations 4, Solve time = 120.732 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.008641859946484528, Final residual = 0.0007871751321308081, No Iterations 3, Solve time = 139.424 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0019460597839978183, Final residual = 0.0001809259789267911, No Iterations 3, Solve time = 123.196 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.008411145506971432, Final residual = 8.265891480779029e-05, No Iterations 29, Solve time = 4558.623 ms
+time step continuity errors : sum local = 2.2230503984174383e-05, global = 5.270972565215396e-07, cumulative = -1.043395492300088e-06
+ExecutionTime = 136.42 s  ClockTime = 158 s
+
+Time = 16
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001919581214261735, Final residual = 8.208716090049149e-06, No Iterations 4, Solve time = 124.467 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00829953463775253, Final residual = 0.0007507001218159523, No Iterations 3, Solve time = 156.676 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0018802200847558524, Final residual = 0.00017670508225918352, No Iterations 3, Solve time = 192.115 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0078004373287911995, Final residual = 7.222926632990541e-05, No Iterations 26, Solve time = 3414.235 ms
+time step continuity errors : sum local = 2.0535278988711377e-05, global = 4.91040682154109e-07, cumulative = -5.523548101459791e-07
+ExecutionTime = 144.64 s  ClockTime = 170 s
+
+Time = 17
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00018481622886410716, Final residual = 7.585470826660196e-06, No Iterations 4, Solve time = 116.088 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.008067199625258056, Final residual = 0.000710968646466, No Iterations 3, Solve time = 591.84 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0018236314029147626, Final residual = 0.0001699994836401596, No Iterations 3, Solve time = 112.753 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.007464725906756618, Final residual = 7.177926629874338e-05, No Iterations 24, Solve time = 2346.936 ms
+time step continuity errors : sum local = 2.104708609581968e-05, global = -9.735894625658704e-08, cumulative = -6.497137564025662e-07
+ExecutionTime = 152.26 s  ClockTime = 179 s
+
+Time = 18
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001772315394222563, Final residual = 7.51313825022939e-06, No Iterations 4, Solve time = 77.322 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007792903742987129, Final residual = 0.0006719915733334501, No Iterations 3, Solve time = 62.256 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017596892408011852, Final residual = 0.00016245332798748248, No Iterations 3, Solve time = 62.959 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.007214312704109184, Final residual = 6.53511669007376e-05, No Iterations 25, Solve time = 2451.667 ms
+time step continuity errors : sum local = 1.9496247951208256e-05, global = 2.407907359005979e-07, cumulative = -4.0892302050196833e-07
+ExecutionTime = 159.27 s  ClockTime = 186 s
+
+Time = 19
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00017009335955510863, Final residual = 1.5987335476666803e-05, No Iterations 3, Solve time = 62.726 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007529933002811121, Final residual = 0.0006412954003756256, No Iterations 3, Solve time = 62.758 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017190756217029305, Final residual = 0.00015629293427799315, No Iterations 3, Solve time = 62.151 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006995791646750217, Final residual = 6.652457857791603e-05, No Iterations 25, Solve time = 2470.91 ms
+time step continuity errors : sum local = 2.0108974807249188e-05, global = 6.677360652832516e-07, cumulative = 2.5881304478128324e-07
+ExecutionTime = 166.32 s  ClockTime = 194 s
+
+Time = 20
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00016527712443444018, Final residual = 7.032323687580843e-06, No Iterations 4, Solve time = 77.692 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007381622308581669, Final residual = 0.000614910160810435, No Iterations 3, Solve time = 63.411 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017143007904039877, Final residual = 0.0001517920647039744, No Iterations 3, Solve time = 62.945 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006770378796901455, Final residual = 6.651795646912329e-05, No Iterations 25, Solve time = 2461.295 ms
+time step continuity errors : sum local = 2.0353909213507573e-05, global = 9.09743332084295e-07, cumulative = 1.1685563768655782e-06
+ExecutionTime = 173.39 s  ClockTime = 201 s
+
+Time = 21
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00016103166390636707, Final residual = 1.474440187914258e-05, No Iterations 3, Solve time = 63.236 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0073501675578167, Final residual = 0.0006025956992395257, No Iterations 3, Solve time = 62.079 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017323799044974752, Final residual = 0.0001484350326805806, No Iterations 3, Solve time = 62.96 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006559491745529635, Final residual = 6.3589618340179e-05, No Iterations 25, Solve time = 2455.056 ms
+time step continuity errors : sum local = 1.9720067664265607e-05, global = 1.0399726864363103e-06, cumulative = 2.2085290633018887e-06
+ExecutionTime = 180.42 s  ClockTime = 208 s
+
+Time = 22
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001582397423103325, Final residual = 1.0463568559395192e-05, No Iterations 3, Solve time = 62.551 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007333901423257518, Final residual = 0.0005926381732656752, No Iterations 3, Solve time = 162.576 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017525762868023699, Final residual = 0.0001464939842871566, No Iterations 3, Solve time = 62.889 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.00638216903711949, Final residual = 5.7828395834393274e-05, No Iterations 25, Solve time = 2578.515 ms
+time step continuity errors : sum local = 1.8196457912134714e-05, global = 9.076673939324858e-07, cumulative = 3.1161964572343745e-06
+ExecutionTime = 187.66 s  ClockTime = 215 s
+
+Time = 23
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00015618058749211744, Final residual = 9.965126079494545e-06, No Iterations 3, Solve time = 63.007 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007264798282523528, Final residual = 0.0005750974855363826, No Iterations 3, Solve time = 62.4 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017625532366711085, Final residual = 0.00014194883460068232, No Iterations 3, Solve time = 62.192 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006241977537232466, Final residual = 6.240536932892256e-05, No Iterations 19, Solve time = 1883.127 ms
+time step continuity errors : sum local = 1.9890290772178983e-05, global = 9.242113994468222e-07, cumulative = 4.040407856681197e-06
+ExecutionTime = 194.19 s  ClockTime = 222 s
+
+Time = 24
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00015406153747595043, Final residual = 9.748499553090165e-06, No Iterations 3, Solve time = 62.555 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.007139856947097311, Final residual = 0.0005482853006604973, No Iterations 3, Solve time = 62.065 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017599871767531954, Final residual = 0.00013860674806224124, No Iterations 3, Solve time = 62.774 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006192197424755912, Final residual = 6.11912551234313e-05, No Iterations 14, Solve time = 1419.414 ms
+time step continuity errors : sum local = 1.94866903151125e-05, global = 4.6354576592899803e-07, cumulative = 4.503953622610195e-06
+ExecutionTime = 200.21 s  ClockTime = 228 s
+
+Time = 25
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001518112115863251, Final residual = 9.283936962247485e-06, No Iterations 3, Solve time = 63.16 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006988291854558499, Final residual = 0.0005179734941734738, No Iterations 3, Solve time = 62.57 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001754833419648546, Final residual = 0.00013775063333922846, No Iterations 3, Solve time = 63.166 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0061638323139103154, Final residual = 6.073419567137418e-05, No Iterations 14, Solve time = 1426.444 ms
+time step continuity errors : sum local = 1.9256612369271014e-05, global = 5.612469095695868e-07, cumulative = 5.065200532179782e-06
+ExecutionTime = 206.21 s  ClockTime = 234 s
+
+Time = 26
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.000149420693213497, Final residual = 9.24959669543626e-06, No Iterations 3, Solve time = 63.328 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006842088725920484, Final residual = 0.000497744173646086, No Iterations 3, Solve time = 63.148 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017538483166026613, Final residual = 0.00013724349979200113, No Iterations 3, Solve time = 62.889 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006119810838844079, Final residual = 5.679388687899932e-05, No Iterations 15, Solve time = 1515.552 ms
+time step continuity errors : sum local = 1.795333230039235e-05, global = 5.578375605980302e-07, cumulative = 5.6230380927778125e-06
+ExecutionTime = 212.27 s  ClockTime = 240 s
+
+Time = 27
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001468081944572917, Final residual = 9.041746990923953e-06, No Iterations 3, Solve time = 62.794 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00670105346635725, Final residual = 0.00047467000613860103, No Iterations 3, Solve time = 63.07 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017600790699207817, Final residual = 0.00013879897825639262, No Iterations 3, Solve time = 62.434 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006067142199257391, Final residual = 5.4356303305420363e-05, No Iterations 16, Solve time = 1603.681 ms
+time step continuity errors : sum local = 1.7142766900595264e-05, global = 2.9207104241089104e-07, cumulative = 5.915109135188704e-06
+ExecutionTime = 218.44 s  ClockTime = 247 s
+
+Time = 28
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0001440634515711149, Final residual = 8.175714114018297e-06, No Iterations 3, Solve time = 62.593 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00657164738045625, Final residual = 0.0004670289362343821, No Iterations 3, Solve time = 62.101 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017701769223243211, Final residual = 0.00014020827487919721, No Iterations 3, Solve time = 62.418 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006030692698877142, Final residual = 6.001554902362649e-05, No Iterations 17, Solve time = 1698.236 ms
+time step continuity errors : sum local = 1.885324357258641e-05, global = -1.427394555352125e-07, cumulative = 5.772369679653492e-06
+ExecutionTime = 224.71 s  ClockTime = 253 s
+
+Time = 29
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00014117542254186475, Final residual = 9.784928737224089e-06, No Iterations 3, Solve time = 62.997 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006458945437730499, Final residual = 0.00046353830361394225, No Iterations 3, Solve time = 62.572 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017804655729966156, Final residual = 0.00014020376005348113, No Iterations 3, Solve time = 62.762 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006013616841874163, Final residual = 5.852510371115029e-05, No Iterations 24, Solve time = 2361.641 ms
+time step continuity errors : sum local = 1.8237229853746935e-05, global = -7.89460005434688e-07, cumulative = 4.982909674218803e-06
+ExecutionTime = 231.65 s  ClockTime = 260 s
+
+Time = 30
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.00013838112545187854, Final residual = 8.468296909824188e-06, No Iterations 3, Solve time = 63.325 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.006380955820880638, Final residual = 0.00045717650782806644, No Iterations 3, Solve time = 63.591 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0017882886571467002, Final residual = 0.00013840673667019434, No Iterations 3, Solve time = 63.943 ms
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.006087645908045771, Final residual = 5.494271167986628e-05, No Iterations 25, Solve time = 2453.667 ms
+time step continuity errors : sum local = 1.6689208116834674e-05, global = -4.969058516006932e-07, cumulative = 4.48600382261811e-06
+Writing p
+Writing U
+Writing turbulence variables
+ExecutionTime = 239.21 s  ClockTime = 268 s
+
+
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.422021313 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 2.5% 0.0% 0.1% 1.44e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.77e+02 sec 65.8% 1.1% 0.0% 9.0% 1.56e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.4% 0.0% 99.6% 2.91e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 7.33e-01 sec 0.3% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |-> 7.78e+01 sec 29.0% 5.3% 0.0% 94.7% 1.01e+02 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 7.33e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 6.94e-01 sec 0.3% 100.0% 0.0% ------ 2599 fill [for]
+|   |   |-> 6.90e-01 sec 0.3% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 2.97e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 3.53e+00 sec 1.3% 15.6% 0.0% 84.4% 5.69e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.43e-01 sec 0.1% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |-> 1.36e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 0.5% 0.0% 99.5% 5.39e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.37e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.37e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.59e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.59e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.48e+00 sec 2.8% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 2.98e+00 sec 1.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 2.98e+00 sec 1.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.36e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.36e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.22e+00 sec 0.5% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|-> 1.04e+00 sec 0.4% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 6.90e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.90e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 3.43e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.43e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.03e+00 sec 0.4% 100.0% 0.0% ------ 7297 fill [for]
+|   |-> 6.94e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.94e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.timeStep [region]
+|-> 7.33e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.33e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 3.63e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.97e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 2.97e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 2.97e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.90e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1290728.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.5% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10434744 kB
+
+END KOKKOS PROFILING REPORT.
+
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.452038259 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 2.5% 0.0% 0.1% 1.26e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.77e+02 sec 65.8% 1.1% 0.0% 9.0% 1.38e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.3% 0.0% 99.7% 2.59e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 7.15e-01 sec 0.3% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |-> 7.79e+01 sec 29.0% 5.1% 0.0% 94.9% 8.74e+01 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 7.25e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 6.87e-01 sec 0.3% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 6.63e-01 sec 0.2% 100.0% 0.0% ------ 2599 fill [for]
+|   |   |-> 2.94e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 3.64e+00 sec 1.4% 15.0% 0.0% 85.0% 4.12e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.47e-01 sec 0.1% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 0.5% 0.0% 99.5% 4.71e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.59e+02 sec 59.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.39e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.39e+01 sec 27.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.58e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.58e+01 sec 5.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.48e+00 sec 2.8% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 3.09e+00 sec 1.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 3.09e+00 sec 1.2% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.19e+00 sec 0.4% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 7.15e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 7.15e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|-> 1.05e+00 sec 0.4% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 6.87e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.87e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 3.47e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 3.47e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 9.95e-01 sec 0.4% 100.0% 0.0% ------ 7297 fill [for]
+|   |-> 6.63e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 6.63e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 2599 neoSimpleFoam.timeStep [region]
+|-> 7.25e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.25e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.25e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 3.66e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.94e-01 sec 0.1% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 2.94e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 2.94e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.78e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1287766.1 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.4% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10369924 kB
+
+END KOKKOS PROFILING REPORT.
+
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.489853422 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 5.7% 0.0% 0.1% 1.29e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.77e+02 sec 65.8% 3.6% 0.0% 6.9% 1.43e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.9% 0.0% 99.1% 2.62e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |   |-> 3.96e-01 sec 0.1% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |   |   |-> 2.69e-01 sec 0.1% 100.0% 0.0% ------ 943 fill [for]
+|   |   |-> 1.28e+00 sec 0.5% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |   |-> 8.73e-01 sec 0.3% 100.0% 0.0% ------ 3660 fill [for]
+|   |   |-> 8.20e-01 sec 0.3% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |   |-> 3.96e-01 sec 0.1% 100.0% 0.0% ------ 2250 computeGradBoundaryRefGrad [for]
+|   |   |-> 3.34e-01 sec 0.1% 100.0% 0.0% ------ 1560 parallelFor [for]
+|   |-> 7.79e+01 sec 29.0% 9.3% 0.0% 90.7% 8.74e+01 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.68e+00 sec 0.6% 100.0% 0.0% ------ 2629 fill [for]
+|   |   |-> 1.05e+00 sec 0.4% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 5.35e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |   |-> 4.64e-01 sec 0.2% 100.0% 0.0% ------ 30 computeLaplacianImplicitCorrection [for]
+|   |   |-> 4.37e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |-> 3.66e+00 sec 1.4% 31.9% 0.0% 68.1% 4.27e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.43e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 1.6% 0.0% 98.4% 4.98e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.06e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.06e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.21e+01 sec 4.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.21e+01 sec 4.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.40e+00 sec 2.8% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 3.06e+00 sec 1.1% 100.0% 0.0% ------ 7633 fill [for]
+|   |-> 1.68e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.68e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.timeStep [region]
+|   |-> 8.73e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 8.73e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.timeStep [region]
+|   |-> 2.69e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 2.69e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector [region]
+|   |       |-> 2.69e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.timeStep [region]
+|-> 2.49e+00 sec 0.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 2.49e+00 sec 0.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.11e+00 sec 0.8% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 1.28e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.28e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|   |-> 4.37e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.37e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|   |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|       |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|           |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.72e+00 sec 0.6% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 1.05e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.05e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 6.43e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.43e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.38e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 8.20e-01 sec 0.3% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |-> 8.20e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.pressureCorrector [region]
+|       |-> 8.20e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.timeStep [region]
+|-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 5.35e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 5.35e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 5.35e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 5.33e-01 sec 0.2% 100.0% 0.0% ------ 2118 parallelFor [for]
+|   |-> 3.34e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1560 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.34e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1560 neoSimpleFoam.timeStep [region]
+|-> 5.03e-01 sec 0.2% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+|   |-> 4.64e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.64e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 4.95e-01 sec 0.2% 100.0% 0.0% ------ 3000 computeGradBoundaryRefGrad [for]
+|   |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2250 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.96e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2250 neoSimpleFoam.timeStep [region]
+|-> 3.61e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 3.14e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLocalLaplacianCoefficients [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1287078.3 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.4% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  5.0% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10364856 kB
+
+END KOKKOS PROFILING REPORT.
+Finalizing NeoN
+
+BEGIN KOKKOS PROFILING REPORT:
+TOTAL TIME: 268.536912866 seconds
+TOP-DOWN TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <remainder> <kernels per second> <number of calls> <name> [type]
+===================
+|-> 2.60e+02 sec 96.8% 6.3% 0.0% 0.1% 1.48e+02 30 neoSimpleFoam.timeStep [region]
+|   |-> 1.76e+02 sec 65.7% 4.3% 0.0% 6.2% 1.61e+02 30 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.59e+02 sec 59.4% 0.9% 0.0% 99.1% 2.96e+01 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |   |-> 4.13e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |   |   |-> 2.71e-01 sec 0.1% 100.0% 0.0% ------ 943 fill [for]
+|   |   |-> 1.32e+00 sec 0.5% 100.0% 0.0% ------ 90 computeGradInternal [for]
+|   |   |-> 1.31e+00 sec 0.5% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |   |-> 8.82e-01 sec 0.3% 100.0% 0.0% ------ 3660 fill [for]
+|   |   |-> 6.76e-01 sec 0.3% 100.0% 0.0% ------ 3960 computeGradBoundaryRefGrad [for]
+|   |   |-> 3.08e-01 sec 0.1% 100.0% 0.0% ------ 1590 setGradientValue [for]
+|   |   |-> 3.05e-01 sec 0.1% 100.0% 0.0% ------ 2100 parallelFor [for]
+|   |-> 7.80e+01 sec 29.1% 9.4% 0.0% 90.6% 1.01e+02 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.72e+00 sec 0.6% 100.0% 0.0% ------ 2629 fill [for]
+|   |   |-> 1.06e+00 sec 0.4% 100.0% 0.0% ------ 60 computeGradTensorInternal [for]
+|   |   |-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |   |-> 5.48e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |   |-> 4.28e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradInternal [for]
+|   |   |-> 4.27e-01 sec 0.2% 100.0% 0.0% ------ 30 computeLaplacianImplicitCorrection [for]
+|   |-> 3.60e+00 sec 1.3% 39.1% 0.0% 60.9% 5.83e+02 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.49e-01 sec 0.2% 100.0% 0.0% ------ 30 computeGradTensorInternal [for]
+|   |   |-> 2.88e-01 sec 0.1% 100.0% 0.0% ------ 1320 computeGradTensorBoundaryReconstruct [for]
+|   |-> 1.40e+00 sec 0.5% 0.0% 0.0% 100.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|-> 7.52e+00 sec 2.8% 1.9% 0.0% 98.1% 5.69e+01 1 neoSimpleFoam.setup [region]
+
+BOTTOM-UP TIME TREE:
+<average time> <percent of total time> <percent time in Kokkos> <percent MPI imbalance> <number of calls> <name> [type]
+===================
+|-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.58e+02 sec 58.9% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.07e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |-> 7.07e+01 sec 26.3% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.09e+01 sec 4.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|   |-> 1.09e+01 sec 4.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 7.37e+00 sec 2.7% 0.0% 0.0% 0.0% 0.00e+00 1 neoSimpleFoam.setup [region]
+|-> 3.12e+00 sec 1.2% 100.0% 0.0% ------ 7633 fill [for]
+|   |-> 1.72e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.72e+00 sec 0.6% 100.0% 0.0% 0.0% 0.00e+00 2629 neoSimpleFoam.timeStep [region]
+|   |-> 8.82e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 8.82e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3660 neoSimpleFoam.timeStep [region]
+|   |-> 2.71e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector.pEqn [region]
+|   |   |-> 2.71e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.pressureCorrector [region]
+|   |       |-> 2.71e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 943 neoSimpleFoam.timeStep [region]
+|-> 2.19e+00 sec 0.8% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |-> 2.19e+00 sec 0.8% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 2.16e+00 sec 0.8% 100.0% 0.0% ------ 150 computeGradInternal [for]
+|   |-> 1.32e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 1.32e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 90 neoSimpleFoam.timeStep [region]
+|   |-> 4.28e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.28e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|   |-> 4.13e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector.pEqn [region]
+|       |-> 4.13e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.pressureCorrector [region]
+|           |-> 4.13e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.74e+00 sec 0.6% 100.0% 0.0% ------ 91 computeGradTensorInternal [for]
+|   |-> 1.06e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 1.06e+00 sec 0.4% 100.0% 0.0% 0.0% 0.00e+00 60 neoSimpleFoam.timeStep [region]
+|   |-> 6.49e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 6.49e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.40e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.write [region]
+|   |-> 1.40e+00 sec 0.5% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 1.31e+00 sec 0.5% 100.0% 0.0% ------ 8250 extrapolateValue [for]
+|   |-> 1.31e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.pressureCorrector [region]
+|       |-> 1.31e+00 sec 0.5% 100.0% 0.0% 0.0% 0.00e+00 8250 neoSimpleFoam.timeStep [region]
+|-> 7.90e-01 sec 0.3% 100.0% 0.0% ------ 5280 computeGradBoundaryRefGrad [for]
+|   |-> 6.76e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3960 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 6.76e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 3960 neoSimpleFoam.timeStep [region]
+|-> 7.26e-01 sec 0.3% 100.0% 0.0% ------ 31 parallelScan [scan]
+|   |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.momentumPredictor [region]
+|       |-> 7.26e-01 sec 0.3% 100.0% 0.0% 0.0% 0.00e+00 31 neoSimpleFoam.timeStep [region]
+|-> 5.48e-01 sec 0.2% 100.0% 0.0% ------ 30 addDivCorrectionToRhs [for]
+|   |-> 5.48e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|       |-> 5.48e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 4.94e-01 sec 0.2% 100.0% 0.0% ------ 2658 parallelFor [for]
+|   |-> 3.05e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2100 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.05e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 2100 neoSimpleFoam.timeStep [region]
+|-> 4.60e-01 sec 0.2% 100.0% 0.0% ------ 60 computeLaplacianImplicitCorrection [for]
+|   |-> 4.27e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.momentumPredictor [region]
+|   |   |-> 4.27e-01 sec 0.2% 100.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 4.55e-01 sec 0.2% 100.0% 0.0% ------ 4004 computeGradTensorBoundaryReconstruct [for]
+|   |-> 2.88e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1320 neoSimpleFoam.turbulenceCorrect [region]
+|   |   |-> 2.88e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1320 neoSimpleFoam.timeStep [region]
+|-> 4.06e-01 sec 0.2% 100.0% 0.0% ------ 3256 setGradientValue [for]
+|   |-> 3.08e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1590 neoSimpleFoam.pressureCorrector [region]
+|   |   |-> 3.08e-01 sec 0.1% 100.0% 0.0% 0.0% 0.00e+00 1590 neoSimpleFoam.timeStep [region]
+|-> 3.62e-01 sec 0.1% 0.0% 0.0% 0.0% 0.00e+00 30 neoSimpleFoam.timeStep [region]
+|-> 3.23e-01 sec 0.1% 100.0% 0.0% ------ 60 computeLocalLaplacianCoefficients [for]
+
+KOKKOS HOST SPACE:
+===================
+MAX MEMORY ALLOCATED: 1290464.5 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  29.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  15.5% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  14.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+  4.9% neoSimpleFoam.timeStep/neoSimpleFoam.momentumPredictor/Vector
+
+KOKKOS CUDA SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS HIP SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS SYCL SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+KOKKOS OpenMPTarget SPACE:
+===================
+MAX MEMORY ALLOCATED: 0.0 kB
+ALLOCATIONS AT TIME OF HIGH WATER MARK:
+
+Host process high water mark memory consumption: 10433616 kB
+
+END KOKKOS PROFILING REPORT.
+Finalising parallel run

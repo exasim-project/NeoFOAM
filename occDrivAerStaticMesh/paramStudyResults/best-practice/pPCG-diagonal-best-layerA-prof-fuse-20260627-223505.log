@@ -1,0 +1,628 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jun 27 2026
+Time   : 22:35:05
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 15801
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 30 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Schwarz(Jacobi))':
+{
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    relTol: 0.010000
+    reportName: config(Cg+Schwarz(Jacobi))
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49243125, Boundary: 1362247
+Selecting patchDistMethod meshWave
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Starting time loop
+Time = 1
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0034074200391685933, Final residual = 0.0002632278246119297, No Iterations 3, Solve time = 141.698 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.1645218552661728, Final residual = 0.00819319563321304, No Iterations 3, Solve time = 141.698 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.10551605654018228, Final residual = 0.005000446687446598, No Iterations 3, Solve time = 141.698 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 1, Final residual = 0.009939946883665632, No Iterations 772, Solve time = 6477.189 ms
+time step continuity errors : sum local = 8.400908029267861e-05, global = -3.3525514137624395e-06, cumulative = -3.3525514137624395e-06
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.9999999999999999, Final residual = 0.030731129248555037, No Iterations 1, Solve time = 35.095 ms
+bounding omega, min: -52.730818141742645 max: 46107406.7494913 average: 2440.8188567028174
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.9999999999999726, Final residual = 0.0438606879150572, No Iterations 1, Solve time = 33.951 ms
+ExecutionTime = 42.99 s  ClockTime = 44 s
+
+Time = 2
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0024567320491944962, Final residual = 0.00019168304305684414, No Iterations 3, Solve time = 124.156 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.06924155160067395, Final residual = 0.007274646825724171, No Iterations 3, Solve time = 124.156 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.044323997064650324, Final residual = 0.0039039362249783825, No Iterations 3, Solve time = 124.156 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.0607013108909589, Final residual = 0.0005825388296278323, No Iterations 462, Solve time = 3850.703 ms
+time step continuity errors : sum local = 6.218088083807665e-05, global = 1.3274875518102008e-06, cumulative = -2.0250638619522387e-06
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.008204512254400624, Final residual = 0.00047900834652733103, No Iterations 1, Solve time = 32.11 ms
+bounding omega, min: -5191.419123252679 max: 45304886.456158765 average: 2717.984366487627
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.07548196612013078, Final residual = 0.004480555455097393, No Iterations 1, Solve time = 32.42 ms
+ExecutionTime = 48.52 s  ClockTime = 49 s
+
+Time = 3
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0013078041337752195, Final residual = 6.5844920785348e-05, No Iterations 4, Solve time = 154.92 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.03690880832825815, Final residual = 0.0025721469099528327, No Iterations 4, Solve time = 154.92 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.02145565324494845, Final residual = 0.001548638253713872, No Iterations 4, Solve time = 154.92 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.030356958016870505, Final residual = 0.001093608060299027, No Iterations 1000, Solve time = 8294.222 ms
+time step continuity errors : sum local = 0.0002091176299281203, global = -5.378814240284167e-06, cumulative = -7.403878102236406e-06
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.003507144429969638, Final residual = 0.00029071106590855284, No Iterations 1, Solve time = 32.864 ms
+bounding omega, min: -12.043541146532906 max: 45377737.52893006 average: 3345.738047586282
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.01433949530638771, Final residual = 0.0010271861048950462, No Iterations 1, Solve time = 32.267 ms
+ExecutionTime = 58.51 s  ClockTime = 59 s
+
+Time = 4
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0008767210660570538, Final residual = 2.6474516893215585e-05, No Iterations 5, Solve time = 182.072 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.023422863596547848, Final residual = 0.0007768258286117982, No Iterations 5, Solve time = 182.072 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.01237944439521774, Final residual = 0.00036246915291306196, No Iterations 5, Solve time = 182.072 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.0201123906117578, Final residual = 0.001132362823178215, No Iterations 1000, Solve time = 8359.035 ms
+time step continuity errors : sum local = 0.00029617166195506283, global = -1.0118485077620094e-05, cumulative = -1.75223631798565e-05
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0017156505966019699, Final residual = 5.139458657492014e-05, No Iterations 2, Solve time = 46.687 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.004803157483564208, Final residual = 0.0004053156400713583, No Iterations 1, Solve time = 32.362 ms
+ExecutionTime = 68.61 s  ClockTime = 70 s
+
+Time = 5
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.000723501892883209, Final residual = 5.349676847562998e-05, No Iterations 4, Solve time = 154.222 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.02027032682123691, Final residual = 0.002687504085196357, No Iterations 4, Solve time = 154.222 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.008977492191842833, Final residual = 0.0006304072514611421, No Iterations 4, Solve time = 154.222 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.01581386589260551, Final residual = 0.0016819781846000947, No Iterations 1000, Solve time = 8340.204 ms
+time step continuity errors : sum local = 0.0005096279165304624, global = 4.779846619059548e-06, cumulative = -1.2742516560796952e-05
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.000987768696077392, Final residual = 8.947804041234133e-05, No Iterations 2, Solve time = 47.287 ms
+bounding omega, min: -12198.45391084695 max: 45356907.825935885 average: 4579.08873401872
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0024507752959000246, Final residual = 0.00023184746093136174, No Iterations 1, Solve time = 32.989 ms
+ExecutionTime = 78.66 s  ClockTime = 80 s
+
+Time = 6
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0006696455490243148, Final residual = 9.120644499835856e-06, No Iterations 6, Solve time = 213.464 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.01910508418933565, Final residual = 0.0005001067007939721, No Iterations 6, Solve time = 213.464 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.007648751490966488, Final residual = 0.00012917115957950865, No Iterations 6, Solve time = 213.464 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.014147605952706007, Final residual = 0.017527193484545976, No Iterations 1000, Solve time = 8314.939 ms
+time step continuity errors : sum local = 0.005723168798162536, global = 2.532675757994664e-05, cumulative = 1.2584241019149686e-05
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0006273070564261865, Final residual = 3.8521707560286084e-05, No Iterations 2, Solve time = 46.968 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.001693808024239358, Final residual = 0.0001689721756830567, No Iterations 1, Solve time = 32.319 ms
+bounding k, min: -0.04996275905976866 max: 347.2556494048646 average: 0.3172429230121106
+ExecutionTime = 88.73999999999999 s  ClockTime = 90 s
+
+
+    From virtual bool Foam::regIOobject::readIfModified()
+    in file db/regIOobject/regIOobjectRead.C at line 266
+        Re-reading object fvSchemes from file "/storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/system/fvSchemes"
+Time = 7
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.001399533937523437, Final residual = 0.0001209926148560148, No Iterations 3, Solve time = 124.821 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.05294364603398524, Final residual = 0.0018827377646180006, No Iterations 3, Solve time = 124.821 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.011826989513675484, Final residual = 0.0007989517785676901, No Iterations 3, Solve time = 124.821 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.01935995550633948, Final residual = 0.01463433545615389, No Iterations 1000, Solve time = 8298.474 ms
+time step continuity errors : sum local = 0.004825745183262251, global = 1.1063759792871884e-05, cumulative = 2.364800081202157e-05
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.0006080783776443704, Final residual = 3.1271066812612115e-06, No Iterations 6, Solve time = 104.991 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0012168193759375908, Final residual = 7.766565341277154e-05, No Iterations 2, Solve time = 47.929 ms
+ExecutionTime = 98.78 s  ClockTime = 100 s
+
+Time = 8
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.01446832288284648, Final residual = 0.000217175827099237, No Iterations 3, Solve time = 124.662 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.299023695400557, Final residual = 0.0024984712824937896, No Iterations 3, Solve time = 124.662 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.14309050469636106, Final residual = 0.0013054236117866847, No Iterations 3, Solve time = 124.662 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.018946234264090398, Final residual = 0.0553303171585859, No Iterations 1000, Solve time = 8365.5 ms
+time step continuity errors : sum local = 0.01838755875278884, global = 2.3702258008217273e-05, cumulative = 4.735025882023884e-05
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.036623359741161085, Final residual = 0.0018024440841471693, No Iterations 4, Solve time = 75.604 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.001327604546449244, Final residual = 6.040666221820196e-05, No Iterations 4, Solve time = 76.057 ms
+ExecutionTime = 108.9 s  ClockTime = 110 s
+
+Time = 9
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5533432469587968, Final residual = 0.03749338540342408, No Iterations 2, Solve time = 95.344 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5142110054556311, Final residual = 0.07094735446192835, No Iterations 2, Solve time = 95.344 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.48328595022486365, Final residual = 0.03543516589078836, No Iterations 2, Solve time = 95.344 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.05392576382614918, Final residual = 0.4289330949628003, No Iterations 1000, Solve time = 8315.441 ms
+time step continuity errors : sum local = 0.14178834774519417, global = 2.798023515837659e-05, cumulative = 7.533049397861543e-05
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.19184264529370704, Final residual = 0.0070822229761653725, No Iterations 7, Solve time = 118.457 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.008546454528521272, Final residual = 0.0005954948440539548, No Iterations 7, Solve time = 119.081 ms
+bounding k, min: -5.297435091867236e-05 max: 95598.56248394819 average: 0.5396042940896737
+ExecutionTime = 119.07 s  ClockTime = 120 s
+
+Time = 10
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.6057062515978058, Final residual = 0.01641540977401178, No Iterations 2, Solve time = 94.687 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5813134674517149, Final residual = 0.024387860686164654, No Iterations 2, Solve time = 94.687 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.4855720157850338, Final residual = 0.018540465886649288, No Iterations 2, Solve time = 94.687 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.0814773703604453, Final residual = 1.9341429432261787, No Iterations 1000, Solve time = 8305.278 ms
+time step continuity errors : sum local = 3.7808279350947647, global = 3.520221283324599e-05, cumulative = 0.00011053270681186142
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.41973896299793567, Final residual = 0.014870314760468661, No Iterations 12, Solve time = 189.983 ms
+bounding omega, min: -1112.3876847605875 max: 675970069147.9698 average: 307963.83396343864
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.35036620935194923, Final residual = 0.009989511653554842, No Iterations 11, Solve time = 175.974 ms
+bounding k, min: -25.10336354791552 max: 2273113.8003495615 average: 1.3252986179390234
+ExecutionTime = 129.34 s  ClockTime = 131 s
+
+Time = 11
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.6088422285834776, Final residual = 0.0022369917906864974, No Iterations 2, Solve time = 94.464 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5367622018010586, Final residual = 0.003872039776634335, No Iterations 2, Solve time = 94.464 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.4645581826073592, Final residual = 0.007236853085412894, No Iterations 2, Solve time = 94.464 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.007875962461594417, Final residual = 123.12208238134966, No Iterations 1000, Solve time = 8320.691 ms
+time step continuity errors : sum local = 46301.44378445504, global = 7.522934785095759e-06, cumulative = 0.00011805564159695717
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.47411404271514335, Final residual = 0.025343640139135534, No Iterations 12, Solve time = 189.521 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.6531333372379606, Final residual = 0.04784170353163105, No Iterations 17, Solve time = 262.114 ms
+bounding k, min: -309.0434625129543 max: 21310947753.26792 average: 4174.668070574426
+ExecutionTime = 139.68 s  ClockTime = 141 s
+
+Time = 12
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5852649019217384, Final residual = 0.02763269515498732, No Iterations 2, Solve time = 94.896 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.6151967615706969, Final residual = 0.03778391146140712, No Iterations 2, Solve time = 94.896 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.3850156275892378, Final residual = 0.006145068839941982, No Iterations 2, Solve time = 94.896 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.0036874579187652448, Final residual = 15.321941303985541, No Iterations 1000, Solve time = 8340.146 ms
+time step continuity errors : sum local = 357241716.1769754, global = 7.751938302446773e-05, cumulative = 0.0001955750246214249
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.3479993403422019, Final residual = 0.02220643644080908, No Iterations 11, Solve time = 176.111 ms
+bounding omega, min: -3.081589615909241e+17 max: 2.1831249843075387e+18 average: 1147759160752.363
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.4445238939323543, Final residual = 0.01624571545125002, No Iterations 16, Solve time = 249.011 ms
+bounding k, min: -299485270.1975446 max: 1576401431700160 average: 272205154.4590331
+ExecutionTime = 150.03 s  ClockTime = 151 s
+
+Time = 13
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5291537296648673, Final residual = 0.005243364827919875, No Iterations 2, Solve time = 94.754 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.6435567277789156, Final residual = 0.008016753720141632, No Iterations 2, Solve time = 94.754 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.19931952895480146, Final residual = 0.0008951974507859596, No Iterations 2, Solve time = 94.754 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 5.005576366043682e-06, Final residual = 0.009246783865140593, No Iterations 1000, Solve time = 8328.609 ms
+time step continuity errors : sum local = 945569327561.371, global = 0.012813282586217533, cumulative = 0.013008857610838958
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.46311946932751435, Final residual = 0.004490756363834782, No Iterations 16, Solve time = 248.981 ms
+bounding omega, min: -6.84326751268371e+20 max: 4.896493462142181e+21 average: 1095890400566623.6
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.3239623636306307, Final residual = 0.01981120722963538, No Iterations 20, Solve time = 304.966 ms
+bounding k, min: -2.3428418680644844e+18 max: 2.6936853291399836e+16 average: -214825517262.92044
+ExecutionTime = 160.5 s  ClockTime = 162 s
+
+Time = 14
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.18999943120810012, Final residual = 0.0010099617272388342, No Iterations 2, Solve time = 95.201 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.45659734025348275, Final residual = 0.004225400096640698, No Iterations 2, Solve time = 95.201 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.6268192298206624, Final residual = 0.0105748101336218, No Iterations 2, Solve time = 95.201 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 1.420689468831067e-09, Final residual = 1.420689468831067e-09, No Iterations 0, Solve time = 17.755 ms
+time step continuity errors : sum local = 2960888925852.945, global = 1.894055075568002e-05, cumulative = 0.013027798161594637
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 8.441900497503185e-08, Final residual = 1.4901422363371318e-09, No Iterations 1, Solve time = 32.328 ms
+bounding omega, min: -3161594152122279 max: 2.436769597950951e+24 average: 1.3034016092259842e+17
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.8371270277006904, Final residual = 0.07423042277225196, No Iterations 3, Solve time = 61.427 ms
+bounding k, min: -41933.61918825493 max: 3.2833283975911056e+16 average: 16454366656.555513
+ExecutionTime = 162.24 s  ClockTime = 164 s
+
+Time = 15
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5442335222841231, Final residual = 0.025449996255004, No Iterations 2, Solve time = 94.297 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5154799434026649, Final residual = 0.007259752087111182, No Iterations 2, Solve time = 94.297 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.577222986552162, Final residual = 0.012147090865741735, No Iterations 2, Solve time = 94.297 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 6.492953911132514e-07, Final residual = 0.04993638577837119, No Iterations 1000, Solve time = 8372.184 ms
+time step continuity errors : sum local = 1.0405974498050587e+20, global = 14716.709749348258, cumulative = 14716.722777146419
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.007912985824598083, Final residual = 0.0007220321477979956, No Iterations 8, Solve time = 133.72 ms
+bounding omega, min: -1.342757077556314e+22 max: 1.0471657536553144e+24 average: 3.6597309448939494e+17
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00028671658217809936, Final residual = 9.361436281574038e-06, No Iterations 26, Solve time = 390.683 ms
+bounding k, min: -1.0625684149605145e+21 max: 1.2014781234194541e+21 average: 301268174754731.25
+ExecutionTime = 172.7 s  ClockTime = 174 s
+
+Time = 16
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.3552531826430448, Final residual = 0.008243114438372105, No Iterations 2, Solve time = 94.255 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.3832157305395895, Final residual = 0.002945436164949683, No Iterations 2, Solve time = 94.255 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.5991483206073984, Final residual = 0.004990784861794244, No Iterations 2, Solve time = 94.255 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 1.3939447056583073e-10, Final residual = 1.3939447056583073e-10, No Iterations 0, Solve time = 17.779 ms
+time step continuity errors : sum local = 3.441064515086437e+20, global = -11817.06113476682, cumulative = 2899.6616423795986
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3297593627688065e-22, Final residual = 1.3297593627688065e-22, No Iterations 0, Solve time = 18.118 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.03876532287036677, Final residual = 0.003062645630685274, No Iterations 23, Solve time = 348.741 ms
+bounding k, min: -1.6003455061886036e+24 max: 1.0781396814517815e+27 average: 2.2960007552710558e+20
+ExecutionTime = 174.7 s  ClockTime = 176 s
+
+Time = 17
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5586710513581523, Final residual = 0.005882924325100991, No Iterations 3, Solve time = 124.062 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5343635428755654, Final residual = 0.0029855924549774724, No Iterations 3, Solve time = 124.062 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.4825792432646909, Final residual = 0.0005583376076420617, No Iterations 3, Solve time = 124.062 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 3.765856603456879e-10, Final residual = 3.765856603456879e-10, No Iterations 0, Solve time = 17.712 ms
+time step continuity errors : sum local = 9.295473746487086e+20, global = 40674.523031936886, cumulative = 43574.184674316486
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 8.233722443109807e-21, Final residual = 8.233722443109807e-21, No Iterations 0, Solve time = 17.994 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.001137945267811405, Final residual = 4.6729720098811315e-05, No Iterations 21, Solve time = 318.927 ms
+bounding k, min: -1.4510199738195244e+33 max: 8.308910436741337e+30 average: -8.115076096784959e+25
+ExecutionTime = 176.67 s  ClockTime = 178 s
+
+Time = 18
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.48715132350521223, Final residual = 0.03494784713621722, No Iterations 2, Solve time = 94.544 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5093568260920681, Final residual = 0.036164390838037505, No Iterations 2, Solve time = 94.544 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.7104940392549043, Final residual = 0.043834941810538534, No Iterations 2, Solve time = 94.544 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.0009567385019434465, Final residual = 1.0605459817893752, No Iterations 1000, Solve time = 8309.214 ms
+time step continuity errors : sum local = 2.620142439213158e+30, global = -1876614461160395.2, cumulative = -1876614461116821
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 3.8770025738228847e-16, Final residual = 3.8770025738228847e-16, No Iterations 0, Solve time = 17.805 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 5.875225440366416e-06, Final residual = 5.442795144577935e-07, No Iterations 41, Solve time = 612.846 ms
+bounding k, min: -2.2182651183192837e+39 max: 2.5768991532306573e+38 average: -2.2078716462727278e+32
+ExecutionTime = 187.21 s  ClockTime = 189 s
+
+Time = 19
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.6877796484752677, Final residual = 1.228421656696853e-05, No Iterations 2, Solve time = 94.513 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.6076507649116951, Final residual = 1.2235912802705426e-05, No Iterations 2, Solve time = 94.513 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.3365797448749447, Final residual = 0.0005165873674278345, No Iterations 2, Solve time = 94.513 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 7.953822335832104e-19, Final residual = 7.953822335832104e-19, No Iterations 0, Solve time = 18.083 ms
+time step continuity errors : sum local = 6.887064258470073e+31, global = 2795131939241083, cumulative = 918517478124262
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.5916485885902053e-27, Final residual = 1.5916485885902053e-27, No Iterations 0, Solve time = 17.758 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 8.677800722262762e-05, Final residual = 7.789733963197105e-06, No Iterations 22, Solve time = 334.02 ms
+bounding k, min: -1.765357621700384e+41 max: 9.392889962821443e+42 average: 8.78162266581491e+35
+ExecutionTime = 189.12 s  ClockTime = 191 s
+
+Time = 20
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.6050160646446218, Final residual = 0.028071801260076423, No Iterations 2, Solve time = 94.818 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.604309500264647, Final residual = 0.028105579610556583, No Iterations 2, Solve time = 94.818 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.5991879798728189, Final residual = 0.02833305909339269, No Iterations 2, Solve time = 94.818 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 9.250557968091636e-17, Final residual = 9.250557968091636e-17, No Iterations 0, Solve time = 17.663 ms
+time step continuity errors : sum local = 8.008677264658542e+33, global = -1.0733306646685759e+18, cumulative = -1.0724121471904516e+18
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 6.929734437337355e-14, Final residual = 6.929734437337355e-14, No Iterations 0, Solve time = 18.092 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 1.3550447297024759e-07, Final residual = 1.1119430587146813e-08, No Iterations 53, Solve time = 779.7 ms
+bounding k, min: -1.5563257595623703e+46 max: 1.6777447608876624e+51 average: 4.834451032114686e+44
+ExecutionTime = 191.53 s  ClockTime = 193 s
+
+Time = 21
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.6325192890290612, Final residual = 0.006066646044141819, No Iterations 2, Solve time = 94.812 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.6324552403622555, Final residual = 0.0060842074219913484, No Iterations 2, Solve time = 94.812 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.6319689255433135, Final residual = 0.006211466900920564, No Iterations 2, Solve time = 94.812 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 1.9613543299643303e-13, Final residual = 1.9613543299643303e-13, No Iterations 0, Solve time = 18.228 ms
+time step continuity errors : sum local = 1.698049867054255e+37, global = -3.235197511755199e+21, cumulative = -3.2362699239023895e+21
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 2.076323686118208e-10, Final residual = 2.076323686118208e-10, No Iterations 0, Solve time = 18.097 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.48991499396457416, Final residual = 0.02024306510025928, No Iterations 9, Solve time = 147.834 ms
+bounding k, min: -9.165020933661524e+49 max: 2.699741269868771e+53 average: 1.5854890783717948e+46
+ExecutionTime = 193.3 s  ClockTime = 195 s
+
+Time = 22
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.4668946273383621, Final residual = 0.035959291400487245, No Iterations 1, Solve time = 65.526 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.46689462332275145, Final residual = 0.035959292544065116, No Iterations 1, Solve time = 65.526 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.46689471028059165, Final residual = 0.03595926468686678, No Iterations 1, Solve time = 65.526 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 7.011572294588942e-13, Final residual = 7.011572294588942e-13, No Iterations 0, Solve time = 18.033 ms
+time step continuity errors : sum local = 6.070573687582452e+37, global = 1.0990906006206217e+21, cumulative = -2.137179323281768e+21
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 2.332424244606381e-22, Final residual = 2.332424244606381e-22, No Iterations 0, Solve time = 18.18 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.48797079337213684, Final residual = 0.04218218054847053, No Iterations 4, Solve time = 75.02 ms
+bounding k, min: -2.3178982667445085e+50 max: 1.1435888343497759e+53 average: 2.2097803390490655e+46
+ExecutionTime = 194.94 s  ClockTime = 196 s
+
+Time = 23
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.6226049108717463, Final residual = 0.007088244025169833, No Iterations 2, Solve time = 95.606 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.6226049112280849, Final residual = 0.0070882440677572265, No Iterations 2, Solve time = 95.606 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.6226046829050396, Final residual = 0.00708824375797185, No Iterations 2, Solve time = 95.606 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 8.186579543252174e-08, Final residual = 8.186579543252174e-08, No Iterations 0, Solve time = 18.129 ms
+time step continuity errors : sum local = 7.088026845772297e+42, global = 3.8416000854545634e+26, cumulative = 3.841578713661331e+26
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 0.9999998719546632, Final residual = 0.03170421051768107, No Iterations 66, Solve time = 961.553 ms
+bounding omega, min: -3.7283625361320637e+42 max: 6.904239437665933e+51 average: 7.049911327267482e+44
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.6421063608954696, Final residual = 0.02398007878446745, No Iterations 3, Solve time = 61.315 ms
+bounding k, min: -7.865632030557713e+51 max: 5.835976540575531e+56 average: 4.0890804161832334e+49
+ExecutionTime = 197.59 s  ClockTime = 199 s
+
+Time = 24
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5691891654273069, Final residual = 0.017039281447364708, No Iterations 2, Solve time = 94.749 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.569188631866766, Final residual = 0.017039903210146118, No Iterations 2, Solve time = 94.749 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.5692175741323511, Final residual = 0.01701217775598352, No Iterations 2, Solve time = 94.749 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 0.9883241171342166, Final residual = 35431913863.27215, No Iterations 1000, Solve time = 8319.091 ms
+time step continuity errors : sum local = 2.6268172687789805e+62, global = -3.118060598836527e+47, cumulative = -3.118060598836527e+47
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.0375009742597226e-30, Final residual = 1.0375009742597226e-30, No Iterations 0, Solve time = 17.946 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 1.9252902337608516e-11, Final residual = 1.9252902337608516e-11, No Iterations 0, Solve time = 18.044 ms
+ExecutionTime = 207.5 s  ClockTime = 209 s
+
+Time = 25
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.16553003599848748, Final residual = 1.8566075424120032e-05, No Iterations 2, Solve time = 94.872 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.7065038917131188, Final residual = 0.00029336683962485606, No Iterations 2, Solve time = 94.872 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.2159228112126769, Final residual = 0.00015477518726183975, No Iterations 2, Solve time = 94.872 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 1.1980853548352823e-40, Final residual = 1.1980853548352823e-40, No Iterations 0, Solve time = 17.665 ms
+time step continuity errors : sum local = 1.5252545375224636e+62, global = 0, cumulative = -3.118060598836527e+47
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 2.1987308250884183e-29, Final residual = 2.1987308250884183e-29, No Iterations 0, Solve time = 18.036 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 6.105001536352102e-12, Final residual = 6.105001536352102e-12, No Iterations 0, Solve time = 18.218 ms
+ExecutionTime = 209.13 s  ClockTime = 211 s
+
+Time = 26
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5534388707552813, Final residual = 0.00523208915849495, No Iterations 2, Solve time = 94.018 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5259648284264975, Final residual = 0.017421320861128988, No Iterations 2, Solve time = 94.018 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.502172234084152, Final residual = 0.0010695987810398525, No Iterations 2, Solve time = 94.018 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 3.1157622387713927e-40, Final residual = 3.1157622387713927e-40, No Iterations 0, Solve time = 17.713 ms
+time step continuity errors : sum local = 3.966317734291318e+62, global = 8.503801633190529e+46, cumulative = -2.2676804355174744e+47
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.690179004361035e-29, Final residual = 1.690179004361035e-29, No Iterations 0, Solve time = 18.219 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 2.2659548905405968e-07, Final residual = 6.975925671325836e-09, No Iterations 71, Solve time = 1036.823 ms
+bounding k, min: -1.1653697208749798e+54 max: 9.818048531620336e+72 average: 3.857186904201871e+66
+ExecutionTime = 211.79 s  ClockTime = 213 s
+
+Time = 27
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.5535433367558474, Final residual = 0.003542422233612989, No Iterations 2, Solve time = 95.488 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.5863521277412201, Final residual = 0.0032029552898547235, No Iterations 2, Solve time = 95.488 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.5756461873706383, Final residual = 0.00330575130982636, No Iterations 2, Solve time = 95.488 ms
+config(Cg+Schwarz(Jacobi)):  Solving for p, Initial residual = 7.618283551689274e-33, Final residual = 7.618283551689274e-33, No Iterations 0, Solve time = 18.174 ms
+time step continuity errors : sum local = 9.69086042089369e+69, global = 1.6644846962472198e+54, cumulative = 1.6644844694791763e+54
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 5.660855909507063e-10, Final residual = 5.660855909507063e-10, No Iterations 0, Solve time = 18 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 1.8143270914626553e-08, Final residual = 9.25504700262832e-11, No Iterations 53, Solve time = 779.76 ms
+bounding k, min: -2.5377502752868913e+68 max: 7.84127197597848e+85 average: 2.245357823968075e+79
+ExecutionTime = 214.24 s  ClockTime = 216 s
+
+Time = 28
+[1] [stack trace]
+[1] =============
+[2] [stack trace]
+[2] =============
+[2] #1  [1] #1  Foam::sigFpe::sigHandler(int)Foam::sigFpe::sigHandler(int)[3] [stack trace]
+[3] =============
+[0] [stack trace]
+[0] =============
+[3] #1  Foam::sigFpe::sigHandler(int)[0] #1  Foam::sigFpe::sigHandler(int) in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[1] #2  ? in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[3] #2  ? in  in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[0] #2  ?[2] #2  ? in /lib64/libc.so.6
+ in /lib64/libc.so.6
+ in /lib64/libc.so.6
+ in /lib64/libc.so.6
+[1] #3  ?[3] #3  ?[2] #3  ?[0] #3  ? at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:379
+[1] #4  gko::stop::Criterion::check(unsigned char, bool, gko::array<gko::stopping_status>*, bool*, gko::stop::Criterion::Updater const&) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:379
+ at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:379
+ at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:379
+[2] #4  gko::stop::Criterion::check(unsigned char, bool, gko::array<gko::stopping_status>*, bool*, gko::stop::Criterion::Updater const&)[0] #4  gko::stop::Criterion::check(unsigned char, bool, gko::array<gko::stopping_status>*, bool*, gko::stop::Criterion::Updater const&)[3] #4  gko::stop::Criterion::check(unsigned char, bool, gko::array<gko::stopping_status>*, bool*, gko::stop::Criterion::Updater const&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1522
+[1] #5  void gko::solver::Bicgstab<double>::apply_dense_impl<gko::experimental::distributed::Vector<double> >(gko::experimental::distributed::Vector<double> const*, gko::experimental::distributed::Vector<double>*) const at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1522
+[3] #5  void gko::solver::Bicgstab<double>::apply_dense_impl<gko::experimental::distributed::Vector<double> >(gko::experimental::distributed::Vector<double> const*, gko::experimental::distributed::Vector<double>*) const at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1522
+ at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1522
+[2] #5  void gko::solver::Bicgstab<double>::apply_dense_impl<gko::experimental::distributed::Vector<double> >(gko::experimental::distributed::Vector<double> const*, gko::experimental::distributed::Vector<double>*) const[0] #5  void gko::solver::Bicgstab<double>::apply_dense_impl<gko::experimental::distributed::Vector<double> >(gko::experimental::distributed::Vector<double> const*, gko::experimental::distributed::Vector<double>*) const at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/bicgstab.cpp:169
+ at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/bicgstab.cpp:169
+[1] #6  [3] #6  void gko::experimental::distributed::precision_dispatch_real_complex<double, gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}>(gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}, gko::LinOp const*, gko::LinOp*)void gko::experimental::distributed::precision_dispatch_real_complex<double, gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}>(gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}, gko::LinOp const*, gko::LinOp*) at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/bicgstab.cpp:169
+[2] #6  void gko::experimental::distributed::precision_dispatch_real_complex<double, gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}>(gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}, gko::LinOp const*, gko::LinOp*) at ~/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/bicgstab.cpp:169
+[0] #6  void gko::experimental::distributed::precision_dispatch_real_complex<double, gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}>(gko::solver::Bicgstab<double>::apply_impl(gko::LinOp const*, gko::LinOp*) const::{lambda(auto:1, auto:2)#1}, gko::LinOp const*, gko::LinOp*) at  at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+[1] #7  [3] #7  gko::LinOp::apply(gko::ptr_param<gko::LinOp const>, gko::ptr_param<gko::LinOp>) constgko::LinOp::apply(gko::ptr_param<gko::LinOp const>, gko::ptr_param<gko::LinOp>) const at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+[2] #7  gko::LinOp::apply(gko::ptr_param<gko::LinOp const>, gko::ptr_param<gko::LinOp>) const at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+[0] #7  gko::LinOp::apply(gko::ptr_param<gko::LinOp const>, gko::ptr_param<gko::LinOp>) const at  at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+[1] #8  ?[3] #8  ? at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+[2] #8  ? at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/unique_ptr.h:403
+[0] #8  ? at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:460
+[3] #9  NeoN::la::ginkgo::solveWithL1StopDist(std::shared_ptr<gko::Executor const>, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::experimental::distributed::Vector<double> const>, std::shared_ptr<gko::experimental::distributed::Vector<double> >, gko::LinOp*, NeoN::la::ginkgo::L1ResidualControl const&) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:460
+[1] #9  NeoN::la::ginkgo::solveWithL1StopDist(std::shared_ptr<gko::Executor const>, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::experimental::distributed::Vector<double> const>, std::shared_ptr<gko::experimental::distributed::Vector<double> >, gko::LinOp*, NeoN::la::ginkgo::L1ResidualControl const&) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:460
+[2] #9  NeoN::la::ginkgo::solveWithL1StopDist(std::shared_ptr<gko::Executor const>, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::experimental::distributed::Vector<double> const>, std::shared_ptr<gko::experimental::distributed::Vector<double> >, gko::LinOp*, NeoN::la::ginkgo::L1ResidualControl const&) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:460
+[0] #9  NeoN::la::ginkgo::solveWithL1StopDist(std::shared_ptr<gko::Executor const>, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::experimental::distributed::Vector<double> const>, std::shared_ptr<gko::experimental::distributed::Vector<double> >, gko::LinOp*, NeoN::la::ginkgo::L1ResidualControl const&) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:493 (discriminator 4)
+[3] #10  NeoN::la::ginkgo::solve_impl_dist(std::shared_ptr<gko::Executor const>, gko::experimental::mpi::communicator const&, NeoN::Vector<NeoN::Vec3> const&, NeoN::Vector<NeoN::Vec3>&, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::LinOp>, NeoN::la::ginkgo::L1ResidualControl const*) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:493 (discriminator 4)
+[1] #10  NeoN::la::ginkgo::solve_impl_dist(std::shared_ptr<gko::Executor const>, gko::experimental::mpi::communicator const&, NeoN::Vector<NeoN::Vec3> const&, NeoN::Vector<NeoN::Vec3>&, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::LinOp>, NeoN::la::ginkgo::L1ResidualControl const*) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:493 (discriminator 4)
+[0] #10  NeoN::la::ginkgo::solve_impl_dist(std::shared_ptr<gko::Executor const>, gko::experimental::mpi::communicator const&, NeoN::Vector<NeoN::Vec3> const&, NeoN::Vector<NeoN::Vec3>&, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::LinOp>, NeoN::la::ginkgo::L1ResidualControl const*) at ~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp:493 (discriminator 4)
+[2] #10  NeoN::la::ginkgo::solve_impl_dist(std::shared_ptr<gko::Executor const>, gko::experimental::mpi::communicator const&, NeoN::Vector<NeoN::Vec3> const&, NeoN::Vector<NeoN::Vec3>&, std::shared_ptr<gko::LinOp const>, std::shared_ptr<gko::LinOp>, NeoN::la::ginkgo::L1ResidualControl const*) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+[3] #11  NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<NeoN::Vec3>&) const at  at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+ at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+[2] #11  [1] #11  NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<NeoN::Vec3>&) constNeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<NeoN::Vec3>&) const[0] #11  NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<NeoN::Vec3>&) const at  at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+[3] #12  [2] #12  NeoFOAM::PDE<NeoN::Vec3, double, int>::solve(NeoN::dsl::SpatialOperator<NeoN::Vec3>&&)NeoFOAM::PDE<NeoN::Vec3, double, int>::solve(NeoN::dsl::SpatialOperator<NeoN::Vec3>&&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+[1] #12  NeoFOAM::PDE<NeoN::Vec3, double, int>::solve(NeoN::dsl::SpatialOperator<NeoN::Vec3>&&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/shared_ptr_base.h:1070
+[0] #12  NeoFOAM::PDE<NeoN::Vec3, double, int>::solve(NeoN::dsl::SpatialOperator<NeoN::Vec3>&&) at ~/code/NeoN/include/NeoN/linearAlgebra/linearSystem.hpp:163
+[1] #13  main at ~/code/NeoN/include/NeoN/linearAlgebra/linearSystem.hpp:163
+ at ~/code/NeoN/include/NeoN/linearAlgebra/linearSystem.hpp:163
+ at ~/code/NeoN/include/NeoN/linearAlgebra/linearSystem.hpp:163
+[2] #13  main[3] #13  main[0] #13  main at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/stl_vector.h:369
+[3] #14  ? at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/stl_vector.h:369
+[1] #14  ? at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/stl_vector.h:369
+[0] #14  ? at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/stl_vector.h:369
+[2] #14  ? in  in /lib64/libc.so.6
+[1] #15  /lib64/libc.so.6
+[3] #15  __libc_start_main__libc_start_main in /lib64/libc.so.6
+[0] #15  __libc_start_main in /lib64/libc.so.6
+[2] #15  __libc_start_main in /lib64/libc.so.6 in /lib64/libc.so.6
+
+[3] #16  _start[1] #16  _start in /lib64/libc.so.6
+[0] #16  _start in /lib64/libc.so.6
+[2] #16  _start in  in  in  in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[1] =============
+~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[3] =============
+~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[2] =============
+~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[0] =============
+[gpu-nvidia-h200-3:15803] *** Process received signal ***
+[gpu-nvidia-h200-3:15802] *** Process received signal ***
+[gpu-nvidia-h200-3:15802] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:15802] Signal code:  (-6)
+[gpu-nvidia-h200-3:15802] Failing at address: 0x40f00003dba
+[gpu-nvidia-h200-3:15804] *** Process received signal ***
+[gpu-nvidia-h200-3:15804] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:15804] Signal code:  (-6)
+[gpu-nvidia-h200-3:15804] Failing at address: 0x40f00003dbc
+[gpu-nvidia-h200-3:15801] *** Process received signal ***
+[gpu-nvidia-h200-3:15801] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:15801] Signal code:  (-6)
+[gpu-nvidia-h200-3:15801] Failing at address: 0x40f00003db9
+[gpu-nvidia-h200-3:15803] Signal: Floating point exception (8)
+[gpu-nvidia-h200-3:15803] Signal code:  (-6)
+[gpu-nvidia-h200-3:15803] Failing at address: 0x40f00003dbb
+[gpu-nvidia-h200-3:15802] [ 0] [gpu-nvidia-h200-3:15801] [ 0] [gpu-nvidia-h200-3:15803] [ 0] [gpu-nvidia-h200-3:15804] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7ff6dfc1fc30]
+[gpu-nvidia-h200-3:15804] [ 1] /lib64/libc.so.6(+0x3fc30)[0x7f39eb747c30]
+[gpu-nvidia-h200-3:15802] [ 1] /lib64/libc.so.6(+0x3fc30)[0x7ffa8419fc30]
+[gpu-nvidia-h200-3:15801] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7ffa841ed02c]
+[gpu-nvidia-h200-3:15801] [ 2] /lib64/libc.so.6(+0x3fc30)[0x7f54f3a3ec30]
+[gpu-nvidia-h200-3:15803] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f54f3a8c02c]
+[gpu-nvidia-h200-3:15803] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f54f3a3eb86]
+[gpu-nvidia-h200-3:15803] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7f54f3a3ec30]
+[gpu-nvidia-h200-3:15803] [ 4] /lib64/libc.so.6(+0x8d02c)[0x7ff6dfc6d02c]
+[gpu-nvidia-h200-3:15804] [ 2] /lib64/libc.so.6(raise+0x16)[0x7ff6dfc1fb86]
+[gpu-nvidia-h200-3:15804] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7ff6dfc1fc30]
+[gpu-nvidia-h200-3:15804] [ 4] /lib64/libc.so.6(+0x8d02c)[0x7f39eb79502c]
+[gpu-nvidia-h200-3:15802] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f39eb747b86]
+[gpu-nvidia-h200-3:15802] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7f39eb747c30]
+[gpu-nvidia-h200-3:15802] [ 4] /lib64/libc.so.6(raise+0x16)[0x7ffa8419fb86]
+[gpu-nvidia-h200-3:15801] [ 3] /lib64/libc.so.6(+0x3fc30)[0x7ffa8419fc30]
+[gpu-nvidia-h200-3:15801] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f617da)[0x7ffae29237da]
+[gpu-nvidia-h200-3:15801] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f617da)[0x7ff73e3a37da]
+[gpu-nvidia-h200-3:15804] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f617da)[0x7f55521c27da]
+[gpu-nvidia-h200-3:15803] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f617da)[0x7f3a49ecb7da]
+[gpu-nvidia-h200-3:15802] [ 5] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko4stop9Criterion5checkEhbPNS_5arrayINS_15stopping_statusEEEPbRKNS1_7UpdaterE+0xb7)[0x7f5552ba7907]
+[gpu-nvidia-h200-3:15803] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko4stop9Criterion5checkEhbPNS_5arrayINS_15stopping_statusEEEPbRKNS1_7UpdaterE+0xb7)[0x7ffae3308907]
+[gpu-nvidia-h200-3:15801] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko4stop9Criterion5checkEhbPNS_5arrayINS_15stopping_statusEEEPbRKNS1_7UpdaterE+0xb7)[0x7ff73ed88907]
+[gpu-nvidia-h200-3:15804] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko4stop9Criterion5checkEhbPNS_5arrayINS_15stopping_statusEEEPbRKNS1_7UpdaterE+0xb7)[0x7f3a4a8b0907]
+[gpu-nvidia-h200-3:15802] [ 6] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko6solver8BicgstabIdE16apply_dense_implINS_12experimental11distributed6VectorIdEEEEvPKT_PS8_+0xf55)[0x7f555302f995]
+[gpu-nvidia-h200-3:15803] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko6solver8BicgstabIdE16apply_dense_implINS_12experimental11distributed6VectorIdEEEEvPKT_PS8_+0xf55)[0x7ff73f210995]
+[gpu-nvidia-h200-3:15804] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko6solver8BicgstabIdE16apply_dense_implINS_12experimental11distributed6VectorIdEEEEvPKT_PS8_+0xf55)[0x7f3a4ad38995]
+[gpu-nvidia-h200-3:15802] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko6solver8BicgstabIdE16apply_dense_implINS_12experimental11distributed6VectorIdEEEEvPKT_PS8_+0xf55)[0x7ffae3790995]
+[gpu-nvidia-h200-3:15801] [ 7] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed31precision_dispatch_real_complexIdZNKS_6solver8BicgstabIdE10apply_implEPKNS_5LinOpEPS6_EUlT_T0_E_EEvSB_S8_S9_+0x80)[0x7f555303a970]
+[gpu-nvidia-h200-3:15803] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed31precision_dispatch_real_complexIdZNKS_6solver8BicgstabIdE10apply_implEPKNS_5LinOpEPS6_EUlT_T0_E_EEvSB_S8_S9_+0x80)[0x7ff73f21b970]
+[gpu-nvidia-h200-3:15804] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed31precision_dispatch_real_complexIdZNKS_6solver8BicgstabIdE10apply_implEPKNS_5LinOpEPS6_EUlT_T0_E_EEvSB_S8_S9_+0x80)[0x7ffae379b970]
+[gpu-nvidia-h200-3:15801] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko12experimental11distributed31precision_dispatch_real_complexIdZNKS_6solver8BicgstabIdE10apply_implEPKNS_5LinOpEPS6_EUlT_T0_E_EEvSB_S8_S9_+0x80)[0x7f3a4ad43970]
+[gpu-nvidia-h200-3:15802] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko5LinOp5applyENS_9ptr_paramIKS0_EENS1_IS0_EE+0x171)[0x7f5552197441]
+[gpu-nvidia-h200-3:15803] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko5LinOp5applyENS_9ptr_paramIKS0_EENS1_IS0_EE+0x171)[0x7ff73e378441]
+[gpu-nvidia-h200-3:15804] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko5LinOp5applyENS_9ptr_paramIKS0_EENS1_IS0_EE+0x171)[0x7ffae28f8441]
+[gpu-nvidia-h200-3:15801] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko5LinOp5applyENS_9ptr_paramIKS0_EENS1_IS0_EE+0x171)[0x7f3a49ea0441]
+[gpu-nvidia-h200-3:15802] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f5fe0a)[0x7f55521c0e0a]
+[gpu-nvidia-h200-3:15803] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f5fe0a)[0x7ff73e3a1e0a]
+[gpu-nvidia-h200-3:15804] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f5fe0a)[0x7ffae2921e0a]
+[gpu-nvidia-h200-3:15801] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f5fe0a)[0x7f3a49ec9e0a]
+[gpu-nvidia-h200-3:15802] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo19solveWithL1StopDistESt10shared_ptrIKN3gko8ExecutorEES2_IKNS3_5LinOpEES2_IKNS3_12experimental11distributed6VectorIdEEES2_ISD_EPS7_RKNS1_17L1ResidualControlE+0xad)[0x7f55521be67d]
+[gpu-nvidia-h200-3:15803] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo19solveWithL1StopDistESt10shared_ptrIKN3gko8ExecutorEES2_IKNS3_5LinOpEES2_IKNS3_12experimental11distributed6VectorIdEEES2_ISD_EPS7_RKNS1_17L1ResidualControlE+0xad)[0x7ff73e39f67d]
+[gpu-nvidia-h200-3:15804] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo19solveWithL1StopDistESt10shared_ptrIKN3gko8ExecutorEES2_IKNS3_5LinOpEES2_IKNS3_12experimental11distributed6VectorIdEEES2_ISD_EPS7_RKNS1_17L1ResidualControlE+0xad)[0x7ffae291f67d]
+[gpu-nvidia-h200-3:15801] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo19solveWithL1StopDistESt10shared_ptrIKN3gko8ExecutorEES2_IKNS3_5LinOpEES2_IKNS3_12experimental11distributed6VectorIdEEES2_ISD_EPS7_RKNS1_17L1ResidualControlE+0xad)[0x7f3a49ec767d]
+[gpu-nvidia-h200-3:15802] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo15solve_impl_distESt10shared_ptrIKN3gko8ExecutorEERKNS3_12experimental3mpi12communicatorERKNS_6VectorINS_4Vec3EEERSE_S2_IKNS3_5LinOpEES2_ISI_EPKNS1_17L1ResidualControlE+0x1ee)[0x7f55523e326e]
+[gpu-nvidia-h200-3:15803] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo15solve_impl_distESt10shared_ptrIKN3gko8ExecutorEERKNS3_12experimental3mpi12communicatorERKNS_6VectorINS_4Vec3EEERSE_S2_IKNS3_5LinOpEES2_ISI_EPKNS1_17L1ResidualControlE+0x1ee)[0x7ff73e5c426e]
+[gpu-nvidia-h200-3:15804] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo15solve_impl_distESt10shared_ptrIKN3gko8ExecutorEERKNS3_12experimental3mpi12communicatorERKNS_6VectorINS_4Vec3EEERSE_S2_IKNS3_5LinOpEES2_ISI_EPKNS1_17L1ResidualControlE+0x1ee)[0x7f3a4a0ec26e]
+[gpu-nvidia-h200-3:15802] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN2la6ginkgo15solve_impl_distESt10shared_ptrIKN3gko8ExecutorEERKNS3_12experimental3mpi12communicatorERKNS_6VectorINS_4Vec3EEERSE_S2_IKNS3_5LinOpEES2_ISI_EPKNS1_17L1ResidualControlE+0x1ee)[0x7ffae2b4426e]
+[gpu-nvidia-h200-3:15801] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK4NeoN2la6ginkgo12GinkgoSolver9solveDistERKNS0_12LinearSystemIdNS_4Vec3ENS0_6MatrixIdNS0_18CsrSparsityPatternIiEEEENS5_IdNS0_18CooSparsityPatternIiEEEEEERNS_6VectorIS4_EE+0x708)[0x7f55523e4d28]
+[gpu-nvidia-h200-3:15803] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK4NeoN2la6ginkgo12GinkgoSolver9solveDistERKNS0_12LinearSystemIdNS_4Vec3ENS0_6MatrixIdNS0_18CsrSparsityPatternIiEEEENS5_IdNS0_18CooSparsityPatternIiEEEEEERNS_6VectorIS4_EE+0x708)[0x7ff73e5c5d28]
+[gpu-nvidia-h200-3:15804] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiE5solveEONS1_3dsl15SpatialOperatorIS2_EE+0x356)[0x5fe566]
+[gpu-nvidia-h200-3:15803] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiE5solveEONS1_3dsl15SpatialOperatorIS2_EE+0x356)[0x5fe566]
+[gpu-nvidia-h200-3:15804] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xe9d)[0x53f3ad]
+[gpu-nvidia-h200-3:15803] [15] /lib64/libc.so.6(+0x2a610)[0x7f54f3a29610]
+[gpu-nvidia-h200-3:15803] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK4NeoN2la6ginkgo12GinkgoSolver9solveDistERKNS0_12LinearSystemIdNS_4Vec3ENS0_6MatrixIdNS0_18CsrSparsityPatternIiEEEENS5_IdNS0_18CooSparsityPatternIiEEEEEERNS_6VectorIS4_EE+0x708)[0x7ffae2b45d28]
+[gpu-nvidia-h200-3:15801] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK4NeoN2la6ginkgo12GinkgoSolver9solveDistERKNS0_12LinearSystemIdNS_4Vec3ENS0_6MatrixIdNS0_18CsrSparsityPatternIiEEEENS5_IdNS0_18CooSparsityPatternIiEEEEEERNS_6VectorIS4_EE+0x708)[0x7f3a4a0edd28]
+[gpu-nvidia-h200-3:15802] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xe9d)[0x53f3ad]
+[gpu-nvidia-h200-3:15804] [15] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f54f3a296c0]
+[gpu-nvidia-h200-3:15803] [17] /lib64/libc.so.6(+0x2a610)[0x7ff6dfc0a610]
+[gpu-nvidia-h200-3:15804] [16] /lib64/libc.so.6(__libc_start_main+0x80)[0x7ff6dfc0a6c0]
+[gpu-nvidia-h200-3:15804] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:15803] *** End of error message ***
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:15804] *** End of error message ***
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiE5solveEONS1_3dsl15SpatialOperatorIS2_EE+0x356)[0x5fe566]
+[gpu-nvidia-h200-3:15801] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiE5solveEONS1_3dsl15SpatialOperatorIS2_EE+0x356)[0x5fe566]
+[gpu-nvidia-h200-3:15802] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xe9d)[0x53f3ad]
+[gpu-nvidia-h200-3:15801] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xe9d)[0x53f3ad]
+[gpu-nvidia-h200-3:15802] [15] /lib64/libc.so.6(+0x2a610)[0x7ffa8418a610]
+[gpu-nvidia-h200-3:15801] [16] /lib64/libc.so.6(+0x2a610)[0x7f39eb732610]
+[gpu-nvidia-h200-3:15802] [16] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f39eb7326c0]
+[gpu-nvidia-h200-3:15802] [17] /lib64/libc.so.6(__libc_start_main+0x80)[0x7ffa8418a6c0]
+[gpu-nvidia-h200-3:15801] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:15802] *** End of error message ***
+/storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:15801] *** End of error message ***
+--------------------------------------------------------------------------
+
+prterun noticed that process rank 3 with PID 15804 on node gpu-nvidia-h200-3 exited on
+signal 8 (Floating point exception).
+--------------------------------------------------------------------------

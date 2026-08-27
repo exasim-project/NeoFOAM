@@ -1,0 +1,287 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jul 09 2026
+Time   : 07:46:27
+Host   : gpu-nvidia-h200-2.int.coma-cluster.de
+PID    : 187720
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-2.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 1000 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Multigrid)':
+{
+    cacheSolver: false
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    preconditionerRebuildInterval: 1
+    relTol: 0.010000
+    reportName: config(Cg+Multigrid)
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+[1] [stack trace]
+[1] =============
+[1] #1  Foam::sigSegv::sigHandler(int)[2] [stack trace]
+[2] =============
+[2] #1  Foam::sigSegv::sigHandler(int)[3] [stack trace]
+[3] =============
+[3] #1  Foam::sigSegv::sigHandler(int)[0] [stack trace]
+[0] =============
+[0] #1  Foam::sigSegv::sigHandler(int) in  in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+ in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[3] #2  ?[2] #2  [0] #2  ?? in ~/OpenFOAM/openfoam/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so
+[1] #2  ? in  in  in /lib64/libc.so.6
+/lib64/libc.so.6
+ in /lib64/libc.so.6
+/lib64/libc.so.6
+[0] #3  ?[3] #3  ?[2] #3  ?[1] #3  ? in /lib64/libc.so.6
+[2] #4  ? in /lib64/libc.so.6
+ in [1] #4  ?/lib64/libc.so.6
+ in /lib64/libc.so.6
+[3] #4  ?[0] #4  ? in  in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80
+[2] #5  [3] #5  mca_pml_ob1_send_request_start_rndv[0] #5  mca_pml_ob1_send_request_start_rndvmca_pml_ob1_send_request_start_rndv[1] #5  mca_pml_ob1_send_request_start_rndv in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in  in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[3] #6  ?[2] #6  ?[1] #6  ? in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[0] #6  ? in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in  in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+/storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[1] #7  mca_pml_ob1_isend[2] #7  mca_pml_ob1_isend in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[3] #7  mca_pml_ob1_isend[0] #7  mca_pml_ob1_isend in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[1] #8  MPI_Isend[2] #8  MPI_Isend in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[3] #8  MPI_Isend[0] #8  MPI_Isend in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+ in /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40
+[1] #9  [2] #9  NeoN::BoundaryData<double>::communicate(std::pair<int, int>, int)NeoN::BoundaryData<double>::communicate(std::pair<int, int>, int)[3] #9  NeoN::BoundaryData<double>::communicate(std::pair<int, int>, int)[0] #9  NeoN::BoundaryData<double>::communicate(std::pair<int, int>, int) at ~/code/NeoN/include/NeoN/core/mpi/operators.hpp:213 (discriminator 1)
+[0] #10  NeoN::finiteVolume::cellCentred::VolumeField<double>::correctBoundaryConditions() at ~/code/NeoN/include/NeoN/core/mpi/operators.hpp:213 (discriminator 1)
+ at ~/code/NeoN/include/NeoN/core/mpi/operators.hpp:213 (discriminator 1)
+[2] #10  NeoN::finiteVolume::cellCentred::VolumeField<double>::correctBoundaryConditions()[3] #10  NeoN::finiteVolume::cellCentred::VolumeField<double>::correctBoundaryConditions() at ~/code/NeoN/include/NeoN/core/mpi/operators.hpp:213 (discriminator 1)
+[1] #10  NeoN::finiteVolume::cellCentred::VolumeField<double>::correctBoundaryConditions() at ~/code/NeoN/include/NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp:140 (discriminator 1)
+[3] #11  auto NeoFOAM::constructFrom<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, NeoN::UnstructuredMesh const&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&) at ~/code/NeoN/include/NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp:140 (discriminator 1)
+[0] #11  auto NeoFOAM::constructFrom<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, NeoN::UnstructuredMesh const&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&) at ~/code/NeoN/include/NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp:140 (discriminator 1)
+[2] #11  auto NeoFOAM::constructFrom<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, NeoN::UnstructuredMesh const&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&) at ~/code/NeoN/include/NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp:140 (discriminator 1)
+[1] #11  auto NeoFOAM::constructFrom<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, NeoN::UnstructuredMesh const&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&) at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:421
+[3] #12  NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >::operator()(NeoN::Database&) at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:421
+[0] #12  NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >::operator()(NeoN::Database&) at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:421
+[2] #12  NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >::operator()(NeoN::Database&) at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:421
+[1] #12  NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >::operator()(NeoN::Database&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[2] #13  std::_Function_handler<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&), NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> > >::_M_invoke(std::_Any_data const&, NeoN::Database&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[0] #13  std::_Function_handler<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&), NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> > >::_M_invoke(std::_Any_data const&, NeoN::Database&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[3] #13  std::_Function_handler<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&), NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> > >::_M_invoke(std::_Any_data const&, NeoN::Database&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/variant:506
+[1] #13  std::_Function_handler<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&), NeoFOAM::CreateFromFoamField<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> > >::_M_invoke(std::_Any_data const&, NeoN::Database&) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/std_function.h:292
+[2] #14  NeoN::finiteVolume::cellCentred::VolumeField<double>& NeoN::finiteVolume::cellCentred::VectorCollection::registerVector<NeoN::finiteVolume::cellCentred::VolumeField<double> >(std::function<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&)>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/std_function.h:292
+[0] #14  NeoN::finiteVolume::cellCentred::VolumeField<double>& NeoN::finiteVolume::cellCentred::VectorCollection::registerVector<NeoN::finiteVolume::cellCentred::VolumeField<double> >(std::function<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&)>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/std_function.h:292
+[3] #14  NeoN::finiteVolume::cellCentred::VolumeField<double>& NeoN::finiteVolume::cellCentred::VectorCollection::registerVector<NeoN::finiteVolume::cellCentred::VolumeField<double> >(std::function<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&)>) at /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib/gcc/x86_64-pc-linux-gnu/13.3.0/../../../../include/c++/13.3.0/bits/std_function.h:292
+[1] #14  NeoN::finiteVolume::cellCentred::VolumeField<double>& NeoN::finiteVolume::cellCentred::VectorCollection::registerVector<NeoN::finiteVolume::cellCentred::VolumeField<double> >(std::function<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&)>) at ~/code/NeoN/include/NeoN/core/database/fieldCollection.hpp:342
+[2] #15  auto& NeoFOAM::constructAndRegister<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(NeoN::finiteVolume::cellCentred::VectorCollection&, NeoFOAM::RunTime&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&, bool) at ~/code/NeoN/include/NeoN/core/database/fieldCollection.hpp:342
+[0] #15  auto& NeoFOAM::constructAndRegister<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(NeoN::finiteVolume::cellCentred::VectorCollection&, NeoFOAM::RunTime&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&, bool) at ~/code/NeoN/include/NeoN/core/database/fieldCollection.hpp:342
+[3] #15  auto& NeoFOAM::constructAndRegister<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(NeoN::finiteVolume::cellCentred::VectorCollection&, NeoFOAM::RunTime&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&, bool) at ~/code/NeoN/include/NeoN/core/database/fieldCollection.hpp:342
+[1] #15  auto& NeoFOAM::constructAndRegister<Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> >(NeoN::finiteVolume::cellCentred::VectorCollection&, NeoFOAM::RunTime&, Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh> const&, bool) at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:576 (discriminator 2)
+[2] #16  main at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:576 (discriminator 2)
+[0] #16  main at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:576 (discriminator 2)
+[3] #16  main at ~/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp:576 (discriminator 2)
+[1] #16  main at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:101
+[2] #17  ? in /lib64/libc.so.6
+[2] #18  __libc_start_main in /lib64/libc.so.6
+[2] #19  _start at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:101
+[0] #17  ? in /lib64/libc.so.6
+[0] #18  __libc_start_main in /lib64/libc.so.6
+[0] #19  _start in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[2] =============
+[gpu-nvidia-h200-2:187722] *** Process received signal ***
+[gpu-nvidia-h200-2:187722] Signal: Segmentation fault (11)
+[gpu-nvidia-h200-2:187722] Signal code:  (-6)
+[gpu-nvidia-h200-2:187722] Failing at address: 0x40f0002dd4a
+[gpu-nvidia-h200-2:187722] [ 0] /lib64/libc.so.6(+0x3fc60)[0x7f81fdc6cc60]
+[gpu-nvidia-h200-2:187722] [ 1] /lib64/libc.so.6(+0x8d4bc)[0x7f81fdcba4bc]
+[gpu-nvidia-h200-2:187722] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f81fdc6cbb6]
+[gpu-nvidia-h200-2:187722] [ 3] /lib64/libc.so.6(+0x3fc60)[0x7f81fdc6cc60]
+[gpu-nvidia-h200-2:187722] [ 4] /lib64/libc.so.6(+0x1918c1)[0x7f81fddbe8c1]
+[gpu-nvidia-h200-2:187722] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80(+0xd6744)[0x7f81fdbd4744]
+[gpu-nvidia-h200-2:187722] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_send_request_start_rndv+0x25b)[0x7f820290217b]
+[gpu-nvidia-h200-2:187722] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(+0x1fbc8f)[0x7f82028eec8f]
+[gpu-nvidia-h200-2:187722] [ 8] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_isend+0x39b)[0x7f82028efecb]
+[gpu-nvidia-h200-2:187722] [ 9] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(MPI_Isend+0x134)[0x7f82027a98f4]
+[gpu-nvidia-h200-2:187722] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryDataIdE11communicateESt4pairIiiEi+0x515)[0x7f825d884035]
+[gpu-nvidia-h200-2:187722] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred11VolumeFieldIdE25correctBoundaryConditionsEv+0x122)[0x7f825d8a9372]
+[gpu-nvidia-h200-2:187722] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM13constructFromIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEEDaSt7variantIJN4NeoN14SerialExecutorENS7_11CPUExecutorENS7_11GPUExecutorEEERKNS7_16UnstructuredMeshERKT_+0x23e)[0x62ddbe]
+[gpu-nvidia-h200-2:187722] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEclERN4NeoN8DatabaseE+0x71)[0x62e041]
+[gpu-nvidia-h200-2:187722] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZNSt17_Function_handlerIFN4NeoN12finiteVolume11cellCentred14VectorDocumentERNS0_8DatabaseEEN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS9_12fvPatchFieldENS9_7volMeshEEEEEE9_M_invokeERKSt9_Any_dataS5_+0x14)[0x62e8b4]
+[gpu-nvidia-h200-2:187722] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN12finiteVolume11cellCentred16VectorCollection14registerVectorINS1_11VolumeFieldIdEEEERT_St8functionIFNS1_14VectorDocumentERNS_8DatabaseEEE+0x33)[0x593dd3]
+[gpu-nvidia-h200-2:187722] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM20constructAndRegisterIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEERDaRN4NeoN12finiteVolume11cellCentred16VectorCollectionERNS_7RunTimeERKT_b+0x11c)[0x5940bc]
+[gpu-nvidia-h200-2:187722] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x701)[0x53fd01]
+[gpu-nvidia-h200-2:187722] [18] /lib64/libc.so.6(+0x2a610)[0x7f81fdc57610]
+[gpu-nvidia-h200-2:187722] [19] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f81fdc576c0]
+[gpu-nvidia-h200-2:187722] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x541e25]
+[gpu-nvidia-h200-2:187722] *** End of error message ***
+ at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:101
+[3] #17  ? in /lib64/libc.so.6
+[3] #18  __libc_start_main in  in /lib64/libc.so.6
+~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[0] =============
+[gpu-nvidia-h200-2:187720] *** Process received signal ***
+[3] #[gpu-nvidia-h200-2:187720] Signal: Segmentation fault (11)
+[gpu-nvidia-h200-2:187720] Signal code:  (-6)
+[gpu-nvidia-h200-2:187720] Failing at address: 0x40f0002dd48
+19  _start[gpu-nvidia-h200-2:187720] [ 0] /lib64/libc.so.6(+0x3fc60)[0x7f325225ac60]
+[gpu-nvidia-h200-2:187720] [ 1] /lib64/libc.so.6(+0x8d4bc)[0x7f32522a84bc]
+[gpu-nvidia-h200-2:187720] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f325225abb6]
+[gpu-nvidia-h200-2:187720] [ 3] /lib64/libc.so.6(+0x3fc60)[0x7f325225ac60]
+[gpu-nvidia-h200-2:187720] [ 4] /lib64/libc.so.6(+0x1918c1)[0x7f32523ac8c1]
+[gpu-nvidia-h200-2:187720] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80(+0xd6744)[0x7f32521c2744]
+[gpu-nvidia-h200-2:187720] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_send_request_start_rndv+0x25b)[0x7f3256ef017b]
+[gpu-nvidia-h200-2:187720] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(+0x1fbc8f)[0x7f3256edcc8f]
+[gpu-nvidia-h200-2:187720] [ 8] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_isend+0x39b)[0x7f3256eddecb]
+[gpu-nvidia-h200-2:187720] [ 9] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(MPI_Isend+0x134)[0x7f3256d978f4]
+[gpu-nvidia-h200-2:187720] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryDataIdE11communicateESt4pairIiiEi+0x515)[0x7f32b1e72035]
+[gpu-nvidia-h200-2:187720] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred11VolumeFieldIdE25correctBoundaryConditionsEv+0x122)[0x7f32b1e97372]
+[gpu-nvidia-h200-2:187720] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM13constructFromIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEEDaSt7variantIJN4NeoN14SerialExecutorENS7_11CPUExecutorENS7_11GPUExecutorEEERKNS7_16UnstructuredMeshERKT_+0x23e)[0x62ddbe]
+[gpu-nvidia-h200-2:187720] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEclERN4NeoN8DatabaseE+0x71)[0x62e041]
+[gpu-nvidia-h200-2:187720] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZNSt17_Function_handlerIFN4NeoN12finiteVolume11cellCentred14VectorDocumentERNS0_8DatabaseEEN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS9_12fvPatchFieldENS9_7volMeshEEEEEE9_M_invokeERKSt9_Any_dataS5_+0x14)[0x62e8b4]
+[gpu-nvidia-h200-2:187720] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN12finiteVolume11cellCentred16VectorCollection14registerVectorINS1_11VolumeFieldIdEEEERT_St8functionIFNS1_14VectorDocumentERNS_8DatabaseEEE+0x33)[0x593dd3]
+[gpu-nvidia-h200-2:187720] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM20constructAndRegisterIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEERDaRN4NeoN12finiteVolume11cellCentred16VectorCollectionERNS_7RunTimeERKT_b+0x11c)[0x5940bc]
+[gpu-nvidia-h200-2:187720] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x701)[0x53fd01]
+[gpu-nvidia-h200-2:187720] [18] /lib64/libc.so.6(+0x2a610)[0x7f3252245610]
+[gpu-nvidia-h200-2:187720] [19] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f32522456c0]
+[gpu-nvidia-h200-2:187720] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x541e25]
+[gpu-nvidia-h200-2:187720] *** End of error message ***
+ in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[3] =============
+[gpu-nvidia-h200-2:187723] *** Process received signal ***
+[gpu-nvidia-h200-2:187723] Signal: Segmentation fault (11)
+[gpu-nvidia-h200-2:187723] Signal code:  (-6)
+[gpu-nvidia-h200-2:187723] Failing at address: 0x40f0002dd4b
+[gpu-nvidia-h200-2:187723] [ 0] /lib64/libc.so.6(+0x3fc60)[0x7ff547d67c60]
+[gpu-nvidia-h200-2:187723] [ 1] /lib64/libc.so.6(+0x8d4bc)[0x7ff547db54bc]
+[gpu-nvidia-h200-2:187723] [ 2] /lib64/libc.so.6(raise+0x16)[0x7ff547d67bb6]
+[gpu-nvidia-h200-2:187723] [ 3] /lib64/libc.so.6(+0x3fc60)[0x7ff547d67c60]
+[gpu-nvidia-h200-2:187723] [ 4] /lib64/libc.so.6(+0x1918c1)[0x7ff547eb98c1]
+[gpu-nvidia-h200-2:187723] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80(+0xd6744)[0x7ff547ccf744]
+[gpu-nvidia-h200-2:187723] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_send_request_start_rndv+0x25b)[0x7ff54c9fd17b]
+[gpu-nvidia-h200-2:187723] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(+0x1fbc8f)[0x7ff54c9e9c8f]
+[gpu-nvidia-h200-2:187723] [ 8] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_isend+0x39b)[0x7ff54c9eaecb]
+[gpu-nvidia-h200-2:187723] [ 9] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(MPI_Isend+0x134)[0x7ff54c8a48f4]
+[gpu-nvidia-h200-2:187723] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryDataIdE11communicateESt4pairIiiEi+0x515)[0x7ff5a797f035]
+[gpu-nvidia-h200-2:187723] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred11VolumeFieldIdE25correctBoundaryConditionsEv+0x122)[0x7ff5a79a4372]
+[gpu-nvidia-h200-2:187723] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM13constructFromIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEEDaSt7variantIJN4NeoN14SerialExecutorENS7_11CPUExecutorENS7_11GPUExecutorEEERKNS7_16UnstructuredMeshERKT_+0x23e)[0x62ddbe]
+[gpu-nvidia-h200-2:187723] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEclERN4NeoN8DatabaseE+0x71)[0x62e041]
+[gpu-nvidia-h200-2:187723] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZNSt17_Function_handlerIFN4NeoN12finiteVolume11cellCentred14VectorDocumentERNS0_8DatabaseEEN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS9_12fvPatchFieldENS9_7volMeshEEEEEE9_M_invokeERKSt9_Any_dataS5_+0x14)[0x62e8b4]
+[gpu-nvidia-h200-2:187723] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN12finiteVolume11cellCentred16VectorCollection14registerVectorINS1_11VolumeFieldIdEEEERT_St8functionIFNS1_14VectorDocumentERNS_8DatabaseEEE+0x33)[0x593dd3]
+[gpu-nvidia-h200-2:187723] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM20constructAndRegisterIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEERDaRN4NeoN12finiteVolume11cellCentred16VectorCollectionERNS_7RunTimeERKT_b+0x11c)[0x5940bc]
+[gpu-nvidia-h200-2:187723] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x701)[0x53fd01]
+[gpu-nvidia-h200-2:187723] [18] /lib64/libc.so.6(+0x2a610)[0x7ff547d52610]
+[gpu-nvidia-h200-2:187723] [19] /lib64/libc.so.6(__libc_start_main+0x80)[0x7ff547d526c0]
+[gpu-nvidia-h200-2:187723] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x541e25]
+[gpu-nvidia-h200-2:187723] *** End of error message ***
+ at ~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:101
+[1] #17  ? in /lib64/libc.so.6
+[1] #18  __libc_start_main in /lib64/libc.so.6
+[1] #19  _start in ~/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[1] =============
+[gpu-nvidia-h200-2:187721] *** Process received signal ***
+[gpu-nvidia-h200-2:187721] Signal: Segmentation fault (11)
+[gpu-nvidia-h200-2:187721] Signal code:  (-6)
+[gpu-nvidia-h200-2:187721] Failing at address: 0x40f0002dd49
+[gpu-nvidia-h200-2:187721] [ 0] /lib64/libc.so.6(+0x3fc60)[0x7f054e7f3c60]
+[gpu-nvidia-h200-2:187721] [ 1] /lib64/libc.so.6(+0x8d4bc)[0x7f054e8414bc]
+[gpu-nvidia-h200-2:187721] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f054e7f3bb6]
+[gpu-nvidia-h200-2:187721] [ 3] /lib64/libc.so.6(+0x3fc60)[0x7f054e7f3c60]
+[gpu-nvidia-h200-2:187721] [ 4] /lib64/libc.so.6(+0x1918c1)[0x7f054e9458c1]
+[gpu-nvidia-h200-2:187721] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libopen-pal.so.80(+0xd6744)[0x7f054e75b744]
+[gpu-nvidia-h200-2:187721] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_send_request_start_rndv+0x25b)[0x7f055348917b]
+[gpu-nvidia-h200-2:187721] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(+0x1fbc8f)[0x7f0553475c8f]
+[gpu-nvidia-h200-2:187721] [ 8] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(mca_pml_ob1_isend+0x39b)[0x7f0553476ecb]
+[gpu-nvidia-h200-2:187721] [ 9] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/openmpi-5.0.7-xrgrcnrryaegf4vo6rz5zfhyxy46wjrl/lib/libmpi.so.40(MPI_Isend+0x134)[0x7f05533308f4]
+[gpu-nvidia-h200-2:187721] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12BoundaryDataIdE11communicateESt4pairIiiEi+0x515)[0x7f05ae40b035]
+[gpu-nvidia-h200-2:187721] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred11VolumeFieldIdE25correctBoundaryConditionsEv+0x122)[0x7f05ae430372]
+[gpu-nvidia-h200-2:187721] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM13constructFromIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEEDaSt7variantIJN4NeoN14SerialExecutorENS7_11CPUExecutorENS7_11GPUExecutorEEERKNS7_16UnstructuredMeshERKT_+0x23e)[0x62ddbe]
+[gpu-nvidia-h200-2:187721] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEclERN4NeoN8DatabaseE+0x71)[0x62e041]
+[gpu-nvidia-h200-2:187721] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZNSt17_Function_handlerIFN4NeoN12finiteVolume11cellCentred14VectorDocumentERNS0_8DatabaseEEN7NeoFOAM19CreateFromFoamFieldIN4Foam14GeometricFieldIdNS9_12fvPatchFieldENS9_7volMeshEEEEEE9_M_invokeERKSt9_Any_dataS5_+0x14)[0x62e8b4]
+[gpu-nvidia-h200-2:187721] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN12finiteVolume11cellCentred16VectorCollection14registerVectorINS1_11VolumeFieldIdEEEERT_St8functionIFNS1_14VectorDocumentERNS_8DatabaseEEE+0x33)[0x593dd3]
+[gpu-nvidia-h200-2:187721] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM20constructAndRegisterIN4Foam14GeometricFieldIdNS1_12fvPatchFieldENS1_7volMeshEEEEERDaRN4NeoN12finiteVolume11cellCentred16VectorCollectionERNS_7RunTimeERKT_b+0x11c)[0x5940bc]
+[gpu-nvidia-h200-2:187721] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0x701)[0x53fd01]
+[gpu-nvidia-h200-2:187721] [18] /lib64/libc.so.6(+0x2a610)[0x7f054e7de610]
+[gpu-nvidia-h200-2:187721] [19] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f054e7de6c0]
+[gpu-nvidia-h200-2:187721] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x541e25]
+[gpu-nvidia-h200-2:187721] *** End of error message ***
+--------------------------------------------------------------------------
+
+prterun noticed that process rank 1 with PID 187721 on node gpu-nvidia-h200-2 exited on
+signal 11 (Segmentation fault).
+--------------------------------------------------------------------------

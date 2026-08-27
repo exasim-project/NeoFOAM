@@ -1,0 +1,324 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jun 27 2026
+Time   : 22:21:59
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 7492
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 30 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Schwarz(Multigrid))':
+{
+    cacheSolver: true
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    preconditionerRebuildInterval: 100
+    relTol: 0.010000
+    reportName: config(Cg+Schwarz(Multigrid))
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49243125, Boundary: 1362247
+Selecting patchDistMethod meshWave
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Starting time loop
+Time = 1
+Key not found: laplacian(nuEff,U) 
+available keys are: 
+  - default 
+unordered_map::at
+Key not found: laplacian(nuEff,U) 
+available keys are: 
+  - default 
+unordered_map::at
+Terminate called after throwing an instance of std::out_of_range: unordered_map::at
+Terminate called after throwing an instance of std::out_of_range: unordered_map::at
+Key not found: laplacian(nuEff,U) 
+available keys are: 
+  - default 
+unordered_map::at
+Terminate called after throwing an instance of std::out_of_range: unordered_map::at
+Key not found: laplacian(nuEff,U) 
+available keys are: 
+  - default 
+unordered_map::at
+Terminate called after throwing an instance of std::out_of_range: unordered_map::at
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb19 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007f66be394f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007f66be394fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007f66be3951f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007f671c258943 in NeoN::Dictionary::operator[](std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/src/core/dictionary.cpp:108:7
+#5  0x00000000005846c7 in NeoN::TokenList& NeoN::Dictionary::get<NeoN::TokenList>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/include/NeoN/core/dictionary.hpp:109:28
+#6  0x00007f671c913be6 in NeoN::finiteVolume::cellCentred::GaussGreenDivLaplacian<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/src/finiteVolume/cellCentred/operators/gaussGreenDivLaplacian.cpp:439:80
+#7  (inlined)          in NeoN::dsl::SpatialOperator<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/spatialOperator.hpp:113:47
+#8  0x0000000000583556 in NeoN::dsl::Expression<NeoN::Vec3, int>::read(NeoN::Dictionary const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/expression.hpp:286:8
+#9  0x00000000005d3cf7 in NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:87:13
+#10 0x000000000053f1f7 in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:162:177
+#11 0x00007f66bdff660f at /lib64/libc.so.6
+#12 0x00007f66bdff66bf at /lib64/libc.so.6
+#13 0x00000000005405c4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:07493] *** Process received signal ***
+[gpu-nvidia-h200-3:07493] Signal: Aborted (6)
+[gpu-nvidia-h200-3:07493] Signal code:  (-6)
+[gpu-nvidia-h200-3:07493] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f66be00bc30]
+[gpu-nvidia-h200-3:07493] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f66be05902c]
+[gpu-nvidia-h200-3:07493] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f66be00bb86]
+[gpu-nvidia-h200-3:07493] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7f66bdff5873]
+[gpu-nvidia-h200-3:07493] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x6289d4]
+[gpu-nvidia-h200-3:07493] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7f66be394f3a]
+[gpu-nvidia-h200-3:07493] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7f66be394fa5]
+[gpu-nvidia-h200-3:07493] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7f66be3951f7]
+[gpu-nvidia-h200-3:07493] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1a2a944)[0x7f671c258944]
+[gpu-nvidia-h200-3:07493] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN10Dictionary3getINS_9TokenListEEERT_RKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE+0x18)[0x5846c8]
+[gpu-nvidia-h200-3:07493] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred22GaussGreenDivLaplacianINS_4Vec3EE4readERKSt7variantIJNS_10DictionaryENS_9TokenListEEE+0x237)[0x7f671c913be7]
+[gpu-nvidia-h200-3:07493] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN3dsl10ExpressionINS_4Vec3EiE4readERKNS_10DictionaryE+0x157)[0x583557]
+[gpu-nvidia-h200-3:07493] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiEC2ENS1_3dsl10ExpressionIS2_iEERNS1_12finiteVolume11cellCentred11VolumeFieldIS2_EERNS_7RunTimeE+0x2c8)[0x5d3cf8]
+[gpu-nvidia-h200-3:07493] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xce8)[0x53f1f8]
+[gpu-nvidia-h200-3:07493] [14] /lib64/libc.so.6(+0x2a610)[0x7f66bdff6610]
+[gpu-nvidia-h200-3:07493] [15] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f66bdff66c0]
+[gpu-nvidia-h200-3:07493] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:07493] *** End of error message ***
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb19 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007f52858e8f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007f52858e8fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007f52858e91f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007f52e37ac943 in NeoN::Dictionary::operator[](std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/src/core/dictionary.cpp:108:7
+#5  0x00000000005846c7 in NeoN::TokenList& NeoN::Dictionary::get<NeoN::TokenList>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/include/NeoN/core/dictionary.hpp:109:28
+#6  0x00007f52e3e67be6 in NeoN::finiteVolume::cellCentred::GaussGreenDivLaplacian<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/src/finiteVolume/cellCentred/operators/gaussGreenDivLaplacian.cpp:439:80
+#7  (inlined)          in NeoN::dsl::SpatialOperator<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/spatialOperator.hpp:113:47
+#8  0x0000000000583556 in NeoN::dsl::Expression<NeoN::Vec3, int>::read(NeoN::Dictionary const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/expression.hpp:286:8
+#9  0x00000000005d3cf7 in NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:87:13
+#10 0x000000000053f1f7 in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:162:177
+#11 0x00007f528554a60f at /lib64/libc.so.6
+#12 0x00007f528554a6bf at /lib64/libc.so.6
+#13 0x00000000005405c4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:07494] *** Process received signal ***
+[gpu-nvidia-h200-3:07494] Signal: Aborted (6)
+[gpu-nvidia-h200-3:07494] Signal code:  (-6)
+[gpu-nvidia-h200-3:07494] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f528555fc30]
+[gpu-nvidia-h200-3:07494] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f52855ad02c]
+[gpu-nvidia-h200-3:07494] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f528555fb86]
+[gpu-nvidia-h200-3:07494] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7f5285549873]
+[gpu-nvidia-h200-3:07494] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x6289d4]
+[gpu-nvidia-h200-3:07494] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7f52858e8f3a]
+[gpu-nvidia-h200-3:07494] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7f52858e8fa5]
+[gpu-nvidia-h200-3:07494] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7f52858e91f7]
+[gpu-nvidia-h200-3:07494] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1a2a944)[0x7f52e37ac944]
+[gpu-nvidia-h200-3:07494] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN10Dictionary3getINS_9TokenListEEERT_RKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE+0x18)[0x5846c8]
+[gpu-nvidia-h200-3:07494] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred22GaussGreenDivLaplacianINS_4Vec3EE4readERKSt7variantIJNS_10DictionaryENS_9TokenListEEE+0x237)[0x7f52e3e67be7]
+[gpu-nvidia-h200-3:07494] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN3dsl10ExpressionINS_4Vec3EiE4readERKNS_10DictionaryE+0x157)[0x583557]
+[gpu-nvidia-h200-3:07494] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiEC2ENS1_3dsl10ExpressionIS2_iEERNS1_12finiteVolume11cellCentred11VolumeFieldIS2_EERNS_7RunTimeE+0x2c8)[0x5d3cf8]
+[gpu-nvidia-h200-3:07494] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xce8)[0x53f1f8]
+[gpu-nvidia-h200-3:07494] [14] /lib64/libc.so.6(+0x2a610)[0x7f528554a610]
+[gpu-nvidia-h200-3:07494] [15] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f528554a6c0]
+[gpu-nvidia-h200-3:07494] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:07494] *** End of error message ***
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb19 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007f837a678f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007f837a678fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007f837a6791f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007f83d853c943 in NeoN::Dictionary::operator[](std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/src/core/dictionary.cpp:108:7
+#5  0x00000000005846c7 in NeoN::TokenList& NeoN::Dictionary::get<NeoN::TokenList>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/include/NeoN/core/dictionary.hpp:109:28
+#6  0x00007f83d8bf7be6 in NeoN::finiteVolume::cellCentred::GaussGreenDivLaplacian<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/src/finiteVolume/cellCentred/operators/gaussGreenDivLaplacian.cpp:439:80
+#7  (inlined)          in NeoN::dsl::SpatialOperator<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/spatialOperator.hpp:113:47
+#8  0x0000000000583556 in NeoN::dsl::Expression<NeoN::Vec3, int>::read(NeoN::Dictionary const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/expression.hpp:286:8
+#9  0x00000000005d3cf7 in NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:87:13
+#10 0x000000000053f1f7 in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:162:177
+#11 0x00007f837a2da60f at /lib64/libc.so.6
+#12 0x00007f837a2da6bf at /lib64/libc.so.6
+#13 0x00000000005405c4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:07495] *** Process received signal ***
+[gpu-nvidia-h200-3:07495] Signal: Aborted (6)
+[gpu-nvidia-h200-3:07495] Signal code:  (-6)
+[gpu-nvidia-h200-3:07495] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f837a2efc30]
+[gpu-nvidia-h200-3:07495] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f837a33d02c]
+[gpu-nvidia-h200-3:07495] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f837a2efb86]
+[gpu-nvidia-h200-3:07495] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7f837a2d9873]
+[gpu-nvidia-h200-3:07495] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x6289d4]
+[gpu-nvidia-h200-3:07495] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7f837a678f3a]
+[gpu-nvidia-h200-3:07495] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7f837a678fa5]
+[gpu-nvidia-h200-3:07495] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7f837a6791f7]
+[gpu-nvidia-h200-3:07495] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1a2a944)[0x7f83d853c944]
+[gpu-nvidia-h200-3:07495] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN10Dictionary3getINS_9TokenListEEERT_RKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE+0x18)[0x5846c8]
+[gpu-nvidia-h200-3:07495] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred22GaussGreenDivLaplacianINS_4Vec3EE4readERKSt7variantIJNS_10DictionaryENS_9TokenListEEE+0x237)[0x7f83d8bf7be7]
+[gpu-nvidia-h200-3:07495] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN3dsl10ExpressionINS_4Vec3EiE4readERKNS_10DictionaryE+0x157)[0x583557]
+[gpu-nvidia-h200-3:07495] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiEC2ENS1_3dsl10ExpressionIS2_iEERNS1_12finiteVolume11cellCentred11VolumeFieldIS2_EERNS_7RunTimeE+0x2c8)[0x5d3cf8]
+[gpu-nvidia-h200-3:07495] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xce8)[0x53f1f8]
+[gpu-nvidia-h200-3:07495] [14] /lib64/libc.so.6(+0x2a610)[0x7f837a2da610]
+[gpu-nvidia-h200-3:07495] [15] /lib64/libc.so.6(__libc_start_main+0x80)[0x7f837a2da6c0]
+[gpu-nvidia-h200-3:07495] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:07495] *** End of error message ***
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb19 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007fef36cf3f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007fef36cf3fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007fef36cf41f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007fef94bb7943 in NeoN::Dictionary::operator[](std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/src/core/dictionary.cpp:108:7
+#5  0x00000000005846c7 in NeoN::TokenList& NeoN::Dictionary::get<NeoN::TokenList>(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) at /storage/home/greole/code/NeoN/include/NeoN/core/dictionary.hpp:109:28
+#6  0x00007fef95272be6 in NeoN::finiteVolume::cellCentred::GaussGreenDivLaplacian<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/src/finiteVolume/cellCentred/operators/gaussGreenDivLaplacian.cpp:439:80
+#7  (inlined)          in NeoN::dsl::SpatialOperator<NeoN::Vec3>::read(std::variant<NeoN::Dictionary, NeoN::TokenList> const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/spatialOperator.hpp:113:47
+#8  0x0000000000583556 in NeoN::dsl::Expression<NeoN::Vec3, int>::read(NeoN::Dictionary const&) at /storage/home/greole/code/NeoN/include/NeoN/dsl/expression.hpp:286:8
+#9  0x00000000005d3cf7 in NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:87:13
+#10 0x000000000053f1f7 in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:162:177
+#11 0x00007fef3695560f at /lib64/libc.so.6
+#12 0x00007fef369556bf at /lib64/libc.so.6
+#13 0x00000000005405c4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:07492] *** Process received signal ***
+[gpu-nvidia-h200-3:07492] Signal: Aborted (6)
+[gpu-nvidia-h200-3:07492] Signal code:  (-6)
+[gpu-nvidia-h200-3:07492] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7fef3696ac30]
+[gpu-nvidia-h200-3:07492] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7fef369b802c]
+[gpu-nvidia-h200-3:07492] [ 2] /lib64/libc.so.6(raise+0x16)[0x7fef3696ab86]
+[gpu-nvidia-h200-3:07492] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7fef36954873]
+[gpu-nvidia-h200-3:07492] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x6289d4]
+[gpu-nvidia-h200-3:07492] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7fef36cf3f3a]
+[gpu-nvidia-h200-3:07492] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7fef36cf3fa5]
+[gpu-nvidia-h200-3:07492] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7fef36cf41f7]
+[gpu-nvidia-h200-3:07492] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1a2a944)[0x7fef94bb7944]
+[gpu-nvidia-h200-3:07492] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN10Dictionary3getINS_9TokenListEEERT_RKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE+0x18)[0x5846c8]
+[gpu-nvidia-h200-3:07492] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN4NeoN12finiteVolume11cellCentred22GaussGreenDivLaplacianINS_4Vec3EE4readERKSt7variantIJNS_10DictionaryENS_9TokenListEEE+0x237)[0x7fef95272be7]
+[gpu-nvidia-h200-3:07492] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN4NeoN3dsl10ExpressionINS_4Vec3EiE4readERKNS_10DictionaryE+0x157)[0x583557]
+[gpu-nvidia-h200-3:07492] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_ZN7NeoFOAM3PDEIN4NeoN4Vec3EdiEC2ENS1_3dsl10ExpressionIS2_iEERNS1_12finiteVolume11cellCentred11VolumeFieldIS2_EERNS_7RunTimeE+0x2c8)[0x5d3cf8]
+[gpu-nvidia-h200-3:07492] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(main+0xce8)[0x53f1f8]
+[gpu-nvidia-h200-3:07492] [14] /lib64/libc.so.6(+0x2a610)[0x7fef36955610]
+[gpu-nvidia-h200-3:07492] [15] /lib64/libc.so.6(__libc_start_main+0x80)[0x7fef369556c0]
+[gpu-nvidia-h200-3:07492] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam(_start+0x25)[0x5405c5]
+[gpu-nvidia-h200-3:07492] *** End of error message ***
+--------------------------------------------------------------------------
+
+prterun noticed that process rank 1 with PID 7493 on node gpu-nvidia-h200-3 exited on
+signal 6 (Aborted).
+--------------------------------------------------------------------------

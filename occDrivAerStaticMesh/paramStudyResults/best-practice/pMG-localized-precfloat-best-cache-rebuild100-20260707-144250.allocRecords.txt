@@ -1,0 +1,527 @@
+# NeoFOAM peak device-pool composition (Umpire allocation records)
+# trigger tag     : pEqn
+# live at snapshot: 24780 MB across 298 allocations
+# top-256 records cover 24780 / 24780 MB; ranked by call-site (needs UMPIRE_ENABLE_BACKTRACE + UMPIRE_BACKTRACE=On):
+
+1169 MB   x1   (largest 1169 MB)
+    Backtrace: 17 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f4a8f1 NeoN::Vector<NeoN::Vec3>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vec3 const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4ab57 NeoN::Vector<NeoN::Vec3>::Vector(NeoN::Vector<NeoN::Vec3> const&)+0x47
+    7 0x7fa4630d5766 NeoN::UnstructuredMesh::UnstructuredMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<int>, NeoN::Vector<int>, NeoN::BoundaryMesh)+0x86
+    8 0x7fa46e864bf2 NeoFOAM::readOpenFOAMMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::fvMesh const&, bool)+0x7b2
+    9 0x7fa46e86510e NeoFOAM::MeshAdapter::MeshAdapter(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::IOobject const&, bool)+0xde
+    a 0x7fa46e81c735 NeoFOAM::createMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, Foam::Time const&)+0x125
+    b 0x7fa46e81f801 NeoFOAM::createAdapterRunTime(Foam::Time const&, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0xd1
+    c 0x7fa46e81fe20 NeoFOAM::createAdapterRunTime(Foam::Time const&)+0x50
+    d 0x53f843 main+0x243
+    e 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    f 0x7fa4034756c0 __libc_start_main+0x80
+    10 0x541e25 _start+0x25
+
+
+1128 MB   x1   (largest 1128 MB)
+    Backtrace: 20 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f4a8f1 NeoN::Vector<NeoN::Vec3>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vec3 const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4ab57 NeoN::Vector<NeoN::Vec3>::Vector(NeoN::Vector<NeoN::Vec3> const&)+0x47
+    7 0x7fa4630e3a3e NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<NeoN::Vec3>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<NeoN::Vec3> > > const&)+0x12e
+    8 0x7fa4630deb57 NeoN::finiteVolume::cellCentred::GeometryScheme::update()+0x1c7
+    9 0x7fa4630df367 NeoN::finiteVolume::cellCentred::GeometryScheme::GeometryScheme(NeoN::UnstructuredMesh const&)+0x287
+    a 0x7fa4630df512 NeoN::finiteVolume::cellCentred::GeometryScheme::readOrCreate(NeoN::UnstructuredMesh const&)+0x92
+    b 0x7fa463133fa7 NeoN::finiteVolume::cellCentred::GaussGreenGrad::GaussGreenGrad(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&)+0x187
+    c 0x7fa46e8d48e6 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x616
+    d 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    e 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    f 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    10 0x53fded main+0x7ed
+    11 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    12 0x7fa4034756c0 __libc_start_main+0x80
+    13 0x541e25 _start+0x25
+
+
+1128 MB   x1   (largest 1128 MB)
+    Backtrace: 20 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f4a8f1 NeoN::Vector<NeoN::Vec3>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vec3 const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4ab57 NeoN::Vector<NeoN::Vec3>::Vector(NeoN::Vector<NeoN::Vec3> const&)+0x47
+    7 0x7fa4630e3a3e NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<NeoN::Vec3>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<NeoN::Vec3> > > const&)+0x12e
+    8 0x7fa4630deaf3 NeoN::finiteVolume::cellCentred::GeometryScheme::update()+0x163
+    9 0x7fa4630df367 NeoN::finiteVolume::cellCentred::GeometryScheme::GeometryScheme(NeoN::UnstructuredMesh const&)+0x287
+    a 0x7fa4630df512 NeoN::finiteVolume::cellCentred::GeometryScheme::readOrCreate(NeoN::UnstructuredMesh const&)+0x92
+    b 0x7fa463133fa7 NeoN::finiteVolume::cellCentred::GaussGreenGrad::GaussGreenGrad(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&)+0x187
+    c 0x7fa46e8d48e6 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x616
+    d 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    e 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    f 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    10 0x53fded main+0x7ed
+    11 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    12 0x7fa4034756c0 __libc_start_main+0x80
+    13 0x541e25 _start+0x25
+
+
+1128 MB   x1   (largest 1128 MB)
+    Backtrace: 19 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f4a8f1 NeoN::Vector<NeoN::Vec3>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Vec3 const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4ab57 NeoN::Vector<NeoN::Vec3>::Vector(NeoN::Vector<NeoN::Vec3> const&)+0x47
+    7 0x7fa4630e3a3e NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<NeoN::Vec3>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<NeoN::Vec3> > > const&)+0x12e
+    8 0x7fa4630df2f7 NeoN::finiteVolume::cellCentred::GeometryScheme::GeometryScheme(NeoN::UnstructuredMesh const&)+0x217
+    9 0x7fa4630df512 NeoN::finiteVolume::cellCentred::GeometryScheme::readOrCreate(NeoN::UnstructuredMesh const&)+0x92
+    a 0x7fa463133fa7 NeoN::finiteVolume::cellCentred::GaussGreenGrad::GaussGreenGrad(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&)+0x187
+    b 0x7fa46e8d48e6 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x616
+    c 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    d 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    e 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    f 0x53fded main+0x7ed
+    10 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    11 0x7fa4034756c0 __libc_start_main+0x80
+    12 0x541e25 _start+0x25
+
+
+1121 MB   x1   (largest 1121 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f4b321 NeoN::Vector<NeoN::Tensor>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::Tensor const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4b587 NeoN::Vector<NeoN::Tensor>::Vector(NeoN::Vector<NeoN::Tensor> const&)+0x47
+    7 0x7fa46312d132 NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>::VolumeField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::VolumeBoundary<NeoN::Tensor>, std::allocator<NeoN::finiteVolume::cellCentred::VolumeBoundary<NeoN::Tensor> > > const&)+0x132
+    8 0x7fa46e8d4400 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x130
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+877 MB   x1   (largest 877 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5975f4 NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >::LinearSystem(NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&)+0x44
+    8 0x597d08 std::any::_Manager_external<NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > >::_S_manage(std::any::_Op, std::any const*, std::any::_Arg*)+0x48
+    9 0x7fa46300b448 NeoN::Dictionary::insert(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::any const&)+0x48
+    a 0x598001 NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >& NeoFOAM::readOrCreate<NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >, NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)::{lambda()#1}>(NeoFOAM::RunTime&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)::{lambda()#1})+0xb1
+    b 0x5d81c6 NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)+0x66
+    c 0x5403a3 main+0xda3
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+877 MB   x1   (largest 877 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x59bcc4 NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >::LinearSystem(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&)+0x44
+    8 0x59c3d8 std::any::_Manager_external<NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > >::_S_manage(std::any::_Op, std::any const*, std::any::_Arg*)+0x48
+    9 0x7fa46300b448 NeoN::Dictionary::insert(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::any const&)+0x48
+    a 0x59c6d1 NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >& NeoFOAM::readOrCreate<NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >, NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)::{lambda()#1}>(NeoFOAM::RunTime&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)::{lambda()#1})+0xb1
+    b 0x5d4c36 NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)+0x66
+    c 0x540c23 main+0x1623
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+877 MB   x1   (largest 877 MB)
+    Backtrace: 18 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x59bcc4 NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >::LinearSystem(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&)+0x44
+    8 0x59c3d8 std::any::_Manager_external<NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > >::_S_manage(std::any::_Op, std::any const*, std::any::_Arg*)+0x48
+    9 0x7fa46300b448 NeoN::Dictionary::insert(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::any const&)+0x48
+    a 0x59c6d1 NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >& NeoFOAM::readOrCreate<NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >, NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)::{lambda()#1}>(NeoFOAM::RunTime&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)::{lambda()#1})+0xb1
+    b 0x5d4c36 NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)+0x66
+    c 0x7fa46e8d90db NeoFOAM::KOmegaSST::correct(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<double>&, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)+0x184b
+    d 0x7fa46e8d9731 NeoFOAM::KOmegaSSTModel::correct(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<double>&, NeoFOAM::RunTime&)+0x31
+    e 0x5408bd main+0x12bd
+    f 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    10 0x7fa4034756c0 __libc_start_main+0x80
+    11 0x541e25 _start+0x25
+
+
+877 MB   x1   (largest 877 MB)
+    Backtrace: 18 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x59bcc4 NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >::LinearSystem(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&)+0x44
+    8 0x59c3d8 std::any::_Manager_external<NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > >::_S_manage(std::any::_Op, std::any const*, std::any::_Arg*)+0x48
+    9 0x7fa46300b448 NeoN::Dictionary::insert(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::any const&)+0x48
+    a 0x59c6d1 NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >& NeoFOAM::readOrCreate<NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >, NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)::{lambda()#1}>(NeoFOAM::RunTime&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)::{lambda()#1})+0xb1
+    b 0x5d4c36 NeoFOAM::PDE<double, double, int>::PDE(NeoN::dsl::Expression<double, int>, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)+0x66
+    c 0x7fa46e8d8b83 NeoFOAM::KOmegaSST::correct(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<double>&, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoN::finiteVolume::cellCentred::VolumeField<double>&, NeoFOAM::RunTime&)+0x12f3
+    d 0x7fa46e8d9731 NeoFOAM::KOmegaSSTModel::correct(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<double>&, NeoFOAM::RunTime&)+0x31
+    e 0x5408bd main+0x12bd
+    f 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    10 0x7fa4034756c0 __libc_start_main+0x80
+    11 0x541e25 _start+0x25
+
+
+438 MB   x1   (largest 438 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f664b6 NeoN::Vector<int>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, int, int)+0x56
+    6 0x7fa4630c216c std::pair<std::shared_ptr<NeoN::la::CsrSparsityPattern<int> const>, std::shared_ptr<NeoN::la::FaceToMatrixAddress const> > NeoN::la::createSparsityPatternFaceToMatrixAddress<NeoN::la::CsrSparsityPattern<int> >(NeoN::UnstructuredMesh const&)+0x10c
+    7 0x7fa4630c37e5 NeoN::la::SharedSparsityBundle<NeoN::la::CsrSparsityPattern<int>, NeoN::la::CooSparsityPattern<int> > NeoN::la::readOrCreateSparsityBundle<NeoN::la::CsrSparsityPattern<int>, NeoN::la::CooSparsityPattern<int> >(NeoN::UnstructuredMesh const&)+0x115
+    8 0x5961be NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > NeoN::la::createEmptyLinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >(NeoN::UnstructuredMesh const&, std::shared_ptr<NeoN::la::MeshIterationStrategy>)+0x3e
+    9 0x597098 NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)::{lambda()#1}::operator()() const+0x1d8
+    a 0x597fa2 NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >& NeoFOAM::readOrCreate<NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >, NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)::{lambda()#1}>(NeoFOAM::RunTime&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)::{lambda()#1})+0x52
+    b 0x5d81c6 NeoFOAM::PDE<NeoN::Vec3, double, int>::PDE(NeoN::dsl::Expression<NeoN::Vec3, int>, NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3>&, NeoFOAM::RunTime&)+0x66
+    c 0x5403a3 main+0xda3
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+389 MB   x1   (largest 389 MB)
+    Backtrace: 17 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x7fa4630d5794 NeoN::UnstructuredMesh::UnstructuredMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<NeoN::Vec3>, NeoN::Vector<double>, NeoN::Vector<int>, NeoN::Vector<int>, NeoN::BoundaryMesh)+0xb4
+    8 0x7fa46e864bf2 NeoFOAM::readOpenFOAMMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::fvMesh const&, bool)+0x7b2
+    9 0x7fa46e86510e NeoFOAM::MeshAdapter::MeshAdapter(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>, Foam::IOobject const&, bool)+0xde
+    a 0x7fa46e81c735 NeoFOAM::createMesh(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, Foam::Time const&)+0x125
+    b 0x7fa46e81f801 NeoFOAM::createAdapterRunTime(Foam::Time const&, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0xd1
+    c 0x7fa46e81fe20 NeoFOAM::createAdapterRunTime(Foam::Time const&)+0x50
+    d 0x53f843 main+0x243
+    e 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    f 0x7fa4034756c0 __libc_start_main+0x80
+    10 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d47ca NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x4fa
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d48ba NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x5ea
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d486a NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x59a
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d481a NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x54a
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 12 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x540599 main+0xf99
+    9 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    a 0x7fa4034756c0 __libc_start_main+0x80
+    b 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d477a NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x4aa
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d43b0 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0xe0
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 15 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f5b5e8 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, int, double)+0x58
+    6 0x7fa4631f8c3a void NeoN::finiteVolume::cellCentred::computeLaplacianNonOrthCorrImpl<double, double>(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&, NeoN::finiteVolume::cellCentred::SurfaceField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::dsl::Coeff, NeoN::finiteVolume::cellCentred::FaceNormalGradient<double> const&)+0x27a
+    7 0x7fa4631f9325 NeoN::finiteVolume::cellCentred::GaussGreenLaplacian<double, double>::laplacian(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&, NeoN::finiteVolume::cellCentred::SurfaceField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::dsl::Coeff)+0x175
+    8 0x61520e NeoN::finiteVolume::cellCentred::LaplacianOperator<double>::implicitOperation(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&) const+0x6e
+    9 0x605811 void NeoN::dsl::Expression<double, int>::assemble<double>(double, double, NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&, NeoN::UnstructuredMesh const&, std::vector<NeoN::dsl::PostAssemblyBase<double, int> const*, std::allocator<NeoN::dsl::PostAssemblyBase<double, int> const*> >) const+0x101
+    a 0x60a1fb NeoFOAM::PDE<double, double, int>::solveImpl(NeoN::dsl::Expression<double, int>&, NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&)+0xbb
+    b 0x540e0c main+0x180c
+    c 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    d 0x7fa4034756c0 __libc_start_main+0x80
+    e 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 16 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e8d4ba7 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x8d7
+    9 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    a 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    b 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    c 0x53fded main+0x7ed
+    d 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    e 0x7fa4034756c0 __libc_start_main+0x80
+    f 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 13 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa46e799aac NeoFOAM::flux(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&)+0x3bc
+    9 0x54066c main+0x106c
+    a 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    b 0x7fa4034756c0 __libc_start_main+0x80
+    c 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 18 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5e9e3a NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(NeoN::finiteVolume::cellCentred::SurfaceField<double> const&)+0x7a
+    8 0x5ea638 std::any::_Manager_external<NeoN::finiteVolume::cellCentred::SurfaceField<double> >::_S_manage(std::any::_Op, std::any const*, std::any::_Arg*)+0x48
+    9 0x7fa462fdbc41 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f03c41) [0x7fa462fdbc41]
+    a 0x7fa462fdbd5c No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x1f03d5c) [0x7fa462fdbd5c]
+    b 0x7fa462fdd15a NeoN::finiteVolume::cellCentred::VectorCollection::insert[abi:cxx11](NeoN::finiteVolume::cellCentred::VectorDocument const&)+0xea
+    c 0x594830 NeoN::finiteVolume::cellCentred::SurfaceField<double>& NeoN::finiteVolume::cellCentred::VectorCollection::registerVector<NeoN::finiteVolume::cellCentred::SurfaceField<double> >(std::function<NeoN::finiteVolume::cellCentred::VectorDocument (NeoN::Database&)>)+0x60
+    d 0x5e996f auto& NeoFOAM::constructAndRegister<Foam::GeometricField<double, Foam::fvsPatchField, Foam::surfaceMesh> >(NeoN::finiteVolume::cellCentred::VectorCollection&, NeoFOAM::RunTime&, Foam::GeometricField<double, Foam::fvsPatchField, Foam::surfaceMesh> const&, bool)+0x11f
+    e 0x53fd5d main+0x75d
+    f 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    10 0x7fa4034756c0 __libc_start_main+0x80
+    11 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 19 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa4630df1b2 NeoN::finiteVolume::cellCentred::GeometryScheme::GeometryScheme(NeoN::UnstructuredMesh const&)+0xd2
+    9 0x7fa4630df512 NeoN::finiteVolume::cellCentred::GeometryScheme::readOrCreate(NeoN::UnstructuredMesh const&)+0x92
+    a 0x7fa463133fa7 NeoN::finiteVolume::cellCentred::GaussGreenGrad::GaussGreenGrad(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&)+0x187
+    b 0x7fa46e8d48e6 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x616
+    c 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    d 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    e 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    f 0x53fded main+0x7ed
+    10 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    11 0x7fa4034756c0 __libc_start_main+0x80
+    12 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 19 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f49ee1 NeoN::Vector<double>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, double const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4a137 NeoN::Vector<double>::Vector(NeoN::Vector<double> const&)+0x47
+    7 0x5ea980 NeoN::finiteVolume::cellCentred::SurfaceField<double>::SurfaceField(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, NeoN::UnstructuredMesh const&, std::vector<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double>, std::allocator<NeoN::finiteVolume::cellCentred::SurfaceBoundary<double> > > const&)+0x290
+    8 0x7fa4630df257 NeoN::finiteVolume::cellCentred::GeometryScheme::GeometryScheme(NeoN::UnstructuredMesh const&)+0x177
+    9 0x7fa4630df512 NeoN::finiteVolume::cellCentred::GeometryScheme::readOrCreate(NeoN::UnstructuredMesh const&)+0x92
+    a 0x7fa463133fa7 NeoN::finiteVolume::cellCentred::GaussGreenGrad::GaussGreenGrad(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&)+0x187
+    b 0x7fa46e8d48e6 NeoFOAM::KOmegaSST::KOmegaSST(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x616
+    c 0x7fa46e8db7e6 NeoFOAM::KOmegaSSTModel::KOmegaSSTModel(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x86
+    d 0x7fa46e8f33cf std::_Function_handler<std::unique_ptr<NeoFOAM::TurbulenceModel, std::default_delete<NeoFOAM::TurbulenceModel> > (NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&), NeoN::RuntimeSelectionFactory<NeoFOAM::TurbulenceModel, NeoN::Parameters<NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&> >::Register<NeoFOAM::KOmegaSSTModel>::addSubType()::{lambda(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)#1}>::_M_invoke(std::_Any_data const&, NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x2f
+    e 0x7fa46e886d19 NeoFOAM::TurbulenceModel::create(NeoFOAM::RunTime&, NeoN::finiteVolume::cellCentred::VolumeField<double> const&)+0x289
+    f 0x53fded main+0x7ed
+    10 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    11 0x7fa4034756c0 __libc_start_main+0x80
+    12 0x541e25 _start+0x25
+
+
+376 MB   x1   (largest 376 MB)
+    Backtrace: 21 frames
+    0 0x7fa463332c26 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x225ac26) [0x7fa463332c26]
+    1 0x7fa46333337c umpire::ResourceManager::registerAllocation(void*, umpire::util::AllocationRecord)+0x2fc
+    2 0x7fa463318be4 umpire::strategy::mixins::Inspector::registerAllocation(void*, unsigned long, umpire::strategy::AllocationStrategy*)+0x74
+    3 0x7fa462ff8d03 umpire::Allocator::do_allocate(unsigned long)+0x283
+    4 0x7fa462ff449b NeoN::UmpirePoolAllocator::alloc(unsigned long)+0x7b
+    5 0x7fa462f4dba1 NeoN::Vector<int>::Vector(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, int const*, int, std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>)+0x61
+    6 0x7fa462f4ddf7 NeoN::Vector<int>::Vector(NeoN::Vector<int> const&)+0x47
+    7 0x7fa4630d1bcb NeoN::SegmentedVector<int, int>::SegmentedVector(NeoN::Vector<int> const&, NeoN::Vector<int> const&)+0x3b
+    8 0x7fa4630d22cd NeoN::SegmentedVector<int, int>::copyToExecutor(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor>) const+0x16d
+    9 0x7fa4630f4f6a NeoN::finiteVolume::cellCentred::CellToFaceStencil::computeInternalStencil() const+0xa2a
+    a 0x7fa46314e6d8 NeoN::finiteVolume::cellCentred::CellLimitedGrad::CellLimitedGrad(std::variant<NeoN::SerialExecutor, NeoN::CPUExecutor, NeoN::GPUExecutor> const&, NeoN::UnstructuredMesh const&, std::variant<NeoN::Dictionary, NeoN::TokenList> const&)+0x98
+    b 0x7fa463279bfc No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x21a1bfc) [0x7fa463279bfc]
+    c 0x7fa463289602 void NeoN::finiteVolume::cellCentred::computeLinearUpwind<NeoN::Vec3>(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<double> const&, NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3>&, bool, bool)+0x1b2
+    d 0x7fa463289996 void NeoN::finiteVolume::cellCentred::computeLinearUpwindCorrection<NeoN::Vec3>(NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<double> const&, NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3> const&, NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::Vec3>&, bool)+0x16
+    e 0x7fa46321b5b9 NeoN::finiteVolume::cellCentred::GaussGreenDivLaplacian<NeoN::Vec3>::implicitOperation(NeoN::la::LinearSystem<double, NeoN::Vec3, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&) const+0x3a99
+    f 0x54c0e9 No dladdr: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam() [0x54c0e9]
+    10 0x60432f NeoFOAM::PDE<NeoN::Vec3, double, int>::solve(NeoN::dsl::SpatialOperator<NeoN::Vec3>&&)+0x4f
+    11 0x54122b main+0x1c2b
+    12 0x7fa403475610 No dladdr: /lib64/libc.so.6(+0x2a610) [0x7fa403475610]
+    13 0x7fa4034756c0 __libc_start_main+0x80
+    14 0x541e25 _start+0x25
+
+

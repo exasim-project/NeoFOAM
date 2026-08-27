@@ -1,0 +1,41 @@
+
+The following have been reloaded with a version change:
+  1) cuda/13.0.2 => cuda/13.1.1
+
+Not expanding variables or dictionary directives
+startFrom       startTime;
+Not expanding variables or dictionary directives
+startTime       1000;
+Not expanding variables or dictionary directives
+stopAt          endTime;
+Not expanding variables or dictionary directives
+endTime         1050;
+Not expanding variables or dictionary directives
+writeInterval   50;
+Phase 3h (global mgsc + merge2 + localized-CG coarse; 2-D max_levels x rel-tol): 50 iters/variant from restart 1000
+  LEVELS={2}  TOLS={0.1}  coarse-cap=50  variants: L2e1
+================================================================
+ L2e1 : GLOBAL Cg+MG mgsc, CACHED, pgmMerge2, localized-CG coarse rel-tol=0.1 (cap 50), max_levels=2
+   -> paperParamStudyResults/mgnosc-coarse-reltol-abA/L2e1-20260717-065335.log
+================================================================
+   | Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025263577120940517, Final residual = 1.3983619925929497e-05, No Iterations 2, Solve time = 69.818 ms
+   | bounding k, min: -0.0011602340478031495 max: 870.3827916363102 average: 9.133896173979913
+   | [mem] after-turb: DEVICE_POOL current=19126 MB  actual(reserved)=38146 MB  highWater=24414 MB
+   | Writing p
+   | Writing U
+   | Writing turbulence variables
+   | ExecutionTime = 159.27 s  ClockTime = 161 s
+   | 
+   | Finalizing NeoN
+   | Finalising parallel run
+   exit=0  wall=166s  steps=50
+
+######################## SUMMARY ########################
+run                         steps   p_iters/it     p_ms/solve       cont       exec_s     s/step
+L2e1                           50           15            761 3.098516489590953e-06       159.27      3.185
+#########################################################
+per-run logs under: paperParamStudyResults/mgnosc-coarse-reltol-abA/
+
+logs under: paperParamStudyResults/mgnosc-coarse-reltol-abA/   |   2-D knee: does adaptive coarse tol beat the fixed-count best?
+  reference: §4.11j L5 (fixed coarse max_iters=10) = 7.5 outer iters, 3.660 s/step
+phase3h done

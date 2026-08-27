@@ -1,0 +1,468 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jun 28 2026
+Time   : 22:39:03
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 867025
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 30 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Multigrid)':
+{
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    relTol: 0.010000
+    reportName: config(Cg+Multigrid)
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::434]: Internal: 49243125, Boundary: 1362247
+Selecting patchDistMethod meshWave
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: true
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: true
+    effective checkFrequency: 1
+Starting time loop
+Time = 1
+[mem] step-start: DEVICE_POOL current=16605 MB  actual(reserved)=38146 MB  highWater=19132 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 0.0019488955966077423, Final residual = 0.0002389414417994438, No Iterations 3, Solve time = 143.34 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.16486889485444556, Final residual = 0.008211417173385843, No Iterations 3, Solve time = 143.34 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.10478399166434317, Final residual = 0.004988129972801337, No Iterations 3, Solve time = 143.34 ms
+[mem] after-UEqn: DEVICE_POOL current=19099 MB  actual(reserved)=38146 MB  highWater=24387 MB
+Terminate called after throwing an instance of gko::NotSupported: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338: Operation gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >> does not support parameters of type gko::matrix::Coo<double, int>
+Terminate called after throwing an instance of gko::NotSupported: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338: Operation gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >> does not support parameters of type gko::matrix::Coo<double, int>
+Terminate called after throwing an instance of gko::NotSupported: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338: Operation gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >> does not support parameters of type gko::matrix::Coo<double, int>
+Terminate called after throwing an instance of gko::NotSupported: /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338: Operation gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >> does not support parameters of type gko::matrix::Coo<double, int>
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb39 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007f8d71e65f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007f8d71e65fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007f8d71e661f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007f8dd089611b in std::decay<gko::ConvertibleTo<gko::matrix::Csr<float, int> > >::type const* gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >, gko::PolymorphicObject>(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338:9
+#5  0x00007f8dd08961b3 in gko::EnablePolymorphicObject<gko::matrix::Csr<float, int>, gko::LinOp>::copy_from_impl(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:688:42
+#6  0x00007f8dd0c90543 in gko::PolymorphicObject::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:143:43
+#7  (inlined)          in gko::EnableAbstractPolymorphicObject<gko::LinOp, gko::PolymorphicObject>::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:387:45
+#8  0x00007f8dd0caf5aa in gko::experimental::distributed::Matrix<double, int, long>::convert_to(gko::experimental::distributed::Matrix<float, int, long>*) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/distributed/matrix.cpp:242:37
+#9  0x00007f8dd1a71f63 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:494:19
+#10 0x00007f8dd1a7240b in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, , gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:81:17
+#11 0x00007f8dd1a7268c in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:83:46
+#12 (inlined)          in auto gko::run<gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:215:53
+#13 0x00007f8dd1a72757 in auto gko::run<gko::ConvertibleTo, gko::experimental::distributed::Matrix<float, int, int>, gko::experimental::distributed::Matrix<float, int, long>, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:244:31
+#14 0x00007f8dd1aa1e3a in gko::multigrid::Pgm<float, int>::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/multigrid/pgm.cpp:412:59
+#15 0x00007f8dd1648d87 in gko::multigrid::Pgm<float, int>::Pgm(gko::multigrid::Pgm<float, int>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/multigrid/pgm.hpp:184:27
+#16 0x00007f8dd1648e73 in gko::EnableDefaultFactory<gko::multigrid::Pgm<float, int>::Factory, gko::multigrid::Pgm<float, int>, gko::multigrid::Pgm<float, int>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#17 0x00007f8dd0557fef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#18 0x00007f8dd0555e68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#19 0x00007f8dd13929ae in gko::solver::Multigrid::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:917:45
+#20 0x00007f8dd1394927 in gko::solver::Multigrid::Multigrid(gko::solver::Multigrid::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:1463:23
+#21 0x00007f8dd0d96183 in gko::EnableDefaultFactory<gko::solver::Multigrid::Factory, gko::solver::Multigrid, gko::solver::Multigrid::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#22 0x00007f8dd0557fef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#23 0x00007f8dd0556455 in gko::solver::detail::generate_with_view(gko::LinOpFactory const*, std::shared_ptr<gko::LinOp const>, gko::solver::Workspace*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:93:58
+#24 0x00007f8dd0f0cd02 in void gko::solver::EnablePreconditionedIterativeSolver<double, gko::solver::Cg<double> >::generate_preconditioner_with_workspace<gko::solver::Cg<double>::parameters_type>(gko::solver::Cg<double>::parameters_type const&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/solver_base.hpp:902:37
+#25 0x00007f8dd0f7f5ad in gko::solver::Cg<double>::Cg(gko::solver::Cg<double>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/cg.hpp:119:53
+#26 0x00007f8dd0f7f713 in gko::EnableDefaultFactory<gko::solver::Cg<double>::Factory, gko::solver::Cg<double>, gko::solver::Cg<double>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#27 0x00007f8dd0557fef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#28 0x00007f8dd0555e68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#29 (inlined)          in operator() at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:624:34
+#30 0x00007f8dd04769ca in NeoN::la::ginkgo::(anonymous namespace)::cacheOrUpdateSolver(std::shared_ptr<gko::LinOp>&, std::unique_ptr<gko::solver::Workspace, std::default_delete<gko::solver::Workspace> >&, std::array<unsigned long, 3ul>&, int&, bool, int, std::shared_ptr<gko::LinOpFactory const> const&, std::shared_ptr<gko::LinOp const> const&, std::array<unsigned long, 3ul> const&) at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:644:30
+#31 0x00007f8dd04788b9 in NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:810:217
+#32 (inlined)          in NeoN::la::Solver::solve(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/include/NeoN/linearAlgebra/solver.hpp:121:92
+#33 0x0000000000604666 in NeoFOAM::PDE<double, double, int>::solveImpl(NeoN::dsl::Expression<double, int>&, NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:436:6
+#34 (inlined)          in NeoFOAM::PDE<double, double, int>::solve() at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:222:31
+#35 0x000000000053fd7b in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:244:11
+#36 0x00007f8d71ac760f at /lib64/libc.so.6
+#37 0x00007f8d71ac76bf at /lib64/libc.so.6
+#38 0x00000000005405e4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:867026] *** Process received signal ***
+[gpu-nvidia-h200-3:867026] Signal: Aborted (6)
+[gpu-nvidia-h200-3:867026] Signal code:  (-6)
+[gpu-nvidia-h200-3:867026] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f8d71adcc30]
+[gpu-nvidia-h200-3:867026] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f8d71b2a02c]
+[gpu-nvidia-h200-3:867026] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f8d71adcb86]
+[gpu-nvidia-h200-3:867026] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7f8d71ac6873]
+[gpu-nvidia-h200-3:867026] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x628dd4]
+[gpu-nvidia-h200-3:867026] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7f8d71e65f3a]
+[gpu-nvidia-h200-3:867026] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7f8d71e65fa5]
+[gpu-nvidia-h200-3:867026] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7f8d71e661f7]
+[gpu-nvidia-h200-3:867026] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko2asINS_13ConvertibleToINS_6matrix3CsrIfiEEEENS_17PolymorphicObjectEEEPKNSt5decayIT_E4typeEPKT0_+0x16c)[0x7f8dd089611c]
+[gpu-nvidia-h200-3:867026] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko23EnablePolymorphicObjectINS_6matrix3CsrIfiEENS_5LinOpEE14copy_from_implEPKNS_17PolymorphicObjectE+0x14)[0x7f8dd08961b4]
+[gpu-nvidia-h200-3:867026] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x2991544)[0x7f8dd0c90544]
+[gpu-nvidia-h200-3:867026] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12experimental11distributed6MatrixIdilE10convert_toEPNS2_IfilEE+0x3b)[0x7f8dd0caf5ab]
+[gpu-nvidia-h200-3:867026] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZZN3gko9multigrid3PgmIfiE8generateEvENKUlT_E_clISt10shared_ptrIKNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEEEEDaS3_+0x2c4)[0x7f8dd1a71f64]
+[gpu-nvidia-h200-3:867026] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEJEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESD_St10shared_ptrIT2_EOT3_DpOT4_+0x8c)[0x7f8dd1a7240c]
+[gpu-nvidia-h200-3:867026] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfiiEEEEJNS2_INS5_IfilEEEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESF_St10shared_ptrIT2_EOT3_DpOT4_+0xcd)[0x7f8dd1a7268d]
+[gpu-nvidia-h200-3:867026] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko3runINS_13ConvertibleToEJNS_12experimental11distributed6MatrixIfiiEENS4_IfilEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEEDaSt10shared_ptrIT1_EOT2_DpOT3_+0x48)[0x7f8dd1a72758]
+[gpu-nvidia-h200-3:867026] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiE8generateEv+0x5db)[0x7f8dd1aa1e3b]
+[gpu-nvidia-h200-3:867026] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiEC1EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x228)[0x7f8dd1648d88]
+[gpu-nvidia-h200-3:867026] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_9multigrid3PgmIfiE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f8dd1648e74]
+[gpu-nvidia-h200-3:867026] [19] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f8dd0557ff0]
+[gpu-nvidia-h200-3:867026] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12LinOpFactory8generateESt10shared_ptrIKNS_5LinOpEE+0x549)[0x7f8dd0555e69]
+[gpu-nvidia-h200-3:867026] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9Multigrid8generateEv+0x2ef)[0x7f8dd13929af]
+[gpu-nvidia-h200-3:867026] [22] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9MultigridC1EPKNS1_7FactoryENS_23LinOpGenerateComponentsE+0x4b8)[0x7f8dd1394928]
+[gpu-nvidia-h200-3:867026] [23] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver9Multigrid7FactoryES2_NS2_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f8dd0d96184]
+[gpu-nvidia-h200-3:867026] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f8dd0557ff0]
+[gpu-nvidia-h200-3:867026] [25] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver6detail18generate_with_viewEPKNS_12LinOpFactoryESt10shared_ptrIKNS_5LinOpEEPNS0_9WorkspaceE+0x286)[0x7f8dd0556456]
+[gpu-nvidia-h200-3:867026] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver35EnablePreconditionedIterativeSolverIdNS0_2CgIdEEE38generate_preconditioner_with_workspaceINS3_15parameters_typeEEEvRKT_+0x103)[0x7f8dd0f0cd03]
+[gpu-nvidia-h200-3:867026] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver2CgIdEC2EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x23e)[0x7f8dd0f7f5ae]
+[gpu-nvidia-h200-3:867026] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver2CgIdE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f8dd0f7f714]
+[gpu-nvidia-h200-3:867026] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f8dd0557ff0]
+[gpu-nvidia-h200-3:867026] *** End of error message ***
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb39 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007fb5ec3f9f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007fb5ec3f9fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007fb5ec3fa1f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007fb64ae2a11b in std::decay<gko::ConvertibleTo<gko::matrix::Csr<float, int> > >::type const* gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >, gko::PolymorphicObject>(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338:9
+#5  0x00007fb64ae2a1b3 in gko::EnablePolymorphicObject<gko::matrix::Csr<float, int>, gko::LinOp>::copy_from_impl(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:688:42
+#6  0x00007fb64b224543 in gko::PolymorphicObject::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:143:43
+#7  (inlined)          in gko::EnableAbstractPolymorphicObject<gko::LinOp, gko::PolymorphicObject>::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:387:45
+#8  0x00007fb64b2435aa in gko::experimental::distributed::Matrix<double, int, long>::convert_to(gko::experimental::distributed::Matrix<float, int, long>*) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/distributed/matrix.cpp:242:37
+#9  0x00007fb64c005f63 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:494:19
+#10 0x00007fb64c00640b in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, , gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:81:17
+#11 0x00007fb64c00668c in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:83:46
+#12 (inlined)          in auto gko::run<gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:215:53
+#13 0x00007fb64c006757 in auto gko::run<gko::ConvertibleTo, gko::experimental::distributed::Matrix<float, int, int>, gko::experimental::distributed::Matrix<float, int, long>, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:244:31
+#14 0x00007fb64c035e3a in gko::multigrid::Pgm<float, int>::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/multigrid/pgm.cpp:412:59
+#15 0x00007fb64bbdcd87 in gko::multigrid::Pgm<float, int>::Pgm(gko::multigrid::Pgm<float, int>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/multigrid/pgm.hpp:184:27
+#16 0x00007fb64bbdce73 in gko::EnableDefaultFactory<gko::multigrid::Pgm<float, int>::Factory, gko::multigrid::Pgm<float, int>, gko::multigrid::Pgm<float, int>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#17 0x00007fb64aaebfef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#18 0x00007fb64aae9e68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#19 0x00007fb64b9269ae in gko::solver::Multigrid::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:917:45
+#20 0x00007fb64b928927 in gko::solver::Multigrid::Multigrid(gko::solver::Multigrid::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:1463:23
+#21 0x00007fb64b32a183 in gko::EnableDefaultFactory<gko::solver::Multigrid::Factory, gko::solver::Multigrid, gko::solver::Multigrid::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#22 0x00007fb64aaebfef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#23 0x00007fb64aaea455 in gko::solver::detail::generate_with_view(gko::LinOpFactory const*, std::shared_ptr<gko::LinOp const>, gko::solver::Workspace*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:93:58
+#24 0x00007fb64b4a0d02 in void gko::solver::EnablePreconditionedIterativeSolver<double, gko::solver::Cg<double> >::generate_preconditioner_with_workspace<gko::solver::Cg<double>::parameters_type>(gko::solver::Cg<double>::parameters_type const&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/solver_base.hpp:902:37
+#25 0x00007fb64b5135ad in gko::solver::Cg<double>::Cg(gko::solver::Cg<double>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/cg.hpp:119:53
+#26 0x00007fb64b513713 in gko::EnableDefaultFactory<gko::solver::Cg<double>::Factory, gko::solver::Cg<double>, gko::solver::Cg<double>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#27 0x00007fb64aaebfef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#28 0x00007fb64aae9e68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#29 (inlined)          in operator() at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:624:34
+#30 0x00007fb64aa0a9ca in NeoN::la::ginkgo::(anonymous namespace)::cacheOrUpdateSolver(std::shared_ptr<gko::LinOp>&, std::unique_ptr<gko::solver::Workspace, std::default_delete<gko::solver::Workspace> >&, std::array<unsigned long, 3ul>&, int&, bool, int, std::shared_ptr<gko::LinOpFactory const> const&, std::shared_ptr<gko::LinOp const> const&, std::array<unsigned long, 3ul> const&) at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:644:30
+#31 0x00007fb64aa0c8b9 in NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:810:217
+#32 (inlined)          in NeoN::la::Solver::solve(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/include/NeoN/linearAlgebra/solver.hpp:121:92
+#33 0x0000000000604666 in NeoFOAM::PDE<double, double, int>::solveImpl(NeoN::dsl::Expression<double, int>&, NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:436:6
+#34 (inlined)          in NeoFOAM::PDE<double, double, int>::solve() at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:222:31
+#35 0x000000000053fd7b in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:244:11
+#36 0x00007fb5ec05b60f at /lib64/libc.so.6
+#37 0x00007fb5ec05b6bf at /lib64/libc.so.6
+#38 0x00000000005405e4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:867027] *** Process received signal ***
+[gpu-nvidia-h200-3:867027] Signal: Aborted (6)
+[gpu-nvidia-h200-3:867027] Signal code:  (-6)
+[gpu-nvidia-h200-3:867027] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7fb5ec070c30]
+[gpu-nvidia-h200-3:867027] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7fb5ec0be02c]
+[gpu-nvidia-h200-3:867027] [ 2] /lib64/libc.so.6(raise+0x16)[0x7fb5ec070b86]
+[gpu-nvidia-h200-3:867027] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7fb5ec05a873]
+[gpu-nvidia-h200-3:867027] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x628dd4]
+[gpu-nvidia-h200-3:867027] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7fb5ec3f9f3a]
+[gpu-nvidia-h200-3:867027] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7fb5ec3f9fa5]
+[gpu-nvidia-h200-3:867027] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7fb5ec3fa1f7]
+[gpu-nvidia-h200-3:867027] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko2asINS_13ConvertibleToINS_6matrix3CsrIfiEEEENS_17PolymorphicObjectEEEPKNSt5decayIT_E4typeEPKT0_+0x16c)[0x7fb64ae2a11c]
+[gpu-nvidia-h200-3:867027] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko23EnablePolymorphicObjectINS_6matrix3CsrIfiEENS_5LinOpEE14copy_from_implEPKNS_17PolymorphicObjectE+0x14)[0x7fb64ae2a1b4]
+[gpu-nvidia-h200-3:867027] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x2991544)[0x7fb64b224544]
+[gpu-nvidia-h200-3:867027] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12experimental11distributed6MatrixIdilE10convert_toEPNS2_IfilEE+0x3b)[0x7fb64b2435ab]
+[gpu-nvidia-h200-3:867027] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZZN3gko9multigrid3PgmIfiE8generateEvENKUlT_E_clISt10shared_ptrIKNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEEEEDaS3_+0x2c4)[0x7fb64c005f64]
+[gpu-nvidia-h200-3:867027] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEJEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESD_St10shared_ptrIT2_EOT3_DpOT4_+0x8c)[0x7fb64c00640c]
+[gpu-nvidia-h200-3:867027] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfiiEEEEJNS2_INS5_IfilEEEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESF_St10shared_ptrIT2_EOT3_DpOT4_+0xcd)[0x7fb64c00668d]
+[gpu-nvidia-h200-3:867027] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko3runINS_13ConvertibleToEJNS_12experimental11distributed6MatrixIfiiEENS4_IfilEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEEDaSt10shared_ptrIT1_EOT2_DpOT3_+0x48)[0x7fb64c006758]
+[gpu-nvidia-h200-3:867027] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiE8generateEv+0x5db)[0x7fb64c035e3b]
+[gpu-nvidia-h200-3:867027] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiEC1EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x228)[0x7fb64bbdcd88]
+[gpu-nvidia-h200-3:867027] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_9multigrid3PgmIfiE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7fb64bbdce74]
+[gpu-nvidia-h200-3:867027] [19] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7fb64aaebff0]
+[gpu-nvidia-h200-3:867027] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12LinOpFactory8generateESt10shared_ptrIKNS_5LinOpEE+0x549)[0x7fb64aae9e69]
+[gpu-nvidia-h200-3:867027] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9Multigrid8generateEv+0x2ef)[0x7fb64b9269af]
+[gpu-nvidia-h200-3:867027] [22] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9MultigridC1EPKNS1_7FactoryENS_23LinOpGenerateComponentsE+0x4b8)[0x7fb64b928928]
+[gpu-nvidia-h200-3:867027] [23] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver9Multigrid7FactoryES2_NS2_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7fb64b32a184]
+[gpu-nvidia-h200-3:867027] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7fb64aaebff0]
+[gpu-nvidia-h200-3:867027] [25] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver6detail18generate_with_viewEPKNS_12LinOpFactoryESt10shared_ptrIKNS_5LinOpEEPNS0_9WorkspaceE+0x286)[0x7fb64aaea456]
+[gpu-nvidia-h200-3:867027] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver35EnablePreconditionedIterativeSolverIdNS0_2CgIdEEE38generate_preconditioner_with_workspaceINS3_15parameters_typeEEEvRKT_+0x103)[0x7fb64b4a0d03]
+[gpu-nvidia-h200-3:867027] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver2CgIdEC2EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x23e)[0x7fb64b5135ae]
+[gpu-nvidia-h200-3:867027] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver2CgIdE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7fb64b513714]
+[gpu-nvidia-h200-3:867027] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7fb64aaebff0]
+[gpu-nvidia-h200-3:867027] *** End of error message ***
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb39 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007f2bda9a7f39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007f2bda9a7fa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007f2bda9a81f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007f2c393d811b in std::decay<gko::ConvertibleTo<gko::matrix::Csr<float, int> > >::type const* gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >, gko::PolymorphicObject>(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338:9
+#5  0x00007f2c393d81b3 in gko::EnablePolymorphicObject<gko::matrix::Csr<float, int>, gko::LinOp>::copy_from_impl(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:688:42
+#6  0x00007f2c397d2543 in gko::PolymorphicObject::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:143:43
+#7  (inlined)          in gko::EnableAbstractPolymorphicObject<gko::LinOp, gko::PolymorphicObject>::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:387:45
+#8  0x00007f2c397f15aa in gko::experimental::distributed::Matrix<double, int, long>::convert_to(gko::experimental::distributed::Matrix<float, int, long>*) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/distributed/matrix.cpp:242:37
+#9  0x00007f2c3a5b3f63 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:494:19
+#10 0x00007f2c3a5b440b in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, , gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:81:17
+#11 0x00007f2c3a5b468c in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:83:46
+#12 (inlined)          in auto gko::run<gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:215:53
+#13 0x00007f2c3a5b4757 in auto gko::run<gko::ConvertibleTo, gko::experimental::distributed::Matrix<float, int, int>, gko::experimental::distributed::Matrix<float, int, long>, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:244:31
+#14 0x00007f2c3a5e3e3a in gko::multigrid::Pgm<float, int>::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/multigrid/pgm.cpp:412:59
+#15 0x00007f2c3a18ad87 in gko::multigrid::Pgm<float, int>::Pgm(gko::multigrid::Pgm<float, int>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/multigrid/pgm.hpp:184:27
+#16 0x00007f2c3a18ae73 in gko::EnableDefaultFactory<gko::multigrid::Pgm<float, int>::Factory, gko::multigrid::Pgm<float, int>, gko::multigrid::Pgm<float, int>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#17 0x00007f2c39099fef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#18 0x00007f2c39097e68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#19 0x00007f2c39ed49ae in gko::solver::Multigrid::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:917:45
+#20 0x00007f2c39ed6927 in gko::solver::Multigrid::Multigrid(gko::solver::Multigrid::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:1463:23
+#21 0x00007f2c398d8183 in gko::EnableDefaultFactory<gko::solver::Multigrid::Factory, gko::solver::Multigrid, gko::solver::Multigrid::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#22 0x00007f2c39099fef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#23 0x00007f2c39098455 in gko::solver::detail::generate_with_view(gko::LinOpFactory const*, std::shared_ptr<gko::LinOp const>, gko::solver::Workspace*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:93:58
+#24 0x00007f2c39a4ed02 in void gko::solver::EnablePreconditionedIterativeSolver<double, gko::solver::Cg<double> >::generate_preconditioner_with_workspace<gko::solver::Cg<double>::parameters_type>(gko::solver::Cg<double>::parameters_type const&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/solver_base.hpp:902:37
+#25 0x00007f2c39ac15ad in gko::solver::Cg<double>::Cg(gko::solver::Cg<double>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/cg.hpp:119:53
+#26 0x00007f2c39ac1713 in gko::EnableDefaultFactory<gko::solver::Cg<double>::Factory, gko::solver::Cg<double>, gko::solver::Cg<double>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#27 0x00007f2c39099fef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#28 0x00007f2c39097e68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#29 (inlined)          in operator() at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:624:34
+#30 0x00007f2c38fb89ca in NeoN::la::ginkgo::(anonymous namespace)::cacheOrUpdateSolver(std::shared_ptr<gko::LinOp>&, std::unique_ptr<gko::solver::Workspace, std::default_delete<gko::solver::Workspace> >&, std::array<unsigned long, 3ul>&, int&, bool, int, std::shared_ptr<gko::LinOpFactory const> const&, std::shared_ptr<gko::LinOp const> const&, std::array<unsigned long, 3ul> const&) at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:644:30
+#31 0x00007f2c38fba8b9 in NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:810:217
+#32 (inlined)          in NeoN::la::Solver::solve(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/include/NeoN/linearAlgebra/solver.hpp:121:92
+#33 0x0000000000604666 in NeoFOAM::PDE<double, double, int>::solveImpl(NeoN::dsl::Expression<double, int>&, NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:436:6
+#34 (inlined)          in NeoFOAM::PDE<double, double, int>::solve() at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:222:31
+#35 0x000000000053fd7b in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:244:11
+#36 0x00007f2bda60960f at /lib64/libc.so.6
+#37 0x00007f2bda6096bf at /lib64/libc.so.6
+#38 0x00000000005405e4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:867028] *** Process received signal ***
+[gpu-nvidia-h200-3:867028] Signal: Aborted (6)
+[gpu-nvidia-h200-3:867028] Signal code:  (-6)
+[gpu-nvidia-h200-3:867028] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f2bda61ec30]
+[gpu-nvidia-h200-3:867028] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f2bda66c02c]
+[gpu-nvidia-h200-3:867028] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f2bda61eb86]
+[gpu-nvidia-h200-3:867028] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7f2bda608873]
+[gpu-nvidia-h200-3:867028] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x628dd4]
+[gpu-nvidia-h200-3:867028] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7f2bda9a7f3a]
+[gpu-nvidia-h200-3:867028] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7f2bda9a7fa5]
+[gpu-nvidia-h200-3:867028] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7f2bda9a81f7]
+[gpu-nvidia-h200-3:867028] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko2asINS_13ConvertibleToINS_6matrix3CsrIfiEEEENS_17PolymorphicObjectEEEPKNSt5decayIT_E4typeEPKT0_+0x16c)[0x7f2c393d811c]
+[gpu-nvidia-h200-3:867028] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko23EnablePolymorphicObjectINS_6matrix3CsrIfiEENS_5LinOpEE14copy_from_implEPKNS_17PolymorphicObjectE+0x14)[0x7f2c393d81b4]
+[gpu-nvidia-h200-3:867028] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x2991544)[0x7f2c397d2544]
+[gpu-nvidia-h200-3:867028] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12experimental11distributed6MatrixIdilE10convert_toEPNS2_IfilEE+0x3b)[0x7f2c397f15ab]
+[gpu-nvidia-h200-3:867028] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZZN3gko9multigrid3PgmIfiE8generateEvENKUlT_E_clISt10shared_ptrIKNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEEEEDaS3_+0x2c4)[0x7f2c3a5b3f64]
+[gpu-nvidia-h200-3:867028] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEJEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESD_St10shared_ptrIT2_EOT3_DpOT4_+0x8c)[0x7f2c3a5b440c]
+[gpu-nvidia-h200-3:867028] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfiiEEEEJNS2_INS5_IfilEEEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESF_St10shared_ptrIT2_EOT3_DpOT4_+0xcd)[0x7f2c3a5b468d]
+[gpu-nvidia-h200-3:867028] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko3runINS_13ConvertibleToEJNS_12experimental11distributed6MatrixIfiiEENS4_IfilEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEEDaSt10shared_ptrIT1_EOT2_DpOT3_+0x48)[0x7f2c3a5b4758]
+[gpu-nvidia-h200-3:867028] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiE8generateEv+0x5db)[0x7f2c3a5e3e3b]
+[gpu-nvidia-h200-3:867028] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiEC1EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x228)[0x7f2c3a18ad88]
+[gpu-nvidia-h200-3:867028] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_9multigrid3PgmIfiE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f2c3a18ae74]
+[gpu-nvidia-h200-3:867028] [19] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f2c39099ff0]
+[gpu-nvidia-h200-3:867028] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12LinOpFactory8generateESt10shared_ptrIKNS_5LinOpEE+0x549)[0x7f2c39097e69]
+[gpu-nvidia-h200-3:867028] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9Multigrid8generateEv+0x2ef)[0x7f2c39ed49af]
+[gpu-nvidia-h200-3:867028] [22] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9MultigridC1EPKNS1_7FactoryENS_23LinOpGenerateComponentsE+0x4b8)[0x7f2c39ed6928]
+[gpu-nvidia-h200-3:867028] [23] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver9Multigrid7FactoryES2_NS2_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f2c398d8184]
+[gpu-nvidia-h200-3:867028] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f2c39099ff0]
+[gpu-nvidia-h200-3:867028] [25] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver6detail18generate_with_viewEPKNS_12LinOpFactoryESt10shared_ptrIKNS_5LinOpEEPNS0_9WorkspaceE+0x286)[0x7f2c39098456]
+[gpu-nvidia-h200-3:867028] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver35EnablePreconditionedIterativeSolverIdNS0_2CgIdEEE38generate_preconditioner_with_workspaceINS3_15parameters_typeEEEvRKT_+0x103)[0x7f2c39a4ed03]
+[gpu-nvidia-h200-3:867028] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver2CgIdEC2EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x23e)[0x7f2c39ac15ae]
+[gpu-nvidia-h200-3:867028] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver2CgIdE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f2c39ac1714]
+[gpu-nvidia-h200-3:867028] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f2c39099ff0]
+[gpu-nvidia-h200-3:867028] *** End of error message ***
+Stack trace to reach terminate handler (most recent call first):
+#0  0x000000000053bb39 in cpptrace::terminate_handler() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/cpptrace-src/src/utils.cpp:65:34
+#1  0x00007f345306af39 in __cxxabiv1::__terminate(void (*)()) at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:48:15
+#2  0x00007f345306afa4 in std::terminate() at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_terminate.cc:58:27
+#3  0x00007f345306b1f6 in __cxa_throw at /scratch/software/tmp/spack-stage/spack-stage-gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/spack-src/libstdc++-v3/libsupc++/eh_throw.cc:98:18
+#4  0x00007f34b1a9b11b in std::decay<gko::ConvertibleTo<gko::matrix::Csr<float, int> > >::type const* gko::as<gko::ConvertibleTo<gko::matrix::Csr<float, int> >, gko::PolymorphicObject>(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/utils_helper.hpp:338:9
+#5  0x00007f34b1a9b1b3 in gko::EnablePolymorphicObject<gko::matrix::Csr<float, int>, gko::LinOp>::copy_from_impl(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:688:42
+#6  0x00007f34b1e95543 in gko::PolymorphicObject::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:143:43
+#7  (inlined)          in gko::EnableAbstractPolymorphicObject<gko::LinOp, gko::PolymorphicObject>::copy_from(gko::PolymorphicObject const*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:387:45
+#8  0x00007f34b1eb45aa in gko::experimental::distributed::Matrix<double, int, long>::convert_to(gko::experimental::distributed::Matrix<float, int, long>*) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/distributed/matrix.cpp:242:37
+#9  0x00007f34b2c76f63 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/polymorphic_object.hpp:494:19
+#10 0x00007f34b2c7740b in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, , gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:81:17
+#11 0x00007f34b2c7768c in void gko::detail::run_impl<void, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:83:46
+#12 (inlined)          in auto gko::run<gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, int> >, gko::ConvertibleTo<gko::experimental::distributed::Matrix<float, int, long> >, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:215:53
+#13 0x00007f34b2c77757 in auto gko::run<gko::ConvertibleTo, gko::experimental::distributed::Matrix<float, int, int>, gko::experimental::distributed::Matrix<float, int, long>, gko::LinOp const, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&>(std::shared_ptr<gko::LinOp const>, gko::multigrid::Pgm<float, int>::generate()::{lambda(auto:1)#1}&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/dispatch_helper.hpp:244:31
+#14 0x00007f34b2ca6e3a in gko::multigrid::Pgm<float, int>::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/multigrid/pgm.cpp:412:59
+#15 0x00007f34b284dd87 in gko::multigrid::Pgm<float, int>::Pgm(gko::multigrid::Pgm<float, int>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/multigrid/pgm.hpp:184:27
+#16 0x00007f34b284de73 in gko::EnableDefaultFactory<gko::multigrid::Pgm<float, int>::Factory, gko::multigrid::Pgm<float, int>, gko::multigrid::Pgm<float, int>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#17 0x00007f34b175cfef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#18 0x00007f34b175ae68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#19 0x00007f34b25979ae in gko::solver::Multigrid::generate() at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:917:45
+#20 0x00007f34b2599927 in gko::solver::Multigrid::Multigrid(gko::solver::Multigrid::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/solver/multigrid.cpp:1463:23
+#21 0x00007f34b1f9b183 in gko::EnableDefaultFactory<gko::solver::Multigrid::Factory, gko::solver::Multigrid, gko::solver::Multigrid::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#22 0x00007f34b175cfef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#23 0x00007f34b175b455 in gko::solver::detail::generate_with_view(gko::LinOpFactory const*, std::shared_ptr<gko::LinOp const>, gko::solver::Workspace*) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:93:58
+#24 0x00007f34b2111d02 in void gko::solver::EnablePreconditionedIterativeSolver<double, gko::solver::Cg<double> >::generate_preconditioner_with_workspace<gko::solver::Cg<double>::parameters_type>(gko::solver::Cg<double>::parameters_type const&) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/solver_base.hpp:902:37
+#25 0x00007f34b21845ad in gko::solver::Cg<double>::Cg(gko::solver::Cg<double>::Factory const*, gko::LinOpGenerateComponents) at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/solver/cg.hpp:119:53
+#26 0x00007f34b2184713 in gko::EnableDefaultFactory<gko::solver::Cg<double>::Factory, gko::solver::Cg<double>, gko::solver::Cg<double>::parameters_type, gko::LinOpFactory>::generate_impl(gko::LinOpGenerateComponents) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:188:13
+#27 0x00007f34b175cfef in std::unique_ptr<gko::LinOp, std::default_delete<gko::LinOp> > gko::AbstractFactory<gko::LinOp, gko::LinOpGenerateComponents>::generate<gko::LinOpGenerateComponents>(gko::LinOpGenerateComponents&&) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/include/ginkgo/core/base/abstract_factory.hpp:69:14
+#28 0x00007f34b175ae68 in gko::LinOpFactory::generate(std::shared_ptr<gko::LinOp const>) const at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/_deps/ginkgo-src/core/base/lin_op.cpp:50:44
+#29 (inlined)          in operator() at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:624:34
+#30 0x00007f34b167b9ca in NeoN::la::ginkgo::(anonymous namespace)::cacheOrUpdateSolver(std::shared_ptr<gko::LinOp>&, std::unique_ptr<gko::solver::Workspace, std::default_delete<gko::solver::Workspace> >&, std::array<unsigned long, 3ul>&, int&, bool, int, std::shared_ptr<gko::LinOpFactory const> const&, std::shared_ptr<gko::LinOp const> const&, std::array<unsigned long, 3ul> const&) at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:644:30
+#31 0x00007f34b167d8b9 in NeoN::la::ginkgo::GinkgoSolver::solveDist(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/src/linearAlgebra/ginkgo/ginkgoDistributed.cpp:810:217
+#32 (inlined)          in NeoN::la::Solver::solve(NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > > const&, NeoN::Vector<double>&) const at /storage/home/greole/code/NeoN/include/NeoN/linearAlgebra/solver.hpp:121:92
+#33 0x0000000000604666 in NeoFOAM::PDE<double, double, int>::solveImpl(NeoN::dsl::Expression<double, int>&, NeoN::la::LinearSystem<double, double, NeoN::la::Matrix<double, NeoN::la::CsrSparsityPattern<int> >, NeoN::la::Matrix<double, NeoN::la::CooSparsityPattern<int> > >&) at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:436:6
+#34 (inlined)          in NeoFOAM::PDE<double, double, int>::solve() at /storage/home/greole/code/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp:222:31
+#35 0x000000000053fd7b in main at /storage/home/greole/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp:244:11
+#36 0x00007f3452ccc60f at /lib64/libc.so.6
+#37 0x00007f3452ccc6bf at /lib64/libc.so.6
+#38 0x00000000005405e4 at /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+[gpu-nvidia-h200-3:867025] *** Process received signal ***
+[gpu-nvidia-h200-3:867025] Signal: Aborted (6)
+[gpu-nvidia-h200-3:867025] Signal code:  (-6)
+[gpu-nvidia-h200-3:867025] [ 0] /lib64/libc.so.6(+0x3fc30)[0x7f3452ce1c30]
+[gpu-nvidia-h200-3:867025] [ 1] /lib64/libc.so.6(+0x8d02c)[0x7f3452d2f02c]
+[gpu-nvidia-h200-3:867025] [ 2] /lib64/libc.so.6(raise+0x16)[0x7f3452ce1b86]
+[gpu-nvidia-h200-3:867025] [ 3] /lib64/libc.so.6(abort+0xd3)[0x7f3452ccb873]
+[gpu-nvidia-h200-3:867025] [ 4] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam[0x628dd4]
+[gpu-nvidia-h200-3:867025] [ 5] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdf3a)[0x7f345306af3a]
+[gpu-nvidia-h200-3:867025] [ 6] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbdfa5)[0x7f345306afa5]
+[gpu-nvidia-h200-3:867025] [ 7] /storage/apps/opt/spack/opt/spack/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spack_path_placeholder__/__spac/linux-x86_64_v3/gcc-13.3.0-pc5contataet2iuufjrcsndtp6ub6hpk/lib64/libstdc++.so.6(+0xbe1f7)[0x7f345306b1f7]
+[gpu-nvidia-h200-3:867025] [ 8] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko2asINS_13ConvertibleToINS_6matrix3CsrIfiEEEENS_17PolymorphicObjectEEEPKNSt5decayIT_E4typeEPKT0_+0x16c)[0x7f34b1a9b11c]
+[gpu-nvidia-h200-3:867025] [ 9] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko23EnablePolymorphicObjectINS_6matrix3CsrIfiEENS_5LinOpEE14copy_from_implEPKNS_17PolymorphicObjectE+0x14)[0x7f34b1a9b1b4]
+[gpu-nvidia-h200-3:867025] [10] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(+0x2991544)[0x7f34b1e95544]
+[gpu-nvidia-h200-3:867025] [11] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12experimental11distributed6MatrixIdilE10convert_toEPNS2_IfilEE+0x3b)[0x7f34b1eb45ab]
+[gpu-nvidia-h200-3:867025] [12] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZZN3gko9multigrid3PgmIfiE8generateEvENKUlT_E_clISt10shared_ptrIKNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEEEEDaS3_+0x2c4)[0x7f34b2c76f64]
+[gpu-nvidia-h200-3:867025] [13] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfilEEEEJEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESD_St10shared_ptrIT2_EOT3_DpOT4_+0x8c)[0x7f34b2c7740c]
+[gpu-nvidia-h200-3:867025] [14] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6detail8run_implIvNS_13ConvertibleToINS_12experimental11distributed6MatrixIfiiEEEEJNS2_INS5_IfilEEEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEESF_St10shared_ptrIT2_EOT3_DpOT4_+0xcd)[0x7f34b2c7768d]
+[gpu-nvidia-h200-3:867025] [15] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko3runINS_13ConvertibleToEJNS_12experimental11distributed6MatrixIfiiEENS4_IfilEEEKNS_5LinOpERZNS_9multigrid3PgmIfiE8generateEvEUlT_E_JEEEDaSt10shared_ptrIT1_EOT2_DpOT3_+0x48)[0x7f34b2c77758]
+[gpu-nvidia-h200-3:867025] [16] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiE8generateEv+0x5db)[0x7f34b2ca6e3b]
+[gpu-nvidia-h200-3:867025] [17] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko9multigrid3PgmIfiEC1EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x228)[0x7f34b284dd88]
+[gpu-nvidia-h200-3:867025] [18] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_9multigrid3PgmIfiE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f34b284de74]
+[gpu-nvidia-h200-3:867025] [19] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f34b175cff0]
+[gpu-nvidia-h200-3:867025] [20] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko12LinOpFactory8generateESt10shared_ptrIKNS_5LinOpEE+0x549)[0x7f34b175ae69]
+[gpu-nvidia-h200-3:867025] [21] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9Multigrid8generateEv+0x2ef)[0x7f34b25979af]
+[gpu-nvidia-h200-3:867025] [22] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver9MultigridC1EPKNS1_7FactoryENS_23LinOpGenerateComponentsE+0x4b8)[0x7f34b2599928]
+[gpu-nvidia-h200-3:867025] [23] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver9Multigrid7FactoryES2_NS2_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f34b1f9b184]
+[gpu-nvidia-h200-3:867025] [24] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f34b175cff0]
+[gpu-nvidia-h200-3:867025] [25] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver6detail18generate_with_viewEPKNS_12LinOpFactoryESt10shared_ptrIKNS_5LinOpEEPNS0_9WorkspaceE+0x286)[0x7f34b175b456]
+[gpu-nvidia-h200-3:867025] [26] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver35EnablePreconditionedIterativeSolverIdNS0_2CgIdEEE38generate_preconditioner_with_workspaceINS3_15parameters_typeEEEvRKT_+0x103)[0x7f34b2111d03]
+[gpu-nvidia-h200-3:867025] [27] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZN3gko6solver2CgIdEC2EPKNS2_7FactoryENS_23LinOpGenerateComponentsE+0x23e)[0x7f34b21845ae]
+[gpu-nvidia-h200-3:867025] [28] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko20EnableDefaultFactoryINS_6solver2CgIdE7FactoryES3_NS3_15parameters_typeENS_12LinOpFactoryEE13generate_implENS_23LinOpGenerateComponentsE+0x44)[0x7f34b2184714]
+[gpu-nvidia-h200-3:867025] [29] /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko15AbstractFactoryINS_5LinOpENS_23LinOpGenerateComponentsEE8generateIJS2_EEESt10unique_ptrIS1_St14default_deleteIS1_EEDpOT_+0x40)[0x7f34b175cff0]
+[gpu-nvidia-h200-3:867025] *** End of error message ***
+--------------------------------------------------------------------------
+
+prterun noticed that process rank 2 with PID 867027 on node gpu-nvidia-h200-3 exited on
+signal 6 (Aborted).
+--------------------------------------------------------------------------

@@ -1,0 +1,961 @@
+/*---------------------------------------------------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2506                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+Build  : b050cd9480-20250814 OPENFOAM=2506 version=v2506
+Arch   : "LSB;label=32;scalar=64"
+Exec   : /storage/home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam -parallel
+Date   : Jul 21 2026
+Time   : 07:59:44
+Host   : gpu-nvidia-h200-3.int.coma-cluster.de
+PID    : 2216333
+I/O    : uncollated
+Case   : /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+nProcs : 4
+Hosts  :
+(
+    (gpu-nvidia-h200-3.int.coma-cluster.de 4)
+)
+Pstream initialized with:
+    node communication : off [type=host] (4 ranks, 1 nodes)
+    topology controls  : none
+    consensus exchange : 0 (tuning: 0)
+    exchange algorithm : 0
+    commsType          : nonBlocking
+    polling iterations : 0
+trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+fileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+allowSystemOperations : Allowing user-supplied system call operations
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+Create time
+
+Initializing NeoN
+Creating Executor GPU
+Creating NeoFOAM runTime
+
+SIMPLE: no convergence criteria found. Calculations will run for 50 steps.
+
+Reading field p
+
+Reading field U
+
+Reading/calculating face flux field phi
+
+Selecting incompressible transport model Newtonian
+NeoFOAM solver config (from fvSolution configFile) for 'config(Cg+Multigrid)':
+{
+    cacheSolver: true
+    configFile: <NeoN::TokenList>
+    l1ScaledResidual: true
+    preconditionerRebuildInterval: 0
+    relTol: 0.010000
+    reportName: config(Cg+Multigrid)
+    solver: Ginkgo
+    tolerance: 0.000000
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: false
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Creating phi
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49333487, Boundary: 1754396
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49320882, Boundary: 1762558
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49261542, Boundary: 1427829
+
+[NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp::423]: Internal: 49243125, Boundary: 1362247
+Selecting patchDistMethod meshWave
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: false
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Mapping OpenFOAM solver settings to NeoN settings.
+Currently, it is advisable to specify a configFile
+for fine grained Ginkgo solver control
+
+Replacing solver PBiCGStab by solver::Bicgstab
+Replacing preconditioner diagonal by preconditioner::Schwarz (Schwarz-wrapped for distributed run)
+NeoFOAM solver config (mapped from fvSolution) for 'Schwarz(Jacobi)+Bicgstab':
+{
+    cacheSolver: true
+    criteria: {
+        absolute_residual_norm: 0.000000
+        initial_residual_norm: 0.100000
+        iteration: 1000
+    }
+    l1ScaledResidual: true
+    optimize: false
+    preconditioner: {
+        local_solver: {
+            max_block_size: 1
+            type: preconditioner::Jacobi
+        }
+        type: preconditioner::Schwarz
+    }
+    reportName: Schwarz(Jacobi)+Bicgstab
+    solver: Ginkgo
+    type: solver::Bicgstab
+}
+    effective optimize: false
+    effective checkFrequency: 1
+Starting time loop
+Time = 1001
+[mem] step-start: DEVICE_POOL current=12979 MB  actual(reserved)=38146 MB  highWater=19132 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.915631151210173e-05, Final residual = 3.117777853246355e-06, No Iterations 3, Solve time = 35.173 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004031295874140797, Final residual = 0.00014165332775768302, No Iterations 3, Solve time = 19.392 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011223325614447871, Final residual = 4.881420736287105e-05, No Iterations 3, Solve time = 19.279 ms
+[mem] after-UEqn: DEVICE_POOL current=15408 MB  actual(reserved)=38146 MB  highWater=20761 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013061677652833343, Final residual = 1.082521062834025e-05, No Iterations 9, Solve time = 173.708 ms
+time step continuity errors : sum local = 2.7337225721669217e-06, global = 3.585693047095533e-08, cumulative = 3.585693047095533e-08
+[mem] after-pEqn: DEVICE_POOL current=16877 MB  actual(reserved)=38146 MB  highWater=20761 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3376474509477255e-05, Final residual = 8.341612603426931e-07, No Iterations 2, Solve time = 16.302 ms
+bounding omega, min: -36178.74515738064 max: 45355982.77767275 average: 6373.388340954179
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024227554376765007, Final residual = 2.3712861068141434e-05, No Iterations 2, Solve time = 16.266 ms
+bounding k, min: -0.06724281733035173 max: 939.918035653294 average: 9.153223501382122
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=21870 MB
+ExecutionTime = 44 s  ClockTime = 44 s
+
+Time = 1002
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=21870 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.87519360261864e-05, Final residual = 2.9933585217738626e-06, No Iterations 3, Solve time = 19.863 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004033612847653756, Final residual = 0.00014038718712216212, No Iterations 3, Solve time = 19.456 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011190470061172822, Final residual = 4.0811322483338033e-05, No Iterations 3, Solve time = 20.102 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012766866099028114, Final residual = 1.2380536043561229e-05, No Iterations 9, Solve time = 189.061 ms
+time step continuity errors : sum local = 3.130016715428669e-06, global = 2.6945105998092877e-08, cumulative = 6.280203646904821e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2813835092722627e-05, Final residual = 8.603166641790899e-07, No Iterations 2, Solve time = 14.321 ms
+bounding omega, min: -94366.02132161132 max: 45355982.84774711 average: 6373.6614025589
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024177453618369314, Final residual = 8.01290850458919e-06, No Iterations 3, Solve time = 17.518 ms
+bounding k, min: -0.00019981949424606945 max: 933.2949042793449 average: 9.152819592653449
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 46.67 s  ClockTime = 47 s
+
+Time = 1003
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.858178526710075e-05, Final residual = 2.411681832991053e-06, No Iterations 3, Solve time = 19.863 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004030559170728878, Final residual = 0.0001366793624657547, No Iterations 3, Solve time = 19.789 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011175236432582664, Final residual = 7.24171156502995e-05, No Iterations 2, Solve time = 16.43 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012675582697340042, Final residual = 1.1544772633723319e-05, No Iterations 9, Solve time = 186.679 ms
+time step continuity errors : sum local = 2.919109483420037e-06, global = 1.628086635889446e-08, cumulative = 7.908290282794266e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3129578760119564e-05, Final residual = 8.375133075233265e-07, No Iterations 2, Solve time = 14.409 ms
+bounding omega, min: -36294.84171697884 max: 45355982.93183691 average: 6373.352558478551
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002396982081474651, Final residual = 7.1849032068649795e-06, No Iterations 3, Solve time = 17.584 ms
+bounding k, min: -1.0804970762437199e-05 max: 922.072837702475 average: 9.152673835094435
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 49.35 s  ClockTime = 49 s
+
+Time = 1004
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.849145195956534e-05, Final residual = 2.051517753706752e-06, No Iterations 3, Solve time = 19.877 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00402571779282114, Final residual = 0.0001330321448120202, No Iterations 3, Solve time = 19.527 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011193367211427148, Final residual = 6.176799707374211e-05, No Iterations 2, Solve time = 15.812 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001268023975919395, Final residual = 1.1871702025579593e-05, No Iterations 9, Solve time = 184.986 ms
+time step continuity errors : sum local = 3.0010877900499685e-06, global = 5.1450730127472826e-09, cumulative = 8.422797584068995e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2898281138247516e-05, Final residual = 8.337322454139359e-07, No Iterations 2, Solve time = 14.209 ms
+bounding omega, min: -33982.66955498524 max: 45355983.01627918 average: 6373.414713616545
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023931656163764137, Final residual = 1.3491639398007715e-05, No Iterations 2, Solve time = 14.417 ms
+bounding k, min: -2.1708759790906734e-05 max: 907.7029493764277 average: 9.152416201092652
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 52.03 s  ClockTime = 52 s
+
+Time = 1005
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.841562911017944e-05, Final residual = 3.888533131110534e-06, No Iterations 2, Solve time = 16.582 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004022205476973577, Final residual = 0.00024950287979415227, No Iterations 2, Solve time = 16.318 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011188274609067444, Final residual = 5.8505494015252144e-05, No Iterations 3, Solve time = 19.228 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001276674852955611, Final residual = 1.1723794494035222e-05, No Iterations 13, Solve time = 250.939 ms
+time step continuity errors : sum local = 2.96225127276871e-06, global = -1.8274896835417684e-08, cumulative = 6.595307900527227e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2879992153387425e-05, Final residual = 8.414493927159902e-07, No Iterations 2, Solve time = 14.231 ms
+bounding omega, min: -32698.7680974368 max: 45355983.08434374 average: 6373.585719485325
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023981110195749901, Final residual = 1.913335893672622e-05, No Iterations 2, Solve time = 14.292 ms
+bounding k, min: -7.650073493122283e-05 max: 897.4200004056803 average: 9.15260340826563
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 54.76 s  ClockTime = 55 s
+
+Time = 1006
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.848306654959412e-05, Final residual = 4.260440131438845e-06, No Iterations 2, Solve time = 16.152 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004012860215311792, Final residual = 0.00015341490971795347, No Iterations 3, Solve time = 19.651 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011210014897221586, Final residual = 6.959058343349964e-05, No Iterations 2, Solve time = 16.291 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012808350726584094, Final residual = 1.24575474470011e-05, No Iterations 9, Solve time = 184.546 ms
+time step continuity errors : sum local = 3.1440256945243482e-06, global = -1.875123949362623e-08, cumulative = 4.7201839511646036e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2524510476495095e-05, Final residual = 8.433205559730166e-07, No Iterations 2, Solve time = 14.41 ms
+bounding omega, min: -129311.24352189606 max: 45355983.13444566 average: 6373.732654083322
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023927639440458816, Final residual = 6.779415221072311e-06, No Iterations 3, Solve time = 17.589 ms
+bounding k, min: -1.174413303078735e-05 max: 893.0295392278122 average: 9.152403792577699
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 57.42 s  ClockTime = 57 s
+
+Time = 1007
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.853144375995237e-05, Final residual = 4.309071497834428e-06, No Iterations 2, Solve time = 16.409 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004011266691701476, Final residual = 0.0001418989258401619, No Iterations 3, Solve time = 19.654 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011223551364558473, Final residual = 5.969682455263151e-05, No Iterations 2, Solve time = 15.846 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001284493228697194, Final residual = 1.2254750716682637e-05, No Iterations 19, Solve time = 342.423 ms
+time step continuity errors : sum local = 3.0913527480918877e-06, global = -3.2155122259331516e-08, cumulative = 1.504671725231452e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.29112010183285e-05, Final residual = 8.400397626627829e-07, No Iterations 2, Solve time = 14.174 ms
+bounding omega, min: -36719.83213715541 max: 45355983.1282631 average: 6373.931625751038
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023830772175721174, Final residual = 1.185265066510048e-05, No Iterations 2, Solve time = 14.017 ms
+bounding k, min: -0.00034303909711121746 max: 892.0224241501161 average: 9.152070611434903
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 60.23 s  ClockTime = 60 s
+
+Time = 1008
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.857495115289312e-05, Final residual = 4.321697701142411e-06, No Iterations 2, Solve time = 16.27 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00401706213914695, Final residual = 0.000248862310940325, No Iterations 2, Solve time = 16.21 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001119766785248285, Final residual = 9.902827497369009e-05, No Iterations 3, Solve time = 19.187 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012849534728044225, Final residual = 1.18275112639237e-05, No Iterations 8, Solve time = 166.655 ms
+time step continuity errors : sum local = 2.9773815283581353e-06, global = -3.531347487632908e-08, cumulative = -2.0266757624014563e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2892060965310326e-05, Final residual = 8.38840338604441e-07, No Iterations 2, Solve time = 13.973 ms
+bounding omega, min: -33773.22125414787 max: 45355983.0643768 average: 6374.006459305802
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002385189615687743, Final residual = 1.1346538642976718e-05, No Iterations 2, Solve time = 13.895 ms
+bounding k, min: -2.002017219540708e-05 max: 891.1667839709613 average: 9.15177537694332
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 62.87 s  ClockTime = 63 s
+
+Time = 1009
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.861532550986364e-05, Final residual = 4.3061008127532335e-06, No Iterations 2, Solve time = 16.383 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0040161667013067694, Final residual = 0.00015118262875707318, No Iterations 3, Solve time = 19.384 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011228908009120386, Final residual = 7.261321170492378e-05, No Iterations 2, Solve time = 16.479 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012844398933591003, Final residual = 1.1674288425851958e-05, No Iterations 20, Solve time = 362.707 ms
+time step continuity errors : sum local = 2.938143998707729e-06, global = -2.059297224557216e-08, cumulative = -4.085972986958673e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2844766343710772e-05, Final residual = 8.43991317472021e-07, No Iterations 2, Solve time = 14.365 ms
+bounding omega, min: -34798.61450353887 max: 45355982.91318494 average: 6374.160798651375
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002388359702031048, Final residual = 1.1293369763210219e-05, No Iterations 2, Solve time = 14.303 ms
+bounding k, min: -0.0002065709320210118 max: 892.0045088138248 average: 9.151432189348341
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 65.70999999999999 s  ClockTime = 66 s
+
+Time = 1010
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.86582976617273e-05, Final residual = 4.311449434575621e-06, No Iterations 2, Solve time = 16.347 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004022811731971151, Final residual = 0.00014417792982697006, No Iterations 3, Solve time = 19.838 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011217098432485405, Final residual = 6.108812201519619e-05, No Iterations 2, Solve time = 16.105 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012896320450492722, Final residual = 1.0895292165202643e-05, No Iterations 9, Solve time = 182.029 ms
+time step continuity errors : sum local = 2.7384212000761116e-06, global = -4.0517657710648664e-08, cumulative = -8.137738758023539e-08
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2815738153343816e-05, Final residual = 8.459941785828255e-07, No Iterations 2, Solve time = 13.949 ms
+bounding omega, min: -164047.52273575906 max: 45355982.70071407 average: 6374.15633364264
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023915235889814603, Final residual = 1.1611365844624266e-05, No Iterations 2, Solve time = 13.907 ms
+bounding k, min: -1.6781779287153207e-05 max: 892.2440683497608 average: 9.150987719196111
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 68.36 s  ClockTime = 68 s
+
+Time = 1011
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.870123289180659e-05, Final residual = 4.317780788926424e-06, No Iterations 2, Solve time = 16.43 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004035288872456241, Final residual = 0.00029442997254534365, No Iterations 2, Solve time = 16.37 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011169515922836654, Final residual = 9.901741820784114e-05, No Iterations 3, Solve time = 19.141 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012908585385449632, Final residual = 1.1691170875851097e-05, No Iterations 9, Solve time = 194.114 ms
+time step continuity errors : sum local = 2.9381731966738806e-06, global = -3.922225115369323e-08, cumulative = -1.205996387339286e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2813735827301614e-05, Final residual = 8.451966424087768e-07, No Iterations 2, Solve time = 14.223 ms
+bounding omega, min: -38215.4551365879 max: 45355982.68029197 average: 6374.180971130664
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023950815104106175, Final residual = 1.1755491112670088e-05, No Iterations 2, Solve time = 13.993 ms
+bounding k, min: -3.785986789722896e-05 max: 893.0224743534865 average: 9.150513935049817
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 71.03 s  ClockTime = 71 s
+
+Time = 1012
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.877996759932747e-05, Final residual = 4.335655193937757e-06, No Iterations 2, Solve time = 16.376 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004033260826876386, Final residual = 0.00014928744108220349, No Iterations 3, Solve time = 19.453 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011189274959011422, Final residual = 7.34554064926595e-05, No Iterations 2, Solve time = 16.155 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012922206066932717, Final residual = 1.1975884134818846e-05, No Iterations 9, Solve time = 185.758 ms
+time step continuity errors : sum local = 3.009498176186102e-06, global = -3.73510250445161e-08, cumulative = -1.579506637784447e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2798189267405095e-05, Final residual = 8.453398519791928e-07, No Iterations 2, Solve time = 14.246 ms
+bounding omega, min: -37613.96093252057 max: 45355982.72444064 average: 6374.120403114251
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00023979565334090693, Final residual = 1.2596922694432918e-05, No Iterations 2, Solve time = 14.363 ms
+bounding k, min: -2.1390755919591133e-05 max: 893.1587519216096 average: 9.149980042521827
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 73.67 s  ClockTime = 74 s
+
+Time = 1013
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.883325106240787e-05, Final residual = 4.349687373950349e-06, No Iterations 2, Solve time = 16.656 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004040879311920308, Final residual = 0.000143787008360431, No Iterations 3, Solve time = 19.46 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011176083746154979, Final residual = 6.912730119929974e-05, No Iterations 2, Solve time = 16.077 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012950066404126862, Final residual = 1.1961411291588003e-05, No Iterations 11, Solve time = 218.286 ms
+time step continuity errors : sum local = 3.0059076878899825e-06, global = -3.4413755675078275e-08, cumulative = -1.9236441945352299e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2803927843166316e-05, Final residual = 8.514844617907099e-07, No Iterations 2, Solve time = 14.328 ms
+bounding omega, min: -34301.723080496406 max: 45355982.78098323 average: 6374.069265620098
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024012970681573152, Final residual = 1.1114339953092189e-05, No Iterations 2, Solve time = 14.167 ms
+bounding k, min: -0.0029253552452447804 max: 893.3440229041438 average: 9.149412767509162
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 76.36 s  ClockTime = 77 s
+
+Time = 1014
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.888920366704454e-05, Final residual = 4.434634239604605e-06, No Iterations 2, Solve time = 16.564 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00405277858237488, Final residual = 0.00013943815367118244, No Iterations 3, Solve time = 19.637 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011146797257208499, Final residual = 6.218751815186434e-05, No Iterations 2, Solve time = 16.178 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013001137359430384, Final residual = 1.183822975391985e-05, No Iterations 11, Solve time = 220.606 ms
+time step continuity errors : sum local = 2.975430970019012e-06, global = -3.202512804193791e-08, cumulative = -2.243895474954609e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2773083162424072e-05, Final residual = 8.538034787458397e-07, No Iterations 2, Solve time = 14.234 ms
+bounding omega, min: -255440.4198838586 max: 45355982.81911037 average: 6373.883343527197
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024031685010734684, Final residual = 1.3610512754137918e-05, No Iterations 2, Solve time = 14.129 ms
+bounding k, min: -2.4773934364233725e-05 max: 892.8910100827758 average: 9.14867899431119
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 79.05 s  ClockTime = 79 s
+
+Time = 1015
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.896653352351069e-05, Final residual = 4.400634603626283e-06, No Iterations 2, Solve time = 16.342 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004067707417653409, Final residual = 0.00036169999827380416, No Iterations 2, Solve time = 16.268 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011092791402121406, Final residual = 8.009322354308481e-05, No Iterations 3, Solve time = 19.28 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012996633610446965, Final residual = 1.0971798732739868e-05, No Iterations 12, Solve time = 232.281 ms
+time step continuity errors : sum local = 2.757147296452455e-06, global = -2.8397901281211327e-08, cumulative = -2.5278744877667223e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2842071401472627e-05, Final residual = 8.537979042170852e-07, No Iterations 2, Solve time = 14.231 ms
+bounding omega, min: -51066.53532745085 max: 45355982.80615484 average: 6373.684032662738
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024075677263888742, Final residual = 1.3375542467623994e-05, No Iterations 2, Solve time = 14.223 ms
+bounding k, min: -0.0008730799318047641 max: 892.3243650866441 average: 9.147926463477067
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 81.73999999999999 s  ClockTime = 82 s
+
+Time = 1016
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.908932486075715e-05, Final residual = 4.564904889659397e-06, No Iterations 2, Solve time = 16.392 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004060823730400211, Final residual = 0.00015120267332779713, No Iterations 3, Solve time = 19.845 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011102401787816331, Final residual = 7.873470627240286e-05, No Iterations 2, Solve time = 16.028 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001298335692195534, Final residual = 1.2158741839577676e-05, No Iterations 11, Solve time = 225.121 ms
+time step continuity errors : sum local = 3.0536727937571877e-06, global = -2.8933126561917203e-08, cumulative = -2.8172057533858944e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.283462497171608e-05, Final residual = 8.537226777833046e-07, No Iterations 2, Solve time = 14.042 ms
+bounding omega, min: -52684.622581418174 max: 45355982.740287885 average: 6373.428888501055
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024106133115019045, Final residual = 1.4074506717832698e-05, No Iterations 2, Solve time = 14.249 ms
+bounding k, min: -5.238232388229555e-05 max: 891.3946240356366 average: 9.147239995213244
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 84.44 s  ClockTime = 85 s
+
+Time = 1017
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.915968788389724e-05, Final residual = 3.96781163597827e-06, No Iterations 3, Solve time = 19.639 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004065851385018769, Final residual = 0.00014663128230339725, No Iterations 3, Solve time = 19.452 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011114501851665587, Final residual = 7.826941443798022e-05, No Iterations 2, Solve time = 15.825 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012982778568079835, Final residual = 1.2170339349111288e-05, No Iterations 9, Solve time = 186.383 ms
+time step continuity errors : sum local = 3.0543225118762524e-06, global = -2.9000764691979163e-08, cumulative = -3.107213400305686e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2849537475128137e-05, Final residual = 8.581288573542559e-07, No Iterations 2, Solve time = 14.075 ms
+bounding omega, min: -52596.363934078865 max: 45355982.653934166 average: 6373.178531958095
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002413828108107145, Final residual = 1.3389720883181952e-05, No Iterations 2, Solve time = 14.276 ms
+bounding k, min: -0.000840276235792619 max: 890.2574234914113 average: 9.14659409171419
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 87.09 s  ClockTime = 87 s
+
+Time = 1018
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.917208878722857e-05, Final residual = 4.0765256427966806e-06, No Iterations 2, Solve time = 16.237 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004076692979520512, Final residual = 0.00014092322087170614, No Iterations 3, Solve time = 20.174 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011117326873615679, Final residual = 7.646927802662627e-05, No Iterations 2, Solve time = 16.469 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013000007185151828, Final residual = 1.241126313633364e-05, No Iterations 9, Solve time = 187.676 ms
+time step continuity errors : sum local = 3.1124506809817053e-06, global = -3.063009287670975e-08, cumulative = -3.4135143290727835e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2840710658360491e-05, Final residual = 8.589054531492028e-07, No Iterations 2, Solve time = 14.348 ms
+bounding omega, min: -285476.66013479297 max: 45355982.586729005 average: 6372.924333355022
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002415809886691352, Final residual = 1.4121995429971276e-05, No Iterations 2, Solve time = 14.05 ms
+bounding k, min: -0.0010587581434362975 max: 888.8876654716098 average: 9.145966170715374
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 89.73999999999999 s  ClockTime = 90 s
+
+Time = 1019
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.919881462110767e-05, Final residual = 3.5154972163227197e-06, No Iterations 2, Solve time = 16.662 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004090446634466446, Final residual = 0.00013921953400662402, No Iterations 3, Solve time = 19.375 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001111266277847581, Final residual = 7.468003380881847e-05, No Iterations 2, Solve time = 16.227 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013008333747020699, Final residual = 1.254739971829519e-05, No Iterations 12, Solve time = 235.676 ms
+time step continuity errors : sum local = 3.1441702993666236e-06, global = -3.051635641468017e-08, cumulative = -3.7186778932195853e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2836418897904828e-05, Final residual = 8.522050450000912e-07, No Iterations 2, Solve time = 14.141 ms
+bounding omega, min: -61959.30610312002 max: 45355982.57393698 average: 6372.674171739835
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024170606627068944, Final residual = 1.141386476872342e-05, No Iterations 2, Solve time = 14.273 ms
+bounding k, min: -0.008321654565275352 max: 887.3735843848806 average: 9.14529734399126
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 92.45999999999999 s  ClockTime = 93 s
+
+Time = 1020
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.916076872815979e-05, Final residual = 2.7750607265345197e-06, No Iterations 3, Solve time = 19.771 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0041047446256430795, Final residual = 0.00037536888431740994, No Iterations 2, Solve time = 16.051 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001110418589791366, Final residual = 7.88150874726024e-05, No Iterations 2, Solve time = 16.078 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001297789417607273, Final residual = 1.2614913646312367e-05, No Iterations 11, Solve time = 221.705 ms
+time step continuity errors : sum local = 3.1604466966687815e-06, global = -2.984432060442934e-08, cumulative = -4.0171210992638785e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.279104662046354e-05, Final residual = 8.471347366520014e-07, No Iterations 2, Solve time = 13.954 ms
+bounding omega, min: -57024.44508102663 max: 45355982.57700965 average: 6372.3644948953515
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024175889483613454, Final residual = 1.4125067364879799e-05, No Iterations 2, Solve time = 14.306 ms
+bounding k, min: -0.003723764413896949 max: 885.7954105112956 average: 9.144564877723816
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 95.15000000000001 s  ClockTime = 95 s
+
+Time = 1021
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.91998542795848e-05, Final residual = 4.208061913145133e-06, No Iterations 2, Solve time = 16.582 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0040994126660959095, Final residual = 0.00015605602472008637, No Iterations 3, Solve time = 19.604 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001112309991895044, Final residual = 7.991223955618258e-05, No Iterations 2, Solve time = 15.956 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013003808231928672, Final residual = 1.1643125308635198e-05, No Iterations 10, Solve time = 198.647 ms
+time step continuity errors : sum local = 2.9158083734298555e-06, global = -3.375626422134451e-08, cumulative = -4.3546837414773234e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2875972430980889e-05, Final residual = 8.514833334989722e-07, No Iterations 2, Solve time = 14.242 ms
+bounding omega, min: -55751.25833899893 max: 45355982.58593143 average: 6372.101810567582
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024203543996712798, Final residual = 1.472419364229978e-05, No Iterations 2, Solve time = 14.228 ms
+bounding k, min: -0.0008893974939750988 max: 884.1591327222304 average: 9.143943819103951
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 97.81999999999999 s  ClockTime = 98 s
+
+Time = 1022
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.930886438401248e-05, Final residual = 3.694446185038804e-06, No Iterations 2, Solve time = 16.276 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004105701081148697, Final residual = 0.00014909461269429862, No Iterations 3, Solve time = 19.521 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011132437040797273, Final residual = 8.086877678499169e-05, No Iterations 2, Solve time = 15.95 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013030536928636018, Final residual = 1.1937458070251199e-05, No Iterations 10, Solve time = 200.623 ms
+time step continuity errors : sum local = 2.9887723097236146e-06, global = -3.2304256705931464e-08, cumulative = -4.677726308536638e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2853516391283001e-05, Final residual = 8.467181050195484e-07, No Iterations 2, Solve time = 14.369 ms
+bounding omega, min: -118257.62183107881 max: 45355982.597134925 average: 6371.835844069316
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024212172557446315, Final residual = 1.2852704890086123e-05, No Iterations 2, Solve time = 14.25 ms
+bounding k, min: -0.005407054215351405 max: 882.521628441139 average: 9.143242188856448
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 100.48 s  ClockTime = 101 s
+
+Time = 1023
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.932251873131082e-05, Final residual = 2.5545138080947275e-06, No Iterations 3, Solve time = 19.937 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004118511248369836, Final residual = 0.0001431422371447841, No Iterations 3, Solve time = 19.219 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011135641110419383, Final residual = 8.10204298874829e-05, No Iterations 2, Solve time = 15.886 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012961172601258903, Final residual = 1.0596855490577069e-05, No Iterations 12, Solve time = 231.189 ms
+time step continuity errors : sum local = 2.6525878617751657e-06, global = -2.5907552708548942e-08, cumulative = -4.936801835622128e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2819329243635965e-05, Final residual = 8.398864149162554e-07, No Iterations 2, Solve time = 14.443 ms
+bounding omega, min: -58909.61526156982 max: 45355982.61115269 average: 6371.66803101014
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024206521290148281, Final residual = 1.386546471312871e-05, No Iterations 2, Solve time = 14.179 ms
+bounding k, min: -0.003106553237168047 max: 881.0044438706001 average: 9.142573490027612
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 103.19 s  ClockTime = 104 s
+
+Time = 1024
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.921844506532333e-05, Final residual = 3.1612566192547604e-06, No Iterations 3, Solve time = 19.588 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004132327532958301, Final residual = 0.0001426821578177428, No Iterations 3, Solve time = 19.624 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011132580966605567, Final residual = 8.149328081945309e-05, No Iterations 2, Solve time = 16.097 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012947881122610634, Final residual = 1.1063951900232417e-05, No Iterations 10, Solve time = 198.97 ms
+time step continuity errors : sum local = 2.7689323230752033e-06, global = -2.7193347835201702e-08, cumulative = -5.208735313974145e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2845220521690589e-05, Final residual = 8.371438229521131e-07, No Iterations 2, Solve time = 14.01 ms
+bounding omega, min: -55252.362136907584 max: 45355982.62416001 average: 6371.510419893484
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024225841225950916, Final residual = 1.4962148564784103e-05, No Iterations 2, Solve time = 13.942 ms
+bounding k, min: -0.000891779794184944 max: 879.5178691899475 average: 9.141927426463191
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 105.86 s  ClockTime = 106 s
+
+Time = 1025
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.921575096672032e-05, Final residual = 3.9271311023227005e-06, No Iterations 2, Solve time = 16.515 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004146114429796538, Final residual = 0.0001441825729203796, No Iterations 3, Solve time = 19.459 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011127129573934866, Final residual = 7.921885484858976e-05, No Iterations 2, Solve time = 16.631 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012981197863629315, Final residual = 1.1521280760917897e-05, No Iterations 10, Solve time = 203.578 ms
+time step continuity errors : sum local = 2.8831564328462098e-06, global = -2.2555404413349202e-08, cumulative = -5.434289358107637e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2863189082054503e-05, Final residual = 8.401620088041063e-07, No Iterations 2, Solve time = 14.106 ms
+bounding omega, min: -59679.648951799354 max: 45355982.63582164 average: 6371.410182324097
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024260230754421836, Final residual = 1.6670534474725235e-05, No Iterations 2, Solve time = 14.184 ms
+bounding k, min: -0.004644127874387005 max: 878.2005058235745 average: 9.141275189002132
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 108.52 s  ClockTime = 109 s
+
+Time = 1026
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.929431567377407e-05, Final residual = 2.779295214837436e-06, No Iterations 3, Solve time = 19.853 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004158891504957551, Final residual = 0.00031007767120020297, No Iterations 2, Solve time = 16.077 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001112207676485904, Final residual = 7.833124857010998e-05, No Iterations 2, Solve time = 16.156 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001298467212201888, Final residual = 1.2452259363782037e-05, No Iterations 10, Solve time = 207.453 ms
+time step continuity errors : sum local = 3.115251907984716e-06, global = -1.883890670774037e-08, cumulative = -5.622678425185041e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.286818338062841e-05, Final residual = 8.386812901322986e-07, No Iterations 2, Solve time = 14.253 ms
+bounding omega, min: -258092.1964326057 max: 45355982.64594703 average: 6371.288838503837
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024296313955729748, Final residual = 1.4852182350305697e-05, No Iterations 2, Solve time = 14.592 ms
+bounding k, min: -0.0001132239555446269 max: 877.0599715889618 average: 9.140579142392841
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 111.19 s  ClockTime = 112 s
+
+Time = 1027
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.935596927534067e-05, Final residual = 4.1865188088397105e-06, No Iterations 2, Solve time = 16.592 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004155957107863899, Final residual = 0.0001542057675369086, No Iterations 3, Solve time = 19.246 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001113577946873186, Final residual = 7.899242932013155e-05, No Iterations 2, Solve time = 16.059 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013017038810995555, Final residual = 1.272888151807129e-05, No Iterations 13, Solve time = 250.307 ms
+time step continuity errors : sum local = 3.18412719532199e-06, global = -7.991614518089789e-09, cumulative = -5.702594570365939e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2877410018567208e-05, Final residual = 8.365754651416286e-07, No Iterations 2, Solve time = 14.196 ms
+bounding omega, min: -56587.21200446393 max: 45355982.65285753 average: 6371.224426324939
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024332833847456545, Final residual = 1.53012695210352e-05, No Iterations 2, Solve time = 14.073 ms
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 113.91 s  ClockTime = 114 s
+
+Time = 1028
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.949331295850746e-05, Final residual = 3.0919066915884743e-06, No Iterations 3, Solve time = 19.67 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00416138196760586, Final residual = 0.0001465348048116149, No Iterations 3, Solve time = 19.992 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001114417332319671, Final residual = 7.887183487812767e-05, No Iterations 2, Solve time = 16.344 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013006560378476804, Final residual = 1.1054678236858141e-05, No Iterations 10, Solve time = 199.008 ms
+time step continuity errors : sum local = 2.7651504335390085e-06, global = -1.3937141383047049e-08, cumulative = -5.84196598419641e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2868483111859617e-05, Final residual = 8.335011297974363e-07, No Iterations 2, Solve time = 13.867 ms
+bounding omega, min: -55476.1106662351 max: 45355982.6587229 average: 6371.137120241012
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024370332270452733, Final residual = 1.5899593895593282e-05, No Iterations 2, Solve time = 14.258 ms
+bounding k, min: -0.00020901957780204358 max: 875.0887834801327 average: 9.139369005325255
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 116.59 s  ClockTime = 117 s
+
+Time = 1029
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.949188116699541e-05, Final residual = 3.5444748818127852e-06, No Iterations 2, Solve time = 16.455 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00417247826066347, Final residual = 0.0001393490991771584, No Iterations 3, Solve time = 19.303 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001114943774055728, Final residual = 7.910918556158296e-05, No Iterations 2, Solve time = 16.295 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001303658725246503, Final residual = 1.2156149722705515e-05, No Iterations 11, Solve time = 218.799 ms
+time step continuity errors : sum local = 3.040306918061883e-06, global = -6.010472812025408e-09, cumulative = -5.902070712316664e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2856973975215409e-05, Final residual = 8.329712953398191e-07, No Iterations 2, Solve time = 14.307 ms
+bounding omega, min: -55477.23243147633 max: 45355982.664735295 average: 6371.042853758956
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002441177382722416, Final residual = 1.638812339264321e-05, No Iterations 2, Solve time = 14.329 ms
+bounding k, min: -0.00045508391549951377 max: 874.375641808521 average: 9.13865547130775
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 119.27 s  ClockTime = 120 s
+
+Time = 1030
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.95113148044965e-05, Final residual = 2.5623201289054665e-06, No Iterations 3, Solve time = 19.918 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004186662141298323, Final residual = 0.0001375945876147564, No Iterations 3, Solve time = 19.511 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011155821110566642, Final residual = 7.930476903645158e-05, No Iterations 2, Solve time = 16.031 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012986684014774058, Final residual = 1.2302652464168218e-05, No Iterations 9, Solve time = 187.909 ms
+time step continuity errors : sum local = 3.076697567218875e-06, global = -9.542061161158553e-09, cumulative = -5.99749132392825e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2855655358717664e-05, Final residual = 8.334757761469232e-07, No Iterations 2, Solve time = 14.253 ms
+bounding omega, min: -257434.11686152982 max: 45355982.671312824 average: 6370.9716820151325
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002445873842792939, Final residual = 1.698779748933093e-05, No Iterations 2, Solve time = 14.18 ms
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 121.93 s  ClockTime = 122 s
+
+Time = 1031
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.942416983659655e-05, Final residual = 2.9240962434602113e-06, No Iterations 3, Solve time = 19.825 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004201761547038708, Final residual = 0.00013883203175945946, No Iterations 3, Solve time = 19.78 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011161259485766757, Final residual = 7.953393770756085e-05, No Iterations 2, Solve time = 16.105 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012965425764300518, Final residual = 1.1671433975659342e-05, No Iterations 11, Solve time = 224.893 ms
+time step continuity errors : sum local = 2.920062561399265e-06, global = -1.920074725413602e-09, cumulative = -6.016692071182386e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2869504211933204e-05, Final residual = 8.292649352636508e-07, No Iterations 2, Solve time = 14.244 ms
+bounding omega, min: -53215.77400826023 max: 45355982.67672435 average: 6370.945617986802
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024511616891368336, Final residual = 1.7222820130934484e-05, No Iterations 2, Solve time = 14.084 ms
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 124.63 s  ClockTime = 125 s
+
+Time = 1032
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.940772605170329e-05, Final residual = 4.009220748220309e-06, No Iterations 2, Solve time = 16.317 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.00421627521043719, Final residual = 0.00014144412381934023, No Iterations 3, Solve time = 19.714 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011168294060986384, Final residual = 7.89768981867188e-05, No Iterations 2, Solve time = 16.084 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012996130190699538, Final residual = 1.2442019524445195e-05, No Iterations 10, Solve time = 205.702 ms
+time step continuity errors : sum local = 3.113916751148541e-06, global = -4.522769848350268e-09, cumulative = -6.061919769665888e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2876974056453033e-05, Final residual = 8.326876634769898e-07, No Iterations 2, Solve time = 14.162 ms
+bounding omega, min: -51819.5174736497 max: 45355982.68330715 average: 6370.924612330266
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024572494121361384, Final residual = 1.7332886348063988e-05, No Iterations 2, Solve time = 14.526 ms
+bounding k, min: -3.7830509264867144e-06 max: 872.9555863933493 average: 9.136679223664231
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 127.31 s  ClockTime = 128 s
+
+Time = 1033
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.950000536442968e-05, Final residual = 2.793928392966772e-06, No Iterations 3, Solve time = 19.623 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004230555223843019, Final residual = 0.00024748511982313897, No Iterations 2, Solve time = 15.918 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011178229881074607, Final residual = 7.887915556009332e-05, No Iterations 2, Solve time = 16.011 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012985135283632172, Final residual = 1.2209353544790348e-05, No Iterations 9, Solve time = 182.907 ms
+time step continuity errors : sum local = 3.0555699330178852e-06, global = -9.441692827071965e-09, cumulative = -6.156336697936608e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2887825120845093e-05, Final residual = 8.395027075106267e-07, No Iterations 2, Solve time = 13.98 ms
+bounding omega, min: -51495.96554817253 max: 45355982.69027303 average: 6370.9274976241695
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024635750390244245, Final residual = 1.6974689898820733e-05, No Iterations 2, Solve time = 14.29 ms
+bounding k, min: -0.00012557649344938407 max: 872.6820142357153 average: 9.136002127782852
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 129.97 s  ClockTime = 130 s
+
+Time = 1034
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.954599558396213e-05, Final residual = 3.5460271416217405e-06, No Iterations 2, Solve time = 16.391 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0042341583998987565, Final residual = 0.00015225900101885497, No Iterations 3, Solve time = 19.673 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011201426821819663, Final residual = 7.895104802570009e-05, No Iterations 2, Solve time = 16.088 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012998487295779342, Final residual = 1.280608836359427e-05, No Iterations 10, Solve time = 202.92 ms
+time step continuity errors : sum local = 3.2047626135860096e-06, global = -6.763250405501272e-09, cumulative = -6.22396920199162e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.289230315168964e-05, Final residual = 8.433912662545108e-07, No Iterations 2, Solve time = 14.14 ms
+bounding omega, min: -226521.5646232228 max: 45355982.69587024 average: 6370.92466893323
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002468104457364953, Final residual = 1.6005537630970457e-05, No Iterations 2, Solve time = 14.166 ms
+bounding k, min: -4.741640837636473e-05 max: 872.4475935184946 average: 9.135306353377713
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 132.65 s  ClockTime = 133 s
+
+Time = 1035
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.96340089901011e-05, Final residual = 2.4971786423410623e-06, No Iterations 3, Solve time = 19.601 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004244156318979144, Final residual = 0.00014713465865527362, No Iterations 3, Solve time = 19.254 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011219560968315078, Final residual = 7.617679981156456e-05, No Iterations 2, Solve time = 16.205 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001295743537315928, Final residual = 1.1852594821470434e-05, No Iterations 11, Solve time = 224.035 ms
+time step continuity errors : sum local = 2.966926367442674e-06, global = -9.708399989018651e-09, cumulative = -6.321053201881806e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2903954500806285e-05, Final residual = 8.431798628707105e-07, No Iterations 2, Solve time = 13.929 ms
+bounding omega, min: -49271.33502463609 max: 45355982.69942885 average: 6370.972878032099
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002471812378339476, Final residual = 1.502847231019183e-05, No Iterations 2, Solve time = 13.958 ms
+bounding k, min: -0.00017655210726118763 max: 872.2763929406608 average: 9.13467357820467
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 135.34 s  ClockTime = 136 s
+
+Time = 1036
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.962127919114061e-05, Final residual = 2.979946584185958e-06, No Iterations 3, Solve time = 19.766 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004257441292097031, Final residual = 0.0001414817577590417, No Iterations 3, Solve time = 19.827 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001123036416333014, Final residual = 7.384011767114598e-05, No Iterations 2, Solve time = 15.951 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012959009440644694, Final residual = 1.2497701969481994e-05, No Iterations 8, Solve time = 170.675 ms
+time step continuity errors : sum local = 3.1295215577049538e-06, global = -2.2482846581808225e-08, cumulative = -6.545881667699888e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2914532236784705e-05, Final residual = 8.476074800184697e-07, No Iterations 2, Solve time = 14.092 ms
+bounding omega, min: -48067.32984478541 max: 45355982.69999996 average: 6370.991504167814
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002476402796812744, Final residual = 1.5025592238396329e-05, No Iterations 2, Solve time = 14.268 ms
+bounding k, min: -6.933647673118631e-05 max: 872.1759921822808 average: 9.134079254839264
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 137.98 s  ClockTime = 139 s
+
+Time = 1037
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.967130269553924e-05, Final residual = 3.5847186292325837e-06, No Iterations 3, Solve time = 19.636 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004271908540075622, Final residual = 0.00014266329369544162, No Iterations 3, Solve time = 19.426 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011235487047722022, Final residual = 7.046102314811971e-05, No Iterations 2, Solve time = 15.754 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0012984519250437898, Final residual = 1.195577943852173e-05, No Iterations 9, Solve time = 186.042 ms
+time step continuity errors : sum local = 2.994323684258627e-06, global = -2.3917492866250222e-08, cumulative = -6.785056596362391e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.294505738116406e-05, Final residual = 8.586428742432968e-07, No Iterations 2, Solve time = 14.4 ms
+bounding omega, min: -46075.04755859506 max: 45355982.69599051 average: 6371.047407847023
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024820279202991663, Final residual = 1.4965674120596536e-05, No Iterations 2, Solve time = 14.285 ms
+bounding k, min: -0.00010623910239699743 max: 871.9622853490744 average: 9.133549906298535
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 140.64 s  ClockTime = 141 s
+
+Time = 1038
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 7.97767417539491e-05, Final residual = 6.103736367702852e-06, No Iterations 2, Solve time = 16.53 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004287328158205596, Final residual = 0.00014617118512854632, No Iterations 3, Solve time = 19.163 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001123873553258798, Final residual = 6.401274874780749e-05, No Iterations 2, Solve time = 15.862 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013122237699229127, Final residual = 1.3078902667735715e-05, No Iterations 13, Solve time = 246.1 ms
+time step continuity errors : sum local = 3.2765273732057604e-06, global = 4.969046670498865e-10, cumulative = -6.780087549691892e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.2998765500732754e-05, Final residual = 8.737139272056643e-07, No Iterations 2, Solve time = 13.794 ms
+bounding omega, min: -270938.6636077423 max: 45355982.685795985 average: 6371.101926620907
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00024892579581095006, Final residual = 1.4792107920042121e-05, No Iterations 2, Solve time = 14.255 ms
+bounding k, min: -9.641865576820482e-05 max: 871.7629489012124 average: 9.133192862520735
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 143.36 s  ClockTime = 144 s
+
+Time = 1039
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.009108946744264e-05, Final residual = 6.210079323379042e-06, No Iterations 2, Solve time = 16.368 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004304383001635873, Final residual = 0.00033063804332854064, No Iterations 2, Solve time = 15.898 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011235621810240302, Final residual = 7.581221716448515e-05, No Iterations 3, Solve time = 19.368 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013157308901148592, Final residual = 1.3079783037187265e-05, No Iterations 10, Solve time = 201.593 ms
+time step continuity errors : sum local = 3.2802079861736302e-06, global = -1.2847642092362592e-08, cumulative = -6.908563970615518e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.305329348123151e-05, Final residual = 8.847336432619219e-07, No Iterations 2, Solve time = 14.19 ms
+bounding omega, min: -46407.1569506413 max: 45355982.67223861 average: 6371.2018064869335
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002495837947116228, Final residual = 1.4954808136108923e-05, No Iterations 2, Solve time = 14.251 ms
+bounding k, min: -0.0002561797006580815 max: 871.5956258417328 average: 9.132943054153454
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 146.04 s  ClockTime = 147 s
+
+Time = 1040
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.041662590478447e-05, Final residual = 6.133113469034519e-06, No Iterations 2, Solve time = 16.512 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004301700567838745, Final residual = 0.00016008124725216187, No Iterations 3, Solve time = 19.522 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001124821918639259, Final residual = 7.529551830456351e-05, No Iterations 2, Solve time = 15.868 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013133953876446076, Final residual = 1.3106926775771717e-05, No Iterations 11, Solve time = 219.515 ms
+time step continuity errors : sum local = 3.2886293491421226e-06, global = -5.978251879666923e-09, cumulative = -6.968346489412187e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3100743834215967e-05, Final residual = 8.962195065748604e-07, No Iterations 2, Solve time = 14.057 ms
+bounding omega, min: -45063.71455356607 max: 45355982.65607402 average: 6371.287491563983
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002501843014587398, Final residual = 1.3287929120169682e-05, No Iterations 2, Solve time = 14.067 ms
+bounding k, min: -0.003727916155184016 max: 871.4730719949729 average: 9.132911563210206
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 148.71 s  ClockTime = 149 s
+
+Time = 1041
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.066753465596397e-05, Final residual = 5.912414657887669e-06, No Iterations 2, Solve time = 16.521 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004310871725843151, Final residual = 0.00014612767804072322, No Iterations 3, Solve time = 19.367 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011281018325758154, Final residual = 6.99630179770319e-05, No Iterations 2, Solve time = 16.305 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013156742513744115, Final residual = 1.2782505124471773e-05, No Iterations 11, Solve time = 221.015 ms
+time step continuity errors : sum local = 3.210948091865431e-06, global = -8.541713379492513e-09, cumulative = -7.053763623207112e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3122684152067161e-05, Final residual = 9.09484317753678e-07, No Iterations 2, Solve time = 14.349 ms
+bounding omega, min: -44385.095520973184 max: 45355982.63711204 average: 6371.3817170902175
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.000250538854922482, Final residual = 1.4127339666356514e-06, No Iterations 4, Solve time = 20.56 ms
+bounding k, min: -4.843640283457975e-05 max: 871.4227298354004 average: 9.133163421740258
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 151.41 s  ClockTime = 152 s
+
+Time = 1042
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.087563829921418e-05, Final residual = 5.810836604111459e-06, No Iterations 2, Solve time = 16.199 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004325893091928105, Final residual = 0.00014183992506352748, No Iterations 3, Solve time = 19.393 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011304708859668526, Final residual = 6.889000546055959e-05, No Iterations 3, Solve time = 19.21 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013166206228555483, Final residual = 1.040731373043633e-05, No Iterations 11, Solve time = 224.4 ms
+time step continuity errors : sum local = 2.616828259198827e-06, global = -1.3435963297050766e-08, cumulative = -7.18812325617762e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3135658339837122e-05, Final residual = 9.195536601717099e-07, No Iterations 2, Solve time = 14.352 ms
+bounding omega, min: -217709.39770224557 max: 45355982.621626854 average: 6371.448225682585
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002498431804035137, Final residual = 1.1425855798470816e-05, No Iterations 2, Solve time = 14.348 ms
+bounding k, min: -0.0006898892739351202 max: 871.2538665839355 average: 9.133302922042272
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 154.11 s  ClockTime = 155 s
+
+Time = 1043
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.102522835133432e-05, Final residual = 5.2959168345520176e-06, No Iterations 2, Solve time = 16.234 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.0043427884931229385, Final residual = 0.0001460509150636558, No Iterations 3, Solve time = 19.493 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011312356204492492, Final residual = 7.465904658695431e-05, No Iterations 2, Solve time = 15.968 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013180602427433207, Final residual = 1.2507107828716226e-05, No Iterations 10, Solve time = 205.635 ms
+time step continuity errors : sum local = 3.1471982668094484e-06, global = -2.4722223840223586e-08, cumulative = -7.435345494579857e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3223164710511074e-05, Final residual = 9.249531695694716e-07, No Iterations 2, Solve time = 14.189 ms
+bounding omega, min: -45134.35321984187 max: 45355982.60689889 average: 6371.528878793419
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002502244729926131, Final residual = 1.2442349147198194e-05, No Iterations 2, Solve time = 14.228 ms
+bounding k, min: -0.006027248509513833 max: 871.0459731830433 average: 9.133500216439318
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 156.79 s  ClockTime = 158 s
+
+Time = 1044
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.112760395212376e-05, Final residual = 5.087971450600862e-06, No Iterations 2, Solve time = 16.261 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004362262333068817, Final residual = 0.00015160195527009405, No Iterations 3, Solve time = 19.265 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011342302535608873, Final residual = 6.898934784036056e-05, No Iterations 2, Solve time = 16.089 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013267741324573333, Final residual = 1.171216918489407e-05, No Iterations 11, Solve time = 218.021 ms
+time step continuity errors : sum local = 2.9468756327269303e-06, global = -3.4563804392889934e-08, cumulative = -7.780983538508756e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3242499557661191e-05, Final residual = 9.247068910929752e-07, No Iterations 2, Solve time = 14.462 ms
+bounding omega, min: -45385.384155145824 max: 45355982.596436046 average: 6371.488214080308
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002506902549488765, Final residual = 1.4893479402252069e-05, No Iterations 2, Solve time = 14.156 ms
+bounding k, min: -0.01569927364063281 max: 870.846094882026 average: 9.13363033830434
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 159.49 s  ClockTime = 160 s
+
+Time = 1045
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.123503520319481e-05, Final residual = 5.072714111718352e-06, No Iterations 2, Solve time = 16.271 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004384430777179309, Final residual = 0.0001574487162436364, No Iterations 3, Solve time = 19.278 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011350910205553844, Final residual = 5.2694592364146295e-05, No Iterations 3, Solve time = 19.351 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013197524639148956, Final residual = 1.0911451128591026e-05, No Iterations 19, Solve time = 354.018 ms
+time step continuity errors : sum local = 2.7443067315337948e-06, global = -4.8578675402891e-08, cumulative = -8.266770292537666e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3274580867817654e-05, Final residual = 9.294224383502355e-07, No Iterations 2, Solve time = 13.906 ms
+bounding omega, min: -45860.22528895631 max: 45355982.59067051 average: 6371.464608020094
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025142464338029287, Final residual = 1.4851498748363844e-05, No Iterations 2, Solve time = 14.431 ms
+bounding k, min: -0.007651226664777411 max: 870.6370218061451 average: 9.133857963155737
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 162.32 s  ClockTime = 163 s
+
+Time = 1046
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.131530078077179e-05, Final residual = 4.984975099710685e-06, No Iterations 2, Solve time = 16.532 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004403625597603694, Final residual = 0.00015825256487812686, No Iterations 3, Solve time = 19.2 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.00113317377191813, Final residual = 2.1611035560087766e-05, No Iterations 4, Solve time = 22.644 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001322237919661562, Final residual = 1.1978866997054978e-05, No Iterations 11, Solve time = 225.459 ms
+time step continuity errors : sum local = 3.00183809957777e-06, global = -5.8707166141773255e-08, cumulative = -8.853841953955398e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3279044954926666e-05, Final residual = 9.280511380555677e-07, No Iterations 2, Solve time = 14.287 ms
+bounding omega, min: -184458.4314233403 max: 45355982.58833143 average: 6371.397110988664
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025177840037191897, Final residual = 1.5198697237394024e-05, No Iterations 2, Solve time = 14.129 ms
+bounding k, min: -0.005554274920096504 max: 870.5125014569663 average: 9.134112501931407
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 165.02 s  ClockTime = 166 s
+
+Time = 1047
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.139538824395214e-05, Final residual = 4.972231821733439e-06, No Iterations 2, Solve time = 16.522 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004419669917948487, Final residual = 0.00015677981589437846, No Iterations 3, Solve time = 19.334 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011312812775231896, Final residual = 7.911912975226142e-05, No Iterations 2, Solve time = 16.138 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013162054986759872, Final residual = 1.3156017318239493e-05, No Iterations 9, Solve time = 190.329 ms
+time step continuity errors : sum local = 3.2951127112188145e-06, global = -7.734760379998855e-08, cumulative = -9.627317991955284e-07
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3297745698919363e-05, Final residual = 9.26251273771091e-07, No Iterations 2, Solve time = 14.035 ms
+bounding omega, min: -46592.38185850123 max: 45355982.58922912 average: 6371.384586885231
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025229318880011324, Final residual = 1.4713092107833721e-05, No Iterations 2, Solve time = 14.039 ms
+bounding k, min: -0.009281110655003366 max: 870.2856412184456 average: 9.134506613365481
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 167.68 s  ClockTime = 168 s
+
+Time = 1048
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.147294565425587e-05, Final residual = 5.0320399017423e-06, No Iterations 2, Solve time = 16.503 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004430571639040859, Final residual = 0.000364621210712438, No Iterations 2, Solve time = 16.631 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011358938926996891, Final residual = 7.248118345047696e-05, No Iterations 2, Solve time = 15.894 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.001321990035056375, Final residual = 1.288135642032019e-05, No Iterations 20, Solve time = 367.94 ms
+time step continuity errors : sum local = 3.2262116460810685e-06, global = -4.6680909158772243e-08, cumulative = -1.0094127083543007e-06
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3292332591916055e-05, Final residual = 9.208934443196174e-07, No Iterations 2, Solve time = 13.961 ms
+bounding omega, min: -46769.90997885363 max: 45355982.59236744 average: 6371.365581449792
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025276709909453226, Final residual = 1.5038802710030692e-05, No Iterations 2, Solve time = 14.24 ms
+bounding k, min: -0.009667911510183785 max: 869.9575806566415 average: 9.134839898154599
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 170.53 s  ClockTime = 171 s
+
+Time = 1049
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.165012629644104e-05, Final residual = 5.168957436363543e-06, No Iterations 2, Solve time = 16.372 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004420484959575755, Final residual = 0.00016218124319868185, No Iterations 3, Solve time = 19.783 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.0011413179701854907, Final residual = 7.035545147530923e-05, No Iterations 3, Solve time = 19.201 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.0013226564242398461, Final residual = 1.1786566042932284e-05, No Iterations 12, Solve time = 245.909 ms
+time step continuity errors : sum local = 2.940318331239957e-06, global = -7.154410445851794e-08, cumulative = -1.0809568128128187e-06
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3313426378455879e-05, Final residual = 9.247888784571328e-07, No Iterations 2, Solve time = 14.13 ms
+bounding omega, min: -47084.49515559108 max: 45355982.59773272 average: 6371.351404874463
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.0002531591193013834, Final residual = 1.5132026140251911e-05, No Iterations 2, Solve time = 14.286 ms
+bounding k, min: -0.00577601001761327 max: 869.780385749243 average: 9.135311531204906
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+ExecutionTime = 173.25 s  ClockTime = 174 s
+
+Time = 1050
+[mem] step-start: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for Ux, Initial residual = 8.175366156649214e-05, Final residual = 5.2870097518013845e-06, No Iterations 2, Solve time = 16.456 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uy, Initial residual = 0.004420007639387436, Final residual = 0.00015089946746539608, No Iterations 3, Solve time = 19.613 ms
+Schwarz(Jacobi)+Bicgstab:  Solving for Uz, Initial residual = 0.001144787369098328, Final residual = 7.827835372905306e-05, No Iterations 2, Solve time = 15.85 ms
+[mem] after-UEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+config(Cg+Multigrid):  Solving for p, Initial residual = 0.00132307018995341, Final residual = 1.0963358003992157e-05, No Iterations 12, Solve time = 243.603 ms
+time step continuity errors : sum local = 2.734756703660603e-06, global = -7.000142757607425e-08, cumulative = -1.150958240388893e-06
+[mem] after-pEqn: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Schwarz(Jacobi)+Bicgstab:  Solving for omega, Initial residual = 1.3324069654961808e-05, Final residual = 9.235431016858075e-07, No Iterations 2, Solve time = 14.351 ms
+bounding omega, min: -113078.27316815699 max: 45355982.605148725 average: 6371.399244047004
+Schwarz(Jacobi)+Bicgstab:  Solving for k, Initial residual = 0.00025351929567387586, Final residual = 1.5375267058364383e-05, No Iterations 2, Solve time = 14.32 ms
+bounding k, min: -0.008741360687730071 max: 869.6481681760429 average: 9.135853912189203
+[mem] after-turb: DEVICE_POOL current=19061 MB  actual(reserved)=38146 MB  highWater=24788 MB
+Writing p
+Writing U
+Writing turbulence variables
+ExecutionTime = 177.18 s  ClockTime = 179 s
+
+Finalizing NeoN
+Finalising parallel run
