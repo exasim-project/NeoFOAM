@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v1912
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out values of fields from cells nearest to specified locations.
+
+\*---------------------------------------------------------------------------*/
+
+probes_603
+{
+    type            patchProbes;
+    libs            ("libsampling.so");
+
+    // Name of the directory for probe data
+    name            probes_603;
+   
+    patches         ($forcesWallPatches);
+
+    // Write at same frequency as fields
+    writeControl    timeStep;
+    writeInterval   1;
+
+    // Fields to be probed
+    fields          ($probeField);
+
+    // Optional: do not recalculate cells if mesh moves
+    fixedLocations  true;
+
+    // Optional: interpolation scheme to use (default is cell)
+    interpolationScheme $interpScheme; //cell
+
+    probeLocations
+    (
+        ( 0.5535 -0.2 0.675 )
+        ( 0.71828 -0.2 0.775 )
+        ( 0.8958 -0.2 0.875 )
+        ( 1.0959 -0.2 0.975 )
+        ( 0.5892 -0.4 0.675 )
+        ( 0.75438 -0.4 0.775 )
+        ( 0.93243 -0.4 0.875 )
+        ( 1.1349 -0.4 0.975 )
+        ( 0.6611 -0.6 0.675 )
+        ( 0.82765 -0.6 0.775 )
+        ( 1.0079 -0.6 0.875 )
+    );
+
+    // Optional: filter out points that haven't been found. Default
+    //           is to include them (with value -VGREAT)
+    includeOutOfBounds  true;
+}
+// ************************************************************************* //

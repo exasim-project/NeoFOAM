@@ -18,17 +18,12 @@ FoamFile
 // fvSolution.cpp injects "solver Ginkgo" and reads no other keys for p. Path is
 // UNQUOTED so the OpenFOAM tokenizer keeps it as a single word, and is relative
 // to the case directory.
-//
-// p points at the champion: CG + Multigrid(max_levels 6, pgmMerge2, coarse rel-tol 0.1)
-// with post-only scale correction. That last part is NOT in the JSON -- run with
-// NEON_MGSC_MODE=post (champion-clean-perf.sh exports it), otherwise the pre+post
-// form is used and costs ~9% p-solve.
 
 solvers
 {
     p
     {
-        configFile       system/gko/p-champion-mgscpost-L6-tol01.json;
+        configFile       system/gko/mp-fp64.json;
         cacheSolver      true;
         preconditionerRebuildInterval 0;
         // Opt the Ginkgo configFile solver into NeoN's L1-scaled residual stop. The

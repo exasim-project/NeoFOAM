@@ -1,0 +1,70 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v1912
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out values of fields from cells nearest to specified locations.
+
+\*---------------------------------------------------------------------------*/
+
+probes_624
+{
+    type            patchProbes;
+    libs            ("libsampling.so");
+
+    // Name of the directory for probe data
+    name            probes_624;
+   
+    patches         ($forcesWallPatches);
+
+    // Write at same frequency as fields
+    writeControl    timeStep;
+    writeInterval   1;
+
+    // Fields to be probed
+    fields          ($probeField);
+
+    // Optional: do not recalculate cells if mesh moves
+    fixedLocations  true;
+
+    // Optional: interpolation scheme to use (default is cell)
+    interpolationScheme $interpScheme; //cell
+
+    probeLocations
+    (
+        ( -0.38029 -0.75 -0.115 )
+        ( -0.34304 -0.6 -0.115 )
+        ( -0.13 -0.479 -0.155 )
+        ( 0 -0.4734 -0.155 )
+        ( 0.13 -0.46781 -0.155 )
+        ( 0.3349 -0.50609 -0.115 )
+        ( 0.38479 -0.6 -0.115 )
+        ( 0.406 -0.75 -0.115 )
+        ( -0.37767 -0.75 0.04315 )
+        ( -0.35653 -0.75 0.199 )
+        ( -0.27273 -0.75 0.33181 )
+        ( -0.14305 -0.75 0.42067 )
+        ( 0.01068 -0.75 0.45254 )
+        ( 0.16446 -0.75 0.42088 )
+        ( 0.29338 -0.75 0.33082 )
+        ( 0.37834 -0.75 0.1986 )
+        ( 0.40196 -0.75 0.04311 )
+        ( -0.33945 -0.6 0.03023 )
+        ( -0.31819 -0.6 0.17358 )
+        ( -0.24515 -0.6 0.29808 )
+        ( -0.12779 -0.6 0.38166 )
+        ( 0.0136 -0.6 0.40976 )
+        ( 0.15419 -0.6 0.37811 )
+        ( 0.27012 -0.6 0.29195 )
+        ( 0.35102 -0.6 0.17173 )
+        ( 0.37908 -0.6 0.03012 )
+    );
+
+    // Optional: filter out points that haven't been found. Default
+    //           is to include them (with value -VGREAT)
+    includeOutOfBounds  true;
+}
+// ************************************************************************* //

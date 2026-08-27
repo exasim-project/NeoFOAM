@@ -1,0 +1,76 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    // Steady SIMPLE: every equation uses the steadyState ddt (no time term).
+    // NeoN's DdtOperator now supports steadyState directly, so the previous
+    // Euler/BDF1 pseudo-transient workaround for ddt(k)/ddt(omega) is no longer
+    // needed; turbulence stability comes from the k/omega equation
+    // under-relaxation, matching the OpenFOAM simpleFoam reference.
+    default         steadyState;
+}
+
+gradSchemes
+{
+    // NeoFOAM's GradOperator::read does an exact-key lookup with no `default`
+    // fallback, so every grad(...) used by the solver/turbulence model must be
+    // listed explicitly. grad(U) uses the cell-limited gradient (NeoN's
+    // CellLimitedGrad, registered as "cellLimited"), matching the OpenFOAM
+    // simpleFoam reference: the minmod limiter clamps the gradient so values
+    // extrapolated to faces stay within the neighbour cell-value range,
+    // stabilising convection on the skewed/refined DrivAre mesh.
+    default         Gauss linear;
+    grad(p)         Gauss linear;
+    grad(U)         cellLimited Gauss linear 1;
+    grad(k)         Gauss linear;
+    grad(omega)     Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+
+    div(phi,U)      bounded Gauss linearUpwindV grad(U);
+
+    turbulence      bounded Gauss upwind;
+    div(phi,k)      $turbulence;
+    div(phi,omega)  $turbulence;
+
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
+wallDist
+{
+    method          meshWave;
+}
+
+// ************************************************************************* //

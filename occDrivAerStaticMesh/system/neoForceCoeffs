@@ -1,0 +1,97 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | GPU-native force coefficients for neoSimpleFoam
+    \\  /    A nd           |
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    GPU-native aerodynamic force-coefficient function object (neoForceCoeffs,
+    libNeoFOAM). Reads p/U/nut directly from NeoN's on-device VectorCollection
+    (no OpenFOAM objectRegistry lookup, no host copy), so it works with
+    neoSimpleFoam where the OpenFOAM-native forceCoeffs cannot (the solution
+    lives in NeoN GPU fields, not the OF database). Output matches OpenFOAM's
+    forceCoeffs: postProcessing/neoForceCoeffs/<t0>/coefficient.dat.
+
+    NOTE: neoForces resolves patches by LITERAL name (findPatchID) -- it does
+    NOT expand regexes -- so the wall patches matched by $forcesWallPatches are
+    listed explicitly below. Regenerate this list if the mesh boundary changes.
+\*---------------------------------------------------------------------------*/
+
+neoForceCoeffs
+{
+    type            neoForceCoeffs;
+    libs            ("libNeoFOAM.so");
+    writeControl    timeStep;
+    writeInterval   1;
+    log             true;
+
+    pName           p;
+    uName           U;
+    nutName         nut;
+
+    rhoInf          1.0;
+    pRef            $pref;
+
+    magUInf         $UinfMag;
+    lRef            $lref;
+    Aref            $Aref;
+
+    CofR            (1.40009 0 -0.3176);
+    dragDir         (1 0 0);
+    liftDir         (0 0 1);
+
+    // Wall patches matched by $forcesWallPatches (literal -- neoForces has no regex expansion)
+    patches
+    (
+        BodyDoorhandles
+        BodyFasciafront1
+        BodyFasciafront2
+        BodyFender
+        BodyHeadlamps
+        BodyHood
+        BodyRear
+        BodyRearAccess
+        BodyRocker
+        BodyRoof
+        BodySide
+        BodyWindowfront
+        BodyWindowfrontframe
+        BodyWindowSide
+        BodyWindowsideframe
+        BodyA-Pillar
+        Mirrors1
+        Mirrors2
+        ClosedGrillLowerInsert
+        ClosedGrillUpperInsert
+        OCDADetailedUnderbody
+        EngineUndershield
+        Tiresfront
+        Tiresrear
+        WheelSupportfront1
+        WheelSupportfront2
+        WheelSupportrear
+        Powertrain
+        ExhaustSystem1
+        ExhaustSystem2
+        ExhaustSystem3
+        NotchbackBodyside
+        NotchbackB-Pillar
+        NotchbackC-Pillar
+        NotchbackRoof
+        NotchbackTrunk
+        NotchbackWindowrear
+        NotchbackWindowrearframe
+        NotchbackWindowside
+        NotchbackWindowsideframe
+        CTRL_SURFACE_Outlet
+        CTRL_SURFACE_Wheelhouse_LHS
+        CTRL_SURFACE_Wheelshouse_RHS
+        Rimsfront
+        Rimsrear
+        BrakeDiscfront
+        BrakeDiscrear
+    );
+}
+
+// ************************************************************************* //

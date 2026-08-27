@@ -1,0 +1,66 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v1912
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out values of fields from cells nearest to specified locations.
+
+\*---------------------------------------------------------------------------*/
+
+probes_600
+{
+    type            patchProbes;
+    libs            ("libsampling.so");
+
+    // Name of the directory for probe data
+    name            probes_600;
+    
+    patches         ($forcesWallPatches);
+    // Write at same frequency as fields
+    writeControl    timeStep;
+    writeInterval   1;
+
+    // Fields to be probed
+    fields          ($probeField);
+
+    // Optional: do not recalculate cells if mesh moves
+    fixedLocations  true;
+
+    // Optional: interpolation scheme to use (default is cell)
+    //interpolationScheme $interpScheme; //cell
+
+    probeLocations
+    (
+        ( -0.79825 0 0.15 )
+        ( -0.7 0 0.40635 )
+        ( -0.6 0 0.46263 )
+        ( -0.5 0 0.49945 )
+        ( -0.4 0 0.5277 )
+        ( -0.3 0 0.55085 )
+        ( -0.1 0 0.58773 )
+        ( 0 0 0.60305 )
+        ( 0.1 0 0.6169 )
+        ( 0.3 0 0.64083 )
+        ( 0.35 0 0.64593 )
+        ( 0.4131 0 0.625 )
+        ( 0.46413 0 0.625 )
+        ( 0.54318 0 0.675 )
+        ( 0.62425 0 0.725 )
+        ( 0.70788 0 0.775 )
+        ( 0.88533 0 0.875 )
+        ( 1.0849 0 0.975 )
+        ( 1.199 0 1.025 )
+        ( 1.3 0 1.0515 )
+        ( 3.7527 0 0.45 )
+        ( 3.7579 0 0.35 )
+        ( 3.8041 0 0.25 )
+    );
+
+    // Optional: filter out points that haven't been found. Default
+    //           is to include them (with value -VGREAT)
+    includeOutOfBounds  true;
+}
+// ************************************************************************* //
