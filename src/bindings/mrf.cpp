@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// TODO: Implement a python version of this.
+
 // MRF (multiple reference frame) rotating zones for the NeoN solver family.
 //
 // Design (report/mrf-modelspec-neon-plan.md §2): do NOT port Foam::MRFZone to
