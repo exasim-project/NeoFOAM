@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Laplacian scheme models.&quot;&quot;&quot;</span>
+<span class="sd">"""Laplacian scheme models."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -604,9 +604,9 @@
 <div class="viewcode-block" id="NoneLaplacian">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.foam.schemes.laplacian.html#neofoam.foam.schemes.laplacian.NoneLaplacian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NoneLaplacian</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``laplacianSchemes { default none; }`` — OpenFOAM&#39;s *no-default* sentinel.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``laplacianSchemes { default none; }`` — OpenFOAM's *no-default* sentinel."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;none&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"none"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"none"</span>
 
     <span class="nd">@model_serializer</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -617,15 +617,15 @@
 <div class="viewcode-block" id="GaussLaplacian">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.foam.schemes.laplacian.html#neofoam.foam.schemes.laplacian.GaussLaplacian">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GaussLaplacian</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;Gauss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Gauss&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"Gauss"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Gauss"</span>
     <span class="n">interpolation</span><span class="p">:</span> <span class="n">InterpolationScheme</span>
     <span class="n">sn_grad</span><span class="p">:</span> <span class="n">SnGradScheme</span>
 
     <span class="nd">@model_serializer</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">interp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-        <span class="n">sn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sn_grad</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Gauss </span><span class="si">{</span><span class="n">interp</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">sn</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="n">interp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">)</span>
+        <span class="n">sn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sn_grad</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Gauss </span><span class="si">{</span><span class="n">interp</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">sn</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
@@ -635,21 +635,21 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_laplacian</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">v</span>
-    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"none"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"none"</span><span class="p">}</span>
     <span class="n">tokens</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;interpolation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">"interpolation"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;sn_grad&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">"sn_grad"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
     <span class="k">return</span> <span class="n">result</span>
 
 
 <span class="n">LaplacianScheme</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
     <span class="n">Union</span><span class="p">[</span><span class="n">NoneLaplacian</span><span class="p">,</span> <span class="n">GaussLaplacian</span><span class="p">],</span>
     <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_parse_laplacian</span><span class="p">),</span>
-    <span class="n">Discriminator</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">),</span>
+    <span class="n">Discriminator</span><span class="p">(</span><span class="s2">"type"</span><span class="p">),</span>
 <span class="p">]</span>
 </pre></div>
         </article>
@@ -690,6 +690,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

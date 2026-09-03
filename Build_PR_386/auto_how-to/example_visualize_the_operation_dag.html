@@ -625,10 +625,10 @@ relationships.</p>
 <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">render_solver_dag</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dag.html&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">render_solver_dag</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"dag.html"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
     <span class="n">metas_by_domain</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;main&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">]</span>
+        <span class="s2">"main"</span><span class="p">:</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">]</span>
         <span class="o">+</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">model_ops</span><span class="o">.</span><span class="n">ops</span><span class="p">],</span>
     <span class="p">}</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">dependency_dag</span><span class="p">(</span><span class="n">metas_by_domain</span><span class="p">)</span>
@@ -645,36 +645,36 @@ browser to drag nodes and inspect edges. The same
 <code class="xref py py-class docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code> feeds both renderers.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">build_dependency_digraph</span><span class="p">(</span>
     <span class="p">{</span>
-        <span class="s2">&quot;U_predictor&quot;</span><span class="p">:</span> <span class="p">[],</span>
-        <span class="s2">&quot;p_corrector&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;U_predictor&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;U_corrector&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;p_corrector&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;write_output&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;U_corrector&quot;</span><span class="p">],</span>
+        <span class="s2">"U_predictor"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="s2">"p_corrector"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"U_predictor"</span><span class="p">],</span>
+        <span class="s2">"U_corrector"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"p_corrector"</span><span class="p">],</span>
+        <span class="s2">"write_output"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"U_corrector"</span><span class="p">],</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
 <span class="n">layout</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;U_predictor&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">&quot;p_corrector&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">&quot;U_corrector&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">&quot;write_output&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"U_predictor"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"p_corrector"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"U_corrector"</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="s2">"write_output"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
 <span class="p">}</span>
 <span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span>
     <span class="n">graph</span><span class="p">,</span>
     <span class="n">pos</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span>
     <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
     <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">node_color</span><span class="o">=</span><span class="s2">&quot;lightblue&quot;</span><span class="p">,</span>
+    <span class="n">node_color</span><span class="o">=</span><span class="s2">"lightblue"</span><span class="p">,</span>
     <span class="n">node_size</span><span class="o">=</span><span class="mi">2400</span><span class="p">,</span>
-    <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+    <span class="n">edgecolors</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span>
     <span class="n">font_size</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
     <span class="n">arrowsize</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;PISO-style operation DAG&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"PISO-style operation DAG"</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 
 <span class="c1"># Same graph, written to an interactive pyvis page.</span>
-<span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s2">&quot;dag.html&quot;</span><span class="p">)</span>
+<span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s2">"dag.html"</span><span class="p">)</span>
 </pre></div>
 </div>
 <img src="../_images/sphx_glr_example_visualize_the_operation_dag_001.png" srcset="../_images/sphx_glr_example_visualize_the_operation_dag_001.png" alt="PISO-style operation DAG" class = "sphx-glr-single-img"/></section>
@@ -684,11 +684,11 @@ browser to drag nodes and inspect edges. The same
 you can call <code class="docutils literal notranslate"><span class="pre">graph.predecessors(name)</span></code>, <code class="docutils literal notranslate"><span class="pre">graph.successors(name)</span></code>,
 or <code class="docutils literal notranslate"><span class="pre">nx.find_cycle(graph)</span></code> directly. Useful inside tests or while
 debugging.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">&quot;U_predictor&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;p_corrector&quot;</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;successors of U_predictor:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">&quot;U_predictor&quot;</span><span class="p">)))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">"U_predictor"</span><span class="p">))</span> <span class="o">==</span> <span class="p">[</span><span class="s2">"p_corrector"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"successors of U_predictor:"</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">"U_predictor"</span><span class="p">)))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>successors of U_predictor: [&#39;p_corrector&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>successors of U_predictor: ['p_corrector']
 </pre></div>
 </div>
 </section>
@@ -699,15 +699,15 @@ duplicates, no missing dependencies, no cycles) use
 <code class="xref py py-func docutils literal notranslate"><span class="pre">validate_dependency_graph()</span></code> — it returns a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">GraphValidationReport</span></code> you can inspect without raising.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">report</span> <span class="o">=</span> <span class="n">validate_dependency_graph</span><span class="p">(</span>
-    <span class="n">node_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">],</span>
-    <span class="n">dependencies_by_node</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">],</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;missing&quot;</span><span class="p">]},</span>
+    <span class="n">node_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"A"</span><span class="p">,</span> <span class="s2">"B"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">],</span>
+    <span class="n">dependencies_by_node</span><span class="o">=</span><span class="p">{</span><span class="s2">"A"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"B"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="s2">"C"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"B"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">]},</span>
 <span class="p">)</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">diagnostic</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>missing_dependency InitStep &#39;C&#39; depends on &#39;missing&#39;, but &#39;missing&#39; was not found
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>missing_dependency InitStep 'C' depends on 'missing', but 'missing' was not found
 </pre></div>
 </div>
 </section>
@@ -718,7 +718,7 @@ duplicates, no missing dependencies, no cycles) use
 the resolver pipeline.</p></li>
 <li><p><a class="reference internal" href="../reference/api/neofoam.framework.graph.visualization.html#module-neofoam.framework.graph.visualization" title="neofoam.framework.graph.visualization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.framework.graph.visualization</span></code></a> — full API.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.063 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.061 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-visualize-the-operation-dag-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/dcf9aa64645a892a344f4a7605b2b2bf/example_visualize_the_operation_dag.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_visualize_the_operation_dag.ipynb</span></code></a></p>

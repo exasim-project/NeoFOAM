@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The extension seams of the NeoN pressure-velocity operations.</span>
+<span class="sd">"""The extension seams of the NeoN pressure-velocity operations.</span>
 
 <span class="sd">The NeoN twin of</span>
 <span class="sd">:mod:`neofoam.solver.incompressibleFluid.models.pressure_velocity.extension`:</span>
 <span class="sd">a model hooks into the NeoN ``UEqn`` / ``pEqn`` port with</span>
 <span class="sd">``@&lt;model&gt;.contributes(&lt;extension&gt;.&lt;hook&gt;)`` and the algorithms call each hook</span>
 <span class="sd">once on the injected handle, so no operation has to know which models a case</span>
-<span class="sd">activated. The hooks are separate from the pybFoam family&#39;s because they speak</span>
+<span class="sd">activated. The hooks are separate from the pybFoam family's because they speak</span>
 <span class="sd">NeoN types (``neon._neon`` fields, ``NeoN::dsl`` operators) rather than</span>
 <span class="sd">``volVectorField`` / ``fvVectorMatrix``.</span>
 
@@ -610,9 +610,9 @@
 <span class="sd">Example::</span>
 
 <span class="sd">    @myModel.contributes(momentum_extension.terms)</span>
-<span class="sd">    def my_momentum_term(U: Any, my_runtime: Annotated[Any, &quot;models&quot;]) -&gt; Any:</span>
+<span class="sd">    def my_momentum_term(U: Any, my_runtime: Annotated[Any, "models"]) -&gt; Any:</span>
 <span class="sd">        return nn.exp.source(my_runtime.acceleration(U))</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -621,24 +621,24 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span><span class="p">,</span> <span class="n">Kind</span><span class="p">,</span> <span class="n">fold</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;momentum_extension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;pressure_extension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;zero_expression&quot;</span><span class="p">,</span>
+    <span class="s2">"momentum_extension"</span><span class="p">,</span>
+    <span class="s2">"pressure_extension"</span><span class="p">,</span>
+    <span class="s2">"zero_expression"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="n">momentum_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">&quot;momentum&quot;</span><span class="p">)</span>
-<span class="n">pressure_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+<span class="n">momentum_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">"momentum"</span><span class="p">)</span>
+<span class="n">pressure_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="zero_expression">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.zero_expression">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">zero_expression</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The additive identity of the NeoN DSL for *field*&#39;s value type.</span>
+<span class="w">    </span><span class="sd">"""The additive identity of the NeoN DSL for *field*'s value type.</span>
 
 <span class="sd">    An ``Expression`` built from an executor alone carries no operator, so</span>
 <span class="sd">    adding it to an equation assembles a bit-identical matrix. Use it to seed a</span>
 <span class="sd">    fold whose contributions are NeoN operators.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="bp">cls</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ExpressionVector</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">VectorVolumeField</span><span class="p">)</span> <span class="k">else</span> <span class="n">nn</span><span class="o">.</span><span class="n">ExpressionScalar</span>
     <span class="c1"># Via the internal vector: VolumeField::exec() returns a std::variant that</span>
     <span class="c1"># volumeField.cpp binds without &lt;nanobind/stl/variant.h&gt;, so it has no</span>
@@ -654,50 +654,50 @@
 
 <span class="nd">@momentum_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">terms</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">contributions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Terms folded into the momentum sum at ``+ ext.terms(U)``.</span>
+<span class="w">    </span><span class="sd">"""Terms folded into the momentum sum at ``+ ext.terms(U)``.</span>
 
-<span class="sd">    The seed is an empty ``nn.Expression`` — NeoN&#39;s additive identity, so the</span>
+<span class="sd">    The seed is an empty ``nn.Expression`` — NeoN's additive identity, so the</span>
 <span class="sd">    no-contributor path assembles the matrix the algorithm wrote before this</span>
-<span class="sd">    seam existed, bit for bit. A contribution&#39;s operator joins with ``+``; a</span>
-<span class="sd">    term that belongs on native&#39;s right-hand side (``== source``) returns</span>
+<span class="sd">    seam existed, bit for bit. A contribution's operator joins with ``+``; a</span>
+<span class="sd">    term that belongs on native's right-hand side (``== source``) returns</span>
 <span class="sd">    ``negated(term)``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">fold</span><span class="p">(</span><span class="n">zero_expression</span><span class="p">(</span><span class="n">U</span><span class="p">),</span> <span class="n">contributions</span><span class="p">)</span>
 
 
 <span class="nd">@momentum_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">constrain</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The velocity, before the momentum matrix is assembled from it.</span>
+<span class="w">    </span><span class="sd">"""The velocity, before the momentum matrix is assembled from it.</span>
 
-<span class="sd">    Native&#39;s ``fvConstraints().constrain(U)``: whatever a contribution writes</span>
+<span class="sd">    Native's ``fvConstraints().constrain(U)``: whatever a contribution writes</span>
 <span class="sd">    into the boundary here is what the boundary coefficients of ``div(phi,U)``</span>
 <span class="sd">    and ``laplacian(nuEff,U)`` are built from.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 
 <span class="nd">@pressure_extension</span><span class="o">.</span><span class="n">defines</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">predicted_flux</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The predicted flux the pressure equation will see, already summed.</span>
+<span class="w">    </span><span class="sd">"""The predicted flux the pressure equation will see, already summed.</span>
 
 <span class="sd">    One point, because native does everything to this flux here:</span>
 <span class="sd">    ``MRF.makeRelative(phi)``, ``fvc::makeRelative(phi, U)`` on a moving mesh,</span>
 <span class="sd">    and ``adjustPhi`` when p needs a reference. Contributions apply in</span>
-<span class="sd">    registration order, each transforming the previous one&#39;s output, so those</span>
+<span class="sd">    registration order, each transforming the previous one's output, so those</span>
 <span class="sd">    compose the way native stacks the calls; a contribution returning ``None``</span>
 <span class="sd">    passes the flux through untouched.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 
 <span class="nd">@pressure_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">constrain_corrected_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The velocity, after the pressure corrector updated and corrected it.</span>
+<span class="w">    </span><span class="sd">"""The velocity, after the pressure corrector updated and corrected it.</span>
 
 <span class="sd">    Native needs no such point: a ``fixedValue``/``noSlip`` patch keeps an</span>
-<span class="sd">    assigned value through ``correctBoundaryConditions``. NeoN&#39;s fixed-value</span>
+<span class="sd">    assigned value through ``correctBoundaryConditions``. NeoN's fixed-value</span>
 <span class="sd">    boundary re-derives its face values from the stored uniform on every</span>
 <span class="sd">    correct, so a contribution that owns a boundary value has to re-apply it</span>
 <span class="sd">    here to hold the state native holds.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 </pre></div>
         </article>
       </div>
@@ -737,6 +737,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

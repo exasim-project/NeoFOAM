@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;``constant/transportProperties`` configuration (viscosity selection).</span>
+<span class="sd">"""``constant/transportProperties`` configuration (viscosity selection).</span>
 
 <span class="sd">Reads the OpenFOAM transport dictionary into a validated pydantic model via the</span>
 <span class="sd">OpenFOAM IO strategy. ``transportModel`` selects the viscosity model</span>
@@ -599,26 +599,26 @@
 
 <span class="sd">This is the only viscosity module that imports ``neofoam.io`` (hence pybFoam);</span>
 <span class="sd">tests that load it run the OpenFOAM IO path directly.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;TransportPropertiesConfig&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"TransportPropertiesConfig"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="TransportPropertiesConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.config.html#neofoam.viscosity.config.TransportPropertiesConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;constant/transportProperties&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/transportProperties"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransportPropertiesConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Top-level ``constant/transportProperties`` dictionary.</span>
+<span class="w">    </span><span class="sd">"""Top-level ``constant/transportProperties`` dictionary.</span>
 
 <span class="sd">    A dimensioned ``nu`` entry (``nu [ 0 2 -1 0 0 0 0 ] 1e-05``) is reduced to a</span>
 <span class="sd">    ``float`` by the IO read path before pydantic sees it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">transportModel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Newtonian&quot;</span>
+    <span class="n">transportModel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Newtonian"</span>
     <span class="n">nu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 </pre></div>
@@ -660,6 +660,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

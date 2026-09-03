@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Factory helpers that build Python-native pressure-velocity controls.</span>
+<span class="sd">"""Factory helpers that build Python-native pressure-velocity controls.</span>
 
 <span class="sd">These factories read the algorithm block of ``system/fvSolution`` through its</span>
 <span class="sd">typed config (:mod:`neofoam.foam.algorithm_configs`) and return</span>
 <span class="sd">:class:`PimpleControl` / :class:`SimpleControl` instances from</span>
 <span class="sd">:mod:`neofoam.algorithms.solution_loop.control`. They replace direct use of</span>
 <span class="sd">``pybFoam.pimpleControl`` so loop logic stays in Python.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -618,32 +618,32 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_algorithm_classes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">PimpleAlgorithmConfig</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">DynamicMeshControls</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The config classes for whichever of ``PIMPLE`` / ``PISO`` the case ships.</span>
+<span class="w">    </span><span class="sd">"""The config classes for whichever of ``PIMPLE`` / ``PISO`` the case ships.</span>
 
 <span class="sd">    pisoFoam tutorials ship a ``PISO`` block where pimpleFoam ships ``PIMPLE``;</span>
 <span class="sd">    PISO is a single-outer-loop PIMPLE, so it is read from the same place.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_PIMPLE_CLASSES</span>
-    <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="s2">"PISO"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_PISO_CLASSES</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-        <span class="s2">&quot;incompressibleFluid: system/fvSolution has neither a PIMPLE nor a &quot;</span>
-        <span class="s2">&quot;PISO block to build the pressure-velocity control from.&quot;</span>
+        <span class="s2">"incompressibleFluid: system/fvSolution has neither a PIMPLE nor a "</span>
+        <span class="s2">"PISO block to build the pressure-velocity control from."</span>
     <span class="p">)</span>
 
 
 <div class="viewcode-block" id="load_pimple_config">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.load_pimple_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_pimple_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">PimpleAlgorithmConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The active algorithm block as a typed config; a ``PISO`` block pins</span>
+<span class="w">    </span><span class="sd">"""The active algorithm block as a typed config; a ``PISO`` block pins</span>
 <span class="sd">    ``nOuterCorrectors`` to 1 (no outer loop) and ``validate=False`` mirrors the</span>
-<span class="sd">    framework&#39;s own auto-load, falling back to schema defaults for absent keys.&quot;&quot;&quot;</span>
+<span class="sd">    framework's own auto-load, falling back to schema defaults for absent keys."""</span>
     <span class="n">config_cls</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_algorithm_classes</span><span class="p">()</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">config_cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">config_cls</span><span class="p">,</span> <span class="n">PisoAlgorithmConfig</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;nOuterCorrectors&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"nOuterCorrectors"</span><span class="p">:</span> <span class="mi">1</span><span class="p">})</span>
     <span class="k">return</span> <span class="n">config</span></div>
 
 
@@ -651,22 +651,22 @@
 <div class="viewcode-block" id="create_dynamic_mesh_controls">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.create_dynamic_mesh_controls">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_dynamic_mesh_controls</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DynamicMeshControls</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The algorithm block&#39;s mesh-motion switches (``createDyMControls.H``).</span>
+<span class="w">    </span><span class="sd">"""The algorithm block's mesh-motion switches (``createDyMControls.H``).</span>
 
 <span class="sd">    Native re-reads them every time step (``readDyMControls.H``); read once here</span>
 <span class="sd">    because no tutorial rewrites them mid-run. ``correctPhi`` defaults to</span>
 <span class="sd">    ``mesh.dynamic()``, resolved here where the mesh is in hand.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">controls_cls</span> <span class="o">=</span> <span class="n">_algorithm_classes</span><span class="p">()</span>
     <span class="n">controls</span> <span class="o">=</span> <span class="n">controls_cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">controls</span><span class="o">.</span><span class="n">resolved</span><span class="p">(</span><span class="n">mesh_dynamic</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dynamic</span><span class="p">()))</span></div>
+    <span class="k">return</span> <span class="n">controls</span><span class="o">.</span><span class="n">resolved</span><span class="p">(</span><span class="n">mesh_dynamic</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span><span class="o">.</span><span class="n">dynamic</span><span class="p">()))</span></div>
 
 
 
 <div class="viewcode-block" id="create_pimple_control">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.create_pimple_control">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_pimple_control</span><span class="p">(</span><span class="n">_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PimpleControl</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :class:`PimpleControl` from the PIMPLE (or PISO) block.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create a :class:`PimpleControl` from the PIMPLE (or PISO) block."""</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">load_pimple_config</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">PimpleControl</span><span class="p">(</span>
         <span class="n">nOuterCorrectors</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">nOuterCorrectors</span><span class="p">,</span>
@@ -685,7 +685,7 @@
 <div class="viewcode-block" id="create_simple_control">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.create_simple_control">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_simple_control</span><span class="p">(</span><span class="n">_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SimpleControl</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :class:`SimpleControl` from the SIMPLE block.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create a :class:`SimpleControl` from the SIMPLE block."""</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">SimpleAlgorithmConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">SimpleControl</span><span class="p">(</span>
         <span class="n">nNonOrthogonalCorrectors</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span><span class="p">,</span>
@@ -733,6 +733,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

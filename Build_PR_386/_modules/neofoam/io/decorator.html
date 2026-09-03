@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;IOStrategy decorator and helper functions (YAML, JSON).&quot;&quot;&quot;</span>
+<span class="sd">"""IOStrategy decorator and helper functions (YAML, JSON)."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
 
@@ -603,35 +603,35 @@
     <span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">subdict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper to create YAML strategy configuration.</span>
+<span class="w">    </span><span class="sd">"""Helper to create YAML strategy configuration.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        file: Relative path to YAML file</span>
 <span class="sd">        subdict: Optional subdict path for partial file updates.</span>
-<span class="sd">                 Examples: &quot;PIMPLE&quot; (flat) or &quot;solvers.p&quot; (nested with dots)</span>
+<span class="sd">                 Examples: "PIMPLE" (flat) or "solvers.p" (nested with dots)</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Dictionary with strategy configuration</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        @IOStrategy(YAML(&quot;solver_config.yaml&quot;))</span>
+<span class="sd">        @IOStrategy(YAML("solver_config.yaml"))</span>
 <span class="sd">        class SolverConfig(BaseConfig):</span>
 <span class="sd">            param1: float</span>
 
-<span class="sd">        @IOStrategy(YAML(&quot;fvSolution.yaml&quot;, subdict=&quot;PIMPLE&quot;))</span>
+<span class="sd">        @IOStrategy(YAML("fvSolution.yaml", subdict="PIMPLE"))</span>
 <span class="sd">        class PIMPLEConfig(BaseConfig):</span>
 <span class="sd">            nOuterCorrectors: int</span>
 
-<span class="sd">        @IOStrategy(YAML(&quot;fvSolution.yaml&quot;, subdict=&quot;solvers.p&quot;))</span>
+<span class="sd">        @IOStrategy(YAML("fvSolution.yaml", subdict="solvers.p"))</span>
 <span class="sd">        class PSolverConfig(BaseConfig):</span>
 <span class="sd">            solver: str</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">YAMLStrategy</span><span class="p">(</span><span class="n">subdict</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;input_file&quot;</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
-        <span class="s2">&quot;reading_strategy&quot;</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
-        <span class="s2">&quot;writing_strategy&quot;</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
+        <span class="s2">"input_file"</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
+        <span class="s2">"reading_strategy"</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
+        <span class="s2">"writing_strategy"</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
@@ -642,31 +642,31 @@
     <span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">subdict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper to create JSON strategy configuration.</span>
+<span class="w">    </span><span class="sd">"""Helper to create JSON strategy configuration.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        file: Relative path to JSON file</span>
 <span class="sd">        subdict: Optional subdict path for partial file updates.</span>
-<span class="sd">                 Examples: &quot;database&quot; (flat) or &quot;services.database&quot; (nested with dots)</span>
+<span class="sd">                 Examples: "database" (flat) or "services.database" (nested with dots)</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Dictionary with strategy configuration</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        @IOStrategy(JSON(&quot;config.json&quot;))</span>
+<span class="sd">        @IOStrategy(JSON("config.json"))</span>
 <span class="sd">        class MyConfig(BaseConfig):</span>
 <span class="sd">            setting: str</span>
 
-<span class="sd">        @IOStrategy(JSON(&quot;config.json&quot;, subdict=&quot;services.database&quot;))</span>
+<span class="sd">        @IOStrategy(JSON("config.json", subdict="services.database"))</span>
 <span class="sd">        class DatabaseConfig(BaseConfig):</span>
 <span class="sd">            host: str</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">JSONStrategy</span><span class="p">(</span><span class="n">subdict</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;input_file&quot;</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
-        <span class="s2">&quot;reading_strategy&quot;</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
-        <span class="s2">&quot;writing_strategy&quot;</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
+        <span class="s2">"input_file"</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
+        <span class="s2">"reading_strategy"</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
+        <span class="s2">"writing_strategy"</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
@@ -677,33 +677,33 @@
     <span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">subdict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper to create OpenFOAM dictionary strategy configuration.</span>
+<span class="w">    </span><span class="sd">"""Helper to create OpenFOAM dictionary strategy configuration.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        file: Relative path to OpenFOAM dictionary file</span>
 <span class="sd">        subdict: Optional subdict path for partial file updates.</span>
-<span class="sd">                 Examples: &quot;PISO&quot; (flat) or &quot;solvers.p&quot; (nested with dots)</span>
+<span class="sd">                 Examples: "PISO" (flat) or "solvers.p" (nested with dots)</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Dictionary with strategy configuration</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">OpenFOAMStrategy</span><span class="p">(</span><span class="n">subdict</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;input_file&quot;</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
-        <span class="s2">&quot;reading_strategy&quot;</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
-        <span class="s2">&quot;writing_strategy&quot;</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
+        <span class="s2">"input_file"</span><span class="p">:</span> <span class="n">file</span><span class="p">,</span>
+        <span class="s2">"reading_strategy"</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
+        <span class="s2">"writing_strategy"</span><span class="p">:</span> <span class="n">strategy</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
 
-<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="IOStrategy">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.decorator.html#neofoam.io.decorator.IOStrategy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">IOStrategy</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to set IO strategy on a configuration class.</span>
+<span class="w">    </span><span class="sd">"""Decorator to set IO strategy on a configuration class.</span>
 
 <span class="sd">    Sets ``io_config`` on the decorated class to an :class:`IOMetadata` instance.</span>
 
@@ -714,18 +714,18 @@
 <span class="sd">        Decorator function</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        @IOStrategy(YAML(&quot;solver_config.yaml&quot;))</span>
+<span class="sd">        @IOStrategy(YAML("solver_config.yaml"))</span>
 <span class="sd">        class SolverConfig(BaseConfig):</span>
 <span class="sd">            param1: float</span>
 <span class="sd">            param2: float</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">reader</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reading_strategy&quot;</span><span class="p">,</span> <span class="n">YAMLStrategy</span><span class="p">())</span>
+<span class="sd">    """</span>
+    <span class="n">reader</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reading_strategy"</span><span class="p">,</span> <span class="n">YAMLStrategy</span><span class="p">())</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="o">=</span> <span class="n">IOMetadata</span><span class="p">(</span>  <span class="c1"># type: ignore[attr-defined]</span>
-            <span class="n">file</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;input_file&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">.yaml&quot;</span><span class="p">),</span>
+            <span class="n">file</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_file"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">.yaml"</span><span class="p">),</span>
             <span class="n">reader</span><span class="o">=</span><span class="n">reader</span><span class="p">,</span>
-            <span class="n">writer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;writing_strategy&quot;</span><span class="p">,</span> <span class="n">reader</span><span class="p">),</span>
+            <span class="n">writer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"writing_strategy"</span><span class="p">,</span> <span class="n">reader</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span>
 
@@ -770,6 +770,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

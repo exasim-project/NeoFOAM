@@ -698,11 +698,11 @@ signature.</p>
 loaded, for example), the parameter arrives as <code class="docutils literal notranslate"><span class="pre">None</span></code>. Operations
 that take an optional model write
 <code class="docutils literal notranslate"><span class="pre">Annotated[Optional[T],</span> <span class="pre">&quot;models&quot;]</span></code> and guard with <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">model:</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@incompressibleFluid</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;continuity&quot;</span><span class="p">])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@incompressibleFluid</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"continuity"</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">turbulence_correction</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">laminarTransport</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">CorrectableModel</span><span class="p">],</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">CorrectableModel</span><span class="p">],</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">laminarTransport</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">CorrectableModel</span><span class="p">],</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">CorrectableModel</span><span class="p">],</span> <span class="s2">"models"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">laminarTransport</span><span class="p">:</span>
         <span class="n">laminarTransport</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
@@ -722,13 +722,13 @@ should handle.</p>
 <h2>Concrete examples<a class="headerlink" href="#concrete-examples" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">momentum</span></code> operation uses both injection modes side by side
 (<code class="docutils literal notranslate"><span class="pre">src/neofoam/solver/incompressibleFluid/models/pressure_velocity/pimpleAlgorithm.py</span></code>):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.1"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span>
-    <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>                                  <span class="c1"># ctx.fields[&quot;U&quot;]</span>
-    <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>                            <span class="c1"># ctx.fields[&quot;phi&quot;]</span>
-    <span class="n">p</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>                                  <span class="c1"># ctx.fields[&quot;p&quot;]</span>
-    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">TurbulenceModel</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>   <span class="c1"># ctx.models[&quot;turbulence&quot;]</span>
-    <span class="n">pimple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PimpleControl</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span> <span class="c1"># ctx.models[&quot;pimple_control&quot;]</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>                                  <span class="c1"># ctx.fields["U"]</span>
+    <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>                            <span class="c1"># ctx.fields["phi"]</span>
+    <span class="n">p</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>                                  <span class="c1"># ctx.fields["p"]</span>
+    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">TurbulenceModel</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>   <span class="c1"># ctx.models["turbulence"]</span>
+    <span class="n">pimple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PimpleControl</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span> <span class="c1"># ctx.models["pimple_control"]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
     <span class="o">...</span>
 </pre></div>
@@ -739,8 +739,8 @@ injection (<code class="docutils literal notranslate"><span class="pre">incompre
 <span class="k">def</span><span class="w"> </span><span class="nf">set_time_step</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span>                                          <span class="c1"># full Context</span>
-    <span class="n">pressure_velocity</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span> <span class="c1"># ctx.models[&quot;pressure_velocity&quot;]</span>
-    <span class="n">cfl_condition</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>     <span class="c1"># ctx.models[&quot;cfl_condition&quot;]</span>
+    <span class="n">pressure_velocity</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="s2">"models"</span><span class="p">],</span> <span class="c1"># ctx.models["pressure_velocity"]</span>
+    <span class="n">cfl_condition</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="s2">"models"</span><span class="p">],</span>     <span class="c1"># ctx.models["cfl_condition"]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="o">...</span>
 </pre></div>

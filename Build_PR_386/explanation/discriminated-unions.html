@@ -627,15 +627,15 @@ selection, validation, and schema export from the same definition.</p>
 to the right subclass based on the value of <code class="docutils literal notranslate"><span class="pre">pet_type</span></code> in the input
 dictionary:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Cat</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;cat&#39;</span><span class="p">]</span>
+    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'cat'</span><span class="p">]</span>
     <span class="n">meows</span><span class="p">:</span> <span class="nb">int</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Dog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;dog&#39;</span><span class="p">]</span>
+    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">'dog'</span><span class="p">]</span>
     <span class="n">barks</span><span class="p">:</span> <span class="nb">float</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Model</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">pet</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Cat</span><span class="p">,</span> <span class="n">Dog</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s1">&#39;pet_type&#39;</span><span class="p">)</span>
+    <span class="n">pet</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Cat</span><span class="p">,</span> <span class="n">Dog</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s1">'pet_type'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This gives type-safe selection: <code class="docutils literal notranslate"><span class="pre">Model(pet={'pet_type':</span> <span class="pre">'dog',</span>
@@ -658,7 +658,7 @@ that can drift from the type system.</p></li>
 <section id="the-limitation-closed-at-definition-time">
 <h3>The limitation: closed at definition time<a class="headerlink" href="#the-limitation-closed-at-definition-time" title="Link to this heading">¶</a></h3>
 <p>Pydantic’s discriminated union must be defined at model creation time:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pet</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Cat</span><span class="p">,</span> <span class="n">Dog</span><span class="p">,</span> <span class="n">Lizard</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s1">&#39;pet_type&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pet</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Cat</span><span class="p">,</span> <span class="n">Dog</span><span class="p">,</span> <span class="n">Lizard</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s1">'pet_type'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The members are baked in. You cannot add a fourth pet type from a
@@ -673,18 +673,18 @@ runtime-extensible registry. Each base class decorated with
 <code class="docutils literal notranslate"><span class="pre">&#64;PluginSystem.register(...)</span></code> gets a registry of subclasses;
 <code class="docutils literal notranslate"><span class="pre">&#64;&lt;Base&gt;.register</span></code> on a subclass appends to the registry <strong>and</strong>
 rebuilds the parent’s discriminated union to include the new member:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;shape_type&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"shape"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"shape_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ShapeInterface</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">color</span><span class="p">:</span> <span class="nb">str</span>
 
 <span class="nd">@ShapeInterface</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CircleConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;circle&quot;</span><span class="p">]</span>
+    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"circle"</span><span class="p">]</span>
     <span class="n">radius</span><span class="p">:</span> <span class="nb">float</span>
 
 <span class="nd">@ShapeInterface</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SquareConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;square&quot;</span><span class="p">]</span>
+    <span class="n">shape_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"square"</span><span class="p">]</span>
     <span class="n">side</span><span class="p">:</span> <span class="nb">float</span>
 </pre></div>
 </div>
@@ -863,6 +863,8 @@ models at startup (plugin registry vs core specs), see
     <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

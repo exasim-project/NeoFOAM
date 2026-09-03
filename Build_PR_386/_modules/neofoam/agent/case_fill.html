@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Fill an ``incompressibleFluid`` case&#39;s config files with an LLM agent.</span>
+<span class="sd">"""Fill an ``incompressibleFluid`` case's config files with an LLM agent.</span>
 
 <span class="sd">Layered API so the same machinery serves the CLI, an LLM workflow, and a</span>
 <span class="sd">deterministic test path:</span>
@@ -607,7 +607,7 @@
 <span class="sd">- :func:`fill_case` — one-shot: copy the on-disk mesh + ``0/``/``0.orig``</span>
 <span class="sd">  fields from ``source_case`` to ``target_case``, then either disk-roundtrip</span>
 <span class="sd">  the configs (no agent) or have an agent rewrite them.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -630,34 +630,34 @@
 
 <span class="c1">#: Actionable message when the optional ``[agent]`` extra is missing.</span>
 <span class="n">_MISSING_PYDANTIC_AI</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;the agent feature needs pydantic-ai; install with: pip install neofoam[agent]&quot;</span>
+    <span class="s2">"the agent feature needs pydantic-ai; install with: pip install neofoam[agent]"</span>
 <span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;DEFAULT_CASE_SYSTEM_PROMPT&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_case_agent&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_case_output_model&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;case_spec_to_configs&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;fill_case&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;load_case_from_disk&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_case_text&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;save_case&quot;</span><span class="p">,</span>
+    <span class="s2">"DEFAULT_CASE_SYSTEM_PROMPT"</span><span class="p">,</span>
+    <span class="s2">"build_case_agent"</span><span class="p">,</span>
+    <span class="s2">"build_case_output_model"</span><span class="p">,</span>
+    <span class="s2">"case_spec_to_configs"</span><span class="p">,</span>
+    <span class="s2">"fill_case"</span><span class="p">,</span>
+    <span class="s2">"load_case_from_disk"</span><span class="p">,</span>
+    <span class="s2">"read_case_text"</span><span class="p">,</span>
+    <span class="s2">"save_case"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <span class="n">DEFAULT_CASE_SYSTEM_PROMPT</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;You scaffold an OpenFOAM case for the ``incompressibleFluid`` solver.&quot;</span>
-    <span class="s2">&quot; Fill ONLY the configs needed for the user&#39;s case description; leave&quot;</span>
-    <span class="s2">&quot; every other field as null. Always include ControlDictConfig,&quot;</span>
-    <span class="s2">&quot; TransportPropertiesConfig and TurbulencePropertiesConfig. Include&quot;</span>
-    <span class="s2">&quot; Pimple_fvSchemes / Pimple_fvSolution whenever PIMPLE pressure-velocity&quot;</span>
-    <span class="s2">&quot; coupling is used (which is always, for this solver). Set Boussinesq&quot;</span>
-    <span class="s2">&quot; configs only when the user explicitly asks for buoyancy.&quot;</span>
+    <span class="s2">"You scaffold an OpenFOAM case for the ``incompressibleFluid`` solver."</span>
+    <span class="s2">" Fill ONLY the configs needed for the user's case description; leave"</span>
+    <span class="s2">" every other field as null. Always include ControlDictConfig,"</span>
+    <span class="s2">" TransportPropertiesConfig and TurbulencePropertiesConfig. Include"</span>
+    <span class="s2">" Pimple_fvSchemes / Pimple_fvSolution whenever PIMPLE pressure-velocity"</span>
+    <span class="s2">" coupling is used (which is always, for this solver). Set Boussinesq"</span>
+    <span class="s2">" configs only when the user explicitly asks for buoyancy."</span>
 <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_solver</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the incompressibleFluid solver spec.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the incompressibleFluid solver spec."""</span>
     <span class="k">return</span> <span class="n">incompressibleFluid</span>
 
 
@@ -666,15 +666,15 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">build_case_output_model</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CaseSpec&quot;</span><span class="p">,</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"CaseSpec"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an aggregate pydantic model with one ``Optional`` field per config.</span>
+<span class="w">    </span><span class="sd">"""Return an aggregate pydantic model with one ``Optional`` field per config.</span>
 
 <span class="sd">    Every field defaults to ``None`` so a single agent prompt can fill only</span>
 <span class="sd">    the subset the case needs (e.g. no ``Boussinesq*`` for an isothermal</span>
 <span class="sd">    flow). Field names are the snake-case class names, matching the</span>
 <span class="sd">    convention of :meth:`Configurations.as_output_model`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span> <span class="ow">or</span> <span class="n">_solver</span><span class="p">()</span>
     <span class="n">classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">))</span>
     <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -695,11 +695,11 @@
 <div class="viewcode-block" id="case_spec_to_configs">
 <a class="viewcode-back" href="../../../reference/api/neofoam.agent.case_fill.html#neofoam.agent.case_fill.case_spec_to_configs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">case_spec_to_configs</span><span class="p">(</span><span class="n">case_spec</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pull every non-``None`` ``BaseConfig`` instance out of an aggregate.</span>
+<span class="w">    </span><span class="sd">"""Pull every non-``None`` ``BaseConfig`` instance out of an aggregate.</span>
 
 <span class="sd">    The aggregate is whatever :func:`build_case_output_model` produced; this</span>
 <span class="sd">    walks its fields in declaration order and filters to BaseConfig values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="n">case_spec</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span><span class="p">:</span>
         <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">case_spec</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -716,24 +716,24 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read every config-bound file in ``case_dir`` as raw text.</span>
+<span class="w">    </span><span class="sd">"""Read every config-bound file in ``case_dir`` as raw text.</span>
 
-<span class="sd">    Keys are the registered IO file paths (e.g. ``&quot;system/controlDict&quot;``);</span>
+<span class="sd">    Keys are the registered IO file paths (e.g. ``"system/controlDict"``);</span>
 <span class="sd">    values are the file contents (empty string when the file is missing).</span>
 <span class="sd">    This is what gets fed to the LLM so it can extract structured values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span> <span class="ow">or</span> <span class="n">_solver</span><span class="p">()</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
-        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;io_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">rel</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span>
         <span class="k">if</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="n">rel</span>
-        <span class="n">seen</span><span class="p">[</span><span class="n">rel</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">seen</span><span class="p">[</span><span class="n">rel</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="s2">""</span>
     <span class="k">return</span> <span class="n">seen</span></div>
 
 
@@ -747,7 +747,7 @@
     <span class="n">output_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">warnings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``CaseSpec`` by loading each config from disk (no LLM).</span>
+<span class="w">    </span><span class="sd">"""Build a ``CaseSpec`` by loading each config from disk (no LLM).</span>
 
 <span class="sd">    Skips classes without an ``@IOStrategy`` binding and classes whose file</span>
 <span class="sd">    is not present — the resulting aggregate carries ``None`` in those</span>
@@ -755,17 +755,17 @@
 <span class="sd">    roundtrip path used by tests.</span>
 
 <span class="sd">    Pass a ``warnings`` list to surface configs that are *present on disk but</span>
-<span class="sd">    don&#39;t validate* (e.g. a ``turbulenceProperties`` selecting a model we don&#39;t</span>
-<span class="sd">    represent): each is appended as ``{&quot;file&quot;, &quot;config&quot;, &quot;reason&quot;}`` instead of</span>
+<span class="sd">    don't validate* (e.g. a ``turbulenceProperties`` selecting a model we don't</span>
+<span class="sd">    represent): each is appended as ``{"file", "config", "reason"}`` instead of</span>
 <span class="sd">    only silently nulling the field — so a caller can report the gap (F5).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span> <span class="ow">or</span> <span class="n">_solver</span><span class="p">()</span>
     <span class="n">output_model</span> <span class="o">=</span> <span class="n">output_model</span> <span class="ow">or</span> <span class="n">build_case_output_model</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
 
     <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
-        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;io_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -773,20 +773,20 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">values</span><span class="p">[</span><span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="c1"># File present but doesn&#39;t validate against this schema. Distinguish two</span>
+            <span class="c1"># File present but doesn't validate against this schema. Distinguish two</span>
             <span class="c1"># cases (F5): a config whose failure is only *missing required keys* is a</span>
-            <span class="c1"># completeness gap — the file simply doesn&#39;t carry this (often optional)</span>
-            <span class="c1"># config, e.g. a plain case&#39;s shared ``controlDict`` has no ``maxCo`` for</span>
+            <span class="c1"># completeness gap — the file simply doesn't carry this (often optional)</span>
+            <span class="c1"># config, e.g. a plain case's shared ``controlDict`` has no ``maxCo`` for</span>
             <span class="c1"># ``CourantConfig``, or a non-buoyant ``fvSchemes`` has no ``div(phi,T)``</span>
-            <span class="c1"># for the boussinesq slice. Those are ``validate_case``&#39;s job, not a load</span>
+            <span class="c1"># for the boussinesq slice. Those are ``validate_case``'s job, not a load</span>
             <span class="c1"># warning, so leave the field ``None`` silently. Only *present but invalid*</span>
             <span class="c1"># data (a value that fails validation) is surfaced as a warning.</span>
             <span class="k">if</span> <span class="n">warnings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_absence</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span>
-                        <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                        <span class="s2">&quot;reason&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                        <span class="s2">"file"</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span>
+                        <span class="s2">"config"</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                        <span class="s2">"reason"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
             <span class="k">continue</span>
@@ -795,21 +795,21 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_absence</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when ``exc`` signals the config is *absent*, not present-but-invalid.</span>
+<span class="w">    </span><span class="sd">"""True when ``exc`` signals the config is *absent*, not present-but-invalid.</span>
 
-<span class="sd">    Two completeness gaps count as absence (both are ``validate_case``&#39;s domain, not</span>
+<span class="sd">    Two completeness gaps count as absence (both are ``validate_case``'s domain, not</span>
 <span class="sd">    a load warning): a pydantic ``ValidationError`` whose every error is a *missing</span>
-<span class="sd">    required field* (the file carries none of this config&#39;s keys), and a ``KeyError``</span>
-<span class="sd">    from a config bound to a sub-dict whose block isn&#39;t in the file (e.g.</span>
+<span class="sd">    required field* (the file carries none of this config's keys), and a ``KeyError``</span>
+<span class="sd">    from a config bound to a sub-dict whose block isn't in the file (e.g.</span>
 <span class="sd">    ``TelemetryDictConfig`` → ``controlDict{telemetry}`` on a case with no telemetry</span>
 <span class="sd">    block). Anything else — a value that fails validation — is present-but-invalid.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">):</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;missing&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"missing"</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
         <span class="n">message</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s2">&quot;Subdict&quot;</span> <span class="ow">in</span> <span class="n">message</span> <span class="ow">and</span> <span class="s2">&quot;not found&quot;</span> <span class="ow">in</span> <span class="n">message</span>
+        <span class="k">return</span> <span class="s2">"Subdict"</span> <span class="ow">in</span> <span class="n">message</span> <span class="ow">and</span> <span class="s2">"not found"</span> <span class="ow">in</span> <span class="n">message</span>
     <span class="k">return</span> <span class="kc">False</span>
 
 
@@ -819,45 +819,45 @@
     <span class="n">case_spec</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span>
     <span class="n">target_case</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write every populated config in ``case_spec`` to ``target_case``.</span>
+<span class="w">    </span><span class="sd">"""Write every populated config in ``case_spec`` to ``target_case``.</span>
 
 <span class="sd">    Delegates to :func:`neofoam.io.write_configs`, which groups configs that</span>
 <span class="sd">    target the same file (e.g. ``TransportProperties`` + ``Boussinesq``) and</span>
-<span class="sd">    writes each file once, so co-owners don&#39;t clobber each other.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    writes each file once, so co-owners don't clobber each other.</span>
+<span class="sd">    """</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">write_configs</span><span class="p">(</span><span class="n">case_spec_to_configs</span><span class="p">(</span><span class="n">case_spec</span><span class="p">),</span> <span class="n">target_case</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">target_case</span><span class="p">)</span> <span class="o">/</span> <span class="n">file</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">report</span><span class="p">]</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_copy_static_assets</span><span class="p">(</span><span class="n">source_case</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">target_case</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mirror the parts of a case the agent can&#39;t (yet) generate.</span>
+<span class="w">    </span><span class="sd">"""Mirror the parts of a case the agent can't (yet) generate.</span>
 
 <span class="sd">    What we copy:</span>
 
 <span class="sd">    - ``constant/polyMesh`` (or ``system/blockMeshDict`` if the mesh</span>
-<span class="sd">      hasn&#39;t been built yet) and ``system/decomposeParDict``;</span>
+<span class="sd">      hasn't been built yet) and ``system/decomposeParDict``;</span>
 <span class="sd">    - ``0/`` and ``0.orig/`` field dictionaries — boundary conditions are</span>
-<span class="sd">      not part of the solver&#39;s config schema today;</span>
+<span class="sd">      not part of the solver's config schema today;</span>
 <span class="sd">    - ``system/fvSchemes`` / ``system/fvSolution`` — the per-spec config</span>
 <span class="sd">      classes only model the entries the in-tree operations declared via</span>
 <span class="sd">      ``@&lt;Subclass&gt;.add(...)``; writing from scratch would drop the rest.</span>
 <span class="sd">      Mirroring then letting ``save_case`` patch in place keeps real</span>
 <span class="sd">      cases (which have many more entries) working. Other configs</span>
 <span class="sd">      (``controlDict``, ``transportProperties``, ``turbulenceProperties``)</span>
-<span class="sd">      write cleanly from the schema alone now and don&#39;t need mirroring.</span>
+<span class="sd">      write cleanly from the schema alone now and don't need mirroring.</span>
 
 <span class="sd">    Existing target files are removed before the copy.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">target_case</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="p">(</span>
-        <span class="s2">&quot;constant/polyMesh&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;system/decomposeParDict&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;system/fvSchemes&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;0&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;0.orig&quot;</span><span class="p">,</span>
+        <span class="s2">"constant/polyMesh"</span><span class="p">,</span>
+        <span class="s2">"system/blockMeshDict"</span><span class="p">,</span>
+        <span class="s2">"system/decomposeParDict"</span><span class="p">,</span>
+        <span class="s2">"system/fvSchemes"</span><span class="p">,</span>
+        <span class="s2">"system/fvSolution"</span><span class="p">,</span>
+        <span class="s2">"0"</span><span class="p">,</span>
+        <span class="s2">"0.orig"</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="n">src</span> <span class="o">=</span> <span class="n">source_case</span> <span class="o">/</span> <span class="n">rel</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -881,13 +881,13 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;claude-haiku-4-5&quot;</span><span class="p">,</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"claude-haiku-4-5"</span><span class="p">,</span>
     <span class="n">system_prompt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_CASE_SYSTEM_PROMPT</span><span class="p">,</span>
-    <span class="n">output_model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;CaseSpec&quot;</span><span class="p">,</span>
+    <span class="n">output_model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"CaseSpec"</span><span class="p">,</span>
     <span class="n">output_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">agent_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a pydantic-ai ``Agent`` returning a filled aggregate ``CaseSpec``.</span>
+<span class="w">    </span><span class="sd">"""Build a pydantic-ai ``Agent`` returning a filled aggregate ``CaseSpec``.</span>
 
 <span class="sd">    By default uses the Anthropic backend with ``claude-haiku-4-5``; pass a</span>
 <span class="sd">    pre-built ``model`` to use the local-Ollama scaffold from</span>
@@ -895,7 +895,7 @@
 <span class="sd">    emit that model directly (e.g. a custom aggregate) instead of the synthesised</span>
 <span class="sd">    per-solver ``CaseSpec``. Extra ``agent_kwargs`` are forwarded to</span>
 <span class="sd">    :class:`pydantic_ai.Agent`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">Agent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">_MISSING_PYDANTIC_AI</span><span class="p">)</span>
 
@@ -915,17 +915,17 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_agent_prompt_from_source</span><span class="p">(</span><span class="n">source_case</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the per-file source text into one prompt body.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Render the per-file source text into one prompt body."""</span>
     <span class="n">files</span> <span class="o">=</span> <span class="n">read_case_text</span><span class="p">(</span><span class="n">source_case</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;Fill the schema from these OpenFOAM dictionaries. Use the values&quot;</span>
-        <span class="s2">&quot; present; leave irrelevant configs null.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">"Fill the schema from these OpenFOAM dictionaries. Use the values"</span>
+        <span class="s2">" present; leave irrelevant configs null.</span><span class="se">\n</span><span class="s2">"</span>
     <span class="p">]</span>
     <span class="k">for</span> <span class="n">rel</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2"> ===</span><span class="se">\n</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2"> ===</span><span class="se">\n</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="fill_case">
@@ -938,7 +938,7 @@
     <span class="n">solver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">copy_static</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fill the configs of ``target_case`` from ``source_case``.</span>
+<span class="w">    </span><span class="sd">"""Fill the configs of ``target_case`` from ``source_case``.</span>
 
 <span class="sd">    The mesh, BC fields (``0/`` or ``0.orig/``) and decomposeParDict are</span>
 <span class="sd">    mirrored from ``source_case`` (set ``copy_static=False`` to skip).</span>
@@ -948,20 +948,20 @@
 <span class="sd">      its validated ``CaseSpec`` to write the configs;</span>
 <span class="sd">    - otherwise, load the configs from disk via :func:`load_case_from_disk`</span>
 <span class="sd">      and write them out — a deterministic, LLM-free roundtrip used by</span>
-<span class="sd">      tests and by the CLI&#39;s ``--no-llm`` mode.</span>
+<span class="sd">      tests and by the CLI's ``--no-llm`` mode.</span>
 
 <span class="sd">    Returns the validated aggregate that was saved.</span>
 
 <span class="sd">    A missing/invalid ``source_case`` raises :class:`ValueError` **before** any</span>
 <span class="sd">    static-asset copy or agent call, so a bad source never burns an LLM API call on</span>
 <span class="sd">    a contentless prompt (the guard the removed MCP ``fill_case`` tool used to carry).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span> <span class="ow">or</span> <span class="n">_solver</span><span class="p">()</span>
     <span class="n">source_case</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source_case</span><span class="p">)</span>
     <span class="n">target_case</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">target_case</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">source_case</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;source_case does not exist or is not a directory: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">source_case</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"source_case does not exist or is not a directory: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">source_case</span><span class="p">)</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">copy_static</span><span class="p">:</span>
         <span class="n">_copy_static_assets</span><span class="p">(</span><span class="n">source_case</span><span class="p">,</span> <span class="n">target_case</span><span class="p">)</span>
@@ -1015,6 +1015,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

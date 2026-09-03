@@ -609,8 +609,8 @@ all operations. It is the only coupling mechanism between them —
 there is no other shared state.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># src/neofoam/framework/context.py</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Context</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>   <span class="c1"># e.g. fields[&quot;U&quot;], fields[&quot;p&quot;], fields[&quot;phi&quot;]</span>
-    <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>   <span class="c1"># e.g. models[&quot;turbulence&quot;], models[&quot;pressure_velocity&quot;]</span>
+    <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>   <span class="c1"># e.g. fields["U"], fields["p"], fields["phi"]</span>
+    <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>   <span class="c1"># e.g. models["turbulence"], models["pressure_velocity"]</span>
     <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>      <span class="c1"># OpenFOAM runtime (time, mesh handle)</span>
 </pre></div>
@@ -621,27 +621,27 @@ specific entry from it. Two examples from
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># from incompressibleFluid.py</span>
 <span class="nd">@incompressibleFluid</span><span class="o">.</span><span class="n">operation</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">increment_time</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">Info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time = </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">Info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Time = </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span>
 
 <span class="c1"># from models/pressure_velocity/pimpleAlgorithm.py</span>
-<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
-<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ddt</span><span class="o">=</span><span class="s2">&quot;ddt(U)&quot;</span><span class="p">,</span> <span class="n">div</span><span class="o">=</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="s2">&quot;grad(U)&quot;</span><span class="p">,</span>
-               <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(nuEff,U)&quot;</span><span class="p">)</span>
-<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">)</span>
+<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.1"</span><span class="p">)</span>
+<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ddt</span><span class="o">=</span><span class="s2">"ddt(U)"</span><span class="p">,</span> <span class="n">div</span><span class="o">=</span><span class="s2">"div(phi,U)"</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="s2">"grad(U)"</span><span class="p">,</span>
+               <span class="n">laplacian</span><span class="o">=</span><span class="s2">"laplacian(nuEff,U)"</span><span class="p">)</span>
+<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"U"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>
     <span class="n">p</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
-    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">TurbulenceModel</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">pimple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PimpleControl</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">TurbulenceModel</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">pimple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PimpleControl</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
     <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
                           <span class="o">+</span> <span class="n">turbulence</span><span class="o">.</span><span class="n">divDevReff</span><span class="p">(</span><span class="n">U</span><span class="p">))</span>
     <span class="n">UEqn</span><span class="o">.</span><span class="n">relax</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">pimple_control</span><span class="o">.</span><span class="n">momentumPredictor</span><span class="p">():</span>
         <span class="n">pyf</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">UEqn</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;UEqn&quot;</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"UEqn"</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>Two ways of touching the Context show up here:</p>
@@ -718,19 +718,19 @@ easiest way to see what the solver does. From
 
     <span class="n">time_loop_op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
         <span class="n">func</span><span class="o">=</span><span class="n">IterativeOp</span><span class="p">(</span><span class="n">TimeLoop</span><span class="p">()),</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;time_loop&quot;</span><span class="p">),</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">"time_loop"</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="k">with</span> <span class="n">builder</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">time_loop_op</span><span class="p">)</span> <span class="k">as</span> <span class="n">time_builder</span><span class="p">:</span>
-        <span class="n">time_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">&quot;set_time_step&quot;</span><span class="p">])</span>
-        <span class="n">time_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">&quot;increment_time&quot;</span><span class="p">])</span>
+        <span class="n">time_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">"set_time_step"</span><span class="p">])</span>
+        <span class="n">time_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">"increment_time"</span><span class="p">])</span>
 
-        <span class="k">with</span> <span class="n">time_builder</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">algo_ops</span><span class="p">[</span><span class="s2">&quot;inner_loop&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">inner</span><span class="p">:</span>
-            <span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">algo_ops</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">])</span>
-            <span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">algo_ops</span><span class="p">[</span><span class="s2">&quot;continuity&quot;</span><span class="p">])</span>
-            <span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">&quot;turbulence_correction&quot;</span><span class="p">])</span>
+        <span class="k">with</span> <span class="n">time_builder</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">algo_ops</span><span class="p">[</span><span class="s2">"inner_loop"</span><span class="p">])</span> <span class="k">as</span> <span class="n">inner</span><span class="p">:</span>
+            <span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">algo_ops</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">])</span>
+            <span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">algo_ops</span><span class="p">[</span><span class="s2">"continuity"</span><span class="p">])</span>
+            <span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">"turbulence_correction"</span><span class="p">])</span>
 
-        <span class="n">time_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">&quot;write_output&quot;</span><span class="p">])</span>
+        <span class="n">time_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">ops</span><span class="p">[</span><span class="s2">"write_output"</span><span class="p">])</span>
 
     <span class="c1"># Collect ops contributed by optional plugin models</span>
     <span class="n">model_ops</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">()</span>
@@ -784,36 +784,36 @@ solver’s standard ordering, producing the actual run-time graph.</p>
 <em>two</em> operations inside the algorithm’s inner loop, between
 <code class="docutils literal notranslate"><span class="pre">momentum</span></code> and <code class="docutils literal notranslate"><span class="pre">continuity</span></code>. From
 <code class="docutils literal notranslate"><span class="pre">src/neofoam/solver/incompressibleFluid/models/boussinesq.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">boussinesq</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;boussinesq&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">boussinesq</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"boussinesq"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
 
-<span class="nd">@boussinesq</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.5&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">])</span>
-<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ddt</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="n">div</span><span class="o">=</span><span class="s2">&quot;div(phi,T)&quot;</span><span class="p">,</span> <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
-<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="nd">@boussinesq</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.5"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">])</span>
+<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ddt</span><span class="o">=</span><span class="s2">"default"</span><span class="p">,</span> <span class="n">div</span><span class="o">=</span><span class="s2">"div(phi,T)"</span><span class="p">,</span> <span class="n">laplacian</span><span class="o">=</span><span class="s2">"default"</span><span class="p">)</span>
+<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">solve_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">turbulence</span><span class="p">,</span> <span class="n">alphat</span><span class="p">):</span>
     <span class="o">...</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="s2">&quot;alphat&quot;</span><span class="p">:</span> <span class="n">alphat</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"T"</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="s2">"alphat"</span><span class="p">:</span> <span class="n">alphat</span><span class="p">})</span>
 
-<span class="nd">@boussinesq</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.7&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;solve_energy&quot;</span><span class="p">])</span>
+<span class="nd">@boussinesq</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.7"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"solve_energy"</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_rhok</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">rhok</span><span class="p">):</span>
     <span class="o">...</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;rhok&quot;</span><span class="p">:</span> <span class="n">rhok</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"rhok"</span><span class="p">:</span> <span class="n">rhok</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>A passive-scalar transport plugin adds a single operation that runs
 <em>after</em> <code class="docutils literal notranslate"><span class="pre">continuity</span></code>. The plugin lives outside the solver source
 tree (see <a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html"><span class="doc">Add a passive scalar transport model</span></a>)
 but the registration pattern is the same:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">passive_scalar</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;passive_scalar&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">passive_scalar</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"passive_scalar"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
 
-<span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;continuity&quot;</span><span class="p">])</span>
-<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ddt</span><span class="o">=</span><span class="s2">&quot;ddt(s)&quot;</span><span class="p">,</span> <span class="n">div</span><span class="o">=</span><span class="s2">&quot;div(phi,s)&quot;</span><span class="p">,</span> <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(D,s)&quot;</span><span class="p">)</span>
-<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)</span>
+<span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"continuity"</span><span class="p">])</span>
+<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ddt</span><span class="o">=</span><span class="s2">"ddt(s)"</span><span class="p">,</span> <span class="n">div</span><span class="o">=</span><span class="s2">"div(phi,s)"</span><span class="p">,</span> <span class="n">laplacian</span><span class="o">=</span><span class="s2">"laplacian(D,s)"</span><span class="p">)</span>
+<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"s"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">solve_s</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">phi</span><span class="p">):</span>
     <span class="n">cfg</span><span class="p">:</span> <span class="n">PassiveScalarConfig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimViscosity</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimViscosity</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
     <span class="n">sEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
     <span class="n">sEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="n">s</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"s"</span><span class="p">:</span> <span class="n">s</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>With both plugins active, the merger produces this graph:</p>
@@ -948,6 +948,8 @@ plugin models register and how the solver picks them up.</p></li>
     <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

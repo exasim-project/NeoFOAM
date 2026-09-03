@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;MRF (multiple reference frame) rotating zones for incompressibleFluidNeoN.</span>
+<span class="sd">"""MRF (multiple reference frame) rotating zones for incompressibleFluidNeoN.</span>
 
 <span class="sd">Use it when a case drives its flow through a rotating cell zone declared in</span>
 <span class="sd">``constant/MRFProperties`` (``simpleFoam/mixerVessel2D``, …). The model is</span>
@@ -599,7 +599,7 @@
 
 <span class="sd">The spec owns one runtime object — the NeoN frame handle</span>
 <span class="sd">:class:`neofoam_bindings.MRFNeoN` — whose frame terms the contributions apply</span>
-<span class="sd">where native&#39;s ``UEqn.H``/``pEqn.H`` apply them. ``@build`` stashes it on the</span>
+<span class="sd">where native's ``UEqn.H``/``pEqn.H`` apply them. ``@build`` stashes it on the</span>
 <span class="sd">model runtime, so the contributions read it off ``self``, and its InitStep also</span>
 <span class="sd">publishes it on the Context as ``models.mrf_neon`` for the consumers that look it</span>
 <span class="sd">up by name. This spec covers a *subset* of the cases native MRF supports, so</span>
@@ -611,7 +611,7 @@
 
 <span class="sd">    from neofoam.solver.incompressibleFluidNeoN.models.mrf import mrfNeoN</span>
 <span class="sd">    mrfNeoN.register_with(incompressibleFluidNeoNModel)</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
@@ -628,97 +628,97 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pressure_velocity.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentum_extension</span><span class="p">,</span> <span class="n">pressure_extension</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.pressure_velocity.simpleAlgorithm</span><span class="w"> </span><span class="kn">import</span> <span class="n">simpleNeoN</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MRFPropertiesConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;mrfNeoN&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"MRFPropertiesConfig"</span><span class="p">,</span> <span class="s2">"mrfNeoN"</span><span class="p">]</span>
 
 <span class="c1"># Case-relative: the solver runs with the case directory as its working directory.</span>
-<span class="n">_MRF_PROPERTIES</span> <span class="o">=</span> <span class="s2">&quot;constant/MRFProperties&quot;</span>
-<span class="n">_CONTROL_DICT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">)</span>
+<span class="n">_MRF_PROPERTIES</span> <span class="o">=</span> <span class="s2">"constant/MRFProperties"</span>
+<span class="n">_CONTROL_DICT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">)</span>
 <span class="c1"># The marker createDynamicFvMesh.H keys off, as neofoam.foam.initialization.new_mesh</span>
 <span class="c1"># does: a case carrying it selects a moving mesh, a case without it a static one.</span>
-<span class="n">_DYNAMIC_MESH_DICT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;constant/dynamicMeshDict&quot;</span><span class="p">)</span>
+<span class="n">_DYNAMIC_MESH_DICT</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"constant/dynamicMeshDict"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="MRFPropertiesConfig">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.mrf.html#neofoam.solver.incompressibleFluidNeoN.models.mrf.MRFPropertiesConfig">[docs]</a>
 <span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="n">_MRF_PROPERTIES</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MRFPropertiesConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``constant/MRFProperties`` — one sub-dict per rotating zone.</span>
+<span class="w">    </span><span class="sd">"""``constant/MRFProperties`` — one sub-dict per rotating zone.</span>
 
-<span class="sd">    Declared so the file is part of the solver&#39;s config schema. The zone entries</span>
+<span class="sd">    Declared so the file is part of the solver's config schema. The zone entries</span>
 <span class="sd">    stay free-form: their values are consumed by ``IOMRFZoneList`` straight off</span>
 <span class="sd">    disk, and ``omega`` alone is a Function1 with several spellings.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        MRFPropertiesConfig.load(case_dir=case).model_extra[&quot;MRF1&quot;][&quot;cellZone&quot;]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        MRFPropertiesConfig.load(case_dir=case).model_extra["MRF1"]["cellZone"]</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">)</span></div>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span></div>
 
 
 
-<span class="n">mrfNeoN</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;mrf&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">labeled</span><span class="p">(</span><span class="s2">&quot;Rotating zones (MRF)&quot;</span><span class="p">)</span>
+<span class="n">mrfNeoN</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"mrf"</span><span class="p">)</span><span class="o">.</span><span class="n">labeled</span><span class="p">(</span><span class="s2">"Rotating zones (MRF)"</span><span class="p">)</span>
 <span class="n">mrfNeoN</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">MRFPropertiesConfig</span><span class="p">)</span>
 
 
 <span class="nd">@mrfNeoN</span><span class="o">.</span><span class="n">detect</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">detect_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;MRF is active exactly when the case carries ``constant/MRFProperties``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""MRF is active exactly when the case carries ``constant/MRFProperties``."""</span>
     <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">_MRF_PROPERTIES</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reject_time_varying_omega</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">MRFPropertiesConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise unless every zone&#39;s ``omega`` is constant in time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raise unless every zone's ``omega`` is constant in time."""</span>
     <span class="c1"># The frame fields are probed once at build time, so a Function1 omega would</span>
     <span class="c1"># be silently frozen at t=0.</span>
     <span class="k">for</span> <span class="n">zone</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">model_extra</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;omega&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"omega"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">omega</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="s2">&quot;omega&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">omega</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entries</span><span class="p">[</span><span class="s2">"omega"</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="c1"># Both Function1 spellings of a constant: the bare scalar shorthand</span>
         <span class="c1"># (``omega 104.72;``) and the explicit ``constant`` type.</span>
-        <span class="k">if</span> <span class="n">omega</span><span class="o">.</span><span class="n">split</span><span class="p">()[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;constant&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">omega</span><span class="o">.</span><span class="n">split</span><span class="p">()[:</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="s2">"constant"</span><span class="p">]:</span>
             <span class="k">continue</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="nb">float</span><span class="p">(</span><span class="n">omega</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;MRF zone &#39;</span><span class="si">{</span><span class="n">zone</span><span class="si">}</span><span class="s2">&#39;: omega &#39;</span><span class="si">{</span><span class="n">omega</span><span class="si">}</span><span class="s2">&#39; is not constant in time, which &quot;</span>
-                <span class="s2">&quot;incompressibleFluidNeoN does not support — its frame fields are built &quot;</span>
-                <span class="s2">&quot;once from the zone list. Use a constant omega.&quot;</span>
+                <span class="sa">f</span><span class="s2">"MRF zone '</span><span class="si">{</span><span class="n">zone</span><span class="si">}</span><span class="s2">': omega '</span><span class="si">{</span><span class="n">omega</span><span class="si">}</span><span class="s2">' is not constant in time, which "</span>
+                <span class="s2">"incompressibleFluidNeoN does not support — its frame fields are built "</span>
+                <span class="s2">"once from the zone list. Use a constant omega."</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_start_time_pressure</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``p`` file this run reads, per ``system/controlDict``&#39;s ``startFrom``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The ``p`` file this run reads, per ``system/controlDict``'s ``startFrom``."""</span>
     <span class="c1"># Not hardcoded ``0/p``: a restart reads a later directory, and a caller that</span>
     <span class="c1"># found no file would wave through the configuration it exists to block.</span>
-    <span class="n">selector</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">read_toplevel</span><span class="p">(</span><span class="n">_CONTROL_DICT</span><span class="p">,</span> <span class="s2">&quot;startFrom&quot;</span><span class="p">),</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">selector</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">read_toplevel</span><span class="p">(</span><span class="n">_CONTROL_DICT</span><span class="p">,</span> <span class="s2">"startFrom"</span><span class="p">),</span> <span class="s2">"text"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">times</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">()</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()),</span>
+        <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Path</span><span class="p">()</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()),</span>
         <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">start</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">times</span> <span class="ow">and</span> <span class="n">selector</span> <span class="o">==</span> <span class="s2">&quot;latestTime&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">times</span> <span class="ow">and</span> <span class="n">selector</span> <span class="o">==</span> <span class="s2">"latestTime"</span><span class="p">:</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="n">times</span> <span class="ow">and</span> <span class="n">selector</span> <span class="o">==</span> <span class="s2">&quot;firstTime&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">times</span> <span class="ow">and</span> <span class="n">selector</span> <span class="o">==</span> <span class="s2">"firstTime"</span><span class="p">:</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">elif</span> <span class="n">selector</span> <span class="o">==</span> <span class="s2">&quot;startTime&quot;</span><span class="p">:</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">read_toplevel</span><span class="p">(</span><span class="n">_CONTROL_DICT</span><span class="p">,</span> <span class="s2">&quot;startTime&quot;</span><span class="p">),</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">selector</span> <span class="o">==</span> <span class="s2">"startTime"</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">read_toplevel</span><span class="p">(</span><span class="n">_CONTROL_DICT</span><span class="p">,</span> <span class="s2">"startTime"</span><span class="p">),</span> <span class="s2">"text"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">start</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
             <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">times</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)),</span> <span class="kc">None</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">start</span> <span class="o">/</span> <span class="s2">&quot;p&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">start</span> <span class="o">/</span> <span class="s2">"p"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;MRF: cannot locate the &#39;p&#39; field this case starts from (system/controlDict &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;startFrom </span><span class="si">{</span><span class="n">selector</span><span class="si">!r}</span><span class="s2">), so the boundary-condition check cannot run. Write &quot;</span>
-            <span class="s2">&quot;the pressure field into the time directory the run starts from.&quot;</span>
+            <span class="s2">"MRF: cannot locate the 'p' field this case starts from (system/controlDict "</span>
+            <span class="sa">f</span><span class="s2">"startFrom </span><span class="si">{</span><span class="n">selector</span><span class="si">!r}</span><span class="s2">), so the boundary-condition check cannot run. Write "</span>
+            <span class="s2">"the pressure field into the time directory the run starts from."</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">start</span> <span class="o">/</span> <span class="s2">&quot;p&quot;</span>
+    <span class="k">return</span> <span class="n">start</span> <span class="o">/</span> <span class="s2">"p"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reject_fixed_flux_pressure</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise when the start-time ``p`` carries a ``fixedFluxPressure`` patch.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raise when the start-time ``p`` carries a ``fixedFluxPressure`` patch."""</span>
     <span class="c1"># Native closes the corrector with constrainPressure(p, U, phiHbyA, rAU, MRF),</span>
     <span class="c1"># which writes the frame-aware wall gradient onto exactly those patches. NeoN</span>
     <span class="c1"># has the boundary condition but nothing to update its refGrad, so under MRF</span>
@@ -726,66 +726,66 @@
     <span class="n">pressure</span> <span class="o">=</span> <span class="n">_start_time_pressure</span><span class="p">()</span>
     <span class="n">offending</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">patch</span>
-        <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">leaves</span> <span class="ow">in</span> <span class="n">read_section</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="s2">&quot;boundaryField&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">leaves</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">),</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;fixedFluxPressure&quot;</span>
+        <span class="k">for</span> <span class="n">patch</span><span class="p">,</span> <span class="n">leaves</span> <span class="ow">in</span> <span class="n">read_section</span><span class="p">(</span><span class="n">pressure</span><span class="p">,</span> <span class="s2">"boundaryField"</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">leaves</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">),</span> <span class="s2">"text"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"fixedFluxPressure"</span>
     <span class="p">]</span>
     <span class="k">if</span> <span class="n">offending</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;MRF: </span><span class="si">{</span><span class="n">pressure</span><span class="si">}</span><span class="s2"> patch(es) </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">offending</span><span class="p">)</span><span class="si">}</span><span class="s2"> use fixedFluxPressure, which &quot;</span>
-            <span class="s2">&quot;incompressibleFluidNeoN cannot constrain — NeoN has the boundary condition &quot;</span>
-            <span class="s2">&quot;but no constrainPressure to set its refGrad from the rotating-frame flux.&quot;</span>
+            <span class="sa">f</span><span class="s2">"MRF: </span><span class="si">{</span><span class="n">pressure</span><span class="si">}</span><span class="s2"> patch(es) </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">offending</span><span class="p">)</span><span class="si">}</span><span class="s2"> use fixedFluxPressure, which "</span>
+            <span class="s2">"incompressibleFluidNeoN cannot constrain — NeoN has the boundary condition "</span>
+            <span class="s2">"but no constrainPressure to set its refGrad from the rotating-frame flux."</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reject_transient_algorithm</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise unless the case runs the steady SIMPLE algorithm.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raise unless the case runs the steady SIMPLE algorithm."""</span>
     <span class="k">if</span> <span class="n">PressureVelocityAlgorithmNeoN</span><span class="o">.</span><span class="n">detect_and_create</span><span class="p">()</span> <span class="ow">is</span> <span class="n">simpleNeoN</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-        <span class="s2">&quot;MRF: incompressibleFluidNeoN supports rotating zones only for the steady &quot;</span>
-        <span class="s2">&quot;SIMPLE algorithm, and system/fvSolution selects a transient one. A transient &quot;</span>
-        <span class="s2">&quot;run adds the absolute-frame ddt flux correction to phiHbyA, which native &quot;</span>
-        <span class="s2">&quot;filters with MRF.zeroFilter() and the NeoN pressure extension has no hook &quot;</span>
-        <span class="s2">&quot;for. Use a SIMPLE block, or add that hook and contribute zero_filter to it.&quot;</span>
+        <span class="s2">"MRF: incompressibleFluidNeoN supports rotating zones only for the steady "</span>
+        <span class="s2">"SIMPLE algorithm, and system/fvSolution selects a transient one. A transient "</span>
+        <span class="s2">"run adds the absolute-frame ddt flux correction to phiHbyA, which native "</span>
+        <span class="s2">"filters with MRF.zeroFilter() and the NeoN pressure extension has no hook "</span>
+        <span class="s2">"for. Use a SIMPLE block, or add that hook and contribute zero_filter to it."</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reject_dynamic_mesh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise when the case selects a moving mesh.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raise when the case selects a moving mesh."""</span>
     <span class="c1"># File presence is how this codebase selects a moving mesh (foam.initialization</span>
     <span class="c1"># .new_mesh). Native rebuilds the zone faces from MRFZone::update(), which the</span>
     <span class="c1"># pybFoam spec reaches through on_mesh_change; NeoN has no such hook.</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_DYNAMIC_MESH_DICT</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-        <span class="s2">&quot;MRF: incompressibleFluidNeoN does not support rotating zones on a moving &quot;</span>
-        <span class="s2">&quot;mesh, and constant/dynamicMeshDict selects one. The frame fields are probed &quot;</span>
-        <span class="s2">&quot;once when the handle is built and there is no mesh-change hook to rebuild &quot;</span>
-        <span class="s2">&quot;them, so they would keep describing the initial mesh. Use a static mesh, or &quot;</span>
-        <span class="s2">&quot;add that hook and contribute the rebuild to it.&quot;</span>
+        <span class="s2">"MRF: incompressibleFluidNeoN does not support rotating zones on a moving "</span>
+        <span class="s2">"mesh, and constant/dynamicMeshDict selects one. The frame fields are probed "</span>
+        <span class="s2">"once when the handle is built and there is no mesh-change hook to rebuild "</span>
+        <span class="s2">"them, so they would keep describing the initial mesh. Use a static mesh, or "</span>
+        <span class="s2">"add that hook and contribute the rebuild to it."</span>
     <span class="p">)</span>
 
 
 <span class="nd">@mrfNeoN</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_neon</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">MRFPropertiesConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the NeoN rotating-frame handle, also published as ``models.mrf_neon``.</span>
+<span class="w">    </span><span class="sd">"""Build the NeoN rotating-frame handle, also published as ``models.mrf_neon``.</span>
 
-<span class="sd">    It owns its own ``Foam::IOMRFZoneList`` (built on the NeoN runtime&#39;s</span>
+<span class="sd">    It owns its own ``Foam::IOMRFZoneList`` (built on the NeoN runtime's</span>
 <span class="sd">    OpenFOAM mesh) plus the frame constants probed out of it — ``frame_flux``</span>
 <span class="sd">    and ``relative_keep``, which the contributions below compose in Python — so</span>
 <span class="sd">    no pybFoam mesh is needed on the Context. The InitStep is what orders the</span>
 <span class="sd">    handle behind ``_neon_runtime``; the contributions take it off ``self``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_reject_time_varying_omega</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="n">_reject_fixed_flux_pressure</span><span class="p">()</span>
     <span class="n">_reject_transient_algorithm</span><span class="p">()</span>
     <span class="n">_reject_dynamic_mesh</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_mrf_neon</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">MRFNeoN</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">MRFNeoN</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">])</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">&quot;mrf_neon&quot;</span><span class="p">,</span> <span class="n">create_mrf_neon</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">"mrf_neon"</span><span class="p">,</span> <span class="n">create_mrf_neon</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">])]</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -795,14 +795,14 @@
 
 <span class="nd">@mrfNeoN</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">momentum_extension</span><span class="o">.</span><span class="n">constrain</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">mrf_neon_correct_boundary_velocity</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">VectorVolumeField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="c1"># UEqn.H&#39;s ``MRF.correctBoundaryVelocity(U)``: Omega x r on the rotating</span>
+    <span class="c1"># UEqn.H's ``MRF.correctBoundaryVelocity(U)``: Omega x r on the rotating</span>
     <span class="c1"># wall faces, which the momentum boundary coefficients are built from.</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">correct_boundary_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
 
 <span class="nd">@mrfNeoN</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">momentum_extension</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">mrf_neon_frame_acceleration</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">VectorVolumeField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">SpatialOperatorVector</span><span class="p">:</span>
-    <span class="c1"># UEqn.H&#39;s ``+ MRF.DDt(U)``: the frame acceleration Omega x U. MRF solves for</span>
+    <span class="c1"># UEqn.H's ``+ MRF.DDt(U)``: the frame acceleration Omega x U. MRF solves for</span>
     <span class="c1"># the *absolute* velocity, so this is the Coriolis term alone — no centrifugal</span>
     <span class="c1"># Omega x (Omega x r), which belongs to the relative-velocity (SRF)</span>
     <span class="c1"># formulation. The binding refreshes one acceleration buffer it owns and</span>
@@ -812,7 +812,7 @@
 
 <span class="nd">@mrfNeoN</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">pressure_extension</span><span class="o">.</span><span class="n">predicted_flux</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">mrf_neon_predicted_flux</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">phiHbyA</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">ScalarSurfaceField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">ScalarSurfaceField</span><span class="p">:</span>
-    <span class="c1"># pEqn.H&#39;s ``MRF.makeRelative(phiHbyA)``, in place as native does it. One</span>
+    <span class="c1"># pEqn.H's ``MRF.makeRelative(phiHbyA)``, in place as native does it. One</span>
     <span class="c1"># kernel pass subtracts the frame flux and zeroes the rotating patch faces,</span>
     <span class="c1"># so no temporary flux field is allocated per outer iteration.</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">make_relative</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">)</span>
@@ -821,9 +821,9 @@
 
 <span class="nd">@mrfNeoN</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">pressure_extension</span><span class="o">.</span><span class="n">constrain_corrected_velocity</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">mrf_neon_restore_boundary_velocity</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">VectorVolumeField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="c1"># See the hook: OpenFOAM&#39;s rotating wall keeps Omega x r once assigned, so</span>
-    <span class="c1"># the turbulence correction that follows sees a moving wall. NeoN&#39;s</span>
-    <span class="c1"># fixed-value boundary would have reset it to the case&#39;s noSlip value.</span>
+    <span class="c1"># See the hook: OpenFOAM's rotating wall keeps Omega x r once assigned, so</span>
+    <span class="c1"># the turbulence correction that follows sees a moving wall. NeoN's</span>
+    <span class="c1"># fixed-value boundary would have reset it to the case's noSlip value.</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="o">.</span><span class="n">correct_boundary_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 </pre></div>
         </article>
@@ -864,6 +864,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

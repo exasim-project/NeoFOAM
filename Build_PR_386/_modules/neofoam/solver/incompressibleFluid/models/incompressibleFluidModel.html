@@ -589,12 +589,12 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Plugin interface for solver-local incompressibleFluid optional models.</span>
+<span class="sd">"""Plugin interface for solver-local incompressibleFluid optional models.</span>
 
 <span class="sd">The PluginSystem registration keeps the extension point identical to the</span>
 <span class="sd">source branch so future optional models (boussinesq, spalartAllmaras, …)</span>
 <span class="sd">can be re-added without changing the solver entrypoint.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
@@ -604,33 +604,33 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ModelSpec</span>  <span class="c1"># noqa: F401</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;incompressibleFluidModel&quot;</span><span class="p">,</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span> <span class="s2">&quot;ModelRuntime&quot;</span><span class="p">,</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"incompressibleFluidModel"</span><span class="p">,</span> <span class="s2">"Model"</span><span class="p">,</span> <span class="s2">"ModelRuntime"</span><span class="p">,</span> <span class="s2">"ModelSpec"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="incompressibleFluidModel">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.incompressibleFluidModel">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"model_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">incompressibleFluidModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface for solver-local incompressibleFluid models.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Plugin interface for solver-local incompressibleFluid models."""</span>
 
 <div class="viewcode-block" id="incompressibleFluidModel.all_specs">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.incompressibleFluidModel.all_specs">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">all_specs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every registered optional-model spec, without detection.</span>
+<span class="w">        </span><span class="sd">"""Return every registered optional-model spec, without detection.</span>
 
 <span class="sd">        Unlike :meth:`detect_models`, this does not run ``detect`` (which</span>
 <span class="sd">        needs a case) — it lists the full set of optional models so their</span>
 <span class="sd">        config classes can be enumerated case-free.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">&quot;incompressibleFluidModel&quot;</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">"incompressibleFluidModel"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">registry</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">plugin_cls</span><span class="o">.</span><span class="n">get_model_instance</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">&quot;get_model_instance&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">"get_model_instance"</span><span class="p">)</span>
         <span class="p">]</span></div>
 
 
@@ -638,19 +638,19 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.incompressibleFluidModel.detect_models">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelRuntime</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return enabled model runtimes from the plugin registry.</span>
+<span class="w">        </span><span class="sd">"""Return enabled model runtimes from the plugin registry.</span>
 
 <span class="sd">        Empty by default in this minimal port; any optional model that</span>
 <span class="sd">        registers itself with this interface will be discovered here.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">&quot;incompressibleFluidModel&quot;</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">"incompressibleFluidModel"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">registry</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="n">runtimes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelRuntime</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">effective_dir</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">effective_dir</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">&quot;get_model_instance&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">"get_model_instance"</span><span class="p">):</span>
                 <span class="k">continue</span>
 
             <span class="n">spec</span><span class="p">:</span> <span class="n">ModelSpec</span> <span class="o">=</span> <span class="n">plugin_cls</span><span class="o">.</span><span class="n">get_model_instance</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">)</span>
@@ -699,6 +699,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

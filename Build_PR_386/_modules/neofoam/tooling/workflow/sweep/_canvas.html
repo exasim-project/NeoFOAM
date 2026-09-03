@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Canvas model for the wizard&#39;s parameter-sweep step (VueFlow nodes + edges).</span>
+<span class="sd">"""Canvas model for the wizard's parameter-sweep step (VueFlow nodes + edges).</span>
 
 <span class="sd">The presentation layer of the sweep: it maps sweep *dimensions* and the packaged</span>
 <span class="sd">rule library onto plain node/edge dicts (positions, handles, edge styles) the</span>
@@ -600,7 +600,7 @@
 <span class="sd">Validation lives in :mod:`neofoam.tooling.workflow.sweep._validate`; Snakefile</span>
 <span class="sd">generation in :mod:`~neofoam.tooling.workflow.sweep._codegen`; the export/load</span>
 <span class="sd">round-trip in :mod:`~neofoam.tooling.workflow.sweep._io`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -618,35 +618,35 @@
     <span class="n">default_registry</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1">#: Canvas node types rendered by the app&#39;s CustomNode templates.</span>
-<span class="n">DIM_NODE_TYPE</span> <span class="o">=</span> <span class="s2">&quot;dim&quot;</span>
-<span class="n">RULE_NODE_TYPE</span> <span class="o">=</span> <span class="s2">&quot;rule&quot;</span>
+<span class="c1">#: Canvas node types rendered by the app's CustomNode templates.</span>
+<span class="n">DIM_NODE_TYPE</span> <span class="o">=</span> <span class="s2">"dim"</span>
+<span class="n">RULE_NODE_TYPE</span> <span class="o">=</span> <span class="s2">"rule"</span>
 
 <span class="c1">#: Anchor rules of every pipeline (the full set lives in the rule registry).</span>
-<span class="n">SETUP_RULE</span> <span class="o">=</span> <span class="s2">&quot;setup&quot;</span>
-<span class="n">SOLVE_RULE</span> <span class="o">=</span> <span class="s2">&quot;solve&quot;</span>
-<span class="n">ALL_RULE</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span>
+<span class="n">SETUP_RULE</span> <span class="o">=</span> <span class="s2">"setup"</span>
+<span class="n">SOLVE_RULE</span> <span class="o">=</span> <span class="s2">"solve"</span>
+<span class="n">ALL_RULE</span> <span class="o">=</span> <span class="s2">"all"</span>
 
 <span class="c1">#: Handle-id prefixes; both edge ends carry the same normalized payload so a</span>
 <span class="c1">#: pure string comparison can validate connections.</span>
-<span class="n">CFG_HANDLE_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;cfg:&quot;</span>
-<span class="n">IN_HANDLE_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;in:&quot;</span>
-<span class="n">OUT_HANDLE_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;out:&quot;</span>
+<span class="n">CFG_HANDLE_PREFIX</span> <span class="o">=</span> <span class="s2">"cfg:"</span>
+<span class="n">IN_HANDLE_PREFIX</span> <span class="o">=</span> <span class="s2">"in:"</span>
+<span class="n">OUT_HANDLE_PREFIX</span> <span class="o">=</span> <span class="s2">"out:"</span>
 
 <span class="c1">#: Edge style for file (rule output -&gt; rule input) edges: solid, bold, blue.</span>
-<span class="n">FILE_EDGE_PROPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;strokeWidth&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">,</span> <span class="s2">&quot;stroke&quot;</span><span class="p">:</span> <span class="s2">&quot;#2563eb&quot;</span><span class="p">}}</span>
+<span class="n">FILE_EDGE_PROPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"style"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"strokeWidth"</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">,</span> <span class="s2">"stroke"</span><span class="p">:</span> <span class="s2">"#2563eb"</span><span class="p">}}</span>
 
 <span class="c1">#: Edge style for config (dimension -&gt; rule) edges: thin, dashed, muted.</span>
 <span class="n">CFG_EDGE_PROPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;strokeDasharray&quot;</span><span class="p">:</span> <span class="s2">&quot;6 4&quot;</span><span class="p">,</span> <span class="s2">&quot;stroke&quot;</span><span class="p">:</span> <span class="s2">&quot;#94a3b8&quot;</span><span class="p">,</span> <span class="s2">&quot;strokeWidth&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">}</span>
+    <span class="s2">"style"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"strokeDasharray"</span><span class="p">:</span> <span class="s2">"6 4"</span><span class="p">,</span> <span class="s2">"stroke"</span><span class="p">:</span> <span class="s2">"#94a3b8"</span><span class="p">,</span> <span class="s2">"strokeWidth"</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="n">_WILDCARD_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\{(\w+)\}&quot;</span><span class="p">)</span>
+<span class="n">_WILDCARD_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\{(\w+)\}"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_pattern</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replace every ``{name}`` wildcard with the fixed token ``{*}``.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_WILDCARD_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;{*}&quot;</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Replace every ``{name}`` wildcard with the fixed token ``{*}``."""</span>
+    <span class="k">return</span> <span class="n">_WILDCARD_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">"{*}"</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -658,15 +658,15 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.SweepDimension">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SweepDimension</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One sweepable dimension: a solver config with named variants.</span>
+<span class="w">    </span><span class="sd">"""One sweepable dimension: a solver config with named variants.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        name: The snake-case config name (``transport_properties_config``) —</span>
 <span class="sd">            the sweep column and ``params.yaml`` key.</span>
 <span class="sd">        title: Human title for the node header (e.g. ``transportProperties``).</span>
-<span class="sd">        schema: The config&#39;s JSONForms-ready schema (rendered inside the node).</span>
-<span class="sd">        seed: The initial &quot;base&quot; variant payload (the live wizard form state).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        schema: The config's JSONForms-ready schema (rendered inside the node).</span>
+<span class="sd">        seed: The initial "base" variant payload (the live wizard form state).</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
@@ -685,33 +685,33 @@
     <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dimension node: a view into one ``params.yaml`` section.</span>
+<span class="w">    </span><span class="sd">"""A dimension node: a view into one ``params.yaml`` section.</span>
 
 <span class="sd">    ``data.entries`` holds the named variants (``{name: payload}``),</span>
 <span class="sd">    ``data.selected`` the variant shown in the node, ``data.rename`` the</span>
 <span class="sd">    uncommitted rename buffer. All values are plain JSON-serializable dicts.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">entries</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">entries</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">seed</span><span class="p">)}</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"base"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">seed</span><span class="p">)}</span>
     <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">selected</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">entries</span><span class="p">))</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">node_id</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">DIM_NODE_TYPE</span><span class="p">,</span>
-        <span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">},</span>
-        <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;vue-flow__node-default&quot;</span><span class="p">,</span>
+        <span class="s2">"id"</span><span class="p">:</span> <span class="n">node_id</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="n">DIM_NODE_TYPE</span><span class="p">,</span>
+        <span class="s2">"position"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"x"</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">:</span> <span class="n">y</span><span class="p">},</span>
+        <span class="s2">"class"</span><span class="p">:</span> <span class="s2">"vue-flow__node-default"</span><span class="p">,</span>
         <span class="c1"># The default-node class fixes width at 150px and pads the content;</span>
         <span class="c1"># the node template brings its own width and padding.</span>
-        <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="s2">&quot;420px&quot;</span><span class="p">,</span> <span class="s2">&quot;padding&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">},</span>
-        <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
-            <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
-            <span class="s2">&quot;entries&quot;</span><span class="p">:</span> <span class="n">entries</span><span class="p">,</span>
-            <span class="s2">&quot;selected&quot;</span><span class="p">:</span> <span class="n">selected</span><span class="p">,</span>
-            <span class="s2">&quot;rename&quot;</span><span class="p">:</span> <span class="n">selected</span><span class="p">,</span>
+        <span class="s2">"style"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"width"</span><span class="p">:</span> <span class="s2">"420px"</span><span class="p">,</span> <span class="s2">"padding"</span><span class="p">:</span> <span class="s2">"0"</span><span class="p">},</span>
+        <span class="s2">"width"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"height"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+        <span class="s2">"data"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"label"</span><span class="p">:</span> <span class="n">dim</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+            <span class="s2">"dim"</span><span class="p">:</span> <span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">"schema"</span><span class="p">:</span> <span class="n">dim</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span>
+            <span class="s2">"entries"</span><span class="p">:</span> <span class="n">entries</span><span class="p">,</span>
+            <span class="s2">"selected"</span><span class="p">:</span> <span class="n">selected</span><span class="p">,</span>
+            <span class="s2">"rename"</span><span class="p">:</span> <span class="n">selected</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">}</span></div>
 
@@ -724,28 +724,28 @@
     <span class="n">registry</span><span class="p">:</span> <span class="n">RuleRegistry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">enabled</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The pipeline nodes derived from the rule registry&#39;s validated plan.</span>
+<span class="w">    </span><span class="sd">"""The pipeline nodes derived from the rule registry's validated plan.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        dims: The dimension names currently on the canvas. Non-mesh dims become</span>
-<span class="sd">            ``setup``&#39;s config ports; a ``mesh`` dim is ``setup_mesh``&#39;s port.</span>
+<span class="sd">            ``setup``'s config ports; a ``mesh`` dim is ``setup_mesh``'s port.</span>
 <span class="sd">        registry: The rule library (default: :func:`default_registry`).</span>
 <span class="sd">        enabled: The selected rule names (default: the full default pipeline).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">plan</span> <span class="o">=</span> <span class="p">(</span><span class="n">registry</span> <span class="ow">or</span> <span class="n">default_registry</span><span class="p">())</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span>
     <span class="n">setup_dims</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">MESH_DIM</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">RuleSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;(cfg_dims, inputs, outputs) with plan-dependent patterns rendered.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""(cfg_dims, inputs, outputs) with plan-dependent patterns rendered."""</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[],</span> <span class="p">[</span><span class="n">plan</span><span class="o">.</span><span class="n">final_pattern</span><span class="p">],</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_STAGE</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">MESH_DIM</span><span class="p">],</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">inputs</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">is_mesh_tool</span><span class="p">:</span>
-            <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_tool_input</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_tool_input</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
             <span class="k">return</span> <span class="p">[],</span> <span class="n">inputs</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">CASE_SETUP</span><span class="p">:</span>
-            <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">SETUP_CONFIG_PATTERN</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_done</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">SETUP_CONFIG_PATTERN</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_done</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">setup_dims</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[],</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">inputs</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span>
 
@@ -754,31 +754,31 @@
     <span class="c1"># the per-case chain (setup -&gt; solve [-&gt; post] -&gt; all) below it.</span>
     <span class="n">ordered</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">plan</span><span class="o">.</span><span class="n">rules</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">ALL_RULE</span><span class="p">]</span>
     <span class="n">ordered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ALL_RULE</span><span class="p">))</span>
-    <span class="n">row_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">MESH_DIM</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;case&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">row_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">MESH_DIM</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"case"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">:</span>
         <span class="n">cfg_dims</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="n">row</span> <span class="o">=</span> <span class="n">MESH_DIM</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">keyed_by</span> <span class="o">==</span> <span class="n">MESH_DIM</span> <span class="k">else</span> <span class="s2">&quot;case&quot;</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">MESH_DIM</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">keyed_by</span> <span class="o">==</span> <span class="n">MESH_DIM</span> <span class="k">else</span> <span class="s2">"case"</span>
         <span class="n">i</span> <span class="o">=</span> <span class="n">row_index</span><span class="p">[</span><span class="n">row</span><span class="p">]</span>
         <span class="n">row_index</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">position</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">620.0</span> <span class="k">if</span> <span class="n">row</span> <span class="o">==</span> <span class="n">MESH_DIM</span> <span class="k">else</span> <span class="mf">900.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">300.0</span> <span class="o">*</span> <span class="n">i</span><span class="p">,</span>
-            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mf">40.0</span> <span class="k">if</span> <span class="n">row</span> <span class="o">==</span> <span class="n">MESH_DIM</span> <span class="k">else</span> <span class="mf">280.0</span><span class="p">,</span>
+            <span class="s2">"x"</span><span class="p">:</span> <span class="p">(</span><span class="mf">620.0</span> <span class="k">if</span> <span class="n">row</span> <span class="o">==</span> <span class="n">MESH_DIM</span> <span class="k">else</span> <span class="mf">900.0</span><span class="p">)</span> <span class="o">+</span> <span class="mf">300.0</span> <span class="o">*</span> <span class="n">i</span><span class="p">,</span>
+            <span class="s2">"y"</span><span class="p">:</span> <span class="mf">40.0</span> <span class="k">if</span> <span class="n">row</span> <span class="o">==</span> <span class="n">MESH_DIM</span> <span class="k">else</span> <span class="mf">280.0</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;rule:</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">RULE_NODE_TYPE</span><span class="p">,</span>
-                <span class="s2">&quot;position&quot;</span><span class="p">:</span> <span class="n">position</span><span class="p">,</span>
-                <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;vue-flow__node-default&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;padding&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">},</span>
-                <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="s2">&quot;rule&quot;</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="s2">&quot;cfg_dims&quot;</span><span class="p">:</span> <span class="n">cfg_dims</span><span class="p">,</span>
-                    <span class="s2">&quot;inputs&quot;</span><span class="p">:</span> <span class="n">inputs</span><span class="p">,</span>
-                    <span class="s2">&quot;outputs&quot;</span><span class="p">:</span> <span class="n">outputs</span><span class="p">,</span>
+                <span class="s2">"id"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"rule:</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="n">RULE_NODE_TYPE</span><span class="p">,</span>
+                <span class="s2">"position"</span><span class="p">:</span> <span class="n">position</span><span class="p">,</span>
+                <span class="s2">"class"</span><span class="p">:</span> <span class="s2">"vue-flow__node-default"</span><span class="p">,</span>
+                <span class="s2">"style"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"width"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span> <span class="s2">"padding"</span><span class="p">:</span> <span class="s2">"0"</span><span class="p">},</span>
+                <span class="s2">"width"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+                <span class="s2">"height"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">,</span>
+                <span class="s2">"data"</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">"label"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">title</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"rule"</span><span class="p">:</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"cfg_dims"</span><span class="p">:</span> <span class="n">cfg_dims</span><span class="p">,</span>
+                    <span class="s2">"inputs"</span><span class="p">:</span> <span class="n">inputs</span><span class="p">,</span>
+                    <span class="s2">"outputs"</span><span class="p">:</span> <span class="n">outputs</span><span class="p">,</span>
                 <span class="p">},</span>
             <span class="p">}</span>
         <span class="p">)</span>
@@ -789,53 +789,53 @@
 <div class="viewcode-block" id="autowire">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.autowire">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">autowire</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wire up the canvas: file-pattern edges plus dimension -&gt; rule cfg edges.</span>
+<span class="w">    </span><span class="sd">"""Wire up the canvas: file-pattern edges plus dimension -&gt; rule cfg edges.</span>
 
 <span class="sd">    File edges connect matching output/input patterns across the rule nodes;</span>
 <span class="sd">    config edges connect every dimension node to every rule node that lists its</span>
 <span class="sd">    dimension in ``cfg_dims``. Returns the edge list (assign it to</span>
 <span class="sd">    ``NodeEditor.edges``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">RULE_NODE_TYPE</span><span class="p">]</span>
-    <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">DIM_NODE_TYPE</span><span class="p">]</span>
+<span class="sd">    """</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="n">RULE_NODE_TYPE</span><span class="p">]</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="n">DIM_NODE_TYPE</span><span class="p">]</span>
 
     <span class="n">producers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;outputs&quot;</span><span class="p">]:</span>
-            <span class="n">producers</span><span class="p">[</span><span class="n">_normalize_pattern</span><span class="p">(</span><span class="n">out</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">out</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"outputs"</span><span class="p">]:</span>
+            <span class="n">producers</span><span class="p">[</span><span class="n">_normalize_pattern</span><span class="p">(</span><span class="n">out</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span> <span class="n">out</span><span class="p">)</span>
 
     <span class="n">edges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">infile</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">infile</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"inputs"</span><span class="p">]:</span>
             <span class="n">hit</span> <span class="o">=</span> <span class="n">producers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_normalize_pattern</span><span class="p">(</span><span class="n">infile</span><span class="p">))</span>
-            <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">hit</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">node</span><span class="p">[</span><span class="s2">"id"</span><span class="p">]:</span>
                 <span class="k">continue</span>
             <span class="n">source_id</span><span class="p">,</span> <span class="n">out_pattern</span> <span class="o">=</span> <span class="n">hit</span>
             <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">infile</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">source_id</span><span class="p">,</span>
-                    <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
-                    <span class="s2">&quot;sourceHandle&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">OUT_HANDLE_PREFIX</span><span class="si">}{</span><span class="n">out_pattern</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;targetHandle&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">IN_HANDLE_PREFIX</span><span class="si">}{</span><span class="n">infile</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
+                    <span class="s2">"id"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">infile</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="s2">"source"</span><span class="p">:</span> <span class="n">source_id</span><span class="p">,</span>
+                    <span class="s2">"target"</span><span class="p">:</span> <span class="n">node</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+                    <span class="s2">"sourceHandle"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">OUT_HANDLE_PREFIX</span><span class="si">}{</span><span class="n">out_pattern</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="s2">"targetHandle"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">IN_HANDLE_PREFIX</span><span class="si">}{</span><span class="n">infile</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"default"</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">FILE_EDGE_PROPS</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;dim&quot;</span><span class="p">])):</span>
-        <span class="n">cfg_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">CFG_HANDLE_PREFIX</span><span class="si">}{</span><span class="n">dim</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;dim&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"dim"</span><span class="p">])):</span>
+        <span class="n">cfg_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">CFG_HANDLE_PREFIX</span><span class="si">}{</span><span class="n">dim</span><span class="p">[</span><span class="s1">'data'</span><span class="p">][</span><span class="s1">'dim'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">dim</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;dim&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;cfg_dims&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">dim</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"dim"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"cfg_dims"</span><span class="p">]:</span>
                 <span class="k">continue</span>
             <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
-                    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dim</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cfg_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">dim</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
-                    <span class="s2">&quot;target&quot;</span><span class="p">:</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span>
-                    <span class="s2">&quot;sourceHandle&quot;</span><span class="p">:</span> <span class="n">cfg_id</span><span class="p">,</span>
-                    <span class="s2">&quot;targetHandle&quot;</span><span class="p">:</span> <span class="n">cfg_id</span><span class="p">,</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
+                    <span class="s2">"id"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dim</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">cfg_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="s2">"source"</span><span class="p">:</span> <span class="n">dim</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+                    <span class="s2">"target"</span><span class="p">:</span> <span class="n">node</span><span class="p">[</span><span class="s2">"id"</span><span class="p">],</span>
+                    <span class="s2">"sourceHandle"</span><span class="p">:</span> <span class="n">cfg_id</span><span class="p">,</span>
+                    <span class="s2">"targetHandle"</span><span class="p">:</span> <span class="n">cfg_id</span><span class="p">,</span>
+                    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"default"</span><span class="p">,</span>
                     <span class="o">**</span><span class="n">CFG_EDGE_PROPS</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -848,30 +848,30 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">nodes_to_dimensions</span><span class="p">(</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract ``{dim: {variant: payload}}`` from the canvas&#39;s dimension nodes.</span>
+<span class="w">    </span><span class="sd">"""Extract ``{dim: {variant: payload}}`` from the canvas's dimension nodes.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: On a dimension node without variants, an empty variant</span>
 <span class="sd">            name, or a variant name repeated across nodes of one dimension.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">dimensions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">DIM_NODE_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">DIM_NODE_TYPE</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">dim</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dim&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
-        <span class="n">entries</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;entries&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dim"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"entries"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node &#39;</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; (</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">): no variants defined&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"node '</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">): no variants defined"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">variants</span> <span class="o">=</span> <span class="n">dimensions</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">for</span> <span class="n">raw_name</span><span class="p">,</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw_name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;node &#39;</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; (</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">): the variant name must not be empty&quot;</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"node '</span><span class="si">{</span><span class="n">node</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">): the variant name must not be empty"</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">variants</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;duplicate variant name &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; for dimension &#39;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"duplicate variant name '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' for dimension '</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">'"</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
             <span class="n">variants</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">payload</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="k">return</span> <span class="n">dimensions</span></div>
@@ -915,6 +915,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

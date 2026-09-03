@@ -590,12 +590,12 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Route :class:`InitResult` values into a :class:`Context`.</span>
+<span class="sd">"""Route :class:`InitResult` values into a :class:`Context`.</span>
 
 <span class="sd">The routing layer is open for extension: register additional category</span>
 <span class="sd">handlers via :class:`CategoryRouter.register`. Unknown categories fall</span>
 <span class="sd">through to ``models`` with a logged warning.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -610,7 +610,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">."</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
     <span class="k">return</span> <span class="n">name</span>
 
@@ -619,10 +619,10 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.ContextBuilder">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ContextBuilder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable accumulator routed values are written into.</span>
+<span class="w">    </span><span class="sd">"""Mutable accumulator routed values are written into.</span>
 
 <span class="sd">    Calling :meth:`to_context` produces the immutable :class:`Context`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
@@ -645,21 +645,21 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_route_fields</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">ContextBuilder</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">"fields"</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_route_models</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">ContextBuilder</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_route_operators</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">ContextBuilder</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;operators&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">"operators"</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_route_resource</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">ContextBuilder</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;mesh&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"mesh"</span><span class="p">:</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"time"</span><span class="p">:</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">value</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_fallback_to_models</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
@@ -667,7 +667,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fallback_to_models</span><span class="p">(</span><span class="n">builder</span><span class="p">:</span> <span class="n">ContextBuilder</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-        <span class="s2">&quot;InitStep &#39;</span><span class="si">%s</span><span class="s2">&#39; has no special context slot — routing to models&quot;</span><span class="p">,</span>
+        <span class="s2">"InitStep '</span><span class="si">%s</span><span class="s2">' has no special context slot — routing to models"</span><span class="p">,</span>
         <span class="n">name</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">builder</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
@@ -676,7 +676,7 @@
 <div class="viewcode-block" id="CategoryRouter">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.CategoryRouter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CategoryRouter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Registry mapping :attr:`InitResult.category` to handlers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Registry mapping :attr:`InitResult.category` to handlers."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Handler</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -685,28 +685,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">[</span><span class="n">category</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">route</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">builder</span><span class="p">:</span> <span class="n">ContextBuilder</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">InitResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># init-only resources (leading underscore) stay in the executor&#39;s</span>
+        <span class="c1"># init-only resources (leading underscore) stay in the executor's</span>
         <span class="c1"># working dict for dependent build steps but are never routed onto the</span>
         <span class="c1"># Context — e.g. a backend Foam::Time held only by the mesh/hook/backend.</span>
-        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
             <span class="k">return</span>
         <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">_fallback_to_models</span><span class="p">)</span>
         <span class="n">handler</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
         <span class="c1"># collect fields flagged for persistence (auto-write)</span>
         <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">write</span><span class="p">:</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">write_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">))</span></div>
+            <span class="n">builder</span><span class="o">.</span><span class="n">write_fields</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_strip_prefix</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"fields"</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="default_router">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.default_router">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">default_router</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CategoryRouter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Router populated with the four built-in category handlers.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Router populated with the four built-in category handlers."""</span>
     <span class="n">router</span> <span class="o">=</span> <span class="n">CategoryRouter</span><span class="p">()</span>
-    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;fields&quot;</span><span class="p">,</span> <span class="n">_route_fields</span><span class="p">)</span>
-    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;models&quot;</span><span class="p">,</span> <span class="n">_route_models</span><span class="p">)</span>
-    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;operators&quot;</span><span class="p">,</span> <span class="n">_route_operators</span><span class="p">)</span>
-    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="n">_route_resource</span><span class="p">)</span>
+    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"fields"</span><span class="p">,</span> <span class="n">_route_fields</span><span class="p">)</span>
+    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"models"</span><span class="p">,</span> <span class="n">_route_models</span><span class="p">)</span>
+    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"operators"</span><span class="p">,</span> <span class="n">_route_operators</span><span class="p">)</span>
+    <span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"resource"</span><span class="p">,</span> <span class="n">_route_resource</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">router</span></div>
 
 
@@ -718,7 +718,7 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">router</span><span class="p">:</span> <span class="n">CategoryRouter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`Context` by routing ``init_results`` through ``router``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a :class:`Context` by routing ``init_results`` through ``router``."""</span>
     <span class="n">builder</span> <span class="o">=</span> <span class="n">ContextBuilder</span><span class="p">()</span>
     <span class="n">active_router</span> <span class="o">=</span> <span class="n">router</span> <span class="ow">or</span> <span class="n">default_router</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">init_results</span><span class="p">:</span>
@@ -764,6 +764,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

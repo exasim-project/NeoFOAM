@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Injectable meshing strategies as pipeline steps: ``block_mesh``, ``box``, ``snappy_hex_mesh``.</span>
+<span class="sd">"""Injectable meshing strategies as pipeline steps: ``block_mesh``, ``box``, ``snappy_hex_mesh``.</span>
 
-<span class="sd">There is deliberately no default meshing verb — a case&#39;s mesh is chosen by injecting</span>
+<span class="sd">There is deliberately no default meshing verb — a case's mesh is chosen by injecting</span>
 <span class="sd">one of these steps. Each reuses the shared ``neofoam.tools`` mesh tools</span>
 <span class="sd">(``blockMeshTool`` / ``snappyHexMeshTool`` + their pydantic step configs) rather than</span>
-<span class="sd">re-wrapping ``pybFoam.meshing``: :func:`run_tool` drives a tool&#39;s ``InitStep`` objects</span>
+<span class="sd">re-wrapping ``pybFoam.meshing``: :func:`run_tool` drives a tool's ``InitStep`` objects</span>
 <span class="sd">directly against a :class:`CaseDir`, seeding the ``ctx`` the tool expects</span>
-<span class="sd">(``_foam_time``, and ``_prev_mesh`` for mesh-consuming tools). A tool&#39;s ``dict_file``</span>
+<span class="sd">(``_foam_time``, and ``_prev_mesh`` for mesh-consuming tools). A tool's ``dict_file``</span>
 <span class="sd">option is absolutized against the case so the Foam ``Time`` can use the two-arg</span>
 <span class="sd">(root, case) form — no ``chdir`` and no ``argList`` lifetime hazard.</span>
 
@@ -604,10 +604,10 @@
 <span class="sd">runner (:mod:`neofoam.tooling.workflow.sweep_runner`) both drive mesh tools through it.</span>
 
 <span class="sd">``block_mesh`` reads a committed ``blockMeshDict``; ``box`` synthesizes one from</span>
-<span class="sd">``n``/``dims`` (the OpenFOAM ``blocks``/``boundary`` grammar can&#39;t be built through the</span>
+<span class="sd">``n``/``dims`` (the OpenFOAM ``blocks``/``boundary`` grammar can't be built through the</span>
 <span class="sd">typed ``dictionary`` API, so it is emitted as text); ``snappy_hex_mesh`` refines the mesh</span>
 <span class="sd">a prior ``block_mesh`` left on disk (reconstructed via ``pyf.fvMesh``).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -627,7 +627,7 @@
 <div class="viewcode-block" id="seed_tool_ctx">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.seed_tool_ctx">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">seed_tool_ctx</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">needs_prev_mesh</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the init ``ctx`` a tool&#39;s ``@build`` reads for an in-process run.</span>
+<span class="w">    </span><span class="sd">"""Build the init ``ctx`` a tool's ``@build`` reads for an in-process run.</span>
 
 <span class="sd">    The single place the Foam objects are constructed for a one-shot tool run: a</span>
 <span class="sd">    two-arg (root, case) ``pyf.Time`` seeded as ``_foam_time`` (so no ``chdir`` and no</span>
@@ -639,11 +639,11 @@
 <span class="sd">    that engine is a DAG *chainer* that receives ``_foam_time`` from the solver Context</span>
 <span class="sd">    and threads ``_prev_mesh`` between ``InitStep`` outputs — it never constructs a</span>
 <span class="sd">    ``Time``/``fvMesh`` itself, so there is nothing to fold together.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">time</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="p">),</span> <span class="n">case</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">}</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"_foam_time"</span><span class="p">:</span> <span class="n">time</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">needs_prev_mesh</span><span class="p">:</span>
-        <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_prev_mesh&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="s2">"_prev_mesh"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ctx</span></div>
 
 
@@ -657,29 +657,29 @@
     <span class="n">options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">needs_prev_mesh</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run one preprocessing *tool* in-process against *case*.</span>
+<span class="w">    </span><span class="sd">"""Run one preprocessing *tool* in-process against *case*.</span>
 
-<span class="sd">    Drives the tool&#39;s ``InitStep`` objects with a ``ctx`` seeded by</span>
-<span class="sd">    :func:`seed_tool_ctx`. Any ``dict_file`` in *options* (or the tool&#39;s default) is</span>
+<span class="sd">    Drives the tool's ``InitStep`` objects with a ``ctx`` seeded by</span>
+<span class="sd">    :func:`seed_tool_ctx`. Any ``dict_file`` in *options* (or the tool's default) is</span>
 <span class="sd">    absolutized against the case, so a relative dict path resolves without changing the</span>
 <span class="sd">    working directory.</span>
 
-<span class="sd">    *needs_prev_mesh* seeds ``ctx[&#39;_prev_mesh&#39;]`` from the on-disk mesh a prior</span>
+<span class="sd">    *needs_prev_mesh* seeds ``ctx['_prev_mesh']`` from the on-disk mesh a prior</span>
 <span class="sd">    ``block_mesh`` left — the input a refiner (snappy) or validator (checkMesh) reads.</span>
-<span class="sd">    When ``None`` it defaults to the tool&#39;s ``consumes_mesh`` flag; a caller running a</span>
+<span class="sd">    When ``None`` it defaults to the tool's ``consumes_mesh`` flag; a caller running a</span>
 <span class="sd">    single tool against an existing mesh (the sweep runner) passes it explicitly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">opts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">options</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="n">config_type</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">step_config_type</span>
-    <span class="k">if</span> <span class="n">config_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;dict_file&quot;</span> <span class="ow">in</span> <span class="n">config_type</span><span class="o">.</span><span class="n">model_fields</span><span class="p">:</span>
-        <span class="n">rel</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dict_file&quot;</span><span class="p">,</span> <span class="n">config_type</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">&quot;dict_file&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">config_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"dict_file"</span> <span class="ow">in</span> <span class="n">config_type</span><span class="o">.</span><span class="n">model_fields</span><span class="p">:</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dict_file"</span><span class="p">,</span> <span class="n">config_type</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="s2">"dict_file"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
-            <span class="n">opts</span><span class="p">[</span><span class="s2">&quot;dict_file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span>
+            <span class="n">opts</span><span class="p">[</span><span class="s2">"dict_file"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">needs_prev_mesh</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">needs_prev_mesh</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">consumes_mesh</span>
 
     <span class="n">ctx</span> <span class="o">=</span> <span class="n">seed_tool_ctx</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">needs_prev_mesh</span><span class="o">=</span><span class="n">needs_prev_mesh</span><span class="p">)</span>
-    <span class="n">runtime</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">})</span>
+    <span class="n">runtime</span> <span class="o">=</span> <span class="n">tool</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="s2">"tool"</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">})</span>
     <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">():</span>
         <span class="n">step</span><span class="o">.</span><span class="n">initializer</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
@@ -687,11 +687,11 @@
 
 <div class="viewcode-block" id="block_mesh">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.block_mesh">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">block_mesh</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the base mesh from a committed ``blockMeshDict`` (via ``blockMeshTool``).&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">block_mesh</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"system/blockMeshDict"</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Generate the base mesh from a committed ``blockMeshDict`` (via ``blockMeshTool``)."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">run_tool</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">blockMeshTool</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dict_file&quot;</span><span class="p">:</span> <span class="n">dict_file</span><span class="p">,</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">})</span>
+        <span class="n">run_tool</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">blockMeshTool</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"dict_file"</span><span class="p">:</span> <span class="n">dict_file</span><span class="p">,</span> <span class="s2">"verbose"</span><span class="p">:</span> <span class="n">verbose</span><span class="p">})</span>
 
     <span class="k">return</span> <span class="n">step</span></div>
 
@@ -701,25 +701,25 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.snappy_hex_mesh">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">snappy_hex_mesh</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/snappyHexMeshDict&quot;</span><span class="p">,</span>
+    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"system/snappyHexMeshDict"</span><span class="p">,</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refine the prior ``block_mesh`` output from ``snappyHexMeshDict``</span>
+<span class="w">    </span><span class="sd">"""Refine the prior ``block_mesh`` output from ``snappyHexMeshDict``</span>
 <span class="sd">    (via ``snappyHexMeshTool``).</span>
 
 <span class="sd">    Runs after a ``block_mesh`` step in the same pipeline; the background mesh it left on</span>
 <span class="sd">    disk is reconstructed and fed to snappy as ``_prev_mesh``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">run_tool</span><span class="p">(</span>
             <span class="n">case</span><span class="p">,</span>
             <span class="n">snappyHexMeshTool</span><span class="p">,</span>
             <span class="n">options</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;dict_file&quot;</span><span class="p">:</span> <span class="n">dict_file</span><span class="p">,</span>
-                <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span> <span class="n">overwrite</span><span class="p">,</span>
-                <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">,</span>
+                <span class="s2">"dict_file"</span><span class="p">:</span> <span class="n">dict_file</span><span class="p">,</span>
+                <span class="s2">"overwrite"</span><span class="p">:</span> <span class="n">overwrite</span><span class="p">,</span>
+                <span class="s2">"verbose"</span><span class="p">:</span> <span class="n">verbose</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
@@ -730,7 +730,7 @@
 <div class="viewcode-block" id="BoxMeshStep">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.BoxMeshStep">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BoxMeshStep</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for a synthesized axis-aligned box ``blockMeshDict``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Parameters for a synthesized axis-aligned box ``blockMeshDict``."""</span>
 
     <span class="n">n</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">dims</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span></div>
@@ -738,11 +738,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_render_box_blockmeshdict</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">BoxMeshStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit a ``blockMeshDict`` for an origin-anchored box (front/back ``empty`` when 2D).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Emit a ``blockMeshDict`` for an origin-anchored box (front/back ``empty`` when 2D)."""</span>
     <span class="n">lx</span><span class="p">,</span> <span class="n">ly</span><span class="p">,</span> <span class="n">lz</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">dims</span>
     <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">n</span>
-    <span class="n">fb_type</span> <span class="o">=</span> <span class="s2">&quot;empty&quot;</span> <span class="k">if</span> <span class="n">nz</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;wall&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;FoamFile</span>
+    <span class="n">fb_type</span> <span class="o">=</span> <span class="s2">"empty"</span> <span class="k">if</span> <span class="n">nz</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">"wall"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"""FoamFile</span>
 <span class="se">{{</span>
 <span class="s2">    version     2.0;</span>
 <span class="s2">    format      ascii;</span>
@@ -769,7 +769,7 @@
 <span class="s2">);</span>
 
 <span class="s2">mergePatchPairs ();</span>
-<span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">"""</span>
 
 
 <div class="viewcode-block" id="box">
@@ -778,21 +778,21 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">n</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
     <span class="n">dims</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
-    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">,</span>
+    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"system/blockMeshDict"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Synthesize a box ``blockMeshDict`` from *n*/*dims*, write it, then ``block_mesh`` it.</span>
+<span class="w">    </span><span class="sd">"""Synthesize a box ``blockMeshDict`` from *n*/*dims*, write it, then ``block_mesh`` it.</span>
 
 <span class="sd">    Lets a test vary resolution by argument instead of committing dict variants. The case</span>
 <span class="sd">    must still carry ``controlDict``/``fvSchemes``/``fvSolution`` (OpenFOAM mesh</span>
 <span class="sd">    prerequisites) — as with :func:`block_mesh`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">BoxMeshStep</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="n">dict_file</span>
         <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">target</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">_render_box_blockmeshdict</span><span class="p">(</span><span class="n">cfg</span><span class="p">))</span>
-        <span class="n">run_tool</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">blockMeshTool</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dict_file&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">)})</span>
+        <span class="n">run_tool</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">blockMeshTool</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">"dict_file"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">)})</span>
 
     <span class="k">return</span> <span class="n">step</span></div>
 
@@ -835,6 +835,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

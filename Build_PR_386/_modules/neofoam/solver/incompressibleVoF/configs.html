@@ -589,10 +589,10 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Solver-core configs for incompressibleVoF (interFoam-style two-phase VoF).</span>
+<span class="sd">"""Solver-core configs for incompressibleVoF (interFoam-style two-phase VoF).</span>
 
 <span class="sd">These pydantic ``BaseConfig`` classes declare the case-authoring surface the</span>
-<span class="sd">solver&#39;s C++ backend reads at run time but that no model family already owns:</span>
+<span class="sd">solver's C++ backend reads at run time but that no model family already owns:</span>
 
 <span class="sd">- :class:`ControlDictConfig` — ``system/controlDict`` with the interFoam</span>
 <span class="sd">  adaptive-stepping keys (``adjustTimeStep`` / ``maxCo`` / ``maxAlphaCo`` /</span>
@@ -612,7 +612,7 @@
 <span class="sd">None of these change the solve: they are declared on the solver spec purely so</span>
 <span class="sd">``configurations(incompressibleVoF)`` / the case wizard can fill and persist the</span>
 <span class="sd">files the C++ backend then reads.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -629,31 +629,31 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.turbulence.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TurbulencePropertiesConfig</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;ControlDictConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;TransportPropertiesConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;GravityConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;TurbulencePropertiesConfig&quot;</span><span class="p">,</span>
+    <span class="s2">"ControlDictConfig"</span><span class="p">,</span>
+    <span class="s2">"TransportPropertiesConfig"</span><span class="p">,</span>
+    <span class="s2">"GravityConfig"</span><span class="p">,</span>
+    <span class="s2">"TurbulencePropertiesConfig"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="ControlDictConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleVoF.configs.html#neofoam.solver.incompressibleVoF.configs.ControlDictConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ControlDictConfig</span><span class="p">(</span><span class="n">TimeControlConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``system/controlDict`` — the file-bound time/write config for VoF.</span>
+<span class="w">    </span><span class="sd">"""``system/controlDict`` — the file-bound time/write config for VoF.</span>
 
 <span class="sd">    Inherits the time-stepping + write schema (``startTime`` / ``endTime`` /</span>
 <span class="sd">    ``deltaT`` / ``writeControl`` / ``writeInterval``) from</span>
 <span class="sd">    :class:`~neofoam.algorithms.solution_loop.config.TimeControlConfig`.</span>
 
 <span class="sd">    Unlike ``incompressibleFluid`` (which co-owns the adaptive keys through</span>
-<span class="sd">    opt-in ``courant`` / ``max_delta_t`` models), VoF&#39;s ``set_time_step`` re-reads</span>
+<span class="sd">    opt-in ``courant`` / ``max_delta_t`` models), VoF's ``set_time_step`` re-reads</span>
 <span class="sd">    ``adjustTimeStep`` / ``maxCo`` / ``maxAlphaCo`` / ``maxDeltaT`` from</span>
 <span class="sd">    ``controlDict`` every step (the dual flow/interface Courant limiter is core to</span>
 <span class="sd">    interFoam), so they live here with interFoam-typical defaults.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">application</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;interFoam&quot;</span>
+    <span class="n">application</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"interFoam"</span>
     <span class="n">adjustTimeStep</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">maxCo</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">maxAlphaCo</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
@@ -662,112 +662,112 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseTransport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One phase&#39;s transport sub-dict in ``constant/transportProperties``.</span>
+<span class="w">    </span><span class="sd">"""One phase's transport sub-dict in ``constant/transportProperties``.</span>
 
 <span class="sd">    ``transportModel Newtonian; nu &lt;kinematic viscosity&gt;; rho &lt;density&gt;;`` — the</span>
 <span class="sd">    interFoam per-phase block. ``nu`` is a kinematic viscosity (m^2/s), ``rho`` a</span>
 <span class="sd">    density (kg/m^3).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">transportModel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Newtonian&quot;</span>
+    <span class="n">transportModel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Newtonian"</span>
     <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">rho</span><span class="p">:</span> <span class="nb">float</span>
 
 
 <div class="viewcode-block" id="TransportPropertiesConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleVoF.configs.html#neofoam.solver.incompressibleVoF.configs.TransportPropertiesConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;constant/transportProperties&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/transportProperties"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransportPropertiesConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``constant/transportProperties`` — the interFoam two-phase transport.</span>
+<span class="w">    </span><span class="sd">"""``constant/transportProperties`` — the interFoam two-phase transport.</span>
 
 <span class="sd">    Models the file the C++ ``immiscibleIncompressibleTwoPhaseMixture`` reads:</span>
 <span class="sd">    the ordered ``phases`` list, one transport sub-dict per phase, and the</span>
 <span class="sd">    surface-tension coefficient ``sigma``. Defaults describe water flooding an</span>
 <span class="sd">    air-filled domain (the hx-cad VoF study).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">phases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;water&quot;</span><span class="p">,</span> <span class="s2">&quot;air&quot;</span><span class="p">])</span>
+    <span class="n">phases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="s2">"water"</span><span class="p">,</span> <span class="s2">"air"</span><span class="p">])</span>
     <span class="n">water</span><span class="p">:</span> <span class="n">PhaseTransport</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">PhaseTransport</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">))</span>
     <span class="n">air</span><span class="p">:</span> <span class="n">PhaseTransport</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">PhaseTransport</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mf">1.48e-5</span><span class="p">,</span> <span class="n">rho</span><span class="o">=</span><span class="mf">1.0</span><span class="p">))</span>
     <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.07</span>
 
-    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;phases&quot;</span><span class="p">,</span> <span class="n">when_used</span><span class="o">=</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">"phases"</span><span class="p">,</span> <span class="n">when_used</span><span class="o">=</span><span class="s2">"always"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="s2">"("</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;phases&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"phases"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_phases</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"()"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_GravityHeader</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``FoamFile`` header that identifies ``constant/g`` to OpenFOAM.</span>
+<span class="w">    </span><span class="sd">"""The ``FoamFile`` header that identifies ``constant/g`` to OpenFOAM.</span>
 
 <span class="sd">    ``class`` is pinned to ``uniformDimensionedVectorField`` so OpenFOAM reads the</span>
 <span class="sd">    file as a gravity field (not the generic ``dictionary`` the writer injects for</span>
 <span class="sd">    headerless configs).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;2.0&quot;</span>
-    <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;ascii&quot;</span>
-    <span class="n">field_class</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;uniformDimensionedVectorField&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;class&quot;</span><span class="p">)</span>
-    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;g&quot;</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"2.0"</span>
+    <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"ascii"</span>
+    <span class="n">field_class</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"uniformDimensionedVectorField"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"class"</span><span class="p">)</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"g"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_component</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a vector component with no gratuitous ``.0`` (``0.0`` -&gt; ``0``).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Render a vector component with no gratuitous ``.0`` (``0.0`` -&gt; ``0``)."""</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="GravityConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleVoF.configs.html#neofoam.solver.incompressibleVoF.configs.GravityConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;constant/g&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/g"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">GravityConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``constant/g`` — the uniform gravitational acceleration.</span>
+<span class="w">    </span><span class="sd">"""``constant/g`` — the uniform gravitational acceleration.</span>
 
 <span class="sd">    The VoF ``p_rgh`` formulation reads ``g`` at init to form the geopotential</span>
 <span class="sd">    ``gh`` / ``ghf``; without this file the solver aborts with *cannot find file</span>
-<span class="sd">    &quot;constant/g&quot;*. Defaults are Earth gravity acting in -y: ``dimensions</span>
+<span class="sd">    "constant/g"*. Defaults are Earth gravity acting in -y: ``dimensions</span>
 <span class="sd">    [0 1 -2 0 0 0 0]``, ``value (0 -9.81 0)``.</span>
 
-<span class="sd">    A field-for-field copy of ``incompressibleFluid``&#39;s ``GravityConfig``; the two</span>
+<span class="sd">    A field-for-field copy of ``incompressibleFluid``'s ``GravityConfig``; the two</span>
 <span class="sd">    are unified in a neutral module as a follow-up (the VoF review branch keeps its</span>
 <span class="sd">    solver package self-contained).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">FoamFile</span><span class="p">:</span> <span class="n">_GravityHeader</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">_GravityHeader</span><span class="p">)</span>
     <span class="n">dimensions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
     <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.81</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;dimensions&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"dimensions"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_dimensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"[]"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_value</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;()&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"()"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
         <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
 
-    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;dimensions&quot;</span><span class="p">,</span> <span class="n">when_used</span><span class="o">=</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">"dimensions"</span><span class="p">,</span> <span class="n">when_used</span><span class="o">=</span><span class="s2">"always"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+        <span class="k">return</span> <span class="s2">"["</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"]"</span>
 
-    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="n">when_used</span><span class="o">=</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+    <span class="nd">@field_serializer</span><span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="n">when_used</span><span class="o">=</span><span class="s2">"always"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fmt_component</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span></div>
+        <span class="k">return</span> <span class="s2">"("</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fmt_component</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span></div>
 
 </pre></div>
         </article>
@@ -808,6 +808,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

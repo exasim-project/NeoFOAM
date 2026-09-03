@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Factory helpers that build the Python-native PIMPLE control (VoF solver).</span>
+<span class="sd">"""Factory helpers that build the Python-native PIMPLE control (VoF solver).</span>
 
 <span class="sd">Reads the PIMPLE subdict of ``system/fvSolution`` through its typed config and</span>
 <span class="sd">returns a :class:`~neofoam.algorithms.solution_loop.control.PimpleControl` so the</span>
@@ -597,7 +597,7 @@
 
 <span class="sd">When the case sets ``frozenFlow yes`` the pressure-velocity solve is switched</span>
 <span class="sd">off entirely and the factory returns a :class:`FrozenFlowControl` instead.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -606,25 +606,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;FrozenFlowControl&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;VofPimpleAlgorithmConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;create_dynamic_mesh_controls&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;create_pimple_control&quot;</span><span class="p">,</span>
+    <span class="s2">"FrozenFlowControl"</span><span class="p">,</span>
+    <span class="s2">"VofPimpleAlgorithmConfig"</span><span class="p">,</span>
+    <span class="s2">"create_dynamic_mesh_controls"</span><span class="p">,</span>
+    <span class="s2">"create_pimple_control"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="VofPimpleAlgorithmConfig">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.VofPimpleAlgorithmConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PIMPLE"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">VofPimpleAlgorithmConfig</span><span class="p">(</span><span class="n">PimpleAlgorithmConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``PIMPLE`` block as interFoam reads it: the shared keys plus ``frozenFlow``.</span>
+<span class="w">    </span><span class="sd">"""The ``PIMPLE`` block as interFoam reads it: the shared keys plus ``frozenFlow``.</span>
 
 <span class="sd">    ``frozenFlow yes`` skips the pressure-velocity solve entirely, so the</span>
 <span class="sd">    corrector counts are free to carry the ``-1`` sentinels the interIsoFoam</span>
 <span class="sd">    tutorials pair with it (see :class:`FrozenFlowControl`). The inherited</span>
 <span class="sd">    ``finalOnLastPimpleIterOnly`` is unused here — this port selects the</span>
 <span class="sd">    ``&lt;field&gt;Final`` settings from ``pimple_control.finalIter()`` directly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">frozenFlow</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
@@ -633,12 +633,12 @@
 <div class="viewcode-block" id="FrozenFlowControl">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.FrozenFlowControl">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FrozenFlowControl</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Frozen-flow drop-in for :class:`PimpleControl` — no pressure-velocity solve.</span>
+<span class="w">    </span><span class="sd">"""Frozen-flow drop-in for :class:`PimpleControl` — no pressure-velocity solve.</span>
 
 <span class="sd">    interIsoFoam runs ``if (pimple.frozenFlow()) continue;`` inside the outer</span>
 <span class="sd">    corrector loop: alpha still advects, but the momentum predictor, the pressure</span>
 <span class="sd">    corrector and the turbulence correction are skipped. It drives a single outer</span>
-<span class="sd">    pass per step; ``pimpleAlgorithm``&#39;s ``momentum``/``continuity`` recognise the</span>
+<span class="sd">    pass per step; ``pimpleAlgorithm``'s ``momentum``/``continuity`` recognise the</span>
 <span class="sd">    type and return early.</span>
 
 <span class="sd">    A :class:`PimpleControl` cannot stand in: the frozen tutorials pair</span>
@@ -647,7 +647,7 @@
 <span class="sd">    carried verbatim, ``-1`` included, so the start-up flux projection runs</span>
 <span class="sd">    ``nNonOrthCorr + 1`` — i.e. zero — passes and never solves a ``pcorr`` these</span>
 <span class="sd">    cases declare no solver for.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nNonOrthogonalCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outer_open</span> <span class="o">=</span> <span class="kc">True</span>
@@ -656,7 +656,7 @@
 <div class="viewcode-block" id="FrozenFlowControl.loop">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.FrozenFlowControl.loop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;One outer pass per time step (re-arms on close, mirroring PimpleControl).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""One outer pass per time step (re-arms on close, mirroring PimpleControl)."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outer_open</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_outer_open</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -667,21 +667,21 @@
 <div class="viewcode-block" id="FrozenFlowControl.firstIter">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.FrozenFlowControl.firstIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">firstIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The single outer pass is always the first one.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The single outer pass is always the first one."""</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="FrozenFlowControl.finalIter">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.FrozenFlowControl.finalIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The single outer pass is always the final one.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The single outer pass is always the final one."""</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="FrozenFlowControl.turbCorr">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.FrozenFlowControl.turbCorr">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">turbCorr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Never — interIsoFoam ``continue``s past the turbulence correction.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Never — interIsoFoam ``continue``s past the turbulence correction."""</span>
         <span class="k">return</span> <span class="kc">False</span></div>
 </div>
 
@@ -690,14 +690,14 @@
 <div class="viewcode-block" id="create_dynamic_mesh_controls">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.create_dynamic_mesh_controls">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_dynamic_mesh_controls</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">DynamicMeshControls</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The PIMPLE dict&#39;s mesh-motion switches (transcription of ``createDyMControls.H``).</span>
+<span class="w">    </span><span class="sd">"""The PIMPLE dict's mesh-motion switches (transcription of ``createDyMControls.H``).</span>
 
 <span class="sd">    Native re-reads them every time step (``readDyMControls.H``); read once here</span>
 <span class="sd">    because no tutorial rewrites them mid-run. ``correctPhi`` defaults to</span>
 <span class="sd">    ``mesh.dynamic()``, resolved here where the mesh is in hand.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">controls</span> <span class="o">=</span> <span class="n">DynamicMeshControls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">controls</span><span class="o">.</span><span class="n">resolved</span><span class="p">(</span><span class="n">mesh_dynamic</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dynamic</span><span class="p">()))</span></div>
+    <span class="k">return</span> <span class="n">controls</span><span class="o">.</span><span class="n">resolved</span><span class="p">(</span><span class="n">mesh_dynamic</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span><span class="o">.</span><span class="n">dynamic</span><span class="p">()))</span></div>
 
 
 
@@ -706,11 +706,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">create_pimple_control</span><span class="p">(</span>
     <span class="n">_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">PimpleControl</span><span class="p">,</span> <span class="n">FrozenFlowControl</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the PIMPLE control from the PIMPLE subdict.</span>
+<span class="w">    </span><span class="sd">"""Create the PIMPLE control from the PIMPLE subdict.</span>
 
 <span class="sd">    ``frozenFlow yes`` (default ``no``) switches the pressure-velocity solve off</span>
 <span class="sd">    entirely and yields a :class:`FrozenFlowControl` instead.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">VofPimpleAlgorithmConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">frozenFlow</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">FrozenFlowControl</span><span class="p">(</span><span class="n">nNonOrthogonalCorrectors</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span><span class="p">)</span>
@@ -764,6 +764,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

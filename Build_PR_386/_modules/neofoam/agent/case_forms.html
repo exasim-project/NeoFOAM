@@ -589,20 +589,20 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Wire ``incompressibleFluid`` configs to/from JSON-schema form values.</span>
+<span class="sd">"""Wire ``incompressibleFluid`` configs to/from JSON-schema form values.</span>
 
 <span class="sd">Bridges the form data the case notebooks collect (or the AI agent produces) and</span>
-<span class="sd">the per-field split the wizard uses — a field config&#39;s ``internalField`` lives</span>
+<span class="sd">the per-field split the wizard uses — a field config's ``internalField`` lives</span>
 <span class="sd">on the *Initial values* tab while its ``boundaryField`` lives on the *BCs* tab.</span>
 
 <span class="sd">BC / field values no longer need a write-boundary normalisation pass: the</span>
 <span class="sd">:data:`neofoam.fields.value_types.FieldValue` type serialises itself to the</span>
 <span class="sd">right per-writer form (raw for forms/JSON, ``uniform``/``nonuniform`` literals</span>
-<span class="sd">for OpenFOAM via the writer&#39;s serialization context).</span>
+<span class="sd">for OpenFOAM via the writer's serialization context).</span>
 
 <span class="sd">Pure pydantic + stdlib. See :mod:`neofoam.io.pydantic_schema` for the generic</span>
 <span class="sd">(config-agnostic) schema/form helpers.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -611,33 +611,33 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;INPUT_KEYS&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;field_name&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;is_scheme_config&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;merge_field_config&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;split_field_dump&quot;</span><span class="p">,</span>
+    <span class="s2">"INPUT_KEYS"</span><span class="p">,</span>
+    <span class="s2">"field_name"</span><span class="p">,</span>
+    <span class="s2">"is_scheme_config"</span><span class="p">,</span>
+    <span class="s2">"merge_field_config"</span><span class="p">,</span>
+    <span class="s2">"split_field_dump"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1">#: Top-level field-config properties that belong on the *Initial values* tab</span>
 <span class="c1">#: (the complement, ``boundaryField``, belongs on the *BCs* tab).</span>
-<span class="n">INPUT_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;dimensions&quot;</span><span class="p">,</span> <span class="s2">&quot;internalField&quot;</span><span class="p">)</span>
+<span class="n">INPUT_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"dimensions"</span><span class="p">,</span> <span class="s2">"internalField"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="is_scheme_config">
 <a class="viewcode-back" href="../../../reference/api/neofoam.agent.case_forms.html#neofoam.agent.case_forms.is_scheme_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_scheme_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True if ``cls`` writes a ``system/fv*`` file (fvSchemes / fvSolution).&quot;&quot;&quot;</span>
-    <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;io_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">io</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;system/fv&quot;</span><span class="p">))</span></div>
+<span class="w">    </span><span class="sd">"""True if ``cls`` writes a ``system/fv*`` file (fvSchemes / fvSolution)."""</span>
+    <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">io</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"system/fv"</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="field_name">
 <a class="viewcode-back" href="../../../reference/api/neofoam.agent.case_forms.html#neofoam.agent.case_forms.field_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">field_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The short field name for a ``0/&lt;name&gt;`` field config (e.g. ``&quot;U&quot;``).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The short field name for a ``0/&lt;name&gt;`` field config (e.g. ``"U"``)."""</span>
     <span class="n">io</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span>  <span class="c1"># type: ignore[attr-defined]</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">name</span></div>
 
 
@@ -647,14 +647,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">split_field_dump</span><span class="p">(</span>
     <span class="n">dump</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a field config dump into (initial-values half, BCs half).</span>
+<span class="w">    </span><span class="sd">"""Split a field config dump into (initial-values half, BCs half).</span>
 
 <span class="sd">    Mirrors how the wizard renders a field across two tabs: the input half</span>
 <span class="sd">    carries :data:`INPUT_KEYS` (``dimensions`` / ``internalField``), the BC half</span>
 <span class="sd">    carries ``boundaryField``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">input_half</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">dump</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">INPUT_KEYS</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dump</span><span class="p">}</span>
-    <span class="n">bc_half</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;boundaryField&quot;</span><span class="p">:</span> <span class="n">dump</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;boundaryField&quot;</span><span class="p">,</span> <span class="p">{})}</span>
+    <span class="n">bc_half</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"boundaryField"</span><span class="p">:</span> <span class="n">dump</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,</span> <span class="p">{})}</span>
     <span class="k">return</span> <span class="n">input_half</span><span class="p">,</span> <span class="n">bc_half</span></div>
 
 
@@ -666,13 +666,13 @@
     <span class="n">input_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">bc_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rebuild a field config from its two form halves.</span>
+<span class="w">    </span><span class="sd">"""Rebuild a field config from its two form halves.</span>
 
-<span class="sd">    Starts from the config&#39;s ``model_construct`` defaults so a half the user</span>
+<span class="sd">    Starts from the config's ``model_construct`` defaults so a half the user</span>
 <span class="sd">    never submitted falls back rather than vanishing, overlays the input and BC</span>
 <span class="sd">    halves, then validates. The OpenFOAM literal form is produced at write time</span>
 <span class="sd">    by the :data:`~neofoam.fields.value_types.FieldValue` serializer.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">data</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_construct</span><span class="p">()</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">input_data</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bc_data</span> <span class="ow">or</span> <span class="p">{})</span>
@@ -717,6 +717,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

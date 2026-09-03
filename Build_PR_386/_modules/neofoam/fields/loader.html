@@ -589,22 +589,22 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;One-call read/write orchestration for declared ``0/&lt;name&gt;`` fields.</span>
+<span class="sd">"""One-call read/write orchestration for declared ``0/&lt;name&gt;`` fields.</span>
 
 <span class="sd">These helpers are the user-facing surface for the per-field schemas</span>
 <span class="sd">``Model.field(...)`` declares. The schemas themselves are pydantic</span>
-<span class="sd">``BaseConfig`` subclasses — :func:`load_fields` just walks the solver&#39;s</span>
+<span class="sd">``BaseConfig`` subclasses — :func:`load_fields` just walks the solver's</span>
 <span class="sd">field schemas through :class:`~neofoam.framework.solver.configurations.Configurations.fields`</span>
-<span class="sd">and calls each class&#39;s ``.load(case_dir=...)``, returning a</span>
+<span class="sd">and calls each class's ``.load(case_dir=...)``, returning a</span>
 <span class="sd">``dict[str, BaseConfig]`` keyed by field name. :func:`save_fields`</span>
 <span class="sd">mirrors that on the write side.</span>
 
 <span class="sd">Field files are single-owner per ``0/&lt;name&gt;``, so direct ``cfg.save()``</span>
 <span class="sd">per field is enough — unlike ``constant/transportProperties`` or</span>
-<span class="sd">``system/fvSchemes`` (multi-owner files), there&#39;s no merge layer. The</span>
+<span class="sd">``system/fvSchemes`` (multi-owner files), there's no merge layer. The</span>
 <span class="sd">caller can mutate, omit, or add fields freely between load and save;</span>
 <span class="sd">:func:`save_fields` writes exactly what it is handed.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -618,7 +618,7 @@
 <div class="viewcode-block" id="load_fields">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.loader.html#neofoam.fields.loader.load_fields">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_fields</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load every declared ``0/&lt;name&gt;`` field on ``solver`` from ``case_dir``.</span>
+<span class="w">    </span><span class="sd">"""Load every declared ``0/&lt;name&gt;`` field on ``solver`` from ``case_dir``.</span>
 
 <span class="sd">    Walks ``configurations(solver).fields`` and calls</span>
 <span class="sd">    ``cls.load(case_dir=...)`` for each. Missing files raise</span>
@@ -633,10 +633,10 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Mapping of field name → loaded :class:`BaseConfig` instance.</span>
-<span class="sd">        The name is taken from the schema class — ``&quot;UFieldConfig&quot;``</span>
-<span class="sd">        → ``&quot;U&quot;`` — so callers index by the OpenFOAM field name</span>
+<span class="sd">        The name is taken from the schema class — ``"UFieldConfig"``</span>
+<span class="sd">        → ``"U"`` — so callers index by the OpenFOAM field name</span>
 <span class="sd">        directly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
@@ -652,10 +652,10 @@
     <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">],</span>
     <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist a mapping of fields back to ``case_dir``.</span>
+<span class="w">    </span><span class="sd">"""Persist a mapping of fields back to ``case_dir``.</span>
 
 <span class="sd">    Each instance is written through its registered IO strategy — the</span>
-<span class="sd">    ``@IOStrategy(OF(&quot;0/&lt;name&gt;&quot;))`` decorator that ``schema_for(decl)``</span>
+<span class="sd">    ``@IOStrategy(OF("0/&lt;name&gt;"))`` decorator that ``schema_for(decl)``</span>
 <span class="sd">    stamped on the synthesised class. Returns the list of paths</span>
 <span class="sd">    actually written, in iteration order, so the caller can log /</span>
 <span class="sd">    surface them in tests.</span>
@@ -663,17 +663,17 @@
 <span class="sd">    Args:</span>
 <span class="sd">        fields: Field instances to persist. The mapping key is</span>
 <span class="sd">            informational only — the on-disk path is driven by each</span>
-<span class="sd">            instance&#39;s ``io_config.file``.</span>
+<span class="sd">            instance's ``io_config.file``.</span>
 <span class="sd">        case_dir: Target case directory.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Paths written, in iteration order.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If an instance&#39;s class has no ``io_config`` (it was</span>
+<span class="sd">        ValueError: If an instance's class has no ``io_config`` (it was</span>
 <span class="sd">            not synthesised by :func:`schema_for` — and there is no</span>
 <span class="sd">            ``0/&lt;name&gt;`` binding to write to).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">_name</span><span class="p">,</span> <span class="n">instance</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -681,11 +681,11 @@
         <span class="c1"># models that never went through ``@IOStrategy`` raise the</span>
         <span class="c1"># ValueError below rather than ``AttributeError`` — the former is</span>
         <span class="c1"># the documented failure mode for this function.</span>
-        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="s2">&quot;io_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;save_fields: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no io_config &quot;</span>
-                <span class="s2">&quot;(not a synthesised field schema)&quot;</span>
+                <span class="sa">f</span><span class="s2">"save_fields: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no io_config "</span>
+                <span class="s2">"(not a synthesised field schema)"</span>
             <span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_path</span><span class="p">)</span>
         <span class="n">written</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">case_path</span> <span class="o">/</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
@@ -694,20 +694,20 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_field_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recover the field name from a synthesised schema class.</span>
+<span class="w">    </span><span class="sd">"""Recover the field name from a synthesised schema class.</span>
 
-<span class="sd">    Synthesised schemas are named ``&quot;&lt;name&gt;FieldConfig&quot;`` in</span>
-<span class="sd">    :func:`schema_for`; their ``io_config.file`` is ``&quot;0/&lt;name&gt;&quot;``.</span>
+<span class="sd">    Synthesised schemas are named ``"&lt;name&gt;FieldConfig"`` in</span>
+<span class="sd">    :func:`schema_for`; their ``io_config.file`` is ``"0/&lt;name&gt;"``.</span>
 <span class="sd">    Both are stable, but the path is the canonical source — strip the</span>
 <span class="sd">    ``0/`` prefix to get the field name even if the class name is later</span>
 <span class="sd">    changed for cosmetic reasons.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">io</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span>
-    <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0/&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;0/&quot;</span><span class="p">)</span> <span class="p">:]</span>
+    <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"0/"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"0/"</span><span class="p">)</span> <span class="p">:]</span>
     <span class="c1"># Fallback to the class name convention; should never fire for</span>
     <span class="c1"># schemas built via ``schema_for``.</span>
-    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">&quot;FieldConfig&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">"FieldConfig"</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>
@@ -747,6 +747,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

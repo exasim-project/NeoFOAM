@@ -590,7 +590,7 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Topological sort abstractions and implementations.&quot;&quot;&quot;</span>
+<span class="sd">"""Topological sort abstractions and implementations."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span>
 
@@ -600,7 +600,7 @@
 <div class="viewcode-block" id="TopologicalSorter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.sorter.html#neofoam.framework.graph.sorter.TopologicalSorter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TopologicalSorter</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface boundary for DAG sorting backends.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Interface boundary for DAG sorting backends."""</span>
 
 <div class="viewcode-block" id="TopologicalSorter.sort">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.sorter.html#neofoam.framework.graph.sorter.TopologicalSorter.sort">[docs]</a>
@@ -609,7 +609,7 @@
         <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span>
         <span class="n">key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return nodes in valid topological order, with optional tie-break key.&quot;&quot;&quot;</span></div>
+<span class="w">        </span><span class="sd">"""Return nodes in valid topological order, with optional tie-break key."""</span></div>
 </div>
 
 
@@ -617,7 +617,7 @@
 <div class="viewcode-block" id="NetworkxTopologicalSorter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.sorter.html#neofoam.framework.graph.sorter.NetworkxTopologicalSorter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NetworkxTopologicalSorter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Topological sorter implementation based on networkx.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Topological sorter implementation based on networkx."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="o">=</span> <span class="n">key</span>
@@ -629,11 +629,11 @@
         <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span>
         <span class="n">key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return nodes in topological order.</span>
+<span class="w">        </span><span class="sd">"""Return nodes in topological order.</span>
 
 <span class="sd">        Per-call ``key`` overrides the instance-level key; otherwise the</span>
 <span class="sd">        instance key is used; otherwise sort lexicographically by node name.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">sort_key</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span> <span class="ow">or</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">node_name</span><span class="p">:</span> <span class="n">node_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">lexicographical_topological_sort</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">sort_key</span><span class="p">))</span></div>
 </div>
@@ -677,6 +677,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

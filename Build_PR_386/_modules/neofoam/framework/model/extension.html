@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Extension — the bundle of hooks an operation module declares for models to extend.</span>
+<span class="sd">"""Extension — the bundle of hooks an operation module declares for models to extend.</span>
 
 <span class="sd">An operation module declares one :class:`Extension` per extensible operation and</span>
 <span class="sd">one ``@&lt;extension&gt;.defines`` function per :class:`Hook`; models register plain</span>
@@ -598,7 +598,7 @@
 <span class="sd">A contribution runs iff its model is active for the case (a live ``ModelRuntime``</span>
 <span class="sd">in ``ctx.models``), so the operations never name a model and a case activates</span>
 <span class="sd">contributions by its files alone.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -613,7 +613,7 @@
 <div class="viewcode-block" id="Kind">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Kind">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Kind</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a hook combines what its contributions return.</span>
+<span class="w">    </span><span class="sd">"""How a hook combines what its contributions return.</span>
 
 <span class="sd">    Declared once per hook at ``@&lt;extension&gt;.defines(kind=...)``, so a</span>
 <span class="sd">    declaration states which of the two shapes it is instead of inventing a</span>
@@ -627,20 +627,20 @@
 <span class="sd">    raw, without invoking the body, when the declaration has no trailing results</span>
 <span class="sd">    parameter to receive them (a broadcast hook, see :class:`Extension`).</span>
 <span class="sd">    ``PIPELINE`` threads the value instead: each contribution receives the</span>
-<span class="sd">    previous one&#39;s output in the declaration&#39;s *first* parameter, the call returns</span>
+<span class="sd">    previous one's output in the declaration's *first* parameter, the call returns</span>
 <span class="sd">    that threaded value, and a contribution returning ``None`` passes it through;</span>
 <span class="sd">    its body is documentation only.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">ADDITIVE</span> <span class="o">=</span> <span class="s2">&quot;additive&quot;</span>
-    <span class="n">PIPELINE</span> <span class="o">=</span> <span class="s2">&quot;pipeline&quot;</span></div>
+    <span class="n">ADDITIVE</span> <span class="o">=</span> <span class="s2">"additive"</span>
+    <span class="n">PIPELINE</span> <span class="o">=</span> <span class="s2">"pipeline"</span></div>
 
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Negated</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marks a term to fold in by subtraction; see :func:`negated`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Marks a term to fold in by subtraction; see :func:`negated`."""</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;term&quot;</span><span class="p">,)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"term"</span><span class="p">,)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">term</span> <span class="o">=</span> <span class="n">term</span>
@@ -649,11 +649,11 @@
 <div class="viewcode-block" id="negated">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.negated">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">negated</span><span class="p">(</span><span class="n">term</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mark *term* to join a :func:`fold` with ``-`` instead of ``+``.</span>
+<span class="w">    </span><span class="sd">"""Mark *term* to join a :func:`fold` with ``-`` instead of ``+``.</span>
 
-<span class="sd">    Mirrors native&#39;s ``== source``. The bound matrices have no unary minus, so</span>
+<span class="sd">    Mirrors native's ``== source``. The bound matrices have no unary minus, so</span>
 <span class="sd">    ``sum - term`` is the only available spelling.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_Negated</span><span class="p">(</span><span class="n">term</span><span class="p">)</span></div>
 
 
@@ -661,12 +661,12 @@
 <div class="viewcode-block" id="fold">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.fold">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fold</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine contribution *results* onto *seed*, in order: ``+`` by default,</span>
+<span class="w">    </span><span class="sd">"""Combine contribution *results* onto *seed*, in order: ``+`` by default,</span>
 <span class="sd">    ``-`` for :func:`negated` results, skipping ``None`` (no opinion).</span>
 
 <span class="sd">    Seeding plus the ``None`` skip is what keeps ``+ ext.terms(U)`` well-formed</span>
 <span class="sd">    for any number of active contributions, including none.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">seed</span>
     <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -682,12 +682,12 @@
 <div class="viewcode-block" id="Hook">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Hook">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Hook</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One hook of an :class:`Extension` and its registered contributions.</span>
+<span class="w">    </span><span class="sd">"""One hook of an :class:`Extension` and its registered contributions.</span>
 
 <span class="sd">    The handle ``@&lt;extension&gt;.defines`` returns: the</span>
 <span class="sd">    ``@&lt;model&gt;.contributes(&lt;hook&gt;)`` target, and — used as a parameter</span>
-<span class="sd">    annotation — the consumer&#39;s injection marker.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    annotation — the consumer's injection marker.</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -704,17 +704,17 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">contributions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The registered contribution functions, in registration order.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The registered contribution functions, in registration order."""</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_contributions</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Hook.owner_of">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Hook.owner_of">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">owner_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contribution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelSpec</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the contributing model that registered *contribution*.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the contributing model that registered *contribution*."""</span>
         <span class="k">if</span> <span class="n">contribution</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contributions</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;hook &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">contribution</span><span class="si">!r}</span><span class="s2"> &quot;</span>
-                <span class="s2">&quot;is not a registered contribution.&quot;</span>
+                <span class="sa">f</span><span class="s2">"hook '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">contribution</span><span class="si">!r}</span><span class="s2"> "</span>
+                <span class="s2">"is not a registered contribution."</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contributions</span><span class="p">[</span><span class="n">contribution</span><span class="p">]</span></div>
 
@@ -722,19 +722,19 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_register_contribution</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">owner</span><span class="p">:</span> <span class="n">ModelSpec</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Record *func* as a contribution owned by the *owner* model.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Record *func* as a contribution owned by the *owner* model."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_contributions</span><span class="p">[</span><span class="n">func</span><span class="p">]</span> <span class="o">=</span> <span class="n">owner</span>
         <span class="k">return</span> <span class="n">func</span>
 
 <div class="viewcode-block" id="Hook.resolve">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Hook.resolve">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bind this hook to *ctx* for one injection.</span>
+<span class="w">        </span><span class="sd">"""Bind this hook to *ctx* for one injection.</span>
 
 <span class="sd">        The returned callable dispatches exactly like ``ext.&lt;hook&gt;(...)`` on a</span>
 <span class="sd">        :class:`BoundExtension`. This is how a hook used as a parameter</span>
 <span class="sd">        annotation (``@&lt;model&gt;.interface``) reaches its consumer.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">runtime_by_spec</span> <span class="o">=</span> <span class="n">_runtime_by_spec</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -748,16 +748,16 @@
 <div class="viewcode-block" id="Extension">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Extension">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Extension</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A named bundle of hooks an operation module defines.</span>
+<span class="w">    </span><span class="sd">"""A named bundle of hooks an operation module defines.</span>
 
-<span class="sd">    A ``@defines`` declaration&#39;s leading parameters are the call-time arguments</span>
+<span class="sd">    A ``@defines`` declaration's leading parameters are the call-time arguments</span>
 <span class="sd">    the operation passes; a **trailing parameter the call does not supply**</span>
-<span class="sd">    receives the active contributions&#39; results, and the body owns the combine</span>
+<span class="sd">    receives the active contributions' results, and the body owns the combine</span>
 <span class="sd">    rule (``min``, ``any``, :func:`fold`, …). A declaration whose every parameter</span>
 <span class="sd">    is a call argument is a **broadcast hook**: the call returns the raw</span>
 <span class="sd">    per-contribution results and the body is never invoked::</span>
 
-<span class="sd">        momExt = Extension(&quot;momentum&quot;)</span>
+<span class="sd">        momExt = Extension("momentum")</span>
 
 <span class="sd">        @momExt.defines</span>
 <span class="sd">        def terms(U: volVectorField, contributions: list[Any]) -&gt; Any:</span>
@@ -768,7 +768,7 @@
 
 <span class="sd">    An operation consumes the whole bundle as one injected handle by annotating</span>
 <span class="sd">    a parameter ``Annotated[BoundExtension, &lt;extension&gt;]``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -785,11 +785,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">defines</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">Kind</span> <span class="o">=</span> <span class="n">Kind</span><span class="o">.</span><span class="n">ADDITIVE</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hook</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Hook</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare one hook of this extension; returns its :class:`Hook` handle.</span>
+<span class="w">        </span><span class="sd">"""Declare one hook of this extension; returns its :class:`Hook` handle.</span>
 
 <span class="sd">        Usable bare (``@&lt;extension&gt;.defines``) for the default additive kind, or</span>
 <span class="sd">        with the kind named (``@&lt;extension&gt;.defines(kind=Kind.PIPELINE)``).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="k">lambda</span> <span class="n">deferred</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_define</span><span class="p">(</span><span class="n">deferred</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_define</span><span class="p">(</span><span class="n">declaration</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span></div>
@@ -799,32 +799,32 @@
         <span class="n">hook</span> <span class="o">=</span> <span class="n">Hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">declaration</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Extension &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: pipeline hook &#39;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; declares no &quot;</span>
-                <span class="s2">&quot;parameter to thread the value through.&quot;</span>
+                <span class="sa">f</span><span class="s2">"Extension '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">': pipeline hook '</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' declares no "</span>
+                <span class="s2">"parameter to thread the value through."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Extension &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: hook &#39;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is already defined.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Extension '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">': hook '</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' is already defined."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="p">[</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">hook</span>
         <span class="k">return</span> <span class="n">hook</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hook</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The declared hooks by name, in declaration order.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The declared hooks by name, in declaration order."""</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hook</span><span class="p">:</span>
         <span class="c1"># Attribute lookup, so two extensions can share a hook name.</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="n">hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">hook</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;extension &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; defines no hook &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"extension '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' defines no hook '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">hook</span>
 
 <div class="viewcode-block" id="Extension.resolve">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Extension.resolve">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundExtension</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bind this extension to *ctx* for one injection (see BoundExtension).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Bind this extension to *ctx* for one injection (see BoundExtension)."""</span>
         <span class="k">return</span> <span class="n">BoundExtension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
 </div>
 
@@ -833,14 +833,14 @@
 <div class="viewcode-block" id="BoundExtension">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.BoundExtension">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BoundExtension</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One :class:`Extension` resolved against one Context: ``ext.&lt;hook&gt;(...)``.</span>
+<span class="w">    </span><span class="sd">"""One :class:`Extension` resolved against one Context: ``ext.&lt;hook&gt;(...)``.</span>
 
 <span class="sd">    Built fresh by :meth:`Extension.resolve` on every injection, so it never</span>
 <span class="sd">    outlives the Context it was resolved against. A hook call runs every</span>
 <span class="sd">    contribution whose model is active for the Context (by ``ModelSpec``</span>
-<span class="sd">    identity), in registration order, then returns the declaration body&#39;s</span>
+<span class="sd">    identity), in registration order, then returns the declaration body's</span>
 <span class="sd">    combined value — or, for a broadcast hook, the raw results list.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="n">Extension</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_extension</span> <span class="o">=</span> <span class="n">extension</span>
@@ -849,11 +849,11 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="c1"># Underscore names must miss so internal state still resolves during __init__.</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="n">hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extension</span><span class="o">.</span><span class="n">_hooks</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">hook</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;extension &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; defines no hook &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"extension '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' defines no hook '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">call_hook</span><span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runtime_by_spec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
@@ -863,7 +863,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_runtime_by_spec</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The live ``ModelRuntime``s of *ctx*, keyed by their spec (identity).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The live ``ModelRuntime``s of *ctx*, keyed by their spec (identity)."""</span>
     <span class="c1"># Lazy import breaks the cycle model.extension -&gt; model.runtime -&gt; ... .</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>  <span class="c1"># noqa: PLC0415</span>
 
@@ -881,11 +881,11 @@
     <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
     <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispatch one hook call: run the active contributions, then combine.</span>
+<span class="w">    </span><span class="sd">"""Dispatch one hook call: run the active contributions, then combine.</span>
 
 <span class="sd">    Shared by :class:`BoundExtension` and by a hook bound on its own</span>
 <span class="sd">    (:meth:`Hook.resolve`).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Lazy import breaks the cycle model.extension -&gt; model.interface -&gt; ... .</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">_resolve_contribution_kwargs</span>  <span class="c1"># noqa: PLC0415</span>
 
@@ -894,7 +894,7 @@
     <span class="n">call_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">bound</span><span class="o">.</span><span class="n">arguments</span><span class="p">)</span>
     <span class="n">parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
     <span class="c1"># The results sink is the *last* parameter by convention; any other</span>
-    <span class="c1"># unsupplied parameter is a caller mistake, not a sink. A pipeline&#39;s first</span>
+    <span class="c1"># unsupplied parameter is a caller mistake, not a sink. A pipeline's first</span>
     <span class="c1"># parameter carries the threaded value, so it can never be the sink — without</span>
     <span class="c1"># this a one-parameter pipeline would exempt its own argument from the guard</span>
     <span class="c1"># below and fail with a bare KeyError instead.</span>
@@ -903,8 +903,8 @@
     <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound</span><span class="o">.</span><span class="n">arguments</span> <span class="ow">and</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">results_param</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;hook &#39;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; called without &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;argument(s): </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"hook '</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' called without "</span>
+            <span class="sa">f</span><span class="s2">"argument(s): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">owner_spec</span> <span class="ow">in</span> <span class="n">hook</span><span class="o">.</span><span class="n">_contributions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -912,12 +912,12 @@
         <span class="k">if</span> <span class="n">runtime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>  <span class="c1"># contributing model not active for this case</span>
         <span class="n">resolved</span> <span class="o">=</span> <span class="n">_resolve_contribution_kwargs</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">call_kwargs</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">call_kwargs</span>
         <span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">)</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># The next contribution transforms this one&#39;s output.</span>
+            <span class="c1"># The next contribution transforms this one's output.</span>
             <span class="n">call_kwargs</span><span class="p">[</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
     <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span><span class="p">:</span>
         <span class="c1"># The threaded value *is* the answer, so the declaration body is</span>
@@ -969,6 +969,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

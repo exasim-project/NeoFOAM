@@ -628,7 +628,7 @@ target and as an operation-parameter annotation.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">DependencyResolver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelRuntime</span>
 
-<span class="n">equation</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;equation&quot;</span><span class="p">)</span>
+<span class="n">equation</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"equation"</span><span class="p">)</span>
 
 
 <span class="nd">@equation</span><span class="o">.</span><span class="n">interface</span>
@@ -636,7 +636,7 @@ target and as an operation-parameter annotation.</p>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># no contribution -&gt; 0.0</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;empty fold =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{},</span> <span class="n">models</span><span class="o">=</span><span class="p">{}))())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"empty fold ="</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{},</span> <span class="n">models</span><span class="o">=</span><span class="p">{}))())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>source empty fold = 0.0
@@ -651,9 +651,9 @@ fields it needs as typed parameters (resolved from the
 and returns its one contribution to the sum. The three models below stand in
 for three independent physics models — <strong>none knows the others exist</strong>, and
 none touches <code class="docutils literal notranslate"><span class="pre">ctx</span></code> directly.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">gravity</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;gravity&quot;</span><span class="p">)</span>
-<span class="n">drag</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;drag&quot;</span><span class="p">)</span>
-<span class="n">buoyancy</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;buoyancy&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">gravity</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"gravity"</span><span class="p">)</span>
+<span class="n">drag</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"drag"</span><span class="p">)</span>
+<span class="n">buoyancy</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"buoyancy"</span><span class="p">)</span>
 
 
 <span class="nd">@gravity</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
@@ -671,10 +671,10 @@ none touches <code class="docutils literal notranslate"><span class="pre">ctx</s
     <span class="k">return</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="mf">300.0</span><span class="p">)</span>  <span class="c1"># thermal source</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;models contributing to &#39;source&#39;:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">contributions</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"models contributing to 'source':"</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">contributions</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>models contributing to &#39;source&#39;: [&#39;gravity_force&#39;, &#39;drag_force&#39;, &#39;buoyancy_force&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>models contributing to 'source': ['gravity_force', 'drag_force', 'buoyancy_force']
 </pre></div>
 </div>
 </section>
@@ -686,16 +686,16 @@ the returned handle is callable, and calling it runs exactly the
 contributions whose model is active and hands their results to the declared
 combine. The parameter <em>name</em> (<code class="docutils literal notranslate"><span class="pre">rho</span></code>/<code class="docutils literal notranslate"><span class="pre">U</span></code>/<code class="docutils literal notranslate"><span class="pre">T</span></code>) is the lookup key into
 <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">gravity_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">gravity</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;gravity&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="n">drag_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">drag</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;drag&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="n">buoyancy_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">buoyancy</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;buoyancy&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">gravity_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">gravity</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"gravity"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">drag_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">drag</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"drag"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">buoyancy_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">buoyancy</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"buoyancy"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mf">320.0</span><span class="p">},</span>
-    <span class="n">models</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;gravity&quot;</span><span class="p">:</span> <span class="n">gravity_rt</span><span class="p">,</span> <span class="s2">&quot;drag&quot;</span><span class="p">:</span> <span class="n">drag_rt</span><span class="p">,</span> <span class="s2">&quot;buoyancy&quot;</span><span class="p">:</span> <span class="n">buoyancy_rt</span><span class="p">},</span>
+    <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">"U"</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">"rho"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">:</span> <span class="mf">320.0</span><span class="p">},</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">{</span><span class="s2">"gravity"</span><span class="p">:</span> <span class="n">gravity_rt</span><span class="p">,</span> <span class="s2">"drag"</span><span class="p">:</span> <span class="n">drag_rt</span><span class="p">,</span> <span class="s2">"buoyancy"</span><span class="p">:</span> <span class="n">buoyancy_rt</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="c1"># gravity = -9.81, drag = -1.0, buoyancy = 0.1*(320-300) = 2.0 -&gt; summed -8.81</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;total source =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"total source ="</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>total source = -8.81
@@ -719,13 +719,13 @@ annotation and hide the handle from the resolver).</p>
 
 <span class="c1"># In a solver: @momentum.operation</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">advance_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="n">source</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># type: ignore[valid-type]</span>
-    <span class="c1"># src() gathers every active model&#39;s contribution into one total source term</span>
+    <span class="c1"># src() gathers every active model's contribution into one total source term</span>
     <span class="k">return</span> <span class="n">U</span> <span class="o">+</span> <span class="n">DT</span> <span class="o">*</span> <span class="n">src</span><span class="p">()</span>
 
 
 <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">advance_velocity</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;injected src() =&quot;</span><span class="p">,</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;src&quot;</span><span class="p">]())</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;advance_velocity(**resolved) =&quot;</span><span class="p">,</span> <span class="n">advance_velocity</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"injected src() ="</span><span class="p">,</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">"src"</span><span class="p">]())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"advance_velocity(**resolved) ="</span><span class="p">,</span> <span class="n">advance_velocity</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>injected src() = -8.81
@@ -740,7 +740,7 @@ in the case — the combine rule, the operation, and the existing models are
 untouched. Register a porous resistance and include its runtime; the same
 <code class="docutils literal notranslate"><span class="pre">advance_velocity</span></code> now sees the extra term, because it asked the interface
 for “the total”, not for specific models.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">porous</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;porous&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">porous</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"porous"</span><span class="p">)</span>
 
 
 <span class="nd">@porous</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
@@ -748,11 +748,11 @@ for “the total”, not for specific models.</p>
     <span class="k">return</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">U</span>
 
 
-<span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;porous&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">porous</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;porous&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;total source after adding &#39;porous&#39; =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)())</span>
+<span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"porous"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">porous</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"porous"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"total source after adding 'porous' ="</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)())</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>total source after adding &#39;porous&#39; = -12.81
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>total source after adding 'porous' = -12.81
 </pre></div>
 </div>
 </section>
@@ -762,11 +762,11 @@ for “the total”, not for specific models.</p>
 active-set to toggle: drop <code class="docutils literal notranslate"><span class="pre">porous</span></code> from the Context and its term simply
 drops out of the fold — exactly how an optional model whose config is absent
 stops contributing.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;porous&quot;</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;with &#39;porous&#39; off =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)())</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"porous"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"with 'porous' off ="</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)())</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>with &#39;porous&#39; off = -8.81
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>with 'porous' off = -8.81
 </pre></div>
 </div>
 </section>
@@ -776,22 +776,22 @@ stops contributing.</p>
 contribution whose parameter nothing supplies raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when the
 interface is called, naming the interface, the contribution, and the missing
 parameter. A misconfigured model can never silently vanish from the sum.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">needs_phi</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;needsPhi&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">needs_phi</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"needsPhi"</span><span class="p">)</span>
 
 
 <span class="nd">@needs_phi</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">needs_phi_force</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># &#39;phi&#39; is not in ctx.fields</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">needs_phi_force</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># 'phi' is not in ctx.fields</span>
     <span class="k">return</span> <span class="n">phi</span>
 
 
-<span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;needsPhi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">needs_phi</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;needsPhi&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"needsPhi"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">needs_phi</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"needsPhi"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">source</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)()</span>
 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;fold raised:&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"fold raised:"</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>fold raised: interface &#39;equation.source&#39;: contribution &#39;needs_phi_force&#39; (model &#39;needsPhi&#39;) declares parameter &#39;phi&#39; but no provider supplies it. Available context fields: [&#39;T&#39;, &#39;U&#39;, &#39;rho&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>fold raised: interface 'equation.source': contribution 'needs_phi_force' (model 'needsPhi') declares parameter 'phi' but no provider supplies it. Available context fields: ['T', 'U', 'rho']
 </pre></div>
 </div>
 </section>

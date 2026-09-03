@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Read a materialized case&#39;s field back into numpy, one subprocess per read.</span>
+<span class="sd">"""Read a materialized case's field back into numpy, one subprocess per read.</span>
 
 <span class="sd">Kept off the :class:`~neofoam.tooling.casebuild.pipeline.CaseDir` value (which is a</span>
 <span class="sd">pure case-*construction* handle) so ``pipeline.py`` stays free of numpy/subprocess:</span>
@@ -599,7 +599,7 @@
 <span class="sd">global state (later reads come back as ``nan``), so each read runs in its own process</span>
 <span class="sd">via the ``neofoam.tooling.casebuild._reader`` entry point — the only safe way to read</span>
 <span class="sd">more than one field from Python.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -619,20 +619,20 @@
 
 <div class="viewcode-block" id="read_field">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.casebuild.reader.html#neofoam.tooling.casebuild.reader.read_field">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_field</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;latest&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;np.ndarray[Any, Any]&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read field *name*&#39;s internal field from *case* (``time`` = ``&quot;latest&quot;`` or a dir).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_field</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"latest"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read field *name*'s internal field from *case* (``time`` = ``"latest"`` or a dir).</span>
 
 <span class="sd">    Runs the read in a fresh subprocess (see the module docstring). Returns the</span>
 <span class="sd">    internal field as a numpy array (``(N,)`` scalar, ``(N, 3)`` vector).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.npy&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.npy"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
                 <span class="p">[</span>
                     <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span>
-                    <span class="s2">&quot;-m&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;neofoam.tooling.casebuild._reader&quot;</span><span class="p">,</span>
+                    <span class="s2">"-m"</span><span class="p">,</span>
+                    <span class="s2">"neofoam.tooling.casebuild._reader"</span><span class="p">,</span>
                     <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">path</span><span class="p">),</span>
                     <span class="n">time</span><span class="p">,</span>
                     <span class="n">name</span><span class="p">,</span>
@@ -644,10 +644,10 @@
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">failure</span><span class="p">:</span>
             <span class="c1"># An OpenFOAM fatal error reaches the caller as a bare exit code; its</span>
-            <span class="c1"># explanation is only on the subprocess&#39;s stderr.</span>
+            <span class="c1"># explanation is only on the subprocess's stderr.</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;reading field </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> at time </span><span class="si">{</span><span class="n">time</span><span class="si">!r}</span><span class="s2"> from </span><span class="si">{</span><span class="n">case</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> failed &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(exit </span><span class="si">{</span><span class="n">failure</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">failure</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"reading field </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> at time </span><span class="si">{</span><span class="n">time</span><span class="si">!r}</span><span class="s2"> from </span><span class="si">{</span><span class="n">case</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> failed "</span>
+                <span class="sa">f</span><span class="s2">"(exit </span><span class="si">{</span><span class="n">failure</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">failure</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">failure</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">out</span><span class="p">))</span></div>
 
@@ -690,6 +690,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

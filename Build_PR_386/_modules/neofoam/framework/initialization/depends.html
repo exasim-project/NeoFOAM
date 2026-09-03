@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Dependency marker used with ``typing.Annotated`` for injection.&quot;&quot;&quot;</span>
+<span class="sd">"""Dependency marker used with ``typing.Annotated`` for injection."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -597,7 +597,7 @@
 <div class="viewcode-block" id="Depends">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.depends.html#neofoam.framework.initialization.depends.Depends">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Depends</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Declare a dependency for DI-enabled callables.</span>
 
 <span class="sd">    Supported usage includes initializer injection, e.g.:</span>
@@ -607,25 +607,25 @@
 <span class="sd">            init: Annotated[StagedInitRunner, Depends(create_init)],</span>
 <span class="sd">        ) -&gt; Context:</span>
 <span class="sd">            return init.run()</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dependency</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;time_step&quot;</span><span class="p">,</span>  <span class="c1"># time_step, iteration, operation</span>
+        <span class="n">scope</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"time_step"</span><span class="p">,</span>  <span class="c1"># time_step, iteration, operation</span>
         <span class="n">cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">optional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Args:</span>
 <span class="sd">            dependency: The function to call or string path to resolve.</span>
 <span class="sd">                       Can be a provider function or a string path</span>
-<span class="sd">                       like &quot;fields.U&quot; or &quot;models.turbulence&quot;.</span>
-<span class="sd">            scope: Caching scope - &quot;time_step&quot;, &quot;iteration&quot;, or &quot;operation&quot;</span>
+<span class="sd">                       like "fields.U" or "models.turbulence".</span>
+<span class="sd">            scope: Caching scope - "time_step", "iteration", or "operation"</span>
 <span class="sd">            cache: Whether to cache the resolved value within the scope</span>
-<span class="sd">            optional: If True, don&#39;t raise error when dependency is missing</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            optional: If True, don't raise error when dependency is missing</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dependency</span> <span class="o">=</span> <span class="n">dependency</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">cache</span>
@@ -635,8 +635,8 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependency</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dependency</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependency</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependency</span><span class="p">))</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Depends(</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, scope=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependency</span><span class="p">,</span> <span class="s2">"__name__"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dependency</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Depends(</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, scope=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scope</span><span class="si">}</span><span class="s2">)"</span></div>
 
 </pre></div>
         </article>
@@ -677,6 +677,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

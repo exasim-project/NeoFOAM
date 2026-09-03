@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;maxDeltaT — a constant deltaT ceiling as a maxTimeStep contribution.</span>
+<span class="sd">"""maxDeltaT — a constant deltaT ceiling as a maxTimeStep contribution.</span>
 
 <span class="sd">A pure-Python optional model: it owns one ``@IOStrategy`` config</span>
 <span class="sd">(``system/controlDict`` ``maxDeltaT``) and contributes a single float limit to the</span>
@@ -603,7 +603,7 @@
 <span class="sd">for the case — gating is intrinsic to the bound contributor runtimes, matched to the</span>
 <span class="sd">owning ``maxTimeStep`` interface by ``ModelSpec`` identity, not a name lookup in</span>
 <span class="sd">``ctx.models``. No import-time activation toggle.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
@@ -618,15 +618,15 @@
 
 <div class="viewcode-block" id="MaxDeltaTConfig">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.max_delta_t.html#neofoam.solver.incompressibleFluid.models.max_delta_t.MaxDeltaTConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MaxDeltaTConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The constant deltaT cap read from ``system/controlDict``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The constant deltaT cap read from ``system/controlDict``."""</span>
 
     <span class="n">maxDeltaT</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></div>
 
 
 
-<span class="n">maxDeltaT</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;maxDeltaT&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
+<span class="n">maxDeltaT</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"maxDeltaT"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
 <span class="n">maxDeltaT</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">MaxDeltaTConfig</span><span class="p">)</span>
 
 
@@ -634,17 +634,17 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.max_delta_t.html#neofoam.solver.incompressibleFluid.models.max_delta_t.detect_model">[docs]</a>
 <span class="nd">@maxDeltaT</span><span class="o">.</span><span class="n">detect</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">detect_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Active iff ``system/controlDict`` enables adaptive stepping with a ``maxDeltaT``.</span>
+<span class="w">    </span><span class="sd">"""Active iff ``system/controlDict`` enables adaptive stepping with a ``maxDeltaT``.</span>
 
 <span class="sd">    OpenFOAM only honours ``maxDeltaT`` when ``adjustTimeStep`` is on; mirror that so a</span>
 <span class="sd">    fixed-step case (``adjustTimeStep no``) keeps a fixed step. Read relative to the</span>
-<span class="sd">    run&#39;s working directory; inactive when the file or the entries are absent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">):</span>
+<span class="sd">    run's working directory; inactive when the file or the entries are absent.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
-    <span class="n">cd</span> <span class="o">=</span> <span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">)</span>
-    <span class="n">adaptive</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;adjustTimeStep&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cd</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">bool</span><span class="p">](</span><span class="s2">&quot;adjustTimeStep&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">adaptive</span> <span class="ow">and</span> <span class="n">cd</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;maxDeltaT&quot;</span><span class="p">))</span></div>
+    <span class="n">cd</span> <span class="o">=</span> <span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">)</span>
+    <span class="n">adaptive</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"adjustTimeStep"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">cd</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">bool</span><span class="p">](</span><span class="s2">"adjustTimeStep"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">adaptive</span> <span class="ow">and</span> <span class="n">cd</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"maxDeltaT"</span><span class="p">))</span></div>
 
 
 
@@ -652,11 +652,11 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.max_delta_t.html#neofoam.solver.incompressibleFluid.models.max_delta_t.max_delta_t_limit">[docs]</a>
 <span class="nd">@maxDeltaT</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">maxTimeStep</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">max_delta_t_limit</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">MaxDeltaTConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The constant deltaT ceiling this model imposes (config only).</span>
+<span class="w">    </span><span class="sd">"""The constant deltaT ceiling this model imposes (config only).</span>
 
 <span class="sd">    A ``maxTimeStep`` ceiling rather than a ``timeStepConstraint`` limit because</span>
 <span class="sd">    ``setDeltaT.H`` clips it onto the *already-damped* step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">cfg</span><span class="o">.</span><span class="n">maxDeltaT</span></div>
 
 </pre></div>
@@ -698,6 +698,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

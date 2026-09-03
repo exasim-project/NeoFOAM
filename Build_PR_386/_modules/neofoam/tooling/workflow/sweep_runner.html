@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Per-case / per-variant workers behind the generated sweep workflows.</span>
+<span class="sd">"""Per-case / per-variant workers behind the generated sweep workflows.</span>
 
 <span class="sd">The packaged Snakemake rules (:mod:`neofoam.tooling.workflow.rules`) shell out to::</span>
 
@@ -601,7 +601,7 @@
 <span class="sd">worker is a :class:`~neofoam.tooling.casebuild.Pipeline` (a start that clones/stages</span>
 <span class="sd">the base, then ordered steps that apply the swept configs / copy a shared mesh),</span>
 <span class="sd">materialized with ``.build_at``. ``setup`` clones the wizard-saved base case and</span>
-<span class="sd">re-writes the swept config files from the case&#39;s materialized JSON payloads (each</span>
+<span class="sd">re-writes the swept config files from the case's materialized JSON payloads (each</span>
 <span class="sd">validated — and thereby coerced — by its config class; co-owners of a target file</span>
 <span class="sd">are reloaded from the clone first so re-writing one config never drops keys another</span>
 <span class="sd">config owns). ``mesh-setup``/``tool`` implement the shared keyed mesh: a mesh variant</span>
@@ -613,7 +613,7 @@
 
 <span class="sd">Unlike :mod:`neofoam.tooling.workflow.paramspace` this module runs inside a full</span>
 <span class="sd">neofoam environment (it needs pybFoam for the OpenFOAM dictionary IO).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -636,58 +636,58 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tools.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">available_tools</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;apply_configs&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;clone_case&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;config_classes_by_name&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;main&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;run_tool_command&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;setup_case&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;setup_mesh_case&quot;</span><span class="p">,</span>
+    <span class="s2">"apply_configs"</span><span class="p">,</span>
+    <span class="s2">"clone_case"</span><span class="p">,</span>
+    <span class="s2">"config_classes_by_name"</span><span class="p">,</span>
+    <span class="s2">"main"</span><span class="p">,</span>
+    <span class="s2">"run_tool_command"</span><span class="p">,</span>
+    <span class="s2">"setup_case"</span><span class="p">,</span>
+    <span class="s2">"setup_mesh_case"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1">#: Case content that must not leak from the base into a fresh clone.</span>
-<span class="n">_CLONE_IGNORES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;postProcessing&quot;</span><span class="p">,</span> <span class="s2">&quot;processor*&quot;</span><span class="p">,</span> <span class="s2">&quot;log.*&quot;</span><span class="p">,</span> <span class="s2">&quot;*.foam&quot;</span><span class="p">)</span>
+<span class="n">_CLONE_IGNORES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"postProcessing"</span><span class="p">,</span> <span class="s2">"processor*"</span><span class="p">,</span> <span class="s2">"log.*"</span><span class="p">,</span> <span class="s2">"*.foam"</span><span class="p">)</span>
 
 <span class="c1">#: What a mesh mini-case needs from the base: Time wants controlDict, building</span>
 <span class="c1">#: an fvMesh wants fvSchemes/fvSolution, the tools read their dicts, snappy</span>
 <span class="c1">#: reads the STLs. ``preprocess.yaml`` is deliberately NOT staged — each</span>
 <span class="c1">#: per-tool rule writes its own single-tool slice.</span>
 <span class="n">_MESH_STAGE_FILES</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;system/controlDict&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;system/fvSchemes&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;system/snappyHexMeshDict&quot;</span><span class="p">,</span>
+    <span class="s2">"system/controlDict"</span><span class="p">,</span>
+    <span class="s2">"system/fvSchemes"</span><span class="p">,</span>
+    <span class="s2">"system/fvSolution"</span><span class="p">,</span>
+    <span class="s2">"system/blockMeshDict"</span><span class="p">,</span>
+    <span class="s2">"system/snappyHexMeshDict"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">_MESH_STAGE_TREES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;constant/triSurface&quot;</span><span class="p">,)</span>
+<span class="n">_MESH_STAGE_TREES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"constant/triSurface"</span><span class="p">,)</span>
 
 
 <div class="viewcode-block" id="config_classes_by_name">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.sweep_runner.html#neofoam.tooling.workflow.sweep_runner.config_classes_by_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">config_classes_by_name</span><span class="p">(</span><span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The solver&#39;s config classes keyed by their snake-case name.</span>
+<span class="w">    </span><span class="sd">"""The solver's config classes keyed by their snake-case name.</span>
 
 <span class="sd">    The snake name (``transport_properties_config``) is the sweep-dimension</span>
 <span class="sd">    key used in ``params.yaml`` / ``configs/{case}/setup.json``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="p">{</span><span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span> <span class="bp">cls</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span><span class="p">}</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_time_dir</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="clone_case">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.sweep_runner.html#neofoam.tooling.workflow.sweep_runner.clone_case">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">clone_case</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy the base case to ``dest``, dropping run artifacts and results.</span>
+<span class="w">    </span><span class="sd">"""Copy the base case to ``dest``, dropping run artifacts and results.</span>
 
 <span class="sd">    Removes an existing ``dest`` first (a re-run of ``setup`` starts clean).</span>
 <span class="sd">    ``copytree`` preserves permissions, so the scaffolded ``Allrun``/``Allclean``</span>
 <span class="sd">    stay executable. Time directories other than ``0`` (previous results) are</span>
 <span class="sd">    dropped.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">dest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
     <span class="n">dest</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -705,7 +705,7 @@
     <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">payloads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate and write the swept config payloads into ``case_dir``.</span>
+<span class="w">    </span><span class="sd">"""Validate and write the swept config payloads into ``case_dir``.</span>
 
 <span class="sd">    Co-owners of a swept target file (e.g. ``BoussinesqConfig`` sharing</span>
 <span class="sd">    ``constant/transportProperties`` with ``TransportPropertiesConfig``) are</span>
@@ -718,7 +718,7 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: On a payload naming an unknown config or failing validation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">classes</span> <span class="o">=</span> <span class="n">config_classes_by_name</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
 
     <span class="n">swept</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -726,15 +726,15 @@
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">payloads</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;unknown config &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; (known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"unknown config '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' (known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;config &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has no file binding — it cannot be swept&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"config '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' has no file binding — it cannot be swept"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">swept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">payload</span><span class="p">)))</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;payload for &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; failed validation against </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"payload for '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' failed validation against </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">target_files</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
 
@@ -748,7 +748,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">co_owners</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="c1"># File present but not (or no longer) carrying this config&#39;s slice —</span>
+            <span class="c1"># File present but not (or no longer) carrying this config's slice —</span>
             <span class="c1"># same tolerant read as load_case_from_disk.</span>
             <span class="k">continue</span>
 
@@ -760,7 +760,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_payloads</span><span class="p">(</span><span class="n">config_json</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="n">payloads</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">config_json</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payloads</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;config file </span><span class="si">{</span><span class="n">config_json</span><span class="si">}</span><span class="s2">: expected a mapping of config payloads&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"config file </span><span class="si">{</span><span class="n">config_json</span><span class="si">}</span><span class="s2">: expected a mapping of config payloads"</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">payloads</span>
 
@@ -769,11 +769,11 @@
     <span class="k">if</span> <span class="n">stamp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="n">stamp</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">stamp</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">stamp</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_clone_start</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A casebuild start that clones ``base`` (drops artifacts/results) into the dest.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A casebuild start that clones ``base`` (drops artifacts/results) into the dest."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="n">dest</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">clone_case</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
@@ -782,7 +782,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_apply_step</span><span class="p">(</span><span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">payloads</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A casebuild step that applies the swept payloads, collecting the written paths.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A casebuild step that applies the swept payloads, collecting the written paths."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">written</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">apply_configs</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">case</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">payloads</span><span class="p">))</span>
@@ -791,22 +791,22 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_copy_mesh_step</span><span class="p">(</span><span class="n">mesh_src</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A casebuild step that grafts a meshed variant&#39;s ``constant/polyMesh`` into the case.</span>
+<span class="w">    </span><span class="sd">"""A casebuild step that grafts a meshed variant's ``constant/polyMesh`` into the case.</span>
 
 <span class="sd">    Removes ``system/preprocess.yaml`` after copying so nothing — not even a manual</span>
 <span class="sd">    ``./Allrun`` — re-meshes the case with the un-swept dicts.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">poly_src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mesh_src</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;constant&quot;</span> <span class="o">/</span> <span class="s2">&quot;polyMesh&quot;</span>
+        <span class="n">poly_src</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">mesh_src</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"polyMesh"</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">poly_src</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;mesh source </span><span class="si">{</span><span class="n">poly_src</span><span class="si">}</span><span class="s2"> does not exist — run the mesh rules first&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"mesh source </span><span class="si">{</span><span class="n">poly_src</span><span class="si">}</span><span class="s2"> does not exist — run the mesh rules first"</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="n">poly_dst</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="s2">&quot;constant&quot;</span> <span class="o">/</span> <span class="s2">&quot;polyMesh&quot;</span>
+        <span class="n">poly_dst</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"polyMesh"</span>
         <span class="k">if</span> <span class="n">poly_dst</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">poly_dst</span><span class="p">)</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="n">poly_src</span><span class="p">,</span> <span class="n">poly_dst</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;preprocess.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">path</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"preprocess.yaml"</span><span class="p">)</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">step</span>
 
@@ -821,23 +821,23 @@
     <span class="n">stamp</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">mesh_src</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Clone ``base`` into ``case_dir`` and apply the materialized payloads.</span>
+<span class="w">    </span><span class="sd">"""Clone ``base`` into ``case_dir`` and apply the materialized payloads.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        solver_name: Registered solver name (resolves the config classes).</span>
 <span class="sd">        base: The wizard-saved base case.</span>
 <span class="sd">        case_dir: The per-case clone to (re)create.</span>
-<span class="sd">        config_json: The case&#39;s ``configs/{case}/setup.json``.</span>
+<span class="sd">        config_json: The case's ``configs/{case}/setup.json``.</span>
 <span class="sd">        stamp: Optional stamp file written last (the Snakemake rule output);</span>
 <span class="sd">            holds the applied payloads with a fresh mtime.</span>
 <span class="sd">        mesh_src: A meshed variant dir (``meshes/&lt;variant&gt;``) whose</span>
-<span class="sd">            ``constant/polyMesh`` is copied into the clone. The clone&#39;s</span>
+<span class="sd">            ``constant/polyMesh`` is copied into the clone. The clone's</span>
 <span class="sd">            ``system/preprocess.yaml`` is then removed so nothing — not even a</span>
 <span class="sd">            manual ``./Allrun`` — re-meshes the case with un-swept dicts.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The relative paths of the config files written into the clone.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">solver</span> <span class="o">=</span> <span class="n">resolve_solver</span><span class="p">(</span><span class="n">solver_name</span><span class="p">)</span>
     <span class="n">payloads</span> <span class="o">=</span> <span class="n">_load_payloads</span><span class="p">(</span><span class="n">config_json</span><span class="p">)</span>
 
@@ -853,19 +853,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_mesh_stage_start</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A casebuild start that stages a mesh variant&#39;s inputs from ``base`` into the dest.</span>
+<span class="w">    </span><span class="sd">"""A casebuild start that stages a mesh variant's inputs from ``base`` into the dest.</span>
 
 <span class="sd">    Copies the mesh-relevant inputs (``_MESH_STAGE_FILES``/``_MESH_STAGE_TREES``) and</span>
 <span class="sd">    wipes any stale ``constant/polyMesh`` (a re-stage means the variant changed: the</span>
 <span class="sd">    mesh must be rebuilt from scratch). Raises if the base has no ``controlDict`` — a</span>
 <span class="sd">    mesh mini-case cannot construct an OpenFOAM ``Time`` without one.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="n">mesh_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">base</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;controlDict&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">base</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"controlDict"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;base case </span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2"> has no system/controlDict — a mesh mini-case &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cannot construct an OpenFOAM Time without one (save the case first)&quot;</span>
+                <span class="sa">f</span><span class="s2">"base case </span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2"> has no system/controlDict — a mesh mini-case "</span>
+                <span class="sa">f</span><span class="s2">"cannot construct an OpenFOAM Time without one (save the case first)"</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
@@ -886,7 +886,7 @@
             <span class="n">dst</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
 
-        <span class="n">stale</span> <span class="o">=</span> <span class="n">mesh_dir</span> <span class="o">/</span> <span class="s2">&quot;constant&quot;</span> <span class="o">/</span> <span class="s2">&quot;polyMesh&quot;</span>
+        <span class="n">stale</span> <span class="o">=</span> <span class="n">mesh_dir</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"polyMesh"</span>
         <span class="k">if</span> <span class="n">stale</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">stale</span><span class="p">)</span>
 
@@ -902,18 +902,18 @@
     <span class="n">config_json</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">stamp</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stage one mesh variant&#39;s mini-case under ``mesh_dir`` (``meshes/&lt;variant&gt;``).</span>
+<span class="w">    </span><span class="sd">"""Stage one mesh variant's mini-case under ``mesh_dir`` (``meshes/&lt;variant&gt;``).</span>
 
 <span class="sd">    Copies the mesh-relevant inputs from the base case (dicts, STLs — see</span>
 <span class="sd">    ``_MESH_STAGE_FILES``/``_MESH_STAGE_TREES``), wipes any stale</span>
 <span class="sd">    ``constant/polyMesh`` (a re-stage means the variant changed: the mesh must</span>
-<span class="sd">    be rebuilt from scratch), and applies the variant&#39;s config payloads</span>
-<span class="sd">    (config-name-keyed, e.g. ``{&quot;block_mesh_dict_config&quot;: {...}}``; ``{}`` for</span>
+<span class="sd">    be rebuilt from scratch), and applies the variant's config payloads</span>
+<span class="sd">    (config-name-keyed, e.g. ``{"block_mesh_dict_config": {...}}``; ``{}`` for</span>
 <span class="sd">    the implicit ``base`` variant).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The relative paths of the config files written (empty for ``{}``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">payloads</span> <span class="o">=</span> <span class="n">_load_payloads</span><span class="p">(</span><span class="n">config_json</span><span class="p">)</span>
 
     <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -935,116 +935,116 @@
     <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">stamp</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run ONE preprocess tool in ``case_dir`` via the shared casebuild tool engine.</span>
+<span class="w">    </span><span class="sd">"""Run ONE preprocess tool in ``case_dir`` via the shared casebuild tool engine.</span>
 
-<span class="sd">    The ``tool`` subcommand&#39;s worker. The tool&#39;s options come from the base case&#39;s</span>
-<span class="sd">    ``system/preprocess.yaml`` entry (minus ``depends_on`` — chaining is Snakemake&#39;s</span>
+<span class="sd">    The ``tool`` subcommand's worker. The tool's options come from the base case's</span>
+<span class="sd">    ``system/preprocess.yaml`` entry (minus ``depends_on`` — chaining is Snakemake's</span>
 <span class="sd">    job here); that entry is written back to ``case_dir/system/preprocess.yaml`` as a</span>
 <span class="sd">    single-tool slice (provenance) and the tool is then driven in-process against</span>
 <span class="sd">    ``case_dir`` via :func:`neofoam.tooling.casebuild.meshing.run_tool` — the same engine the</span>
 <span class="sd">    casebuild meshing steps use (a two-arg Foam ``Time``, absolute ``dict_file``, no</span>
 <span class="sd">    ``chdir``). Any tool other than ``blockMesh`` runs against the</span>
 <span class="sd">    ``constant/polyMesh`` already on disk, seeded as ``_prev_mesh``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">stamp</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">stamp</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">stamp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">PreprocessConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">base</span><span class="p">)</span>
-    <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="nb">dict</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tools</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tool&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="n">tool_name</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="nb">dict</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tools</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool"</span><span class="p">)</span> <span class="o">==</span> <span class="n">tool_name</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">available</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tool&quot;</span><span class="p">))</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tools</span><span class="p">)</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool"</span><span class="p">))</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tools</span><span class="p">)</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;tool &#39;</span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s2">&#39; is not in the base case&#39;s preprocess pipeline &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">base</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">&#39;system&#39;</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">&#39;preprocess.yaml&#39;</span><span class="si">}</span><span class="s2">; available: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="sa">f</span><span class="s2">"tool '</span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s2">' is not in the base case's preprocess pipeline "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">base</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'system'</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'preprocess.yaml'</span><span class="si">}</span><span class="s2">; available: </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-    <span class="n">entry</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;depends_on&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">entry</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"depends_on"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">slice_text</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">({</span><span class="s2">&quot;tools&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">entry</span><span class="p">]},</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">write_if_changed</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;preprocess.yaml&quot;</span><span class="p">,</span> <span class="n">slice_text</span><span class="p">)</span>
+    <span class="n">slice_text</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">({</span><span class="s2">"tools"</span><span class="p">:</span> <span class="p">[</span><span class="n">entry</span><span class="p">]},</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">write_if_changed</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"preprocess.yaml"</span><span class="p">,</span> <span class="n">slice_text</span><span class="p">)</span>
 
     <span class="n">tool</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">available_tools</span><span class="p">()}[</span><span class="n">tool_name</span><span class="p">]</span>
-    <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;tool&quot;</span><span class="p">}</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"tool"</span><span class="p">}</span>
     <span class="c1"># A standalone tool run resumes from the mesh already on disk (blockMesh is the</span>
     <span class="c1"># only from-scratch producer); seed _prev_mesh for every other tool.</span>
     <span class="n">run_tool</span><span class="p">(</span>
         <span class="n">CaseDir</span><span class="p">(</span><span class="n">case_dir</span><span class="p">),</span>
         <span class="n">tool</span><span class="p">,</span>
         <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span>
-        <span class="n">needs_prev_mesh</span><span class="o">=</span><span class="n">tool_name</span> <span class="o">!=</span> <span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span>
+        <span class="n">needs_prev_mesh</span><span class="o">=</span><span class="n">tool_name</span> <span class="o">!=</span> <span class="s2">"blockMesh"</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">_write_stamp</span><span class="p">(</span><span class="n">stamp</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="n">tool_name</span><span class="p">,</span> <span class="s2">&quot;options&quot;</span><span class="p">:</span> <span class="n">entry</span><span class="p">})</span></div>
+    <span class="n">_write_stamp</span><span class="p">(</span><span class="n">stamp</span><span class="p">,</span> <span class="p">{</span><span class="s2">"tool"</span><span class="p">:</span> <span class="n">tool_name</span><span class="p">,</span> <span class="s2">"options"</span><span class="p">:</span> <span class="n">entry</span><span class="p">})</span></div>
 
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.sweep_runner.html#neofoam.tooling.workflow.sweep_runner.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;CLI entry point used by generated Snakefiles.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""CLI entry point used by generated Snakefiles."""</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
-        <span class="n">prog</span><span class="o">=</span><span class="s2">&quot;python -m neofoam.tooling.workflow.sweep_runner&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Per-case / per-mesh-variant workers for NeoFOAM sweep workflows.&quot;</span><span class="p">,</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m neofoam.tooling.workflow.sweep_runner"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Per-case / per-mesh-variant workers for NeoFOAM sweep workflows."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">sub</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">&quot;command&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">setup</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;clone the base case and apply the case&#39;s configs&quot;</span><span class="p">)</span>
-    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--solver&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;registered solver name&quot;</span><span class="p">)</span>
-    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--base&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the saved base case&quot;</span><span class="p">)</span>
-    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--case&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the per-case clone to create&quot;</span><span class="p">)</span>
-    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;configs/&lt;case&gt;/setup.json&quot;</span><span class="p">)</span>
-    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--stamp&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;stamp file to write on success&quot;</span><span class="p">)</span>
+    <span class="n">setup</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"setup"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"clone the base case and apply the case's configs"</span><span class="p">)</span>
+    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--solver"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"registered solver name"</span><span class="p">)</span>
+    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--base"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the saved base case"</span><span class="p">)</span>
+    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--case"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the per-case clone to create"</span><span class="p">)</span>
+    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--config"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"configs/&lt;case&gt;/setup.json"</span><span class="p">)</span>
+    <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--stamp"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"stamp file to write on success"</span><span class="p">)</span>
     <span class="n">setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--mesh-src&quot;</span><span class="p">,</span>
+        <span class="s2">"--mesh-src"</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;meshed variant dir whose constant/polyMesh is copied into the clone&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"meshed variant dir whose constant/polyMesh is copied into the clone"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">mesh_setup</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
-        <span class="s2">&quot;mesh-setup&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;stage one mesh variant&#39;s mini-case under meshes/&lt;variant&gt;&quot;</span>
+        <span class="s2">"mesh-setup"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"stage one mesh variant's mini-case under meshes/&lt;variant&gt;"</span>
     <span class="p">)</span>
-    <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--solver&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;registered solver name&quot;</span><span class="p">)</span>
-    <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--base&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the saved base case&quot;</span><span class="p">)</span>
+    <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--solver"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"registered solver name"</span><span class="p">)</span>
+    <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--base"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the saved base case"</span><span class="p">)</span>
     <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--case&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the meshes/&lt;variant&gt; dir to stage&quot;</span>
-    <span class="p">)</span>
-    <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--config&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;configs/mesh/&lt;variant&gt;.json&quot;</span>
+        <span class="s2">"--case"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the meshes/&lt;variant&gt; dir to stage"</span>
     <span class="p">)</span>
     <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--stamp&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;stamp file to write on success&quot;</span>
+        <span class="s2">"--config"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"configs/mesh/&lt;variant&gt;.json"</span>
+    <span class="p">)</span>
+    <span class="n">mesh_setup</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--stamp"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"stamp file to write on success"</span>
     <span class="p">)</span>
 
-    <span class="n">tool</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">&quot;tool&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run ONE preprocess tool in a staged mesh variant dir&quot;</span><span class="p">)</span>
-    <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--tool&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;tool name (e.g. blockMesh)&quot;</span><span class="p">)</span>
+    <span class="n">tool</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"tool"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"run ONE preprocess tool in a staged mesh variant dir"</span><span class="p">)</span>
+    <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--tool"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"tool name (e.g. blockMesh)"</span><span class="p">)</span>
     <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">&quot;--base&quot;</span><span class="p">,</span>
+        <span class="s2">"--base"</span><span class="p">,</span>
         <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the base case whose preprocess.yaml holds the tool&#39;s options&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"the base case whose preprocess.yaml holds the tool's options"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--case&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the meshes/&lt;variant&gt; dir to run in&quot;</span><span class="p">)</span>
-    <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--stamp&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;stamp file to write on success&quot;</span><span class="p">)</span>
+    <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--case"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the meshes/&lt;variant&gt; dir to run in"</span><span class="p">)</span>
+    <span class="n">tool</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--stamp"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"stamp file to write on success"</span><span class="p">)</span>
 
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;setup&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"setup"</span><span class="p">:</span>
         <span class="n">written</span> <span class="o">=</span> <span class="n">setup_case</span><span class="p">(</span>
             <span class="n">args</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">case</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">stamp</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">mesh_src</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;mesh-setup&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"mesh-setup"</span><span class="p">:</span>
         <span class="n">written</span> <span class="o">=</span> <span class="n">setup_mesh_case</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">case</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">stamp</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">run_tool_command</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">tool</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">case</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">stamp</span><span class="p">)</span>
         <span class="n">written</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">written</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;wrote </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">case</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">case</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>
     <span class="k">return</span> <span class="mi">0</span></div>
 
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </pre></div>
         </article>
@@ -1085,6 +1085,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

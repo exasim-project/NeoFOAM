@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Write a batch of configs, combining co-owners of a file into one write.</span>
+<span class="sd">"""Write a batch of configs, combining co-owners of a file into one write.</span>
 
 <span class="sd">Several ``BaseConfig`` classes can declare the same ``io_config.file``:</span>
 <span class="sd">``TransportPropertiesConfig`` + ``BoussinesqConfig`` → ``constant/transportProperties``;</span>
@@ -598,12 +598,12 @@
 <span class="sd">it no longer carries — e.g. a BC flipped from ``fixedValue`` to ``zeroGradient``</span>
 <span class="sd">must not leave a stale ``value``). That same clear would make sequential</span>
 <span class="sd">per-config writes clobber each other, so :func:`write_configs` first groups</span>
-<span class="sd">instances by their target file and deep-merges each group&#39;s</span>
+<span class="sd">instances by their target file and deep-merges each group's</span>
 <span class="sd">``model_dump(by_alias=True, exclude_none=True)`` into one payload, then writes</span>
 <span class="sd">that payload once. Within a file, keys are last-wins in iteration order, so</span>
 <span class="sd">callers control precedence by ordering the instances they pass in. A co-owner</span>
 <span class="sd">that declares a ``subdict`` contributes its payload nested under that block.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -617,11 +617,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.strategies.openfoam_strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.strategies.yaml_strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">YAMLStrategy</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;write_configs&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"write_configs"</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_deep_merge</span><span class="p">(</span><span class="n">dst</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">src</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursive last-wins merge: keys in ``src`` overwrite ``dst`` in place.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Recursive last-wins merge: keys in ``src`` overwrite ``dst`` in place."""</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">src</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dst</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">_deep_merge</span><span class="p">(</span><span class="n">dst</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
@@ -631,16 +631,16 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_under_subdict</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">subdict</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Nest ``payload`` under its declared sub-dict path, if it has one.</span>
+<span class="w">    </span><span class="sd">"""Nest ``payload`` under its declared sub-dict path, if it has one.</span>
 
 <span class="sd">    The merged write below emits one whole-file payload, so a config owning only</span>
 <span class="sd">    a block has to be lifted into place first or its keys land beside the block</span>
 <span class="sd">    the reader takes them from. Dotted paths nest one level per component, as</span>
 <span class="sd">    ``BaseConfig.load`` reads them.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">subdict</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">payload</span>
-    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">subdict</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">subdict</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)):</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="n">part</span><span class="p">:</span> <span class="n">payload</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">payload</span>
 
@@ -651,7 +651,7 @@
     <span class="n">instances</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span>
     <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Group ``instances`` by ``io_config.file`` and write one file per group.</span>
+<span class="w">    </span><span class="sd">"""Group ``instances`` by ``io_config.file`` and write one file per group.</span>
 
 <span class="sd">    Each instance contributes its ``model_dump(by_alias=True, exclude_none=True)``</span>
 <span class="sd">    payload; co-owners of a file are deep-merged (last-wins per key).</span>
@@ -670,10 +670,10 @@
 <span class="sd">        NotImplementedError: For strategies without a merged-write path (only</span>
 <span class="sd">            :class:`OpenFOAMStrategy` is wired up; extend</span>
 <span class="sd">            :func:`_write_merged_payload` when adding more).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">groups</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="n">instances</span><span class="p">:</span>
-        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">inst</span><span class="p">),</span> <span class="s2">&quot;io_config&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">inst</span><span class="p">),</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">groups</span><span class="p">[</span><span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span>
@@ -687,12 +687,12 @@
                 <span class="n">merged</span><span class="p">,</span>
                 <span class="n">_under_subdict</span><span class="p">(</span>
                     <span class="n">inst</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
-                        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span>
                         <span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="c1"># OpenFOAM literal mapping for FieldValue types (write_configs</span>
                         <span class="c1"># only writes OpenFOAM strategies — see _write_merged_payload).</span>
-                        <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">},</span>
+                        <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"openfoam"</span><span class="p">},</span>
                     <span class="p">),</span>
                     <span class="nb">type</span><span class="p">(</span><span class="n">inst</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">subdict</span><span class="p">,</span>  <span class="c1"># type: ignore[attr-defined]</span>
                 <span class="p">),</span>
@@ -703,8 +703,8 @@
             <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contribs</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">writers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">names</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">writers</span><span class="p">))</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot write </span><span class="si">{</span><span class="n">file</span><span class="si">!r}</span><span class="s2">: contributors use mixed strategies (</span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">writers</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Cannot write </span><span class="si">{</span><span class="n">file</span><span class="si">!r}</span><span class="s2">: contributors use mixed strategies (</span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 
         <span class="n">strategy</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">contribs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">writer</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="n">_write_merged_payload</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">case_dir_path</span> <span class="o">/</span> <span class="n">file</span><span class="p">,</span> <span class="n">merged</span><span class="p">)</span>
@@ -714,7 +714,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_merged_payload</span><span class="p">(</span><span class="n">strategy</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit a pre-merged (whole-file) payload through the shared write engine.</span>
+<span class="w">    </span><span class="sd">"""Emit a pre-merged (whole-file) payload through the shared write engine.</span>
 
 <span class="sd">    The caller already merged co-owners in Python, so this hands the payload to</span>
 <span class="sd">    :func:`neofoam.io.dictfile._write_payload` -- the same engine behind</span>
@@ -722,22 +722,22 @@
 <span class="sd">    dict configs. A payload that round-tripped through ``load(...)`` (e.g. the</span>
 <span class="sd">    AI-fill push) carries ``FoamFile`` as its last key; hoist it to the front so</span>
 <span class="sd">    the header leads the file (OpenFOAM rejects a non-leading header).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">OpenFOAMStrategy</span><span class="p">):</span>
-        <span class="k">if</span> <span class="s2">&quot;FoamFile&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;FoamFile&quot;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;FoamFile&quot;</span><span class="p">],</span> <span class="o">**</span><span class="n">data</span><span class="p">}</span>
-        <span class="c1"># merge: a pre-existing file (e.g. fill_case&#39;s mirrored fvSolution) keeps</span>
-        <span class="c1"># the entries no config models; only the payload&#39;s sections are rewritten.</span>
-        <span class="n">_write_payload</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="p">(),</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"FoamFile"</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"FoamFile"</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="s2">"FoamFile"</span><span class="p">],</span> <span class="o">**</span><span class="n">data</span><span class="p">}</span>
+        <span class="c1"># merge: a pre-existing file (e.g. fill_case's mirrored fvSolution) keeps</span>
+        <span class="c1"># the entries no config models; only the payload's sections are rewritten.</span>
+        <span class="n">_write_payload</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="p">(),</span> <span class="s2">"openfoam"</span><span class="p">,</span> <span class="n">merge</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">YAMLStrategy</span><span class="p">):</span>
         <span class="c1"># Whole-file YAML (e.g. ``system/preprocess.yaml``): no ``FoamFile`` header,</span>
         <span class="c1"># dumped through the same engine the OpenFOAM path uses (it dispatches on the</span>
         <span class="c1"># ``.yaml`` suffix / ``fmt``). Grouping is per file, so this is a whole-file</span>
         <span class="c1"># write like the OpenFOAM branch.</span>
-        <span class="n">_write_payload</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="p">(),</span> <span class="s2">&quot;yaml&quot;</span><span class="p">)</span>
+        <span class="n">_write_payload</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="p">(),</span> <span class="s2">"yaml"</span><span class="p">)</span>
         <span class="k">return</span>
-    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;write_configs: no merged-write path for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"write_configs: no merged-write path for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>
@@ -777,6 +777,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

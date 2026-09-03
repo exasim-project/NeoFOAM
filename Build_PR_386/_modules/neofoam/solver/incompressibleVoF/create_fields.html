@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;3-stage initialization for the incompressibleVoF solver.</span>
+<span class="sd">"""3-stage initialization for the incompressibleVoF solver.</span>
 
 <span class="sd">LOAD    → detect the PIMPLE algorithm and any optional models</span>
 <span class="sd">RESOLVE → wire optional-model dependencies via ConfigContext</span>
@@ -600,7 +600,7 @@
 <span class="sd">Ported from the ``StagedInit`` / ``ModelInstance`` API to the</span>
 <span class="sd">``StagedInitRunner`` / ``StagedInitSpec`` + ``ModelSpec`` API in</span>
 <span class="sd">``stack/python_arch`` (mirrors ``incompressibleFluid.create_fields``).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
@@ -628,16 +628,16 @@
 <span class="c1"># OpenFOAM libraries native interFoam links but pybFoam does not, so their</span>
 <span class="c1"># runtime-selection entries (waveVelocity/waveAlpha) are otherwise unreachable —</span>
 <span class="c1"># no tutorial declares them via `libs (...)`, the interFoam binary is the declaration.</span>
-<span class="n">EXTRA_LIBRARIES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;libwaveModels.so&quot;</span><span class="p">]</span>
+<span class="n">EXTRA_LIBRARIES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"libwaveModels.so"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="create_init">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleVoF.create_fields.html#neofoam.solver.incompressibleVoF.create_fields.create_init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a fresh :class:`StagedInitRunner` for incompressibleVoF.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a fresh :class:`StagedInitRunner` for incompressibleVoF."""</span>
     <span class="n">load_libraries</span><span class="p">(</span><span class="n">EXTRA_LIBRARIES</span><span class="p">)</span>
-    <span class="n">spec_builder</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">&quot;incompressibleVoF&quot;</span><span class="p">)</span>
-    <span class="n">resolved_case_dir</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">spec_builder</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">"incompressibleVoF"</span><span class="p">)</span>
+    <span class="n">resolved_case_dir</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
 
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
@@ -667,18 +667,18 @@
 
         <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
 
-        <span class="c1"># Foam::Time (&quot;runtime&quot;) + fvMesh (&quot;mesh&quot;). create_time_mesh routes the</span>
-        <span class="c1"># Time onto ctx.models[&quot;runtime&quot;] and the mesh onto ctx.mesh.</span>
+        <span class="c1"># Foam::Time ("runtime") + fvMesh ("mesh"). create_time_mesh routes the</span>
+        <span class="c1"># Time onto ctx.models["runtime"] and the mesh onto ctx.mesh.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">create_time_mesh</span><span class="p">(</span><span class="n">runner</span><span class="o">.</span><span class="n">argv</span><span class="p">))</span>
 
         <span class="c1"># Register the two core models under their solver-facing names, then run</span>
-        <span class="c1"># each spec&#39;s @build to emit the field/model InitSteps it owns (phi,</span>
+        <span class="c1"># each spec's @build to emit the field/model InitSteps it owns (phi,</span>
         <span class="c1"># mixture, alpha1/alpha2, rho, rhoPhi from alpha-advection; U, p_rgh, gh,</span>
         <span class="c1"># ghf, p, pimple_control, pressure_reference from PIMPLE). The bare</span>
         <span class="c1"># ModelSpec is not a BuildsInitSteps runtime, so add_core_models only</span>
         <span class="c1"># registers it — the @build steps are added explicitly here.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">(</span>
-            <span class="p">[(</span><span class="s2">&quot;alpha_advection&quot;</span><span class="p">,</span> <span class="n">alpha_model</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;pressure_velocity&quot;</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)]</span>
+            <span class="p">[(</span><span class="s2">"alpha_advection"</span><span class="p">,</span> <span class="n">alpha_model</span><span class="p">),</span> <span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)]</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span><span class="n">alpha_model</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">):</span>
             <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">build_steps</span><span class="p">())</span>
@@ -686,23 +686,23 @@
         <span class="c1"># Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">create_turbulence</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">multiphase</span><span class="o">.</span><span class="n">TwoPhaseTransportModel</span><span class="p">(</span>
-                <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.rho&quot;</span><span class="p">],</span>
-                <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
-                <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">],</span>
-                <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.rhoPhi&quot;</span><span class="p">],</span>
-                <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">],</span>
+                <span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.rho"</span><span class="p">],</span>
+                <span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
+                <span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">],</span>
+                <span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.rhoPhi"</span><span class="p">],</span>
+                <span class="n">ctx</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">],</span>
             <span class="p">)</span>
 
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
             <span class="n">init_model</span><span class="p">(</span>
-                <span class="s2">&quot;turbulence&quot;</span><span class="p">,</span>
+                <span class="s2">"turbulence"</span><span class="p">,</span>
                 <span class="n">create_turbulence</span><span class="p">,</span>
                 <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span>
-                    <span class="s2">&quot;fields.rho&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;fields.U&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;fields.phi&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;fields.rhoPhi&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;models.mixture&quot;</span><span class="p">,</span>
+                    <span class="s2">"fields.rho"</span><span class="p">,</span>
+                    <span class="s2">"fields.U"</span><span class="p">,</span>
+                    <span class="s2">"fields.phi"</span><span class="p">,</span>
+                    <span class="s2">"fields.rhoPhi"</span><span class="p">,</span>
+                    <span class="s2">"models.mixture"</span><span class="p">,</span>
                 <span class="p">],</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -757,6 +757,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

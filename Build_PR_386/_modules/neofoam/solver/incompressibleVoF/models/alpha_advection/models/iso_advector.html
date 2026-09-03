@@ -589,16 +589,16 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;isoAdvector alpha-advection scheme (interIsoFoam-based).</span>
+<span class="sd">"""isoAdvector alpha-advection scheme (interIsoFoam-based).</span>
 
 <span class="sd">Geometric VoF advection, a member of the ``advectionModel`` family. The</span>
 <span class="sd">interface is reconstructed (``reconstructionScheme``, e.g. isoAlpha) and</span>
 <span class="sd">``alpha1`` is advected geometrically by the C++ ``Foam::isoAdvection`` object</span>
-<span class="sd">(bound as ``pybFoam.multiphase.isoAdvection``), which reads its controls from the case&#39;s</span>
-<span class="sd">``system/fvSolution`` ``solvers.&quot;alpha.water&quot;`` sub-dict at construction.</span>
+<span class="sd">(bound as ``pybFoam.multiphase.isoAdvection``), which reads its controls from the case's</span>
+<span class="sd">``system/fvSolution`` ``solvers."alpha.water"`` sub-dict at construction.</span>
 
 <span class="sd">Unlike MULES there is no ``nAlphaCorr``/``MULESCorr``/interface-compression loop:</span>
-<span class="sd">the advector is constructed **once** (mirroring interIsoFoam&#39;s createFields.H) and</span>
+<span class="sd">the advector is constructed **once** (mirroring interIsoFoam's createFields.H) and</span>
 <span class="sd">its ``advect`` is called each outer corrector. This model owns the shared VoF</span>
 <span class="sd">fields (via ``shared_field_build_steps``) plus an ``advector`` model, and exposes</span>
 <span class="sd">the same ``alpha_advection`` operation contract (updates ``alpha1``/``alpha2`` and</span>
@@ -610,7 +610,7 @@
 <span class="sd">``mixture.correct()``. ``alphaEqnSubCycle.H`` then runs that pass</span>
 <span class="sd">``nAlphaSubCycles`` times over a sub-cycled ``Foam::Time``, sums ``rhoPhi`` over</span>
 <span class="sd">the sub-steps, and closes the step with ``rho = alpha1*rho1 + alpha2*rho2``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span>
@@ -638,37 +638,37 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..advectionModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">advectionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixtureProtocol</span><span class="p">,</span> <span class="n">alpha_sub_cycle</span><span class="p">,</span> <span class="n">shared_field_build_steps</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PorosityPropertiesConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;iso_advector&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"PorosityPropertiesConfig"</span><span class="p">,</span> <span class="s2">"iso_advector"</span><span class="p">]</span>
 
-<span class="n">iso_advector</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;isoAdvector&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">advectionModel</span><span class="p">)</span><span class="o">.</span><span class="n">labeled</span><span class="p">(</span><span class="s2">&quot;isoAdvector&quot;</span><span class="p">)</span>
+<span class="n">iso_advector</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"isoAdvector"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">advectionModel</span><span class="p">)</span><span class="o">.</span><span class="n">labeled</span><span class="p">(</span><span class="s2">"isoAdvector"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PorosityPropertiesConfig">
 <a class="viewcode-back" href="../../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector.html#neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector.PorosityPropertiesConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;constant/porosityProperties&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/porosityProperties"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PorosityPropertiesConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``constant/porosityProperties`` — isoAdvector&#39;s porosity switch.</span>
+<span class="w">    </span><span class="sd">"""``constant/porosityProperties`` — isoAdvector's porosity switch.</span>
 
-<span class="sd">    When it is on, ``isoAdvection``&#39;s constructor looks a ``porosity`` field up</span>
+<span class="sd">    When it is on, ``isoAdvection``'s constructor looks a ``porosity`` field up</span>
 <span class="sd">    in the object registry, so the field read has to be ordered ahead of the</span>
 <span class="sd">    advector. Most cases ship no such file, hence the guarded load in</span>
 <span class="sd">    :func:`_porosity_enabled`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">porosityEnabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 
 
-<span class="c1"># Declared so the switch is part of this model&#39;s exported schema set; loading is</span>
+<span class="c1"># Declared so the switch is part of this model's exported schema set; loading is</span>
 <span class="c1"># unaffected — this spec is used as its own runtime and never auto-loads its</span>
 <span class="c1"># configs, the guarded read below drives instantiation.</span>
 <span class="n">iso_advector</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">PorosityPropertiesConfig</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_porosity_enabled</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether ``constant/porosityProperties`` switches porosity on; the file is</span>
-<span class="sd">    optional, so its absence short-circuits instead of raising.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;constant/porosityProperties&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Whether ``constant/porosityProperties`` switches porosity on; the file is</span>
+<span class="sd">    optional, so its absence short-circuits instead of raising."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"constant/porosityProperties"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="n">PorosityPropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">porosityEnabled</span>
 
@@ -680,28 +680,28 @@
 
 <span class="nd">@iso_advector</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register the shared VoF fields plus the persistent isoAdvection advector.</span>
+<span class="w">    </span><span class="sd">"""Register the shared VoF fields plus the persistent isoAdvection advector.</span>
 
 <span class="sd">    The advector holds references to alpha1/phi/U and is reused each step, so it</span>
 <span class="sd">    is created as a model in the init graph (interIsoFoam createFields.H).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_advector</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">multiphase</span><span class="o">.</span><span class="n">isoAdvection</span><span class="p">(</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.alpha1&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.alpha1"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="n">steps</span> <span class="o">=</span> <span class="n">shared_field_build_steps</span><span class="p">()</span>
-    <span class="n">advector_depends_on</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;fields.alpha1&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.U&quot;</span><span class="p">]</span>
+    <span class="n">advector_depends_on</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"fields.alpha1"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">,</span> <span class="s2">"fields.U"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">_porosity_enabled</span><span class="p">():</span>
-        <span class="c1"># createPorosity.H: isoAdvection&#39;s constructor looks &quot;porosity&quot; up in the</span>
+        <span class="c1"># createPorosity.H: isoAdvection's constructor looks "porosity" up in the</span>
         <span class="c1"># object registry and aborts when the switch is on but the field is absent,</span>
         <span class="c1"># so the read has to be ordered ahead of the advector.</span>
-        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">read_vol_field</span><span class="p">(</span><span class="n">volScalarField</span><span class="p">,</span> <span class="s2">&quot;porosity&quot;</span><span class="p">))</span>
-        <span class="n">advector_depends_on</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;fields.porosity&quot;</span><span class="p">)</span>
-    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="s2">&quot;advector&quot;</span><span class="p">,</span> <span class="n">create_advector</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="n">advector_depends_on</span><span class="p">))</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">read_vol_field</span><span class="p">(</span><span class="n">volScalarField</span><span class="p">,</span> <span class="s2">"porosity"</span><span class="p">))</span>
+        <span class="n">advector_depends_on</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"fields.porosity"</span><span class="p">)</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="s2">"advector"</span><span class="p">,</span> <span class="n">create_advector</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="n">advector_depends_on</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">steps</span>
 
 
@@ -711,13 +711,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">read_n_alpha_sub_cycles</span><span class="p">(</span><span class="n">alpha_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``nAlphaSubCycles`` for *alpha_name*, read from ``system/fvSolution``.</span>
+<span class="w">    </span><span class="sd">"""``nAlphaSubCycles`` for *alpha_name*, read from ``system/fvSolution``.</span>
 
 <span class="sd">    Re-read on every alpha solve, as ``alphaControls.H`` does, so a</span>
 <span class="sd">    ``runTimeModifiable`` case can change it mid-run.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">solvers</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;solvers&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">solvers</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">alpha_name</span><span class="p">)</span><span class="o">.</span><span class="n">getOrDefault</span><span class="p">[</span><span class="nb">int</span><span class="p">](</span><span class="s2">&quot;nAlphaSubCycles&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="sd">    """</span>
+    <span class="n">solvers</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"solvers"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">solvers</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">alpha_name</span><span class="p">)</span><span class="o">.</span><span class="n">getOrDefault</span><span class="p">[</span><span class="nb">int</span><span class="p">](</span><span class="s2">"nAlphaSubCycles"</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">advect_alpha</span><span class="p">(</span>
@@ -728,19 +728,19 @@
     <span class="n">mixture</span><span class="p">:</span> <span class="n">MixtureProtocol</span><span class="p">,</span>
     <span class="n">advector</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One pass of interIsoFoam&#39;s ``alphaEqn.H``: advect ``alpha1``, update ``rhoPhi``.</span>
+<span class="w">    </span><span class="sd">"""One pass of interIsoFoam's ``alphaEqn.H``: advect ``alpha1``, update ``rhoPhi``.</span>
 
-<span class="sd">    On a moving mesh the pass is bracketed by native&#39;s</span>
+<span class="sd">    On a moving mesh the pass is bracketed by native's</span>
 <span class="sd">    ``U -= fvc::reconstruct(mesh.phi())`` / ``U += …``: isoAdvection interpolates</span>
 <span class="sd">    ``U`` onto the iso-face centres, so — unlike the already-relative ``phi`` — it</span>
 <span class="sd">    must be handed the velocity relative to the mesh motion.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">mesh</span> <span class="o">=</span> <span class="n">alpha1</span><span class="o">.</span><span class="n">mesh</span><span class="p">()</span>
     <span class="c1"># Held across the advect call rather than rebuilt after it (advect() changes</span>
     <span class="c1"># neither the geometry nor the motion flux); materialised because</span>
     <span class="c1"># fvc.reconstruct hands back a single-use ``tmp``.</span>
     <span class="n">mesh_velocity</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">volVectorField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;meshU&quot;</span><span class="p">),</span> <span class="n">fvc</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">phi</span><span class="p">()))</span> <span class="k">if</span> <span class="n">mesh</span><span class="o">.</span><span class="n">moving</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">volVectorField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"meshU"</span><span class="p">),</span> <span class="n">fvc</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">phi</span><span class="p">()))</span> <span class="k">if</span> <span class="n">mesh</span><span class="o">.</span><span class="n">moving</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">mesh_velocity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -756,7 +756,7 @@
     <span class="n">mixture</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
 
 
-<span class="nd">@iso_advector</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.0&quot;</span><span class="p">)</span>
+<span class="nd">@iso_advector</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.0"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">alpha_advection</span><span class="p">(</span>
     <span class="n">alpha1</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
     <span class="n">alpha2</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
@@ -764,22 +764,22 @@
     <span class="n">rhoPhi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>
     <span class="n">rho</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>
-    <span class="n">mixture</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">MixtureProtocol</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">advector</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">mixture</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">MixtureProtocol</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">advector</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Advect alpha geometrically (isoAdvector) and update rho / rhoPhi.</span>
+<span class="w">    </span><span class="sd">"""Advect alpha geometrically (isoAdvector) and update rho / rhoPhi.</span>
 
-<span class="sd">    Transcribes interIsoFoam&#39;s ``alphaEqnSubCycle.H``: ``nAlphaSubCycles`` passes</span>
+<span class="sd">    Transcribes interIsoFoam's ``alphaEqnSubCycle.H``: ``nAlphaSubCycles`` passes</span>
 <span class="sd">    of :func:`advect_alpha` over a sub-cycled ``Foam::Time``, with ``rhoPhi``</span>
 <span class="sd">    accumulated as the sub-step-length-weighted mean. ``rho`` is rebuilt once</span>
 <span class="sd">    after the sub-cycle: writing it rolls its old-time value, which the momentum</span>
 <span class="sd">    ``fvm::ddt(rho, U)`` needs from the start of the real time step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">n_alpha_sub_cycles</span> <span class="o">=</span> <span class="n">read_n_alpha_sub_cycles</span><span class="p">(</span><span class="n">alpha1</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
 
     <span class="k">if</span> <span class="n">n_alpha_sub_cycles</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">total_delta_t</span> <span class="o">=</span> <span class="n">alpha1</span><span class="o">.</span><span class="n">mesh</span><span class="p">()</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">.</span><span class="n">deltaTValue</span><span class="p">()</span>
-        <span class="n">rho_phi_sum</span> <span class="o">=</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;rhoPhiSum&quot;</span><span class="p">),</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">rhoPhi</span><span class="p">)</span>
+        <span class="n">rho_phi_sum</span> <span class="o">=</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"rhoPhiSum"</span><span class="p">),</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">rhoPhi</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">alpha_sub_cycle</span><span class="p">(</span><span class="n">alpha1</span><span class="p">,</span> <span class="n">n_alpha_sub_cycles</span><span class="p">)</span> <span class="k">as</span> <span class="n">runtime</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_alpha_sub_cycles</span><span class="p">):</span>
                 <span class="n">runtime</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span>
@@ -791,9 +791,9 @@
 
     <span class="n">rho</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">alpha1</span> <span class="o">*</span> <span class="n">mixture</span><span class="o">.</span><span class="n">rho1</span><span class="p">()</span> <span class="o">+</span> <span class="n">alpha2</span> <span class="o">*</span> <span class="n">mixture</span><span class="o">.</span><span class="n">rho2</span><span class="p">())</span>
     <span class="c1"># interIsoFoam.C:166 — one more correct() after the whole alpha block; an</span>
-    <span class="c1"># alphaContactAngle patch rewrites alpha1&#39;s gradient on every call.</span>
+    <span class="c1"># alphaContactAngle patch rewrites alpha1's gradient on every call.</span>
     <span class="n">mixture</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;alpha1&quot;</span><span class="p">:</span> <span class="n">alpha1</span><span class="p">,</span> <span class="s2">&quot;alpha2&quot;</span><span class="p">:</span> <span class="n">alpha2</span><span class="p">,</span> <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="n">rho</span><span class="p">,</span> <span class="s2">&quot;rhoPhi&quot;</span><span class="p">:</span> <span class="n">rhoPhi</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"alpha1"</span><span class="p">:</span> <span class="n">alpha1</span><span class="p">,</span> <span class="s2">"alpha2"</span><span class="p">:</span> <span class="n">alpha2</span><span class="p">,</span> <span class="s2">"rho"</span><span class="p">:</span> <span class="n">rho</span><span class="p">,</span> <span class="s2">"rhoPhi"</span><span class="p">:</span> <span class="n">rhoPhi</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -803,7 +803,7 @@
 
 <span class="nd">@iso_advector</span><span class="o">.</span><span class="n">operation_collection</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">collected_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
-    <span class="c1"># The collection path bypasses the spec&#39;s default operation wrapping, so</span>
+    <span class="c1"># The collection path bypasses the spec's default operation wrapping, so</span>
     <span class="c1"># wrap alpha_advection with dependency resolution here (``self`` is the</span>
     <span class="c1"># bound runtime).</span>
     <span class="n">wrapped_alpha_advection</span> <span class="o">=</span> <span class="n">iso_advector</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">alpha_advection</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -812,11 +812,11 @@
         <span class="n">Operation</span><span class="p">(</span>
             <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">wrapped_alpha_advection</span><span class="p">),</span>
             <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
-                <span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;alpha_advection&quot;</span><span class="p">,</span>
+                <span class="n">op_name</span><span class="o">=</span><span class="s2">"alpha_advection"</span><span class="p">,</span>
                 <span class="n">depends_on</span><span class="o">=</span><span class="p">[],</span>
                 <span class="n">before</span><span class="o">=</span><span class="p">[],</span>
-                <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">,</span>
-                <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgreen&quot;</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="s2">"box"</span><span class="p">,</span>
+                <span class="n">color</span><span class="o">=</span><span class="s2">"lightgreen"</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
     <span class="p">)</span>
@@ -860,6 +860,8 @@
     <script src="../../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

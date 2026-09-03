@@ -590,9 +590,9 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Immutable spec + builder for the 3-stage init pipeline.</span>
+<span class="sd">"""Immutable spec + builder for the 3-stage init pipeline.</span>
 
-<span class="sd">`StagedInitSpec` is the frozen description of one solver&#39;s load → resolve →</span>
+<span class="sd">`StagedInitSpec` is the frozen description of one solver's load → resolve →</span>
 <span class="sd">build pipeline (callbacks only, no state). `StagedInitSpecBuilder` collects</span>
 <span class="sd">those callbacks via decorators and produces a `StagedInitSpec` on</span>
 <span class="sd">`finalize()`. Execution lives in :mod:`runner`.</span>
@@ -600,7 +600,7 @@
 <span class="sd">Note: this `*Spec` is per-solver-instance pipeline registration. It is</span>
 <span class="sd">distinct from the long-lived ``ModelSpec`` / ``SolverSpec`` types that</span>
 <span class="sd">declare what a solver *is*.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -615,18 +615,18 @@
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_ValidationError</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Module-private validation error (was the legacy public ``ValidationError``).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Module-private validation error (was the legacy public ``ValidationError``)."""</span>
 
     <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"error"</span>
 
 
 <div class="viewcode-block" id="LoadResult">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.staged.spec.html#neofoam.framework.initialization.staged.spec.LoadResult">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LoadResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Outcome of the LOAD stage: core and optional model objects.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Outcome of the LOAD stage: core and optional model objects."""</span>
 
     <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
     <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
@@ -639,13 +639,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">configs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_models</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;configs&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"configs"</span><span class="p">):</span>
                 <span class="n">configs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">configs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">configs</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">config_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declared config schema set across all models.</span>
+<span class="w">        </span><span class="sd">"""Declared config schema set across all models.</span>
 
 <span class="sd">        Returns the distinct ``BaseConfig`` subclasses every model</span>
 <span class="sd">        declares — both classes registered via ``spec.config(...)`` (even</span>
@@ -655,13 +655,13 @@
 
 <span class="sd">        This is the with-a-case view (after LOAD); for the case-free schema</span>
 <span class="sd">        of a whole solver see ``collect_config_classes``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">collect_config_classes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_models</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LoadResult.validate">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.staged.spec.html#neofoam.framework.initialization.staged.spec.LoadResult.validate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate all model configs and return a list of errors.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Validate all model configs and return a list of errors."""</span>
         <span class="k">return</span> <span class="n">validate_models</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">configs</span><span class="p">)</span></div>
 </div>
 
@@ -676,7 +676,7 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.staged.spec.html#neofoam.framework.initialization.staged.spec.StagedInitSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StagedInitSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Immutable pipeline description ready to hand to a :class:`StagedInitRunner`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Immutable pipeline description ready to hand to a :class:`StagedInitRunner`."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">load_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LoadFn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -687,7 +687,7 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.staged.spec.html#neofoam.framework.initialization.staged.spec.StagedInitSpec.build">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitSpecBuilder</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start a fluent registration of the three stages.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Start a fluent registration of the three stages."""</span>
         <span class="k">return</span> <span class="n">StagedInitSpecBuilder</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 </div>
 
@@ -696,11 +696,11 @@
 <div class="viewcode-block" id="StagedInitSpecBuilder">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.staged.spec.html#neofoam.framework.initialization.staged.spec.StagedInitSpecBuilder">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StagedInitSpecBuilder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator-driven registration of a :class:`StagedInitSpec`.</span>
+<span class="w">    </span><span class="sd">"""Decorator-driven registration of a :class:`StagedInitSpec`.</span>
 
 <span class="sd">    Each decorator returns ``self`` so the resulting function reference is</span>
-<span class="sd">    preserved on the user&#39;s side (the decorator pattern stays familiar).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    preserved on the user's side (the decorator pattern stays familiar).</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
@@ -767,6 +767,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

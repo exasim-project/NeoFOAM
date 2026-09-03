@@ -590,11 +590,11 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2023 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Lazy Initialization</span>
 
 <span class="sd">Provides the InitStep dataclass for deferred initialization with dependency tracking.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
@@ -608,19 +608,19 @@
 <div class="viewcode-block" id="InitStepExecutionError">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStepExecutionError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InitStepExecutionError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when an InitStep&#39;s initializer fails during execution.</span>
+<span class="w">    </span><span class="sd">"""Raised when an InitStep's initializer fails during execution.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        step_name: Name of the InitStep that failed.</span>
 <span class="sd">        depends_on: Dependencies declared by the failed step.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">cause</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">step_name</span> <span class="o">=</span> <span class="n">step_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">depends_on</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">depends_on</span><span class="p">)</span>
-        <span class="n">deps</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">depends_on</span><span class="p">)</span> <span class="k">if</span> <span class="n">depends_on</span> <span class="k">else</span> <span class="s2">&quot;(none)&quot;</span>
+        <span class="n">deps</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">depends_on</span><span class="p">)</span> <span class="k">if</span> <span class="n">depends_on</span> <span class="k">else</span> <span class="s2">"(none)"</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;InitStep &#39;</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">&#39; failed during execution (depends_on: [</span><span class="si">{</span><span class="n">deps</span><span class="si">}</span><span class="s2">]): </span><span class="si">{</span><span class="n">cause</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"InitStep '</span><span class="si">{</span><span class="n">step_name</span><span class="si">}</span><span class="s2">' failed during execution (depends_on: [</span><span class="si">{</span><span class="n">deps</span><span class="si">}</span><span class="s2">]): </span><span class="si">{</span><span class="n">cause</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span></div>
 
 
@@ -629,7 +629,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStep">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">InitStep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    A deferred initialization step that declares its dependencies.</span>
 
 <span class="sd">    InitStep objects are returned from BUILD stage methods and collected</span>
@@ -637,34 +637,34 @@
 <span class="sd">    and executed in the correct order.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        name: Unique identifier (e.g., &quot;fields.U&quot;, &quot;operators.momentum&quot;)</span>
+<span class="sd">        name: Unique identifier (e.g., "fields.U", "operators.momentum")</span>
 <span class="sd">        depends_on: List of dependency names that must be initialized first</span>
 <span class="sd">        initializer: Lazy function that produces the runtime object using context</span>
-<span class="sd">        category: Optional category for grouping (e.g., &quot;fields&quot;, &quot;operators&quot;)</span>
+<span class="sd">        category: Optional category for grouping (e.g., "fields", "operators")</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        InitStep(</span>
-<span class="sd">            name=&quot;fields.U&quot;,</span>
-<span class="sd">            depends_on=[&quot;mesh&quot;],</span>
-<span class="sd">            initializer=lambda ctx: create_vector_field(ctx[&quot;mesh&quot;], U0)</span>
+<span class="sd">            name="fields.U",</span>
+<span class="sd">            depends_on=["mesh"],</span>
+<span class="sd">            initializer=lambda ctx: create_vector_field(ctx["mesh"], U0)</span>
 <span class="sd">        )</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">initializer</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
-    <span class="n">category</span><span class="p">:</span> <span class="n">InitCategory</span> <span class="o">=</span> <span class="s2">&quot;resource&quot;</span>
+    <span class="n">category</span><span class="p">:</span> <span class="n">InitCategory</span> <span class="o">=</span> <span class="s2">"resource"</span>
     <span class="n">write</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># flag a field for persistence (auto-write)</span>
     <span class="n">replaces</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># default step names this supersedes</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate InitStep after creation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Validate InitStep after creation."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;InitStep must have a non-empty name&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"InitStep must have a non-empty name"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">initializer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;InitStep &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must have an initializer function&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"InitStep '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' must have an initializer function"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;InitStep &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must have a non-empty category string&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"InitStep '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' must have a non-empty category string"</span><span class="p">)</span></div>
 
 </pre></div>
         </article>
@@ -705,6 +705,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,19 +589,19 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Variant-payload validation for a parameter sweep.</span>
+<span class="sd">"""Variant-payload validation for a parameter sweep.</span>
 
 <span class="sd">Each sweep dimension validates its variants differently:</span>
 
-<span class="sd">* a *regular* dimension → each variant payload against the dimension&#39;s config class;</span>
+<span class="sd">* a *regular* dimension → each variant payload against the dimension's config class;</span>
 <span class="sd">* the reserved ``mesh`` dimension → config-name-keyed inner payloads, each against its</span>
 <span class="sd">  own class.</span>
 
-<span class="sd">That &quot;what a valid variant looks like&quot; rule lives in **one** place, :func:`_variant_error`.</span>
+<span class="sd">That "what a valid variant looks like" rule lives in **one** place, :func:`_variant_error`.</span>
 <span class="sd">Everything else is a thin wrapper over it: the non-throwing :func:`variant_errors` (used</span>
 <span class="sd">to badge the canvas live) collects its messages, and the throwing :func:`validate_dimensions`</span>
 <span class="sd">/ :func:`validate_mesh_dimension` raise the first one.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -614,17 +614,17 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_short_validation_error</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A one-line, user-facing message from a pydantic ``ValidationError``.</span>
+<span class="w">    </span><span class="sd">"""A one-line, user-facing message from a pydantic ``ValidationError``.</span>
 
-<span class="sd">    Takes the first error&#39;s location + message (e.g. ``nu: Input should be</span>
+<span class="sd">    Takes the first error's location + message (e.g. ``nu: Input should be</span>
 <span class="sd">    greater than 0``); falls back to the exception text for non-pydantic errors.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">):</span>
         <span class="n">detail</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">detail</span><span class="p">:</span>
             <span class="n">first</span> <span class="o">=</span> <span class="n">detail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">loc</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">first</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="p">()))</span> <span class="ow">or</span> <span class="s2">&quot;value&quot;</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">loc</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">first</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;msg&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;invalid&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">loc</span> <span class="o">=</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">first</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"loc"</span><span class="p">,</span> <span class="p">()))</span> <span class="ow">or</span> <span class="s2">"value"</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loc</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">first</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'msg'</span><span class="p">,</span><span class="w"> </span><span class="s1">'invalid'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span> <span class="k">else</span> <span class="n">exc</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
 
 
@@ -633,27 +633,27 @@
     <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate one variant payload; return a short message or ``None`` if valid.</span>
+<span class="w">    </span><span class="sd">"""Validate one variant payload; return a short message or ``None`` if valid.</span>
 
 <span class="sd">    The single shape-checker for every dimension kind — the mesh/regular rules</span>
 <span class="sd">    live here and nowhere else. The throwing validators and :func:`variant_errors`</span>
 <span class="sd">    both delegate to it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="n">MESH_DIM</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-            <span class="k">return</span> <span class="s2">&quot;must map config names to payloads&quot;</span>
+            <span class="k">return</span> <span class="s2">"must map config names to payloads"</span>
         <span class="k">for</span> <span class="n">config_name</span><span class="p">,</span> <span class="n">inner</span> <span class="ow">in</span> <span class="n">payload</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="bp">cls</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config_name</span><span class="p">))</span>
             <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;unknown config &#39;</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">"unknown config '</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">'"</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">inner</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-                <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">_short_validation_error</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">_short_validation_error</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="bp">cls</span> <span class="o">=</span> <span class="n">classes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
     <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;unknown dimension &#39;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"unknown dimension '</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">'"</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -665,16 +665,16 @@
     <span class="n">dimensions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise ``ValueError`` on the first invalid variant — the throwing form.</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` on the first invalid variant — the throwing form.</span>
 
 <span class="sd">    A thin ``raise`` wrapper over :func:`_variant_error`, naming the offending</span>
-<span class="sd">    ``dim.variant`` so callers get the same &quot;which variant, and why&quot; report.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``dim.variant`` so callers get the same "which variant, and why" report.</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">variants</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">variants</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="n">_variant_error</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;variant &#39;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; failed validation: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"variant '</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' failed validation: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="validate_dimensions">
@@ -683,7 +683,7 @@
     <span class="n">dimensions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate every variant payload against its dimension&#39;s config class.</span>
+<span class="w">    </span><span class="sd">"""Validate every variant payload against its dimension's config class.</span>
 
 <span class="sd">    Payloads are validated, not round-tripped: several configs materialize their</span>
 <span class="sd">    content in a wrap serializer (``model_dump()`` of the defaults is ``{}``), so</span>
@@ -692,7 +692,7 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: On an unknown dimension or a failing variant, naming ``dim.variant``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_raise_variant_errors</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span></div>
 
 
@@ -703,15 +703,15 @@
     <span class="n">variants</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the ``mesh`` dimension&#39;s config-name-keyed variant payloads.</span>
+<span class="w">    </span><span class="sd">"""Validate the ``mesh`` dimension's config-name-keyed variant payloads.</span>
 
 <span class="sd">    Each mesh variant holds ``{config_name: payload}`` (e.g.</span>
-<span class="sd">    ``{&quot;block_mesh_dict_config&quot;: {...}}``); every inner payload is validated against</span>
+<span class="sd">    ``{"block_mesh_dict_config": {...}}``); every inner payload is validated against</span>
 <span class="sd">    its config class. Empty variants are allowed (the base dicts run unchanged).</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: Naming the offending ``mesh.variant`` (and inner config).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">_raise_variant_errors</span><span class="p">({</span><span class="n">MESH_DIM</span><span class="p">:</span> <span class="n">variants</span><span class="p">},</span> <span class="n">classes</span><span class="p">)</span></div>
 
 
@@ -722,12 +722,12 @@
     <span class="n">dimensions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]],</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-variant validation errors, ``{dim: {variant: message}}`` — never raises.</span>
+<span class="w">    </span><span class="sd">"""Per-variant validation errors, ``{dim: {variant: message}}`` — never raises.</span>
 
 <span class="sd">    The non-throwing counterpart of the ``validate_*`` functions (all share</span>
 <span class="sd">    :func:`_variant_error`): only failing variants appear, so it is safe to badge the</span>
 <span class="sd">    canvas live. Covers the mesh dimension the same way the throwing validators do.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">errors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">variants</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">payload</span> <span class="ow">in</span> <span class="n">variants</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -775,6 +775,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

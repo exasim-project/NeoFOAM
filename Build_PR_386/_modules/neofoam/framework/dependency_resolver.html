@@ -589,11 +589,11 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Runtime dependency resolution for Depends() markers.</span>
 
 <span class="sd">Handles dependency injection during solver/model execution.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
@@ -606,13 +606,13 @@
 <div class="viewcode-block" id="DependencyResolver">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DependencyResolver</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve Depends() markers and context-backed arguments.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolve Depends() markers and context-backed arguments."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;time_step&quot;</span><span class="p">:</span> <span class="p">{},</span>
-            <span class="s2">&quot;iteration&quot;</span><span class="p">:</span> <span class="p">{},</span>
-            <span class="s2">&quot;operation&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">"time_step"</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">"iteration"</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s2">"operation"</span><span class="p">:</span> <span class="p">{},</span>
         <span class="p">}</span>
 
 <div class="viewcode-block" id="DependencyResolver.resolve_arguments">
@@ -623,21 +623,21 @@
         <span class="n">ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">provided_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve function arguments from Depends markers and Context.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Resolve function arguments from Depends markers and Context."""</span>
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">provided_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="s2">&quot;cls&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"self"</span><span class="p">,</span> <span class="s2">"cls"</span><span class="p">):</span>
                 <span class="k">continue</span>
 
             <span class="n">depends</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_depends</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">depends</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_dependency</span><span class="p">(</span><span class="n">depends</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">depends</span><span class="o">.</span><span class="n">optional</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Required dependency &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; not found&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Required dependency '</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
                 <span class="k">continue</span>
 
@@ -653,8 +653,8 @@
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">_Hook</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; is typed as an interface &quot;</span>
-                            <span class="s2">&quot;hook but no Context was provided to the resolver.&quot;</span>
+                            <span class="sa">f</span><span class="s2">"Parameter '</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">' is typed as an interface "</span>
+                            <span class="s2">"hook but no Context was provided to the resolver."</span>
                         <span class="p">)</span>
                     <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
                     <span class="k">continue</span>
@@ -668,19 +668,19 @@
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_Extension</span><span class="p">):</span>
                         <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; is annotated with the &quot;</span>
-                                <span class="sa">f</span><span class="s2">&quot;extension &#39;</span><span class="si">{</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; but no Context &quot;</span>
-                                <span class="s2">&quot;was provided to the resolver.&quot;</span>
+                                <span class="sa">f</span><span class="s2">"Parameter '</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">' is annotated with the "</span>
+                                <span class="sa">f</span><span class="s2">"extension '</span><span class="si">{</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' but no Context "</span>
+                                <span class="s2">"was provided to the resolver."</span>
                             <span class="p">)</span>
                         <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
                         <span class="k">continue</span>
 
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
                         <span class="n">marker</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-                        <span class="k">if</span> <span class="n">marker</span> <span class="o">==</span> <span class="s2">&quot;models&quot;</span> <span class="ow">and</span> <span class="n">ctx</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">marker</span> <span class="o">==</span> <span class="s2">"models"</span> <span class="ow">and</span> <span class="n">ctx</span><span class="p">:</span>
                             <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">param_name</span><span class="p">)</span>
                             <span class="k">continue</span>
-                        <span class="k">if</span> <span class="n">marker</span> <span class="o">==</span> <span class="s2">&quot;fields&quot;</span> <span class="ow">and</span> <span class="n">ctx</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">marker</span> <span class="o">==</span> <span class="s2">"fields"</span> <span class="ow">and</span> <span class="n">ctx</span><span class="p">:</span>
                             <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">param_name</span><span class="p">)</span>
                             <span class="k">continue</span>
                         <span class="k">if</span> <span class="n">ctx</span><span class="p">:</span>
@@ -702,8 +702,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_dependency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depends</span><span class="p">:</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Context</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">cache_key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">depends</span><span class="o">.</span><span class="n">dependency</span><span class="p">)</span>
-        <span class="n">scope</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">depends</span><span class="p">,</span> <span class="s2">&quot;scope&quot;</span><span class="p">,</span> <span class="s2">&quot;time_step&quot;</span><span class="p">)</span>
-        <span class="n">use_cache</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">depends</span><span class="p">,</span> <span class="s2">&quot;cache&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">scope</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">depends</span><span class="p">,</span> <span class="s2">"scope"</span><span class="p">,</span> <span class="s2">"time_step"</span><span class="p">)</span>
+        <span class="n">use_cache</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">depends</span><span class="p">,</span> <span class="s2">"cache"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">use_cache</span> <span class="ow">and</span> <span class="n">cache_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">scope</span><span class="p">]:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">scope</span><span class="p">][</span><span class="n">cache_key</span><span class="p">]</span>
@@ -713,7 +713,7 @@
         <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">depends</span><span class="o">.</span><span class="n">dependency</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_callable</span><span class="p">(</span><span class="n">depends</span><span class="o">.</span><span class="n">dependency</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid dependency type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">depends</span><span class="o">.</span><span class="n">dependency</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid dependency type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">depends</span><span class="o">.</span><span class="n">dependency</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">scope</span><span class="p">][</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
@@ -724,10 +724,10 @@
         <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;fields&quot;</span><span class="p">:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"fields"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;models&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"models"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
@@ -752,7 +752,7 @@
     <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">dependency_resolver</span><span class="p">:</span> <span class="n">DependencyResolver</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Context</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap *func* so it can be called with just a Context.</span>
+<span class="w">    </span><span class="sd">"""Wrap *func* so it can be called with just a Context.</span>
 
 <span class="sd">    Dependencies are resolved via *dependency_resolver*.  If the function</span>
 <span class="sd">    signature includes a ``self`` parameter it is bound to *instance*.</span>
@@ -761,15 +761,15 @@
 
 <span class="sd">    This is the canonical implementation shared by ``SolverSpec`` and</span>
 <span class="sd">    ``ModelSpec`` — avoids duplicating the same wrapper in every factory.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="n">dependency_resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
 
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span> <span class="ow">and</span> <span class="s2">&quot;self&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;self&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="k">if</span> <span class="s2">"self"</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span> <span class="ow">and</span> <span class="s2">"self"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"self"</span><span class="p">]</span> <span class="o">=</span> <span class="n">instance</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -820,6 +820,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

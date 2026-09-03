@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Alpha-advection scheme selection / factory.</span>
+<span class="sd">"""Alpha-advection scheme selection / factory.</span>
 
 <span class="sd">Resolves which registered advection scheme is active for a case from the</span>
 <span class="sd">explicit ``advectionScheme`` key in ``system/fvSolution`` (default ``MULES``),</span>
@@ -603,8 +603,8 @@
 
 <span class="sd">No upstream interIsoFoam tutorial declares ``advectionScheme`` (it is a</span>
 <span class="sd">NeoFOAM-only key), so when it is absent ``select_from_case`` falls back to</span>
-<span class="sd">inspecting the ``solvers`` &quot;alpha.*&quot; sub-dict for isoAdvector-only controls.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">inspecting the ``solvers`` "alpha.*" sub-dict for isoAdvector-only controls.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -613,57 +613,57 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.advectionModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelSpec</span><span class="p">,</span> <span class="n">advectionModel</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="s2">&quot;select_advection_scheme&quot;</span><span class="p">,</span> <span class="s2">&quot;select_from_case&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"select_advection_scheme"</span><span class="p">,</span> <span class="s2">"select_from_case"</span><span class="p">]</span>
 
-<span class="n">_DEFAULT_SCHEME</span> <span class="o">=</span> <span class="s2">&quot;MULES&quot;</span>
-<span class="n">_ISO_ADVECTOR_SCHEME</span> <span class="o">=</span> <span class="s2">&quot;isoAdvector&quot;</span>
-<span class="c1"># Keys that only ever appear in an isoAdvector &quot;alpha.*&quot; solver sub-dict</span>
-<span class="c1"># (Foam::isoAdvection&#39;s construction-time controls); MULES cases never carry</span>
+<span class="n">_DEFAULT_SCHEME</span> <span class="o">=</span> <span class="s2">"MULES"</span>
+<span class="n">_ISO_ADVECTOR_SCHEME</span> <span class="o">=</span> <span class="s2">"isoAdvector"</span>
+<span class="c1"># Keys that only ever appear in an isoAdvector "alpha.*" solver sub-dict</span>
+<span class="c1"># (Foam::isoAdvection's construction-time controls); MULES cases never carry</span>
 <span class="c1"># any of these.</span>
 <span class="n">_ISO_ADVECTOR_DISCRIMINATOR_KEYS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;reconstructionScheme&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;isoFaceTol&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;surfCellTol&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;nAlphaBounds&quot;</span><span class="p">,</span>
+    <span class="s2">"reconstructionScheme"</span><span class="p">,</span>
+    <span class="s2">"isoFaceTol"</span><span class="p">,</span>
+    <span class="s2">"surfCellTol"</span><span class="p">,</span>
+    <span class="s2">"nAlphaBounds"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
 <div class="viewcode-block" id="model_name">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html#neofoam.solver.incompressibleVoF.models.alpha_advection.selection.model_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">model_name</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the advection-scheme name from a duck-typed config.</span>
+<span class="w">    </span><span class="sd">"""Resolve the advection-scheme name from a duck-typed config.</span>
 
-<span class="sd">    Returns the ``advectionScheme`` attribute, or ``&quot;MULES&quot;`` when absent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;advectionScheme&quot;</span><span class="p">,</span> <span class="n">_DEFAULT_SCHEME</span><span class="p">))</span></div>
+<span class="sd">    Returns the ``advectionScheme`` attribute, or ``"MULES"`` when absent.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"advectionScheme"</span><span class="p">,</span> <span class="n">_DEFAULT_SCHEME</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="select_advection_scheme">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html#neofoam.solver.incompressibleVoF.models.alpha_advection.selection.select_advection_scheme">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_advection_scheme</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the registered spec for ``name``.</span>
+<span class="w">    </span><span class="sd">"""Return the registered spec for ``name``.</span>
 
 <span class="sd">    Raises ``ValueError`` when ``name`` is not a registered scheme — a silent</span>
 <span class="sd">    fallback to MULES would disguise a routing failure as a scheme error.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">advectionModel</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Unknown advectionScheme &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;; registered: </span><span class="si">{</span><span class="n">advectionModel</span><span class="o">.</span><span class="n">registered_names</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"Unknown advectionScheme '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'; registered: </span><span class="si">{</span><span class="n">advectionModel</span><span class="o">.</span><span class="n">registered_names</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">spec</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_isoadvector_controls_present</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when ``solvers`` has an &quot;alpha.*&quot; sub-dict with isoAdvector controls.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;solvers&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""True when ``solvers`` has an "alpha.*" sub-dict with isoAdvector controls."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"solvers"</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
-    <span class="n">solvers</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;solvers&quot;</span><span class="p">)</span>
+    <span class="n">solvers</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"solvers"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">solvers</span><span class="o">.</span><span class="n">toc</span><span class="p">():</span>
         <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;alpha.&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">solvers</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"alpha."</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">solvers</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="n">alpha_dict</span> <span class="o">=</span> <span class="n">solvers</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">alpha_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_ISO_ADVECTOR_DISCRIMINATOR_KEYS</span><span class="p">):</span>
@@ -673,27 +673,27 @@
 
 <div class="viewcode-block" id="select_from_case">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html#neofoam.solver.incompressibleVoF.models.alpha_advection.selection.select_from_case">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">select_from_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ``advectionScheme`` from ``system/fvSolution`` and select the scheme.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_from_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read ``advectionScheme`` from ``system/fvSolution`` and select the scheme.</span>
 
 <span class="sd">    An explicit ``advectionScheme`` key always wins; otherwise isoAdvector is</span>
-<span class="sd">    selected when the ``solvers`` &quot;alpha.*&quot; sub-dict carries isoAdvector controls</span>
+<span class="sd">    selected when the ``solvers`` "alpha.*" sub-dict carries isoAdvector controls</span>
 <span class="sd">    (see :data:`_ISO_ADVECTOR_DISCRIMINATOR_KEYS`), and MULES is the fallback.</span>
 <span class="sd">    A missing/unreadable fvSolution is logged so the scheme never changes silently.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">_DEFAULT_SCHEME</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span>
+        <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
         <span class="c1"># pybFoam raises RuntimeError when the file cannot be opened; a</span>
         <span class="c1"># malformed value inside the dict is a fatal OpenFOAM IO error instead.</span>
         <span class="n">Info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;select_from_case: cannot read system/fvSolution (</span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">); &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;using advectionScheme &#39;</span><span class="si">{</span><span class="n">_DEFAULT_SCHEME</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+            <span class="sa">f</span><span class="s2">"select_from_case: cannot read system/fvSolution (</span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">); "</span>
+            <span class="sa">f</span><span class="s2">"using advectionScheme '</span><span class="si">{</span><span class="n">_DEFAULT_SCHEME</span><span class="si">}</span><span class="s2">'."</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;advectionScheme&quot;</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fv_solution</span><span class="o">.</span><span class="n">getOrDefault</span><span class="p">[</span><span class="nb">str</span><span class="p">](</span><span class="s2">&quot;advectionScheme&quot;</span><span class="p">,</span> <span class="n">_DEFAULT_SCHEME</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"advectionScheme"</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">fv_solution</span><span class="o">.</span><span class="n">getOrDefault</span><span class="p">[</span><span class="nb">str</span><span class="p">](</span><span class="s2">"advectionScheme"</span><span class="p">,</span> <span class="n">_DEFAULT_SCHEME</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">_isoadvector_controls_present</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">_ISO_ADVECTOR_SCHEME</span>
     <span class="k">return</span> <span class="n">select_advection_scheme</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
@@ -737,6 +737,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

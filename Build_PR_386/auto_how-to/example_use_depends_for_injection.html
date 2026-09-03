@@ -620,27 +620,27 @@ once — every example below reuses them.</p>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Algorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stand-in for a solver-side object stored under ``ctx.models``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Stand-in for a solver-side object stored under ``ctx.models``."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.solve() ran&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.solve() ran"</span>
 
 
 <span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mf">300.0</span><span class="p">},</span>
-    <span class="n">models</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="n">_Algorithm</span><span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">)},</span>
+    <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">"U"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">:</span> <span class="mf">300.0</span><span class="p">},</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">{</span><span class="s2">"algorithm"</span><span class="p">:</span> <span class="n">_Algorithm</span><span class="p">(</span><span class="s2">"PISO"</span><span class="p">)},</span>
 <span class="p">)</span>
 <span class="n">resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ctx.fields =&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ctx.models =&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ctx.fields ="</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ctx.models ="</span><span class="p">,</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ctx.fields = {&#39;U&#39;: 0.5, &#39;p&#39;: 0.2, &#39;T&#39;: 300.0}
-ctx.models = {&#39;algorithm&#39;: &#39;_Algorithm&#39;}
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ctx.fields = {'U': 0.5, 'p': 0.2, 'T': 300.0}
+ctx.models = {'algorithm': '_Algorithm'}
 </pre></div>
 </div>
 </section>
@@ -654,11 +654,11 @@ key — rename the parameter and the lookup changes with it.</p>
 
 
 <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">advance</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;resolved kwargs:&quot;</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;advance(**resolved) =&quot;</span><span class="p">,</span> <span class="n">advance</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"resolved kwargs:"</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"advance(**resolved) ="</span><span class="p">,</span> <span class="n">advance</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>resolved kwargs: {&#39;U&#39;: 0.5, &#39;p&#39;: 0.2}
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>resolved kwargs: {'U': 0.5, 'p': 0.2}
 advance(**resolved) = 0.5002
 </pre></div>
 </div>
@@ -670,16 +670,16 @@ container <em>other than</em> <code class="docutils literal notranslate"><span c
 container attribute on <code class="xref py py-class docutils literal notranslate"><span class="pre">Context</span></code> (<code class="docutils literal notranslate"><span class="pre">models</span></code>, <code class="docutils literal notranslate"><span class="pre">fields</span></code>,
 or any other dict-typed attribute); the parameter name is still
 the key within it.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="n">algorithm</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="n">algorithm</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 
 
 <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;resolved kwargs:&quot;</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;correct(**resolved) =&quot;</span><span class="p">,</span> <span class="n">correct</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"resolved kwargs:"</span><span class="p">,</span> <span class="n">resolved</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"correct(**resolved) ="</span><span class="p">,</span> <span class="n">correct</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>resolved kwargs: {&#39;algorithm&#39;: &lt;__main__._Algorithm object at 0x7f77a4331690&gt;}
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>resolved kwargs: {'algorithm': &lt;__main__._Algorithm object at 0x7f323e8a7a90&gt;}
 correct(**resolved) = PISO.solve() ran
 </pre></div>
 </div>
@@ -693,20 +693,20 @@ the provider on first request and caches the result (default scope:
 every call, or <code class="docutils literal notranslate"><span class="pre">Depends(provider,</span> <span class="pre">scope=&quot;iteration&quot;)</span></code> to bind the
 cache lifetime to the inner iteration loop instead.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">make_logger</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;neofoam.demo&quot;</span><span class="p">)</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"neofoam.demo"</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">logger</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">announce</span><span class="p">(</span><span class="n">logger</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">make_logger</span><span class="p">)])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;got logger named </span><span class="si">{</span><span class="n">logger</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"got logger named </span><span class="si">{</span><span class="n">logger</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span>
 
 
 <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">announce</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;announce(**resolved) =&quot;</span><span class="p">,</span> <span class="n">announce</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"announce(**resolved) ="</span><span class="p">,</span> <span class="n">announce</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>announce(**resolved) = got logger named &#39;neofoam.demo&#39;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>announce(**resolved) = got logger named 'neofoam.demo'
 </pre></div>
 </div>
 </section>
@@ -717,12 +717,12 @@ against the <code class="xref py py-class docutils literal notranslate"><span cl
 <code class="docutils literal notranslate"><span class="pre">&quot;models.algorithm&quot;</span></code>, or any attribute on <code class="docutils literal notranslate"><span class="pre">Context</span></code>. Useful
 when the parameter name and the field key disagree (e.g. you want
 a parameter called <code class="docutils literal notranslate"><span class="pre">u_field</span></code> to pull <code class="docutils literal notranslate"><span class="pre">ctx.fields[&quot;U&quot;]</span></code>).</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">u_field</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="s2">&quot;fields.U&quot;</span><span class="p">)])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;u_field = </span><span class="si">{</span><span class="n">u_field</span><span class="si">}</span><span class="s2">&quot;</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="n">u_field</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="s2">"fields.U"</span><span class="p">)])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"u_field = </span><span class="si">{</span><span class="n">u_field</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;report(**resolved) =&quot;</span><span class="p">,</span> <span class="n">report</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"report(**resolved) ="</span><span class="p">,</span> <span class="n">report</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>report(**resolved) = u_field = 0.5
@@ -749,12 +749,12 @@ default <code class="docutils literal notranslate"><span class="pre">cache=True<
 
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">needs_counter</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;call </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: counter = </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, provider ran </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">_call_log</span><span class="p">)</span><span class="si">}</span><span class="s2">x&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"call </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: counter = </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'counter'</span><span class="p">]</span><span class="si">}</span><span class="s2">, provider ran </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">_call_log</span><span class="p">)</span><span class="si">}</span><span class="s2">x"</span><span class="p">)</span>
 
 <span class="c1"># Drop the time_step cache and the provider runs again on the next call.</span>
-<span class="n">resolver</span><span class="o">.</span><span class="n">clear_scope</span><span class="p">(</span><span class="s2">&quot;time_step&quot;</span><span class="p">)</span>
+<span class="n">resolver</span><span class="o">.</span><span class="n">clear_scope</span><span class="p">(</span><span class="s2">"time_step"</span><span class="p">)</span>
 <span class="n">kwargs</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">needs_counter</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;after clear_scope: counter = </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;counter&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, provider ran </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">_call_log</span><span class="p">)</span><span class="si">}</span><span class="s2">x&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"after clear_scope: counter = </span><span class="si">{</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">'counter'</span><span class="p">]</span><span class="si">}</span><span class="s2">, provider ran </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">_call_log</span><span class="p">)</span><span class="si">}</span><span class="s2">x"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>call 0: counter = 1, provider ran 1x

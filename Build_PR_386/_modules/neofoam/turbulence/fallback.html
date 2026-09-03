@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;OpenFOAM turbulence (momentum-transport) fallback adapter.</span>
+<span class="sd">"""OpenFOAM turbulence (momentum-transport) fallback adapter.</span>
 
 <span class="sd">When no native model matches the configured turbulence model, the selector</span>
 <span class="sd">returns an :class:`OpenFOAMTurbulenceModel`. The pybFoam</span>
@@ -598,9 +598,9 @@
 <span class="sd">(ignoring the native Context ``nu``/``nut``, which a native closure would use)</span>
 <span class="sd">and advances the model via a ``correct()`` operation after the pressure-velocity</span>
 <span class="sd">coupling — the proven OpenFOAM lifecycle. Materialising the OF eddy viscosity as</span>
-<span class="sd">a Context field is unsafe (it duplicates the model&#39;s registered ``nut``), which is</span>
+<span class="sd">a Context field is unsafe (it duplicates the model's registered ``nut``), which is</span>
 <span class="sd">why the fallback keeps its own stress rather than the shared assembly.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -614,14 +614,14 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.stress</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMStress</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OpenFOAMTurbulenceModel&quot;</span><span class="p">,</span> <span class="s2">&quot;FallbackHandle&quot;</span><span class="p">,</span> <span class="s2">&quot;TurbulenceFactory&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"OpenFOAMTurbulenceModel"</span><span class="p">,</span> <span class="s2">"FallbackHandle"</span><span class="p">,</span> <span class="s2">"TurbulenceFactory"</span><span class="p">]</span>
 
 <span class="c1">#: A pybFoam-style turbulence factory: ``(U, phi, transport) -&gt; model``.</span>
 <span class="n">TurbulenceFactory</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_default_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;TurbulenceFactory&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return pybFoam&#39;s incompressible turbulence factory (lazy import).&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">"TurbulenceFactory"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return pybFoam's incompressible turbulence factory (lazy import)."""</span>
     <span class="c1"># Lazy so constructing the adapter stays side-effect-free and unit-testable</span>
     <span class="c1"># with an injected factory (test_construction_does_not_import_pybfoam).</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam.turbulence</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleTurbulenceModel</span>  <span class="c1"># noqa: PLC0415</span>
@@ -632,25 +632,25 @@
 <div class="viewcode-block" id="OpenFOAMTurbulenceModel">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.OpenFOAMTurbulenceModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpenFOAMTurbulenceModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The OpenFOAM fallback momentum-transport model — a peer of the native models.</span>
+<span class="w">    </span><span class="sd">"""The OpenFOAM fallback momentum-transport model — a peer of the native models.</span>
 
 <span class="sd">    Selected on the fallback path, it sits at ``models.turbulence`` (wrapped by</span>
 <span class="sd">    :class:`FallbackHandle`) as the nut/stress provider. Construction is</span>
 <span class="sd">    side-effect free; the underlying pybFoam model is created on</span>
 <span class="sd">    :meth:`build`. It **defines its own stress** via :meth:`viscous_stress`,</span>
-<span class="sd">    returning an :class:`OpenFOAMStress` that delegates to the pybFoam model&#39;s own</span>
+<span class="sd">    returning an :class:`OpenFOAMStress` that delegates to the pybFoam model's own</span>
 <span class="sd">    ``divDevReff``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1">#: Descriptive tag for the stress family this model uses.</span>
-    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">&quot;openfoam&quot;</span>
+    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">"openfoam"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">transport</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-        <span class="n">factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;TurbulenceFactory&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"TurbulenceFactory"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_U</span> <span class="o">=</span> <span class="n">U</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_phi</span> <span class="o">=</span> <span class="n">phi</span>
@@ -660,15 +660,15 @@
 
 <div class="viewcode-block" id="OpenFOAMTurbulenceModel.build">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.OpenFOAMTurbulenceModel.build">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OpenFOAMTurbulenceModel&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate the underlying pybFoam turbulence model.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"OpenFOAMTurbulenceModel"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Instantiate the underlying pybFoam turbulence model.</span>
 
 <span class="sd">        ``validate()`` recomputes the eddy viscosity from the initial ``k``/</span>
 <span class="sd">        ``epsilon`` (``correctNut``) exactly as ``pimpleFoam`` does before the</span>
 <span class="sd">        first solve — the ``0/nut`` shipped with a case is usually a placeholder</span>
 <span class="sd">        (e.g. ``uniform 0``), so skipping this leaves the first momentum equation</span>
 <span class="sd">        with ``nuEff = nu`` and diverges from native OpenFOAM.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory</span> <span class="ow">or</span> <span class="n">_default_factory</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span> <span class="o">=</span> <span class="n">factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_U</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phi</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transport</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
@@ -677,13 +677,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;OpenFOAMTurbulenceModel.build() must be called before use&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"OpenFOAMTurbulenceModel.build() must be called before use"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span>
 
 <div class="viewcode-block" id="OpenFOAMTurbulenceModel.has_nut">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.OpenFOAMTurbulenceModel.has_nut">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_nut</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The OpenFOAM model always exposes an eddy viscosity (zero when laminar).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The OpenFOAM model always exposes an eddy viscosity (zero when laminar)."""</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
@@ -696,18 +696,18 @@
 <div class="viewcode-block" id="OpenFOAMTurbulenceModel.divDevReff">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.OpenFOAMTurbulenceModel.divDevReff">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">divDevReff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nut</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Momentum stress term — the pybFoam model assembles it internally.</span>
+<span class="w">        </span><span class="sd">"""Momentum stress term — the pybFoam model assembles it internally.</span>
 
 <span class="sd">        The native Context ``nu``/``nut`` are ignored: the OpenFOAM model owns its</span>
 <span class="sd">        own eddy viscosity and stress assembly.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_require_impl</span><span class="p">()</span><span class="o">.</span><span class="n">divDevReff</span><span class="p">(</span><span class="n">U</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="OpenFOAMTurbulenceModel.viscous_stress">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.OpenFOAMTurbulenceModel.viscous_stress">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">viscous_stress</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpenFOAMStress</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The stress this model uses — delegates ``divDevReff`` to the pybFoam model.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The stress this model uses — delegates ``divDevReff`` to the pybFoam model."""</span>
         <span class="k">return</span> <span class="n">OpenFOAMStress</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 
@@ -716,10 +716,10 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;One operation advancing the model after the pressure-velocity coupling.</span>
+<span class="w">        </span><span class="sd">"""One operation advancing the model after the pressure-velocity coupling.</span>
 
 <span class="sd">        The operation resolves the model from the :class:`Context` at run time</span>
-<span class="sd">        (``ctx.models[&quot;turbulence&quot;]``) rather than closing over ``self`` / the</span>
+<span class="sd">        (``ctx.models["turbulence"]``) rather than closing over ``self`` / the</span>
 <span class="sd">        pybFoam model. Capturing the mesh-bound model in an operation closure</span>
 <span class="sd">        would tie it into the execution-graph reference cycle, leaving it as</span>
 <span class="sd">        cyclic garbage that the collector frees at an unsafe time during a later</span>
@@ -727,13 +727,13 @@
 <span class="sd">        refcount when the run ends.</span>
 
 <span class="sd">        .. note::</span>
-<span class="sd">            A *registered* model&#39;s scheduled correct comes from its own</span>
+<span class="sd">            A *registered* model's scheduled correct comes from its own</span>
 <span class="sd">            ``fallback=True`` op instead; this property serves the models with no</span>
-<span class="sd">            registered spec, built straight from OpenFOAM&#39;s table.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            registered spec, built straight from OpenFOAM's table.</span>
+<span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;turbulence&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"turbulence"</span><span class="p">]</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({})</span>
 
         <span class="k">return</span> <span class="p">[</span>
@@ -741,7 +741,7 @@
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span>
                     <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">DependencyResolver</span><span class="p">())</span>
                 <span class="p">),</span>
-                <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;of_correct_turbulence&quot;</span><span class="p">),</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">"of_correct_turbulence"</span><span class="p">),</span>
             <span class="p">),</span>
         <span class="p">]</span></div>
 
@@ -750,22 +750,22 @@
 <div class="viewcode-block" id="FallbackHandle">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.FallbackHandle">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FallbackHandle</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The momentum-transport handle for the pybFoam-OpenFOAM fallback path.</span>
+<span class="w">    </span><span class="sd">"""The momentum-transport handle for the pybFoam-OpenFOAM fallback path.</span>
 
 <span class="sd">    Returned by :func:`~neofoam.turbulence.selection.select_turbulence_model`</span>
 <span class="sd">    when a solver selects ``fallback=True`` (today: ``incompressibleFluid``). It</span>
 <span class="sd">    pairs the :class:`OpenFOAMTurbulenceModel` — which owns the eddy viscosity</span>
-<span class="sd">    ``nut`` and assembles its own momentum stress — with the model&#39;s co-located</span>
+<span class="sd">    ``nut`` and assembles its own momentum stress — with the model's co-located</span>
 <span class="sd">    ``fallback=True`` operations (a single ``correct`` that advances the pybFoam</span>
 <span class="sd">    model after the pressure-velocity loop).</span>
 
 <span class="sd">    Satisfies :class:`~neofoam.turbulence.protocol.MomentumTransport`: it forwards</span>
 <span class="sd">    ``nut`` / ``has_nut`` / ``nu`` / ``viscous_stress`` / ``divDevReff`` to the OF</span>
-<span class="sd">    model and returns the spec&#39;s fallback ops as :attr:`operations`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    model and returns the spec's fallback ops as :attr:`operations`.</span>
+<span class="sd">    """</span>
 
     <span class="c1">#: Descriptive tag for the stress family this handle uses.</span>
-    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">&quot;openfoam&quot;</span>
+    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">"openfoam"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">of_model</span><span class="p">:</span> <span class="n">OpenFOAMTurbulenceModel</span><span class="p">,</span> <span class="n">operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_of</span> <span class="o">=</span> <span class="n">of_model</span>
@@ -773,8 +773,8 @@
 
 <div class="viewcode-block" id="FallbackHandle.build">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.FallbackHandle.build">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FallbackHandle&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate the underlying pybFoam turbulence model (delegates).&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FallbackHandle"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Instantiate the underlying pybFoam turbulence model (delegates)."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_of</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
@@ -797,13 +797,13 @@
 <div class="viewcode-block" id="FallbackHandle.correct">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.FallbackHandle.correct">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance the wrapped pybFoam model one step (no-arg, OpenFOAM lifecycle).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Advance the wrapped pybFoam model one step (no-arg, OpenFOAM lifecycle)."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_of</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span></div>
 
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The model&#39;s ``fallback=True`` operations, stepped after the loop.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The model's ``fallback=True`` operations, stepped after the loop."""</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">)</span></div>
 
 </pre></div>
@@ -845,6 +845,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

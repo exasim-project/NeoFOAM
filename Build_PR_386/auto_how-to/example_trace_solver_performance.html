@@ -629,13 +629,13 @@ reads the summary back.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
 
-<span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">&quot;hotRoom&quot;</span><span class="p">)</span>
-<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;-case&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;setFields&quot;</span><span class="p">,</span> <span class="s2">&quot;-case&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">"hotRoom"</span><span class="p">)</span>
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"blockMesh"</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"setFields"</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="n">control_dict</span> <span class="o">=</span> <span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;controlDict&quot;</span>
+<span class="n">control_dict</span> <span class="o">=</span> <span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"controlDict"</span>
 <span class="n">cd</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
-<span class="n">cd</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;endTime&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">cd</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"endTime"</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
 <span class="n">cd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -648,11 +648,11 @@ optional (<code class="docutils literal notranslate"><span class="pre">enabled</
 sub-dict but returns a detached copy, so re-fetch it with <code class="docutils literal notranslate"><span class="pre">subDict</span></code>
 to get a live handle before setting the keys.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
-<span class="n">cd</span><span class="o">.</span><span class="n">subDictOrAdd</span><span class="p">(</span><span class="s2">&quot;telemetry&quot;</span><span class="p">)</span>
-<span class="n">telemetry_dict</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;telemetry&quot;</span><span class="p">)</span>
-<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>
-<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;directory&quot;</span><span class="p">,</span> <span class="s2">&quot;telemetry&quot;</span><span class="p">)</span>
-<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>
+<span class="n">cd</span><span class="o">.</span><span class="n">subDictOrAdd</span><span class="p">(</span><span class="s2">"telemetry"</span><span class="p">)</span>
+<span class="n">telemetry_dict</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"telemetry"</span><span class="p">)</span>
+<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"enabled"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">)</span>
+<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"directory"</span><span class="p">,</span> <span class="s2">"telemetry"</span><span class="p">)</span>
+<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"summary"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">)</span>
 <span class="n">cd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -665,7 +665,7 @@ case and launch e.g. <code class="docutils literal notranslate"><span class="pre
 <code class="docutils literal notranslate"><span class="pre">run([&quot;incompressibleFluid&quot;,</span> <span class="pre">&quot;-parallel&quot;])</span></code> to get <code class="docutils literal notranslate"><span class="pre">rank0</span></code> …
 <code class="docutils literal notranslate"><span class="pre">rank3</span></code> span files, each tagged with <code class="docutils literal notranslate"><span class="pre">mpi.rank</span></code> / <code class="docutils literal notranslate"><span class="pre">mpi.size</span></code>.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
-    <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;.&quot;</span><span class="p">])</span>
+    <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"."</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
@@ -678,7 +678,7 @@ draws the per-operation total wall-clock. <code class="docutils literal notransl
 Passing an axes lets the docs gallery (or a report) capture the figure;
 <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">telemetry</span> <span class="pre">plot</span> <span class="pre">&lt;case&gt;</span></code> does the same from the command line.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-<span class="n">telemetry</span><span class="o">.</span><span class="n">plot_summary</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;telemetry&quot;</span> <span class="o">/</span> <span class="s2">&quot;rank0.summary.json&quot;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">telemetry</span><span class="o">.</span><span class="n">plot_summary</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"telemetry"</span> <span class="o">/</span> <span class="s2">"rank0.summary.json"</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 </pre></div>
 </div>
 <img src="../_images/sphx_glr_example_trace_solver_performance_001.png" srcset="../_images/sphx_glr_example_trace_solver_performance_001.png" alt="operation totals (rank 0)" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Figure size 800x500 with 1 Axes&gt;
@@ -697,13 +697,13 @@ CLI). Operation authors add finer detail with
 <code class="docutils literal notranslate"><span class="pre">neofoam.telemetry.span(&quot;my.step&quot;)</span></code> or <code class="docutils literal notranslate"><span class="pre">neofoam.telemetry.instrument()</span></code>
 — those spans nest under the operation’s span automatically.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">trace_path</span> <span class="o">=</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">write_chrome_trace</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;wrote </span><span class="si">{</span><span class="n">trace_path</span><span class="si">}</span><span class="s2"> — open it in https://ui.perfetto.dev&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">trace_path</span><span class="si">}</span><span class="s2"> — open it in https://ui.perfetto.dev"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>wrote /tmp/neofoam_k0jmewol/hotRoom/telemetry/trace.json — open it in https://ui.perfetto.dev
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>wrote /tmp/neofoam_xs4sr_hx/hotRoom/telemetry/trace.json — open it in https://ui.perfetto.dev
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.656 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.676 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-trace-solver-performance-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/fc97c5977b7c8c5e04ca75669272e0c7/example_trace_solver_performance.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_trace_solver_performance.ipynb</span></code></a></p>

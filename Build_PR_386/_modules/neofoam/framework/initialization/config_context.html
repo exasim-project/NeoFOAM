@@ -590,11 +590,11 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2023 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Configuration Context</span>
 
 <span class="sd">Central context for inter-model configuration exchange during initialization.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -602,12 +602,12 @@
 <div class="viewcode-block" id="is_configurable_field">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.is_configurable_field">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_configurable_field</span><span class="p">(</span><span class="n">field_info</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Check if a field is marked as Configurable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Check if field has metadata with &quot;configurable&quot;</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">field_info</span><span class="p">,</span> <span class="s2">&quot;metadata&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">field_info</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;configurable&quot;</span> <span class="ow">in</span> <span class="n">field_info</span><span class="o">.</span><span class="n">metadata</span>
+<span class="sd">    """</span>
+    <span class="c1"># Check if field has metadata with "configurable"</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">field_info</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">field_info</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"configurable"</span> <span class="ow">in</span> <span class="n">field_info</span><span class="o">.</span><span class="n">metadata</span>
     <span class="k">return</span> <span class="kc">False</span></div>
 
 
@@ -615,7 +615,7 @@
 <div class="viewcode-block" id="ConfigContext">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConfigContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Context for inter-model configuration exchange during RESOLVE_DEPENDENCIES stage.</span>
 
 <span class="sd">    Models are registered by name and can be retrieved by other models</span>
@@ -624,24 +624,24 @@
 
 <span class="sd">    Supports both intra-region (same region) and inter-region (cross-region)</span>
 <span class="sd">    model access via dot notation:</span>
-<span class="sd">    - &quot;model_name&quot; → model in current region</span>
-<span class="sd">    - &quot;region.model_name&quot; → model in specified region</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    - "model_name" → model in current region</span>
+<span class="sd">    - "region.model_name" → model in specified region</span>
+<span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_region</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;default&quot;</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_region</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"default"</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize the configuration context.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            current_region: Name of the current region (default: &quot;default&quot;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            current_region: Name of the current region (default: "default")</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_region</span> <span class="o">=</span> <span class="n">current_region</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">current_region</span><span class="p">:</span> <span class="p">{}}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse a model path into (region, name).&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
-            <span class="n">maybe_region</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Parse a model path into (region, name)."""</span>
+        <span class="k">if</span> <span class="s2">"."</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+            <span class="n">maybe_region</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">maybe_region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">maybe_region</span><span class="p">,</span> <span class="n">rest</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_region</span><span class="p">,</span> <span class="n">path</span>
@@ -649,14 +649,14 @@
 <div class="viewcode-block" id="ConfigContext.register">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.register">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Register a model by name in a region.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name: Unique identifier for the model within the region</span>
 <span class="sd">            model: The model instance to register</span>
 <span class="sd">            region: Region name (defaults to current_region)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">region</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_region</span>
         <span class="k">if</span> <span class="n">region</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -666,12 +666,12 @@
 <div class="viewcode-block" id="ConfigContext.get">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get a registered model by path.</span>
 
 <span class="sd">        Supports both intra-region and inter-region access:</span>
-<span class="sd">        - &quot;model_name&quot; → model in current region</span>
-<span class="sd">        - &quot;region.model_name&quot; → model in specified region</span>
+<span class="sd">        - "model_name" → model in current region</span>
+<span class="sd">        - "region.model_name" → model in specified region</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path: Model path (name or region.name)</span>
@@ -681,13 +681,13 @@
 
 <span class="sd">        Example:</span>
 <span class="sd">            # Same region access</span>
-<span class="sd">            velocity = config.get(&quot;velocity&quot;)</span>
-<span class="sd">            transport = config.get(&quot;transport&quot;)</span>
+<span class="sd">            velocity = config.get("velocity")</span>
+<span class="sd">            transport = config.get("transport")</span>
 
 <span class="sd">            # Cross-region access</span>
-<span class="sd">            fluid_temp = config.get(&quot;fluid.temperature&quot;)</span>
-<span class="sd">            solid_temp = config.get(&quot;solid.temperature&quot;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            fluid_temp = config.get("fluid.temperature")</span>
+<span class="sd">            solid_temp = config.get("solid.temperature")</span>
+<span class="sd">        """</span>
         <span class="n">region</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
@@ -695,7 +695,7 @@
 <div class="viewcode-block" id="ConfigContext.all">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.all">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get all registered models in a region.</span>
 
 <span class="sd">        Args:</span>
@@ -703,7 +703,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Dictionary mapping model names to model instances</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">region</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_region</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
 
@@ -711,7 +711,7 @@
 <div class="viewcode-block" id="ConfigContext.contains">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.contains">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Check if a model is registered.</span>
 
 <span class="sd">        Supports both intra-region and inter-region paths.</span>
@@ -721,7 +721,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True if the model is registered, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">region</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">region</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">[</span><span class="n">region</span><span class="p">]</span></div>
 
@@ -729,7 +729,7 @@
 <div class="viewcode-block" id="ConfigContext.get_by_type">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get_by_type">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_by_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get all registered models of a specific type in a region.</span>
 
 <span class="sd">        Useful for working with multiple instances of the same model type</span>
@@ -746,7 +746,7 @@
 <span class="sd">            heat_sources = config.get_by_type(HeatSource)</span>
 <span class="sd">            for source in heat_sources:</span>
 <span class="sd">                source.enabled = False</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">region</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_region</span>
         <span class="n">models</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">model</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_type</span><span class="p">)]</span></div>
@@ -755,11 +755,11 @@
 <div class="viewcode-block" id="ConfigContext.get_by_prefix">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get_by_prefix">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_by_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get all models with names starting with a prefix in a region.</span>
 
 <span class="sd">        Useful for finding related model instances that follow a naming</span>
-<span class="sd">        convention (e.g., &quot;heat_source_1&quot;, &quot;heat_source_2&quot;).</span>
+<span class="sd">        convention (e.g., "heat_source_1", "heat_source_2").</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            prefix: The prefix to match against model names</span>
@@ -769,10 +769,10 @@
 <span class="sd">            Dictionary of models with matching names</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">            sources = config.get_by_prefix(&quot;heat_source_&quot;)</span>
+<span class="sd">            sources = config.get_by_prefix("heat_source_")</span>
 <span class="sd">            for name, source in sources.items():</span>
-<span class="sd">                print(f&quot;{name}: {source.power}W&quot;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">                print(f"{name}: {source.power}W")</span>
+<span class="sd">        """</span>
         <span class="n">region</span> <span class="o">=</span> <span class="n">region</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_region</span>
         <span class="n">models</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">model</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)}</span></div>
@@ -781,10 +781,10 @@
 <div class="viewcode-block" id="ConfigContext.get_configurable_fields">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get_configurable_fields">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_configurable_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get all configurable fields and their current values from a model.</span>
 
-<span class="sd">        Scans a model&#39;s field definitions for fields marked with</span>
+<span class="sd">        Scans a model's field definitions for fields marked with</span>
 <span class="sd">        Configurable[T] type annotation and returns their current values.</span>
 
 <span class="sd">        Args:</span>
@@ -795,19 +795,19 @@
 <span class="sd">            or empty dict if model not found or has no configurable fields</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">            configurable = config.get_configurable_fields(&quot;pressure_algorithm&quot;)</span>
-<span class="sd">            # Returns: {&quot;use_buoyancy&quot;: False, &quot;algorithm&quot;: &quot;SIMPLE&quot;}</span>
+<span class="sd">            configurable = config.get_configurable_fields("pressure_algorithm")</span>
+<span class="sd">            # Returns: {"use_buoyancy": False, "algorithm": "SIMPLE"}</span>
 
-<span class="sd">            # Can check what&#39;s configurable before modifying</span>
-<span class="sd">            if &quot;use_buoyancy&quot; in configurable:</span>
+<span class="sd">            # Can check what's configurable before modifying</span>
+<span class="sd">            if "use_buoyancy" in configurable:</span>
 <span class="sd">                pressure.use_buoyancy = True</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{}</span>
 
         <span class="c1"># Check if model has Pydantic fields</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="s2">&quot;model_fields&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="s2">"model_fields"</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{}</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
@@ -820,37 +820,37 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Enable attribute-style access to registered models.</span>
 
 <span class="sd">        This allows models to be accessed as attributes:</span>
-<span class="sd">            config.algorithm  # equivalent to config.get(&quot;algorithm&quot;)</span>
+<span class="sd">            config.algorithm  # equivalent to config.get("algorithm")</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name: The model name</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The model instance, or raises AttributeError if not found</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># Avoid infinite recursion for internal / dunder attributes</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; object has no attribute &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">' object has no attribute '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;No model registered with name &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in region &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">current_region</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="sa">f</span><span class="s2">"No model registered with name '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' in region '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">current_region</span><span class="si">}</span><span class="s2">'"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">model</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get list of all registered region names.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of region names</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
 
 </pre></div>
@@ -892,6 +892,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

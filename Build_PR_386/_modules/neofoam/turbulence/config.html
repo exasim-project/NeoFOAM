@@ -589,18 +589,18 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;``constant/turbulenceProperties`` configuration.</span>
+<span class="sd">"""``constant/turbulenceProperties`` configuration.</span>
 
 <span class="sd">Reads the OpenFOAM turbulence dictionary into a validated pydantic model via the</span>
 <span class="sd">OpenFOAM IO strategy. ``simulationType`` selects RAS / LES / laminar; the</span>
 <span class="sd">``RAS`` / ``LES`` sub-dictionaries map to nested ``BaseModel`` sub-configs —</span>
 <span class="sd">:class:`~neofoam.io.strategies.openfoam_strategy.OpenFOAMStrategy` recurses into</span>
-<span class="sd">sub-dictionaries automatically when a field&#39;s type is a ``BaseModel`` subclass.</span>
+<span class="sd">sub-dictionaries automatically when a field's type is a ``BaseModel`` subclass.</span>
 
 <span class="sd">A closure declares its own ``&lt;Model&gt;Coeffs`` :class:`~neofoam.io.BaseConfig` next</span>
 <span class="sd">to itself and resolves it here. Loading either runs the OpenFOAM IO path (hence</span>
 <span class="sd">pybFoam) directly.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
@@ -611,27 +611,27 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;RASProperties&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;LESProperties&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;TurbulencePropertiesConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;model_coefficients&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;load_with_coefficients&quot;</span><span class="p">,</span>
+    <span class="s2">"RASProperties"</span><span class="p">,</span>
+    <span class="s2">"LESProperties"</span><span class="p">,</span>
+    <span class="s2">"TurbulencePropertiesConfig"</span><span class="p">,</span>
+    <span class="s2">"model_coefficients"</span><span class="p">,</span>
+    <span class="s2">"load_with_coefficients"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="c1">#: A closure&#39;s coefficients config — declared next to the closure it parameterises.</span>
-<span class="n">CoeffsT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;CoeffsT&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseConfig</span><span class="p">)</span>
+<span class="c1">#: A closure's coefficients config — declared next to the closure it parameterises.</span>
+<span class="n">CoeffsT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"CoeffsT"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BaseConfig</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="RASProperties">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.config.html#neofoam.solver.incompressibleVoF.configs.RASProperties">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RASProperties</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``RAS`` sub-dictionary of ``turbulenceProperties``.</span>
+<span class="w">    </span><span class="sd">"""The ``RAS`` sub-dictionary of ``turbulenceProperties``.</span>
 
-<span class="sd">    ``extra=&quot;allow&quot;`` keeps the per-model ``&lt;RASModel&gt;Coeffs`` sub-dictionary; read</span>
+<span class="sd">    ``extra="allow"`` keeps the per-model ``&lt;RASModel&gt;Coeffs`` sub-dictionary; read</span>
 <span class="sd">    it with :func:`model_coefficients`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span>
 
     <span class="n">RASModel</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">turbulence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -642,19 +642,19 @@
 <div class="viewcode-block" id="LESProperties">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.config.html#neofoam.solver.incompressibleVoF.configs.LESProperties">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LESProperties</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``LES`` sub-dictionary of ``turbulenceProperties``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The ``LES`` sub-dictionary of ``turbulenceProperties``."""</span>
 
     <span class="n">LESModel</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">turbulence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">delta</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cubeRootVol&quot;</span></div>
+    <span class="n">delta</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubeRootVol"</span></div>
 
 
 
 <div class="viewcode-block" id="TurbulencePropertiesConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.config.html#neofoam.solver.incompressibleVoF.configs.TurbulencePropertiesConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;constant/turbulenceProperties&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"constant/turbulenceProperties"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulencePropertiesConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Top-level ``constant/turbulenceProperties`` dictionary.</span>
+<span class="w">    </span><span class="sd">"""Top-level ``constant/turbulenceProperties`` dictionary.</span>
 
 <span class="sd">    ``simulationType`` is the closed set ``{laminar, RAS, LES}`` so the generated</span>
 <span class="sd">    JSON Schema advertises the three valid options as an enum — the</span>
@@ -662,27 +662,27 @@
 <span class="sd">    ``Literal[...]`` to ``str`` for disk I/O, so the on-disk format is unchanged.</span>
 <span class="sd">    A ``model_validator`` then pins the simulationType ⇒ sub-block invariant the</span>
 <span class="sd">    dispatcher (``selection.model_name``) silently relies on.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">simulationType</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;laminar&quot;</span><span class="p">,</span> <span class="s2">&quot;RAS&quot;</span><span class="p">,</span> <span class="s2">&quot;LES&quot;</span><span class="p">]</span>
+    <span class="n">simulationType</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"laminar"</span><span class="p">,</span> <span class="s2">"RAS"</span><span class="p">,</span> <span class="s2">"LES"</span><span class="p">]</span>
     <span class="n">RAS</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RASProperties</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">LES</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LESProperties</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_simulation_type_consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TurbulencePropertiesConfig&quot;</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulationType</span> <span class="o">==</span> <span class="s2">&quot;laminar&quot;</span><span class="p">:</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_simulation_type_consistency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"TurbulencePropertiesConfig"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulationType</span> <span class="o">==</span> <span class="s2">"laminar"</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">RAS</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">LES</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;simulationType=laminar must not set RAS or LES sub-dictionary&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulationType</span> <span class="o">==</span> <span class="s2">&quot;RAS&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"simulationType=laminar must not set RAS or LES sub-dictionary"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulationType</span> <span class="o">==</span> <span class="s2">"RAS"</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">RAS</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;simulationType=RAS requires the RAS sub-dictionary&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"simulationType=RAS requires the RAS sub-dictionary"</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">LES</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;simulationType=RAS must not set LES sub-dictionary&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulationType</span> <span class="o">==</span> <span class="s2">&quot;LES&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"simulationType=RAS must not set LES sub-dictionary"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulationType</span> <span class="o">==</span> <span class="s2">"LES"</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">LES</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;simulationType=LES requires the LES sub-dictionary&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"simulationType=LES requires the LES sub-dictionary"</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">RAS</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;simulationType=LES must not set RAS sub-dictionary&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"simulationType=LES must not set RAS sub-dictionary"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
@@ -690,18 +690,18 @@
 <div class="viewcode-block" id="model_coefficients">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.config.html#neofoam.solver.incompressibleVoF.configs.model_coefficients">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">model_coefficients</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">coeffs_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">CoeffsT</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CoeffsT</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A closure&#39;s typed coefficients, with the case&#39;s ``&lt;model&gt;Coeffs`` overrides applied.</span>
+<span class="w">    </span><span class="sd">"""A closure's typed coefficients, with the case's ``&lt;model&gt;Coeffs`` overrides applied.</span>
 
-<span class="sd">    An entry *coeffs_type* does not declare is ignored, as OpenFOAM&#39;s</span>
+<span class="sd">    An entry *coeffs_type* does not declare is ignored, as OpenFOAM's</span>
 <span class="sd">    ``RASModel::coeffDict_`` ignores it. The ``RAS`` block arrives as a</span>
 <span class="sd">    :class:`RASProperties` from :meth:`~neofoam.io.BaseConfig.load` but as a plain</span>
 <span class="sd">    ``dict`` from ``ModelSpec.instantiate``, so both shapes are accepted.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        ``model_coefficients(config, &quot;kEpsilon&quot;, KEpsilonCoeffs)``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ras</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;RAS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">Coeffs&quot;</span>
+<span class="sd">        ``model_coefficients(config, "kEpsilon", KEpsilonCoeffs)``</span>
+<span class="sd">    """</span>
+    <span class="n">ras</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"RAS"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">Coeffs"</span>
     <span class="n">overrides</span> <span class="o">=</span> <span class="n">ras</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ras</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ras</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overrides</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">coeffs_type</span><span class="p">()</span>
@@ -717,12 +717,12 @@
     <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">coeffs_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">CoeffsT</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNamespace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A closure&#39;s runtime config: the dictionary plus its resolved coefficients.</span>
+<span class="w">    </span><span class="sd">"""A closure's runtime config: the dictionary plus its resolved coefficients.</span>
 
 <span class="sd">    The ``SimpleNamespace`` shape is what ``ModelSpec.instantiate`` produces for a</span>
 <span class="sd">    multi-config spec, so ``config_injection`` finds either **by type**.</span>
 <span class="sd">    ``validate=False`` mirrors that auto-load.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">properties</span> <span class="o">=</span> <span class="n">TurbulencePropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">SimpleNamespace</span><span class="p">(</span>
         <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span>
@@ -768,6 +768,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

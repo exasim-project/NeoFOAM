@@ -589,25 +589,25 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The native-NeoN momentum-transport handle (:class:`NeoNHandle`).</span>
+<span class="sd">"""The native-NeoN momentum-transport handle (:class:`NeoNHandle`).</span>
 
 <span class="sd">Returned by :func:`~neofoam.turbulence.selection.select_turbulence_model` when a</span>
 <span class="sd">solver selects ``fallback=False`` (today: ``incompressibleFluidNeoN``). It is the</span>
-<span class="sd">read/advance interface over a native model&#39;s :class:`ModelRuntime`, built on the</span>
+<span class="sd">read/advance interface over a native model's :class:`ModelRuntime`, built on the</span>
 <span class="sd">NeoN backend:</span>
 
-<span class="sd">* :meth:`validate` runs the spec&#39;s ``@build`` InitSteps — seeding the NeoN</span>
+<span class="sd">* :meth:`validate` runs the spec's ``@build`` InitSteps — seeding the NeoN</span>
 <span class="sd">  ``runtime`` / ``nu`` / ``U`` the closures read — into a</span>
-<span class="sd">  :class:`~neofoam.framework.context.Context` that owns the model&#39;s ``nut`` /</span>
+<span class="sd">  :class:`~neofoam.framework.context.Context` that owns the model's ``nut`` /</span>
 <span class="sd">  ``nuEff`` (and, for a closure, its ``k`` / ``epsilon`` and helper operators).</span>
-<span class="sd">* :meth:`correct` steps the spec&#39;s **native** ``@operation``s (a transport solve</span>
-<span class="sd">  for a closure; nothing for ``laminar``). The model&#39;s co-located ``fallback=True``</span>
+<span class="sd">* :meth:`correct` steps the spec's **native** ``@operation``s (a transport solve</span>
+<span class="sd">  for a closure; nothing for ``laminar``). The model's co-located ``fallback=True``</span>
 <span class="sd">  op is deliberately **not** stepped here — that belongs to the pybFoam path.</span>
 
 <span class="sd">Imports the NeoN bindings at module top, so it is imported by NeoN code/tests</span>
 <span class="sd">(the ``incompressibleFluidNeoN`` create_fields, the parity worker), not from the</span>
 <span class="sd">turbulence package ``__init__``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -618,30 +618,30 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">execute_initialization</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;NeoNHandle&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"NeoNHandle"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="NeoNHandle">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NeoNHandle</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read/advance interface over a native NeoN momentum-transport ``ModelRuntime``.</span>
+<span class="w">    </span><span class="sd">"""Read/advance interface over a native NeoN momentum-transport ``ModelRuntime``.</span>
 
-<span class="sd">    :meth:`validate` runs the spec&#39;s ``@build`` InitSteps — seeding the NeoN</span>
+<span class="sd">    :meth:`validate` runs the spec's ``@build`` InitSteps — seeding the NeoN</span>
 <span class="sd">    ``runtime`` / ``nu`` / ``U`` the closures read — into a</span>
-<span class="sd">    :class:`~neofoam.framework.context.Context` that owns the model&#39;s ``nut`` /</span>
+<span class="sd">    :class:`~neofoam.framework.context.Context` that owns the model's ``nut`` /</span>
 <span class="sd">    ``nuEff`` (and, for a closure, its ``k`` / ``epsilon`` and helper operators).</span>
-<span class="sd">    :meth:`correct` then steps the spec&#39;s native ``@operation``s (a transport solve</span>
+<span class="sd">    :meth:`correct` then steps the spec's native ``@operation``s (a transport solve</span>
 <span class="sd">    for a closure; nothing for ``laminar``) over that same Context.</span>
 
 <span class="sd">    The accessor surface (:meth:`nut` / :meth:`nu_eff` / :meth:`rotate_old_times` /</span>
 <span class="sd">    :meth:`write`) matches the C++ ``nfb.create_turbulence_model`` handle, so the</span>
 <span class="sd">    incompressibleFluidNeoN solver consumes either interchangeably.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1">#: Volume fields a model may own that OpenFOAM auto-writes alongside p/U —</span>
     <span class="c1">#: persisted by :meth:`write` when present (``nuEff`` is a surface field and</span>
     <span class="c1">#: ``G`` a per-step temporary, so neither is written).</span>
-    <span class="n">_WRITE_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;nut&quot;</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="s2">&quot;epsilon&quot;</span><span class="p">,</span> <span class="s2">&quot;nuTilda&quot;</span><span class="p">,</span> <span class="s2">&quot;omega&quot;</span><span class="p">)</span>
+    <span class="n">_WRITE_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"nut"</span><span class="p">,</span> <span class="s2">"k"</span><span class="p">,</span> <span class="s2">"epsilon"</span><span class="p">,</span> <span class="s2">"nuTilda"</span><span class="p">,</span> <span class="s2">"omega"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span> <span class="o">=</span> <span class="n">runtime</span>
@@ -652,25 +652,25 @@
 <div class="viewcode-block" id="NeoNHandle.has_nut">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.has_nut">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">has_nut</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Native NeoN closures always maintain a ``nut`` field (zero for laminar).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Native NeoN closures always maintain a ``nut`` field (zero for laminar)."""</span>
         <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="NeoNHandle.validate">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.validate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the model&#39;s fields (``nut`` / ``nuEff`` …) from its ``@build`` steps.</span>
+<span class="w">        </span><span class="sd">"""Build the model's fields (``nut`` / ``nuEff`` …) from its ``@build`` steps.</span>
 
 <span class="sd">        Seeds the NeoN ``runtime`` / ``nu`` / ``U`` the build closures inject by</span>
 <span class="sd">        name (``models.neon_runtime`` / ``models.nu_vol`` / ``fields.U``, matching</span>
-<span class="sd">        the incompressibleFluidNeoN init graph), then executes the spec&#39;s InitSteps</span>
+<span class="sd">        the incompressibleFluidNeoN init graph), then executes the spec's InitSteps</span>
 <span class="sd">        in dependency order into a live :class:`Context`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">seed</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;neon_runtime&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neon_runtime</span><span class="p">),</span>
-            <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;nu_vol&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nu</span><span class="p">),</span>
-            <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;final_iter&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="kc">False</span><span class="p">),</span>
-            <span class="n">init_field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">U</span><span class="p">),</span>
+            <span class="n">init_model</span><span class="p">(</span><span class="s2">"neon_runtime"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neon_runtime</span><span class="p">),</span>
+            <span class="n">init_model</span><span class="p">(</span><span class="s2">"nu_vol"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nu</span><span class="p">),</span>
+            <span class="n">init_model</span><span class="p">(</span><span class="s2">"final_iter"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="n">init_field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">U</span><span class="p">),</span>
         <span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="o">=</span> <span class="n">execute_initialization</span><span class="p">(</span><span class="n">seed</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">())</span></div>
 
@@ -678,26 +678,26 @@
 <div class="viewcode-block" id="NeoNHandle.correct">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.correct">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">final_iter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance the model one step by stepping its **native** ``@operation``s.</span>
+<span class="w">        </span><span class="sd">"""Advance the model one step by stepping its **native** ``@operation``s.</span>
 
 <span class="sd">        A closure (kEpsilon, …) solves its transport PDEs and recomputes ``nut`` /</span>
 <span class="sd">        ``nuEff``; ``laminar`` declares no native operations, so this is a no-op.</span>
-<span class="sd">        The model&#39;s co-located ``fallback=True`` op belongs to the pybFoam path and</span>
+<span class="sd">        The model's co-located ``fallback=True`` op belongs to the pybFoam path and</span>
 <span class="sd">        is intentionally excluded here. ``U`` / ``phi`` are refreshed on the Context</span>
 <span class="sd">        the operations read from.</span>
 
-<span class="sd">        ``final_iter`` is OpenFOAM&#39;s ``mesh.data().isFinalIteration()`` at the point</span>
+<span class="sd">        ``final_iter`` is OpenFOAM's ``mesh.data().isFinalIteration()`` at the point</span>
 <span class="sd">        ``turbulence-&gt;correct()`` runs: the transport solves pick up the</span>
 <span class="sd">        ``&lt;field&gt;Final`` solver settings and equation relaxation from it, exactly as</span>
 <span class="sd">        ``fvMatrix::solve()`` does through ``psi.select(finalIteration)``. PIMPLE</span>
 <span class="sd">        corrects turbulence on its final outer pass, so it passes ``True``; SIMPLE</span>
 <span class="sd">        has no final iteration and leaves it ``False``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;validate() must be called before correct()&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">phi</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;final_iter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_iter</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"validate() must be called before correct()"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"U"</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"phi"</span><span class="p">]</span> <span class="o">=</span> <span class="n">phi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"final_iter"</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_iter</span>
         <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span><span class="o">.</span><span class="n">native_operations</span><span class="p">():</span>
             <span class="n">op</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">)</span></div>
 
@@ -705,12 +705,12 @@
 <div class="viewcode-block" id="NeoNHandle.field">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the NeoN field the model owns under ``name`` (``nut`` / ``nuEff`` …).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the NeoN field the model owns under ``name`` (``nut`` / ``nuEff`` …)."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;validate() must be called before field()&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"validate() must be called before field()"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;NeoN turbulence exposes no field </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> (known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="sa">f</span><span class="s2">"NeoN turbulence exposes no field </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> (known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
 
@@ -718,38 +718,38 @@
 <div class="viewcode-block" id="NeoNHandle.nut">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.nut">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">nut</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The eddy viscosity ``nut`` (volume field) the model maintains.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;nut&quot;</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""The eddy viscosity ``nut`` (volume field) the model maintains."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">"nut"</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NeoNHandle.nu_eff">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.nu_eff">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">nu_eff</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The effective viscosity ``nuEff`` (surface field) the model maintains.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""The effective viscosity ``nuEff`` (surface field) the model maintains."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NeoNHandle.rotate_old_times">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.rotate_old_times">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">rotate_old_times</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;No-op: each transport ``@operation`` rotates its own field before its solve.</span>
+<span class="w">        </span><span class="sd">"""No-op: each transport ``@operation`` rotates its own field before its solve.</span>
 
-<span class="sd">        The C++ handle rotates its transport fields&#39; old times at the start of a</span>
+<span class="sd">        The C++ handle rotates its transport fields' old times at the start of a</span>
 <span class="sd">        time step; the pure-Python closures do the equivalent ``nn.rotate_old_times``</span>
 <span class="sd">        inside :meth:`correct` (nothing touches those fields in between).</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
+<span class="sd">        """</span></div>
 
 
 <div class="viewcode-block" id="NeoNHandle.write">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the owned volume fields (``nut`` + transport unknowns) to disk.</span>
+<span class="w">        </span><span class="sd">"""Write the owned volume fields (``nut`` + transport unknowns) to disk.</span>
 
-<span class="sd">        Signature-compatible with the C++ handle&#39;s ``write(mesh)``; ``mesh`` is</span>
+<span class="sd">        Signature-compatible with the C++ handle's ``write(mesh)``; ``mesh`` is</span>
 <span class="sd">        unused — the NeoN writer resolves the output through the runtime adapter.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;validate() must be called before write()&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"validate() must be called before write()"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_WRITE_FIELDS</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
                 <span class="n">nfb</span><span class="o">.</span><span class="n">write_scalar_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neon_runtime</span><span class="p">)</span></div>
@@ -794,6 +794,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

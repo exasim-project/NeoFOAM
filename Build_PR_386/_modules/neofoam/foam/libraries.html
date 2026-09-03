@@ -589,13 +589,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Load extra OpenFOAM shared libraries that ``pybFoam`` does not link.</span>
+<span class="sd">"""Load extra OpenFOAM shared libraries that ``pybFoam`` does not link.</span>
 
-<span class="sd">A native solver binary (e.g. ``interFoam``) links libraries beyond pybFoam&#39;s</span>
+<span class="sd">A native solver binary (e.g. ``interFoam``) links libraries beyond pybFoam's</span>
 <span class="sd">dependency set — ``libwaveModels.so`` and the like — and no tutorial declares them</span>
 <span class="sd">under ``libs (...)`` because, for OpenFOAM, the binary *is* the declaration. Cases</span>
 <span class="sd">relying on their runtime-selection entries need them loaded here instead.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">ctypes</span>
 
@@ -603,16 +603,16 @@
 <div class="viewcode-block" id="load_libraries">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.libraries.html#neofoam.foam.libraries.load_libraries">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_libraries</span><span class="p">(</span><span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load OpenFOAM shared libraries by name, registering their runtime-selection tables.</span>
+<span class="w">    </span><span class="sd">"""Load OpenFOAM shared libraries by name, registering their runtime-selection tables.</span>
 
-<span class="sd">    ``RTLD_GLOBAL``, like OpenFOAM&#39;s own ``libs (...)``, so the static registrations</span>
+<span class="sd">    ``RTLD_GLOBAL``, like OpenFOAM's own ``libs (...)``, so the static registrations</span>
 <span class="sd">    become visible process-wide.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">ctypes</span><span class="o">.</span><span class="n">CDLL</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">ctypes</span><span class="o">.</span><span class="n">RTLD_GLOBAL</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed to load OpenFOAM library </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"failed to load OpenFOAM library </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 </pre></div>
         </article>
@@ -653,6 +653,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

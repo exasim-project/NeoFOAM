@@ -589,17 +589,17 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Viscosity field builders.</span>
+<span class="sd">"""Viscosity field builders.</span>
 
 <span class="sd">Helpers to build the kinematic-viscosity ``dimensionedScalar`` fields the</span>
 <span class="sd">viscosity and momentum-transport models register in the Context (``nu``, ``nut``).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;VISCOSITY_DIMENSIONS&quot;</span><span class="p">,</span> <span class="s2">&quot;dimensioned_viscosity&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"VISCOSITY_DIMENSIONS"</span><span class="p">,</span> <span class="s2">"dimensioned_viscosity"</span><span class="p">]</span>
 
 <span class="c1">#: Kinematic-viscosity dimensions [0 2 -1 0 0 0 0].</span>
 <span class="n">VISCOSITY_DIMENSIONS</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
@@ -608,11 +608,11 @@
 <div class="viewcode-block" id="dimensioned_viscosity">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.io.html#neofoam.viscosity.io.dimensioned_viscosity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dimensioned_viscosity</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a named kinematic-viscosity ``dimensionedScalar`` from a value.</span>
+<span class="w">    </span><span class="sd">"""Build a named kinematic-viscosity ``dimensionedScalar`` from a value.</span>
 
 <span class="sd">    The pybFoam transport binding exposes no ``nu()``; native models build the</span>
 <span class="sd">    field from the value OpenFOAM reads from ``constant/transportProperties``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span>
         <span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionSet</span><span class="p">(</span><span class="o">*</span><span class="n">VISCOSITY_DIMENSIONS</span><span class="p">),</span> <span class="n">value</span>
     <span class="p">)</span></div>
@@ -656,6 +656,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

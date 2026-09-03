@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Pressure-velocity coupling dispatcher for the NeoN solver.</span>
+<span class="sd">"""Pressure-velocity coupling dispatcher for the NeoN solver.</span>
 
 <span class="sd">Detects which algorithm to instantiate from ``system/fvSolution``.</span>
 <span class="sd">PIMPLE (transient) and SIMPLE (steady state) are wired up; PISO falls</span>
@@ -597,7 +597,7 @@
 <span class="sd">existing tutorial cases that specify it still run (the legacy</span>
 <span class="sd">``neoPimpleFoam`` also reads its corrector counts from the ``PIMPLE``</span>
 <span class="sd">subdict only).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -610,13 +610,13 @@
 <div class="viewcode-block" id="PressureVelocityAlgorithmNeoN">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureVelocityAlgorithmNeoN</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispatcher for NeoN pressure-velocity coupling algorithms.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Dispatcher for NeoN pressure-velocity coupling algorithms."""</span>
 
 <div class="viewcode-block" id="PressureVelocityAlgorithmNeoN.all_specs">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.all_specs">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">all_specs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Every member spec of the family, case-free (no detection).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Every member spec of the family, case-free (no detection)."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">pimpleNeoN</span><span class="p">,</span> <span class="n">simpleNeoN</span><span class="p">]</span></div>
 
 
@@ -624,19 +624,19 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.detect_and_create">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_and_create</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect algorithm from fvSolution and prime its state.&quot;&quot;&quot;</span>
-        <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Detect algorithm from fvSolution and prime its state."""</span>
+        <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">):</span>
-            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">&quot;PIMPLE&quot;</span>
-        <span class="k">elif</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">):</span>
-            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">&quot;SIMPLE&quot;</span>
-        <span class="k">elif</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">):</span>
-            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">&quot;PISO&quot;</span>
+        <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">):</span>
+            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"PIMPLE"</span>
+        <span class="k">elif</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">):</span>
+            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"SIMPLE"</span>
+        <span class="k">elif</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">"PISO"</span><span class="p">):</span>
+            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"PISO"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">&quot;PIMPLE&quot;</span>
+            <span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"PIMPLE"</span>
 
-        <span class="n">algorithm_model</span> <span class="o">=</span> <span class="n">simpleNeoN</span> <span class="k">if</span> <span class="n">algorithm_type</span> <span class="o">==</span> <span class="s2">&quot;SIMPLE&quot;</span> <span class="k">else</span> <span class="n">pimpleNeoN</span>
+        <span class="n">algorithm_model</span> <span class="o">=</span> <span class="n">simpleNeoN</span> <span class="k">if</span> <span class="n">algorithm_type</span> <span class="o">==</span> <span class="s2">"SIMPLE"</span> <span class="k">else</span> <span class="n">pimpleNeoN</span>
         <span class="n">algorithm_model</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="n">algorithm_type</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="k">return</span> <span class="n">algorithm_model</span></div>
 
@@ -645,16 +645,16 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.PressureVelocityAlgorithmNeoN.create">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">algorithm_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Programmatically create a pressure-velocity algorithm model.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">algorithm_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;Simple&quot;</span><span class="p">,</span> <span class="s2">&quot;SIMPLE&quot;</span><span class="p">}:</span>
-            <span class="n">simpleNeoN</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">&quot;SIMPLE&quot;</span>  <span class="c1"># type: ignore[attr-defined]</span>
+<span class="w">        </span><span class="sd">"""Programmatically create a pressure-velocity algorithm model."""</span>
+        <span class="k">if</span> <span class="n">algorithm_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"Simple"</span><span class="p">,</span> <span class="s2">"SIMPLE"</span><span class="p">}:</span>
+            <span class="n">simpleNeoN</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"SIMPLE"</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="k">return</span> <span class="n">simpleNeoN</span>
-        <span class="k">if</span> <span class="n">algorithm_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;Pimple&quot;</span><span class="p">,</span> <span class="s2">&quot;PIMPLE&quot;</span><span class="p">}:</span>
+        <span class="k">if</span> <span class="n">algorithm_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"Pimple"</span><span class="p">,</span> <span class="s2">"PIMPLE"</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;incompressibleFluidNeoN only supports the PIMPLE and SIMPLE &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;algorithms; requested </span><span class="si">{</span><span class="n">algorithm_type</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+                <span class="sa">f</span><span class="s2">"incompressibleFluidNeoN only supports the PIMPLE and SIMPLE "</span>
+                <span class="sa">f</span><span class="s2">"algorithms; requested </span><span class="si">{</span><span class="n">algorithm_type</span><span class="si">!r}</span><span class="s2">."</span>
             <span class="p">)</span>
-        <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">&quot;PIMPLE&quot;</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">pimpleNeoN</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">=</span> <span class="s2">"PIMPLE"</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="k">return</span> <span class="n">pimpleNeoN</span></div>
 </div>
 
@@ -697,6 +697,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

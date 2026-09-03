@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;BaseConfig — Pydantic model with automatic IO strategy registration.&quot;&quot;&quot;</span>
+<span class="sd">"""BaseConfig — Pydantic model with automatic IO strategy registration."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
@@ -602,17 +602,17 @@
     <span class="n">ValidationErrors</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;BaseConfig&quot;</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"BaseConfig"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="BaseConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for configurations with reading/writing strategies.</span>
+<span class="w">    </span><span class="sd">"""Base class for configurations with reading/writing strategies.</span>
 
 <span class="sd">    Subclasses decorated with ``@IOStrategy`` get an ``io_config``</span>
 <span class="sd">    class variable of type :class:`IOMetadata`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">io_config</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">IOMetadata</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -620,35 +620,35 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.form_defaults">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">form_defaults</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A runnable starter prefill for this config, or ``None`` for &quot;use field defaults&quot;.</span>
+<span class="w">        </span><span class="sd">"""A runnable starter prefill for this config, or ``None`` for "use field defaults".</span>
 
 <span class="sd">        Most configs derive their form prefill from their field defaults (see</span>
 <span class="sd">        :func:`neofoam.io.pydantic_schema.default_values`). Configs whose content is</span>
 <span class="sd">        modelled as *required-but-defaultless* fields — e.g. the ``fvSchemes`` /</span>
 <span class="sd">        ``fvSolution`` scheme/solver dicts — return ``None`` here would leave the prefill</span>
 <span class="sd">        empty, so they override this to hand back a canonical, ready-to-edit scaffold.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_io</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IOMetadata</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return ``io_config`` or raise if not registered.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return ``io_config`` or raise if not registered."""</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No IO strategy registered for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No IO strategy registered for </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span>
 
 <div class="viewcode-block" id="BaseConfig.get_default_path">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.get_default_path">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get default file path from ``io_config.file``.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get default file path from ``io_config.file``."""</span>
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_io</span><span class="p">()</span><span class="o">.</span><span class="n">file</span></div>
 
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the on-disk path: explicit file, *file* override, or default.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Resolve the on-disk path: explicit file, *file* override, or default."""</span>
         <span class="n">case_dir_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">suffix</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">case_dir_path</span>  <span class="c1"># case_dir is an explicit file path</span>
@@ -662,12 +662,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
         <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"utf-8"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load configuration from file via :class:`~neofoam.io.DictFile`.</span>
+<span class="w">        </span><span class="sd">"""Load configuration from file via :class:`~neofoam.io.DictFile`.</span>
 
 <span class="sd">        Opens the resolved file with ``DictFile`` (format inferred from the name)</span>
 <span class="sd">        and fills this config out of its declared sub-dict. When ``validate=True``</span>
@@ -688,21 +688,21 @@
 
 <span class="sd">        Raises:</span>
 <span class="sd">            FileNotFoundError: If the configuration file does not exist</span>
-<span class="sd">            KeyError: If a configured subdict path doesn&#39;t resolve</span>
+<span class="sd">            KeyError: If a configured subdict path doesn't resolve</span>
 <span class="sd">            pydantic.ValidationError: If validate=True and data has errors</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">DictFile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">configs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;BaseConfig&quot;</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convenience property to get all config models together.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">configs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">"BaseConfig"</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Convenience property to get all config models together."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">file_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the file name for this configuration.</span>
+<span class="w">        </span><span class="sd">"""Get the file name for this configuration.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Relative path to the configuration file</span>
@@ -710,14 +710,14 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; config = SolverConfig(...)</span>
 <span class="sd">            &gt;&gt;&gt; config.file_name</span>
-<span class="sd">            &#39;solver_config.yaml&#39;</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            'solver_config.yaml'</span>
+<span class="sd">        """</span>
         <span class="n">io</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span>
         <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span> <span class="k">if</span> <span class="n">io</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">subdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the optional subdict path from the reading strategy.</span>
+<span class="w">        </span><span class="sd">"""Get the optional subdict path from the reading strategy.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Subdict path if configured, None otherwise</span>
@@ -725,18 +725,18 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; pimple_config = PIMPLEConfig(...)</span>
 <span class="sd">            &gt;&gt;&gt; pimple_config.subdict</span>
-<span class="sd">            &#39;PIMPLE&#39;</span>
+<span class="sd">            'PIMPLE'</span>
 
 <span class="sd">            &gt;&gt;&gt; config = SolverConfig(...)</span>
 <span class="sd">            &gt;&gt;&gt; config.subdict</span>
 <span class="sd">            None</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">io</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span>
         <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">subdict</span> <span class="k">if</span> <span class="n">io</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get both file name and subdict as a tuple.</span>
+<span class="w">        </span><span class="sd">"""Get both file name and subdict as a tuple.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of (file_name, subdict)</span>
@@ -744,8 +744,8 @@
 <span class="sd">        Example:</span>
 <span class="sd">            &gt;&gt;&gt; config = PIMPLEConfig(...)</span>
 <span class="sd">            &gt;&gt;&gt; config.metadata</span>
-<span class="sd">            (&#39;fvSolution.yaml&#39;, &#39;PIMPLE&#39;)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            ('fvSolution.yaml', 'PIMPLE')</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">subdict</span>
 
 <div class="viewcode-block" id="BaseConfig.save">
@@ -753,13 +753,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
-        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"utf-8"</span><span class="p">,</span>
         <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save configuration to file via :class:`~neofoam.io.DictFile`.</span>
+<span class="w">        </span><span class="sd">"""Save configuration to file via :class:`~neofoam.io.DictFile`.</span>
 
-<span class="sd">        The target file&#39;s format is chosen from its name and this config is</span>
+<span class="sd">        The target file's format is chosen from its name and this config is</span>
 <span class="sd">        written under its declared sub-dict, creating the file/dirs as needed</span>
 <span class="sd">        (a ``FoamFile`` header is synthesised for header-less OpenFOAM configs).</span>
 
@@ -768,7 +768,7 @@
 <span class="sd">            encoding: Accepted for compatibility; ``DictFile`` writes UTF-8.</span>
 <span class="sd">            file: Optional filename override. When provided, resolves relative</span>
 <span class="sd">                  to ``case_dir`` instead of using the registered default path.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">case_dir_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">suffix</span><span class="p">:</span>  <span class="c1"># Has file extension, treat as explicit path</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir_path</span>
@@ -790,7 +790,7 @@
         <span class="n">exc</span><span class="p">:</span> <span class="n">ValidationError</span><span class="p">,</span>
         <span class="n">file_override</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ValidationErrors</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a ``ValidationError`` into a list of ``ValidationErrors``.</span>
+<span class="w">        </span><span class="sd">"""Convert a ``ValidationError`` into a list of ``ValidationErrors``.</span>
 
 <span class="sd">        Shared helper used by :meth:`collect_errors` and :meth:`validate`.</span>
 
@@ -801,7 +801,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ``ValidationErrors`` with file and subdict context.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">file_name</span> <span class="o">=</span> <span class="n">file_override</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 
         <span class="c1"># Resolve subdict from io_config</span>
@@ -809,11 +809,11 @@
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">ValidationErrors</span><span class="p">(</span>
-                <span class="n">field</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loc&quot;</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">]),</span>
-                <span class="n">message</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;msg&quot;</span><span class="p">,</span> <span class="s2">&quot;Validation error&quot;</span><span class="p">),</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"loc"</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">]),</span>
+                <span class="n">message</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"msg"</span><span class="p">,</span> <span class="s2">"Validation error"</span><span class="p">),</span>
                 <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
-                <span class="n">input_value</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-                <span class="n">error_type</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;UnknownError&quot;</span><span class="p">),</span>
+                <span class="n">input_value</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="n">error_type</span><span class="o">=</span><span class="n">err</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"UnknownError"</span><span class="p">),</span>
                 <span class="n">subdict</span><span class="o">=</span><span class="n">subdict</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">(</span><span class="n">include_url</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -825,11 +825,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">collect_errors</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
-        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
+        <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"utf-8"</span><span class="p">,</span>
         <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ValidationErrors</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and validate this config, returning errors instead of raising.</span>
+<span class="w">        </span><span class="sd">"""Load and validate this config, returning errors instead of raising.</span>
 
 <span class="sd">        Performs the same load as ``load(validate=True)`` but catches</span>
 <span class="sd">        ``FileNotFoundError``, ``KeyError``, and ``ValidationError`` and</span>
@@ -845,7 +845,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ``ValidationErrors`` (empty if valid)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">file_name</span> <span class="o">=</span> <span class="n">file</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
@@ -857,7 +857,7 @@
                     <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
                     <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
-                    <span class="n">error_type</span><span class="o">=</span><span class="s2">&quot;FileNotFound&quot;</span><span class="p">,</span>
+                    <span class="n">error_type</span><span class="o">=</span><span class="s2">"FileNotFound"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -866,7 +866,7 @@
                     <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
                     <span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
-                    <span class="n">error_type</span><span class="o">=</span><span class="s2">&quot;KeyError&quot;</span><span class="p">,</span>
+                    <span class="n">error_type</span><span class="o">=</span><span class="s2">"KeyError"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">]</span>
         <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -876,9 +876,9 @@
 <div class="viewcode-block" id="BaseConfig.check_validation">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.check_validation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_validation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ValidationErrors</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate this loaded instance and return errors.</span>
+<span class="w">        </span><span class="sd">"""Validate this loaded instance and return errors.</span>
 
-<span class="sd">        Re-validates the model&#39;s current data against its field types</span>
+<span class="sd">        Re-validates the model's current data against its field types</span>
 <span class="sd">        and constraints.  Returns an empty list if valid.</span>
 
 <span class="sd">        This is intended for the staged workflow where models are first</span>
@@ -886,7 +886,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ``ValidationErrors`` (empty if valid)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
             <span class="k">return</span> <span class="p">[]</span>
@@ -933,6 +933,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

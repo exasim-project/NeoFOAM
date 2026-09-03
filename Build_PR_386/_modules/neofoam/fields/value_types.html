@@ -589,15 +589,15 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Value-type markers for declared fields + uniform-literal helpers.</span>
+<span class="sd">"""Value-type markers for declared fields + uniform-literal helpers.</span>
 
 <span class="sd">A field declaration carries a ``value_type`` — :class:`Scalar` or</span>
 <span class="sd">:class:`Vector` — that drives:</span>
 
 <span class="sd">* The Python form of ``internalField`` (a ``float`` for scalar, a</span>
 <span class="sd">  three-tuple of floats for vector).</span>
-<span class="sd">* The OpenFOAM uniform-literal form (``&quot;uniform 0&quot;`` /</span>
-<span class="sd">  ``&quot;uniform (0 0 0)&quot;``) that the OpenFOAM strategy reads and writes.</span>
+<span class="sd">* The OpenFOAM uniform-literal form (``"uniform 0"`` /</span>
+<span class="sd">  ``"uniform (0 0 0)"``) that the OpenFOAM strategy reads and writes.</span>
 
 <span class="sd">These markers are *not* pydantic field types. They parameterise the</span>
 <span class="sd">synthesised schema (Step 4) so a single declaration line — ``value_type=</span>
@@ -605,7 +605,7 @@
 <span class="sd">discriminated-union BC arms in :mod:`neofoam.fields.bc` reuse the same</span>
 <span class="sd">``parse_uniform`` / ``default_uniform`` helpers when their ``value``</span>
 <span class="sd">crosses the disk boundary.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -618,11 +618,11 @@
 <div class="viewcode-block" id="Scalar">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.Scalar">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Scalar</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marker: the field holds one ``float`` per cell.</span>
+<span class="w">    </span><span class="sd">"""Marker: the field holds one ``float`` per cell.</span>
 
 <span class="sd">    ``internalField`` is ``float`` in Python; on disk it is</span>
-<span class="sd">    ``&quot;uniform &lt;number&gt;&quot;``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``"uniform &lt;number&gt;"``.</span>
+<span class="sd">    """</span>
 
     <span class="n">py_type</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="nb">float</span>
     <span class="n">n_components</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="mi">1</span></div>
@@ -632,11 +632,11 @@
 <div class="viewcode-block" id="Vector">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.Vector">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Vector</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marker: the field holds a 3-vector per cell.</span>
+<span class="w">    </span><span class="sd">"""Marker: the field holds a 3-vector per cell.</span>
 
 <span class="sd">    ``internalField`` is ``tuple[float, float, float]`` in Python; on</span>
-<span class="sd">    disk it is ``&quot;uniform (&lt;x&gt; &lt;y&gt; &lt;z&gt;)&quot;``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    disk it is ``"uniform (&lt;x&gt; &lt;y&gt; &lt;z&gt;)"``.</span>
+<span class="sd">    """</span>
 
     <span class="n">py_type</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="nb">tuple</span>
     <span class="n">n_components</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="mi">3</span></div>
@@ -644,11 +644,11 @@
 
 
 <span class="c1"># Tensor placeholder reserved for a later expansion (volTensorField,</span>
-<span class="c1"># volSymmTensorField); not used by Phase 1&#39;s in-tree fields.</span>
+<span class="c1"># volSymmTensorField); not used by Phase 1's in-tree fields.</span>
 <div class="viewcode-block" id="Tensor">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.Tensor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Tensor</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marker reserved for tensor fields. Not exercised in Phase 1.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Marker reserved for tensor fields. Not exercised in Phase 1."""</span>
 
     <span class="n">py_type</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="nb">tuple</span>
     <span class="n">n_components</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="mi">9</span></div>
@@ -656,17 +656,17 @@
 
 
 <span class="n">_VECTOR_LITERAL</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-    <span class="sa">r</span><span class="s2">&quot;^\s*uniform\s*\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+&quot;</span>
-    <span class="sa">r</span><span class="s2">&quot;([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+&quot;</span>
-    <span class="sa">r</span><span class="s2">&quot;([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)\s*$&quot;</span>
+    <span class="sa">r</span><span class="s2">"^\s*uniform\s*\(\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+"</span>
+    <span class="sa">r</span><span class="s2">"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+"</span>
+    <span class="sa">r</span><span class="s2">"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*\)\s*$"</span>
 <span class="p">)</span>
-<span class="n">_SCALAR_LITERAL</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\s*uniform\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*$&quot;</span><span class="p">)</span>
+<span class="n">_SCALAR_LITERAL</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\s*uniform\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*$"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="default_uniform">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.default_uniform">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">default_uniform</span><span class="p">(</span><span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serialise a Python ``value`` into an OpenFOAM uniform literal.</span>
+<span class="w">    </span><span class="sd">"""Serialise a Python ``value`` into an OpenFOAM uniform literal.</span>
 
 <span class="sd">    Accepts either the bare Python form (``0`` / ``[0, 0, 0]``) or an</span>
 <span class="sd">    already-formatted literal — the latter is returned untouched so</span>
@@ -676,36 +676,36 @@
 <span class="sd">    Args:</span>
 <span class="sd">        value_type: :class:`Scalar` or :class:`Vector`.</span>
 <span class="sd">        value: Either ``float`` / ``tuple`` / ``list``, or a string</span>
-<span class="sd">            already shaped as ``&quot;uniform …&quot;``.</span>
+<span class="sd">            already shaped as ``"uniform …"``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An OpenFOAM uniform-literal string.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        TypeError: For an unsupported value type / value shape.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">if</span> <span class="n">value_type</span> <span class="ow">is</span> <span class="n">Scalar</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;uniform </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"uniform </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">if</span> <span class="n">value_type</span> <span class="ow">is</span> <span class="n">Vector</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;default_uniform(Vector, ...) expects a 3-sequence; got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"default_uniform(Vector, ...) expects a 3-sequence; got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;uniform (</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;default_uniform: unsupported value_type </span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"uniform (</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"default_uniform: unsupported value_type </span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="parse_uniform">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.parse_uniform">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_uniform</span><span class="p">(</span><span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">literal</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse an OpenFOAM uniform literal into the Python ``value_type`` form.</span>
+<span class="w">    </span><span class="sd">"""Parse an OpenFOAM uniform literal into the Python ``value_type`` form.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        value_type: :class:`Scalar` or :class:`Vector`.</span>
-<span class="sd">        literal: The on-disk string (``&quot;uniform 0&quot;`` /</span>
-<span class="sd">            ``&quot;uniform (0 0 0)&quot;``).</span>
+<span class="sd">        literal: The on-disk string (``"uniform 0"`` /</span>
+<span class="sd">            ``"uniform (0 0 0)"``).</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ``float`` for :class:`Scalar`, ``tuple[float, float, float]``</span>
@@ -713,34 +713,34 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If ``literal`` does not parse for the given type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">value_type</span> <span class="ow">is</span> <span class="n">Scalar</span><span class="p">:</span>
         <span class="n">m</span> <span class="o">=</span> <span class="n">_SCALAR_LITERAL</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">literal</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parse_uniform(Scalar, …): cannot parse </span><span class="si">{</span><span class="n">literal</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"parse_uniform(Scalar, …): cannot parse </span><span class="si">{</span><span class="n">literal</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">value_type</span> <span class="ow">is</span> <span class="n">Vector</span><span class="p">:</span>
         <span class="n">m</span> <span class="o">=</span> <span class="n">_VECTOR_LITERAL</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">literal</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parse_uniform(Vector, …): cannot parse </span><span class="si">{</span><span class="n">literal</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"parse_uniform(Vector, …): cannot parse </span><span class="si">{</span><span class="n">literal</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)))</span>
-    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parse_uniform: unsupported value_type </span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"parse_uniform: unsupported value_type </span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="zero_uniform">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.zero_uniform">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">zero_uniform</span><span class="p">(</span><span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The all-zeros uniform literal for ``value_type``.</span>
+<span class="w">    </span><span class="sd">"""The all-zeros uniform literal for ``value_type``.</span>
 
 <span class="sd">    Convenience for the scaffolding path (default ``internalField`` when</span>
 <span class="sd">    a field declaration does not pin one).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">value_type</span> <span class="ow">is</span> <span class="n">Scalar</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;uniform 0&quot;</span>
+        <span class="k">return</span> <span class="s2">"uniform 0"</span>
     <span class="k">if</span> <span class="n">value_type</span> <span class="ow">is</span> <span class="n">Vector</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;uniform (0 0 0)&quot;</span>
-    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;zero_uniform: unsupported value_type </span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s2">"uniform (0 0 0)"</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"zero_uniform: unsupported value_type </span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
@@ -758,12 +758,12 @@
 <div class="viewcode-block" id="NonUniform">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.NonUniform">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NonUniform</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-element field data: a list of scalars or a list of 3-vectors.</span>
+<span class="w">    </span><span class="sd">"""Per-element field data: a list of scalars or a list of 3-vectors.</span>
 
 <span class="sd">    Tagged explicitly (rather than inferred from shape) so a bare ``[1, 0, 0]``</span>
 <span class="sd">    stays an unambiguous *uniform vector* while ``NonUniform(nonuniform=[...])``</span>
 <span class="sd">    is the *non-uniform* field.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">nonuniform</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span></div>
 
@@ -772,17 +772,17 @@
 <div class="viewcode-block" id="to_uniform_literal">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.to_uniform_literal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_uniform_literal</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a uniform field value as an OpenFOAM literal.</span>
+<span class="w">    </span><span class="sd">"""Render a uniform field value as an OpenFOAM literal.</span>
 
-<span class="sd">    ``float`` → ``&quot;uniform &lt;n&gt;&quot;``, 3-sequence → ``&quot;uniform (x y z)&quot;``; strings</span>
+<span class="sd">    ``float`` → ``"uniform &lt;n&gt;"``, 3-sequence → ``"uniform (x y z)"``; strings</span>
 <span class="sd">    (already on-disk literals) and other types pass through unchanged.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;uniform </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"uniform </span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="s2">&quot;uniform (&quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="s2">"uniform ("</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span>
     <span class="k">return</span> <span class="n">value</span></div>
 
 
@@ -790,49 +790,49 @@
 <div class="viewcode-block" id="to_nonuniform_literal">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.to_nonuniform_literal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_nonuniform_literal</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render per-element data as an OpenFOAM ``nonuniform List&lt;…&gt;`` literal.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Render per-element data as an OpenFOAM ``nonuniform List&lt;…&gt;`` literal."""</span>
     <span class="k">if</span> <span class="n">items</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-        <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;vector&quot;</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s2">"vector"</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"("</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;scalar&quot;</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;nonuniform List&lt;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s2">"scalar"</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"nonuniform List&lt;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">&gt; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2">)"</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_serialize_field_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">SerializationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-writer mapping for :data:`FieldValue`.</span>
+<span class="w">    </span><span class="sd">"""Per-writer mapping for :data:`FieldValue`.</span>
 
-<span class="sd">    Only ``format == &quot;openfoam&quot;`` in the serialization context produces OpenFOAM</span>
+<span class="sd">    Only ``format == "openfoam"`` in the serialization context produces OpenFOAM</span>
 <span class="sd">    text; every other writer (JSON, YAML, plain ``model_dump`` for forms / tests)</span>
 <span class="sd">    gets the raw structured value via ``handler``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;format&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"openfoam"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">NonUniform</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">to_nonuniform_literal</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">nonuniform</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">to_uniform_literal</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
 
-<span class="n">_ElementT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_ElementT&quot;</span><span class="p">)</span>
+<span class="n">_ElementT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_ElementT"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="FieldValue">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.FieldValue">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FieldValue</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_ElementT</span><span class="p">]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic field-value type — parameterise with the element marker.</span>
+<span class="w">    </span><span class="sd">"""Generic field-value type — parameterise with the element marker.</span>
 
-<span class="sd">    ``FieldValue[Scalar]`` accepts ``float`` (uniform) / ``&quot;uniform 0&quot;`` /</span>
+<span class="sd">    ``FieldValue[Scalar]`` accepts ``float`` (uniform) / ``"uniform 0"`` /</span>
 <span class="sd">    :class:`NonUniform`; ``FieldValue[Vector]`` accepts ``list[float]`` (uniform)</span>
 <span class="sd">    / literal / :class:`NonUniform`; ``FieldValue[Any]`` accepts either (used by</span>
 <span class="sd">    BC arms shared across scalar and vector fields). All variants share the</span>
 <span class="sd">    per-writer serializer: raw structured data for forms / JSON / YAML, OpenFOAM</span>
-<span class="sd">    ``uniform`` / ``nonuniform`` text under ``context={&quot;format&quot;: &quot;openfoam&quot;}``.</span>
+<span class="sd">    ``uniform`` / ``nonuniform`` text under ``context={"format": "openfoam"}``.</span>
 
 <span class="sd">    It is not instantiated; subscription returns the corresponding</span>
 <span class="sd">    ``Annotated[Union[...], WrapSerializer]`` for use as a Pydantic field type.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__class_getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">element</span> <span class="ow">is</span> <span class="n">Scalar</span><span class="p">:</span>
@@ -882,6 +882,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

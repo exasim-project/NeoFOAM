@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Solver-core configs for incompressibleFluid.</span>
+<span class="sd">"""Solver-core configs for incompressibleFluid.</span>
 
 <span class="sd">Pydantic ``BaseConfig`` for ``system/controlDict``, loaded via</span>
 <span class="sd">``@IOStrategy(OF(...))`` — it feeds validation of the time-stepping controls</span>
@@ -599,7 +599,7 @@
 <span class="sd">binds as a core model family. The opt-in ``telemetry`` sub-dict is also a</span>
 <span class="sd">solver-core config (not a model): activation is solver lifecycle, handled in</span>
 <span class="sd">``run()`` before initialization.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeControlConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
@@ -607,9 +607,9 @@
 
 <div class="viewcode-block" id="ControlDictConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluid.configs.html#neofoam.solver.incompressibleFluid.configs.ControlDictConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ControlDictConfig</span><span class="p">(</span><span class="n">TimeControlConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``system/controlDict`` — the file-bound time/write config for this solver.</span>
+<span class="w">    </span><span class="sd">"""``system/controlDict`` — the file-bound time/write config for this solver.</span>
 
 <span class="sd">    Inherits the time-stepping + write schema (``startTime``/``endTime``/</span>
 <span class="sd">    ``deltaT``/``writeControl``/``writeInterval``) from</span>
@@ -622,30 +622,30 @@
 <span class="sd">    :class:`~neofoam.solver.incompressibleFluid.models.courant.CourantConfig` and</span>
 <span class="sd">    :class:`~neofoam.solver.incompressibleFluid.models.max_delta_t.MaxDeltaTConfig`,</span>
 <span class="sd">    written only when those models are active.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">application</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pimpleFoam&quot;</span>
-    <span class="c1"># which FieldHook backend persists fields: &quot;runtime&quot; (registry write, the</span>
-    <span class="c1"># default — captures sub-model/turbulence fields) or &quot;perField&quot; (writes the</span>
+    <span class="n">application</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pimpleFoam"</span>
+    <span class="c1"># which FieldHook backend persists fields: "runtime" (registry write, the</span>
+    <span class="c1"># default — captures sub-model/turbulence fields) or "perField" (writes the</span>
     <span class="c1"># write=True-flagged context fields individually).</span>
-    <span class="n">writeBackend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;runtime&quot;</span></div>
+    <span class="n">writeBackend</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"runtime"</span></div>
 
 
 
 <div class="viewcode-block" id="TelemetryDictConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluid.configs.html#neofoam.solver.incompressibleFluid.configs.TelemetryDictConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;telemetry&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"telemetry"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TelemetryDictConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``telemetry`` sub-dict of ``system/controlDict`` (all keys optional).</span>
+<span class="w">    </span><span class="sd">"""The ``telemetry`` sub-dict of ``system/controlDict`` (all keys optional).</span>
 
 <span class="sd">    Solver-owned opt-in for OpenTelemetry tracing: the dict being present (and</span>
 <span class="sd">    ``enabled`` absent-or-true) activates tracing for the run. Activation</span>
-<span class="sd">    happens in the solver&#39;s ``run()`` via ``maybe_configure_telemetry``</span>
+<span class="sd">    happens in the solver's ``run()`` via ``maybe_configure_telemetry``</span>
 <span class="sd">    *before* initialization, so init spans are captured too.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;telemetry&quot;</span>
+    <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"telemetry"</span>
     <span class="n">summary</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 </pre></div>
@@ -687,6 +687,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

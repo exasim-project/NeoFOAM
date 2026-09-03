@@ -685,15 +685,15 @@ sequenceDiagram
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.lazy_init</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
 
 <span class="c1"># Create the initialization manager</span>
-<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">&quot;MySolverInit&quot;</span><span class="p">)</span>
+<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">"MySolverInit"</span><span class="p">)</span>
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">load</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stage 1: Load configuration and models.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Read OpenFOAM dictionaries or other config</span>
-    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">read_dictionary</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span>
+    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">read_dictionary</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
 
     <span class="c1"># Instantiate model classes (lightweight, no fields yet)</span>
     <span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="n">TurbulenceModel</span><span class="p">(),</span> <span class="n">TransportModel</span><span class="p">()]</span>
@@ -702,26 +702,26 @@ sequenceDiagram
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">resolve</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_dependencies</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stage 2: Connect models.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Example: Transport model might need to know about Turbulence</span>
     <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">optional_models</span><span class="p">:</span>
          <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_runtime</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stage 3: Create runtime objects (Lazy Execution).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">initializers</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># Define how to create fields</span>
     <span class="n">initializers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="n">InitStep</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span>
-            <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_vector_field</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">),</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"fields.U"</span><span class="p">,</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_vector_field</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">),</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -735,7 +735,7 @@ sequenceDiagram
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">Context</span><span class="p">,</span> <span class="n">Depends</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
 
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;MySolver&quot;</span><span class="p">)</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">"MySolver"</span><span class="p">)</span>
 
 <span class="nd">@solver</span><span class="o">.</span><span class="n">initializer</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="n">init_manager</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_init_manager</span><span class="p">)])</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
@@ -773,23 +773,23 @@ sequenceDiagram
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">lazy</span><span class="p">,</span> <span class="n">model</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MySolver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of lazy initializers instead of executing immediately.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return list of lazy initializers instead of executing immediately."""</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="c1"># Runtime and mesh (no dependencies)</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;runtime&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"runtime"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">"runtime"</span><span class="p">]),</span>
 
             <span class="c1"># Fields depend on mesh</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
 
             <span class="c1"># Operators depend on fields</span>
-            <span class="n">operator</span><span class="p">(</span><span class="s2">&quot;div_phi&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_divergence</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-            <span class="n">operator</span><span class="p">(</span><span class="s2">&quot;laplacian_p&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_laplacian</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]),</span>
+            <span class="n">operator</span><span class="p">(</span><span class="s2">"div_phi"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_divergence</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
+            <span class="n">operator</span><span class="p">(</span><span class="s2">"laplacian_p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_laplacian</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
@@ -797,13 +797,13 @@ sequenceDiagram
         <span class="k">return</span> <span class="n">runtime</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="n">runtime</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]</span>
+        <span class="n">runtime</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">]</span>
         <span class="n">mesh</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mesh</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_pressure_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When <code class="docutils literal notranslate"><span class="pre">SolverInitializer.initialize()</span></code> executes the BUILD stage, it:</p>
@@ -817,17 +817,17 @@ sequenceDiagram
 <p>The framework provides helper functions to create <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects with automatic naming:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">lazy</span><span class="p">,</span> <span class="n">model</span>
 
-<span class="c1"># field(name, initializer, dependencies) -&gt; InitStep with name=&quot;fields.{name}&quot;</span>
-<span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+<span class="c1"># field(name, initializer, dependencies) -&gt; InitStep with name="fields.{name}"</span>
+<span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">read_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
-<span class="c1"># operator(name, initializer, dependencies) -&gt; InitStep with name=&quot;operators.{name}&quot;</span>
-<span class="n">operator</span><span class="p">(</span><span class="s2">&quot;div_phi&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_div</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
+<span class="c1"># operator(name, initializer, dependencies) -&gt; InitStep with name="operators.{name}"</span>
+<span class="n">operator</span><span class="p">(</span><span class="s2">"div_phi"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_div</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">])</span>
 
-<span class="c1"># model(name, initializer, dependencies) -&gt; InitStep with name=&quot;models.{name}&quot;</span>
-<span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_turbulence</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">])</span>
+<span class="c1"># model(name, initializer, dependencies) -&gt; InitStep with name="models.{name}"</span>
+<span class="n">model</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_turbulence</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.p"</span><span class="p">])</span>
 
 <span class="c1"># lazy(name, initializer, dependencies) -&gt; InitStep with custom name</span>
-<span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_algorithm</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">])</span>
+<span class="n">lazy</span><span class="p">(</span><span class="s2">"algorithm"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_algorithm</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>All helpers default to an empty dependency list <code class="docutils literal notranslate"><span class="pre">[]</span></code> if not specified.</p>
@@ -840,22 +840,22 @@ sequenceDiagram
 <p>Example dependency chain:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">runtime</span> <span class="p">(</span><span class="n">no</span> <span class="n">deps</span><span class="p">)</span>
   <span class="err">↓</span>
-<span class="n">mesh</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">])</span>
+<span class="n">mesh</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"runtime"</span><span class="p">])</span>
   <span class="err">↓</span>
-<span class="n">fields</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">U</span> <span class="p">(</span><span class="n">both</span> <span class="n">depend</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+<span class="n">fields</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">U</span> <span class="p">(</span><span class="n">both</span> <span class="n">depend</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
   <span class="err">↓</span>
-<span class="n">models</span><span class="o">.</span><span class="n">turbulence</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">])</span>
+<span class="n">models</span><span class="o">.</span><span class="n">turbulence</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.p"</span><span class="p">])</span>
   <span class="err">↓</span>
-<span class="n">algorithm</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">])</span>
+<span class="n">algorithm</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Execution order: <code class="docutils literal notranslate"><span class="pre">runtime</span> <span class="pre">→</span> <span class="pre">mesh</span> <span class="pre">→</span> <span class="pre">fields.p</span> <span class="pre">→</span> <span class="pre">fields.U</span> <span class="pre">→</span> <span class="pre">models.turbulence</span> <span class="pre">→</span> <span class="pre">algorithm</span></code></p>
 <p>Each initializer receives a <code class="docutils literal notranslate"><span class="pre">context</span></code> dictionary containing all previously initialized objects:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_create_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
     <span class="c1"># Access dependencies via their names</span>
-    <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">]</span>
-    <span class="n">p_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]</span>
-    <span class="n">U_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]</span>
+    <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">]</span>
+    <span class="n">p_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]</span>
+    <span class="n">U_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]</span>
 
     <span class="c1"># Create algorithm using dependencies</span>
     <span class="n">algorithm</span> <span class="o">=</span> <span class="n">PIMPLEAlgorithm</span><span class="p">(</span>
@@ -873,72 +873,72 @@ sequenceDiagram
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">IncompressibleSolver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lazy initialization with explicit dependencies.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Lazy initialization with explicit dependencies."""</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="c1"># Core runtime objects</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;runtime&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"runtime"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">"runtime"</span><span class="p">]),</span>
 
             <span class="c1"># Read fields from disk</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_flux</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_flux</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
 
             <span class="c1"># Create physics models</span>
-            <span class="n">model</span><span class="p">(</span><span class="s2">&quot;laminarTransport&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_transport</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-            <span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span>
-                  <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.laminarTransport&quot;</span><span class="p">]),</span>
+            <span class="n">model</span><span class="p">(</span><span class="s2">"laminarTransport"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_transport</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
+            <span class="n">model</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span>
+                  <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">,</span> <span class="s2">"fields.laminarTransport"</span><span class="p">]),</span>
 
             <span class="c1"># Create algorithm (needs all fields and models)</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_algorithm</span><span class="p">,</span>
-                 <span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;models.turbulence&quot;</span><span class="p">]),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"algorithm"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_algorithm</span><span class="p">,</span>
+                 <span class="p">[</span><span class="s2">"fields.p"</span><span class="p">,</span> <span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"models.turbulence"</span><span class="p">]),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_pressure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_velocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_flux</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">surfaceScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">surfaceScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_transport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">singlePhaseTransportModel</span><span class="p">(</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">incompressibleTurbulenceModel</span><span class="o">.</span><span class="n">New</span><span class="p">(</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.laminarTransport&quot;</span><span class="p">]</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.laminarTransport"</span><span class="p">]</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="c1"># Access all dependencies</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]</span>
-        <span class="n">U</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]</span>
-        <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">]</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]</span>
+        <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">PIMPLEAlgorithm</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">turbulence</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Explicit Dependencies</strong>: Dependencies are visible in code, not implicit in execution order</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clear that turbulence needs U and phi</span>
-<span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">])</span>
+<span class="n">model</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p><strong>Testability</strong>: Test individual initialization steps in isolation</p>
@@ -947,9 +947,9 @@ sequenceDiagram
 
     <span class="c1"># Mock context with only required dependencies</span>
     <span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;fields.U&quot;</span><span class="p">:</span> <span class="n">mock_velocity_field</span><span class="p">,</span>
-        <span class="s2">&quot;fields.phi&quot;</span><span class="p">:</span> <span class="n">mock_flux_field</span><span class="p">,</span>
-        <span class="s2">&quot;fields.laminarTransport&quot;</span><span class="p">:</span> <span class="n">mock_transport</span><span class="p">,</span>
+        <span class="s2">"fields.U"</span><span class="p">:</span> <span class="n">mock_velocity_field</span><span class="p">,</span>
+        <span class="s2">"fields.phi"</span><span class="p">:</span> <span class="n">mock_flux_field</span><span class="p">,</span>
+        <span class="s2">"fields.laminarTransport"</span><span class="p">:</span> <span class="n">mock_transport</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="c1"># Test individual initializer</span>
@@ -968,10 +968,10 @@ sequenceDiagram
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">TransportModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transport properties - no dependencies on other models.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Transport properties - no dependencies on other models."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;transport&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"transport"</span>
     <span class="n">viscosity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
 
@@ -984,7 +984,7 @@ sequenceDiagram
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">viscosity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid viscosity&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid viscosity"</span><span class="p">)</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
@@ -993,23 +993,23 @@ sequenceDiagram
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulenceModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Turbulence model - depends on transport for viscosity.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Turbulence model - depends on transport for viscosity."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;turbulence&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"turbulence"</span>
     <span class="n">coefficients</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">transport_ref</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Set during RESOLVE_DEPENDENCIES</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C_mu&quot;</span><span class="p">:</span> <span class="mf">0.09</span><span class="p">,</span> <span class="s2">&quot;sigma_k&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"C_mu"</span><span class="p">:</span> <span class="mf">0.09</span><span class="p">,</span> <span class="s2">"sigma_k"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">connect_transport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="c1"># Get transport model for viscosity access</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transport_ref</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;transport&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transport_ref</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transport"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport_ref</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Transport model required&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Transport model required"</span><span class="p">)</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
@@ -1020,9 +1020,9 @@ sequenceDiagram
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PimpleSolver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;PIMPLE solver with multiple models.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""PIMPLE solver with multiple models."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TransportModel</span><span class="p">)</span>
     <span class="n">turbulence</span><span class="p">:</span> <span class="n">TurbulenceModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TurbulenceModel</span><span class="p">)</span>
@@ -1031,7 +1031,7 @@ sequenceDiagram
     <span class="n">all_models_ready</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Required: Tell initializer which models we have.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Required: Tell initializer which models we have."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">turbulence</span><span class="p">]</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">load</span>
@@ -1042,10 +1042,10 @@ sequenceDiagram
     <span class="k">def</span><span class="w"> </span><span class="nf">verify_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="c1"># Verify all models configured correctly</span>
         <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_models</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;transport_ref&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;transport&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">'transport_ref'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"transport"</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">transport_ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> missing transport reference&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> missing transport reference"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_models_ready</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">build</span>
@@ -1080,9 +1080,9 @@ sequenceDiagram
 <p>Raise exceptions in any stage to halt initialization:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">connect_required_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-    <span class="n">required</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required_model&quot;</span><span class="p">)</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"required_model"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">required</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Required model not found in registry&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Required model not found in registry"</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">required_ref</span> <span class="o">=</span> <span class="n">required</span>
 </pre></div>
 </div>
@@ -1097,15 +1097,15 @@ sequenceDiagram
 <span class="c1"># Implementations for different behaviors</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StandardPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;solve_pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;correct_velocity&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"solve_pressure"</span><span class="p">,</span> <span class="s2">"correct_velocity"</span><span class="p">]</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BuoyantPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;add_buoyancy&quot;</span><span class="p">,</span> <span class="s2">&quot;solve_pressure_buoyant&quot;</span><span class="p">,</span> <span class="s2">&quot;correct_velocity&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"add_buoyancy"</span><span class="p">,</span> <span class="s2">"solve_pressure_buoyant"</span><span class="p">,</span> <span class="s2">"correct_velocity"</span><span class="p">]</span>
 
 <span class="c1"># Model with adaptable behavior</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureAlgorithm</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pressure&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pressure"</span>
 
     <span class="c1"># Configurable - other models can change this</span>
     <span class="n">use_buoyancy</span><span class="p">:</span> <span class="n">Configurable</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
@@ -1126,12 +1126,12 @@ sequenceDiagram
 </div>
 <p>Other models modify adaptable fields during RESOLVE_DEPENDENCIES:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BuoyancyModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;buoyancy&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"buoyancy"</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="c1"># Get pressure algorithm</span>
-        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
 
         <span class="c1"># Switch it to buoyancy variant</span>
         <span class="n">pressure</span><span class="o">.</span><span class="n">use_buoyancy</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># ← Switches implementation!</span>
@@ -1140,20 +1140,20 @@ sequenceDiagram
 <p>Result: <code class="docutils literal notranslate"><span class="pre">pressure.get_operations()</span></code> now returns buoyancy operations automatically.</p>
 <p>Models can have multiple adaptable fields for complex dispatch:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PressureVelocityCoupling</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pressure_velocity&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pressure_velocity"</span>
 
     <span class="c1"># Multiple adaptable fields</span>
-    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"SIMPLE"</span><span class="p">)</span>
     <span class="n">use_buoyancy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># Tuple-based dispatch</span>
     <span class="n">_implementations</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">SIMPLEStandard</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">SIMPLEBuoyant</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PISOStandard</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PISOBuoyant</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PIMPLEStandard</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PIMPLEBuoyant</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">SIMPLEStandard</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">SIMPLEBuoyant</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PISO"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PISOStandard</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PISO"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PISOBuoyant</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PIMPLEStandard</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PIMPLEBuoyant</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1165,26 +1165,26 @@ sequenceDiagram
 <p>Use <code class="docutils literal notranslate"><span class="pre">ConfigContext.get_adaptable_fields()</span></code> to discover what’s adaptable:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-    <span class="c1"># See what&#39;s adaptable</span>
-    <span class="n">adaptable</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_adaptable_fields</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
-    <span class="c1"># Returns: {&quot;use_buoyancy&quot;: False}</span>
+    <span class="c1"># See what's adaptable</span>
+    <span class="n">adaptable</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_adaptable_fields</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
+    <span class="c1"># Returns: {"use_buoyancy": False}</span>
 
     <span class="c1"># Check before modifying</span>
-    <span class="k">if</span> <span class="s2">&quot;use_buoyancy&quot;</span> <span class="ow">in</span> <span class="n">adaptable</span><span class="p">:</span>
-        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"use_buoyancy"</span> <span class="ow">in</span> <span class="n">adaptable</span><span class="p">:</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
         <span class="n">pressure</span><span class="o">.</span><span class="n">use_buoyancy</span> <span class="o">=</span> <span class="kc">True</span>
 </pre></div>
 </div>
 <p>Models can have multiple instances (e.g., multiple heat sources):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">HeatSource</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;heat_source_1&quot;, &quot;heat_source_2&quot;, etc.</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "heat_source_1", "heat_source_2", etc.</span>
 
     <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;add_heat_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"add_heat_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">[]</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Solver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -1193,9 +1193,9 @@ sequenceDiagram
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">heat_sources</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;heat_source_1&quot;</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">),</span>
-            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;heat_source_2&quot;</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">500.0</span><span class="p">),</span>
-            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;heat_source_3&quot;</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">2000.0</span><span class="p">),</span>
+            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"heat_source_1"</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">),</span>
+            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"heat_source_2"</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">500.0</span><span class="p">),</span>
+            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"heat_source_3"</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">2000.0</span><span class="p">),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1212,8 +1212,8 @@ sequenceDiagram
             <span class="n">source</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># Or by name prefix</span>
-    <span class="n">sources</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_by_prefix</span><span class="p">(</span><span class="s2">&quot;heat_source_&quot;</span><span class="p">)</span>
-    <span class="c1"># Returns: {&quot;heat_source_1&quot;: ..., &quot;heat_source_2&quot;: ..., ...}</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_by_prefix</span><span class="p">(</span><span class="s2">"heat_source_"</span><span class="p">)</span>
+    <span class="c1"># Returns: {"heat_source_1": ..., "heat_source_2": ..., ...}</span>
 </pre></div>
 </div>
 <ol class="arabic simple">
@@ -1227,16 +1227,16 @@ sequenceDiagram
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Implementations</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StandardPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"pressure"</span><span class="p">,</span> <span class="s2">"correct"</span><span class="p">]</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BuoyantPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;buoyancy_source&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure_buoyant&quot;</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"buoyancy_source"</span><span class="p">,</span> <span class="s2">"pressure_buoyant"</span><span class="p">,</span> <span class="s2">"correct"</span><span class="p">]</span>
 
 <span class="c1"># Pressure model with adaptable behavior</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pressure&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pressure"</span>
 
     <span class="n">use_buoyancy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -1250,18 +1250,18 @@ sequenceDiagram
 
 <span class="c1"># Buoyancy model that adapts pressure</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BuoyancyModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;buoyancy&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"buoyancy"</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pressure</span><span class="p">:</span>
             <span class="n">pressure</span><span class="o">.</span><span class="n">use_buoyancy</span> <span class="o">=</span> <span class="kc">True</span>
 
 <span class="c1"># Solver</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Solver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
     <span class="n">pressure</span><span class="p">:</span> <span class="n">PressureModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">PressureModel</span><span class="p">)</span>
     <span class="n">buoyancy</span><span class="p">:</span> <span class="n">BuoyancyModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BuoyancyModel</span><span class="p">)</span>
 
@@ -1275,7 +1275,7 @@ sequenceDiagram
 
 <span class="c1"># Pressure automatically uses buoyancy variant</span>
 <span class="n">ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">get_operations</span><span class="p">()</span>
-<span class="c1"># Returns: [&quot;momentum&quot;, &quot;buoyancy_source&quot;, &quot;pressure_buoyant&quot;, &quot;correct&quot;]</span>
+<span class="c1"># Returns: ["momentum", "buoyancy_source", "pressure_buoyant", "correct"]</span>
 </pre></div>
 </div>
 </section>
@@ -1312,14 +1312,14 @@ sequenceDiagram
 
     <span class="c1"># Verify expected initializers</span>
     <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="s2">&quot;runtime&quot;</span> <span class="ow">in</span> <span class="n">names</span>
-    <span class="k">assert</span> <span class="s2">&quot;mesh&quot;</span> <span class="ow">in</span> <span class="n">names</span>
-    <span class="k">assert</span> <span class="s2">&quot;fields.p&quot;</span> <span class="ow">in</span> <span class="n">names</span>
+    <span class="k">assert</span> <span class="s2">"runtime"</span> <span class="ow">in</span> <span class="n">names</span>
+    <span class="k">assert</span> <span class="s2">"mesh"</span> <span class="ow">in</span> <span class="n">names</span>
+    <span class="k">assert</span> <span class="s2">"fields.p"</span> <span class="ow">in</span> <span class="n">names</span>
 
     <span class="c1"># Verify dependencies</span>
     <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="s2">&quot;mesh&quot;</span> <span class="ow">in</span> <span class="n">li</span><span class="o">.</span><span class="n">depends_on</span>
+        <span class="k">if</span> <span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"fields.p"</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s2">"mesh"</span> <span class="ow">in</span> <span class="n">li</span><span class="o">.</span><span class="n">depends_on</span>
 </pre></div>
 </div>
 <p>For integration testing, use <code class="docutils literal notranslate"><span class="pre">SolverInitializer</span></code> to execute the full initialization:</p>
@@ -1331,9 +1331,9 @@ sequenceDiagram
     <span class="n">context</span> <span class="o">=</span> <span class="n">initializer</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># Verify context contains all initialized objects</span>
-    <span class="k">assert</span> <span class="s2">&quot;runtime&quot;</span> <span class="ow">in</span> <span class="n">context</span>
-    <span class="k">assert</span> <span class="s2">&quot;mesh&quot;</span> <span class="ow">in</span> <span class="n">context</span>
-    <span class="k">assert</span> <span class="s2">&quot;fields.p&quot;</span> <span class="ow">in</span> <span class="n">context</span>
+    <span class="k">assert</span> <span class="s2">"runtime"</span> <span class="ow">in</span> <span class="n">context</span>
+    <span class="k">assert</span> <span class="s2">"mesh"</span> <span class="ow">in</span> <span class="n">context</span>
+    <span class="k">assert</span> <span class="s2">"fields.p"</span> <span class="ow">in</span> <span class="n">context</span>
 
     <span class="c1"># Verify solver state updated</span>
     <span class="k">assert</span> <span class="n">solver</span><span class="o">.</span><span class="n">setup_complete</span>
@@ -1412,6 +1412,8 @@ sequenceDiagram
     <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

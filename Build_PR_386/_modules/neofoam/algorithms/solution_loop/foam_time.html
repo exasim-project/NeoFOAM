@@ -589,20 +589,20 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;FoamTime — a LoopBackend mirroring a LoopState onto an OpenFOAM ``Foam::Time``.</span>
+<span class="sd">"""FoamTime — a LoopBackend mirroring a LoopState onto an OpenFOAM ``Foam::Time``.</span>
 
 <span class="sd">The :class:`~neofoam.algorithms.solution_loop.solution_loop.SolutionLoop` owns the</span>
 <span class="sd">advancement; this backend keeps a backend ``Time`` in lockstep so field IO lands</span>
 <span class="sd">in the right time directory. It is **duck-typed** on the wrapped time object — it</span>
 <span class="sd">only calls ``setDeltaT`` / ``increment`` — so it carries no pybFoam import and is</span>
 <span class="sd">unit-testable with a fake. The solver constructs it with the real</span>
-<span class="sd">``pybFoam.Time`` and injects it (see the solver&#39;s ``loop_backend_steps``).</span>
+<span class="sd">``pybFoam.Time`` and injects it (see the solver's ``loop_backend_steps``).</span>
 
-<span class="sd">``setTime`` can&#39;t be called from Python (``Foam::instant`` has no binding</span>
+<span class="sd">``setTime`` can't be called from Python (``Foam::instant`` has no binding</span>
 <span class="sd">constructor), so we push the (already-computed) ``deltaT`` and reconcile the</span>
-<span class="sd">backend clock by ``increment``-ing it until its step index matches the state&#39;s.</span>
-<span class="sd">It does **not** write — that is the ``fieldWriter`` Model&#39;s job.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">backend clock by ``increment``-ing it until its step index matches the state's.</span>
+<span class="sd">It does **not** write — that is the ``fieldWriter`` Model's job.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -614,7 +614,7 @@
 <div class="viewcode-block" id="FoamTime">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html#neofoam.algorithms.solution_loop.foam_time.FoamTime">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FoamTime</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mirror the Python :class:`LoopState` onto a backend ``Foam::Time`` clock.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Mirror the Python :class:`LoopState` onto a backend ``Foam::Time`` clock."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">foam_time</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_t</span> <span class="o">=</span> <span class="n">foam_time</span>
@@ -672,6 +672,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -591,7 +591,7 @@
 
 <span class="c1"># NB: no ``from __future__ import annotations`` — see solution_loop.py.</span>
 
-<span class="sd">&quot;&quot;&quot;fieldWriter — persisting fields as a framework *core* Model.</span>
+<span class="sd">"""fieldWriter — persisting fields as a framework *core* Model.</span>
 
 <span class="sd">Writing is a separate concern from advancing the stepper, so it is a separate</span>
 <span class="sd">core Model from ``solutionLoop`` (SRP). It is backend-agnostic and wraps a</span>
@@ -609,9 +609,9 @@
 <span class="sd">  :class:`~neofoam.algorithms.field_writer.writer.NullFieldHook` (persists nothing); a solver</span>
 <span class="sd">  injects its backend hook post-build (registry write, per-field write, …).</span>
 
-<span class="sd">The optional ``ctx.models[&quot;step_reporter&quot;]`` callable (``() -&gt; None``) lets a</span>
+<span class="sd">The optional ``ctx.models["step_reporter"]`` callable (``() -&gt; None``) lets a</span>
 <span class="sd">backend report per-step timing after a write; absent ⇒ no-op.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
@@ -625,7 +625,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span><span class="p">,</span> <span class="n">model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 
-<span class="n">fieldWriter</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;fieldWriter&quot;</span><span class="p">)</span>
+<span class="n">fieldWriter</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"fieldWriter"</span><span class="p">)</span>
 
 
 <span class="c1"># -- load: the controlDict write keys parameterise the policy -------------</span>
@@ -634,12 +634,12 @@
     <span class="k">return</span> <span class="n">WriteControlConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
 
 
-<span class="c1"># -- build: the FieldWriter is this model&#39;s runtime state -----------------</span>
+<span class="c1"># -- build: the FieldWriter is this model's runtime state -----------------</span>
 <span class="nd">@fieldWriter</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">WriteControlConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_writer</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FieldWriter</span><span class="p">:</span>
         <span class="c1"># The write policy is selected through the WriteControl discriminated</span>
-        <span class="c1"># union; stepper_decides=True uses the stepper&#39;s Python-computed</span>
+        <span class="c1"># union; stepper_decides=True uses the stepper's Python-computed</span>
         <span class="c1"># outputTime flag. NullFieldHook by default (persists nothing) — a solver</span>
         <span class="c1"># injects its backend hook afterwards by assigning ``writer.hook``.</span>
         <span class="k">return</span> <span class="n">FieldWriter</span><span class="p">(</span>
@@ -647,29 +647,29 @@
             <span class="n">hook</span><span class="o">=</span><span class="n">NullFieldHook</span><span class="p">(),</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">&quot;writer&quot;</span><span class="p">,</span> <span class="n">create_writer</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">"writer"</span><span class="p">,</span> <span class="n">create_writer</span><span class="p">)]</span>
 
 
 <span class="c1"># -- operation: write on write steps --------------------------------------</span>
-<span class="c1"># Stepped last in the solver&#39;s time loop, so builder-insertion order already</span>
+<span class="c1"># Stepped last in the solver's time loop, so builder-insertion order already</span>
 <span class="c1"># places it after every field-mutating op (pressure-velocity, viscosity and</span>
 <span class="c1"># turbulence correction); no explicit ``depends_on`` is needed and a generic</span>
-<span class="c1"># writer must not name a specific solver&#39;s correction op.</span>
+<span class="c1"># writer must not name a specific solver's correction op.</span>
 <div class="viewcode-block" id="write_output">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.field_writer.html#neofoam.algorithms.field_writer.field_writer.write_output">[docs]</a>
 <span class="nd">@fieldWriter</span><span class="o">.</span><span class="n">operation</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_output</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the flagged fields on write steps; optionally report step timing.</span>
+<span class="w">    </span><span class="sd">"""Write the flagged fields on write steps; optionally report step timing.</span>
 
 <span class="sd">    The decision reads the loop state (``ctx.time``, with the Python-computed</span>
 <span class="sd">    ``write_time`` flag); the action writes through the injected backend hook.</span>
 <span class="sd">    Only the ``write=True``-flagged fields are handed over (a registry backend</span>
 <span class="sd">    ignores them and writes everything anyway).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">writer</span><span class="p">:</span> <span class="n">FieldWriter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;writer&quot;</span><span class="p">]</span>
+<span class="sd">    """</span>
+    <span class="n">writer</span><span class="p">:</span> <span class="n">FieldWriter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"writer"</span><span class="p">]</span>
     <span class="n">to_write</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">write_fields</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
     <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">to_write</span><span class="p">)</span>
-    <span class="n">reporter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_reporter&quot;</span><span class="p">)</span>
+    <span class="n">reporter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"step_reporter"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">reporter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">reporter</span><span class="p">()</span></div>
 
@@ -712,6 +712,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

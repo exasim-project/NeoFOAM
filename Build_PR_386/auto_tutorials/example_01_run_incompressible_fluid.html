@@ -618,12 +618,12 @@ to download the full example code.</p>
 <p><code class="docutils literal notranslate"><span class="pre">clone_case</span></code> copies the case to a fresh tempdir and restores
 <code class="docutils literal notranslate"><span class="pre">0.orig/</span></code> to <code class="docutils literal notranslate"><span class="pre">0/</span></code> (what <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> normally does). The
 <code class="docutils literal notranslate"><span class="pre">.foam</span></code> marker satisfies pyvista’s OpenFOAMReader at the end.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">&quot;pitzDaily&quot;</span><span class="p">)</span>
-<span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;pitzDaily.foam&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;working copy: </span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">"pitzDaily"</span><span class="p">)</span>
+<span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"pitzDaily.foam"</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"working copy: </span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>working copy: /tmp/neofoam_ll7_m16h/pitzDaily
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>working copy: /tmp/neofoam_qtyp08zg/pitzDaily
 </pre></div>
 </div>
 </section>
@@ -631,8 +631,8 @@ to download the full example code.</p>
 <h2>Generate the mesh<a class="headerlink" href="#generate-the-mesh" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">blockMesh</span></code> reads <code class="docutils literal notranslate"><span class="pre">system/blockMeshDict</span></code> and writes
 <code class="docutils literal notranslate"><span class="pre">constant/polyMesh/</span></code>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;-case&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">assert</span> <span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;constant&quot;</span> <span class="o">/</span> <span class="s2">&quot;polyMesh&quot;</span> <span class="o">/</span> <span class="s2">&quot;points&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"blockMesh"</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"polyMesh"</span> <span class="o">/</span> <span class="s2">"points"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
@@ -642,7 +642,7 @@ to download the full example code.</p>
 the shell — that CLI command calls the same <code class="docutils literal notranslate"><span class="pre">run</span></code> underneath.
 We <code class="docutils literal notranslate"><span class="pre">chdir</span></code> into the case the way an <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> script does.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
-    <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;.&quot;</span><span class="p">])</span>
+    <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"."</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
@@ -651,16 +651,16 @@ We <code class="docutils literal notranslate"><span class="pre">chdir</span></co
 <p>pyvista colours by the magnitude of <code class="docutils literal notranslate"><span class="pre">U</span></code> automatically. A
 flat-blue plot or zero-range colour bar would mean the solve
 didn’t produce data — re-check the log in that case.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;pitzDaily.foam&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"pitzDaily.foam"</span><span class="p">))</span>
 <span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">&quot;internalMesh&quot;</span><span class="p">]</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">"internalMesh"</span><span class="p">]</span>
 
 <span class="n">pl</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">Plotter</span><span class="p">(</span><span class="n">off_screen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">360</span><span class="p">))</span>
 <span class="n">pl</span><span class="o">.</span><span class="n">add_mesh</span><span class="p">(</span>
     <span class="n">mesh</span><span class="p">,</span>
-    <span class="n">scalars</span><span class="o">=</span><span class="s2">&quot;U&quot;</span><span class="p">,</span>
-    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">,</span>
-    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;|U| [m/s]&quot;</span><span class="p">},</span>
+    <span class="n">scalars</span><span class="o">=</span><span class="s2">"U"</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">"viridis"</span><span class="p">,</span>
+    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"|U| [m/s]"</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="n">pl</span><span class="o">.</span><span class="n">view_xy</span><span class="p">()</span>
 <span class="n">pl</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span>
@@ -677,7 +677,7 @@ Static Scene</label><div class="sd-tab-content docutils">
 Interactive Scene</label><div class="sd-tab-content docutils">
 <iframe src='../_static/static_viewer.html?fileURL=../_images/doc/auto_tutorials/images/sphx_glr_example_01_run_incompressible_fluid_001.vtksz' width='100%%' height='400px' frameborder='0'></iframe></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (1 minutes 1.471 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (1 minutes 9.689 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-01-run-incompressible-fluid-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/567a31588cbccfdd72c8d71a21dfbe44/example_01_run_incompressible_fluid.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_01_run_incompressible_fluid.ipynb</span></code></a></p>

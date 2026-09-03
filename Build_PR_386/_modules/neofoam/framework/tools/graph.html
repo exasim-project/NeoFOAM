@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Enable-file schema + generic graph resolver/DAG-chainer for preprocessing tools.</span>
+<span class="sd">"""Enable-file schema + generic graph resolver/DAG-chainer for preprocessing tools.</span>
 
 <span class="sd">``system/preprocess.yaml`` holds an open ``tools`` list of entries, each naming a</span>
 <span class="sd">registered tool via its ``tool`` key plus an optional ``depends_on: list[str]`` (names</span>
@@ -599,7 +599,7 @@
 <span class="sd">carries its ``depends_on``); :func:`tool_graph_steps` wires each runtime into the</span>
 <span class="sd">existing init-DAG via its ``depends_on``, threading the mesh and publishing the sink</span>
 <span class="sd">through a terminal ``mesh`` alias.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -611,16 +611,16 @@
 
 <div class="viewcode-block" id="PreprocessConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.graph.html#neofoam.framework.tools.graph.PreprocessConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;system/preprocess.yaml&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"system/preprocess.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreprocessConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The enable list for the preprocessing pipeline.</span>
+<span class="w">    </span><span class="sd">"""The enable list for the preprocessing pipeline.</span>
 
 <span class="sd">    ``tools`` is an open list of raw mappings; each names a registered tool via its</span>
 <span class="sd">    ``tool`` key, may carry ``depends_on: list[str]`` (names of OTHER listed tools it</span>
 <span class="sd">    runs after — order comes from the DAG, not list position), plus tool options.</span>
-<span class="sd">    Resolution turns each entry into that tool&#39;s typed step config, so adding a new</span>
+<span class="sd">    Resolution turns each entry into that tool's typed step config, so adding a new</span>
 <span class="sd">    tool needs no change to this schema. Absent/empty file → no preprocessing.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">tools</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span></div>
 
@@ -629,25 +629,25 @@
 <div class="viewcode-block" id="resolve_tools">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.graph.html#neofoam.framework.tools.graph.resolve_tools">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_tools</span><span class="p">(</span><span class="n">tools</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ToolSpec</span><span class="p">],</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">PreprocessConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ToolRuntime</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve each ``tools`` entry&#39;s ``tool:`` against ``tools`` (the registered set).</span>
+<span class="w">    </span><span class="sd">"""Resolve each ``tools`` entry's ``tool:`` against ``tools`` (the registered set).</span>
 
 <span class="sd">    An entry naming a tool not in ``tools`` raises ``ValueError``. ``depends_on`` is</span>
 <span class="sd">    carried onto each runtime; list position is NOT used for ordering. Empty → ``[]``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">tool</span> <span class="k">for</span> <span class="n">tool</span> <span class="ow">in</span> <span class="n">tools</span><span class="p">}</span>
     <span class="n">runtimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ToolRuntime</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tools</span><span class="p">:</span>
-        <span class="n">tool_name</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tool&quot;</span><span class="p">)</span>
+        <span class="n">tool_name</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tool"</span><span class="p">)</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tool_name</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tool_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown preprocess tool: &#39;</span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown preprocess tool: '</span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
         <span class="n">runtimes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">runtimes</span></div>
 
 
 
 <span class="c1">#: Step name of the injected disk-read mesh source (standalone pipelines only).</span>
-<span class="n">DISK_MESH_STEP</span> <span class="o">=</span> <span class="s2">&quot;_disk_mesh&quot;</span>
+<span class="n">DISK_MESH_STEP</span> <span class="o">=</span> <span class="s2">"_disk_mesh"</span>
 
 
 <div class="viewcode-block" id="tool_graph_steps">
@@ -656,13 +656,13 @@
     <span class="n">runtimes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ToolRuntime</span><span class="p">],</span>
     <span class="n">mesh_source</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wire each tool&#39;s build step into the init DAG from its ``depends_on``.</span>
+<span class="w">    </span><span class="sd">"""Wire each tool's build step into the init DAG from its ``depends_on``.</span>
 
 <span class="sd">    Each runtime becomes an ``InitStep`` whose ``depends_on`` is ``_foam_time`` plus</span>
 <span class="sd">    ``preprocess.&lt;dep&gt;`` for every declared dependency — the EXISTING topological sort</span>
 <span class="sd">    orders them (file position is irrelevant). A tool with exactly one declared</span>
-<span class="sd">    dependency receives ``ctx[&quot;_prev_mesh&quot;]`` = that dependency&#39;s output mesh. The</span>
-<span class="sd">    terminal ``lazy(&quot;mesh&quot;, …, replaces=[&quot;mesh&quot;])`` alias publishes the pipeline SINK</span>
+<span class="sd">    dependency receives ``ctx["_prev_mesh"]`` = that dependency's output mesh. The</span>
+<span class="sd">    terminal ``lazy("mesh", …, replaces=["mesh"])`` alias publishes the pipeline SINK</span>
 <span class="sd">    (the tool no other tool depends on) and supersedes the default disk-read step.</span>
 <span class="sd">    A declared dependency naming a tool not in the file (or a cycle) is left for the</span>
 <span class="sd">    existing DAG validation to reject with ``InitializationGraphError``. Returns ``[]``</span>
@@ -674,7 +674,7 @@
 <span class="sd">    (emitted once as the ``_disk_mesh`` step). Without a ``mesh_source`` such a</span>
 <span class="sd">    pipeline is rejected with a clear error. The solver path passes nothing:</span>
 <span class="sd">    a full pipeline starts at a mesh-creating tool.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">runtimes</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
@@ -684,39 +684,39 @@
 
     <span class="n">needs_disk_mesh</span> <span class="o">=</span> <span class="p">[</span><span class="n">rt</span> <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">runtimes</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">and</span> <span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">consumes_mesh</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">needs_disk_mesh</span> <span class="ow">and</span> <span class="n">mesh_source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">needs_disk_mesh</span><span class="p">)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">needs_disk_mesh</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;preprocess tool(s) [</span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">] consume a mesh but declare no &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;depends_on and no mesh source is available — either add a &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;depends_on on a mesh-creating tool or run through a caller that &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;provides a disk-read mesh (neofoam preprocess)&quot;</span>
+            <span class="sa">f</span><span class="s2">"preprocess tool(s) [</span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">] consume a mesh but declare no "</span>
+            <span class="sa">f</span><span class="s2">"depends_on and no mesh source is available — either add a "</span>
+            <span class="sa">f</span><span class="s2">"depends_on on a mesh-creating tool or run through a caller that "</span>
+            <span class="sa">f</span><span class="s2">"provides a disk-read mesh (neofoam preprocess)"</span>
         <span class="p">)</span>
 
     <span class="n">steps</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">needs_disk_mesh</span> <span class="ow">and</span> <span class="n">mesh_source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="n">DISK_MESH_STEP</span><span class="p">,</span> <span class="n">mesh_source</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">]))</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="n">DISK_MESH_STEP</span><span class="p">,</span> <span class="n">mesh_source</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]))</span>
 
     <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">runtimes</span><span class="p">:</span>
         <span class="n">built</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">run_build</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">built</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tool &#39;</span><span class="si">{</span><span class="n">rt</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; produced no init steps from its @build&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Tool '</span><span class="si">{</span><span class="n">rt</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' produced no init steps from its @build"</span><span class="p">)</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">built</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;preprocess.</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)]</span>
+        <span class="n">deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="sa">f</span><span class="s2">"preprocess.</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)]</span>
         <span class="n">orig</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">initializer</span>
         <span class="c1"># Mesh threading is single-predecessor by design: a tool with &gt;1 declared</span>
         <span class="c1"># dependency has no unambiguous _prev_mesh to thread, so reject it here with</span>
         <span class="c1"># a clear message rather than letting its @build hit a bare KeyError later.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">dep_names</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span>
+            <span class="n">dep_names</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;preprocess tool &#39;</span><span class="si">{</span><span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; declares &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span><span class="si">}</span><span class="s2"> dependencies [</span><span class="si">{</span><span class="n">dep_names</span><span class="si">}</span><span class="s2">]; mesh threading &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;is single-predecessor by design — declare at most one depends_on&quot;</span>
+                <span class="sa">f</span><span class="s2">"preprocess tool '</span><span class="si">{</span><span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' declares "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span><span class="si">}</span><span class="s2"> dependencies [</span><span class="si">{</span><span class="n">dep_names</span><span class="si">}</span><span class="s2">]; mesh threading "</span>
+                <span class="sa">f</span><span class="s2">"is single-predecessor by design — declare at most one depends_on"</span>
             <span class="p">)</span>
         <span class="c1"># Exactly one declared dependency → thread its output mesh as _prev_mesh;</span>
         <span class="c1"># a dependency-less mesh consumer threads the injected disk-read mesh.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">mk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;preprocess.</span><span class="si">{</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">mk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"preprocess.</span><span class="si">{</span><span class="n">rt</span><span class="o">.</span><span class="n">depends_on</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">elif</span> <span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">consumes_mesh</span><span class="p">:</span>
             <span class="n">mk</span> <span class="o">=</span> <span class="n">DISK_MESH_STEP</span>
             <span class="n">deps</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">deps</span><span class="p">,</span> <span class="n">DISK_MESH_STEP</span><span class="p">]</span>
@@ -729,7 +729,7 @@
             <span class="n">_mk</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">mk</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">_mk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">ctx</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">ctx</span><span class="p">,</span> <span class="s2">&quot;_prev_mesh&quot;</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="n">_mk</span><span class="p">]}</span>
+                <span class="n">ctx</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">ctx</span><span class="p">,</span> <span class="s2">"_prev_mesh"</span><span class="p">:</span> <span class="n">ctx</span><span class="p">[</span><span class="n">_mk</span><span class="p">]}</span>
             <span class="k">return</span> <span class="n">_orig</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
         <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -749,11 +749,11 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">publish_mesh</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">_k</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">published</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ctx</span><span class="p">[</span><span class="n">_k</span><span class="p">]</span>
 
-        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="n">publish_mesh</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="n">published</span><span class="p">],</span> <span class="n">replaces</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
+        <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="n">publish_mesh</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="n">published</span><span class="p">],</span> <span class="n">replaces</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]))</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">sinks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">sinks</span><span class="p">)</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="n">sinks</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;preprocess pipeline must have exactly one sink tool; found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sinks</span><span class="p">)</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">]&quot;</span>
+            <span class="sa">f</span><span class="s2">"preprocess pipeline must have exactly one sink tool; found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sinks</span><span class="p">)</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">]"</span>
         <span class="p">)</span>
     <span class="c1"># len(sinks) == 0 → every tool is depended on → a cycle. Emit no alias and let the</span>
     <span class="c1"># existing DAG validation raise InitializationGraphError when the graph is sorted.</span>
@@ -798,6 +798,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,12 +589,12 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">SolverSpec — immutable solver definition registered once at module import.</span>
 
 <span class="sd">Stores only callables; all mutable state lives on SolverRuntime created</span>
 <span class="sd">per instantiate().</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -618,23 +618,23 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverRuntime</span>
 
-<span class="n">_ConfigT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_ConfigT&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
+<span class="n">_ConfigT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_ConfigT"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_snake_case</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">s1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(.)([A-Z][a-z]+)&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1_\2&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([a-z0-9])([A-Z])&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1_\2&quot;</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(.)([A-Z][a-z]+)"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\1_\2"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"([a-z0-9])([A-Z])"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\1_\2"</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="SolverSpec">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Immutable solver definition. Read-only after module import.</span>
 
 <span class="sd">    Decorator methods store callables only; execution is delegated to</span>
 <span class="sd">    SolverRuntime so that multiple runtimes can coexist independently.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -665,7 +665,7 @@
 <div class="viewcode-block" id="SolverSpec.config">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.config">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="n">_ConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ConfigT</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a config class. Callable multiple times.</span>
+<span class="w">        </span><span class="sd">"""Register a config class. Callable multiple times.</span>
 
 <span class="sd">        When more than one class is registered, ``runtime.config`` becomes a</span>
 <span class="sd">        ``SimpleNamespace`` keyed by snake-case class name; a single</span>
@@ -673,9 +673,9 @@
 
 <span class="sd">        Classes opting in via ``_synthesize_per_spec = True`` (e.g.</span>
 <span class="sd">        ``neofoam.foam.fvSchemes``) get a fresh per-spec subclass.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_synthesize_per_spec&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-            <span class="n">subclass</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_ConfigT</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,),</span> <span class="p">{}))</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"_synthesize_per_spec"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">subclass</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_ConfigT</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,),</span> <span class="p">{}))</span>
             <span class="n">subclass</span><span class="o">.</span><span class="n">_pending_sections</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="n">subclass</span><span class="o">.</span><span class="n">_finalized</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
@@ -694,25 +694,25 @@
 <div class="viewcode-block" id="SolverSpec.models">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.models">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">required</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bind a model family.</span>
+<span class="w">        </span><span class="sd">"""Bind a model family.</span>
 
 <span class="sd">        ``required=True`` → exactly one member runs per case (pick-one, via</span>
 <span class="sd">        ``family.detect_and_create()``); ``required=False`` (default) → always</span>
 <span class="sd">        optional, zero or more members run (via ``family.detect_models(case_dir)``).</span>
 <span class="sd">        ``family`` must expose ``all_specs()`` (member specs, case-free); every</span>
-<span class="sd">        member&#39;s configs join the case-free schema. Re-registering the same family</span>
+<span class="sd">        member's configs join the case-free schema. Re-registering the same family</span>
 <span class="sd">        with the same flag is an idempotent no-op; re-registering it with a</span>
 <span class="sd">        conflicting ``required`` flag raises ``ValueError`` (a family is either</span>
 <span class="sd">        required or optional, never both). Returns ``family`` (chainable).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">for</span> <span class="n">bound_family</span><span class="p">,</span> <span class="n">bound_required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_families</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">bound_family</span> <span class="ow">is</span> <span class="n">family</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">bound_required</span> <span class="o">!=</span> <span class="n">required</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;model family </span><span class="si">{</span><span class="n">family</span><span class="si">!r}</span><span class="s2"> is already registered as &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;required&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">bound_required</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;optional&#39;</span><span class="si">}</span><span class="s2">; &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;cannot re-register it as &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;required&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;optional&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">"model family </span><span class="si">{</span><span class="n">family</span><span class="si">!r}</span><span class="s2"> is already registered as "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'required'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">bound_required</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'optional'</span><span class="si">}</span><span class="s2">; "</span>
+                        <span class="sa">f</span><span class="s2">"cannot re-register it as "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'required'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'optional'</span><span class="si">}</span><span class="s2">"</span>
                     <span class="p">)</span>
                 <span class="k">return</span> <span class="n">family</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_families</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">family</span><span class="p">,</span> <span class="n">required</span><span class="p">))</span>
@@ -721,31 +721,31 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">required_model_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The bound *required* model families (case-free, no detection).</span>
+<span class="w">        </span><span class="sd">"""The bound *required* model families (case-free, no detection).</span>
 
 <span class="sd">        Each family contributes its active member as a required model — see</span>
 <span class="sd">        :func:`neofoam.framework.solver.configurations.model_catalog`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">family</span> <span class="k">for</span> <span class="n">family</span><span class="p">,</span> <span class="n">required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_families</span> <span class="k">if</span> <span class="n">required</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">optional_model_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The bound *optional* model families (case-free, no detection).</span>
+<span class="w">        </span><span class="sd">"""The bound *optional* model families (case-free, no detection).</span>
 
 <span class="sd">        Optional families are always optional; their members surface in</span>
 <span class="sd">        :func:`neofoam.framework.solver.configurations.model_catalog` with</span>
 <span class="sd">        ``required=False``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">family</span> <span class="k">for</span> <span class="n">family</span><span class="p">,</span> <span class="n">required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_families</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">required</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Every member of every bound family, case-free (no detection).</span>
+<span class="w">        </span><span class="sd">"""Every member of every bound family, case-free (no detection).</span>
 
 <span class="sd">        Required families first, then optional, so the config-schema order from</span>
 <span class="sd">        :func:`configurations` is stable. The union that — together with the</span>
-<span class="sd">        solver&#39;s own ``_config_classes`` — defines the full config schema.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        solver's own ``_config_classes`` — defines the full config schema.</span>
+<span class="sd">        """</span>
         <span class="n">specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">required_model_specs</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">optional_model_specs</span><span class="p">):</span>
             <span class="n">specs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">family</span><span class="o">.</span><span class="n">all_specs</span><span class="p">())</span>
@@ -754,14 +754,14 @@
 <div class="viewcode-block" id="SolverSpec.detect_required_models">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.detect_required_models">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_required_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select the single active member of each bound required family.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Select the single active member of each bound required family."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">family</span><span class="o">.</span><span class="n">detect_and_create</span><span class="p">()</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_model_specs</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="SolverSpec.detect_optional_models">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.detect_optional_models">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_optional_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect the active members of each bound optional family.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Collect the active members of each bound optional family."""</span>
         <span class="n">active</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optional_model_specs</span><span class="p">:</span>
             <span class="n">active</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">family</span><span class="o">.</span><span class="n">detect_models</span><span class="p">(</span><span class="n">case_dir</span><span class="p">))</span>
@@ -769,7 +769,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build ``runtime.config`` from loaded instances.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Build ``runtime.config`` from loaded instances."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
@@ -793,7 +793,7 @@
 <div class="viewcode-block" id="SolverSpec.initializer">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.initializer">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initializer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Context</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Context</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator to register solver initializer with dependency injection support.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Decorator to register solver initializer with dependency injection support."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">return</span> <span class="n">func</span></div>
 
@@ -803,7 +803,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">execution_graph_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator to register execution graph construction step.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Decorator to register execution graph construction step."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">return</span> <span class="n">func</span></div>
 
@@ -817,17 +817,17 @@
         <span class="n">before</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator to register a solver operation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Decorator to register a solver operation."""</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">(</span>
                     <span class="n">func</span><span class="p">,</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;operation_number&quot;</span><span class="p">:</span> <span class="n">operation_number</span><span class="p">,</span>
-                        <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="n">depends_on</span><span class="p">,</span>
-                        <span class="s2">&quot;before&quot;</span><span class="p">:</span> <span class="n">before</span><span class="p">,</span>
-                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                        <span class="s2">"operation_number"</span><span class="p">:</span> <span class="n">operation_number</span><span class="p">,</span>
+                        <span class="s2">"depends_on"</span><span class="p">:</span> <span class="n">depends_on</span><span class="p">,</span>
+                        <span class="s2">"before"</span><span class="p">:</span> <span class="n">before</span><span class="p">,</span>
+                        <span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                     <span class="p">},</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -843,7 +843,7 @@
 <div class="viewcode-block" id="SolverSpec.instantiate">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.instantiate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a fresh SolverRuntime for one run of this solver.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver."""</span>
         <span class="k">return</span> <span class="n">SolverRuntime</span><span class="p">(</span>
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -856,30 +856,30 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the registered initialization step with dependency injection.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Execute the registered initialization step with dependency injection."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No initialize function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No initialize function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span> <span class="ow">and</span> <span class="s2">&quot;self&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;self&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">runtime</span>
+        <span class="k">if</span> <span class="s2">"self"</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span> <span class="ow">and</span> <span class="s2">"self"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"self"</span><span class="p">]</span> <span class="o">=</span> <span class="n">runtime</span>
 
         <span class="n">first_param</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">&quot;argv&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"argv"</span><span class="p">):</span>
             <span class="n">first_param</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">argv</span>
 
         <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">inj_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">inj_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">inj_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">runtime</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">inj_state</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">&quot;core_models&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"core_models"</span><span class="p">):</span>
                     <span class="n">runtime</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">core_models</span> <span class="o">=</span> <span class="n">first_param</span><span class="o">.</span><span class="n">core_models</span>
-                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">&quot;optional_models&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"optional_models"</span><span class="p">):</span>
                     <span class="n">runtime</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">optional_models</span> <span class="o">=</span> <span class="n">first_param</span><span class="o">.</span><span class="n">optional_models</span>
 
         <span class="c1"># Pull every registered config class instance out of core_models</span>
@@ -897,31 +897,31 @@
         <span class="n">domain_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Context</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the registered execution graph step.</span>
+<span class="w">        </span><span class="sd">"""Execute the registered execution graph step.</span>
 
 <span class="sd">        Any ``BaseConfig``-annotated parameter in the callback signature is</span>
 <span class="sd">        type-injected from ``runtime.config``; a ``Context``-annotated parameter</span>
 <span class="sd">        is injected with the live ``ctx`` (so the step can reach the built models</span>
 <span class="sd">        without the runtime holding a long-lived reference to the context).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-        <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;self&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">runtime</span>
-        <span class="k">if</span> <span class="s2">&quot;domain_name&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;domain_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain_name</span>
+        <span class="k">if</span> <span class="s2">"self"</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"self"</span><span class="p">]</span> <span class="o">=</span> <span class="n">runtime</span>
+        <span class="k">if</span> <span class="s2">"domain_name"</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"domain_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain_name</span>
 
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="n">Context</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span>
 
         <span class="k">for</span> <span class="n">cfg_meta</span> <span class="ow">in</span> <span class="n">_discover_configs_from_signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">):</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="n">cfg_meta</span><span class="p">[</span><span class="s2">&quot;param_name&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_find_config_by_type</span><span class="p">(</span>
-                <span class="n">runtime</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">cfg_meta</span><span class="p">[</span><span class="s2">&quot;config_type&quot;</span><span class="p">]</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">cfg_meta</span><span class="p">[</span><span class="s2">"param_name"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_find_config_by_type</span><span class="p">(</span>
+                <span class="n">runtime</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">cfg_meta</span><span class="p">[</span><span class="s2">"config_type"</span><span class="p">]</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -931,7 +931,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_operations_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OperationCollection</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build OperationCollection with *runtime* as the ``self`` binding.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Build OperationCollection with *runtime* as the ``self`` binding."""</span>
         <span class="n">ops</span> <span class="o">=</span> <span class="n">OperationCollection</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span>
             <span class="n">discovered</span> <span class="o">=</span> <span class="n">_discover_configs_from_signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
@@ -945,14 +945,14 @@
             <span class="n">op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">wrapped</span><span class="p">),</span>
                 <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
-                    <span class="n">op_name</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+                    <span class="n">op_name</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"name"</span><span class="p">],</span>
                     <span class="n">operation_number</span><span class="o">=</span><span class="p">(</span>
-                        <span class="n">OperationNumber</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;operation_number&quot;</span><span class="p">])</span>
-                        <span class="k">if</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;operation_number&quot;</span><span class="p">]</span>
+                        <span class="n">OperationNumber</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"operation_number"</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">"operation_number"</span><span class="p">]</span>
                         <span class="k">else</span> <span class="kc">None</span>
                     <span class="p">),</span>
-                    <span class="n">depends_on</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;depends_on&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
-                    <span class="n">before</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;before&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">depends_on</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"depends_on"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="n">before</span><span class="o">=</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"before"</span><span class="p">]</span> <span class="ow">or</span> <span class="p">[],</span>
                 <span class="p">),</span>
             <span class="p">)</span>
             <span class="n">ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
@@ -963,7 +963,7 @@
 <div class="viewcode-block" id="Solver">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.Solver">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">Solver</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a new SolverSpec instance.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Create a new SolverSpec instance."""</span>
     <span class="k">return</span> <span class="n">SolverSpec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
 </pre></div>
@@ -1005,6 +1005,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Per-step writers — persisting output, the symmetric twin of the SolutionLoop.</span>
+<span class="sd">"""Per-step writers — persisting output, the symmetric twin of the SolutionLoop.</span>
 
 <span class="sd">:class:`Writer` is the *abstraction*: anything that may persist something each</span>
 <span class="sd">step (fields, probes, residual logs, …). It is a</span>
@@ -609,8 +609,8 @@
 <span class="sd">  write, ``NullFieldHook`` for standalone).</span>
 
 <span class="sd">The write *flag* is the policy decision; the per-field write to disk is the</span>
-<span class="sd">hook&#39;s job (in OpenFOAM, ``pybFoam.write(field)`` per field).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">hook's job (in OpenFOAM, ``pybFoam.write(field)`` per field).</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -625,15 +625,15 @@
 
 <div class="viewcode-block" id="FieldHook">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.FieldHook">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;hook&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;field_hook_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"hook"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"field_hook_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FieldHook</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface: persist the given fields to disk (a swappable backend).</span>
+<span class="w">    </span><span class="sd">"""Plugin interface: persist the given fields to disk (a swappable backend).</span>
 
 <span class="sd">    Receives the fields to write (name -&gt; field); the stepper has already synced</span>
-<span class="sd">    the backend&#39;s time, so each field lands in the right time directory. Concrete</span>
+<span class="sd">    the backend's time, so each field lands in the right time directory. Concrete</span>
 <span class="sd">    backends register with :meth:`FieldHook.register`. ``arbitrary_types_allowed``</span>
 <span class="sd">    lets a backend hold a live runtime handle.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -646,9 +646,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.NullFieldHook">[docs]</a>
 <span class="nd">@FieldHook</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NullFieldHook</span><span class="p">(</span><span class="n">FieldHook</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default backend for standalone / pure-Python use: persists nothing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Default backend for standalone / pure-Python use: persists nothing."""</span>
 
-    <span class="n">field_hook_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;null&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;null&quot;</span>
+    <span class="n">field_hook_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"null"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"null"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -657,16 +657,16 @@
 
 <div class="viewcode-block" id="Writer">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.Writer">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;writer&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;writer_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"writer"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"writer_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Writer</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface: a per-step writer. Register one to add a new writer.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Plugin interface: a per-step writer. Register one to add a new writer."""</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Writer.write">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.Writer.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stepper</span><span class="p">:</span> <span class="n">StepView</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist for the current step; return whether anything was written.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Persist for the current step; return whether anything was written."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </div>
 
@@ -676,28 +676,28 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.FieldWriter">[docs]</a>
 <span class="nd">@Writer</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FieldWriter</span><span class="p">(</span><span class="n">Writer</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Writes simulation fields to disk on write steps (a :class:`Writer`).</span>
+<span class="w">    </span><span class="sd">"""Writes simulation fields to disk on write steps (a :class:`Writer`).</span>
 
 <span class="sd">    Usage (the ``fieldWriter`` Model drives this once per step)::</span>
 
 <span class="sd">        writer.write(stepper, ctx.fields)   # writes via the hook iff a write step</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">writer_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;field&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;field&quot;</span>
+    <span class="n">writer_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"field"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"field"</span>
     <span class="n">write_control</span><span class="p">:</span> <span class="n">WriteControl</span>
     <span class="n">hook</span><span class="p">:</span> <span class="n">FieldHook</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">NullFieldHook</span><span class="p">)</span>
 
 <div class="viewcode-block" id="FieldWriter.should_write">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.FieldWriter.should_write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">should_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stepper</span><span class="p">:</span> <span class="n">StepView</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Is the current step a write step? (delegated to the policy).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Is the current step a write step? (delegated to the policy)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_control</span><span class="o">.</span><span class="n">should_write</span><span class="p">(</span><span class="n">stepper</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FieldWriter.write">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.FieldWriter.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stepper</span><span class="p">:</span> <span class="n">StepView</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist ``fields`` if this is a write step; return whether it wrote.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Persist ``fields`` if this is a write step; return whether it wrote."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_control</span><span class="o">.</span><span class="n">should_write</span><span class="p">(</span><span class="n">stepper</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">write_fields</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -743,6 +743,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

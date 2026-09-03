@@ -623,10 +623,10 @@ to just the synthesised field schemas — <code class="docutils literal notransl
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 
-<span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Pimple&quot;</span><span class="p">)</span>
+<span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Pimple"</span><span class="p">)</span>
 
 <span class="n">pimple</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;U&quot;</span><span class="p">,</span>
+    <span class="s2">"U"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Vector</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span><span class="n">NoSlipBC</span><span class="p">,</span> <span class="n">FixedValueBC</span><span class="p">,</span> <span class="n">GenericBC</span><span class="p">],</span>
@@ -634,7 +634,7 @@ to just the synthesised field schemas — <code class="docutils literal notransl
 <span class="p">)</span>
 
 <span class="n">pimple</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;p&quot;</span><span class="p">,</span>
+    <span class="s2">"p"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Scalar</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span><span class="n">FixedValueBC</span><span class="p">,</span> <span class="n">ZeroGradientBC</span><span class="p">,</span> <span class="n">GenericBC</span><span class="p">],</span>
@@ -683,12 +683,12 @@ ordering.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_fields</span><span class="p">,</span> <span class="n">save_fields</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.incompressibleFluid.incompressibleFluid</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span>
 
-<span class="n">fields</span> <span class="o">=</span> <span class="n">load_fields</span><span class="p">(</span><span class="s2">&quot;path/to/case&quot;</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">incompressibleFluid</span><span class="p">)</span>
-<span class="n">fields</span><span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">boundaryField</span><span class="p">[</span><span class="s2">&quot;inlet&quot;</span><span class="p">]</span>   <span class="c1"># → a typed BC arm</span>
+<span class="n">fields</span> <span class="o">=</span> <span class="n">load_fields</span><span class="p">(</span><span class="s2">"path/to/case"</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">incompressibleFluid</span><span class="p">)</span>
+<span class="n">fields</span><span class="p">[</span><span class="s2">"U"</span><span class="p">]</span><span class="o">.</span><span class="n">boundaryField</span><span class="p">[</span><span class="s2">"inlet"</span><span class="p">]</span>   <span class="c1"># → a typed BC arm</span>
 
 <span class="c1"># Mutate freely:</span>
-<span class="n">fields</span><span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">boundaryField</span><span class="p">[</span><span class="s2">&quot;inlet&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">FixedValueBC</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
-<span class="n">save_fields</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="s2">&quot;path/to/case&quot;</span><span class="p">)</span>
+<span class="n">fields</span><span class="p">[</span><span class="s2">"U"</span><span class="p">]</span><span class="o">.</span><span class="n">boundaryField</span><span class="p">[</span><span class="s2">"inlet"</span><span class="p">]</span> <span class="o">=</span> <span class="n">FixedValueBC</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+<span class="n">save_fields</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="s2">"path/to/case"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -701,12 +701,12 @@ extras intact. To upgrade an extra to a typed arm, add a <code class="docutils l
 subclass with a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[&quot;…&quot;]</span></code> discriminator and list it in the
 relevant field’s <code class="docutils literal notranslate"><span class="pre">allowed_bcs</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">FixedFluxPressureBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fixedFluxPressure&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fixedFluxPressure&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fixedFluxPressure"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"fixedFluxPressure"</span>
     <span class="n">rho</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">value</span><span class="p">:</span> <span class="nb">str</span>
 
 <span class="n">boussinesq</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;p_rgh&quot;</span><span class="p">,</span>
+    <span class="s2">"p_rgh"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Scalar</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span><span class="n">FixedValueBC</span><span class="p">,</span> <span class="n">FixedFluxPressureBC</span><span class="p">,</span> <span class="n">GenericBC</span><span class="p">],</span>

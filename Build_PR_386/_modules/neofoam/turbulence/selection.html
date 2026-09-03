@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Turbulence model selection / factory.</span>
+<span class="sd">"""Turbulence model selection / factory.</span>
 
 <span class="sd">Resolves the active turbulence model name from a turbulenceProperties-like config</span>
 <span class="sd">and builds the momentum-transport handle a solver consumes. One family</span>
@@ -602,23 +602,23 @@
 <span class="sd">  :class:`~neofoam.turbulence.native.NeoNHandle`.</span>
 <span class="sd">* ``fallback=True`` (``incompressibleFluid``) → a **pybFoam-OpenFOAM** wrapper</span>
 <span class="sd">  that only advances a ``correct()`` op and delegates the momentum stress to</span>
-<span class="sd">  pybFoam&#39;s own ``divDevReff``. Returns a</span>
+<span class="sd">  pybFoam's own ``divDevReff``. Returns a</span>
 <span class="sd">  :class:`~neofoam.turbulence.fallback.FallbackHandle`.</span>
 
-<span class="sd">A model&#39;s shape falls out of which operations it declares: a native-only model</span>
+<span class="sd">A model's shape falls out of which operations it declares: a native-only model</span>
 <span class="sd">raises on ``fallback=True``; a fallback-only model (no ``@build``, only a</span>
 <span class="sd">``fallback=True`` op — e.g. ``realizableKE``) raises on ``fallback=False``.</span>
 
-<span class="sd">A name with **no** registered spec is not an error on the fallback path: OpenFOAM&#39;s</span>
+<span class="sd">A name with **no** registered spec is not an error on the fallback path: OpenFOAM's</span>
 <span class="sd">own run-time selection table can build any of its incompressible models, so the</span>
 <span class="sd">selector hands the name to :class:`OpenFOAMTurbulenceModel` and says so on stdout.</span>
-<span class="sd">A *registered* name is still checked against the case&#39;s family.</span>
+<span class="sd">A *registered* name is still checked against the case's family.</span>
 
 <span class="sd">:func:`select_turbulence_model` operates on a *duck-typed* config (any object</span>
 <span class="sd">exposing ``simulationType`` and optional ``RAS`` / ``LES`` sub-objects).</span>
 <span class="sd">:func:`select_from_case`, which loads the real OpenFOAM dictionary, is the</span>
 <span class="sd">pybFoam-bound entry point.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">overload</span>
@@ -630,7 +630,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.momentumTransport</span><span class="w"> </span><span class="kn">import</span> <span class="n">TurbulenceFamily</span><span class="p">,</span> <span class="n">momentumTransportModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.native</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeoNHandle</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="s2">&quot;select_turbulence_model&quot;</span><span class="p">,</span> <span class="s2">&quot;select_from_case&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"select_turbulence_model"</span><span class="p">,</span> <span class="s2">"select_from_case"</span><span class="p">]</span>
 
 <span class="n">SelectedModel</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">NeoNHandle</span><span class="p">,</span> <span class="n">FallbackHandle</span><span class="p">]</span>
 
@@ -638,29 +638,29 @@
 <div class="viewcode-block" id="model_name">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.selection.html#neofoam.turbulence.selection.model_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">model_name</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the active model name from a turbulenceProperties config.</span>
+<span class="w">    </span><span class="sd">"""Resolve the active model name from a turbulenceProperties config.</span>
 
-<span class="sd">    Returns ``&quot;laminar&quot;`` for ``simulationType laminar``, the ``RASModel`` for</span>
+<span class="sd">    Returns ``"laminar"`` for ``simulationType laminar``, the ``RASModel`` for</span>
 <span class="sd">    ``RAS``, the ``LESModel`` for ``LES``, or ``None`` when it cannot be</span>
 <span class="sd">    determined (unknown ``simulationType`` or a missing sub-dictionary).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">sim_type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;simulationType&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">sim_type</span> <span class="o">==</span> <span class="s2">&quot;laminar&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;laminar&quot;</span>
-    <span class="k">if</span> <span class="n">sim_type</span> <span class="o">==</span> <span class="s2">&quot;RAS&quot;</span><span class="p">:</span>
-        <span class="n">ras</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;RAS&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ras</span><span class="p">,</span> <span class="s2">&quot;RASModel&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">ras</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">sim_type</span> <span class="o">==</span> <span class="s2">&quot;LES&quot;</span><span class="p">:</span>
-        <span class="n">les</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;LES&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">les</span><span class="p">,</span> <span class="s2">&quot;LESModel&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">les</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="sd">    """</span>
+    <span class="n">sim_type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"simulationType"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sim_type</span> <span class="o">==</span> <span class="s2">"laminar"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"laminar"</span>
+    <span class="k">if</span> <span class="n">sim_type</span> <span class="o">==</span> <span class="s2">"RAS"</span><span class="p">:</span>
+        <span class="n">ras</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"RAS"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ras</span><span class="p">,</span> <span class="s2">"RASModel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">ras</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">sim_type</span> <span class="o">==</span> <span class="s2">"LES"</span><span class="p">:</span>
+        <span class="n">les</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"LES"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">les</span><span class="p">,</span> <span class="s2">"LESModel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">les</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="kc">None</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_config_family</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TurbulenceFamily</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The family (``laminar``/``RAS``/``LES``) the config&#39;s simulationType selects.&quot;&quot;&quot;</span>
-    <span class="n">sim_type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;simulationType&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">sim_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;laminar&quot;</span><span class="p">,</span> <span class="s2">&quot;RAS&quot;</span><span class="p">,</span> <span class="s2">&quot;LES&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The family (``laminar``/``RAS``/``LES``) the config's simulationType selects."""</span>
+    <span class="n">sim_type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"simulationType"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sim_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"laminar"</span><span class="p">,</span> <span class="s2">"RAS"</span><span class="p">,</span> <span class="s2">"LES"</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">TurbulenceFamily</span><span class="p">,</span> <span class="n">sim_type</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span>
 
@@ -717,14 +717,14 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">fallback</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
     <span class="n">nu</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">of_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TurbulenceFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectedModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select and build the momentum-transport handle for the configured model.</span>
+<span class="w">    </span><span class="sd">"""Select and build the momentum-transport handle for the configured model.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        config: A turbulenceProperties-like config (``simulationType`` + optional</span>
@@ -738,30 +738,30 @@
 <span class="sd">        of_factory: Override for the pybFoam turbulence factory (tests).</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: if the config names no model, if the registered model&#39;s</span>
-<span class="sd">            family (RAS/LES) differs from the case&#39;s ``simulationType``, or if</span>
+<span class="sd">        ValueError: if the config names no model, if the registered model's</span>
+<span class="sd">            family (RAS/LES) differs from the case's ``simulationType``, or if</span>
 <span class="sd">            the model does not support the requested backend.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">model_name</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;cannot resolve the turbulence model: simulationType must be &quot;</span>
-            <span class="s2">&quot;laminar / RAS / LES with its matching sub-dictionary&quot;</span>
+            <span class="s2">"cannot resolve the turbulence model: simulationType must be "</span>
+            <span class="s2">"laminar / RAS / LES with its matching sub-dictionary"</span>
         <span class="p">)</span>
 
     <span class="n">spec</span> <span class="o">=</span> <span class="n">momentumTransportModel</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">fallback</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;no turbulence model registered for </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; the native NeoN path &quot;</span>
-                <span class="s2">&quot;needs a registered closure — run it on incompressibleFluid (the &quot;</span>
-                <span class="s2">&quot;pybFoam fallback) or port it&quot;</span>
+                <span class="sa">f</span><span class="s2">"no turbulence model registered for </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; the native NeoN path "</span>
+                <span class="s2">"needs a registered closure — run it on incompressibleFluid (the "</span>
+                <span class="s2">"pybFoam fallback) or port it"</span>
             <span class="p">)</span>
         <span class="c1"># Master-only, like the OpenFOAM ``Info`` lines it sits between in the log.</span>
         <span class="k">if</span> <span class="n">Pstream</span><span class="o">.</span><span class="n">master</span><span class="p">():</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Turbulence model </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has no NeoFOAM closure — &quot;</span>
-                <span class="s2">&quot;running it on the pybFoam OpenFOAM fallback&quot;</span>
+                <span class="sa">f</span><span class="s2">"Turbulence model </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has no NeoFOAM closure — "</span>
+                <span class="s2">"running it on the pybFoam OpenFOAM fallback"</span>
             <span class="p">)</span>
         <span class="n">of</span> <span class="o">=</span> <span class="n">OpenFOAMTurbulenceModel</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">transport</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="n">of_factory</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">FallbackHandle</span><span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">of</span><span class="o">.</span><span class="n">operations</span><span class="p">)</span>
@@ -770,9 +770,9 @@
     <span class="n">case_family</span> <span class="o">=</span> <span class="n">_config_family</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">registered_family</span> <span class="o">!=</span> <span class="n">case_family</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;turbulence model </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is registered as a </span><span class="si">{</span><span class="n">registered_family</span><span class="si">}</span><span class="s2"> closure &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;but the case selects it as </span><span class="si">{</span><span class="n">case_family</span><span class="si">}</span><span class="s2"> — OpenFOAM keeps a separate &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;selection table per family, so this is not the same model&quot;</span>
+            <span class="sa">f</span><span class="s2">"turbulence model </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is registered as a </span><span class="si">{</span><span class="n">registered_family</span><span class="si">}</span><span class="s2"> closure "</span>
+            <span class="sa">f</span><span class="s2">"but the case selects it as </span><span class="si">{</span><span class="n">case_family</span><span class="si">}</span><span class="s2"> — OpenFOAM keeps a separate "</span>
+            <span class="sa">f</span><span class="s2">"selection table per family, so this is not the same model"</span>
         <span class="p">)</span>
 
     <span class="n">model_runtime</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">))</span>
@@ -780,8 +780,8 @@
     <span class="k">if</span> <span class="n">fallback</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">model_runtime</span><span class="o">.</span><span class="n">fallback_operations</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> declares no pybFoam fallback correct() — it has no &quot;</span>
-                <span class="s2">&quot;fallback backend; run it on incompressibleFluidNeoN (native NeoN)&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> declares no pybFoam fallback correct() — it has no "</span>
+                <span class="s2">"fallback backend; run it on incompressibleFluidNeoN (native NeoN)"</span>
             <span class="p">)</span>
         <span class="n">of</span> <span class="o">=</span> <span class="n">OpenFOAMTurbulenceModel</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">transport</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="n">of_factory</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">FallbackHandle</span><span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">model_runtime</span><span class="o">.</span><span class="n">fallback_operations</span><span class="p">())</span>
@@ -789,8 +789,8 @@
     <span class="n">native_capable</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="n">model_runtime</span><span class="o">.</span><span class="n">native_operations</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">native_capable</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has no native NeoN closure; run it on incompressibleFluid &quot;</span>
-            <span class="s2">&quot;(pybFoam) or port it&quot;</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has no native NeoN closure; run it on incompressibleFluid "</span>
+            <span class="s2">"(pybFoam) or port it"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">NeoNHandle</span><span class="p">(</span><span class="n">model_runtime</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">nu</span><span class="p">)</span></div>
 
@@ -799,7 +799,7 @@
 <div class="viewcode-block" id="select_from_case">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.selection.html#neofoam.turbulence.selection.select_from_case">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_from_case</span><span class="p">(</span>
-    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">fallback</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -809,11 +809,11 @@
     <span class="n">transport</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">of_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TurbulenceFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectedModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load ``constant/turbulenceProperties`` from a case and select the model.</span>
+<span class="w">    </span><span class="sd">"""Load ``constant/turbulenceProperties`` from a case and select the model.</span>
 
 <span class="sd">    This is the pybFoam-bound entry point: it imports and uses the OpenFOAM</span>
 <span class="sd">    reading strategy via :class:`TurbulencePropertiesConfig`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">TurbulencePropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">select_turbulence_model</span><span class="p">(</span>
         <span class="n">config</span><span class="p">,</span>
@@ -866,6 +866,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

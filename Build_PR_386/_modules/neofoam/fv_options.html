@@ -589,17 +589,17 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Finite-volume options (``fvOptions``) momentum sources, as an optional model.</span>
+<span class="sd">"""Finite-volume options (``fvOptions``) momentum sources, as an optional model.</span>
 
-<span class="sd">Use it when a case&#39;s physics *is* a source term declared in an ``fvOptions``</span>
+<span class="sd">Use it when a case's physics *is* a source term declared in an ``fvOptions``</span>
 <span class="sd">dictionary — a rotor disk, a porosity block, a mean-velocity force. The model is</span>
 <span class="sd">*detected*: without that file it is never instantiated and the pressure-velocity</span>
 <span class="sd">algorithms, which inject it optionally and branch on ``None``, assemble exactly the</span>
 <span class="sd">equations they did before this model existed.</span>
 
-<span class="sd">It owns one runtime object, ``ctx.models[&quot;fv_options&quot;]`` — OpenFOAM&#39;s own</span>
+<span class="sd">It owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's own</span>
 <span class="sd">:class:`Foam::fv::options` — whose hooks (the source matrix, ``constrain``,</span>
-<span class="sd">``correct``) the algorithms apply where native&#39;s ``UEqn.H``/``pEqn.H`` apply them.</span>
+<span class="sd">``correct``) the algorithms apply where native's ``UEqn.H``/``pEqn.H`` apply them.</span>
 <span class="sd">The contributions at the bottom of this module are one set per solver, because</span>
 <span class="sd">the source call differs (``fvOptions(U)`` vs ``fvOptions(rho, U)`` for VoF).</span>
 <span class="sd">Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which each register</span>
@@ -609,7 +609,7 @@
 
 <span class="sd">    from neofoam.fv_options import fvOptions</span>
 <span class="sd">    fvOptions.register_with(incompressibleFluidModel)</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
@@ -622,15 +622,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">negated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;FvOptionsConfig&quot;</span><span class="p">,</span> <span class="s2">&quot;fvOptions&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"FvOptionsConfig"</span><span class="p">,</span> <span class="s2">"fvOptions"</span><span class="p">]</span>
 
-<span class="c1"># OpenFOAM&#39;s own search order (``fv::options::createIOobject``). Case-relative:</span>
+<span class="c1"># OpenFOAM's own search order (``fv::options::createIOobject``). Case-relative:</span>
 <span class="c1"># the solver runs with the case directory as its working directory.</span>
-<span class="n">_FV_OPTIONS_PATHS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;constant/fvOptions&quot;</span><span class="p">,</span> <span class="s2">&quot;system/fvOptions&quot;</span><span class="p">)</span>
+<span class="n">_FV_OPTIONS_PATHS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"constant/fvOptions"</span><span class="p">,</span> <span class="s2">"system/fvOptions"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dictionary_path</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;First of the two locations that exists, in OpenFOAM&#39;s search order.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""First of the two locations that exists, in OpenFOAM's search order."""</span>
     <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="n">_FV_OPTIONS_PATHS</span><span class="p">:</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -642,57 +642,57 @@
 <a class="viewcode-back" href="../../reference/api/neofoam.fv_options.html#neofoam.fv_options.FvOptionsConfig">[docs]</a>
 <span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="n">_FV_OPTIONS_PATHS</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FvOptionsConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``constant/fvOptions`` (or ``system/fvOptions``) — one sub-dict per source.</span>
+<span class="w">    </span><span class="sd">"""``constant/fvOptions`` (or ``system/fvOptions``) — one sub-dict per source.</span>
 
-<span class="sd">    Declared so the file is part of the solver&#39;s config schema. The entries stay</span>
+<span class="sd">    Declared so the file is part of the solver's config schema. The entries stay</span>
 <span class="sd">    free-form: their values are consumed by ``fv::options`` straight off disk, so</span>
 <span class="sd">    modelling the dozens of ``fv::option`` arms in pydantic would buy nothing. The</span>
-<span class="sd">    ``system/`` location is handled by the spec&#39;s ``@load`` below.</span>
+<span class="sd">    ``system/`` location is handled by the spec's ``@load`` below.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        FvOptionsConfig.load(case_dir=case).model_extra[&quot;porosity1&quot;][&quot;type&quot;]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        FvOptionsConfig.load(case_dir=case).model_extra["porosity1"]["type"]</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">)</span></div>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span></div>
 
 
 
-<span class="n">fvOptions</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;fvOptions&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">labeled</span><span class="p">(</span><span class="s2">&quot;Finite volume options (fvOptions)&quot;</span><span class="p">)</span>
+<span class="n">fvOptions</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"fvOptions"</span><span class="p">)</span><span class="o">.</span><span class="n">labeled</span><span class="p">(</span><span class="s2">"Finite volume options (fvOptions)"</span><span class="p">)</span>
 <span class="n">fvOptions</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">FvOptionsConfig</span><span class="p">)</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">detect</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">detect_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;fvOptions is active exactly when the case carries one of the two dictionaries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""fvOptions is active exactly when the case carries one of the two dictionaries."""</span>
     <span class="k">return</span> <span class="n">_dictionary_path</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">load</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">_instance_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FvOptionsConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the dictionary from whichever of the two locations the case uses.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Load the dictionary from whichever of the two locations the case uses."""</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">_dictionary_path</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;fvOptions model instantiated for a case without any of </span><span class="si">{</span><span class="n">_FV_OPTIONS_PATHS</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"fvOptions model instantiated for a case without any of </span><span class="si">{</span><span class="n">_FV_OPTIONS_PATHS</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">FvOptionsConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">_config</span><span class="p">:</span> <span class="n">FvOptionsConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Publish the option list on the Context as ``models.fv_options``.</span>
+<span class="w">    </span><span class="sd">"""Publish the option list on the Context as ``models.fv_options``.</span>
 
 <span class="sd">    Via ``fv::options::New``, which caches on the mesh registry — the native</span>
 <span class="sd">    turbulence closures source their own equations from that same object, and a</span>
 <span class="sd">    second list would double-apply every source. Named ``fv_options`` because the</span>
 <span class="sd">    model runtime itself already occupies ``models.fvOptions``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_fv_options</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvOptions</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvOptions</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvOptions</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">&quot;fv_options&quot;</span><span class="p">,</span> <span class="n">create_fv_options</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">model</span><span class="p">(</span><span class="s2">"fv_options"</span><span class="p">,</span> <span class="n">create_fv_options</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])]</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -707,23 +707,23 @@
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">momentum_extension</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_momentum_source</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="c1"># Native&#39;s ``== fvOptions(U)``: the source joins the sum subtracted.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_momentum_source</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="c1"># Native's ``== fvOptions(U)``: the source joins the sum subtracted.</span>
     <span class="k">return</span> <span class="n">negated</span><span class="p">(</span><span class="n">fv_options</span><span class="p">(</span><span class="n">U</span><span class="p">))</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">momentum_extension</span><span class="o">.</span><span class="n">constrain</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">:</span> <span class="n">fvVectorMatrix</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">:</span> <span class="n">fvVectorMatrix</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">fv_options</span><span class="o">.</span><span class="n">constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">)</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">momentum_extension</span><span class="o">.</span><span class="n">correct</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_momentum_correct</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_momentum_correct</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">fv_options</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">pressure_extension</span><span class="o">.</span><span class="n">correct</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_pressure_correct</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_pressure_correct</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">fv_options</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
 
@@ -738,27 +738,27 @@
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">vof_momentum_extension</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">fv_options_vof_momentum_source</span><span class="p">(</span>
-    <span class="n">rho</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">]</span>
+    <span class="n">rho</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="c1"># Native&#39;s ``== fvOptions(rho, U)``: the source joins the sum subtracted.</span>
+    <span class="c1"># Native's ``== fvOptions(rho, U)``: the source joins the sum subtracted.</span>
     <span class="k">return</span> <span class="n">negated</span><span class="p">(</span><span class="n">fv_options</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">U</span><span class="p">))</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">vof_momentum_extension</span><span class="o">.</span><span class="n">constrain</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_vof_constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">:</span> <span class="n">fvVectorMatrix</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_vof_constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">:</span> <span class="n">fvVectorMatrix</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">fv_options</span><span class="o">.</span><span class="n">constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">)</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">vof_momentum_extension</span><span class="o">.</span><span class="n">correct</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">fv_options_vof_momentum_correct</span><span class="p">(</span>
-    <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">]</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">fv_options</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">vof_pressure_extension</span><span class="o">.</span><span class="n">correct</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">fv_options_vof_pressure_correct</span><span class="p">(</span>
-    <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">]</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">fv_options</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 </pre></div>
@@ -800,6 +800,8 @@
     <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

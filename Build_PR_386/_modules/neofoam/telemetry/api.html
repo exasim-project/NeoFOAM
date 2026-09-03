@@ -589,13 +589,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The telemetry shim: importable and near-zero-cost without OpenTelemetry.</span>
+<span class="sd">"""The telemetry shim: importable and near-zero-cost without OpenTelemetry.</span>
 
 <span class="sd">Framework code wraps execution in :func:`span`; operation authors open</span>
 <span class="sd">nested spans (or use :func:`instrument`) inside their operations for finer</span>
 <span class="sd">detail. Everything is a no-op until :func:`configure` activates tracing,</span>
 <span class="sd">which requires the optional ``neofoam[telemetry]`` extra.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -608,13 +608,13 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">MpiInfo</span><span class="p">,</span> <span class="n">TelemetrySettings</span>
 
-<span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
+<span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"F"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 
 <div class="viewcode-block" id="TelemetryNotInstalledError">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.api.html#neofoam.telemetry.api.TelemetryNotInstalledError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TelemetryNotInstalledError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Telemetry was enabled but the optional OpenTelemetry extra is missing.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Telemetry was enabled but the optional OpenTelemetry extra is missing."""</span></div>
 
 
 
@@ -625,18 +625,18 @@
 <div class="viewcode-block" id="is_active">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.api.html#neofoam.telemetry.api.is_active">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether tracing is currently configured (the fast-path guard).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Whether tracing is currently configured (the fast-path guard)."""</span>
     <span class="k">return</span> <span class="n">_active</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_sdk</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ModuleType</span><span class="p">:</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">&quot;neofoam.telemetry._sdk&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s2">"neofoam.telemetry._sdk"</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">TelemetryNotInstalledError</span><span class="p">(</span>
-            <span class="s2">&quot;Telemetry is enabled but the OpenTelemetry packages are not &quot;</span>
-            <span class="s2">&quot;installed. Install the optional extra: pip install neofoam[telemetry]&quot;</span>
+            <span class="s2">"Telemetry is enabled but the OpenTelemetry packages are not "</span>
+            <span class="s2">"installed. Install the optional extra: pip install neofoam[telemetry]"</span>
         <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
 
 
@@ -648,13 +648,13 @@
     <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">mpi</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MpiInfo</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Activate tracing for a run rooted at ``case_dir``.</span>
+<span class="w">    </span><span class="sd">"""Activate tracing for a run rooted at ``case_dir``.</span>
 
 <span class="sd">    ``mpi=None`` resolves the rank from ``pybFoam.Pstream`` lazily at the</span>
 <span class="sd">    first span export — MPI is typically initialized *after* configure</span>
-<span class="sd">    (by the solver&#39;s ``argList``). Disabled settings deactivate. Calling</span>
+<span class="sd">    (by the solver's ``argList``). Disabled settings deactivate. Calling</span>
 <span class="sd">    while active flushes the previous run and replaces it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">global</span> <span class="n">_active</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">settings</span> <span class="k">if</span> <span class="n">settings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">TelemetrySettings</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
@@ -669,7 +669,7 @@
 <div class="viewcode-block" id="shutdown">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.api.html#neofoam.telemetry.api.shutdown">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flush spans, write the summary, and deactivate. Idempotent.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Flush spans, write the summary, and deactivate. Idempotent."""</span>
     <span class="k">global</span> <span class="n">_active</span>
     <span class="k">if</span> <span class="n">_active</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_active</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
@@ -680,11 +680,11 @@
 <div class="viewcode-block" id="span">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.api.html#neofoam.telemetry.api.span">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">span</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">attributes</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AbstractContextManager</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A tracing span context manager; a shared no-op while inactive.</span>
+<span class="w">    </span><span class="sd">"""A tracing span context manager; a shared no-op while inactive.</span>
 
 <span class="sd">    ``None``-valued attributes are dropped so callers can pass optional</span>
 <span class="sd">    metadata unconditionally.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_active</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">nullcontext</span><span class="p">()</span>
     <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">attributes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
@@ -698,12 +698,12 @@
 <div class="viewcode-block" id="instrument">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.api.html#neofoam.telemetry.api.instrument">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">instrument</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">attributes</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorate a callable so each call runs inside a span.</span>
+<span class="w">    </span><span class="sd">"""Decorate a callable so each call runs inside a span.</span>
 
-<span class="sd">    The span is named ``name`` (default: the function&#39;s qualified name) and</span>
-<span class="sd">    nests under whatever span is current at call time — e.g. the framework&#39;s</span>
+<span class="sd">    The span is named ``name`` (default: the function's qualified name) and</span>
+<span class="sd">    nests under whatever span is current at call time — e.g. the framework's</span>
 <span class="sd">    operation span.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span>
         <span class="n">span_name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">func</span><span class="o">.</span><span class="vm">__qualname__</span>
@@ -758,6 +758,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

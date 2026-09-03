@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Export a sweep canvas to a runnable workflow directory, and read it back.</span>
+<span class="sd">"""Export a sweep canvas to a runnable workflow directory, and read it back.</span>
 
 <span class="sd">:func:`export_sweep` validates every variant, builds the cross product and writes</span>
 <span class="sd">the workflow directory (``sweep.csv``, ``params.yaml``, ``Snakefile``, the</span>
@@ -601,7 +601,7 @@
 <span class="sd">kept in separate files.</span>
 
 <span class="sd">This module has no trame imports so it can be exercised headless.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -634,30 +634,30 @@
 <span class="p">)</span>
 
 <span class="c1">#: Sidecar holding the read-back metadata (the inverse of the Snakefile header).</span>
-<span class="n">SWEEP_META_FILE</span> <span class="o">=</span> <span class="s2">&quot;sweep.meta.json&quot;</span>
+<span class="n">SWEEP_META_FILE</span> <span class="o">=</span> <span class="s2">"sweep.meta.json"</span>
 
 
 <div class="viewcode-block" id="cross_product">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.cross_product">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">cross_product</span><span class="p">(</span>
     <span class="n">dimensions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
-    <span class="n">case_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;case&quot;</span><span class="p">,</span>
+    <span class="n">case_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"case"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The full cross product of variant names per dimension (sweep.csv rows).</span>
+<span class="w">    </span><span class="sd">"""The full cross product of variant names per dimension (sweep.csv rows).</span>
 
 <span class="sd">    Case names join the variant names in sorted-dimension order.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">dim_order</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
     <span class="n">names_per_dim</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dimensions</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dim_order</span><span class="p">]</span>
     <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">names_per_dim</span><span class="p">):</span>
-        <span class="n">case</span> <span class="o">=</span> <span class="s2">&quot;_&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">combo</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;default&quot;</span>
+        <span class="n">case</span> <span class="o">=</span> <span class="s2">"_"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">combo</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"default"</span>
         <span class="k">if</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;case-name collision: &#39;</span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">&#39; produced by more than one variant &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;combination (</span><span class="si">{</span><span class="n">seen</span><span class="p">[</span><span class="n">case</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">combo</span><span class="si">}</span><span class="s2">) — rename a variant to &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;avoid &#39;_&#39; ambiguity&quot;</span>
+                <span class="sa">f</span><span class="s2">"case-name collision: '</span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">' produced by more than one variant "</span>
+                <span class="sa">f</span><span class="s2">"combination (</span><span class="si">{</span><span class="n">seen</span><span class="p">[</span><span class="n">case</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">combo</span><span class="si">}</span><span class="s2">) — rename a variant to "</span>
+                <span class="sa">f</span><span class="s2">"avoid '_' ambiguity"</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="n">seen</span><span class="p">[</span><span class="n">case</span><span class="p">]</span> <span class="o">=</span> <span class="n">combo</span>
@@ -672,7 +672,7 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.SweepExport">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SweepExport</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The files written by :func:`export_sweep`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The files written by :func:`export_sweep`."""</span>
 
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">sweep_csv</span><span class="p">:</span> <span class="n">Path</span>
@@ -694,7 +694,7 @@
     <span class="n">registry</span><span class="p">:</span> <span class="n">RuleRegistry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">enabled</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SweepExport</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the runnable workflow directory for the current canvas.</span>
+<span class="w">    </span><span class="sd">"""Write the runnable workflow directory for the current canvas.</span>
 
 <span class="sd">    Validates every variant (the ``mesh`` dimension via</span>
 <span class="sd">    :func:`validate_mesh_dimension`, everything else against its config class),</span>
@@ -705,13 +705,13 @@
 <span class="sd">    ``configs/mesh/{variant}.json`` (an implicit empty ``base`` variant when the</span>
 <span class="sd">    sweep has no mesh dimension). The directory is immediately runnable with</span>
 <span class="sd">    ``snakemake``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case_dims</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">MESH_DIM</span><span class="p">}</span>
     <span class="n">validate_dimensions</span><span class="p">(</span><span class="n">case_dims</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">MESH_DIM</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
         <span class="n">validate_mesh_dimension</span><span class="p">(</span><span class="n">dimensions</span><span class="p">[</span><span class="n">MESH_DIM</span><span class="p">],</span> <span class="n">classes</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">dimensions</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;no sweep dimensions on the canvas — add at least one config dimension&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">"no sweep dimensions on the canvas — add at least one config dimension"</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="c1"># Build the sweep rows before creating the output directory so a case-name</span>
     <span class="c1"># collision aborts with nothing written to disk (no partial workflow dir).</span>
@@ -720,9 +720,9 @@
     <span class="n">reg</span> <span class="o">=</span> <span class="n">registry</span> <span class="ow">or</span> <span class="n">default_registry</span><span class="p">()</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">out</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">sweep_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;sweep.csv&quot;</span>
-    <span class="n">params_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;params.yaml&quot;</span>
-    <span class="n">snakefile_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;Snakefile&quot;</span>
+    <span class="n">sweep_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">"sweep.csv"</span>
+    <span class="n">params_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">"params.yaml"</span>
+    <span class="n">snakefile_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">"Snakefile"</span>
 
     <span class="n">write_sweep_csv</span><span class="p">(</span><span class="n">sweep_path</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span>
     <span class="n">write_params_yaml</span><span class="p">(</span><span class="n">params_path</span><span class="p">,</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
@@ -745,12 +745,12 @@
 
     <span class="n">space</span> <span class="o">=</span> <span class="n">YamlParamSpace</span><span class="p">(</span><span class="n">sweep_path</span><span class="p">,</span> <span class="n">params_path</span><span class="p">)</span>
     <span class="n">setup_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">space</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">MESH_DIM</span><span class="p">]</span>
-    <span class="n">configs</span> <span class="o">=</span> <span class="n">space</span><span class="o">.</span><span class="n">materialize</span><span class="p">({</span><span class="n">SETUP_RULE</span><span class="p">:</span> <span class="n">setup_dims</span><span class="p">},</span> <span class="n">out_dir</span><span class="o">=</span><span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;configs&quot;</span><span class="p">)</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">space</span><span class="o">.</span><span class="n">materialize</span><span class="p">({</span><span class="n">SETUP_RULE</span><span class="p">:</span> <span class="n">setup_dims</span><span class="p">},</span> <span class="n">out_dir</span><span class="o">=</span><span class="n">out</span> <span class="o">/</span> <span class="s2">"configs"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">MESH_DIM</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
-        <span class="n">configs</span> <span class="o">+=</span> <span class="n">space</span><span class="o">.</span><span class="n">materialize_dims</span><span class="p">([</span><span class="n">MESH_DIM</span><span class="p">],</span> <span class="n">out_dir</span><span class="o">=</span><span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;configs&quot;</span><span class="p">)</span>
+        <span class="n">configs</span> <span class="o">+=</span> <span class="n">space</span><span class="o">.</span><span class="n">materialize_dims</span><span class="p">([</span><span class="n">MESH_DIM</span><span class="p">],</span> <span class="n">out_dir</span><span class="o">=</span><span class="n">out</span> <span class="o">/</span> <span class="s2">"configs"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">implicit</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;configs&quot;</span> <span class="o">/</span> <span class="n">MESH_DIM</span> <span class="o">/</span> <span class="s2">&quot;base.json&quot;</span>
-        <span class="k">if</span> <span class="n">write_if_changed</span><span class="p">(</span><span class="n">implicit</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="n">implicit</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">"configs"</span> <span class="o">/</span> <span class="n">MESH_DIM</span> <span class="o">/</span> <span class="s2">"base.json"</span>
+        <span class="k">if</span> <span class="n">write_if_changed</span><span class="p">(</span><span class="n">implicit</span><span class="p">,</span> <span class="s2">"</span><span class="si">{}</span><span class="se">\n</span><span class="s2">"</span><span class="p">):</span>
             <span class="n">configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">implicit</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">SweepExport</span><span class="p">(</span>
@@ -767,7 +767,7 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.LoadedSweep">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">LoadedSweep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A sweep read back from an exported directory (inverse of export).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A sweep read back from an exported directory (inverse of export)."""</span>
 
     <span class="n">solver_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">base_case</span><span class="p">:</span> <span class="nb">str</span>
@@ -779,7 +779,7 @@
 <div class="viewcode-block" id="load_sweep">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.load_sweep">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_sweep</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="n">RuleRegistry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LoadedSweep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read an exported sweep directory back into its canvas definition.</span>
+<span class="w">    </span><span class="sd">"""Read an exported sweep directory back into its canvas definition.</span>
 
 <span class="sd">    The inverse of :func:`export_sweep`: ``params.yaml`` holds the full</span>
 <span class="sd">    ``{dimension: {variant: payload}}`` (variants keep their complete payloads),</span>
@@ -795,20 +795,20 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If ``out_dir`` has no ``params.yaml`` (not an exported</span>
 <span class="sd">            sweep).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">del</span> <span class="n">registry</span>  <span class="c1"># unused: the sidecar records the enabled rules directly</span>
     <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
-    <span class="n">params_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">&quot;params.yaml&quot;</span>
+    <span class="n">params_path</span> <span class="o">=</span> <span class="n">out</span> <span class="o">/</span> <span class="s2">"params.yaml"</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">params_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">&#39; is not an exported sweep (no params.yaml)&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">out</span><span class="si">}</span><span class="s2">' is not an exported sweep (no params.yaml)"</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
     <span class="n">dimensions</span> <span class="o">=</span> <span class="n">read_params_yaml</span><span class="p">(</span><span class="n">params_path</span><span class="p">)</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="n">_read_sweep_meta</span><span class="p">(</span><span class="n">out</span> <span class="o">/</span> <span class="n">SWEEP_META_FILE</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">LoadedSweep</span><span class="p">(</span>
-        <span class="n">solver_name</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;solver_name&quot;</span><span class="p">],</span>
-        <span class="n">base_case</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;base_case&quot;</span><span class="p">],</span>
+        <span class="n">solver_name</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">"solver_name"</span><span class="p">],</span>
+        <span class="n">base_case</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">"base_case"</span><span class="p">],</span>
         <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
-        <span class="n">enabled</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">],</span>
+        <span class="n">enabled</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s2">"enabled"</span><span class="p">],</span>
     <span class="p">)</span></div>
 
 
@@ -820,32 +820,32 @@
     <span class="n">base_case</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">enabled</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the read-back sidecar (solver / base case / enabled rules).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Write the read-back sidecar (solver / base case / enabled rules)."""</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;solver_name&quot;</span><span class="p">:</span> <span class="n">solver_name</span><span class="p">,</span>
-        <span class="s2">&quot;base_case&quot;</span><span class="p">:</span> <span class="n">base_case</span><span class="p">,</span>
-        <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">enabled</span><span class="p">,</span>
+        <span class="s2">"solver_name"</span><span class="p">:</span> <span class="n">solver_name</span><span class="p">,</span>
+        <span class="s2">"base_case"</span><span class="p">:</span> <span class="n">base_case</span><span class="p">,</span>
+        <span class="s2">"enabled"</span><span class="p">:</span> <span class="n">enabled</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="n">write_if_changed</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">write_if_changed</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_sweep_meta</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the sidecar, falling back to header defaults when it is absent.</span>
+<span class="w">    </span><span class="sd">"""Read the sidecar, falling back to header defaults when it is absent.</span>
 
 <span class="sd">    A missing/partial sidecar (a hand-edited dir, or a sweep exported before the</span>
 <span class="sd">    sidecar existed) still loads: the solver defaults to ``incompressibleFluid``,</span>
-<span class="sd">    the base case to ``&quot;&quot;`` and the enabled rules to the always-present ``all`` —</span>
+<span class="sd">    the base case to ``""`` and the enabled rules to the always-present ``all`` —</span>
 <span class="sd">    the same defaults the old Snakefile-header parser fell back to.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="n">loaded</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loaded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">loaded</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;solver_name&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;solver_name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;incompressibleFluid&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;base_case&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;base_case&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)),</span>
-        <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]),</span>
+        <span class="s2">"solver_name"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"solver_name"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"incompressibleFluid"</span><span class="p">),</span>
+        <span class="s2">"base_case"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"base_case"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)),</span>
+        <span class="s2">"enabled"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"enabled"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">"all"</span><span class="p">]),</span>
     <span class="p">}</span>
 </pre></div>
         </article>
@@ -886,6 +886,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -592,7 +592,7 @@
 <span class="c1"># NB: no ``from __future__ import annotations`` — keeps parity with the framework</span>
 <span class="c1"># model modules (the dependency_resolver matches ``param.annotation is Context``).</span>
 
-<span class="sd">&quot;&quot;&quot;pybFoam backend wiring for the framework ``fieldWriter`` core Model.</span>
+<span class="sd">"""pybFoam backend wiring for the framework ``fieldWriter`` core Model.</span>
 
 <span class="sd">The *model* itself — load ``WriteControlConfig`` from ``system/controlDict``,</span>
 <span class="sd">build a :class:`~neofoam.algorithms.field_writer.writer.FieldWriter`, and the per-step</span>
@@ -608,7 +608,7 @@
 <span class="sd">* :func:`writer_backend_steps` — the init steps that inject the selected hook into</span>
 <span class="sd">  the framework-built ``FieldWriter`` and register the per-step timing reporter</span>
 <span class="sd">  (``step_reporter``) the framework ``write_output`` consults.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Mapping</span>
 
@@ -625,13 +625,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ControlDictConfig</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;fieldWriter&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_output&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RuntimeWriteHook&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PerFieldWriteHook&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;make_field_hook&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;writer_backend_steps&quot;</span><span class="p">,</span>
+    <span class="s2">"fieldWriter"</span><span class="p">,</span>
+    <span class="s2">"build"</span><span class="p">,</span>
+    <span class="s2">"write_output"</span><span class="p">,</span>
+    <span class="s2">"RuntimeWriteHook"</span><span class="p">,</span>
+    <span class="s2">"PerFieldWriteHook"</span><span class="p">,</span>
+    <span class="s2">"make_field_hook"</span><span class="p">,</span>
+    <span class="s2">"writer_backend_steps"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -639,16 +639,16 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.field_writer.html#neofoam.solver.incompressibleFluid.models.field_writer.RuntimeWriteHook">[docs]</a>
 <span class="nd">@FieldHook</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RuntimeWriteHook</span><span class="p">(</span><span class="n">FieldHook</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist via the mesh/time *registry* — ``pybFoam.Time.write`` (a :class:`FieldHook`).</span>
+<span class="w">    </span><span class="sd">"""Persist via the mesh/time *registry* — ``pybFoam.Time.write`` (a :class:`FieldHook`).</span>
 
 <span class="sd">    The OpenFOAM-faithful write: one call persists every registered field at the</span>
 <span class="sd">    current (loop-synced) time, including sub-model fields not present in</span>
 <span class="sd">    ``ctx.fields``. The ``fields`` argument is ignored (the registry knows them).</span>
 <span class="sd">    The live ``Foam::Time`` registry is held in an ``Any`` field (injected at</span>
 <span class="sd">    build, not from the file).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">field_hook_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;runtime&quot;</span>
+    <span class="n">field_hook_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"runtime"</span>
     <span class="n">registry</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -660,14 +660,14 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.field_writer.html#neofoam.solver.incompressibleFluid.models.field_writer.PerFieldWriteHook">[docs]</a>
 <span class="nd">@FieldHook</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PerFieldWriteHook</span><span class="p">(</span><span class="n">FieldHook</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist each given field individually via ``pybFoam.write`` (a :class:`FieldHook`).</span>
+<span class="w">    </span><span class="sd">"""Persist each given field individually via ``pybFoam.write`` (a :class:`FieldHook`).</span>
 
 <span class="sd">    Receives only the fields flagged ``write=True`` (via ``ctx.write_fields``), so</span>
 <span class="sd">    transient intermediates (``UEqn``, …) are never handed in. The stepper has</span>
 <span class="sd">    already synced ``Foam::Time``, so each field lands in the right time directory.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">field_hook_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;perField&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;perField&quot;</span>
+    <span class="n">field_hook_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"perField"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"perField"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">fld</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -678,8 +678,8 @@
 <div class="viewcode-block" id="make_field_hook">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.field_writer.html#neofoam.solver.incompressibleFluid.models.field_writer.make_field_hook">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_field_hook</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ControlDictConfig</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldHook</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select the write backend from ``config.writeBackend``.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">writeBackend</span> <span class="o">==</span> <span class="s2">&quot;perField&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Select the write backend from ``config.writeBackend``."""</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">writeBackend</span> <span class="o">==</span> <span class="s2">"perField"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">PerFieldWriteHook</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">RuntimeWriteHook</span><span class="p">(</span><span class="n">registry</span><span class="o">=</span><span class="n">registry</span><span class="p">)</span></div>
 
@@ -688,26 +688,26 @@
 <div class="viewcode-block" id="writer_backend_steps">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.field_writer.html#neofoam.solver.incompressibleFluid.models.field_writer.writer_backend_steps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">writer_backend_steps</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ControlDictConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Init steps wiring the pybFoam backend into the framework ``fieldWriter``.</span>
+<span class="w">    </span><span class="sd">"""Init steps wiring the pybFoam backend into the framework ``fieldWriter``.</span>
 
 <span class="sd">    * injects the config-selected :class:`FieldHook` into the framework-built</span>
 <span class="sd">      ``FieldWriter`` (which defaults to a no-op ``NullFieldHook``);</span>
 <span class="sd">    * registers ``step_reporter`` — the per-step timing report the framework</span>
 <span class="sd">      ``write_output`` calls after a write (``pybFoam.Time.printExecutionTime``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inject_hook</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FieldHook</span><span class="p">:</span>
-        <span class="n">hook</span> <span class="o">=</span> <span class="n">make_field_hook</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">])</span>
-        <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;models.writer&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">hook</span> <span class="o">=</span> <span class="n">hook</span>
+        <span class="n">hook</span> <span class="o">=</span> <span class="n">make_field_hook</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">])</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="s2">"models.writer"</span><span class="p">]</span><span class="o">.</span><span class="n">hook</span> <span class="o">=</span> <span class="n">hook</span>
         <span class="k">return</span> <span class="n">hook</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">make_reporter</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">]</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]</span>
         <span class="k">return</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">registry</span><span class="o">.</span><span class="n">printExecutionTime</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;writer_hook&quot;</span><span class="p">,</span> <span class="n">inject_hook</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;models.writer&quot;</span><span class="p">,</span> <span class="s2">&quot;_foam_time&quot;</span><span class="p">]),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;step_reporter&quot;</span><span class="p">,</span> <span class="n">make_reporter</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"writer_hook"</span><span class="p">,</span> <span class="n">inject_hook</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.writer"</span><span class="p">,</span> <span class="s2">"_foam_time"</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"step_reporter"</span><span class="p">,</span> <span class="n">make_reporter</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]),</span>
     <span class="p">]</span></div>
 
 </pre></div>
@@ -749,6 +749,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,12 +589,12 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;When to persist fields — a plugin family of write policies.</span>
+<span class="sd">"""When to persist fields — a plugin family of write policies.</span>
 
-<span class="sd">Deciding *when* to write is neither the loop&#39;s job nor the solver&#39;s. The</span>
+<span class="sd">Deciding *when* to write is neither the loop's job nor the solver's. The</span>
 <span class="sd">:class:`WriteControl` interface is a :class:`~neofoam.core.plugin_system.PluginSystem`</span>
 <span class="sd">family: each concrete policy registers itself (discriminated by</span>
-<span class="sd">``write_control_type``) and maps 1:1 to OpenFOAM&#39;s ``writeControl`` keyword, so a</span>
+<span class="sd">``write_control_type``) and maps 1:1 to OpenFOAM's ``writeControl`` keyword, so a</span>
 <span class="sd">plugin adds a new policy (e.g. ``clockTime``) by registering a new</span>
 <span class="sd">``@WriteControl.register`` class — never by editing here. Every policy reads only</span>
 <span class="sd">a narrow :class:`StepView` of the stepper.</span>
@@ -602,7 +602,7 @@
 <span class="sd">The *data* that selects/parameterises a policy is a :class:`WriteControlConfig` —</span>
 <span class="sd">a validated, file-backed :class:`~neofoam.io.BaseConfig` (the controlDict write</span>
 <span class="sd">keys). The config is the file interface; the policy is the behaviour.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -618,15 +618,15 @@
 
 <div class="viewcode-block" id="WriteControlConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.WriteControlConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WriteControlConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The controlDict write keys, as a validated, file-backed config.</span>
+<span class="w">    </span><span class="sd">"""The controlDict write keys, as a validated, file-backed config.</span>
 
 <span class="sd">    Plugins extend the schema by subclassing (e.g. a ``clockTime`` interval),</span>
 <span class="sd">    keeping the file interface the single source of truth.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">writeControl</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;timeStep&quot;</span>
+    <span class="n">writeControl</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"timeStep"</span>
     <span class="n">writeInterval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">startTime</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
 
@@ -636,27 +636,27 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.StepView">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StepView</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The narrow slice of loop state a write policy reads to decide a write step.</span>
+<span class="w">    </span><span class="sd">"""The narrow slice of loop state a write policy reads to decide a write step.</span>
 
 <span class="sd">    The :class:`~neofoam.algorithms.solution_loop.loop_state.LoopState` dataclass</span>
 <span class="sd">    satisfies it structurally (so does any object exposing these attributes).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># current time</span>
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># current step index</span>
-    <span class="n">write_time</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># the loop&#39;s own (Python-computed) write flag</span></div>
+    <span class="n">write_time</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># the loop's own (Python-computed) write flag</span></div>
 
 
 
 <div class="viewcode-block" id="WriteControl">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.WriteControl">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;policy&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;write_control_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"policy"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"write_control_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">WriteControl</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface: decide whether the current step is a write step.</span>
+<span class="w">    </span><span class="sd">"""Plugin interface: decide whether the current step is a write step.</span>
 
 <span class="sd">    Concrete policies register with :meth:`WriteControl.register`; the</span>
 <span class="sd">    ``write_control_type`` literal discriminates them.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">should_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stepper</span><span class="p">:</span> <span class="n">StepView</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
@@ -667,9 +667,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.StepperWriteControl">[docs]</a>
 <span class="nd">@WriteControl</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StepperWriteControl</span><span class="p">(</span><span class="n">WriteControl</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use the stepper&#39;s own (Python-computed) ``outputTime`` flag.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Use the stepper's own (Python-computed) ``outputTime`` flag."""</span>
 
-    <span class="n">write_control_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;stepper&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;stepper&quot;</span>
+    <span class="n">write_control_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"stepper"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"stepper"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">should_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stepper</span><span class="p">:</span> <span class="n">StepView</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">stepper</span><span class="o">.</span><span class="n">write_time</span></div>
@@ -680,9 +680,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.IntervalWriteControl">[docs]</a>
 <span class="nd">@WriteControl</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">IntervalWriteControl</span><span class="p">(</span><span class="n">WriteControl</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``writeControl timeStep`` — write every ``interval`` steps.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``writeControl timeStep`` — write every ``interval`` steps."""</span>
 
-    <span class="n">write_control_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;timeStep&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;timeStep&quot;</span>
+    <span class="n">write_control_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"timeStep"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"timeStep"</span>
     <span class="n">interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">should_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stepper</span><span class="p">:</span> <span class="n">StepView</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -694,9 +694,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.RunTimeWriteControl">[docs]</a>
 <span class="nd">@WriteControl</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RunTimeWriteControl</span><span class="p">(</span><span class="n">WriteControl</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``writeControl runTime``/``adjustable`` — write every ``interval`` of sim time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``writeControl runTime``/``adjustable`` — write every ``interval`` of sim time."""</span>
 
-    <span class="n">write_control_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;runTime&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;runTime&quot;</span>
+    <span class="n">write_control_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"runTime"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"runTime"</span>
     <span class="n">interval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">_last</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">()</span>
@@ -716,23 +716,23 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_policy_payload</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">WriteControlConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map the controlDict write keys onto a policy&#39;s discriminated payload.</span>
+<span class="w">    </span><span class="sd">"""Map the controlDict write keys onto a policy's discriminated payload.</span>
 
 <span class="sd">    The only keyword-specific glue: it normalises the ``writeControl`` keyword to</span>
 <span class="sd">    a registered ``write_control_type`` discriminator and renames the controlDict</span>
-<span class="sd">    keys to the policy&#39;s fields. Everything past this point is the discriminated</span>
+<span class="sd">    keys to the policy's fields. Everything past this point is the discriminated</span>
 <span class="sd">    union picking the class — registering a new policy is enough to select it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">writeControl</span> <span class="o">==</span> <span class="s2">&quot;timeStep&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">writeControl</span> <span class="o">==</span> <span class="s2">"timeStep"</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;write_control_type&quot;</span><span class="p">:</span> <span class="s2">&quot;timeStep&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;interval&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">writeInterval</span><span class="p">),</span>
+            <span class="s2">"write_control_type"</span><span class="p">:</span> <span class="s2">"timeStep"</span><span class="p">,</span>
+            <span class="s2">"interval"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">writeInterval</span><span class="p">),</span>
         <span class="p">}</span>
     <span class="c1"># runTime / adjustable / adjustableRunTime all map to the runTime policy</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;write_control_type&quot;</span><span class="p">:</span> <span class="s2">&quot;runTime&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;interval&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">writeInterval</span><span class="p">),</span>
-        <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">startTime</span><span class="p">,</span>
+        <span class="s2">"write_control_type"</span><span class="p">:</span> <span class="s2">"runTime"</span><span class="p">,</span>
+        <span class="s2">"interval"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">writeInterval</span><span class="p">),</span>
+        <span class="s2">"start"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">startTime</span><span class="p">,</span>
     <span class="p">}</span>
 
 
@@ -743,14 +743,14 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">stepper_decides</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WriteControl</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the write policy from a validated :class:`WriteControlConfig`.</span>
+<span class="w">    </span><span class="sd">"""Build the write policy from a validated :class:`WriteControlConfig`.</span>
 
 <span class="sd">    Selection resolves through the :class:`WriteControl` discriminated union (the</span>
-<span class="sd">    ``PluginSystem`` extension point): the payload&#39;s ``write_control_type`` picks</span>
-<span class="sd">    the registered policy. Pass ``stepper_decides=True`` to use the stepper&#39;s own</span>
+<span class="sd">    ``PluginSystem`` extension point): the payload's ``write_control_type`` picks</span>
+<span class="sd">    the registered policy. Pass ``stepper_decides=True`` to use the stepper's own</span>
 <span class="sd">    ``outputTime`` flag (it already computes the OpenFOAM write semantics in</span>
 <span class="sd">    Python).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">stepper_decides</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">StepperWriteControl</span><span class="p">()</span>
     <span class="n">selected</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">WriteControl</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">policy</span><span class="o">=</span><span class="n">_policy_payload</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
@@ -795,6 +795,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

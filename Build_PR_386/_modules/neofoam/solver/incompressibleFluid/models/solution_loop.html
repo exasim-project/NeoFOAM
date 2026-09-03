@@ -591,7 +591,7 @@
 
 <span class="c1"># NB: no ``from __future__ import annotations`` — see field_writer.py.</span>
 
-<span class="sd">&quot;&quot;&quot;pybFoam backend wiring for the framework ``solutionLoop`` core Model.</span>
+<span class="sd">"""pybFoam backend wiring for the framework ``solutionLoop`` core Model.</span>
 
 <span class="sd">The *model* — load ``TimeControlConfig`` from ``system/controlDict``, build the</span>
 <span class="sd">``LoopState`` (``ctx.time``) + the</span>
@@ -611,7 +611,7 @@
 <span class="sd">  and register the ``loop_logger`` (``pybFoam.Info``) the framework operations</span>
 <span class="sd">  consult. The CFL limit is now a ``timeStepConstraint`` contribution (the</span>
 <span class="sd">  ``courant`` model), folded by ``set_time_step`` — no Courant provider here.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -630,22 +630,22 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span><span class="p">,</span> <span class="n">model</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;solutionLoop&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;SolutionLoopPredicate&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;set_time_step&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;increment_time&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;make_loop_state&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;make_solution_loop&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;FoamTime&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;loop_backend_steps&quot;</span><span class="p">,</span>
+    <span class="s2">"solutionLoop"</span><span class="p">,</span>
+    <span class="s2">"SolutionLoopPredicate"</span><span class="p">,</span>
+    <span class="s2">"build"</span><span class="p">,</span>
+    <span class="s2">"set_time_step"</span><span class="p">,</span>
+    <span class="s2">"increment_time"</span><span class="p">,</span>
+    <span class="s2">"make_loop_state"</span><span class="p">,</span>
+    <span class="s2">"make_solution_loop"</span><span class="p">,</span>
+    <span class="s2">"FoamTime"</span><span class="p">,</span>
+    <span class="s2">"loop_backend_steps"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="loop_backend_steps">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html#neofoam.solver.incompressibleFluid.models.solution_loop.loop_backend_steps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">loop_backend_steps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Init steps wiring the pybFoam backend into the framework ``solutionLoop``.</span>
+<span class="w">    </span><span class="sd">"""Init steps wiring the pybFoam backend into the framework ``solutionLoop``.</span>
 
 <span class="sd">    * injects the :class:`FoamTime` backend into the framework-built engine</span>
 <span class="sd">      (which defaults to a no-op ``NullLoopBackend``);</span>
@@ -653,17 +653,17 @@
 
 <span class="sd">    The CFL limit is no longer pushed in here: it is a ``timeStepConstraint``</span>
 <span class="sd">    contribution (the ``courant`` model) folded by ``set_time_step``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inject_backend</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FoamTime</span><span class="p">:</span>
-        <span class="n">backend</span> <span class="o">=</span> <span class="n">FoamTime</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">])</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">FoamTime</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">])</span>
         <span class="c1"># Anchor the argList (which ``Foam::Time`` only holds by raw reference) to</span>
         <span class="c1"># this backend, which lives on the Context for the whole run. Under</span>
         <span class="c1"># ``-parallel`` the argList owns the MPI session and its destructor calls</span>
         <span class="c1"># MPI_Finalize; without a lasting owner it is collected right after init</span>
         <span class="c1"># and every subsequent Pstream exchange aborts (MPI after FINALIZE).</span>
-        <span class="n">backend</span><span class="o">.</span><span class="n">_foam_arglist</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_foam_arglist&quot;</span><span class="p">)</span>
-        <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;models.solution_loop&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
+        <span class="n">backend</span><span class="o">.</span><span class="n">_foam_arglist</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"_foam_arglist"</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="s2">"models.solution_loop"</span><span class="p">]</span><span class="o">.</span><span class="n">set_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">backend</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">make_logger</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -671,11 +671,11 @@
 
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">model</span><span class="p">(</span>
-            <span class="s2">&quot;loop_backend&quot;</span><span class="p">,</span>
+            <span class="s2">"loop_backend"</span><span class="p">,</span>
             <span class="n">inject_backend</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;models.solution_loop&quot;</span><span class="p">,</span> <span class="s2">&quot;_foam_time&quot;</span><span class="p">,</span> <span class="s2">&quot;_foam_arglist&quot;</span><span class="p">],</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.solution_loop"</span><span class="p">,</span> <span class="s2">"_foam_time"</span><span class="p">,</span> <span class="s2">"_foam_arglist"</span><span class="p">],</span>
         <span class="p">),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;loop_logger&quot;</span><span class="p">,</span> <span class="n">make_logger</span><span class="p">),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"loop_logger"</span><span class="p">,</span> <span class="n">make_logger</span><span class="p">),</span>
     <span class="p">]</span></div>
 
 </pre></div>
@@ -717,6 +717,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

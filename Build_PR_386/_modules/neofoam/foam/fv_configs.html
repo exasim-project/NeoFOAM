@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">``fvSchemes`` / ``fvSolution`` — per-model OpenFOAM dictionary base classes.</span>
 
 <span class="sd">The two classes here are :class:`BaseConfig` subclasses bound to the two</span>
@@ -599,7 +599,7 @@
 <span class="sd">- ``spec.config(fvSchemes)`` returns a per-spec subclass synthesised by</span>
 <span class="sd">  the framework (:meth:`BaseSpec.config` recognises the</span>
 <span class="sd">  ``_synthesize_per_spec`` marker).</span>
-<span class="sd">- ``@&lt;Subclass&gt;.add(div=&quot;div(phi,U)&quot;, grad=&quot;grad(U)&quot;)`` extends the</span>
+<span class="sd">- ``@&lt;Subclass&gt;.add(div="div(phi,U)", grad="grad(U)")`` extends the</span>
 <span class="sd">  subclass with typed Pydantic fields whose value types come from</span>
 <span class="sd">  :mod:`neofoam.foam.schemes` (``DdtScheme``, ``DivScheme``, …).</span>
 <span class="sd">- ``@&lt;Subclass&gt;.add(...)`` doubles as an operation decorator so it can</span>
@@ -608,7 +608,7 @@
 
 <span class="sd">Loading reads the underlying OpenFOAM file once per case dir; slicing</span>
 <span class="sd">is per-subclass and per-section.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -639,30 +639,30 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <span class="n">_SCHEMES_SECTIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;ddt&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;ddtSchemes&quot;</span><span class="p">,</span> <span class="n">DdtScheme</span><span class="p">),</span>
-    <span class="s2">&quot;div&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;divSchemes&quot;</span><span class="p">,</span> <span class="n">DivScheme</span><span class="p">),</span>
-    <span class="s2">&quot;grad&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;gradSchemes&quot;</span><span class="p">,</span> <span class="n">GradScheme</span><span class="p">),</span>
-    <span class="s2">&quot;laplacian&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;laplacianSchemes&quot;</span><span class="p">,</span> <span class="n">LaplacianScheme</span><span class="p">),</span>
-    <span class="s2">&quot;snGrad&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;snGradSchemes&quot;</span><span class="p">,</span> <span class="n">SnGradScheme</span><span class="p">),</span>
-    <span class="s2">&quot;interpolation&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;interpolationSchemes&quot;</span><span class="p">,</span> <span class="n">InterpolationScheme</span><span class="p">),</span>
+    <span class="s2">"ddt"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"ddtSchemes"</span><span class="p">,</span> <span class="n">DdtScheme</span><span class="p">),</span>
+    <span class="s2">"div"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"divSchemes"</span><span class="p">,</span> <span class="n">DivScheme</span><span class="p">),</span>
+    <span class="s2">"grad"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"gradSchemes"</span><span class="p">,</span> <span class="n">GradScheme</span><span class="p">),</span>
+    <span class="s2">"laplacian"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"laplacianSchemes"</span><span class="p">,</span> <span class="n">LaplacianScheme</span><span class="p">),</span>
+    <span class="s2">"snGrad"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"snGradSchemes"</span><span class="p">,</span> <span class="n">SnGradScheme</span><span class="p">),</span>
+    <span class="s2">"interpolation"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"interpolationSchemes"</span><span class="p">,</span> <span class="n">InterpolationScheme</span><span class="p">),</span>
 <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sanitize_name</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM key (``&quot;div(phi,U)&quot;``) → Python attr (``&quot;div_phi_U&quot;``).</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM key (``"div(phi,U)"``) → Python attr (``"div_phi_U"``).</span>
 
 <span class="sd">    The Pydantic field uses the original key as its ``alias`` so OpenFOAM</span>
 <span class="sd">    dictionary parsing finds the entry; ``populate_by_name=True`` also</span>
 <span class="sd">    lets callers use the sanitized name directly when constructing</span>
 <span class="sd">    instances in Python.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="p">(</span>
-        <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"("</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">")"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"*"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
     <span class="p">)</span>
 
 
@@ -673,41 +673,41 @@
     <span class="n">value_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">optional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Record one (section, key, value_type, optional) on ``cls._pending_sections``.</span>
+<span class="w">    </span><span class="sd">"""Record one (section, key, value_type, optional) on ``cls._pending_sections``.</span>
 
 <span class="sd">    Storage is per-subclass; the actual Pydantic submodels are</span>
 <span class="sd">    (re-)synthesised by :func:`_rebuild_sections` after every change.</span>
 <span class="sd">    ``optional`` entries become ``Optional[...]`` fields defaulting to ``None``</span>
 <span class="sd">    (for domain-dependent keys like ``pRefCell`` that not every case carries).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">section</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="p">{})</span>  <span class="c1"># type: ignore[attr-defined]</span>
     <span class="n">attr_name</span> <span class="o">=</span> <span class="n">_sanitize_name</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="n">section</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">attr_name</span><span class="p">,</span> <span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">optional</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_expand_default</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fill missing required entries from an OpenFOAM ``default`` shorthand.</span>
+<span class="w">    </span><span class="sd">"""Fill missing required entries from an OpenFOAM ``default`` shorthand.</span>
 
 <span class="sd">    A scheme section may name every operator explicitly *or* give a single</span>
 <span class="sd">    ``default`` (``gradSchemes { default Gauss linear; }``) that OpenFOAM applies</span>
-<span class="sd">    to every operator it doesn&#39;t spell out. The typed per-operator fields are</span>
+<span class="sd">    to every operator it doesn't spell out. The typed per-operator fields are</span>
 <span class="sd">    required, so a tutorial that leans on ``default`` would fail to load. This</span>
 <span class="sd">    before-validator expands ``default`` into any declared field the input omits</span>
 <span class="sd">    (explicit entries always win), so real cases round-trip while validation still</span>
 <span class="sd">    proves each operator the solver needs is covered.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;default&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"default"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data</span>
-    <span class="n">default_value</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
-    <span class="c1"># ``default none`` is OpenFOAM&#39;s *sentinel* — &quot;no default; an unlisted operator</span>
-    <span class="c1"># is an error&quot; — not a value to fill with. Expanding it would fabricate an</span>
+    <span class="n">default_value</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span>
+    <span class="c1"># ``default none`` is OpenFOAM's *sentinel* — "no default; an unlisted operator</span>
+    <span class="c1"># is an error" — not a value to fill with. Expanding it would fabricate an</span>
     <span class="c1"># invalid ``none`` scheme; leave the required keys missing so the real gap shows.</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">default_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">default_value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">default_value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">default_value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"none"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data</span>
     <span class="n">out</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">field_info</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="n">alias</span> <span class="o">=</span> <span class="n">field_info</span><span class="o">.</span><span class="n">alias</span> <span class="ow">or</span> <span class="n">name</span>
-        <span class="k">if</span> <span class="n">alias</span> <span class="o">==</span> <span class="s2">&quot;default&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">alias</span> <span class="o">==</span> <span class="s2">"default"</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="n">alias</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span> <span class="ow">and</span> <span class="n">field_info</span><span class="o">.</span><span class="n">is_required</span><span class="p">():</span>
             <span class="n">out</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_value</span>
@@ -715,22 +715,22 @@
 
 
 <span class="c1"># The decorated before-validator, built once and attached to every synthesized</span>
-<span class="c1"># section model. Typed ``Any``: create_model&#39;s ``__validators__`` wants decorated</span>
-<span class="c1"># validators, whose pydantic descriptor type isn&#39;t expressible at the call site.</span>
-<span class="n">_EXPAND_DEFAULT_VALIDATOR</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)(</span>
+<span class="c1"># section model. Typed ``Any``: create_model's ``__validators__`` wants decorated</span>
+<span class="c1"># validators, whose pydantic descriptor type isn't expressible at the call site.</span>
+<span class="n">_EXPAND_DEFAULT_VALIDATOR</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)(</span>
     <span class="nb">classmethod</span><span class="p">(</span><span class="n">_expand_default</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
 <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_sections</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;(Re)synthesise every section submodel and re-attach to ``cls``.</span>
+<span class="w">    </span><span class="sd">"""(Re)synthesise every section submodel and re-attach to ``cls``.</span>
 
 <span class="sd">    Pydantic v2 captures a snapshot of nested schemas at</span>
 <span class="sd">    ``model_rebuild`` time, so adding fields to an already-attached</span>
-<span class="sd">    section submodel doesn&#39;t propagate. Building each section from</span>
+<span class="sd">    section submodel doesn't propagate. Building each section from</span>
 <span class="sd">    scratch via :func:`pydantic.create_model` and re-assigning the</span>
 <span class="sd">    parent field works around this.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># type: ignore[attr-defined]</span>
         <span class="n">field_defs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="n">optional</span><span class="p">)</span> <span class="ow">in</span> <span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -742,11 +742,11 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">field_defs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">))</span>
         <span class="n">fresh</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">section_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">__config__</span><span class="o">=</span><span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">section_name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">__config__</span><span class="o">=</span><span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="c1"># Attach the ``default``-expansion before-validator to the synthesized</span>
             <span class="c1"># section model so a tutorial that leans on ``default`` round-trips.</span>
-            <span class="n">__validators__</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;_expand_default&quot;</span><span class="p">:</span> <span class="n">_EXPAND_DEFAULT_VALIDATOR</span><span class="p">},</span>
+            <span class="n">__validators__</span><span class="o">=</span><span class="p">{</span><span class="s2">"_expand_default"</span><span class="p">:</span> <span class="n">_EXPAND_DEFAULT_VALIDATOR</span><span class="p">},</span>
             <span class="o">**</span><span class="n">field_defs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="n">section_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">FieldInfo</span><span class="p">(</span>  <span class="c1"># type: ignore[attr-defined]</span>
@@ -761,47 +761,47 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical_scheme</span><span class="p">(</span><span class="n">section_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A runnable default value for one scheme entry, serialized as a form value.</span>
+<span class="w">    </span><span class="sd">"""A runnable default value for one scheme entry, serialized as a form value.</span>
 
 <span class="sd">    One canonical scheme per section (``Gauss linear`` grad/div, ``corrected``</span>
 <span class="sd">    snGrad, …). The one nuance: a ``div`` term over a *flux* (``div(phi,U)``) gets a</span>
 <span class="sd">    bounded ``upwind`` interpolation, while the viscous-stress divergence stays</span>
 <span class="sd">    ``linear`` — the split OpenFOAM tutorials always make. Returns ``None`` for an</span>
 <span class="sd">    unrecognised (passthrough ``str``) section.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;ddtSchemes&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"ddtSchemes"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Euler</span><span class="p">()</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;gradSchemes&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"gradSchemes"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">GaussGrad</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="n">Linear</span><span class="p">())</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;divSchemes&quot;</span><span class="p">:</span>
-        <span class="n">interp</span> <span class="o">=</span> <span class="n">Upwind</span><span class="p">()</span> <span class="k">if</span> <span class="s2">&quot;phi&quot;</span> <span class="ow">in</span> <span class="n">alias</span> <span class="k">else</span> <span class="n">Linear</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"divSchemes"</span><span class="p">:</span>
+        <span class="n">interp</span> <span class="o">=</span> <span class="n">Upwind</span><span class="p">()</span> <span class="k">if</span> <span class="s2">"phi"</span> <span class="ow">in</span> <span class="n">alias</span> <span class="k">else</span> <span class="n">Linear</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">GaussDiv</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="n">interp</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;laplacianSchemes&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"laplacianSchemes"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">GaussLaplacian</span><span class="p">(</span><span class="n">interpolation</span><span class="o">=</span><span class="n">Linear</span><span class="p">(),</span> <span class="n">sn_grad</span><span class="o">=</span><span class="n">Corrected</span><span class="p">())</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;snGradSchemes&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"snGradSchemes"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Corrected</span><span class="p">()</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;interpolationSchemes&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"interpolationSchemes"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Linear</span><span class="p">()</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="c1">#: Standard corrector counts per algorithm-control section (keyed by section name).</span>
 <span class="n">_CONTROL_CORRECTORS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;PIMPLE&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;nOuterCorrectors&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;nCorrectors&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-    <span class="s2">&quot;PISO&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;nCorrectors&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
-    <span class="s2">&quot;SIMPLE&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="s2">"PIMPLE"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"nOuterCorrectors"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"nCorrectors"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"nNonOrthogonalCorrectors"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="s2">"PISO"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"nCorrectors"</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">"nNonOrthogonalCorrectors"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="s2">"SIMPLE"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"nNonOrthogonalCorrectors"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
 <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical_controls</span><span class="p">(</span><span class="n">section_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">declared_aliases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A runnable algorithm-control block (e.g. ``PIMPLE { … }``) for the scaffold.</span>
+<span class="w">    </span><span class="sd">"""A runnable algorithm-control block (e.g. ``PIMPLE { … }``) for the scaffold.</span>
 
 <span class="sd">    The corrector counts come from the section name; the algorithm reads the block at</span>
 <span class="sd">    run time even though the schema models it as optional/extra, so a starter must</span>
 <span class="sd">    include it. Any declared control key (the closed-domain pressure reference</span>
 <span class="sd">    ``pRefCell`` / ``pRefValue``) is seeded to 0 — harmless when a pressure BC already</span>
 <span class="sd">    references the field, required when none does.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">block</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_CONTROL_CORRECTORS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="p">{}))</span>
     <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">declared_aliases</span><span class="p">:</span>
         <span class="n">block</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -809,28 +809,28 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical_solver</span><span class="p">(</span><span class="n">alias</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A runnable linear-solver block for one ``solvers.&lt;field&gt;`` entry.</span>
+<span class="w">    </span><span class="sd">"""A runnable linear-solver block for one ``solvers.&lt;field&gt;`` entry.</span>
 
 <span class="sd">    Pressure-like fields (``p`` / ``p_rgh`` / ``pcorr`` / ``Phi``) get a symmetric</span>
 <span class="sd">    ``PCG``/``DIC`` block; everything else (``U``, ``alpha.water``, …) a</span>
 <span class="sd">    ``smoothSolver``. A ``&lt;field&gt;Final`` companion tightens ``relTol`` to 0.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">is_final</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Final&quot;</span><span class="p">)</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">alias</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Final&quot;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">is_final</span> <span class="k">else</span> <span class="n">alias</span>
+<span class="sd">    """</span>
+    <span class="n">is_final</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"Final"</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">alias</span><span class="p">[:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">"Final"</span><span class="p">)]</span> <span class="k">if</span> <span class="n">is_final</span> <span class="k">else</span> <span class="n">alias</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="n">is_pressure</span> <span class="o">=</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">&quot;p&quot;</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;p_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;pcorr&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">&quot;phi&quot;</span>
+    <span class="n">is_pressure</span> <span class="o">=</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">"p"</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"p_"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"pcorr"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">"phi"</span>
     <span class="k">if</span> <span class="n">is_pressure</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;solver&quot;</span><span class="p">:</span> <span class="s2">&quot;PCG&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;preconditioner&quot;</span><span class="p">:</span> <span class="s2">&quot;DIC&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="mf">1e-06</span><span class="p">,</span>
-            <span class="s2">&quot;relTol&quot;</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">is_final</span> <span class="k">else</span> <span class="mf">0.05</span><span class="p">,</span>
+            <span class="s2">"solver"</span><span class="p">:</span> <span class="s2">"PCG"</span><span class="p">,</span>
+            <span class="s2">"preconditioner"</span><span class="p">:</span> <span class="s2">"DIC"</span><span class="p">,</span>
+            <span class="s2">"tolerance"</span><span class="p">:</span> <span class="mf">1e-06</span><span class="p">,</span>
+            <span class="s2">"relTol"</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">is_final</span> <span class="k">else</span> <span class="mf">0.05</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;solver&quot;</span><span class="p">:</span> <span class="s2">&quot;smoothSolver&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;smoother&quot;</span><span class="p">:</span> <span class="s2">&quot;symGaussSeidel&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="mf">1e-08</span><span class="p">,</span>
-        <span class="s2">&quot;relTol&quot;</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">is_final</span> <span class="k">else</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="s2">"solver"</span><span class="p">:</span> <span class="s2">"smoothSolver"</span><span class="p">,</span>
+        <span class="s2">"smoother"</span><span class="p">:</span> <span class="s2">"symGaussSeidel"</span><span class="p">,</span>
+        <span class="s2">"tolerance"</span><span class="p">:</span> <span class="mf">1e-08</span><span class="p">,</span>
+        <span class="s2">"relTol"</span><span class="p">:</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">is_final</span> <span class="k">else</span> <span class="mf">0.1</span><span class="p">,</span>
     <span class="p">}</span>
 
 
@@ -841,18 +841,18 @@
 
 <div class="viewcode-block" id="fvSchemes">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSchemes">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSchemes&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSchemes"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">fvSchemes</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for per-spec ``system/fvSchemes`` subclasses.</span>
+<span class="w">    </span><span class="sd">"""Base class for per-spec ``system/fvSchemes`` subclasses.</span>
 
 <span class="sd">    Operations on a spec declare which entries they read via</span>
 <span class="sd">    ``@&lt;Subclass&gt;.add(...)``. Each call extends the subclass with one</span>
 <span class="sd">    or more typed fields, scoped to the section the short-name maps</span>
 <span class="sd">    to (``ddt → ddtSchemes``, ``div → divSchemes``, …). Unknown short</span>
 <span class="sd">    names pass through unchanged with ``str`` typing.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">_synthesize_per_spec</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_section_classes</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -863,13 +863,13 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSchemes.form_defaults">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">form_defaults</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A canonical, ready-to-edit prefill for every required scheme this spec needs.</span>
+<span class="w">        </span><span class="sd">"""A canonical, ready-to-edit prefill for every required scheme this spec needs.</span>
 
 <span class="sd">        The per-operator scheme fields are required-but-defaultless (so validation</span>
 <span class="sd">        proves each operator is covered), which leaves ``model_construct`` — and thus</span>
 <span class="sd">        the form prefill — empty. This fills each required entry with a runnable</span>
 <span class="sd">        canonical scheme (:func:`_canonical_scheme`), keyed by its OpenFOAM alias.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">section_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -888,13 +888,13 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSchemes.add">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">section_to_keys</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extend this subclass with typed entries.</span>
+<span class="w">        </span><span class="sd">"""Extend this subclass with typed entries.</span>
 
 <span class="sd">        Each kwarg maps a short section name to either a single entry</span>
-<span class="sd">        key (``&quot;div(phi,U)&quot;``) or a list of keys. Returns an identity</span>
+<span class="sd">        key (``"div(phi,U)"``) or a list of keys. Returns an identity</span>
 <span class="sd">        decorator so call sites can stack ``@&lt;Subclass&gt;.add(...)`` on</span>
 <span class="sd">        top of ``@spec.operation(...)``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">for</span> <span class="n">short_name</span><span class="p">,</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">section_to_keys</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">section_name</span><span class="p">,</span> <span class="n">value_type</span> <span class="o">=</span> <span class="n">_SCHEMES_SECTIONS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">short_name</span><span class="p">,</span> <span class="p">(</span><span class="n">short_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">))</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -913,18 +913,18 @@
 
 <div class="viewcode-block" id="fvSolution">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSolution">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">fvSolution</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for per-spec ``system/fvSolution`` subclasses.</span>
+<span class="w">    </span><span class="sd">"""Base class for per-spec ``system/fvSolution`` subclasses.</span>
 
 <span class="sd">    ``@&lt;Subclass&gt;.add(*fields)`` declares which fields the operation</span>
 <span class="sd">    solves for. Each field name becomes a typed entry under the</span>
 <span class="sd">    ``solvers`` sub-dictionary; other top-level sections (``PIMPLE``,</span>
 <span class="sd">    ``SIMPLE``, ``relaxationFactors``, …) pass through via</span>
-<span class="sd">    ``extra=&quot;allow&quot;``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``extra="allow"``.</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">_synthesize_per_spec</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">_pending_sections</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -934,25 +934,25 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSolution.form_defaults">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">form_defaults</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A canonical, runnable ``fvSolution`` prefill.</span>
+<span class="w">        </span><span class="sd">"""A canonical, runnable ``fvSolution`` prefill.</span>
 
 <span class="sd">        Fills each required ``solvers.&lt;field&gt;`` entry with a runnable linear-solver</span>
 <span class="sd">        block (:func:`_canonical_solver`), and emits an algorithm-control block for</span>
 <span class="sd">        each declared control section (``PIMPLE`` / ``PISO`` / ``SIMPLE`` —</span>
 <span class="sd">        :func:`_canonical_controls`) so the case actually runs: the solver reads e.g.</span>
 <span class="sd">        ``PIMPLE`` at run time even though the schema treats it as optional/extra.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">solvers</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;solvers&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">solvers</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"solvers"</span><span class="p">,</span> <span class="p">{})</span>
         <span class="n">solvers_out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">_attr</span><span class="p">,</span> <span class="p">(</span><span class="n">_value_type</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="n">optional</span><span class="p">)</span> <span class="ow">in</span> <span class="n">solvers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">optional</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">solvers_out</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">_canonical_solver</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">solvers_out</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;solvers&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">solvers_out</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"solvers"</span><span class="p">]</span> <span class="o">=</span> <span class="n">solvers_out</span>
         <span class="k">for</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pending_sections</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">&quot;solvers&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">section_name</span> <span class="o">==</span> <span class="s2">"solvers"</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">aliases</span> <span class="o">=</span> <span class="p">[</span><span class="n">alias</span> <span class="k">for</span> <span class="n">_attr</span><span class="p">,</span> <span class="p">(</span><span class="n">_vt</span><span class="p">,</span> <span class="n">alias</span><span class="p">,</span> <span class="n">_opt</span><span class="p">)</span> <span class="ow">in</span> <span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
             <span class="n">block</span> <span class="o">=</span> <span class="n">_canonical_controls</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="n">aliases</span><span class="p">)</span>
@@ -965,7 +965,7 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSolution.add">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare solver entries the operation needs.</span>
+<span class="w">        </span><span class="sd">"""Declare solver entries the operation needs.</span>
 
 <span class="sd">        Each ``field`` adds a typed entry under ``solvers.&lt;field&gt;`` plus its</span>
 <span class="sd">        ``solvers.&lt;field&gt;Final`` companion: on the final (in PISO mode:</span>
@@ -974,10 +974,10 @@
 <span class="sd">        value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a</span>
 <span class="sd">        richer typed solver-control model is a follow-up. The presence</span>
 <span class="sd">        check alone catches the most common case-misconfiguration failures.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;solvers&quot;</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;solvers&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">Final&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">Final"</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
         <span class="n">_rebuild_sections</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -990,14 +990,14 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSolution.add_controls">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">add_controls</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">key_to_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare OPTIONAL control entries under a top-level ``section``.</span>
+<span class="w">        </span><span class="sd">"""Declare OPTIONAL control entries under a top-level ``section``.</span>
 
 <span class="sd">        For algorithm-control keys the solver reads straight from the dict —</span>
 <span class="sd">        e.g. ``PIMPLE { pRefCell; pRefValue; }`` for closed-domain pressure</span>
-<span class="sd">        referencing. Optional (default ``None``) so cases that don&#39;t need them</span>
+<span class="sd">        referencing. Optional (default ``None``) so cases that don't need them</span>
 <span class="sd">        (open domains with a fixed-pressure BC) still validate, and</span>
 <span class="sd">        ``exclude_none`` keeps them out of the written file unless set.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value_type</span> <span class="ow">in</span> <span class="n">key_to_type</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">section</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value_type</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">_rebuild_sections</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span></div>
@@ -1042,6 +1042,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

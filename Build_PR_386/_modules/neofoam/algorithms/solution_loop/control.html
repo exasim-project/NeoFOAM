@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">Pydantic-based control condition classes for CFD algorithms.</span>
 
 <span class="sd">This module provides:</span>
@@ -599,7 +599,7 @@
 <span class="sd">- Algorithm control bundles (PimpleControl, SimpleControl)</span>
 
 <span class="sd">All classes are Pydantic BaseModels with automatic validation.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -609,7 +609,7 @@
 <div class="viewcode-block" id="IterationCountCondition">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.IterationCountCondition">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">IterationCountCondition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Generic iteration count condition.</span>
 
 <span class="sd">    Executes a loop for a fixed number of iterations.</span>
@@ -617,22 +617,22 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        nIterations: Number of iterations (must be &gt;= 1)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
-    <span class="n">nIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of iterations to execute&quot;</span><span class="p">)</span>
+    <span class="n">nIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of iterations to execute"</span><span class="p">)</span>
 
     <span class="n">_iteration_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">_linked_conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Check if loop should continue.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True if more iterations needed, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_count</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nIterations</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_count</span> <span class="o">+=</span> <span class="mi">1</span>
 
@@ -646,33 +646,33 @@
 <div class="viewcode-block" id="IterationCountCondition.is_first">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.IterationCountCondition.is_first">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_first</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the first iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if this is the first iteration."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_count</span> <span class="o">==</span> <span class="mi">1</span></div>
 
 
 <div class="viewcode-block" id="IterationCountCondition.is_final">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.IterationCountCondition.is_final">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_final</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the final iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if this is the final iteration."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_count</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nIterations</span></div>
 
 
 <div class="viewcode-block" id="IterationCountCondition.reset">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.IterationCountCondition.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset iteration counter.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reset iteration counter."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration_count</span> <span class="o">=</span> <span class="mi">0</span></div>
 
 
 <div class="viewcode-block" id="IterationCountCondition.link_condition">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.IterationCountCondition.link_condition">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">link_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Link another condition to automatically reset when this one iterates.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            condition: Condition to reset on each iteration of this condition</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_linked_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">condition</span><span class="p">)</span></div>
 </div>
 
@@ -681,7 +681,7 @@
 <div class="viewcode-block" id="ResidualConvergenceCondition">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.ResidualConvergenceCondition">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ResidualConvergenceCondition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Residual-based convergence condition.</span>
 
 <span class="sd">    Checks if all field residuals have dropped below specified tolerances.</span>
@@ -689,25 +689,25 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        residualControl: Dictionary of field names to tolerance values</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="n">residualControl</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Field name to tolerance mapping (e.g., {&#39;p&#39;: 1e-2, &#39;U&#39;: 1e-3})&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Field name to tolerance mapping (e.g., {'p': 1e-2, 'U': 1e-3})"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">_converged</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">_get_residual</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Check convergence based on residuals.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            False if converged (stop iteration), True to continue</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">residualControl</span><span class="p">:</span>
             <span class="c1"># No residual control specified - continue iteration</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -733,19 +733,19 @@
 <div class="viewcode-block" id="ResidualConvergenceCondition.converged">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.ResidualConvergenceCondition.converged">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">converged</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if converged.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if converged."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged</span></div>
 
 
 <div class="viewcode-block" id="ResidualConvergenceCondition.reset">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.ResidualConvergenceCondition.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset convergence flag.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reset convergence flag."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_converged</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_residual_from_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">field_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Extract residual from context (placeholder for actual implementation).</span>
 
 <span class="sd">        Args:</span>
@@ -754,7 +754,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Residual value</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="c1"># This will be implemented when integrating with actual residual tracking</span>
         <span class="c1"># For now, return a large value to continue iteration</span>
         <span class="k">return</span> <span class="mf">1.0</span></div>
@@ -764,22 +764,22 @@
 <div class="viewcode-block" id="SingleIterationCondition">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SingleIterationCondition">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SingleIterationCondition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Single iteration condition (executes once per reset).</span>
 
 <span class="sd">    Returns True once, then False until reset.</span>
 <span class="sd">    Used for PIMPLE outer loop (once per time step).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">_executed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Execute once per reset.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True on first call, False on subsequent calls</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -788,7 +788,7 @@
 <div class="viewcode-block" id="SingleIterationCondition.reset">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SingleIterationCondition.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset for next execution.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reset for next execution."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_executed</span> <span class="o">=</span> <span class="kc">False</span></div>
 </div>
 
@@ -797,7 +797,7 @@
 <div class="viewcode-block" id="BooleanFlagCondition">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.BooleanFlagCondition">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BooleanFlagCondition</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Simple boolean flag condition.</span>
 
 <span class="sd">    Returns the value of the enabled flag.</span>
@@ -805,12 +805,12 @@
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        enabled: Whether condition is enabled</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether condition is enabled&quot;</span><span class="p">)</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether condition is enabled"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return flag value.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return flag value."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span></div>
 
 
@@ -818,7 +818,7 @@
 <div class="viewcode-block" id="PimpleControl">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PimpleControl</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    PIMPLE algorithm control bundle.</span>
 
 <span class="sd">    Manages nested loop structure:</span>
@@ -835,29 +835,29 @@
 <span class="sd">            iteration only</span>
 <span class="sd">        finalOnLastPimpleIterOnly: Whether the ``&lt;field&gt;Final`` settings are</span>
 <span class="sd">            restricted to the final outer iteration</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
-    <span class="n">nCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of PIMPLE corrector iterations&quot;</span><span class="p">)</span>
+    <span class="n">nCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of PIMPLE corrector iterations"</span><span class="p">)</span>
     <span class="n">nOuterCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of PIMPLE outer corrector iterations&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of PIMPLE outer corrector iterations"</span>
     <span class="p">)</span>
     <span class="n">nNonOrthogonalCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of non-orthogonal corrections&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of non-orthogonal corrections"</span>
     <span class="p">)</span>
     <span class="n">momentumPredictor_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable momentum predictor&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;momentumPredictor&quot;</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Enable momentum predictor"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"momentumPredictor"</span>
     <span class="p">)</span>
     <span class="n">turbCorr_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable turbulence correction&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;turbCorr&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Enable turbulence correction"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"turbCorr"</span>
     <span class="p">)</span>
     <span class="n">turbOnFinalIterOnly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Correct turbulence on the final outer iteration only&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Correct turbulence on the final outer iteration only"</span>
     <span class="p">)</span>
     <span class="n">finalOnLastPimpleIterOnly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Restrict the &lt;field&gt;Final settings to the final outer iteration&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Restrict the &lt;field&gt;Final settings to the final outer iteration"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">_loop</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IterationCountCondition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -869,7 +869,7 @@
 <div class="viewcode-block" id="PimpleControl.model_post_init">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.model_post_init">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize nested conditions after model validation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize nested conditions after model validation."""</span>
         <span class="c1"># Outer loop: nOuterCorrectors per time step</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span><span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nOuterCorrectors</span><span class="p">)</span>
 
@@ -882,7 +882,7 @@
         <span class="c1"># Link non-ortho loop to corrector (reset non-ortho on each corrector iteration)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span><span class="o">.</span><span class="n">link_condition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="p">)</span>
 
-        <span class="c1"># Link corrector loop to the outer loop (pimpleControl::loop()&#39;s corrPISO_ = 0)</span>
+        <span class="c1"># Link corrector loop to the outer loop (pimpleControl::loop()'s corrPISO_ = 0)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">link_condition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span><span class="p">)</span>
 
         <span class="c1"># Flags</span>
@@ -893,14 +893,14 @@
 <div class="viewcode-block" id="PimpleControl.loop">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.loop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        PIMPLE outer loop.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True while outer iterations remain, False otherwise.</span>
 <span class="sd">            Automatically resets all counters when the loop finishes</span>
 <span class="sd">            so the control is ready for the next time step.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
@@ -911,12 +911,12 @@
 <div class="viewcode-block" id="PimpleControl.correct">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.correct">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        PIMPLE corrector loop.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True while corrector iterations remain, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
@@ -924,12 +924,12 @@
 <div class="viewcode-block" id="PimpleControl.correctNonOrthogonal">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.correctNonOrthogonal">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correctNonOrthogonal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Non-orthogonal correction loop.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True while non-orthogonal corrections remain, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
@@ -937,7 +937,7 @@
 <div class="viewcode-block" id="PimpleControl.firstIter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.firstIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">firstIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the first outer (PIMPLE) iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if this is the first outer (PIMPLE) iteration."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_first</span><span class="p">()</span></div>
 
@@ -945,7 +945,7 @@
 <div class="viewcode-block" id="PimpleControl.finalIter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.finalIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the final outer (PIMPLE) iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if this is the final outer (PIMPLE) iteration."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span><span class="o">.</span><span class="n">is_final</span><span class="p">()</span></div>
 
@@ -953,11 +953,11 @@
 <div class="viewcode-block" id="PimpleControl.finalInnerIter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.finalInnerIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalInnerIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the last non-orthogonal pass of the last pressure corrector.</span>
+<span class="w">        </span><span class="sd">"""Check if this is the last non-orthogonal pass of the last pressure corrector.</span>
 
 <span class="sd">        Mirrors ``pimpleControl::finalInnerIter()``; the outer iteration only enters</span>
 <span class="sd">        the predicate under ``finalOnLastPimpleIterOnly``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">final_inner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span><span class="o">.</span><span class="n">is_final</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="o">.</span><span class="n">is_final</span><span class="p">()</span>
@@ -969,7 +969,7 @@
 <div class="viewcode-block" id="PimpleControl.finalNonOrthogonalIter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.finalNonOrthogonalIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalNonOrthogonalIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the final non-orthogonal iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if this is the final non-orthogonal iteration."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="o">.</span><span class="n">is_final</span><span class="p">()</span></div>
 
@@ -977,7 +977,7 @@
 <div class="viewcode-block" id="PimpleControl.momentumPredictor">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.momentumPredictor">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">momentumPredictor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if momentum predictor is enabled.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if momentum predictor is enabled."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
 
@@ -985,12 +985,12 @@
 <div class="viewcode-block" id="PimpleControl.turbCorr">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.turbCorr">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">turbCorr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the turbulence correction runs in this outer iteration.</span>
+<span class="w">        </span><span class="sd">"""Check whether the turbulence correction runs in this outer iteration.</span>
 
 <span class="sd">        Mirrors ``pimpleControl::turbCorr()``: with the default</span>
 <span class="sd">        ``turbOnFinalIterOnly true`` it runs once per time step, on the final outer</span>
 <span class="sd">        iteration.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_turb_corr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_turb_corr</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -1000,7 +1000,7 @@
 <div class="viewcode-block" id="PimpleControl.reset">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset all conditions for next time step.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reset all conditions for next time step."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -1014,7 +1014,7 @@
 <div class="viewcode-block" id="SimpleControl">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SimpleControl</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    SIMPLE algorithm control bundle.</span>
 
 <span class="sd">        Manages loop structure:</span>
@@ -1025,29 +1025,29 @@
 <span class="sd">    Attributes:</span>
 <span class="sd">        nNonOrthogonalCorrectors: Number of non-orthogonal corrections (&gt;= 0)</span>
 <span class="sd">        residualControl: Dictionary of field tolerances for convergence</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="n">nNonOrthogonalCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Number of non-orthogonal corrections&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Number of non-orthogonal corrections"</span>
     <span class="p">)</span>
     <span class="n">momentumPredictor_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable momentum predictor&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;momentumPredictor&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Enable momentum predictor"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"momentumPredictor"</span>
     <span class="p">)</span>
     <span class="n">consistent_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable SIMPLEC consistent mode&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;consistent&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Enable SIMPLEC consistent mode"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"consistent"</span>
     <span class="p">)</span>
     <span class="n">useResidualConvergence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Enable convergence-driven SIMPLE loop behavior &quot;</span>
-            <span class="s2">&quot;(legacy mode with residualControl + optional runtime guard)&quot;</span>
+            <span class="s2">"Enable convergence-driven SIMPLE loop behavior "</span>
+            <span class="s2">"(legacy mode with residualControl + optional runtime guard)"</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">residualControl</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Field tolerance mapping for convergence checking&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Field tolerance mapping for convergence checking"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">_residual_check</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ResidualConvergenceCondition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1060,7 +1060,7 @@
 <div class="viewcode-block" id="SimpleControl.model_post_init">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.model_post_init">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SIMPLE control conditions after model validation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Initialize SIMPLE control conditions after model validation."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="o">=</span> <span class="n">ResidualConvergenceCondition</span><span class="p">(</span><span class="n">residualControl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residualControl</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span><span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">momentumPredictor_enabled</span><span class="p">)</span>
@@ -1070,7 +1070,7 @@
 <div class="viewcode-block" id="SimpleControl.loop">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.loop">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        SIMPLE loop gate.</span>
 
 <span class="sd">        Default behavior (useResidualConvergence=False):</span>
@@ -1081,7 +1081,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True to continue SIMPLE pass, False to stop</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">useResidualConvergence</span><span class="p">:</span>
@@ -1090,7 +1090,7 @@
                 <span class="k">return</span> <span class="kc">True</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_inner_loop_open</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="c1"># Closing the pass re-arms the non-orthogonal corrector for the</span>
-            <span class="c1"># next outer iteration (mirrors PimpleControl&#39;s auto-reset —</span>
+            <span class="c1"># next outer iteration (mirrors PimpleControl's auto-reset —</span>
             <span class="c1"># without it only the first pass ever runs a pressure solve).</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
@@ -1104,7 +1104,7 @@
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="c1"># Check runtime limit only if ctx is provided</span>
-        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="s2">&quot;runTime&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">runTime</span><span class="p">,</span> <span class="s2">&quot;loop&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="s2">"runTime"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">runTime</span><span class="p">,</span> <span class="s2">"loop"</span><span class="p">):</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">runTime</span><span class="o">.</span><span class="n">loop</span><span class="p">():</span>
                 <span class="k">return</span> <span class="kc">False</span>
 
@@ -1114,12 +1114,12 @@
 <div class="viewcode-block" id="SimpleControl.correctNonOrthogonal">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.correctNonOrthogonal">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correctNonOrthogonal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Non-orthogonal correction loop.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            True while non-orthogonal corrections remain, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
@@ -1127,7 +1127,7 @@
 <div class="viewcode-block" id="SimpleControl.finalNonOrthogonalIter">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.finalNonOrthogonalIter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">finalNonOrthogonalIter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if this is the final non-orthogonal iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if this is the final non-orthogonal iteration."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="o">.</span><span class="n">is_final</span><span class="p">()</span></div>
 
@@ -1135,7 +1135,7 @@
 <div class="viewcode-block" id="SimpleControl.momentumPredictor">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.momentumPredictor">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">momentumPredictor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if momentum predictor is enabled.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if momentum predictor is enabled."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
 
@@ -1143,7 +1143,7 @@
 <div class="viewcode-block" id="SimpleControl.consistent">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.consistent">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">consistent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if SIMPLEC consistent mode is enabled.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if SIMPLEC consistent mode is enabled."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consistent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consistent</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
 
@@ -1151,7 +1151,7 @@
 <div class="viewcode-block" id="SimpleControl.converged">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.converged">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">converged</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if algorithm has converged.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Check if algorithm has converged."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span><span class="o">.</span><span class="n">converged</span><span class="p">()</span></div>
 
@@ -1159,19 +1159,19 @@
 <div class="viewcode-block" id="SimpleControl.get_residual_condition">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.get_residual_condition">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_residual_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResidualConvergenceCondition</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get residual convergence condition for advanced composition.</span>
 
-<span class="sd">        Allows boolean composition with framework&#39;s Condition class:</span>
+<span class="sd">        Allows boolean composition with framework's Condition class:</span>
 
 <span class="sd">        Example:</span>
-<span class="sd">            simple = SimpleControl(mesh, residualControl={&#39;p&#39;: 1e-2})</span>
-<span class="sd">            residual_cond = Condition(simple.get_residual_condition(), &quot;Residuals&quot;)</span>
+<span class="sd">            simple = SimpleControl(mesh, residualControl={'p': 1e-2})</span>
+<span class="sd">            residual_cond = Condition(simple.get_residual_condition(), "Residuals")</span>
 <span class="sd">            custom_cond = ~residual_cond &amp; other_condition</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            ResidualConvergenceCondition instance</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span></div>
 
@@ -1179,7 +1179,7 @@
 <div class="viewcode-block" id="SimpleControl.reset">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset convergence tracking.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Reset convergence tracking."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
@@ -1193,22 +1193,22 @@
 <div class="viewcode-block" id="SolutionControl">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolutionControl</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Outer solution-loop control — *separate* from the algorithm controls.</span>
+<span class="w">    </span><span class="sd">"""Outer solution-loop control — *separate* from the algorithm controls.</span>
 
 <span class="sd">    Owns the outer-loop predicate (advance time, end on convergence); the</span>
 <span class="sd">    corrector-loop structure stays in :class:`PimpleControl` / :class:`SimpleControl`.</span>
 <span class="sd">    Mirrors ``Foam::solutionControl`` + ``simpleControl::loop()``.</span>
 
 <span class="sd">    ``residualControl`` empty  ⇒ transient: never ends early, runs to ``endTime``.</span>
-<span class="sd">    ``residualControl`` set    ⇒ steady: ends the run once every field&#39;s residual</span>
+<span class="sd">    ``residualControl`` set    ⇒ steady: ends the run once every field's residual</span>
 <span class="sd">    drops below its tolerance (``endTime`` is then the iteration cap).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="n">residualControl</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Field tolerance mapping for outer convergence (empty = transient)&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Field tolerance mapping for outer convergence (empty = transient)"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">_residual_check</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ResidualConvergenceCondition</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1227,14 +1227,14 @@
 <div class="viewcode-block" id="SolutionControl.store_residual">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl.store_residual">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">store_residual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">initial_residual</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Publish the initial residual of ``field`` for convergence checking.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Publish the initial residual of ``field`` for convergence checking."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">initial_residual</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SolutionControl.converged">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl.converged">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">converged</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;True once every ``residualControl`` field is below tolerance.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""True once every ``residualControl`` field is below tolerance."""</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># recompute from stored residuals</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span><span class="o">.</span><span class="n">converged</span><span class="p">()</span></div>
@@ -1243,17 +1243,17 @@
 <div class="viewcode-block" id="SolutionControl.run">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl.run">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Outer-loop predicate: govern advancement only.</span>
+<span class="w">        </span><span class="sd">"""Outer-loop predicate: govern advancement only.</span>
 
 <span class="sd">        End the run on convergence (stop advancing), otherwise report whether</span>
 <span class="sd">        there are more steps. It never writes — persisting fields is the</span>
-<span class="sd">        ``WriteControl``&#39;s responsibility — so ``stop()`` here means &quot;end the</span>
-<span class="sd">        run&quot;, not OpenFOAM&#39;s ``writeAndEnd``.</span>
+<span class="sd">        ``WriteControl``'s responsibility — so ``stop()`` here means "end the</span>
+<span class="sd">        run", not OpenFOAM's ``writeAndEnd``.</span>
 
 <span class="sd">        ``SolutionLoop.running()`` calls this once per step, passing the loop</span>
 <span class="sd">        itself (which exposes ``run()``/``stop()`` over its ``LoopState``):</span>
 <span class="sd">        ``return self._control.run(self)``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">converged</span><span class="p">():</span>
             <span class="n">loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>  <span class="c1"># end the run (no write)</span>
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">loop</span><span class="o">.</span><span class="n">run</span><span class="p">())</span></div>
@@ -1298,6 +1298,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

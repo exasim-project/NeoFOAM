@@ -624,12 +624,12 @@ list.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">YAML</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;turbulence_config.yaml&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"turbulence_config.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulenceConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">nut</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span>
 
 
-<span class="n">turbulence</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Turbulence&quot;</span><span class="p">)</span>
+<span class="n">turbulence</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Turbulence"</span><span class="p">)</span>
 
 
 <span class="nd">@turbulence</span><span class="o">.</span><span class="n">load</span>
@@ -645,9 +645,9 @@ first positional <code class="docutils literal notranslate"><span class="pre">se
 parameters are injected from <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> by type; plain-typed
 parameters (<code class="docutils literal notranslate"><span class="pre">float</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, …) are looked up in <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code>
 by name.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@turbulence</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.5&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@turbulence</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.5"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_nut</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">TurbulenceConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;nut&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">nut</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">U</span><span class="p">)})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"nut"</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">nut</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">U</span><span class="p">)})</span>
 </pre></div>
 </div>
 </section>
@@ -689,9 +689,9 @@ optional models the LOAD stage produced, hands them to an
 matching the <code class="xref py py-class docutils literal notranslate"><span class="pre">BuildsInitSteps</span></code> Protocol (one method:
 <code class="docutils literal notranslate"><span class="pre">run_build()</span> <span class="pre">-&gt;</span> <span class="pre">list[InitStep]</span></code>) — every <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code> already
 qualifies.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">solver_spec</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;demo_solver&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">solver_spec</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">"demo_solver"</span><span class="p">)</span>
 
-<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">&quot;demo_solver&quot;</span><span class="p">)</span>
+<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">"demo_solver"</span><span class="p">)</span>
 
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">load</span>

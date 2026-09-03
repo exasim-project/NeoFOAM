@@ -589,13 +589,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Closed-domain pressure reference for the VoF PIMPLE algorithm.</span>
+<span class="sd">"""Closed-domain pressure reference for the VoF PIMPLE algorithm.</span>
 
-<span class="sd">Reproduces the tail of interFoam&#39;s ``pEqn.H``, which pins the free pressure</span>
+<span class="sd">Reproduces the tail of interFoam's ``pEqn.H``, which pins the free pressure</span>
 <span class="sd">level of a closed domain against ``pRefCell``/``pRefValue``. pybFoam binds</span>
 <span class="sd">neither ``GeometricField::needReference()`` nor ``getRefCellValue``, so both are</span>
 <span class="sd">recovered here from bound primitives.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
@@ -608,32 +608,32 @@
 <div class="viewcode-block" id="need_reference">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference.need_reference">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">need_reference</span><span class="p">(</span><span class="n">ref_cell</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether the pressure level is undetermined by the boundary conditions.</span>
+<span class="w">    </span><span class="sd">"""Whether the pressure level is undetermined by the boundary conditions.</span>
 
 <span class="sd">    ``Foam::setRefCell`` returns this as a ``bool`` the pybFoam binding drops, so</span>
 <span class="sd">    it is recovered from the cell index, which ``findRefCell.C`` sets to ``-1``</span>
 <span class="sd">    on the no-reference path. Valid only for ``forceReference=False`` — otherwise</span>
 <span class="sd">    an index is always assigned. Only the rank owning the cell sees a</span>
 <span class="sd">    non-negative index, hence the OR-reduction.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_reduce_or</span><span class="p">(</span><span class="n">ref_cell</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reduce_or</span><span class="p">(</span><span class="n">flag</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``returnReduce(flag, orOp)``, composed from the bound ``gMax`` reduction.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``returnReduce(flag, orOp)``, composed from the bound ``gMax`` reduction."""</span>
     <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">gMax</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">scalarField</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">flag</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">])))</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_ref_cell_value">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference.get_ref_cell_value">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_ref_cell_value</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span> <span class="n">ref_cell</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Value of ``field`` in ``ref_cell``, reduced over all ranks.</span>
+<span class="w">    </span><span class="sd">"""Value of ``field`` in ``ref_cell``, reduced over all ranks.</span>
 
 <span class="sd">    Python stand-in for ``getRefCellValue``: the owning rank contributes a</span>
 <span class="sd">    one-element field and every other rank an empty one, so a max-reduction picks</span>
-<span class="sd">    the owner&#39;s value and yields ``-VGREAT`` when no rank owns a cell.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    the owner's value and yields ``-VGREAT`` when no rank owns a cell.</span>
+<span class="sd">    """</span>
     <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">internalField</span><span class="p">())</span>
     <span class="n">local</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">ref_cell</span> <span class="p">:</span> <span class="n">ref_cell</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">ref_cell</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">values</span><span class="p">[:</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">reduced</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">gMax</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">scalarField</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">local</span><span class="p">))))</span>
@@ -653,12 +653,12 @@
     <span class="n">ref_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">needs_reference</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rebuild ``p`` from ``p_rgh`` and, on a closed domain, fix its level.</span>
+<span class="w">    </span><span class="sd">"""Rebuild ``p`` from ``p_rgh`` and, on a closed domain, fix its level.</span>
 
-<span class="sd">    The tail of interFoam&#39;s ``pEqn.H``: ``p == p_rgh + rho*gh``, then — only when</span>
+<span class="sd">    The tail of interFoam's ``pEqn.H``: ``p == p_rgh + rho*gh``, then — only when</span>
 <span class="sd">    the domain is closed — shift ``p`` so ``p[ref_cell] == ref_value`` and</span>
 <span class="sd">    re-level ``p_rgh`` from the shifted ``p``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">p</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">p_rgh</span> <span class="o">+</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">gh</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">needs_reference</span><span class="p">:</span>
         <span class="n">p</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="p">(</span><span class="n">ref_value</span> <span class="o">-</span> <span class="n">get_ref_cell_value</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">ref_cell</span><span class="p">)))</span>
@@ -667,9 +667,9 @@
 
 
 <span class="n">__all__</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;get_ref_cell_value&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;need_reference&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;update_absolute_pressure&quot;</span><span class="p">,</span>
+    <span class="s2">"get_ref_cell_value"</span><span class="p">,</span>
+    <span class="s2">"need_reference"</span><span class="p">,</span>
+    <span class="s2">"update_absolute_pressure"</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
         </article>
@@ -710,6 +710,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

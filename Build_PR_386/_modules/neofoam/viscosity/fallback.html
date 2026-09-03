@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;OpenFOAM viscosity (transport) fallback adapter.</span>
+<span class="sd">"""OpenFOAM viscosity (transport) fallback adapter.</span>
 
 <span class="sd">When no native viscosity model matches the configured ``transportModel``, the</span>
 <span class="sd">selector returns an :class:`OpenFOAMViscosityModel`. Like a native model it</span>
@@ -597,7 +597,7 @@
 <span class="sd">the pybFoam ``singlePhaseTransportModel`` (driving ``correct()`` for</span>
 <span class="sd">rate-dependent transport), so the fallback is unified onto the same Context</span>
 <span class="sd">fields the native path uses.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -611,14 +611,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;OpenFOAMViscosityModel&quot;</span><span class="p">,</span> <span class="s2">&quot;TransportFactory&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"OpenFOAMViscosityModel"</span><span class="p">,</span> <span class="s2">"TransportFactory"</span><span class="p">]</span>
 
 <span class="c1">#: A pybFoam-style transport factory: ``(U, phi) -&gt; model``.</span>
 <span class="n">TransportFactory</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_default_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;TransportFactory&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return pybFoam&#39;s single-phase transport factory (lazy import).&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">"TransportFactory"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return pybFoam's single-phase transport factory (lazy import)."""</span>
     <span class="c1"># Lazy so constructing the adapter stays side-effect-free and unit-testable</span>
     <span class="c1"># with an injected factory (test_construction_does_not_import_pybfoam).</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam.turbulence</span><span class="w"> </span><span class="kn">import</span> <span class="n">singlePhaseTransportModel</span>  <span class="c1"># noqa: PLC0415</span>
@@ -629,17 +629,17 @@
 <div class="viewcode-block" id="OpenFOAMViscosityModel">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.fallback.html#neofoam.viscosity.fallback.OpenFOAMViscosityModel">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpenFOAMViscosityModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapter publishing a pybFoam transport&#39;s ``nu`` as the Context field.</span>
+<span class="w">    </span><span class="sd">"""Adapter publishing a pybFoam transport's ``nu`` as the Context field.</span>
 
 <span class="sd">    Construction is side-effect free; the underlying model is created on</span>
 <span class="sd">    :meth:`build` (or an existing ``transport`` is adopted).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">U</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;TransportFactory&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"TransportFactory"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_U</span> <span class="o">=</span> <span class="n">U</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_phi</span> <span class="o">=</span> <span class="n">phi</span>
@@ -648,8 +648,8 @@
 
 <div class="viewcode-block" id="OpenFOAMViscosityModel.build">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.fallback.html#neofoam.viscosity.fallback.OpenFOAMViscosityModel.build">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OpenFOAMViscosityModel&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adopt an existing ``transport`` or instantiate the pybFoam model.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transport</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"OpenFOAMViscosityModel"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Adopt an existing ``transport`` or instantiate the pybFoam model."""</span>
         <span class="k">if</span> <span class="n">transport</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span> <span class="o">=</span> <span class="n">transport</span>
         <span class="k">else</span><span class="p">:</span>
@@ -660,7 +660,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;OpenFOAMViscosityModel.build() must be called before use&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"OpenFOAMViscosityModel.build() must be called before use"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_impl</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">nu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -669,13 +669,13 @@
 <div class="viewcode-block" id="OpenFOAMViscosityModel.nu_field">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.fallback.html#neofoam.viscosity.fallback.OpenFOAMViscosityModel.nu_field">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">nu_field</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Materialise the transport&#39;s ``nu`` as the Context field the model owns.</span>
+<span class="w">        </span><span class="sd">"""Materialise the transport's ``nu`` as the Context field the model owns.</span>
 
 <span class="sd">        The pybFoam ``nu()`` is a ``tmp``; it is copied into a concrete</span>
 <span class="sd">        ``volScalarField`` named ``nu`` so the held Context field outlives the</span>
 <span class="sd">        ``tmp`` (a retained ``tmp`` would be use-after-free).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nu&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">())</span></div>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nu"</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">())</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -683,7 +683,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;One operation advancing a rate-dependent transport model after coupling.</span>
+<span class="w">        </span><span class="sd">"""One operation advancing a rate-dependent transport model after coupling.</span>
 
 <span class="sd">        ``correct()`` runs after the pressure-velocity coupling (after</span>
 <span class="sd">        ``continuity``). It resolves the model from the :class:`Context` at run</span>
@@ -691,10 +691,10 @@
 <span class="sd">        object is not captured into the execution-graph reference cycle (which</span>
 <span class="sd">        would leave it as cyclic garbage freed at an unsafe time during a later</span>
 <span class="sd">        in-process run).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-            <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;viscosity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"viscosity"</span><span class="p">]</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({})</span>
 
         <span class="k">return</span> <span class="p">[</span>
@@ -702,7 +702,7 @@
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span>
                     <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">correct</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">DependencyResolver</span><span class="p">())</span>
                 <span class="p">),</span>
-                <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;of_correct_viscosity&quot;</span><span class="p">),</span>
+                <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">"of_correct_viscosity"</span><span class="p">),</span>
             <span class="p">),</span>
         <span class="p">]</span></div>
 
@@ -745,6 +745,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

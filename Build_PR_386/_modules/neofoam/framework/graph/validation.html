@@ -590,7 +590,7 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Validation utilities for dependency DAGs.&quot;&quot;&quot;</span>
+<span class="sd">"""Validation utilities for dependency DAGs."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
@@ -603,9 +603,9 @@
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_Diagnostic</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Machine-readable graph validation diagnostic (module-private).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Machine-readable graph validation diagnostic (module-private)."""</span>
 
-    <span class="n">code</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;duplicate_name&quot;</span><span class="p">,</span> <span class="s2">&quot;missing_dependency&quot;</span><span class="p">,</span> <span class="s2">&quot;cycle&quot;</span><span class="p">]</span>
+    <span class="n">code</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"duplicate_name"</span><span class="p">,</span> <span class="s2">"missing_dependency"</span><span class="p">,</span> <span class="s2">"cycle"</span><span class="p">]</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">node_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">dependency</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -616,7 +616,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.validation.html#neofoam.framework.graph.validation.GraphValidationReport">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">GraphValidationReport</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validation report for a dependency graph.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Validation report for a dependency graph."""</span>
 
     <span class="n">diagnostics</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">_Diagnostic</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 
@@ -629,7 +629,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_dependency_digraph</span><span class="p">(</span>
     <span class="n">dependencies_by_node</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a directed graph where edges are dependency -&gt; dependant.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a directed graph where edges are dependency -&gt; dependant."""</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">dependencies</span> <span class="ow">in</span> <span class="n">dependencies_by_node</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -659,9 +659,9 @@
         <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">diagnostics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">_Diagnostic</span><span class="p">(</span>
-                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;duplicate_name&quot;</span><span class="p">,</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">"duplicate_name"</span><span class="p">,</span>
                     <span class="n">node_name</span><span class="o">=</span><span class="n">node_name</span><span class="p">,</span>
-                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Duplicate InitStep name detected: &#39;</span><span class="si">{</span><span class="n">node_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Duplicate InitStep name detected: '</span><span class="si">{</span><span class="n">node_name</span><span class="si">}</span><span class="s2">'"</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">diagnostics</span>
@@ -678,12 +678,12 @@
                 <span class="k">continue</span>
             <span class="n">diagnostics</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">_Diagnostic</span><span class="p">(</span>
-                    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;missing_dependency&quot;</span><span class="p">,</span>
+                    <span class="n">code</span><span class="o">=</span><span class="s2">"missing_dependency"</span><span class="p">,</span>
                     <span class="n">node_name</span><span class="o">=</span><span class="n">node_name</span><span class="p">,</span>
                     <span class="n">dependency</span><span class="o">=</span><span class="n">dependency</span><span class="p">,</span>
                     <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;InitStep &#39;</span><span class="si">{</span><span class="n">node_name</span><span class="si">}</span><span class="s2">&#39; depends on &#39;</span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">&#39;, &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;but &#39;</span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">&#39; was not found&quot;</span>
+                        <span class="sa">f</span><span class="s2">"InitStep '</span><span class="si">{</span><span class="n">node_name</span><span class="si">}</span><span class="s2">' depends on '</span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">', "</span>
+                        <span class="sa">f</span><span class="s2">"but '</span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">' was not found"</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -701,9 +701,9 @@
         <span class="n">cycle_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">edge</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">edge</span> <span class="ow">in</span> <span class="n">cycle_edges</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">_Diagnostic</span><span class="p">(</span>
-                <span class="n">code</span><span class="o">=</span><span class="s2">&quot;cycle&quot;</span><span class="p">,</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">"cycle"</span><span class="p">,</span>
                 <span class="n">cycle</span><span class="o">=</span><span class="n">cycle_names</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Circular dependency: </span><span class="si">{</span><span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cycle_names</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Circular dependency: </span><span class="si">{</span><span class="s1">' -&gt; '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cycle_names</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">]</span>
     <span class="k">return</span> <span class="p">[]</span>
@@ -722,7 +722,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_dependency_graph</span><span class="p">(</span>
     <span class="n">node_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">dependencies_by_node</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GraphValidationReport</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate a dependency graph and return structured diagnostics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Validate a dependency graph and return structured diagnostics."""</span>
     <span class="n">diagnostics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Diagnostic</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">detector</span> <span class="ow">in</span> <span class="n">_DETECTORS</span><span class="p">:</span>
         <span class="n">diagnostics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">detector</span><span class="p">(</span><span class="n">node_names</span><span class="p">,</span> <span class="n">dependencies_by_node</span><span class="p">))</span>
@@ -772,6 +772,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

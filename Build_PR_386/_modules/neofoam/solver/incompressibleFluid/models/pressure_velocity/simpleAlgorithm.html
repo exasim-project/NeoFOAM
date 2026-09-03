@@ -589,20 +589,20 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;SIMPLE pressure-velocity coupling (steady state).</span>
+<span class="sd">"""SIMPLE pressure-velocity coupling (steady state).</span>
 
-<span class="sd">Port of ``simpleFoam``&#39;s loop body (``UEqn.H`` / ``pEqn.H``) to the</span>
+<span class="sd">Port of ``simpleFoam``'s loop body (``UEqn.H`` / ``pEqn.H``) to the</span>
 <span class="sd">SolverSpec/ModelSpec API, adapted from the ``feat/incompressibleFluid``</span>
-<span class="sd">source branch. The momentum equation carries no ddt term (the case&#39;s</span>
+<span class="sd">source branch. The momentum equation carries no ddt term (the case's</span>
 <span class="sd">``ddtSchemes`` is expected to be ``steadyState``), equations are</span>
 <span class="sd">under-relaxed via ``relax()``, and the pressure field is explicitly</span>
 <span class="sd">relaxed after each corrector (``p.relax()``), exactly as in simpleFoam.</span>
 
-<span class="sd">One solver &quot;time step&quot; is one SIMPLE outer iteration: the inner loop</span>
+<span class="sd">One solver "time step" is one SIMPLE outer iteration: the inner loop</span>
 <span class="sd">predicate (``SimpleControl.loop``) admits a single momentum+continuity</span>
 <span class="sd">pass per step and the turbulence model is corrected once per step by the</span>
-<span class="sd">solver graph, mirroring ``simpleFoam``&#39;s ``while (simple.loop())`` body.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">solver graph, mirroring ``simpleFoam``'s ``while (simple.loop())`` body.</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Protocol</span>
 
@@ -653,7 +653,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.control_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_simple_control</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentum_extension</span><span class="p">,</span> <span class="n">pressure_extension</span>
 
-<span class="n">simple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Simple&quot;</span><span class="p">)</span>
+<span class="n">simple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Simple"</span><span class="p">)</span>
 
 <span class="c1"># Per-spec fvSchemes / fvSolution slices (see pimpleAlgorithm).</span>
 <span class="n">SimpleFvSchemes</span> <span class="o">=</span> <span class="n">simple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSchemes</span><span class="p">)</span>
@@ -661,7 +661,7 @@
 
 <span class="c1"># Optional SIMPLE control keys read straight from ``system/fvSolution`` by</span>
 <span class="c1"># ``setRefCell`` — a closed domain needs a pressure reference.</span>
-<span class="n">SimpleFvSolution</span><span class="o">.</span><span class="n">add_controls</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="n">pRefCell</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">pRefValue</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">SimpleFvSolution</span><span class="o">.</span><span class="n">add_controls</span><span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="n">pRefCell</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">pRefValue</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
 <span class="c1"># Declared so ``configurations(solver)`` and the MCP export the key set.</span>
 <span class="c1"># Loading is unaffected: this spec is used as its own runtime and never</span>
@@ -670,7 +670,7 @@
 
 <span class="c1"># 0/&lt;name&gt; field declarations SIMPLE owns (same arm sets as PIMPLE).</span>
 <span class="n">simple</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;U&quot;</span><span class="p">,</span>
+    <span class="s2">"U"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Vector</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span>
@@ -689,7 +689,7 @@
     <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">simple</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;p&quot;</span><span class="p">,</span>
+    <span class="s2">"p"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Scalar</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span>
@@ -719,29 +719,29 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.build">[docs]</a>
 <span class="nd">@simple</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazy initializers for SIMPLE state (non-field bits only).</span>
+<span class="w">    </span><span class="sd">"""Lazy initializers for SIMPLE state (non-field bits only).</span>
 
 <span class="sd">    ``U`` / ``p`` are auto-synthesized from the ``simple.field(...)``</span>
 <span class="sd">    declarations; ``@build`` carries ``phi``, the SimpleControl object,</span>
 <span class="sd">    the running continuity-error accumulator, and the pressure-reference</span>
 <span class="sd">    cell logic (reading the ``SIMPLE`` subdict of ``system/fvSolution``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_phi</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">createPhi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">createPhi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_cumulative_cont_err</span><span class="p">(</span><span class="n">_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_pressure_reference</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PressureReference</span><span class="p">:</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
 
-        <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span>
-        <span class="n">algo_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
+        <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
+        <span class="n">algo_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">)</span>
         <span class="n">pRefCell</span><span class="p">,</span> <span class="n">pRefValue</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">setRefCell</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">algo_dict</span><span class="p">)</span>
 
-        <span class="n">mesh</span><span class="o">.</span><span class="n">setFluxRequired</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">))</span>
+        <span class="n">mesh</span><span class="o">.</span><span class="n">setFluxRequired</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"p"</span><span class="p">))</span>
         <span class="c1"># ``needs_ref`` is the same boolean pEqn.H queries off the field,</span>
         <span class="c1"># carried for consumers that have none in hand.</span>
         <span class="k">return</span> <span class="n">PressureReference</span><span class="p">(</span>
@@ -751,13 +751,13 @@
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;simple_control&quot;</span><span class="p">,</span> <span class="n">create_simple_control</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;cumulativeContErr&quot;</span><span class="p">,</span> <span class="n">create_cumulative_cont_err</span><span class="p">),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"simple_control"</span><span class="p">,</span> <span class="n">create_simple_control</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"cumulativeContErr"</span><span class="p">,</span> <span class="n">create_cumulative_cont_err</span><span class="p">),</span>
         <span class="n">model</span><span class="p">(</span>
-            <span class="s2">&quot;pressure_reference&quot;</span><span class="p">,</span>
+            <span class="s2">"pressure_reference"</span><span class="p">,</span>
             <span class="n">create_pressure_reference</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">,</span> <span class="s2">&quot;mesh&quot;</span><span class="p">],</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.p"</span><span class="p">,</span> <span class="s2">"mesh"</span><span class="p">],</span>
         <span class="p">),</span>
     <span class="p">]</span></div>
 
@@ -766,25 +766,25 @@
 <div class="viewcode-block" id="inner_loop">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.inner_loop">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">inner_loop</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One momentum+continuity pass per solver step (``SimpleControl.loop``).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;simple_control&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">ctx</span><span class="p">))</span></div>
+<span class="w">    </span><span class="sd">"""One momentum+continuity pass per solver step (``SimpleControl.loop``)."""</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"simple_control"</span><span class="p">]</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">ctx</span><span class="p">))</span></div>
 
 
 
-<span class="nd">@simple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
+<span class="nd">@simple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.1"</span><span class="p">)</span>
 <span class="nd">@SimpleFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-    <span class="n">ddt</span><span class="o">=</span><span class="s2">&quot;ddt(U)&quot;</span><span class="p">,</span>
-    <span class="n">div</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">,</span> <span class="s2">&quot;div((nuEff*dev2(T(grad(U)))))&quot;</span><span class="p">],</span>
-    <span class="n">grad</span><span class="o">=</span><span class="s2">&quot;grad(U)&quot;</span><span class="p">,</span>
-    <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(nuEff,U)&quot;</span><span class="p">,</span>
+    <span class="n">ddt</span><span class="o">=</span><span class="s2">"ddt(U)"</span><span class="p">,</span>
+    <span class="n">div</span><span class="o">=</span><span class="p">[</span><span class="s2">"div(phi,U)"</span><span class="p">,</span> <span class="s2">"div((nuEff*dev2(T(grad(U)))))"</span><span class="p">],</span>
+    <span class="n">grad</span><span class="o">=</span><span class="s2">"grad(U)"</span><span class="p">,</span>
+    <span class="n">laplacian</span><span class="o">=</span><span class="s2">"laplacian(nuEff,U)"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nd">@SimpleFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">)</span>
+<span class="nd">@SimpleFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"U"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>
     <span class="n">p</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
-    <span class="n">viscousStress</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">ViscousStress</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">simple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">viscousStress</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">ViscousStress</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">simple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
     <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span>
     <span class="n">ext</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">BoundExtension</span><span class="p">,</span> <span class="n">momentum_extension</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
@@ -795,7 +795,7 @@
     <span class="n">p</span><span class="o">.</span><span class="n">storePrevIter</span><span class="p">()</span>
 
     <span class="c1"># Refresh nuEff where it is consumed (see pimpleAlgorithm.momentum).</span>
-    <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;momentum.assemble&quot;</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">"momentum.assemble"</span><span class="p">):</span>
         <span class="n">viscousStress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="c1"># as in UEqn.H: correctBoundaryVelocity before assembly — it feeds</span>
         <span class="c1"># the boundary coefficients of ``div(phi,U)``.</span>
@@ -807,38 +807,38 @@
         <span class="n">ext</span><span class="o">.</span><span class="n">constrain</span><span class="p">(</span><span class="n">UEqn</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">simple_control</span><span class="o">.</span><span class="n">momentumPredictor</span><span class="p">():</span>
-        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;momentum.solve&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">"momentum.solve"</span><span class="p">):</span>
             <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">UEqn</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
         <span class="n">ext</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;UEqn&quot;</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"UEqn"</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
 
 
-<span class="nd">@simple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.2&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">])</span>
+<span class="nd">@simple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.2"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">])</span>
 <span class="nd">@SimpleFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-    <span class="n">grad</span><span class="o">=</span><span class="s2">&quot;grad(p)&quot;</span><span class="p">,</span>
-    <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(rAtU,p)&quot;</span><span class="p">,</span>
-    <span class="n">interpolation</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;flux(HbyA)&quot;</span><span class="p">,</span> <span class="s2">&quot;interpolate((1|A(U)))&quot;</span><span class="p">],</span>
-    <span class="n">snGrad</span><span class="o">=</span><span class="s2">&quot;snGrad(p)&quot;</span><span class="p">,</span>
+    <span class="n">grad</span><span class="o">=</span><span class="s2">"grad(p)"</span><span class="p">,</span>
+    <span class="n">laplacian</span><span class="o">=</span><span class="s2">"laplacian(rAtU,p)"</span><span class="p">,</span>
+    <span class="n">interpolation</span><span class="o">=</span><span class="p">[</span><span class="s2">"flux(HbyA)"</span><span class="p">,</span> <span class="s2">"interpolate((1|A(U)))"</span><span class="p">],</span>
+    <span class="n">snGrad</span><span class="o">=</span><span class="s2">"snGrad(p)"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nd">@SimpleFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">)</span>
+<span class="nd">@SimpleFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"p"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">continuity</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>
     <span class="n">p</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>
     <span class="n">UEqn</span><span class="p">:</span> <span class="n">fvVectorMatrix</span><span class="p">,</span>
-    <span class="n">simple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">cumulativeContErr</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">pressure_reference</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PressureReference</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">simple_control</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">cumulativeContErr</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">pressure_reference</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PressureReference</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
     <span class="n">ext</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">BoundExtension</span><span class="p">,</span> <span class="n">pressure_extension</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
     <span class="n">pRefCell</span> <span class="o">=</span> <span class="n">pressure_reference</span><span class="o">.</span><span class="n">cell</span>
     <span class="n">pRefValue</span> <span class="o">=</span> <span class="n">pressure_reference</span><span class="o">.</span><span class="n">value</span>
 
-    <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.flux&quot;</span><span class="p">):</span>
-        <span class="n">rAU</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;rAU&quot;</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">UEqn</span><span class="o">.</span><span class="n">A</span><span class="p">())</span>
+    <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">"pressure.flux"</span><span class="p">):</span>
+        <span class="n">rAU</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"rAU"</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">UEqn</span><span class="o">.</span><span class="n">A</span><span class="p">())</span>
         <span class="n">HbyA</span> <span class="o">=</span> <span class="n">volVectorField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">constrainHbyA</span><span class="p">(</span><span class="n">rAU</span> <span class="o">*</span> <span class="n">UEqn</span><span class="o">.</span><span class="n">H</span><span class="p">(),</span> <span class="n">U</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
-        <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;phiHbyA&quot;</span><span class="p">),</span> <span class="n">fvc</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">HbyA</span><span class="p">))</span>
+        <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"phiHbyA"</span><span class="p">),</span> <span class="n">fvc</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">HbyA</span><span class="p">))</span>
 
         <span class="c1"># pEqn.H hands the pressure equation the flux seen from the rotating</span>
         <span class="c1"># frame; ``adjustPhi`` then balances that relative flux.</span>
@@ -858,10 +858,10 @@
             <span class="n">pyf</span><span class="o">.</span><span class="n">constrainPressure</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">phiHbyA</span><span class="p">,</span> <span class="n">rAtU</span><span class="p">)</span>
 
     <span class="k">while</span> <span class="n">simple_control</span><span class="o">.</span><span class="n">correctNonOrthogonal</span><span class="p">():</span>
-        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.assemble&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">"pressure.assemble"</span><span class="p">):</span>
             <span class="n">pEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">rAtU</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">))</span>
             <span class="n">pEqn</span><span class="o">.</span><span class="n">setReference</span><span class="p">(</span><span class="n">pRefCell</span><span class="p">,</span> <span class="n">pRefValue</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.solve&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">"pressure.solve"</span><span class="p">):</span>
             <span class="n">pEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">simple_control</span><span class="o">.</span><span class="n">finalNonOrthogonalIter</span><span class="p">():</span>
@@ -870,8 +870,8 @@
     <span class="n">sum_local</span><span class="p">,</span> <span class="n">global_err</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">computeContinuityErrors</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
     <span class="n">cumulativeContErr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">global_err</span>
     <span class="n">pyf</span><span class="o">.</span><span class="n">Info</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;time step continuity errors : sum local = </span><span class="si">{</span><span class="n">sum_local</span><span class="si">}</span><span class="s2">, &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;global = </span><span class="si">{</span><span class="n">global_err</span><span class="si">}</span><span class="s2">, cumulative = </span><span class="si">{</span><span class="n">cumulativeContErr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">"time step continuity errors : sum local = </span><span class="si">{</span><span class="n">sum_local</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"global = </span><span class="si">{</span><span class="n">global_err</span><span class="si">}</span><span class="s2">, cumulative = </span><span class="si">{</span><span class="n">cumulativeContErr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
 
     <span class="c1"># Explicit pressure under-relaxation (relaxationFactors.fields), then the</span>
@@ -880,10 +880,10 @@
     <span class="n">U</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">HbyA</span> <span class="o">-</span> <span class="n">rAtU</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
     <span class="n">U</span><span class="o">.</span><span class="n">correctBoundaryConditions</span><span class="p">()</span>
     <span class="c1"># as in pEqn.H: a second fvOptions.correct(U) closes the corrector, which</span>
-    <span class="c1"># has just overwritten the predictor&#39;s correction.</span>
+    <span class="c1"># has just overwritten the predictor's correction.</span>
     <span class="n">ext</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"U"</span><span class="p">:</span> <span class="n">U</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"phi"</span><span class="p">:</span> <span class="n">phi</span><span class="p">})</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_alias_operation</span><span class="p">(</span>
@@ -897,8 +897,8 @@
         <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
             <span class="n">op_name</span><span class="o">=</span><span class="n">operation_name</span><span class="p">,</span>
             <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
-            <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">,</span>
-            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightblue&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="s2">"box"</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">"lightblue"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -907,12 +907,12 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.collected_operations">[docs]</a>
 <span class="nd">@simple</span><span class="o">.</span><span class="n">operation_collection</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">collected_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap momentum/continuity inside the one-pass SIMPLE inner loop.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Wrap momentum/continuity inside the one-pass SIMPLE inner loop."""</span>
     <span class="n">model_ops</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">()</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">Operation</span><span class="p">(</span>
             <span class="n">func</span><span class="o">=</span><span class="n">IterativeOp</span><span class="p">(</span><span class="n">inner_loop</span><span class="p">),</span>
-            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;inner_loop&quot;</span><span class="p">),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">"inner_loop"</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -921,12 +921,12 @@
         <span class="n">continuity</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">simple</span><span class="o">.</span><span class="n">_dependency_resolver</span>
     <span class="p">)</span>
 
-    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
+    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">_alias_operation</span><span class="p">(</span>
             <span class="n">wrapped_continuity</span><span class="p">,</span>
-            <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;continuity&quot;</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">],</span>
+            <span class="n">operation_name</span><span class="o">=</span><span class="s2">"continuity"</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">],</span>
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">model_ops</span></div>
@@ -970,6 +970,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

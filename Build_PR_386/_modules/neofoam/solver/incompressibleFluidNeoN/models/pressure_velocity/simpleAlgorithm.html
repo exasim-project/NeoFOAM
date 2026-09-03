@@ -590,14 +590,14 @@
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
 <span class="c1"># NB: no ``from __future__ import annotations`` — the dependency_resolver</span>
-<span class="c1"># matches ``param.annotation is Context`` / ``Annotated[..., &quot;models&quot;]`` live.</span>
+<span class="c1"># matches ``param.annotation is Context`` / ``Annotated[..., "models"]`` live.</span>
 
-<span class="sd">&quot;&quot;&quot;SIMPLE (steady state) pressure-velocity coupling backed by NeoN.</span>
+<span class="sd">"""SIMPLE (steady state) pressure-velocity coupling backed by NeoN.</span>
 
-<span class="sd">Port of ``simpleFoam``&#39;s loop body (``UEqn.H`` / ``pEqn.H``) mirroring</span>
-<span class="sd">the pybFoam ``incompressibleFluid`` SIMPLE spec: one solver &quot;time step&quot;</span>
+<span class="sd">Port of ``simpleFoam``'s loop body (``UEqn.H`` / ``pEqn.H``) mirroring</span>
+<span class="sd">the pybFoam ``incompressibleFluid`` SIMPLE spec: one solver "time step"</span>
 <span class="sd">is one SIMPLE outer iteration. The momentum equation carries no ddt</span>
-<span class="sd">operator (the case&#39;s ``ddtSchemes`` is ``steadyState``; the C++</span>
+<span class="sd">operator (the case's ``ddtSchemes`` is ``steadyState``; the C++</span>
 <span class="sd">turbulence transports read the same scheme and no-op their ddt via</span>
 <span class="sd">``DdtScheme::SteadyState``), the momentum matrix opts into the</span>
 <span class="sd">``relaxationFactors.equations`` under-relaxation via ``UEqn.relax()``, and</span>
@@ -618,7 +618,7 @@
 <span class="sd">branch of ``pEqn.H``. Such a case normally omits</span>
 <span class="sd">``relaxationFactors.fields.p``, which leaves the explicit pressure</span>
 <span class="sd">relaxation a no-op (factor 1), as ``p.relax()`` is in OpenFOAM.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
@@ -659,7 +659,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..incompressibleFluidNeoNModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentum_extension</span><span class="p">,</span> <span class="n">pressure_extension</span>
 
-<span class="n">simpleNeoN</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;SimpleNeoN&quot;</span><span class="p">)</span>
+<span class="n">simpleNeoN</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"SimpleNeoN"</span><span class="p">)</span>
 
 <span class="c1"># Per-spec fvSchemes / fvSolution slices — schema-only (see pimpleAlgorithm:</span>
 <span class="c1"># at run time the NeoN runtime maps the on-disk dicts instead).</span>
@@ -667,12 +667,12 @@
 <span class="n">SimpleNeoNFvSolution</span> <span class="o">=</span> <span class="n">simpleNeoN</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSolution</span><span class="p">)</span>
 
 <span class="c1"># Optional SIMPLE control keys read by ``set_ref_cell``.</span>
-<span class="n">SimpleNeoNFvSolution</span><span class="o">.</span><span class="n">add_controls</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="n">pRefCell</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">pRefValue</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">SimpleNeoNFvSolution</span><span class="o">.</span><span class="n">add_controls</span><span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="n">pRefCell</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">pRefValue</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
 <span class="c1"># 0/&lt;name&gt; field declarations (same arm sets as the PIMPLE spec; the actual</span>
 <span class="c1"># NeoN reads are emitted by ``@simpleNeoN.build`` below).</span>
 <span class="n">simpleNeoN</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;U&quot;</span><span class="p">,</span>
+    <span class="s2">"U"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Vector</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span>
@@ -691,7 +691,7 @@
     <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">simpleNeoN</span><span class="o">.</span><span class="n">field</span><span class="p">(</span>
-    <span class="s2">&quot;p&quot;</span><span class="p">,</span>
+    <span class="s2">"p"</span><span class="p">,</span>
     <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="n">value_type</span><span class="o">=</span><span class="n">Scalar</span><span class="p">,</span>
     <span class="n">allowed_bcs</span><span class="o">=</span><span class="p">[</span>
@@ -714,19 +714,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_switch</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read an OpenFOAM on/off switch from a converted NeoN dictionary.</span>
+<span class="w">    </span><span class="sd">"""Read an OpenFOAM on/off switch from a converted NeoN dictionary.</span>
 
 <span class="sd">    The OpenFOAM→NeoN dict conversion stores switch words (``yes``/``no``)</span>
 <span class="sd">    as strings; a wrong-typed ``get_*`` is fatal in NeoN (no catchable</span>
 <span class="sd">    exception), so this must read the string directly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">default</span>
-    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;on&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"yes"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">,</span> <span class="s2">"1"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reduce_u</span><span class="p">(</span><span class="n">stats</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Max-component reduction: Ux/Uy/Uz entries -&gt; one {init, final} pair.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Max-component reduction: Ux/Uy/Uz entries -&gt; one {init, final} pair."""</span>
     <span class="n">mi</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">mf</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">stats</span><span class="o">.</span><span class="n">entries</span><span class="p">:</span>
@@ -738,14 +738,14 @@
 <div class="viewcode-block" id="SimpleNeoNState">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.SimpleNeoNState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SimpleNeoNState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-run SIMPLE loop state shared across the solver operations.</span>
+<span class="w">    </span><span class="sd">"""Per-run SIMPLE loop state shared across the solver operations.</span>
 
 <span class="sd">    ``piso`` supplies the self-resetting non-orthogonal corrector loop and</span>
 <span class="sd">    the momentumPredictor flag (SIMPLE has exactly one pressure correction,</span>
 <span class="sd">    so its PISO-corrector count is never used). ``consistent`` selects the</span>
 <span class="sd">    SIMPLEC pressure correction. ``residuals`` is reported per step;</span>
 <span class="sd">    ``outer_open`` gates the one-pass inner loop.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">piso</span><span class="p">:</span> <span class="n">PisoControl</span><span class="p">,</span> <span class="n">consistent</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">piso</span> <span class="o">=</span> <span class="n">piso</span>
@@ -757,60 +757,60 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_simple_state</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNeoNState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the SIMPLE loop state from the case&#39;s ``SIMPLE`` control block.&quot;&quot;&quot;</span>
-    <span class="n">simple_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Read the SIMPLE loop state from the case's ``SIMPLE`` control block."""</span>
+    <span class="n">simple_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">)</span>
     <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
         <span class="n">n_correctors</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="n">momentum_predictor</span><span class="o">=</span><span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;momentumPredictor&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+        <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">"nNonOrthogonalCorrectors"</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">momentum_predictor</span><span class="o">=</span><span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">"momentumPredictor"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="n">SimpleNeoNState</span><span class="p">(</span><span class="n">piso</span><span class="p">,</span> <span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;consistent&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">SimpleNeoNState</span><span class="p">(</span><span class="n">piso</span><span class="p">,</span> <span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">"consistent"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="build">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.build">[docs]</a>
 <span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazy initializers for the NeoN SIMPLE state (see pimpleAlgorithm).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Lazy initializers for the NeoN SIMPLE state (see pimpleAlgorithm)."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_p</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_scalar_volume_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="s2">&quot;p&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_scalar_volume_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="s2">"p"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_u</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_vector_volume_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_vector_volume_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="s2">"U"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_phi</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_phi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_phi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="s2">"U"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_simple_state</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SimpleNeoNState</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_simple_state</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_build_simple_state</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_pressure_reference</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PressureReference</span><span class="p">:</span>
-        <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-        <span class="n">cell</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">needs_ref</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">set_ref_cell</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
+        <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span>
+        <span class="n">cell</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">needs_ref</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">set_ref_cell</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">,</span> <span class="s2">"SIMPLE"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">PressureReference</span><span class="p">(</span><span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">needs_ref</span><span class="o">=</span><span class="n">needs_ref</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_surf_interp</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">SurfaceInterpolationScalar</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">executor</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">TokenList</span><span class="p">([</span><span class="s2">&quot;linear&quot;</span><span class="p">]))</span>
+        <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">SurfaceInterpolationScalar</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">executor</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">TokenList</span><span class="p">([</span><span class="s2">"linear"</span><span class="p">]))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_grad_op</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="c1"># gradSchemes/grad(U) as the case writes it, so a limited grad(U) is</span>
         <span class="c1"># limited here too (Gauss linear when the case does not name it).</span>
-        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">GradScheme</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">GradScheme</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="s2">"U"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">create_p</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">create_u</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;simple_state&quot;</span><span class="p">,</span> <span class="n">create_simple_state</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">create_p</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="n">create_u</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">],</span> <span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">,</span> <span class="s2">"fields.U"</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"simple_state"</span><span class="p">,</span> <span class="n">create_simple_state</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]),</span>
         <span class="n">model</span><span class="p">(</span>
-            <span class="s2">&quot;pressure_reference&quot;</span><span class="p">,</span>
+            <span class="s2">"pressure_reference"</span><span class="p">,</span>
             <span class="n">create_pressure_reference</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">],</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">,</span> <span class="s2">"fields.p"</span><span class="p">],</span>
         <span class="p">),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;surf_interp&quot;</span><span class="p">,</span> <span class="n">create_surf_interp</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;grad_op&quot;</span><span class="p">,</span> <span class="n">create_grad_op</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"surf_interp"</span><span class="p">,</span> <span class="n">create_surf_interp</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"grad_op"</span><span class="p">,</span> <span class="n">create_grad_op</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]),</span>
     <span class="p">]</span></div>
 
 
@@ -818,8 +818,8 @@
 <div class="viewcode-block" id="inner_loop">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.inner_loop">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">inner_loop</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One momentum+continuity pass per solver step (mirrors SimpleControl).&quot;&quot;&quot;</span>
-    <span class="n">state</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;simple_state&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""One momentum+continuity pass per solver step (mirrors SimpleControl)."""</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"simple_state"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">outer_open</span><span class="p">:</span>
         <span class="n">state</span><span class="o">.</span><span class="n">outer_open</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
@@ -830,44 +830,44 @@
 
 <div class="viewcode-block" id="rotate_and_report">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.rotate_and_report">[docs]</a>
-<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.0&quot;</span><span class="p">)</span>
+<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.0"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">rotate_and_report</span><span class="p">(</span>
-    <span class="n">simple_state</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">simple_state</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Start-of-step bookkeeping: reset the per-step residual report.</span>
+<span class="w">    </span><span class="sd">"""Start-of-step bookkeeping: reset the per-step residual report.</span>
 
 <span class="sd">    Steady state — nothing rotates (no ddt operator reads an oldTime) and</span>
 <span class="sd">    simpleFoam prints no Courant number.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">simple_state</span><span class="o">.</span><span class="n">residuals</span> <span class="o">=</span> <span class="p">{}</span></div>
 
 
 
 <div class="viewcode-block" id="momentum">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.momentum">[docs]</a>
-<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
+<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.1"</span><span class="p">)</span>
 <span class="nd">@SimpleNeoNFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-    <span class="n">div</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">,</span> <span class="s2">&quot;div((nuEff*dev2(T(grad(U)))))&quot;</span><span class="p">],</span>
-    <span class="n">grad</span><span class="o">=</span><span class="s2">&quot;grad(U)&quot;</span><span class="p">,</span>
-    <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(nuEff,U)&quot;</span><span class="p">,</span>
+    <span class="n">div</span><span class="o">=</span><span class="p">[</span><span class="s2">"div(phi,U)"</span><span class="p">,</span> <span class="s2">"div((nuEff*dev2(T(grad(U)))))"</span><span class="p">],</span>
+    <span class="n">grad</span><span class="o">=</span><span class="s2">"grad(U)"</span><span class="p">,</span>
+    <span class="n">laplacian</span><span class="o">=</span><span class="s2">"laplacian(nuEff,U)"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nd">@SimpleNeoNFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">)</span>
+<span class="nd">@SimpleNeoNFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"U"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">p</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">simple_state</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">grad_op</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">nu_vol</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">simple_state</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">grad_op</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">nu_vol</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
     <span class="n">ext</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">BoundExtension</span><span class="p">,</span> <span class="n">momentum_extension</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble (and optionally solve) the steady momentum equation.</span>
+<span class="w">    </span><span class="sd">"""Assemble (and optionally solve) the steady momentum equation.</span>
 
 <span class="sd">    No ddt operator; ``UEqn.relax()`` opts this matrix into the</span>
 <span class="sd">    ``relaxationFactors.equations`` under-relaxation applied during assembly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">simple_state</span>
 
     <span class="c1"># Snapshot p for the explicit field under-relaxation after the pressure</span>
@@ -895,45 +895,45 @@
 
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">piso</span><span class="o">.</span><span class="n">momentum_predictor</span><span class="p">():</span>
         <span class="n">stats_u</span> <span class="o">=</span> <span class="n">UEqn</span><span class="o">.</span><span class="n">solve_with_source</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">nn</span><span class="o">.</span><span class="n">exp</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_reduce_u</span><span class="p">(</span><span class="n">stats_u</span><span class="p">)</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="s2">"U"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_reduce_u</span><span class="p">(</span><span class="n">stats_u</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Relax unconditionally so computeRAUandHByA reads the relaxed diagonal.</span>
         <span class="n">UEqn</span><span class="o">.</span><span class="n">assemble_and_relax</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;UEqn&quot;</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">&quot;prev_p&quot;</span><span class="p">:</span> <span class="n">prev_p</span><span class="p">,</span> <span class="s2">&quot;grad_u&quot;</span><span class="p">:</span> <span class="n">grad_u</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span></div>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"UEqn"</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">"prev_p"</span><span class="p">:</span> <span class="n">prev_p</span><span class="p">,</span> <span class="s2">"grad_u"</span><span class="p">:</span> <span class="n">grad_u</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span></div>
 
 
 
 <div class="viewcode-block" id="continuity">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.continuity">[docs]</a>
-<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.2&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">])</span>
+<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.2"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">])</span>
 <span class="nd">@SimpleNeoNFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-    <span class="n">grad</span><span class="o">=</span><span class="s2">&quot;grad(p)&quot;</span><span class="p">,</span>
-    <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(rAUf,p)&quot;</span><span class="p">,</span>
-    <span class="n">interpolation</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;flux(HbyA)&quot;</span><span class="p">,</span> <span class="s2">&quot;interpolate(rAU)&quot;</span><span class="p">],</span>
-    <span class="n">snGrad</span><span class="o">=</span><span class="s2">&quot;snGrad(p)&quot;</span><span class="p">,</span>
+    <span class="n">grad</span><span class="o">=</span><span class="s2">"grad(p)"</span><span class="p">,</span>
+    <span class="n">laplacian</span><span class="o">=</span><span class="s2">"laplacian(rAUf,p)"</span><span class="p">,</span>
+    <span class="n">interpolation</span><span class="o">=</span><span class="p">[</span><span class="s2">"flux(HbyA)"</span><span class="p">,</span> <span class="s2">"interpolate(rAU)"</span><span class="p">],</span>
+    <span class="n">snGrad</span><span class="o">=</span><span class="s2">"snGrad(p)"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="nd">@SimpleNeoNFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">)</span>
+<span class="nd">@SimpleNeoNFvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">"p"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">continuity</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">p</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">UEqn</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">prev_p</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">simple_state</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">surf_interp</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">pressure_reference</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PressureReference</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">simple_state</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">surf_interp</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">pressure_reference</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PressureReference</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
     <span class="n">ext</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">BoundExtension</span><span class="p">,</span> <span class="n">pressure_extension</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The SIMPLE pressure correction: solve, flux + velocity update, p relax.</span>
+<span class="w">    </span><span class="sd">"""The SIMPLE pressure correction: solve, flux + velocity update, p relax.</span>
 
-<span class="sd">    Verbatim port of ``simpleFoam``&#39;s ``pEqn.H`` (minus adjustPhi /</span>
+<span class="sd">    Verbatim port of ``simpleFoam``'s ``pEqn.H`` (minus adjustPhi /</span>
 <span class="sd">    constrainPressure — see the module docstring): plain ``flux(HbyA)``</span>
 <span class="sd">    with no ddt flux correction, one pressure correction, explicit p</span>
 <span class="sd">    field relaxation before the velocity update, and the ``consistent``</span>
 <span class="sd">    (SIMPLEC) branch on ``rAtU``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">state</span> <span class="o">=</span> <span class="n">simple_state</span>
     <span class="n">rt</span> <span class="o">=</span> <span class="n">neon_runtime</span>
     <span class="n">p_ref_cell</span> <span class="o">=</span> <span class="n">pressure_reference</span><span class="o">.</span><span class="n">cell</span>
@@ -948,7 +948,7 @@
     <span class="n">rAtU</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">compute_ratu</span><span class="p">(</span><span class="n">UEqn</span><span class="p">,</span> <span class="n">rAU</span><span class="p">)</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">consistent</span> <span class="k">else</span> <span class="n">rAU</span>
 
     <span class="n">rAUf</span> <span class="o">=</span> <span class="n">surf_interp</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rAtU</span><span class="p">)</span>
-    <span class="n">rAUf</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;rAUf&quot;</span>
+    <span class="n">rAUf</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"rAUf"</span>
 
     <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span>
 
@@ -972,7 +972,7 @@
         <span class="n">stats_p</span> <span class="o">=</span> <span class="n">pEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">have_p_res</span><span class="p">:</span>
             <span class="n">entry</span> <span class="o">=</span> <span class="n">stats_p</span><span class="o">.</span><span class="n">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">initial_residual</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">final_residual</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="s2">"p"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">initial_residual</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">final_residual</span><span class="p">)</span>
             <span class="n">have_p_res</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">p</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span>
 
@@ -982,8 +982,8 @@
     <span class="n">sum_local</span><span class="p">,</span> <span class="n">global_err</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">compute_continuity_error</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">rt</span><span class="p">)</span>
     <span class="n">state</span><span class="o">.</span><span class="n">cumulative_cont_err</span> <span class="o">+=</span> <span class="n">global_err</span>
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;time step continuity errors : sum local = </span><span class="si">{</span><span class="n">sum_local</span><span class="si">}</span><span class="s2">, &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;global = </span><span class="si">{</span><span class="n">global_err</span><span class="si">}</span><span class="s2">, cumulative = </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">cumulative_cont_err</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">"time step continuity errors : sum local = </span><span class="si">{</span><span class="n">sum_local</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"global = </span><span class="si">{</span><span class="n">global_err</span><span class="si">}</span><span class="s2">, cumulative = </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">cumulative_cont_err</span><span class="si">}</span><span class="s2">"</span>
     <span class="p">)</span>
 
     <span class="c1"># Explicit pressure under-relaxation (relaxationFactors.fields), then the</span>
@@ -999,24 +999,24 @@
     <span class="n">U</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span>
     <span class="n">ext</span><span class="o">.</span><span class="n">constrain_corrected_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">:</span> <span class="n">phi</span><span class="p">})</span></div>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"U"</span><span class="p">:</span> <span class="n">U</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"phi"</span><span class="p">:</span> <span class="n">phi</span><span class="p">})</span></div>
 
 
 
 <div class="viewcode-block" id="turbulence_correct">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.turbulence_correct">[docs]</a>
-<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.3&quot;</span><span class="p">)</span>
+<span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.3"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">turbulence_correct</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
-    <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">turbulence</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
+    <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the turbulence model once per SIMPLE iteration.</span>
+<span class="w">    </span><span class="sd">"""Update the turbulence model once per SIMPLE iteration.</span>
 
 <span class="sd">    ``final_iter`` stays false: simpleFoam has no final outer iteration, so the</span>
 <span class="sd">    transport solves use the plain ``&lt;field&gt;`` settings throughout.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">turbulence</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">neon_runtime</span><span class="p">)</span></div>
 
 
@@ -1032,8 +1032,8 @@
         <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
             <span class="n">op_name</span><span class="o">=</span><span class="n">operation_name</span><span class="p">,</span>
             <span class="n">depends_on</span><span class="o">=</span><span class="n">depends_on</span><span class="p">,</span>
-            <span class="n">shape</span><span class="o">=</span><span class="s2">&quot;box&quot;</span><span class="p">,</span>
-            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightblue&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="s2">"box"</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">"lightblue"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -1042,17 +1042,17 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.collected_operations">[docs]</a>
 <span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">operation_collection</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">collected_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Expose the same op-name surface as the PIMPLE spec.</span>
+<span class="w">    </span><span class="sd">"""Expose the same op-name surface as the PIMPLE spec.</span>
 
-<span class="sd">    The solver&#39;s execution graph consumes ``inner_loop`` / ``rotate_and_report``</span>
+<span class="sd">    The solver's execution graph consumes ``inner_loop`` / ``rotate_and_report``</span>
 <span class="sd">    / ``momentum`` / ``continuity`` / ``turbulence_correct`` by name, so the</span>
 <span class="sd">    SIMPLE spec slots in without solver changes.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">model_ops</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">()</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">Operation</span><span class="p">(</span>
             <span class="n">func</span><span class="o">=</span><span class="n">IterativeOp</span><span class="p">(</span><span class="n">inner_loop</span><span class="p">),</span>
-            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;inner_loop&quot;</span><span class="p">),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">"inner_loop"</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1070,18 +1070,18 @@
     <span class="p">)</span>
 
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_rotate</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;rotate_and_report&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
+        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_rotate</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">"rotate_and_report"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
     <span class="p">)</span>
-    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
+    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">_alias_operation</span><span class="p">(</span>
             <span class="n">wrapped_continuity</span><span class="p">,</span>
-            <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;continuity&quot;</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">],</span>
+            <span class="n">operation_name</span><span class="o">=</span><span class="s2">"continuity"</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"momentum"</span><span class="p">],</span>
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_turbulence</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;turbulence_correct&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
+        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_turbulence</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">"turbulence_correct"</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">model_ops</span></div>
 
@@ -1124,6 +1124,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

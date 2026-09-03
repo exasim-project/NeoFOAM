@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;blockMesh tool — the build step *and* the ``system/blockMeshDict`` writer config.</span>
+<span class="sd">"""blockMesh tool — the build step *and* the ``system/blockMeshDict`` writer config.</span>
 
 <span class="sd">Two things live here, both keyed to the ``blockMesh`` tool:</span>
 
@@ -606,12 +606,12 @@
 <span class="sd">  round-trips). The pydantic shape and the on-disk shape deliberately differ: the</span>
 <span class="sd">  OpenFOAM writer serialises only ``dict`` + scalars, so the compound sections</span>
 <span class="sd">  (``vertices`` / ``blocks`` / ``boundary``) are emitted as OpenFOAM-syntax</span>
-<span class="sd">  **strings** via a ``model_serializer`` gated on ``context={&quot;format&quot;:</span>
-<span class="sd">  &quot;openfoam&quot;}`` (the :class:`~neofoam.fields.value_types.FieldValue` trick), and</span>
+<span class="sd">  **strings** via a ``model_serializer`` gated on ``context={"format":</span>
+<span class="sd">  "openfoam"}`` (the :class:`~neofoam.fields.value_types.FieldValue` trick), and</span>
 <span class="sd">  parsed back by a ``model_validator``. Exotic parts (multi/edge grading, curved</span>
 <span class="sd">  ``edges``, projected ``faces``, the legacy ``patches`` form, grading variables)</span>
 <span class="sd">  are preserved as opaque token passthroughs so arbitrary dicts round-trip.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -641,27 +641,27 @@
 <div class="viewcode-block" id="BlockMeshStep">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.block_mesh.html#neofoam.tools.block_mesh.BlockMeshStep">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlockMeshStep</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the base mesh in-process from ``blockMeshDict``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Generate the base mesh in-process from ``blockMeshDict``."""</span>
 
-    <span class="n">tool</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">]</span>
-    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/blockMeshDict&quot;</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"blockMesh"</span><span class="p">]</span>
+    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"system/blockMeshDict"</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 
 
-<span class="n">blockMeshTool</span> <span class="o">=</span> <span class="n">Tool</span><span class="p">(</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">)</span>
+<span class="n">blockMeshTool</span> <span class="o">=</span> <span class="n">Tool</span><span class="p">(</span><span class="s2">"blockMesh"</span><span class="p">)</span>
 
 
 <span class="nd">@blockMeshTool</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_block</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">BlockMeshStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gen</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">generate_blockmesh</span><span class="p">(</span>
-            <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">],</span>
+            <span class="n">ctx</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">],</span>
             <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">dict_file</span><span class="p">),</span>
             <span class="n">verbose</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">verbose</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;preprocess.blockMesh&quot;</span><span class="p">,</span> <span class="n">gen</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"preprocess.blockMesh"</span><span class="p">,</span> <span class="n">gen</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">])]</span>
 
 
 <span class="n">register_tool</span><span class="p">(</span><span class="n">blockMeshTool</span><span class="p">)</span>
@@ -677,39 +677,39 @@
 <div class="viewcode-block" id="Block">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.block_mesh.html#neofoam.tools.block_mesh.Block">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Block</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One ``hex`` block: 8 vertex indices, cell counts, grading, optional zone.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One ``hex`` block: 8 vertex indices, cell counts, grading, optional zone."""</span>
 
     <span class="n">vertices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The 8 corner vertex indices (blockMesh hex order).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The 8 corner vertex indices (blockMesh hex order)."""</span>
     <span class="n">cells</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``(nx, ny, nz)`` cell counts.&quot;&quot;&quot;</span>
-    <span class="n">grading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;simpleGrading ( 1 1 1 )&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full grading spec (opaque) — ``simpleGrading (...)`` / ``edgeGrading (...)``,</span>
-<span class="sd">    including multi-grading sublists — preserved verbatim for faithful round-trips.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``(nx, ny, nz)`` cell counts."""</span>
+    <span class="n">grading</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"simpleGrading ( 1 1 1 )"</span>
+<span class="w">    </span><span class="sd">"""Full grading spec (opaque) — ``simpleGrading (...)`` / ``edgeGrading (...)``,</span>
+<span class="sd">    including multi-grading sublists — preserved verbatim for faithful round-trips."""</span>
     <span class="n">zone</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional cellZone name placed between the vertex and cell groups.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Optional cellZone name placed between the vertex and cell groups."""</span></div>
 
 
 
 <div class="viewcode-block" id="BlockPatch">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.block_mesh.html#neofoam.tools.block_mesh.BlockPatch">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlockPatch</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One ``boundary`` entry: a named patch owning quad faces (+ opaque extras).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One ``boundary`` entry: a named patch owning quad faces (+ opaque extras)."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;patch&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"patch"</span>
     <span class="n">faces</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Any other patch keys (``inGroups`` / ``neighbourPatch`` / ...), value =</span>
-<span class="sd">    normalised token string, preserved for round-trip fidelity.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Any other patch keys (``inGroups`` / ``neighbourPatch`` / ...), value =</span>
+<span class="sd">    normalised token string, preserved for round-trip fidelity."""</span></div>
 
 
 
 <div class="viewcode-block" id="BlockMeshDictConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.block_mesh.html#neofoam.tools.block_mesh.BlockMeshDictConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/blockMeshDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BlockMeshDictConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``system/blockMeshDict`` — a general single-file blockMesh representation.</span>
+<span class="w">    </span><span class="sd">"""``system/blockMeshDict`` — a general single-file blockMesh representation.</span>
 
 <span class="sd">    Models the common structure (``scale`` + ``vertices`` + ``blocks`` topology +</span>
 <span class="sd">    ``boundary`` patches) and preserves everything else (curved ``edges``,</span>
@@ -723,36 +723,36 @@
 <span class="sd">    (projected/named vertices, expression-valued coordinates, ...) is kept as the</span>
 <span class="sd">    raw OpenFOAM string and emitted verbatim — so a dict always round-trips even</span>
 <span class="sd">    when it cannot be fully structured.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">vertices</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Vec3</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">blocks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Block</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">edges</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;( )&quot;</span>
+    <span class="n">edges</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"( )"</span>
     <span class="n">boundary</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">BlockPatch</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">merge_patch_pairs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;( )&quot;</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;mergePatchPairs&quot;</span><span class="p">)</span>
+    <span class="n">merge_patch_pairs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"( )"</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"mergePatchPairs"</span><span class="p">)</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_foam</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse the OpenFOAM token strings (from ``load``) into structured fields.</span>
+<span class="w">        </span><span class="sd">"""Parse the OpenFOAM token strings (from ``load``) into structured fields.</span>
 
 <span class="sd">        Only strings are parsed, so a directly-constructed / JSON model (already</span>
 <span class="sd">        structured) passes through untouched. A section that does not fit the</span>
 <span class="sd">        structured grammar keeps its raw string (the ``str`` arm of the field),</span>
 <span class="sd">        which the serializer emits verbatim. ``FoamFile`` is dropped — the writer</span>
 <span class="sd">        re-injects a fresh header.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">data</span>
         <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;FoamFile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"FoamFile"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">parser</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s2">&quot;vertices&quot;</span><span class="p">,</span> <span class="n">_parse_vertices</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;blocks&quot;</span><span class="p">,</span> <span class="n">_parse_blocks</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">&quot;boundary&quot;</span><span class="p">,</span> <span class="n">_parse_boundary</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"vertices"</span><span class="p">,</span> <span class="n">_parse_vertices</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"blocks"</span><span class="p">,</span> <span class="n">_parse_blocks</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"boundary"</span><span class="p">,</span> <span class="n">_parse_boundary</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -762,31 +762,31 @@
                     <span class="k">pass</span>  <span class="c1"># keep the raw string; it round-trips verbatim</span>
         <span class="k">return</span> <span class="n">data</span>
 
-    <span class="nd">@model_serializer</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">)</span>
+    <span class="nd">@model_serializer</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"wrap"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">SerializationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Structured data for JSON/YAML/forms; OpenFOAM text under ``openfoam``.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;format&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Structured data for JSON/YAML/forms; OpenFOAM text under ``openfoam``."""</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"openfoam"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># type: ignore[no-any-return]</span>
         <span class="n">vertices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vertices</span>
         <span class="n">blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span>
         <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span>
-            <span class="s2">&quot;vertices&quot;</span><span class="p">:</span> <span class="n">vertices</span>
+            <span class="s2">"scale"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span>
+            <span class="s2">"vertices"</span><span class="p">:</span> <span class="n">vertices</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="k">else</span> <span class="s2">&quot;( &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">point</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vertices</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; )&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;blocks&quot;</span><span class="p">:</span> <span class="n">blocks</span>
+            <span class="k">else</span> <span class="s2">"( "</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">point</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vertices</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" )"</span><span class="p">,</span>
+            <span class="s2">"blocks"</span><span class="p">:</span> <span class="n">blocks</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-            <span class="k">else</span> <span class="s2">&quot;( &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fmt_block</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; )&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;edges&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span>
+            <span class="k">else</span> <span class="s2">"( "</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fmt_block</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" )"</span><span class="p">,</span>
+            <span class="s2">"edges"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="c1"># Only emit ``boundary`` when populated: a dict using the legacy ``patches``</span>
         <span class="c1"># form (preserved as an extra) must not gain a spurious empty ``boundary``.</span>
         <span class="n">boundary</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">boundary</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;boundary&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">boundary</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"boundary"</span><span class="p">]</span> <span class="o">=</span> <span class="n">boundary</span>
         <span class="k">elif</span> <span class="n">boundary</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;boundary&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;( &quot;</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fmt_patch</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">boundary</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; )&quot;</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">&quot;mergePatchPairs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_patch_pairs</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"boundary"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"( "</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fmt_patch</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">boundary</span><span class="p">)</span> <span class="o">+</span> <span class="s2">" )"</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"mergePatchPairs"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_patch_pairs</span>
         <span class="c1"># Preserve any unmodeled top-level entries (patches / faces / defaultPatch /</span>
         <span class="c1"># grading variables / ...) so an arbitrary dict reproduces faithfully.</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__pydantic_extra__</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -800,7 +800,7 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_vertices</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Vec3</span><span class="p">]:</span>
     <span class="n">inner</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_group</span><span class="p">(</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">nums</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">inner</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;()&quot;</span><span class="p">]</span>
+    <span class="n">nums</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">inner</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">"()"</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">[(</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nums</span><span class="p">),</span> <span class="mi">3</span><span class="p">)]</span>
 
 
@@ -809,22 +809,22 @@
     <span class="n">blocks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Block</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;hex&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"hex"</span><span class="p">:</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># defensively skip anything unexpected</span>
             <span class="k">continue</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">verts</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">read_group</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
         <span class="n">zone</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="ow">and</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;(&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="ow">and</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"("</span><span class="p">:</span>
             <span class="n">zone</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">cells</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">read_group</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="ow">and</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;simpleGrading&quot;</span><span class="p">,</span> <span class="s2">&quot;edgeGrading&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span> <span class="ow">and</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"simpleGrading"</span><span class="p">,</span> <span class="s2">"edgeGrading"</span><span class="p">):</span>
             <span class="n">gtype</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
             <span class="n">grad</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">read_group</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">grading</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gtype</span><span class="si">}</span><span class="s2"> ( </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span><span class="si">}</span><span class="s2"> )&quot;</span>
+            <span class="n">grading</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gtype</span><span class="si">}</span><span class="s2"> ( </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span><span class="si">}</span><span class="s2"> )"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">grading</span> <span class="o">=</span> <span class="s2">&quot;simpleGrading ( 1 1 1 )&quot;</span>
+            <span class="n">grading</span> <span class="o">=</span> <span class="s2">"simpleGrading ( 1 1 1 )"</span>
         <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Block</span><span class="p">(</span>
                 <span class="n">vertices</span><span class="o">=</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">],</span>
@@ -843,13 +843,13 @@
     <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">inner</span><span class="p">):</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">inner</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">body</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">read_group</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">open_</span><span class="o">=</span><span class="s2">&quot;{&quot;</span><span class="p">,</span> <span class="n">close</span><span class="o">=</span><span class="s2">&quot;}&quot;</span><span class="p">)</span>
+        <span class="n">body</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">read_group</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">open_</span><span class="o">=</span><span class="s2">"{"</span><span class="p">,</span> <span class="n">close</span><span class="o">=</span><span class="s2">"}"</span><span class="p">)</span>
         <span class="n">patches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_parse_patch</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">body</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">patches</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_patch</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">BlockPatch</span><span class="p">:</span>
-    <span class="n">ptype</span> <span class="o">=</span> <span class="s2">&quot;patch&quot;</span>
+    <span class="n">ptype</span> <span class="o">=</span> <span class="s2">"patch"</span>
     <span class="n">faces</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
@@ -861,24 +861,24 @@
         <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">):</span>
             <span class="n">tok</span> <span class="o">=</span> <span class="n">body</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
             <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">tok</span> <span class="o">==</span> <span class="s2">&quot;;&quot;</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tok</span> <span class="o">==</span> <span class="s2">";"</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">break</span>
-            <span class="k">if</span> <span class="n">tok</span> <span class="ow">in</span> <span class="s2">&quot;({&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tok</span> <span class="ow">in</span> <span class="s2">"({"</span><span class="p">:</span>
                 <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">elif</span> <span class="n">tok</span> <span class="ow">in</span> <span class="s2">&quot;)}&quot;</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">tok</span> <span class="ow">in</span> <span class="s2">")}"</span><span class="p">:</span>
                 <span class="n">depth</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">value</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span>
-            <span class="n">ptype</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="s2">&quot;patch&quot;</span>
-        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;faces&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"type"</span><span class="p">:</span>
+            <span class="n">ptype</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="s2">"patch"</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">"faces"</span><span class="p">:</span>
             <span class="n">faces</span> <span class="o">=</span> <span class="n">_parse_faces</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">extra</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">extra</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">BlockPatch</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">ptype</span><span class="p">,</span> <span class="n">faces</span><span class="o">=</span><span class="n">faces</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_faces</span><span class="p">(</span><span class="n">tokens</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-    <span class="n">nums</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokens</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;()&quot;</span><span class="p">]</span>
+    <span class="n">nums</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tokens</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">"()"</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">[(</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nums</span><span class="p">),</span> <span class="mi">4</span><span class="p">)]</span>
 
 
@@ -886,18 +886,18 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_block</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="n">Block</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">verts</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">b</span><span class="o">.</span><span class="n">vertices</span><span class="p">)</span>
-    <span class="n">zone</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">zone</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">zone</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">verts</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">b</span><span class="o">.</span><span class="n">vertices</span><span class="p">)</span>
+    <span class="n">zone</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">zone</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">zone</span> <span class="k">else</span> <span class="s2">""</span>
     <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">cells</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;hex ( </span><span class="si">{</span><span class="n">verts</span><span class="si">}</span><span class="s2"> )</span><span class="si">{</span><span class="n">zone</span><span class="si">}</span><span class="s2"> ( </span><span class="si">{</span><span class="n">nx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ny</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">nz</span><span class="si">}</span><span class="s2"> ) </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">grading</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"hex ( </span><span class="si">{</span><span class="n">verts</span><span class="si">}</span><span class="s2"> )</span><span class="si">{</span><span class="n">zone</span><span class="si">}</span><span class="s2"> ( </span><span class="si">{</span><span class="n">nx</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">ny</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">nz</span><span class="si">}</span><span class="s2"> ) </span><span class="si">{</span><span class="n">b</span><span class="o">.</span><span class="n">grading</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt_patch</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">BlockPatch</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">faces</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;( </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> )&quot;</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
-    <span class="n">body</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;type </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> ; faces ( </span><span class="si">{</span><span class="n">faces</span><span class="si">}</span><span class="s2"> ) ;&quot;</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"( </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> )"</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"type </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> ; faces ( </span><span class="si">{</span><span class="n">faces</span><span class="si">}</span><span class="s2"> ) ;"</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">extra</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">body</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> ;&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="se">{{</span><span class="s2"> </span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">&quot;</span>
+        <span class="n">body</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> ;"</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="se">{{</span><span class="s2"> </span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2"> </span><span class="se">}}</span><span class="s2">"</span>
 </pre></div>
         </article>
       </div>
@@ -937,6 +937,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Process-wide NeoN (Kokkos) runtime initialization.</span>
+<span class="sd">"""Process-wide NeoN (Kokkos) runtime initialization.</span>
 
 <span class="sd">Kokkos may only be initialized/finalized once per process. Every NeoN-backed</span>
 <span class="sd">solver calls :func:`ensure_neon_initialized` before touching NeoN so repeated</span>
@@ -602,7 +602,7 @@
 <span class="sd">so a CUDA-enabled build takes a CUDA context per rank even for a Serial run.</span>
 <span class="sd">When that context cannot be created, :func:`ensure_neon_initialized` re-raises</span>
 <span class="sd">with the state that explains it; the remedies live in ``doc/reference/cli.rst``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
@@ -618,36 +618,36 @@
 
 <div class="viewcode-block" id="NeoNControlConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.NeoNControlConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/controlDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NeoNControlConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The NeoN runtime keys of ``system/controlDict`` — today the executor alone.</span>
+<span class="w">    </span><span class="sd">"""The NeoN runtime keys of ``system/controlDict`` — today the executor alone.</span>
 
-<span class="sd">    A top-level (sub-dict-free) slice of the case&#39;s ``controlDict``, co-owning the</span>
-<span class="sd">    file with the solver&#39;s ``ControlDictConfig`` the way the ``courant`` /</span>
+<span class="sd">    A top-level (sub-dict-free) slice of the case's ``controlDict``, co-owning the</span>
+<span class="sd">    file with the solver's ``ControlDictConfig`` the way the ``courant`` /</span>
 <span class="sd">    ``maxDeltaT`` model configs do. It is deliberately *not* a field on</span>
 <span class="sd">    ``ControlDictConfig``: it is read by the shared NeoN runtime (the framework</span>
 <span class="sd">    solver and the legacy ``neoPimpleFoam`` alike), and modelling one key keeps</span>
 <span class="sd">    that read independent of the time-control entries. ``executor`` stays a plain</span>
-<span class="sd">    ``str`` rather than a ``Literal``: the names are resolved by NeoFOAM&#39;s C++</span>
+<span class="sd">    ``str`` rather than a ``Literal``: the names are resolved by NeoFOAM's C++</span>
 <span class="sd">    ``createExecutor``, and an unknown one must fail there — after it logged</span>
 <span class="sd">    ``Creating Executor &lt;name&gt;`` — not at config validation.</span>
 
 <span class="sd">    Declared on the ``incompressibleFluidNeoN`` spec, so it shows up in the</span>
-<span class="sd">    solver&#39;s config schema; read through :func:`requested_executor`.</span>
+<span class="sd">    solver's config schema; read through :func:`requested_executor`.</span>
 
 <span class="sd">    Example::</span>
 
 <span class="sd">        executor        GPU;   // in system/controlDict</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">executor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Serial&quot;</span></div>
+    <span class="n">executor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Serial"</span></div>
 
 
 
 <div class="viewcode-block" id="requested_executor">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.requested_executor">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">requested_executor</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;NeoN executor the solver places its fields on.</span>
+<span class="w">    </span><span class="sd">"""NeoN executor the solver places its fields on.</span>
 
 <span class="sd">    Read from the ``executor`` entry of ``system/controlDict`` (``Serial``,</span>
 <span class="sd">    ``CPU``, ``GPU`` or ``default``) via :class:`NeoNControlConfig` — the same</span>
@@ -659,33 +659,33 @@
 <span class="sd">    Example::</span>
 
 <span class="sd">        executor        GPU;   // in system/controlDict</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">NeoNControlConfig</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">executor</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gpu_init_report</span><span class="p">(</span><span class="n">error</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The failed Kokkos GPU init, restated with the state that explains it.&quot;&quot;&quot;</span>
-    <span class="n">seen_by_kokkos</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&lt;unset&gt;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;CUDA_VISIBLE_DEVICES&quot;</span><span class="p">,</span> <span class="s2">&quot;KOKKOS_VISIBLE_DEVICES&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The failed Kokkos GPU init, restated with the state that explains it."""</span>
+    <span class="n">seen_by_kokkos</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;unset&gt;'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"CUDA_VISIBLE_DEVICES"</span><span class="p">,</span> <span class="s2">"KOKKOS_VISIBLE_DEVICES"</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;NeoN (Kokkos) initialization failed on the GPU backend: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;requested executor: </span><span class="si">{</span><span class="n">requested_executor</span><span class="p">()</span><span class="si">}</span><span class="s2"> (system/controlDict)</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">seen_by_kokkos</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;This NeoFOAM links a Kokkos compiled with the CUDA backend, and &quot;</span>
-        <span class="s2">&quot;Kokkos::initialize brings up every compiled backend — so each rank takes a &quot;</span>
-        <span class="s2">&quot;CUDA context (a few hundred MiB) even when the executor is Serial or CPU. &quot;</span>
-        <span class="s2">&quot;The controlDict executor entry cannot switch that off. Ways out: see &quot;</span>
-        <span class="s2">&quot;doc/reference/cli.rst, &#39;Executor selection and GPU initialization&#39;.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">"NeoN (Kokkos) initialization failed on the GPU backend: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"requested executor: </span><span class="si">{</span><span class="n">requested_executor</span><span class="p">()</span><span class="si">}</span><span class="s2"> (system/controlDict)</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">seen_by_kokkos</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"This NeoFOAM links a Kokkos compiled with the CUDA backend, and "</span>
+        <span class="s2">"Kokkos::initialize brings up every compiled backend — so each rank takes a "</span>
+        <span class="s2">"CUDA context (a few hundred MiB) even when the executor is Serial or CPU. "</span>
+        <span class="s2">"The controlDict executor entry cannot switch that off. Ways out: see "</span>
+        <span class="s2">"doc/reference/cli.rst, 'Executor selection and GPU initialization'.</span><span class="se">\n</span><span class="s2">"</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_finalize_neon</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Finalize Kokkos, but only after Python-owned NeoN objects are gone.</span>
+<span class="w">    </span><span class="sd">"""Finalize Kokkos, but only after Python-owned NeoN objects are gone.</span>
 
-<span class="sd">    ``atexit`` handlers run *before* the interpreter&#39;s final garbage collection,</span>
+<span class="sd">    ``atexit`` handlers run *before* the interpreter's final garbage collection,</span>
 <span class="sd">    so calling ``nn.finalize()`` (``Kokkos::finalize()``) directly here races the</span>
 <span class="sd">    teardown of any NeoN ``Vector`` / ``MeshAdapter`` still reachable at exit.</span>
 <span class="sd">    The usual culprit is a failed solve: the exception it raised is kept in</span>
@@ -696,8 +696,8 @@
 
 <span class="sd">    Dropping the stored exception and forcing a collection destroys those objects</span>
 <span class="sd">    first, so ``finalize`` (and its ginkgo executor-release hook) runs cleanly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">_attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;last_traceback&quot;</span><span class="p">,</span> <span class="s2">&quot;last_value&quot;</span><span class="p">,</span> <span class="s2">&quot;last_type&quot;</span><span class="p">,</span> <span class="s2">&quot;last_exc&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">_attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"last_traceback"</span><span class="p">,</span> <span class="s2">"last_value"</span><span class="p">,</span> <span class="s2">"last_type"</span><span class="p">,</span> <span class="s2">"last_exc"</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">_attr</span><span class="p">):</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">sys</span><span class="p">,</span> <span class="n">_attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
@@ -707,7 +707,7 @@
 <div class="viewcode-block" id="ensure_neon_initialized">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.ensure_neon_initialized">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">ensure_neon_initialized</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize NeoN/Kokkos once per process (idempotent).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Initialize NeoN/Kokkos once per process (idempotent)."""</span>
     <span class="k">global</span> <span class="n">_neon_initialized</span>
     <span class="k">if</span> <span class="n">_neon_initialized</span><span class="p">:</span>
         <span class="k">return</span>
@@ -716,7 +716,7 @@
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
         <span class="c1"># Kokkos reports a bare CUDA error code from a frame no user can act on;</span>
         <span class="c1"># anything else is passed through untouched.</span>
-        <span class="k">if</span> <span class="s2">&quot;cuda&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="k">if</span> <span class="s2">"cuda"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
             <span class="k">raise</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">_gpu_init_report</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
     <span class="n">_neon_initialized</span> <span class="o">=</span> <span class="kc">True</span>
@@ -761,6 +761,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

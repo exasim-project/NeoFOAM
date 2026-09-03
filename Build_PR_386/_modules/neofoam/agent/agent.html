@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;A minimal pydantic-ai agent scaffold for NeoFOAM.</span>
+<span class="sd">"""A minimal pydantic-ai agent scaffold for NeoFOAM.</span>
 
 <span class="sd">This is intentionally generic: it wires a :class:`pydantic_ai.Agent` to an</span>
 <span class="sd">OpenAI-compatible endpoint (a local `Ollama &lt;https://ollama.com&gt;`_ server by</span>
 <span class="sd">default) and returns structured output validated against a pydantic schema.</span>
 <span class="sd">Replace :class:`ExampleResponse` with a domain-specific schema and pass it via</span>
 <span class="sd">``create_agent(output_type=...)`` to build a real NeoFOAM assistant on top.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -615,25 +615,25 @@
 
 <span class="c1">#: Actionable message when the optional ``[agent]`` extra is missing.</span>
 <span class="n">_MISSING_PYDANTIC_AI</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;the agent feature needs pydantic-ai; install with: pip install neofoam[agent]&quot;</span>
+    <span class="s2">"the agent feature needs pydantic-ai; install with: pip install neofoam[agent]"</span>
 <span class="p">)</span>
 
 <span class="c1">#: Default model served by a local Ollama instance.</span>
-<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="s2">&quot;llama3.2&quot;</span>
+<span class="n">DEFAULT_MODEL</span> <span class="o">=</span> <span class="s2">"llama3.2"</span>
 <span class="c1">#: Default OpenAI-compatible endpoint exposed by a local Ollama server.</span>
-<span class="n">DEFAULT_BASE_URL</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:11434/v1&quot;</span>
+<span class="n">DEFAULT_BASE_URL</span> <span class="o">=</span> <span class="s2">"http://localhost:11434/v1"</span>
 
 
 <div class="viewcode-block" id="ExampleResponse">
 <a class="viewcode-back" href="../../../reference/api/neofoam.agent.agent.html#neofoam.agent.agent.ExampleResponse">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExampleResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Placeholder structured output for the scaffold.</span>
+<span class="w">    </span><span class="sd">"""Placeholder structured output for the scaffold.</span>
 
 <span class="sd">    Swap this out for a domain schema (e.g. solver settings, a case config)</span>
-<span class="sd">    once the agent&#39;s task is defined.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    once the agent's task is defined.</span>
+<span class="sd">    """</span>
 
-    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;A short, one-sentence summary of the prompt.&quot;</span><span class="p">)</span></div>
+    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"A short, one-sentence summary of the prompt."</span><span class="p">)</span></div>
 
 
 
@@ -643,12 +643,12 @@
     <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_MODEL</span><span class="p">,</span>
     <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_BASE_URL</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OpenAIChatModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a chat model backed by a local Ollama server.</span>
+<span class="w">    </span><span class="sd">"""Build a chat model backed by a local Ollama server.</span>
 
 <span class="sd">    Uses :class:`~pydantic_ai.providers.ollama.OllamaProvider`, so **no API key</span>
 <span class="sd">    is required** — Ollama serves models locally. Constructing the model</span>
 <span class="sd">    performs no network I/O. Point ``base_url`` at any Ollama endpoint.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">OllamaProvider</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">OpenAIChatModel</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="n">_MISSING_PYDANTIC_AI</span><span class="p">)</span>
     <span class="n">provider</span> <span class="o">=</span> <span class="n">OllamaProvider</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span><span class="p">)</span>
@@ -665,11 +665,11 @@
     <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_BASE_URL</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Agent</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a pydantic-ai :class:`Agent` returning structured ``output_type``.</span>
+<span class="w">    </span><span class="sd">"""Create a pydantic-ai :class:`Agent` returning structured ``output_type``.</span>
 
 <span class="sd">    Extra keyword arguments (``instructions``, ``system_prompt``, ``retries``,</span>
 <span class="sd">    ...) are forwarded to :class:`pydantic_ai.Agent`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">build_model</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Agent</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="n">output_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
@@ -712,6 +712,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

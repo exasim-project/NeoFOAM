@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Build the two mesh-input configs from a :class:`PatchSet`.</span>
+<span class="sd">"""Build the two mesh-input configs from a :class:`PatchSet`.</span>
 
 <span class="sd">Deterministic patch_set → ``BaseConfig`` mappers (no OpenFOAM, no LLM):</span>
 
@@ -608,7 +608,7 @@
 <span class="sd">``system/snappyHexMeshDict`` / ``system/preprocess.yaml`` via</span>
 <span class="sd">:func:`neofoam.io.write_configs` — the patch_set supplies the geometry facts, the</span>
 <span class="sd">configs know how to write themselves.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -624,23 +624,23 @@
 <span class="c1">#   0:(xmin,ymin,zmin) 1:(xmax,ymin,zmin) 2:(xmax,ymax,zmin) 3:(xmin,ymax,zmin)</span>
 <span class="c1">#   4:(xmin,ymin,zmax) 5:(xmax,ymin,zmax) 6:(xmax,ymax,zmax) 7:(xmin,ymax,zmax)</span>
 <span class="n">_FACE_QUADS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BoxFace</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;x_min&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-    <span class="s2">&quot;x_max&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
-    <span class="s2">&quot;y_min&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
-    <span class="s2">&quot;y_max&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-    <span class="s2">&quot;z_min&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-    <span class="s2">&quot;z_max&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
+    <span class="s2">"x_min"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="s2">"x_max"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+    <span class="s2">"y_min"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="s2">"y_max"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+    <span class="s2">"z_min"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="s2">"z_max"</span><span class="p">:</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
 <span class="p">}</span>
 
 <span class="c1"># A snappy 3-D mesh cannot honour a true ``empty`` (2-D) patch, so the thin-slab</span>
 <span class="c1"># redundant direction is realised as a generalized ``symmetry`` patch (not</span>
 <span class="c1"># ``symmetryPlane``: its two opposite faces live in one patch).</span>
 <span class="n">_PATCH_TYPE</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">PatchRole</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">PatchRole</span><span class="o">.</span><span class="n">inlet</span><span class="p">:</span> <span class="s2">&quot;patch&quot;</span><span class="p">,</span>
-    <span class="n">PatchRole</span><span class="o">.</span><span class="n">outlet</span><span class="p">:</span> <span class="s2">&quot;patch&quot;</span><span class="p">,</span>
-    <span class="n">PatchRole</span><span class="o">.</span><span class="n">wall</span><span class="p">:</span> <span class="s2">&quot;wall&quot;</span><span class="p">,</span>
-    <span class="n">PatchRole</span><span class="o">.</span><span class="n">symmetry</span><span class="p">:</span> <span class="s2">&quot;symmetry&quot;</span><span class="p">,</span>
-    <span class="n">PatchRole</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span> <span class="s2">&quot;symmetry&quot;</span><span class="p">,</span>
+    <span class="n">PatchRole</span><span class="o">.</span><span class="n">inlet</span><span class="p">:</span> <span class="s2">"patch"</span><span class="p">,</span>
+    <span class="n">PatchRole</span><span class="o">.</span><span class="n">outlet</span><span class="p">:</span> <span class="s2">"patch"</span><span class="p">,</span>
+    <span class="n">PatchRole</span><span class="o">.</span><span class="n">wall</span><span class="p">:</span> <span class="s2">"wall"</span><span class="p">,</span>
+    <span class="n">PatchRole</span><span class="o">.</span><span class="n">symmetry</span><span class="p">:</span> <span class="s2">"symmetry"</span><span class="p">,</span>
+    <span class="n">PatchRole</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span> <span class="s2">"symmetry"</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -650,7 +650,7 @@
     <span class="n">cells</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">padding</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Background cell counts, from explicit ``cells`` or a target ``cell_size``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Background cell counts, from explicit ``cells`` or a target ``cell_size``."""</span>
     <span class="k">if</span> <span class="n">cells</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">cells</span>
     <span class="n">size</span> <span class="o">=</span> <span class="n">cell_size</span> <span class="ow">or</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">patch_set</span><span class="o">.</span><span class="n">length_scale</span>
@@ -672,7 +672,7 @@
     <span class="n">padding</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">grading</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlockMeshDictConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One graded hex box enclosing the bbox, with the box-face patches named.</span>
+<span class="w">    </span><span class="sd">"""One graded hex box enclosing the bbox, with the box-face patches named.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        patch_set: geometry facts (bbox + patches).</span>
@@ -682,7 +682,7 @@
 <span class="sd">            ``cell_size``.</span>
 <span class="sd">        padding: symmetric bbox expansion (m) per side (0 = box == bbox).</span>
 <span class="sd">        grading: ``simpleGrading`` ratios.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">lo</span> <span class="o">=</span> <span class="p">[</span><span class="n">patch_set</span><span class="o">.</span><span class="n">bbox</span><span class="o">.</span><span class="n">min</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">padding</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span>
     <span class="n">hi</span> <span class="o">=</span> <span class="p">[</span><span class="n">patch_set</span><span class="o">.</span><span class="n">bbox</span><span class="o">.</span><span class="n">max</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">padding</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span>
     <span class="n">vertices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
@@ -708,7 +708,7 @@
     <span class="n">block</span> <span class="o">=</span> <span class="n">Block</span><span class="p">(</span>
         <span class="n">vertices</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)),</span>
         <span class="n">cells</span><span class="o">=</span><span class="n">_resolve_cells</span><span class="p">(</span><span class="n">patch_set</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">,</span> <span class="n">cells</span><span class="p">,</span> <span class="n">padding</span><span class="p">),</span>
-        <span class="n">grading</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;simpleGrading ( </span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">gy</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">gz</span><span class="p">)</span><span class="si">}</span><span class="s2"> )&quot;</span><span class="p">,</span>
+        <span class="n">grading</span><span class="o">=</span><span class="sa">f</span><span class="s2">"simpleGrading ( </span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">gx</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">gy</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">gz</span><span class="p">)</span><span class="si">}</span><span class="s2"> )"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">BlockMeshDictConfig</span><span class="p">(</span><span class="n">vertices</span><span class="o">=</span><span class="n">vertices</span><span class="p">,</span> <span class="n">blocks</span><span class="o">=</span><span class="p">[</span><span class="n">block</span><span class="p">],</span> <span class="n">boundary</span><span class="o">=</span><span class="n">boundary</span><span class="p">)</span></div>
 
@@ -725,12 +725,12 @@
     <span class="n">max_global_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2_000_000</span><span class="p">,</span>
     <span class="n">add_layers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SnappyHexMeshDictConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Carve the snappy-surface patches; ``locationInMesh`` from the patch_set.</span>
+<span class="w">    </span><span class="sd">"""Carve the snappy-surface patches; ``locationInMesh`` from the patch_set.</span>
 
 <span class="sd">    Each patch_set patch with no ``box_faces`` (a snappy surface) becomes a</span>
 <span class="sd">    ``geometry`` + ``refinementSurfaces`` entry backed by its STL basename; its</span>
 <span class="sd">    ``surface_refinement`` overrides ``default_level`` when set.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">surfaces</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">SnappySurface</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">patch</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -759,18 +759,18 @@
 <div class="viewcode-block" id="preprocess_config">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.mesh_inputs.html#neofoam.tooling.workflow.geometry.preprocess_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_config</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">has_snappy</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PreprocessConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``preprocess.yaml`` enable-list: blockMesh → [snappyHexMesh] → checkMesh.</span>
+<span class="w">    </span><span class="sd">"""The ``preprocess.yaml`` enable-list: blockMesh → [snappyHexMesh] → checkMesh.</span>
 
 <span class="sd">    ``checkMesh`` runs last and is non-fatal (``fail_on_error: false``) so a mesh</span>
 <span class="sd">    that only warns still lets the solver run. ``snappyHexMesh`` is inserted (after</span>
 <span class="sd">    ``blockMesh``) only when the manifest has a snappy surface.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;blockMesh&quot;</span><span class="p">}]</span>
-    <span class="n">check_deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">]</span>
+<span class="sd">    """</span>
+    <span class="n">tools</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"blockMesh"</span><span class="p">}]</span>
+    <span class="n">check_deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"blockMesh"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">has_snappy</span><span class="p">:</span>
-        <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">]})</span>
-        <span class="n">check_deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">]</span>
-    <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;checkMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="n">check_deps</span><span class="p">,</span> <span class="s2">&quot;fail_on_error&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+        <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"snappyHexMesh"</span><span class="p">,</span> <span class="s2">"depends_on"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"blockMesh"</span><span class="p">]})</span>
+        <span class="n">check_deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"snappyHexMesh"</span><span class="p">]</span>
+    <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"tool"</span><span class="p">:</span> <span class="s2">"checkMesh"</span><span class="p">,</span> <span class="s2">"depends_on"</span><span class="p">:</span> <span class="n">check_deps</span><span class="p">,</span> <span class="s2">"fail_on_error"</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
     <span class="k">return</span> <span class="n">PreprocessConfig</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">)</span></div>
 
 
@@ -784,13 +784,13 @@
     <span class="n">cells</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">padding</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">BlockMeshDictConfig</span><span class="p">,</span> <span class="n">SnappyHexMeshDictConfig</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">PreprocessConfig</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``(blockMeshDict, snappyHexMeshDict | None, preprocess)`` from a manifest.</span>
+<span class="w">    </span><span class="sd">"""Render ``(blockMeshDict, snappyHexMeshDict | None, preprocess)`` from a manifest.</span>
 
 <span class="sd">    The one-call manifest → mesh-dict bridge behind the MCP ``build_mesh_inputs``</span>
 <span class="sd">    tool. The snappy dict is ``None`` for a pure-box case (every patch is a</span>
 <span class="sd">    blockMesh face), and the ``preprocess`` enable-list is sized to match (it</span>
 <span class="sd">    includes ``snappyHexMesh`` only when a snappy dict is produced).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">block</span> <span class="o">=</span> <span class="n">block_mesh_dict</span><span class="p">(</span><span class="n">patch_set</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="n">cell_size</span><span class="p">,</span> <span class="n">cells</span><span class="o">=</span><span class="n">cells</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
     <span class="n">has_snappy</span> <span class="o">=</span> <span class="n">_has_snappy_surface</span><span class="p">(</span><span class="n">patch_set</span><span class="p">)</span>
     <span class="n">snappy</span> <span class="o">=</span> <span class="n">snappy_dict</span><span class="p">(</span><span class="n">patch_set</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_snappy</span> <span class="k">else</span> <span class="kc">None</span>
@@ -836,6 +836,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

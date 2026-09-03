@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;OpenFOAM-specific initialization helpers.&quot;&quot;&quot;</span>
+<span class="sd">"""OpenFOAM-specific initialization helpers."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span>
@@ -603,34 +603,34 @@
 <div class="viewcode-block" id="create_arglist">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.initialization.html#neofoam.foam.initialization.create_arglist">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_arglist</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``Foam::argList`` — under ``-parallel``, the MPI session itself.</span>
+<span class="w">    </span><span class="sd">"""The ``Foam::argList`` — under ``-parallel``, the MPI session itself.</span>
 
 <span class="sd">    A *model* so the Context keeps it alive for the whole run: ``pyf.Time`` only</span>
 <span class="sd">    holds a raw reference to it, and ``~argList`` calls MPI_Finalize.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="n">_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">argList</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="s2">&quot;foam_arglist&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">model</span><span class="p">(</span><span class="s2">"foam_arglist"</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">create_runtime</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.foam_arglist&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"models.foam_arglist"</span><span class="p">])</span>
 
-    <span class="k">return</span> <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;runtime&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;models.foam_arglist&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">lazy</span><span class="p">(</span><span class="s2">"runtime"</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.foam_arglist"</span><span class="p">])</span>
 
 
 <span class="c1">#: Every OpenFOAM topology-changing (refining) ``dynamicFvMesh`` carries it in its</span>
 <span class="c1">#: name: ``dynamicRefineFvMesh``, ``dynamicRefineBalancedFvMesh``.</span>
-<span class="n">_REFINEMENT_MESH_MARKER</span> <span class="o">=</span> <span class="s2">&quot;Refine&quot;</span>
+<span class="n">_REFINEMENT_MESH_MARKER</span> <span class="o">=</span> <span class="s2">"Refine"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_refinement_mesh_type</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The topology-changing ``dynamicFvMesh`` type *case* selects, else ``None``.&quot;&quot;&quot;</span>
-    <span class="n">kind</span> <span class="o">=</span> <span class="n">read_toplevel</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;constant&quot;</span> <span class="o">/</span> <span class="s2">&quot;dynamicMeshDict&quot;</span><span class="p">,</span> <span class="s2">&quot;dynamicFvMesh&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The topology-changing ``dynamicFvMesh`` type *case* selects, else ``None``."""</span>
+    <span class="n">kind</span> <span class="o">=</span> <span class="n">read_toplevel</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"dynamicMeshDict"</span><span class="p">,</span> <span class="s2">"dynamicFvMesh"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">Value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_REFINEMENT_MESH_MARKER</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kind</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">kind</span><span class="o">.</span><span class="n">text</span>
@@ -639,20 +639,20 @@
 <div class="viewcode-block" id="refuse_mesh_refinement">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.initialization.html#neofoam.foam.initialization.refuse_mesh_refinement">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">refuse_mesh_refinement</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refuse a case whose ``dynamicFvMesh`` refines cells, before anything is built.</span>
+<span class="w">    </span><span class="sd">"""Refuse a case whose ``dynamicFvMesh`` refines cells, before anything is built.</span>
 
 <span class="sd">    Mesh *motion* is supported, adaptive refinement is not: nothing downstream</span>
 <span class="sd">    reacts to cells appearing and disappearing, so an AMR case would silently solve</span>
-<span class="sd">    on the initial topology. Call it as the *first* statement of a solver&#39;s ``mesh``</span>
+<span class="sd">    on the initial topology. Call it as the *first* statement of a solver's ``mesh``</span>
 <span class="sd">    init step, ahead of every ``context[...]`` lookup, so the case is refused before</span>
 <span class="sd">    the argList, ``Foam::Time`` and mesh are constructed (:func:`create_mesh` does).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">refinement</span> <span class="o">=</span> <span class="n">_refinement_mesh_type</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
+<span class="sd">    """</span>
+    <span class="n">refinement</span> <span class="o">=</span> <span class="n">_refinement_mesh_type</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">refinement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;adaptive mesh refinement is not implemented: constant/dynamicMeshDict &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;selects dynamicFvMesh </span><span class="si">{</span><span class="n">refinement</span><span class="si">}</span><span class="s2">, which changes the mesh topology &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;during the run. Refusing rather than solving on the initial mesh.&quot;</span>
+            <span class="sa">f</span><span class="s2">"adaptive mesh refinement is not implemented: constant/dynamicMeshDict "</span>
+            <span class="sa">f</span><span class="s2">"selects dynamicFvMesh </span><span class="si">{</span><span class="n">refinement</span><span class="si">}</span><span class="s2">, which changes the mesh topology "</span>
+            <span class="sa">f</span><span class="s2">"during the run. Refusing rather than solving on the initial mesh."</span>
         <span class="p">)</span></div>
 
 
@@ -660,14 +660,14 @@
 <div class="viewcode-block" id="new_mesh">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.initialization.html#neofoam.foam.initialization.new_mesh">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">new_mesh</span><span class="p">(</span><span class="n">arglist</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The case mesh: a moving ``dynamicFvMesh`` when the case asks for one.</span>
+<span class="w">    </span><span class="sd">"""The case mesh: a moving ``dynamicFvMesh`` when the case asks for one.</span>
 
 <span class="sd">    Mirrors ``createDynamicFvMesh.H``, but branches on the dictionary rather than</span>
 <span class="sd">    letting ``dynamicFvMesh::New`` fall back to a ``staticFvMesh``, so the</span>
 <span class="sd">    static-mesh path stays on exactly the code it has always run. Call it behind</span>
 <span class="sd">    :func:`refuse_mesh_refinement` (:func:`create_mesh` does).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;constant/dynamicMeshDict&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"constant/dynamicMeshDict"</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dynamicFvMesh</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="n">arglist</span><span class="p">,</span> <span class="n">runtime</span><span class="p">)</span></div>
 
@@ -676,15 +676,15 @@
 <div class="viewcode-block" id="create_mesh">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.initialization.html#neofoam.foam.initialization.create_mesh">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_mesh</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``mesh`` init step — see :func:`new_mesh` for what it selects.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The ``mesh`` init step — see :func:`new_mesh` for what it selects."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="c1"># First, so an AMR case is refused before the context resolves the argList</span>
         <span class="c1"># and Foam::Time it would be built on.</span>
         <span class="n">refuse_mesh_refinement</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">new_mesh</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.foam_arglist&quot;</span><span class="p">],</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">new_mesh</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"models.foam_arglist"</span><span class="p">],</span> <span class="n">context</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">])</span>
 
-    <span class="k">return</span> <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">,</span> <span class="s2">&quot;models.foam_arglist&quot;</span><span class="p">])</span></div>
+    <span class="k">return</span> <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">,</span> <span class="s2">"models.foam_arglist"</span><span class="p">])</span></div>
 
 
 
@@ -694,9 +694,9 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">read_vol_field</span><span class="p">(</span><span class="n">field_type</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">field_type</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field_type</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">],</span> <span class="n">name</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">field</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 </pre></div>
         </article>
       </div>
@@ -736,6 +736,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

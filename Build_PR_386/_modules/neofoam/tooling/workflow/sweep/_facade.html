@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The :class:`Sweep` object — one value that owns the parameter-sweep round-trip.</span>
+<span class="sd">"""The :class:`Sweep` object — one value that owns the parameter-sweep round-trip.</span>
 
 <span class="sd">Instead of hand-wiring :func:`cross_product`, :func:`sweep_snakefile`, the</span>
 <span class="sd">:class:`~neofoam.tooling.workflow.rules.RulePlan` resolution and the</span>
@@ -598,7 +598,7 @@
 <span class="sd">(:attr:`~Sweep.rows`, :attr:`~Sweep.plan`, :attr:`~Sweep.snakefile`) off one object.</span>
 <span class="sd">The free functions it delegates to remain importable (they are its helpers), but a</span>
 <span class="sd">new caller only needs this class.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -628,7 +628,7 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.Sweep">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Sweep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A parameter sweep as a value: dimensions + solver + base case, round-trip owned.</span>
+<span class="w">    </span><span class="sd">"""A parameter sweep as a value: dimensions + solver + base case, round-trip owned.</span>
 
 <span class="sd">    ``dimensions`` maps each swept axis to its named variants</span>
 <span class="sd">    (``{axis: {variant: payload}}``); the reserved ``mesh`` axis is keyed. ``classes``</span>
@@ -638,7 +638,7 @@
 <span class="sd">    :meth:`export` writes the runnable workflow directory; :meth:`load` reads one back.</span>
 <span class="sd">    :attr:`rows`, :attr:`plan` and :attr:`snakefile` are derived read-only views — the</span>
 <span class="sd">    caller never wires the underlying free functions together.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">dimensions</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span>
     <span class="n">solver_name</span><span class="p">:</span> <span class="nb">str</span>
@@ -650,7 +650,7 @@
 <div class="viewcode-block" id="Sweep.export">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.Sweep.export">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SweepExport</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the runnable workflow dir (sweep.csv, params.yaml, Snakefile, configs).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write the runnable workflow dir (sweep.csv, params.yaml, Snakefile, configs)."""</span>
         <span class="k">return</span> <span class="n">export_sweep</span><span class="p">(</span>
             <span class="n">out_dir</span><span class="p">,</span>
             <span class="n">solver_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span><span class="p">,</span>
@@ -666,12 +666,12 @@
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.Sweep.load">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sweep</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read an exported sweep directory back into a :class:`Sweep`.</span>
+<span class="w">        </span><span class="sd">"""Read an exported sweep directory back into a :class:`Sweep`.</span>
 
 <span class="sd">        The reconstructed sweep carries no config ``classes`` (they are not</span>
 <span class="sd">        persisted), so it is for inspection (:attr:`rows`, :attr:`plan`,</span>
 <span class="sd">        :attr:`snakefile`) rather than re-:meth:`export`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">loaded</span><span class="p">:</span> <span class="n">LoadedSweep</span> <span class="o">=</span> <span class="n">load_sweep</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">dimensions</span><span class="o">=</span><span class="n">loaded</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span>
@@ -684,17 +684,17 @@
     <span class="c1"># -- derived read-only views -------------------------------------------</span>
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The cross-product rows (``sweep.csv``).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The cross-product rows (``sweep.csv``)."""</span>
         <span class="k">return</span> <span class="n">cross_product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RulePlan</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The resolved rule plan.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The resolved rule plan."""</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">registry</span> <span class="ow">or</span> <span class="n">default_registry</span><span class="p">())</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">snakefile</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The generated Snakefile text (same content :meth:`export` writes).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The generated Snakefile text (same content :meth:`export` writes)."""</span>
         <span class="k">return</span> <span class="n">sweep_snakefile</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">solver_name</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">base_case</span><span class="p">,</span>
@@ -742,6 +742,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

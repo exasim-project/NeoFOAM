@@ -627,15 +627,15 @@ every fixture stays addressable, including when sphinx-gallery
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_here</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marker used to locate this script on disk via inspect.getfile().&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Marker used to locate this script on disk via inspect.getfile()."""</span>
 
 
 <span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">_here</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-<span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;neofoam_howto_&quot;</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
+<span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"neofoam_howto_"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"case_dir ="</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_howto_k5opa5ij
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_howto_79vgb769
 </pre></div>
 </div>
 </section>
@@ -646,7 +646,7 @@ format in one decorator. The class body is a plain Pydantic model:
 field names, types, and default values become the schema you’ll
 validate against. The decorator attaches an <code class="docutils literal notranslate"><span class="pre">io_config</span></code> class var
 the framework reads at <code class="docutils literal notranslate"><span class="pre">load()</span></code> time.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"solver_config.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span>
@@ -655,14 +655,14 @@ the framework reads at <code class="docutils literal notranslate"><span class="p
 
 
 <span class="c1"># Show what the binding looks like.</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;file:&quot;</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;reader:&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">SolverConfig</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">reader</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;default path under case_dir:&quot;</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">get_default_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"file:"</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"reader:"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">SolverConfig</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">reader</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"default path under case_dir:"</span><span class="p">,</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">get_default_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>file: solver_config.yaml
 reader: YAMLStrategy
-default path under case_dir: /tmp/neofoam_howto_k5opa5ij/solver_config.yaml
+default path under case_dir: /tmp/neofoam_howto_79vgb769/solver_config.yaml
 </pre></div>
 </div>
 </section>
@@ -679,14 +679,14 @@ filename via <code class="docutils literal notranslate"><span class="pre">io_con
 <span class="nt">write_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
 </pre></div>
 </div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">"solver_config.yaml"</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"solver_config.yaml"</span><span class="p">)</span>
 
 <span class="n">cfg</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loaded:&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cfg.dt =&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;(type:&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"loaded:"</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"cfg.dt ="</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="s2">"(type:"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">")"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>loaded: name=&#39;pisoFoam&#39; dt=0.001 end_time=1.0 write_interval=20
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>loaded: name='pisoFoam' dt=0.001 end_time=1.0 write_interval=20
 cfg.dt = 0.001 (type: float)
 </pre></div>
 </div>
@@ -699,8 +699,8 @@ YAML back to the same path the loader read from.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span><span class="o">.</span><span class="n">write_interval</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="n">cfg</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;file after save:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">((</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"file after save:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">((</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"solver_config.yaml"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>file after save:
@@ -719,18 +719,18 @@ mistypes three keys in one file.</p>
 <p>The intentionally-broken fixture lives at
 <code class="docutils literal notranslate"><span class="pre">examples/how-to/solver_config_bad.yaml</span></code>:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span><span class="w">                </span><span class="c1"># should be a string</span>
-<span class="nt">dt</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;not-a-float&quot;</span><span class="w">       </span><span class="c1"># should be a float</span>
+<span class="nt">dt</span><span class="p">:</span><span class="w"> </span><span class="s">"not-a-float"</span><span class="w">       </span><span class="c1"># should be a float</span>
 <span class="nt">end_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-1.0</span><span class="w">          </span><span class="c1"># would be caught by a validator (not added here)</span>
 </pre></div>
 </div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">&quot;solver_config_bad.yaml&quot;</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">"solver_config_bad.yaml"</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"solver_config.yaml"</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="n">SolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">&quot;raised — listing every problem:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">"raised — listing every problem:"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]))</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="s1">'.'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">[</span><span class="s1">'loc'</span><span class="p">]))</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">'msg'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ValidationError raised — listing every problem:
@@ -747,10 +747,10 @@ shows the user every error before exiting. Returns <code class="docutils literal
 success. The framework’s bulk validator
 (<code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.io.validate_models()</span></code>) is built on top of this.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">errors</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">collect_errors</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> error(s):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span><span class="si">}</span><span class="s2"> error(s):"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
-    <span class="n">field</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">field</span><span class="p">))</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">field</span> <span class="k">else</span> <span class="s2">&quot;&lt;file&gt;&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">field</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">error_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">[:</span><span class="mi">60</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">field</span><span class="p">))</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">field</span> <span class="k">else</span> <span class="s2">"&lt;file&gt;"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">field</span><span class="si">:</span><span class="s2">12s</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">error_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">[:</span><span class="mi">60</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2 error(s):
@@ -778,16 +778,16 @@ own block.</p>
 <span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-5</span>
 </pre></div>
 </div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">"fvSolution.yaml"</span><span class="p">,</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"fvSolution.yaml"</span><span class="p">)</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"fvSolution.yaml"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PIMPLE"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PIMPLEConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">n_outer_correctors</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">n_inner_correctors</span><span class="p">:</span> <span class="nb">int</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;solvers.p&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"fvSolution.yaml"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"solvers.p"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureSolver</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span>
@@ -796,13 +796,13 @@ own block.</p>
 <span class="n">pimple</span> <span class="o">=</span> <span class="n">PIMPLEConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
 <span class="n">psolver</span> <span class="o">=</span> <span class="n">PressureSolver</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PIMPLE   :&quot;</span><span class="p">,</span> <span class="n">pimple</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;solvers.p:&quot;</span><span class="p">,</span> <span class="n">psolver</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;subdict path on PIMPLEConfig:&quot;</span><span class="p">,</span> <span class="n">pimple</span><span class="o">.</span><span class="n">subdict</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"PIMPLE   :"</span><span class="p">,</span> <span class="n">pimple</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"solvers.p:"</span><span class="p">,</span> <span class="n">psolver</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"subdict path on PIMPLEConfig:"</span><span class="p">,</span> <span class="n">pimple</span><span class="o">.</span><span class="n">subdict</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>PIMPLE   : n_outer_correctors=2 n_inner_correctors=1
-solvers.p: solver=&#39;GAMG&#39; tolerance=1e-06
+solvers.p: solver='GAMG' tolerance=1e-06
 subdict path on PIMPLEConfig: PIMPLE
 </pre></div>
 </div>
@@ -835,7 +835,7 @@ the same resolver shown in
 instantiate one of these configs per model and return it inside
 a <code class="xref py py-class docutils literal notranslate"><span class="pre">LoadResult</span></code>.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.009 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.010 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-work-with-config-files-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/c0d78edd156e499314087225d68cb1d7/example_work_with_config_files.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_work_with_config_files.ipynb</span></code></a></p>

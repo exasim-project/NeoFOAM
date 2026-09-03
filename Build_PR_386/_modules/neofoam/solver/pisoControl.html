@@ -589,13 +589,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Pure-Python PISO control loop, mirroring the logic in OpenFOAM&#39;s</span>
+<span class="sd">"""</span>
+<span class="sd">Pure-Python PISO control loop, mirroring the logic in OpenFOAM's</span>
 <span class="sd">Foam::pisoControl / Foam::solutionControl.</span>
 
 <span class="sd">Control parameters are passed directly as plain Python values; no C++</span>
 <span class="sd">bindings are required inside this module.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -603,7 +603,7 @@
 <div class="viewcode-block" id="PisoControl">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.pisoControl.html#neofoam.solver.pisoControl.PisoControl">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PisoControl</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;PISO corrector-loop controller.</span>
+<span class="w">    </span><span class="sd">"""PISO corrector-loop controller.</span>
 
 <span class="sd">    Parameters are passed directly as plain Python values read from</span>
 <span class="sd">    the OpenFOAM ``system/fvSolution`` PISO sub-dictionary:</span>
@@ -611,7 +611,7 @@
 <span class="sd">    * ``n_correctors``              – number of PISO correctors</span>
 <span class="sd">    * ``n_non_orthogonal_correctors`` – non-orthogonal correctors</span>
 <span class="sd">    * ``momentum_predictor``        – bool flag</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -634,19 +634,19 @@
 <div class="viewcode-block" id="PisoControl.momentum_predictor">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.pisoControl.html#neofoam.solver.pisoControl.PisoControl.momentum_predictor">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">momentum_predictor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True when the momentum predictor step should be solved.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return True when the momentum predictor step should be solved."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span></div>
 
 
 <div class="viewcode-block" id="PisoControl.correct">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.pisoControl.html#neofoam.solver.pisoControl.PisoControl.correct">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance the PISO corrector index.</span>
+<span class="w">        </span><span class="sd">"""Advance the PISO corrector index.</span>
 
 <span class="sd">        Call in a ``while piso.correct():`` loop.  Returns True for each</span>
 <span class="sd">        corrector pass and False once all nCorrectors are done (resetting</span>
 <span class="sd">        the counter for the next time-step).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_corr_piso</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corr_piso</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_corr</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -657,11 +657,11 @@
 <div class="viewcode-block" id="PisoControl.correct_non_orthogonal">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.pisoControl.html#neofoam.solver.pisoControl.PisoControl.correct_non_orthogonal">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">correct_non_orthogonal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance the non-orthogonal corrector index.</span>
+<span class="w">        </span><span class="sd">"""Advance the non-orthogonal corrector index.</span>
 
 <span class="sd">        Call in a ``while piso.correct_non_orthogonal():`` loop.</span>
 <span class="sd">        Returns True for (nNonOrthogonalCorrectors + 1) passes, then False.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_corr_non_orth</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corr_non_orth</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_non_orth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -672,7 +672,7 @@
 <div class="viewcode-block" id="PisoControl.final_non_orthogonal_iter">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.pisoControl.html#neofoam.solver.pisoControl.PisoControl.final_non_orthogonal_iter">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">final_non_orthogonal_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True on the final non-orthogonal corrector iteration.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return True on the final non-orthogonal corrector iteration."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corr_non_orth</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_non_orth</span> <span class="o">+</span> <span class="mi">1</span></div>
 </div>
 
@@ -715,6 +715,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

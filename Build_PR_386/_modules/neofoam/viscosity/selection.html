@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Viscosity (transport) model selection / factory.</span>
+<span class="sd">"""Viscosity (transport) model selection / factory.</span>
 
 <span class="sd">Resolves the active transport model name from a transportProperties-like config</span>
 <span class="sd">and returns either a registered native NeoFOAM viscosity model spec or an</span>
@@ -599,7 +599,7 @@
 <span class="sd">exposing ``transportModel``), so this module stays free of ``neofoam.io`` /</span>
 <span class="sd">pybFoam and is unit-testable without OpenFOAM. :func:`select_from_case`, which</span>
 <span class="sd">loads the real OpenFOAM dictionary, is the only pybFoam-bound entry point.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
@@ -608,7 +608,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.fallback</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMViscosityModel</span><span class="p">,</span> <span class="n">TransportFactory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.viscosityModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelSpec</span><span class="p">,</span> <span class="n">viscosityModel</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;model_name&quot;</span><span class="p">,</span> <span class="s2">&quot;select_viscosity_model&quot;</span><span class="p">,</span> <span class="s2">&quot;select_from_case&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"model_name"</span><span class="p">,</span> <span class="s2">"select_viscosity_model"</span><span class="p">,</span> <span class="s2">"select_from_case"</span><span class="p">]</span>
 
 <span class="n">SelectedModel</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">,</span> <span class="n">OpenFOAMViscosityModel</span><span class="p">]</span>
 
@@ -616,12 +616,12 @@
 <div class="viewcode-block" id="model_name">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.selection.html#neofoam.viscosity.selection.model_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">model_name</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the transport model name from a transportProperties config.</span>
+<span class="w">    </span><span class="sd">"""Resolve the transport model name from a transportProperties config.</span>
 
-<span class="sd">    Returns the ``transportModel`` entry (e.g. ``&quot;Newtonian&quot;``,</span>
-<span class="sd">    ``&quot;CrossPowerLaw&quot;``), or ``None`` when it cannot be determined.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;transportModel&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+<span class="sd">    Returns the ``transportModel`` entry (e.g. ``"Newtonian"``,</span>
+<span class="sd">    ``"CrossPowerLaw"``), or ``None`` when it cannot be determined.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"transportModel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
 
 
@@ -634,12 +634,12 @@
     <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">of_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TransportFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectedModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select a viscosity model from a transportProperties config.</span>
+<span class="w">    </span><span class="sd">"""Select a viscosity model from a transportProperties config.</span>
 
 <span class="sd">    Returns the registered native :class:`ModelSpec` whose name matches the</span>
 <span class="sd">    configured ``transportModel``, or an :class:`OpenFOAMViscosityModel`</span>
 <span class="sd">    fallback when no native model is registered for that name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">model_name</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">viscosityModel</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -651,17 +651,17 @@
 <div class="viewcode-block" id="select_from_case">
 <a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.selection.html#neofoam.viscosity.selection.select_from_case">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_from_case</span><span class="p">(</span>
-    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">of_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TransportFactory</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectedModel</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load ``constant/transportProperties`` from a case and select the model.</span>
+<span class="w">    </span><span class="sd">"""Load ``constant/transportProperties`` from a case and select the model.</span>
 
 <span class="sd">    This is the pybFoam-bound entry point: it imports and uses the OpenFOAM</span>
 <span class="sd">    reading strategy via :class:`TransportPropertiesConfig`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">TransportPropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">select_viscosity_model</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">of_factory</span><span class="o">=</span><span class="n">of_factory</span><span class="p">)</span></div>
 
@@ -704,6 +704,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

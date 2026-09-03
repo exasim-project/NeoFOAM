@@ -589,11 +589,11 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Pydantic v2 DTOs for the MCP introspection surface.</span>
+<span class="sd">"""Pydantic v2 DTOs for the MCP introspection surface.</span>
 
 <span class="sd">All fields are JSON-serializable — config classes are mapped to their</span>
 <span class="sd">``__name__`` strings so no ``type`` object ever leaks into a tool response.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -621,28 +621,28 @@
 <span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;ConfigInfoDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ConfigSchemaDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ModelEntryDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ToolInfoDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PatchDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;FindingDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ValidationReportDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;CaseTextDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;CaseSpecDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;CaseSpecSchemaDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ManifestSchemaDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;SaveResultDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;GeometryImportDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;LoadWarningDTO&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;WorkspaceInfoDTO&quot;</span><span class="p">,</span>
+    <span class="s2">"ConfigInfoDTO"</span><span class="p">,</span>
+    <span class="s2">"ConfigSchemaDTO"</span><span class="p">,</span>
+    <span class="s2">"ModelEntryDTO"</span><span class="p">,</span>
+    <span class="s2">"ToolInfoDTO"</span><span class="p">,</span>
+    <span class="s2">"PatchDTO"</span><span class="p">,</span>
+    <span class="s2">"FindingDTO"</span><span class="p">,</span>
+    <span class="s2">"ValidationReportDTO"</span><span class="p">,</span>
+    <span class="s2">"CaseTextDTO"</span><span class="p">,</span>
+    <span class="s2">"CaseSpecDTO"</span><span class="p">,</span>
+    <span class="s2">"CaseSpecSchemaDTO"</span><span class="p">,</span>
+    <span class="s2">"ManifestSchemaDTO"</span><span class="p">,</span>
+    <span class="s2">"SaveResultDTO"</span><span class="p">,</span>
+    <span class="s2">"GeometryImportDTO"</span><span class="p">,</span>
+    <span class="s2">"LoadWarningDTO"</span><span class="p">,</span>
+    <span class="s2">"WorkspaceInfoDTO"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="PatchDTO">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.PatchDTO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PatchDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One boundary patch of a staged case (from its geometry manifest).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One boundary patch of a staged case (from its geometry manifest)."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">role</span><span class="p">:</span> <span class="nb">str</span>
@@ -653,10 +653,10 @@
 <div class="viewcode-block" id="GeometryImportDTO">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.GeometryImportDTO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeometryImportDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of staging geometry into a case: the manifest written + its patches.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Result of staging geometry into a case: the manifest written + its patches."""</span>
 
     <span class="n">manifest</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to the ``manifest.json`` written (the geometry hand-off contract).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Path to the ``manifest.json`` written (the geometry hand-off contract)."""</span>
     <span class="n">patches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PatchDTO</span><span class="p">]</span></div>
 
 
@@ -664,12 +664,12 @@
 <div class="viewcode-block" id="LoadWarningDTO">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.LoadWarningDTO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LoadWarningDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A config file that was present on disk but could not be represented.</span>
+<span class="w">    </span><span class="sd">"""A config file that was present on disk but could not be represented.</span>
 
-<span class="sd">    Surfaces what :func:`load_case` silently dropped (F5): the config&#39;s file, its</span>
+<span class="sd">    Surfaces what :func:`load_case` silently dropped (F5): the config's file, its</span>
 <span class="sd">    class name, and why it did not load — so an agent sees the gap instead of a</span>
-<span class="sd">    clean object that quietly omits, e.g., a turbulence model we don&#39;t model yet.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    clean object that quietly omits, e.g., a turbulence model we don't model yet.</span>
+<span class="sd">    """</span>
 
     <span class="n">file</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">config</span><span class="p">:</span> <span class="nb">str</span>
@@ -689,7 +689,7 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">CaseSpecDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoadWarningDTO</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configs present on disk but dropped (unrepresented/invalid) — see F5.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Configs present on disk but dropped (unrepresented/invalid) — see F5."""</span></div>
 
 
 
@@ -703,52 +703,52 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MeshInputsDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of rendering the mesh dicts from a case&#39;s ``manifest.json``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Result of rendering the mesh dicts from a case's ``manifest.json``."""</span>
 
     <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The mesh-input files written (``system/blockMeshDict`` [+ ``snappyHexMeshDict``]</span>
-<span class="sd">    + ``system/preprocess.yaml``).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The mesh-input files written (``system/blockMeshDict`` [+ ``snappyHexMeshDict``]</span>
+<span class="sd">    + ``system/preprocess.yaml``)."""</span>
     <span class="n">has_snappy</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when a ``snappyHexMeshDict`` was produced (the manifest has a snappy</span>
-<span class="sd">    surface); False for a pure blockMesh box.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""True when a ``snappyHexMeshDict`` was produced (the manifest has a snappy</span>
+<span class="sd">    surface); False for a pure blockMesh box."""</span>
 
 
 <div class="viewcode-block" id="ManifestSchemaDTO">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.ManifestSchemaDTO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ManifestSchemaDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The geometry-manifest (``PatchSet``) JSON Schema, so ``import_geometry``&#39;s</span>
+<span class="w">    </span><span class="sd">"""The geometry-manifest (``PatchSet``) JSON Schema, so ``import_geometry``'s</span>
 <span class="sd">    ``manifest`` argument is self-describing (F1) — an agent authors it without</span>
-<span class="sd">    reading ``workflow/patch_set.py``.&quot;&quot;&quot;</span>
+<span class="sd">    reading ``workflow/patch_set.py``."""</span>
 
     <span class="n">json_schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="n">required</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The manifest&#39;s required top-level keys (``geometry_source``, ``bbox`` …),</span>
-<span class="sd">    hoisted out of ``json_schema`` so the contract is obvious at a glance.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""The manifest's required top-level keys (``geometry_source``, ``bbox`` …),</span>
+<span class="sd">    hoisted out of ``json_schema`` so the contract is obvious at a glance."""</span></div>
 
 
 
 <div class="viewcode-block" id="CaseSpecSchemaDTO">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.CaseSpecSchemaDTO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CaseSpecSchemaDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The aggregate ``save_case`` envelope (``CaseSpec``) JSON Schema, so the</span>
+<span class="w">    </span><span class="sd">"""The aggregate ``save_case`` envelope (``CaseSpec``) JSON Schema, so the</span>
 <span class="sd">    ``case_spec`` argument is self-describing — an agent learns the snake-case</span>
-<span class="sd">    config keys without reading ``agent/case_fill.py``.&quot;&quot;&quot;</span>
+<span class="sd">    config keys without reading ``agent/case_fill.py``."""</span>
 
     <span class="n">json_schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="n">config_keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The snake-case config field names the envelope accepts (all optional).&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""The snake-case config field names the envelope accepts (all optional)."""</span></div>
 
 
 
 <div class="viewcode-block" id="WorkspaceInfoDTO">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.WorkspaceInfoDTO">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WorkspaceInfoDTO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The active path-confinement state, so a client learns the rules up front (F6).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The active path-confinement state, so a client learns the rules up front (F6)."""</span>
 
     <span class="n">confined</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;True when a workspace root confines filesystem tools (paths must be relative).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""True when a workspace root confines filesystem tools (paths must be relative)."""</span>
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The workspace root when confined, else ``None`` (absolute paths allowed).&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""The workspace root when confined, else ``None`` (absolute paths allowed)."""</span></div>
 
 </pre></div>
         </article>
@@ -789,6 +789,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

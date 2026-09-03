@@ -627,14 +627,14 @@ alongside the script to see the file layout.</p>
 (<code class="docutils literal notranslate"><span class="pre">system/solverDict</span></code>), a shared-file example (<code class="docutils literal notranslate"><span class="pre">fvSolution.yaml</span></code>
 with both flat and nested subdicts), and a deeper OpenFOAM dict
 (<code class="docutils literal notranslate"><span class="pre">system/processing</span></code>) with two levels of nesting.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">&quot;configs_demo&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;case: </span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)):</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">"configs_demo"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"case: </span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">"*"</span><span class="p">)):</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case: /tmp/neofoam_xd093gxz/configs_demo
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case: /tmp/neofoam_5hxbg4s8/configs_demo
   bad_solver.yaml
   fvSolution.yaml
   solver_config.json
@@ -651,7 +651,7 @@ with both flat and nested subdicts), and a deeper OpenFOAM dict
 <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy</span></code>. <code class="docutils literal notranslate"><span class="pre">Field(gt=0,</span> <span class="pre">le=10000)</span></code> etc. are standard Pydantic
 constraints — they’re what powers the “fails fast on bad input”
 behaviour below.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"solver_config.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">maxIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
@@ -667,10 +667,10 @@ model. <code class="docutils literal notranslate"><span class="pre">case_dir</sp
 from the <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy</span></code> decorator.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  tolerance type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  tolerance type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver=&#39;PCG&#39;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver='PCG'
   tolerance type: float
 </pre></div>
 </div>
@@ -685,7 +685,7 @@ touched.</p>
 <span class="n">cfg</span><span class="o">.</span><span class="n">maxIterations</span> <span class="o">=</span> <span class="mi">500</span>
 <span class="n">cfg</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"solver_config.yaml"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance: 1.0e-08
@@ -700,7 +700,7 @@ solver: PCG
 field types, validation, <code class="docutils literal notranslate"><span class="pre">.load()</span></code> and <code class="docutils literal notranslate"><span class="pre">.save()</span></code> are identical.
 A real project picks one format per file and keeps it consistent;
 we use both here to show the decorator is the <em>only</em> coupling.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">JSON</span><span class="p">(</span><span class="s2">&quot;solver_config.json&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">JSON</span><span class="p">(</span><span class="s2">"solver_config.json"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverConfigJSON</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">maxIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
@@ -710,7 +710,7 @@ we use both here to show the decorator is the <em>only</em> coupling.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">SolverConfigJSON</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver=&#39;PCG&#39;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver='PCG'
 </pre></div>
 </div>
 </section>
@@ -720,7 +720,7 @@ we use both here to show the decorator is the <em>only</em> coupling.</p>
 format — the same parser the solver uses, so what loads here is
 what the solver will see. Note the field names match the OpenFOAM
 keys verbatim; that’s deliberate.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/solverDict&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/solverDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverConfigOF</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">maxIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
@@ -730,7 +730,7 @@ keys verbatim; that’s deliberate.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">SolverConfigOF</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver=&#39;PCG&#39;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver='PCG'
 </pre></div>
 </div>
 </section>
@@ -739,14 +739,14 @@ keys verbatim; that’s deliberate.</p>
 <p>OpenFOAM’s <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> packs every linear solver, the
 PIMPLE outer-loop control, and tolerances into a single file. The
 <code class="docutils literal notranslate"><span class="pre">subdict=...</span></code> argument lets each config own one top-level section.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"fvSolution.yaml"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PIMPLE"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PIMPLEConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">nOuterCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">nCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
 <span class="n">pimple</span> <span class="o">=</span> <span class="n">PIMPLEConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PIMPLE: </span><span class="si">{</span><span class="n">pimple</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"PIMPLE: </span><span class="si">{</span><span class="n">pimple</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>PIMPLE: nOuterCorrectors=2 nCorrectors=2
@@ -759,24 +759,24 @@ PIMPLE outer-loop control, and tolerances into a single file. The
 <code class="docutils literal notranslate"><span class="pre">subdict=&quot;solvers.p&quot;</span></code> selects the <code class="docutils literal notranslate"><span class="pre">p</span></code> block inside <code class="docutils literal notranslate"><span class="pre">solvers</span></code>.
 Two configs reading the same file with different subdict paths is
 the canonical “share one fvSolution between many models” pattern.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;solvers.p&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"fvSolution.yaml"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"solvers.p"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PSolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;solvers.U&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"fvSolution.yaml"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"solvers.U"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">USolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">solver</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;solvers.p: </span><span class="si">{</span><span class="n">PSolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;solvers.U: </span><span class="si">{</span><span class="n">USolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"solvers.p: </span><span class="si">{</span><span class="n">PSolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"solvers.U: </span><span class="si">{</span><span class="n">USolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>solvers.p: solver=&#39;PCG&#39; tolerance=1e-06
-solvers.U: solver=&#39;smoothSolver&#39; tolerance=1e-05
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>solvers.p: solver='PCG' tolerance=1e-06
+solvers.U: solver='smoothSolver' tolerance=1e-05
 </pre></div>
 </div>
 </section>
@@ -787,14 +787,14 @@ solvers.U: solver=&#39;smoothSolver&#39; tolerance=1e-05
 to follow along) has a top-level <code class="docutils literal notranslate"><span class="pre">metadata</span></code> block plus a
 <code class="docutils literal notranslate"><span class="pre">processing</span></code> block that itself contains <code class="docutils literal notranslate"><span class="pre">stage1</span></code> and <code class="docutils literal notranslate"><span class="pre">stage2</span></code>
 sub-blocks — two levels of nesting, mapped to two configs below.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/processing&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;metadata&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/processing"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"metadata"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetadataConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/processing&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;processing.stage1&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/processing"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"processing.stage1"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Stage1Config</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -802,7 +802,7 @@ sub-blocks — two levels of nesting, mapped to two configs below.</p>
     <span class="n">batchSize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/processing&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;processing.stage2&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/processing"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"processing.stage2"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Stage2Config</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -810,14 +810,14 @@ sub-blocks — two levels of nesting, mapped to two configs below.</p>
     <span class="n">batchSize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;metadata:           </span><span class="si">{</span><span class="n">MetadataConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;processing.stage1:  </span><span class="si">{</span><span class="n">Stage1Config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;processing.stage2:  </span><span class="si">{</span><span class="n">Stage2Config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"metadata:           </span><span class="si">{</span><span class="n">MetadataConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"processing.stage1:  </span><span class="si">{</span><span class="n">Stage1Config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"processing.stage2:  </span><span class="si">{</span><span class="n">Stage2Config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>metadata:           name=&#39;scalarTransport&#39; version=&#39;1.0&#39; priority=5
-processing.stage1:  algorithm=&#39;fast&#39; threshold=0.001 maxIterations=100 batchSize=32
-processing.stage2:  algorithm=&#39;accurate&#39; threshold=0.0001 maxIterations=50 batchSize=16
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>metadata:           name='scalarTransport' version='1.0' priority=5
+processing.stage1:  algorithm='fast' threshold=0.001 maxIterations=100 batchSize=32
+processing.stage2:  algorithm='accurate' threshold=0.0001 maxIterations=50 batchSize=16
 </pre></div>
 </div>
 </section>
@@ -837,25 +837,25 @@ load, exactly like for top-level fields.</p>
     <span class="n">batchSize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/processing&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;processing&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/processing"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"processing"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProcessingConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">stage1</span><span class="p">:</span> <span class="n">StageParams</span>
     <span class="n">stage2</span><span class="p">:</span> <span class="n">StageParams</span>
 
 
 <span class="n">processing</span> <span class="o">=</span> <span class="n">ProcessingConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;stage1 type:      </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">stage1</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;stage1.algorithm: </span><span class="si">{</span><span class="n">processing</span><span class="o">.</span><span class="n">stage1</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;stage2.threshold: </span><span class="si">{</span><span class="n">processing</span><span class="o">.</span><span class="n">stage2</span><span class="o">.</span><span class="n">threshold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;JSON schema knows about the nesting:&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">ProcessingConfig</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()[</span><span class="s1">&#39;$defs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"stage1 type:      </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">processing</span><span class="o">.</span><span class="n">stage1</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"stage1.algorithm: </span><span class="si">{</span><span class="n">processing</span><span class="o">.</span><span class="n">stage1</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"stage2.threshold: </span><span class="si">{</span><span class="n">processing</span><span class="o">.</span><span class="n">stage2</span><span class="o">.</span><span class="n">threshold</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"JSON schema knows about the nesting:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">ProcessingConfig</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()[</span><span class="s1">'$defs'</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>stage1 type:      StageParams
 stage1.algorithm: fast
 stage2.threshold: 0.0001
 JSON schema knows about the nesting:
-  [&#39;StageParams&#39;]
+  ['StageParams']
 </pre></div>
 </div>
 </section>
@@ -887,7 +887,7 @@ only edited <code class="docutils literal notranslate"><span class="pre">stage1<
 <span class="n">stage1</span><span class="o">.</span><span class="n">maxIterations</span> <span class="o">=</span> <span class="mi">250</span>
 <span class="n">stage1</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;processing&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"processing"</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/*--------------------------------*- C++ -*----------------------------------*\
@@ -909,7 +909,7 @@ FoamFile
 metadata
 {
     name            scalarTransport;
-    version         &quot;1.0&quot;;
+    version         "1.0";
     priority        5;
 }
 
@@ -943,15 +943,15 @@ processing
 <code class="docutils literal notranslate"><span class="pre">ValidationError</span></code>; catch it to surface the message in a UI or
 test.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">SolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">&quot;bad_solver.yaml&quot;</span><span class="p">)</span>
+    <span class="n">SolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">"bad_solver.yaml"</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Caught ValidationError:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Caught ValidationError:"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">'loc'</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">'msg'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Caught ValidationError:
-  (&#39;tolerance&#39;,): Input should be greater than 0
+  ('tolerance',): Input should be greater than 0
 </pre></div>
 </div>
 </section>
@@ -961,12 +961,12 @@ test.</p>
 list on success, a list of <code class="docutils literal notranslate"><span class="pre">ValidationErrors</span></code> (with file name and
 subdict context) on failure. Useful in CI and in editors that want
 to surface every problem at once rather than the first one.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">errors</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">collect_errors</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">&quot;bad_solver.yaml&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">errors</span> <span class="o">=</span> <span class="n">SolverConfig</span><span class="o">.</span><span class="n">collect_errors</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">"bad_solver.yaml"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>bad_solver.yaml: (&#39;tolerance&#39;,) — Input should be greater than 0
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>bad_solver.yaml: ('tolerance',) — Input should be greater than 0
 </pre></div>
 </div>
 </section>
@@ -976,7 +976,7 @@ to surface every problem at once rather than the first one.</p>
 <li><p><a class="reference internal" href="example_02_passive_scalar_plugin.html"><span class="doc">Add a passive scalar transport model</span></a> shows a config attached
 to a plugin model via <code class="docutils literal notranslate"><span class="pre">&#64;spec.load</span></code>.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.023 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.024 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-04-configure-with-io-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/d820d17a965cde863db3f31d72626cf8/example_04_configure_with_io.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_04_configure_with_io.ipynb</span></code></a></p>

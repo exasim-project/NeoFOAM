@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Honest case validation — a registry of isolated checks over a case directory.</span>
+<span class="sd">"""Honest case validation — a registry of isolated checks over a case directory.</span>
 
 <span class="sd">Each check is a small unit that reads one aspect of a case and yields</span>
 <span class="sd">:class:`Finding` objects. :meth:`CheckRegistry.run` reports</span>
@@ -597,7 +597,7 @@
 <span class="sd">``Unreadable`` leaf from :mod:`neofoam.io.dictread`, or a check that raises — becomes</span>
 <span class="sd">an *error* finding, never a silent skip. This is the structural completion of the</span>
 <span class="sd">silent-false-success fix in ``validate_case``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -608,20 +608,20 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;Finding&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ValidationReport&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;CaseContext&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Check&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;CheckRegistry&quot;</span><span class="p">,</span>
+    <span class="s2">"Finding"</span><span class="p">,</span>
+    <span class="s2">"ValidationReport"</span><span class="p">,</span>
+    <span class="s2">"CaseContext"</span><span class="p">,</span>
+    <span class="s2">"Check"</span><span class="p">,</span>
+    <span class="s2">"CheckRegistry"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="Finding">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.Finding">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Finding</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One issue found by a check — with a concrete fix where possible.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One issue found by a check — with a concrete fix where possible."""</span>
 
-    <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;warning&quot;</span><span class="p">]</span>
+    <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"error"</span><span class="p">,</span> <span class="s2">"warning"</span><span class="p">]</span>
     <span class="n">file</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">fix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -631,7 +631,7 @@
 <div class="viewcode-block" id="ValidationReport">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.ValidationReport">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ValidationReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The result of a static pre-flight check of a case (no OpenFOAM run).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The result of a static pre-flight check of a case (no OpenFOAM run)."""</span>
 
     <span class="n">ok</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">findings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Finding</span><span class="p">]</span></div>
@@ -642,7 +642,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.CaseContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CaseContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;What a check reads: the case directory + the solver spec it targets.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""What a check reads: the case directory + the solver spec it targets."""</span>
 
     <span class="n">case</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">solver</span><span class="p">:</span> <span class="n">Any</span></div>
@@ -656,27 +656,27 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.CheckRegistry">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CheckRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An ordered set of named, isolated checks over a :class:`CaseContext`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""An ordered set of named, isolated checks over a :class:`CaseContext`."""</span>
 
     <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Check</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CheckRegistry.add">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.CheckRegistry.add">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">check</span><span class="p">:</span> <span class="n">Check</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register ``check`` under ``name`` (order preserved for stable reports).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Register ``check`` under ``name`` (order preserved for stable reports)."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">check</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="CheckRegistry.run">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.CheckRegistry.run">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">CaseContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ValidationReport</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run every check; ``ok`` iff no error finding **and** no check failed to run.</span>
+<span class="w">        </span><span class="sd">"""Run every check; ``ok`` iff no error finding **and** no check failed to run.</span>
 
 <span class="sd">        A check that raises is not allowed to abort the run or silently pass — it is</span>
 <span class="sd">        turned into an error finding, so ``ok`` becomes ``False``. Combined with each</span>
-<span class="sd">        check&#39;s own ``Unreadable ⇒ error`` escalation, this makes &quot;every check ran&quot;</span>
+<span class="sd">        check's own ``Unreadable ⇒ error`` escalation, this makes "every check ran"</span>
 <span class="sd">        structural rather than assumed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">findings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Finding</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -684,12 +684,12 @@
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># a check that cannot run is an error, not a skip</span>
                 <span class="n">findings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">Finding</span><span class="p">(</span>
-                        <span class="n">level</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
-                        <span class="n">file</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&lt;check:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&gt;&quot;</span><span class="p">,</span>
-                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;validation check </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> could not run: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">level</span><span class="o">=</span><span class="s2">"error"</span><span class="p">,</span>
+                        <span class="n">file</span><span class="o">=</span><span class="sa">f</span><span class="s2">"&lt;check:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&gt;"</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"validation check </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> could not run: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
-        <span class="n">ok</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span><span class="p">)</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="s2">"error"</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ValidationReport</span><span class="p">(</span><span class="n">ok</span><span class="o">=</span><span class="n">ok</span><span class="p">,</span> <span class="n">findings</span><span class="o">=</span><span class="n">findings</span><span class="p">)</span></div>
 </div>
 
@@ -732,6 +732,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

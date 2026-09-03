@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;``DictFile`` -- a format-agnostic handle mirroring the OpenFOAM dictionary API.</span>
+<span class="sd">"""``DictFile`` -- a format-agnostic handle mirroring the OpenFOAM dictionary API.</span>
 
 <span class="sd">The format (and thus backend) is inferred from the file name: ``.json`` / ``.yaml``</span>
 <span class="sd">/ ``.yml`` are worked on as a nested Python mapping, everything else (including</span>
@@ -598,14 +598,14 @@
 <span class="sd">``subDict``, ``found``, ``write`` -- so calling code is oblivious to the on-disk</span>
 <span class="sd">format. Entries are addressed by a bare string (top level) or a tuple of keys</span>
 <span class="sd">(nested); ``subDict`` returns a live view whose edits are persisted by the</span>
-<span class="sd">parent&#39;s ``write``.</span>
+<span class="sd">parent's ``write``.</span>
 
 <span class="sd">The pydantic bridge is deliberately *not* folded into ``get`` (that stays a typed</span>
 <span class="sd">leaf accessor): :meth:`DictFile.fill` reads a validated config out of the file and</span>
-<span class="sd">:meth:`DictFile.save` writes one to a fresh file. Both honour the config&#39;s declared</span>
-<span class="sd">``subdict`` and reuse the OpenFOAM strategy&#39;s coercion so ``bool`` &lt;-&gt; ``yes``/``no``</span>
+<span class="sd">:meth:`DictFile.save` writes one to a fresh file. Both honour the config's declared</span>
+<span class="sd">``subdict`` and reuse the OpenFOAM strategy's coercion so ``bool`` &lt;-&gt; ``yes``/``no``</span>
 <span class="sd">and field-value encodings round-trip.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -628,11 +628,11 @@
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="c1"># Annotation-only: importing BaseConfig at runtime would close a base &lt;-&gt; dictfile</span>
     <span class="c1"># cycle (base.load/save import DictFile). The isinstance dispatch below uses</span>
-    <span class="c1"># pydantic&#39;s BaseModel instead, and the TypeVar bound is a forward reference.</span>
+    <span class="c1"># pydantic's BaseModel instead, and the TypeVar bound is a forward reference.</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span>
 
-<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
-<span class="n">TModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TModel&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;BaseConfig&quot;</span><span class="p">)</span>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
+<span class="n">TModel</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TModel"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"BaseConfig"</span><span class="p">)</span>
 
 <span class="c1">#: An entry address: a bare key (top level) or a tuple of keys (nested).</span>
 <span class="n">Key</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
@@ -642,38 +642,38 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_fmt</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The backend format implied by *path*&#39;s suffix (OpenFOAM is the default).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The backend format implied by *path*'s suffix (OpenFOAM is the default)."""</span>
     <span class="n">suffix</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;json&quot;</span>
-    <span class="k">if</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;.yml&quot;</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;yaml&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;openfoam&quot;</span>
+    <span class="k">if</span> <span class="n">suffix</span> <span class="o">==</span> <span class="s2">".json"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"json"</span>
+    <span class="k">if</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">".yaml"</span><span class="p">,</span> <span class="s2">".yml"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"yaml"</span>
+    <span class="k">return</span> <span class="s2">"openfoam"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_map</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-    <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span> <span class="k">else</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span> <span class="k">else</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="k">return</span> <span class="n">data</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dump_map</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
-        <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"json"</span><span class="p">:</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">default_flow_style</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dump_model</span><span class="p">(</span><span class="n">instance</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dump a config to a plain dict, OpenFOAM-encoding field values when needed.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Dump a config to a plain dict, OpenFOAM-encoding field values when needed."""</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"openfoam"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span>
-            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span>
             <span class="n">exclude_none</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">},</span>
+            <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"openfoam"</span><span class="p">},</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span> <span class="n">exclude_none</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">instance</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">,</span> <span class="n">exclude_none</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">by_alias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_tuple</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -681,7 +681,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_plainify</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deep-copy nested mappings into plain ``dict`` (for the JSON/YAML backend).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Deep-copy nested mappings into plain ``dict`` (for the JSON/YAML backend)."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">_plainify</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="k">return</span> <span class="n">value</span>
@@ -703,14 +703,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">overwrite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mapping</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_Backend&quot;</span><span class="p">:</span> <span class="o">...</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">child_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_Backend&quot;</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"_Backend"</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"_Backend"</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">read_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_OFBackend</span><span class="p">(</span><span class="n">_Backend</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Live ``pybFoam.dictionary`` node -- surgical edits, verbatim untouched.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Live ``pybFoam.dictionary`` node -- surgical edits, verbatim untouched."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">root</span>
@@ -718,11 +718,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stored</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Match a quoted regex key against the unquoted form the parser stored.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)):</span>
+<span class="w">        </span><span class="sd">"""Match a quoted regex key against the unquoted form the parser stored."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)):</span>
             <span class="k">return</span> <span class="n">key</span>
         <span class="n">bare</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="c1"># Not ``found``: it applies the dict&#39;s patterns, so ``&quot;.*&quot;`` answers any key.</span>
+        <span class="c1"># Not ``found``: it applies the dict's patterns, so ``".*"`` answers any key.</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span> <span class="o">==</span> <span class="n">bare</span> <span class="k">for</span> <span class="n">stored</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">toc</span><span class="p">()):</span>
             <span class="k">return</span> <span class="n">bare</span>
         <span class="k">return</span> <span class="n">key</span>  <span class="c1"># absent: keep the quotes so the write is a regex key again</span>
@@ -742,7 +742,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="n">typ</span><span class="p">](</span><span class="n">key</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Deliberately not ``_stored``-normalized: pybFoam&#39;s ``set`` strips the</span>
+        <span class="c1"># Deliberately not ``_stored``-normalized: pybFoam's ``set`` strips the</span>
         <span class="c1"># quotes, so a regex-keyed scalar must fail loudly, not write ``.*  0.7;``.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">child_or_add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">overwrite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
@@ -750,8 +750,8 @@
         <span class="n">writer</span> <span class="o">=</span> <span class="n">WRITE_DISPATCH</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">writer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Unsupported value type for key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(supported: str, int, float, bool, or a nested mapping)&quot;</span>
+                <span class="sa">f</span><span class="s2">"Unsupported value type for key '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(supported: str, int, float, bool, or a nested mapping)"</span>
             <span class="p">)</span>
         <span class="n">writer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
@@ -762,12 +762,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stored</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>  <span class="c1"># pybFoam &gt;= 0.5.1; returns False when absent</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_Backend&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"_Backend"</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_dict</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subdict &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Subdict '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_OFBackend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stored</span><span class="p">(</span><span class="n">key</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">child_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_Backend&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"_Backend"</span><span class="p">:</span>
         <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stored</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="c1"># subDictOrAdd returns a detached handle; re-fetch via subDict for a live one.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">subDictOrAdd</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
@@ -781,7 +781,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_MapBackend</span><span class="p">(</span><span class="n">_Backend</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Nested Python mapping node -- JSON/YAML, dumped whole on write.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Nested Python mapping node -- JSON/YAML, dumped whole on write."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">root</span>
@@ -810,12 +810,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_Backend&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"_Backend"</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_dict</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subdict &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Subdict '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_MapBackend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fmt</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">child_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;_Backend&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">child_or_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"_Backend"</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="n">_MapBackend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fmt</span><span class="p">)</span>
@@ -829,9 +829,9 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_open</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Backend</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configuration file not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Configuration file not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">fmt</span> <span class="o">=</span> <span class="n">_fmt</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"openfoam"</span><span class="p">:</span>
         <span class="n">root</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">_OFBackend</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">_load_map</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>  <span class="c1"># root and node are the *same* object at the top</span>
@@ -841,7 +841,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_payload</span><span class="p">(</span>
     <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">key</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">merge</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Persist a pre-dumped model payload to *path* under *key*, creating as needed.</span>
+<span class="w">    </span><span class="sd">"""Persist a pre-dumped model payload to *path* under *key*, creating as needed.</span>
 
 <span class="sd">    The shared engine behind :meth:`DictFile.save`, ``BaseConfig.save`` and</span>
 <span class="sd">    :func:`neofoam.io.write_configs`. Whole-file OpenFOAM writes inject a</span>
@@ -853,16 +853,16 @@
 <span class="sd">    ``merge=True`` (whole-file OpenFOAM only) patches an existing file in place</span>
 <span class="sd">    instead of replacing it: top-level keys the payload carries are rewritten,</span>
 <span class="sd">    everything else is preserved. ``fill_case`` mirrors files like ``fvSolution``</span>
-<span class="sd">    precisely so entries the config classes don&#39;t model (``pFinal``,</span>
-<span class="sd">    ``&quot;(U|nuTilda)&quot;`` solver blocks) survive the config write.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    precisely so entries the config classes don't model (``pFinal``,</span>
+<span class="sd">    ``"(U|nuTilda)"`` solver blocks) survive the config write.</span>
+<span class="sd">    """</span>
     <span class="n">path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"openfoam"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">key</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Configuration file not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;(required for subdict write </span><span class="si">{</span><span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Configuration file not found: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"(required for subdict write </span><span class="si">{</span><span class="s1">'.'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">!r}</span><span class="s2">)"</span>
                 <span class="p">)</span>
             <span class="n">root</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
             <span class="n">node</span> <span class="o">=</span> <span class="n">root</span>
@@ -875,8 +875,8 @@
             <span class="n">root</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">merge</span><span class="p">:</span>
                 <span class="n">root</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">&quot;FoamFile&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">root</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="s2">&quot;FoamFile&quot;</span><span class="p">):</span>
-                <span class="n">_OF_STRATEGY</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;FoamFile&quot;</span><span class="p">:</span> <span class="n">foam_header</span><span class="p">(</span><span class="n">path</span><span class="p">)})</span>
+            <span class="k">if</span> <span class="s2">"FoamFile"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">root</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="s2">"FoamFile"</span><span class="p">):</span>
+                <span class="n">_OF_STRATEGY</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="p">{</span><span class="s2">"FoamFile"</span><span class="p">:</span> <span class="n">foam_header</span><span class="p">(</span><span class="n">path</span><span class="p">)})</span>
             <span class="n">_OF_STRATEGY</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="n">root</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
         <span class="k">return</span>
@@ -901,9 +901,9 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_GetProxy</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Backs ``d.get[T](key)`` -- subscript picks the type, the call the key.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Backs ``d.get[T](key)`` -- subscript picks the type, the call the key."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="s2">&quot;DictFile&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="s2">"DictFile"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span> <span class="o">=</span> <span class="n">owner</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">typ</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Key</span><span class="p">],</span> <span class="n">T</span><span class="p">]:</span>
@@ -916,13 +916,13 @@
 <div class="viewcode-block" id="DictFile">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.DictFile">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DictFile</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dictionary file, edited through the OpenFOAM ``dictionary`` interface.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A dictionary file, edited through the OpenFOAM ``dictionary`` interface."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">_open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="n">_Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DictFile&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">backend</span><span class="p">:</span> <span class="n">_Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DictFile"</span><span class="p">:</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">_backend</span> <span class="o">=</span> <span class="n">backend</span>
         <span class="k">return</span> <span class="n">obj</span>
@@ -953,7 +953,7 @@
             <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">subDict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DictFile&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">subDict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DictFile"</span><span class="p">:</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span>
         <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">_as_tuple</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
             <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">child</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
@@ -964,7 +964,7 @@
 <div class="viewcode-block" id="DictFile.set">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.DictFile.set">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Key</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the entry at *key* (a bare key or a tuple address) to *value*.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Set the entry at *key* (a bare key or a tuple address) to *value*."""</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="n">_as_tuple</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span>
         <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
@@ -989,13 +989,13 @@
 <div class="viewcode-block" id="DictFile.fill">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.DictFile.fill">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TModel</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TModel</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read a config out of the file (dict -&gt; validated model).</span>
+<span class="w">        </span><span class="sd">"""Read a config out of the file (dict -&gt; validated model).</span>
 
-<span class="sd">        The sub-dict is the model&#39;s declared ``subdict`` (the model&#39;s *file* is</span>
+<span class="sd">        The sub-dict is the model's declared ``subdict`` (the model's *file* is</span>
 <span class="sd">        ignored -- this ``DictFile`` owns the file). With ``validate=False`` the</span>
 <span class="sd">        data is coerced but not validated (``model_construct``), mirroring</span>
 <span class="sd">        :meth:`BaseConfig.load`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">scope</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scope</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_key</span><span class="p">(</span><span class="n">model_cls</span><span class="p">))</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">_backend</span><span class="o">.</span><span class="n">read_fields</span><span class="p">(</span><span class="n">model_cls</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">validate</span><span class="p">:</span>
@@ -1007,14 +1007,14 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.DictFile.save">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist *instance* to *path*, creating the file/dirs as needed.</span>
+<span class="w">        </span><span class="sd">"""Persist *instance* to *path*, creating the file/dirs as needed.</span>
 
-<span class="sd">        The file format comes from the suffix and the sub-dict from the config&#39;s</span>
+<span class="sd">        The file format comes from the suffix and the sub-dict from the config's</span>
 <span class="sd">        declared metadata. Unlike :meth:`set` (which edits an already-open file),</span>
 <span class="sd">        this creates from scratch -- injecting a ``FoamFile`` header for</span>
 <span class="sd">        header-less OpenFOAM dict configs -- and is the engine behind</span>
 <span class="sd">        :meth:`BaseConfig.save`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">fmt</span> <span class="o">=</span> <span class="n">_fmt</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="n">_write_payload</span><span class="p">(</span>
@@ -1029,9 +1029,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_model_key</span><span class="p">(</span><span class="n">model_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
         <span class="n">io</span> <span class="o">=</span> <span class="n">model_cls</span><span class="o">.</span><span class="n">io_config</span>
         <span class="n">subdict</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">subdict</span> <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">subdict</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span> <span class="k">if</span> <span class="n">subdict</span> <span class="k">else</span> <span class="p">()</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">subdict</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span> <span class="k">if</span> <span class="n">subdict</span> <span class="k">else</span> <span class="p">()</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DictFile&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DictFile"</span><span class="p">:</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="n">_as_tuple</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="k">if</span> <span class="n">keys</span> <span class="k">else</span> <span class="bp">self</span></div>
 
@@ -1074,6 +1074,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

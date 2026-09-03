@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Typed views of the ``system/fvSolution`` algorithm-control blocks.</span>
+<span class="sd">"""Typed views of the ``system/fvSolution`` algorithm-control blocks.</span>
 
 <span class="sd">The per-spec :class:`~neofoam.foam.fv_configs.fvSolution` slice passes the</span>
 <span class="sd">``PIMPLE`` / ``PISO`` / ``SIMPLE`` blocks through untyped, so the corrector</span>
@@ -598,7 +598,7 @@
 <span class="sd">and is registered on the owning spec so its schema is exported; co-owning</span>
 <span class="sd">``system/fvSolution`` with the slice is safe because</span>
 <span class="sd">:func:`neofoam.io.write_configs` merges co-owners under their sub-dict.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -607,24 +607,24 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;DynamicMeshControls&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PimpleAlgorithmConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PisoAlgorithmConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PisoDynamicMeshControls&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;SimpleAlgorithmConfig&quot;</span><span class="p">,</span>
+    <span class="s2">"DynamicMeshControls"</span><span class="p">,</span>
+    <span class="s2">"PimpleAlgorithmConfig"</span><span class="p">,</span>
+    <span class="s2">"PisoAlgorithmConfig"</span><span class="p">,</span>
+    <span class="s2">"PisoDynamicMeshControls"</span><span class="p">,</span>
+    <span class="s2">"SimpleAlgorithmConfig"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="DynamicMeshControls">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.DynamicMeshControls">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PIMPLE"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DynamicMeshControls</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The mesh-motion switches of the ``PIMPLE`` block (``createDyMControls.H``).</span>
+<span class="w">    </span><span class="sd">"""The mesh-motion switches of the ``PIMPLE`` block (``createDyMControls.H``).</span>
 
-<span class="sd">    ``correctPhi`` is ``Optional`` because OpenFOAM&#39;s default is the runtime</span>
-<span class="sd">    value ``mesh.dynamic()``, not a literal: ``None`` means &quot;not set by the</span>
-<span class="sd">    case&quot;, and :meth:`resolved` substitutes the mesh&#39;s answer.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``correctPhi`` is ``Optional`` because OpenFOAM's default is the runtime</span>
+<span class="sd">    value ``mesh.dynamic()``, not a literal: ``None`` means "not set by the</span>
+<span class="sd">    case", and :meth:`resolved` substitutes the mesh's answer.</span>
+<span class="sd">    """</span>
 
     <span class="n">correctPhi</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">checkMeshCourantNo</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -632,36 +632,36 @@
 
 <div class="viewcode-block" id="DynamicMeshControls.resolved">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.DynamicMeshControls.resolved">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mesh_dynamic</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DynamicMeshControls&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A copy whose ``correctPhi`` is the value the algorithm acts on.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mesh_dynamic</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DynamicMeshControls"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A copy whose ``correctPhi`` is the value the algorithm acts on."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">correctPhi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;correctPhi&quot;</span><span class="p">:</span> <span class="n">mesh_dynamic</span><span class="p">})</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"correctPhi"</span><span class="p">:</span> <span class="n">mesh_dynamic</span><span class="p">})</span></div>
 </div>
 
 
 
 <div class="viewcode-block" id="PisoDynamicMeshControls">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.PisoDynamicMeshControls">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PISO&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PISO"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PisoDynamicMeshControls</span><span class="p">(</span><span class="n">DynamicMeshControls</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The same mesh-motion switches, read from a ``PISO`` block.</span>
+<span class="w">    </span><span class="sd">"""The same mesh-motion switches, read from a ``PISO`` block.</span>
 
 <span class="sd">    A twin class because ``IOMetadata.subdict`` is one fixed string per class.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    """</span></div>
 
 
 
 <div class="viewcode-block" id="PimpleAlgorithmConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.PimpleAlgorithmConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PIMPLE"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PimpleAlgorithmConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``PIMPLE`` block&#39;s loop controls, with ``pimpleControl::read``&#39;s defaults.</span>
+<span class="w">    </span><span class="sd">"""The ``PIMPLE`` block's loop controls, with ``pimpleControl::read``'s defaults.</span>
 
 <span class="sd">    ``nCorrectors`` / ``nNonOrthogonalCorrectors`` stay unbounded ``int``s: the</span>
 <span class="sd">    frozen-flow interIsoFoam tutorials carry deliberate ``-1`` sentinels, and</span>
 <span class="sd">    the stateful control — not this schema — decides what to reject.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">nOuterCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">nCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
@@ -675,27 +675,27 @@
 
 <div class="viewcode-block" id="PisoAlgorithmConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.PisoAlgorithmConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;PISO&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"PISO"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PisoAlgorithmConfig</span><span class="p">(</span><span class="n">PimpleAlgorithmConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``PISO`` block — a single-outer-loop PIMPLE.</span>
+<span class="w">    </span><span class="sd">"""The ``PISO`` block — a single-outer-loop PIMPLE.</span>
 
 <span class="sd">    ``nOuterCorrectors`` is pinned to 1 by the loader that selects this class,</span>
 <span class="sd">    not read: PISO has no outer loop.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    """</span></div>
 
 
 
 <div class="viewcode-block" id="SimpleAlgorithmConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.SimpleAlgorithmConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">,</span> <span class="n">subdict</span><span class="o">=</span><span class="s2">"SIMPLE"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SimpleAlgorithmConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``SIMPLE`` block&#39;s loop controls, with ``simpleControl::read``&#39;s defaults.</span>
+<span class="w">    </span><span class="sd">"""The ``SIMPLE`` block's loop controls, with ``simpleControl::read``'s defaults.</span>
 
 <span class="sd">    ``consistent yes`` selects SIMPLEC. ``residualControl`` is deliberately not</span>
 <span class="sd">    modelled — the Python ``SimpleControl`` never reads it, so typing it here</span>
 <span class="sd">    would advertise a key with no effect; the per-spec ``fvSolution`` slice</span>
 <span class="sd">    still round-trips it.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">nNonOrthogonalCorrectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">momentumPredictor</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -740,6 +740,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

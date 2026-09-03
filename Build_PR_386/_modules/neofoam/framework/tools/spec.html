@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;ToolSpec — a shared, per-solver-registered preprocessing capability.</span>
+<span class="sd">"""ToolSpec — a shared, per-solver-registered preprocessing capability.</span>
 
 <span class="sd">A ``Tool`` is the slimmed parallel of :class:`~neofoam.framework.model.ModelSpec`:</span>
 <span class="sd">it carries a single ``@tool.build`` that emits :class:`InitStep` objects to run</span>
@@ -598,7 +598,7 @@
 <span class="sd">``@detect``/``@resolve``/``@operation`` — tools are enable-file activated and run only</span>
 <span class="sd">at init time. Tools live in shared packages and self-register into the process-wide</span>
 <span class="sd">registry (``neofoam.tools.registry``); the same instance is reusable across solvers.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -614,13 +614,13 @@
 <div class="viewcode-block" id="ToolSpec">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolSpec">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ToolSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Immutable preprocessing-tool definition (read-only after import).</span>
+<span class="w">    </span><span class="sd">"""Immutable preprocessing-tool definition (read-only after import).</span>
 
-<span class="sd">    ``consumes_mesh`` marks tools whose build reads ``ctx[&quot;_prev_mesh&quot;]``</span>
+<span class="sd">    ``consumes_mesh`` marks tools whose build reads ``ctx["_prev_mesh"]``</span>
 <span class="sd">    (snappyHexMesh, checkMesh). When such a tool starts a pipeline (no</span>
 <span class="sd">    ``depends_on``), the graph seeds ``_prev_mesh`` from a caller-provided</span>
 <span class="sd">    mesh source (see :func:`~neofoam.framework.tools.graph.tool_graph_steps`).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">consumes_mesh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
@@ -630,18 +630,18 @@
 <div class="viewcode-block" id="ToolSpec.build">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolSpec.build">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register the BUILD function: ``def build(cfg) -&gt; list[InitStep]``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Register the BUILD function: ``def build(cfg) -&gt; list[InitStep]``."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span> <span class="o">=</span> <span class="n">func</span>
         <span class="k">return</span> <span class="n">func</span></div>
 
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">step_config_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The ``@build`` first-parameter annotation when it is a ``BaseModel``.</span>
+<span class="w">        </span><span class="sd">"""The ``@build`` first-parameter annotation when it is a ``BaseModel``.</span>
 
 <span class="sd">        Returns ``None`` for an untyped/``Any`` build parameter — the open seam,</span>
 <span class="sd">        whose pipeline entry is passed through as a raw mapping.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -656,8 +656,8 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolSpec.instantiate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ToolRuntime&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve one pipeline entry to a runtime.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ToolRuntime"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve one pipeline entry to a runtime.</span>
 
 <span class="sd">        A typed tool validates ``entry`` against its step-config (defaults</span>
 <span class="sd">        applied; the ``depends_on`` envelope key is ignored by pydantic — it is</span>
@@ -665,13 +665,13 @@
 <span class="sd">        (bare names of other listed tools this entry runs after) is carried onto</span>
 <span class="sd">        the runtime. ``instance_id`` is accepted for ``ModelSpec`` parity but</span>
 <span class="sd">        unused (one runtime per entry).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">config_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_config_type</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">config_type</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="k">if</span> <span class="n">config_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">entry</span>
-        <span class="n">depends_on</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depends_on&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">depends_on</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"depends_on"</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">return</span> <span class="n">ToolRuntime</span><span class="p">(</span>
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;preprocess.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"preprocess.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
             <span class="n">depends_on</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">depends_on</span><span class="p">),</span>
         <span class="p">)</span></div>
@@ -682,7 +682,7 @@
 <div class="viewcode-block" id="Tool">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.Tool">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">Tool</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">consumes_mesh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ToolSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Factory: create a named :class:`ToolSpec`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Factory: create a named :class:`ToolSpec`."""</span>
     <span class="k">return</span> <span class="n">ToolSpec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">consumes_mesh</span><span class="o">=</span><span class="n">consumes_mesh</span><span class="p">)</span></div>
 
 
@@ -691,17 +691,17 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolRuntime">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ToolRuntime</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One resolved pipeline entry — a ``ToolSpec`` + its validated step config.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One resolved pipeline entry — a ``ToolSpec`` + its validated step config."""</span>
 
     <span class="n">spec</span><span class="p">:</span> <span class="n">ToolSpec</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;preprocess.&lt;tool&gt;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "preprocess.&lt;tool&gt;"</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># bare tool names run-after</span>
 
 <div class="viewcode-block" id="ToolRuntime.run_build">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolRuntime.run_build">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run_build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Call the spec&#39;s build func with this entry&#39;s config.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Call the spec's build func with this entry's config."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span></div>
@@ -746,6 +746,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

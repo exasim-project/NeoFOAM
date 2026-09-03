@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Typed OpenFOAM-dict *leaf* reader — the honest read layer under validation.</span>
+<span class="sd">"""Typed OpenFOAM-dict *leaf* reader — the honest read layer under validation.</span>
 
 <span class="sd">Reads one dict section (or one entry) via ``pybFoam.dictionary`` and classifies</span>
 <span class="sd">**each leaf** as :class:`Value` or :class:`Unreadable`. A leaf that cannot be</span>
 <span class="sd">rendered as text becomes an explicit :class:`Unreadable` rather than a swallowed</span>
 <span class="sd">skip that truncates the whole section — the mechanism behind the silent</span>
 <span class="sd">false-success in ``validate_case``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -607,13 +607,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;Value&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Unreadable&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Leaf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_section&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_entry&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_keys&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;read_toplevel&quot;</span><span class="p">,</span>
+    <span class="s2">"Value"</span><span class="p">,</span>
+    <span class="s2">"Unreadable"</span><span class="p">,</span>
+    <span class="s2">"Leaf"</span><span class="p">,</span>
+    <span class="s2">"read_section"</span><span class="p">,</span>
+    <span class="s2">"read_entry"</span><span class="p">,</span>
+    <span class="s2">"read_keys"</span><span class="p">,</span>
+    <span class="s2">"read_toplevel"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -621,7 +621,7 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.Value">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Value</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dict leaf successfully rendered as OpenFOAM text (a single token string).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A dict leaf successfully rendered as OpenFOAM text (a single token string)."""</span>
 
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span></div>
 
@@ -631,11 +631,11 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.Unreadable">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Unreadable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A present leaf/section that could not be rendered as text.</span>
+<span class="w">    </span><span class="sd">"""A present leaf/section that could not be rendered as text.</span>
 
 <span class="sd">    Carries *why* so a caller records an explicit finding instead of silently</span>
 <span class="sd">    skipping it — the opposite of the old ``except Exception: pass``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span></div>
 
@@ -645,11 +645,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_leaf</span><span class="p">(</span><span class="n">render</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Leaf</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Classify one leaf read: its text, or an explicit :class:`Unreadable`.</span>
+<span class="w">    </span><span class="sd">"""Classify one leaf read: its text, or an explicit :class:`Unreadable`.</span>
 
 <span class="sd">    The read primitive is passed as a thunk so its failure is isolated to a single</span>
 <span class="sd">    leaf — one bad leaf never truncates its section.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Value</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">render</span><span class="p">()))</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># any backend read failure is made explicit, not swallowed</span>
@@ -659,13 +659,13 @@
 <div class="viewcode-block" id="read_section">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.read_section">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_section</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Leaf</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read ``section`` into ``{sub-name -&gt; {leaf-key -&gt; Value | Unreadable}}``.</span>
+<span class="w">    </span><span class="sd">"""Read ``section`` into ``{sub-name -&gt; {leaf-key -&gt; Value | Unreadable}}``.</span>
 
 <span class="sd">    A missing file or a missing ``section`` yields ``{}`` (a genuine absence other</span>
 <span class="sd">    checks own). A present sub-entry whose leaf cannot be rendered keeps every</span>
 <span class="sd">    sibling leaf and every other sub-entry — the leaf alone becomes</span>
 <span class="sd">    :class:`Unreadable`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Leaf</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">out</span>
@@ -674,7 +674,7 @@
     <span class="c1"># read_toplevel): on this backend a genuinely corrupt FOAM dict aborts the</span>
     <span class="c1"># process uncatchably, so guarding it would be dead code — the real seam is</span>
     <span class="c1"># leaf-level (_leaf turns an unrenderable value into Unreadable). Do not</span>
-    <span class="c1"># &quot;helpfully&quot; add a guard: it cannot catch a real abort.</span>
+    <span class="c1"># "helpfully" add a guard: it cannot catch a real abort.</span>
     <span class="n">root</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>  <span class="c1"># pybFoam dictionary: dynamic access</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">root</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="n">section</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">out</span>
@@ -700,12 +700,12 @@
 <div class="viewcode-block" id="read_entry">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.read_entry">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_entry</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Leaf</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One leaf of ``section`` (e.g. ``divSchemes``/``div(phi,U)``).</span>
+<span class="w">    </span><span class="sd">"""One leaf of ``section`` (e.g. ``divSchemes``/``div(phi,U)``).</span>
 
 <span class="sd">    ``None`` when the file, ``section``, or ``key`` is absent; :class:`Unreadable`</span>
 <span class="sd">    when the value is present but not renderable (absence and unreadability are</span>
 <span class="sd">    different answers).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -723,14 +723,14 @@
 <div class="viewcode-block" id="read_keys">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.read_keys">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_keys</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Unreadable</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Top-level key names of a dict file (its ``toc``) — presence without values.</span>
+<span class="w">    </span><span class="sd">"""Top-level key names of a dict file (its ``toc``) — presence without values.</span>
 
 <span class="sd">    ``None`` when the file is absent (a genuine absence other checks own);</span>
 <span class="sd">    :class:`Unreadable` when the file is present but will not parse, so a caller that</span>
 <span class="sd">    needs mere *presence* of a key (not its value) still distinguishes a corrupt dict</span>
 <span class="sd">    from a key that is simply not there. No leaf value is rendered, so a dimensioned</span>
 <span class="sd">    entry (``beta``/``TRef``) is never misclassified as unreadable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -745,12 +745,12 @@
 <div class="viewcode-block" id="read_toplevel">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.read_toplevel">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_toplevel</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Leaf</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One *top-level* (non-sectioned) entry as a :class:`Leaf` — analogue of</span>
+<span class="w">    </span><span class="sd">"""One *top-level* (non-sectioned) entry as a :class:`Leaf` — analogue of</span>
 <span class="sd">    :func:`read_entry` for keys that live at the dict root.</span>
 
 <span class="sd">    ``None`` when the file or ``key`` is absent; :class:`Unreadable` when the file</span>
 <span class="sd">    will not parse **or** the entry is present but not renderable as text.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -801,6 +801,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

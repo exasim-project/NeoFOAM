@@ -589,12 +589,12 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 <span class="sd">SolverRuntime — mutable per-instance state for a SolverSpec.</span>
 
 <span class="sd">Created by SolverSpec.instantiate(). Each call produces an independent</span>
 <span class="sd">runtime so multiple solver runs never share mutable state.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -612,7 +612,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverState">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mutable state container for a single solver run.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Mutable state container for a single solver run."""</span>
 
     <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -624,15 +624,15 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverRuntime</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    One instantiation of a SolverSpec with its own mutable state.</span>
 
 <span class="sd">    Owns per-instance state (models, configs, argv). All decorator-</span>
 <span class="sd">    registered callables live on the spec; this object provides the</span>
 <span class="sd">    public execution API (initialize, execution_graph, operations).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">spec</span><span class="p">:</span> <span class="s2">&quot;SolverSpec&quot;</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="s2">"SolverSpec"</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SolverState</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SolverState</span><span class="p">)</span>
@@ -645,7 +645,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">core_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Access core_models from state.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Access core_models from state."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">core_models</span>
 
     <span class="nd">@core_models</span><span class="o">.</span><span class="n">setter</span>
@@ -654,7 +654,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">optional_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Access optional_models from state.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Access optional_models from state."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">optional_models</span>
 
     <span class="nd">@optional_models</span><span class="o">.</span><span class="n">setter</span>
@@ -663,7 +663,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Access configs from state.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Access configs from state."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">configs</span>
 
     <span class="nd">@configs</span><span class="o">.</span><span class="n">setter</span>
@@ -676,42 +676,42 @@
 
 <div class="viewcode-block" id="SolverRuntime.initialize">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.initialize">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Context&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the registered initialization step.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Context"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Execute the registered initialization step."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SolverRuntime.execution_graph">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.execution_graph">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">execution_graph</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">domain_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Context&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">&quot;StepBuilder&quot;</span><span class="p">,</span> <span class="s2">&quot;OperationCollection&quot;</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the registered execution graph step.</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">domain_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Context"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="s2">"StepBuilder"</span><span class="p">,</span> <span class="s2">"OperationCollection"</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Execute the registered execution graph step.</span>
 
 <span class="sd">        ``ctx`` (the initialized :class:`Context`) is forwarded so a step that</span>
 <span class="sd">        declares a ``Context`` parameter can reach the built models; it is passed</span>
 <span class="sd">        transiently, never stored on the runtime.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_execution_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_name</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OperationCollection&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build operations with this runtime as the self binding.&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"OperationCollection"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build operations with this runtime as the self binding."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_operations_for</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SolverRuntime.get_config">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.get_config">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get solver configuration instance (lazy initialization).</span>
 
 <span class="sd">        Used as a dependency provider:</span>
 <span class="sd">            config: Annotated[MyConfig, Depends(solver.get_config)]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_config_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No config class defined for solver &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No config class defined for solver '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config_instance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_config_class</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_instance</span></div>
 </div>
@@ -755,6 +755,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

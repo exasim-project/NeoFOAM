@@ -645,31 +645,31 @@ Both live next to the operations they serve — in
 <code class="docutils literal notranslate"><span class="pre">solver/incompressibleFluid/models/pressure_velocity/extension.py</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Extension</span><span class="p">,</span> <span class="n">fold</span>
 
-<span class="n">momentum_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">&quot;momentum&quot;</span><span class="p">)</span>
-<span class="n">pressure_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+<span class="n">momentum_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">"momentum"</span><span class="p">)</span>
+<span class="n">pressure_extension</span> <span class="o">=</span> <span class="n">Extension</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
 
 
 <span class="nd">@momentum_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">correct_boundary_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the boundary velocities the coefficients are built from.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Set the boundary velocities the coefficients are built from."""</span>
 
 
 <span class="nd">@momentum_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">terms</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">contributions</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Terms folded into the momentum sum at ``+ ext.terms(U)``.&quot;&quot;&quot;</span>
-    <span class="n">zero_rate</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionSet</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Terms folded into the momentum sum at ``+ ext.terms(U)``."""</span>
+    <span class="n">zero_rate</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">"0"</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionSet</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fold</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">Sp</span><span class="p">(</span><span class="n">zero_rate</span><span class="p">,</span> <span class="n">U</span><span class="p">),</span> <span class="n">contributions</span><span class="p">)</span>
 
 
 <span class="nd">@pressure_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_relative</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Take the predicted flux relative to whatever frame this model adds.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Take the predicted flux relative to whatever frame this model adds."""</span>
 
 
 <span class="nd">@pressure_extension</span><span class="o">.</span><span class="n">defines</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">constrain_pressure</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">phiHbyA</span><span class="p">,</span> <span class="n">rAU</span><span class="p">,</span> <span class="n">handled</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constrain the pressure boundaries; a contribution returns ``True``</span>
-<span class="sd">    if it handled them (the operation falls back when none did).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Constrain the pressure boundaries; a contribution returns ``True``</span>
+<span class="sd">    if it handled them (the operation falls back when none did)."""</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">handled</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -717,8 +717,8 @@ in <code class="docutils literal notranslate"><span class="pre">incompressibleFl
 
 
 <span class="nd">@fvOptions</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">momentum_extension</span><span class="o">.</span><span class="n">terms</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_momentum_source</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-    <span class="c1"># Native&#39;s ``== fvOptions(U)``: the source joins the sum subtracted.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fv_options_momentum_source</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span> <span class="n">fv_options</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">"models"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="c1"># Native's ``== fvOptions(U)``: the source joins the sum subtracted.</span>
     <span class="k">return</span> <span class="n">negated</span><span class="p">(</span><span class="n">fv_options</span><span class="p">(</span><span class="n">U</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -757,7 +757,7 @@ extension — and calls each hook <strong>once</strong> on the handle (as
 <span class="kn">from</span><span class="w"> </span><span class="nn">.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentum_extension</span>
 
 
-<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
+<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.1"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span>
     <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>

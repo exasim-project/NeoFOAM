@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Write a set of configs back to a case directory.</span>
+<span class="sd">"""Write a set of configs back to a case directory.</span>
 
 <span class="sd">:func:`save_configs` takes loaded (or freshly constructed) ``BaseConfig``</span>
 <span class="sd">instances and writes each to its registered IO path under ``case_dir``.</span>
 <span class="sd">Together with ``LoadResult.config_classes`` this is the basis for</span>
 <span class="sd">scaffolding a case from config schemas alone — fill the configs, save</span>
 <span class="sd">them, and a runnable case directory appears on disk.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -610,7 +610,7 @@
 <div class="viewcode-block" id="collect_config_classes">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.scaffold.html#neofoam.io.scaffold.collect_config_classes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">collect_config_classes</span><span class="p">(</span><span class="n">sources</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collect the distinct ``BaseConfig`` subclasses from ``sources``.</span>
+<span class="w">    </span><span class="sd">"""Collect the distinct ``BaseConfig`` subclasses from ``sources``.</span>
 
 <span class="sd">    Each source may be a ``BaseConfig`` **subclass** (taken as-is), a</span>
 <span class="sd">    ``BaseConfig`` **instance** (its class), or a model **spec / runtime**</span>
@@ -624,7 +624,7 @@
 <span class="sd">    to scaffold a case — it surfaces classes a model declares even when</span>
 <span class="sd">    their instances are never loaded, including the synthesised per-field</span>
 <span class="sd">    schemas that pin the ``0/&lt;name&gt;`` files.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -647,14 +647,14 @@
             <span class="k">continue</span>
         <span class="c1"># A model spec carries ``_config_classes`` directly; a runtime</span>
         <span class="c1"># carries it on ``.spec`` and loaded instances on ``.configs``.</span>
-        <span class="n">spec</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;spec&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">declared</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s2">&quot;_config_classes&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">"spec"</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">declared</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s2">"_config_classes"</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]:</span>
             <span class="n">_add</span><span class="p">(</span><span class="n">declared</span><span class="p">)</span>
         <span class="c1"># Field declarations synthesise to per-field schemas. Cached on</span>
         <span class="c1"># the decl object so the same call here returns the same class.</span>
-        <span class="k">for</span> <span class="n">decl</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s2">&quot;_field_decls&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="k">for</span> <span class="n">decl</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="s2">"_field_decls"</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]:</span>
             <span class="n">_add</span><span class="p">(</span><span class="n">schema_for</span><span class="p">(</span><span class="n">decl</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;configs&quot;</span><span class="p">,</span> <span class="p">[]):</span>
+        <span class="k">for</span> <span class="n">instance</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">"configs"</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="n">_add</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">seen</span></div>
 
@@ -663,7 +663,7 @@
 <div class="viewcode-block" id="save_configs">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.scaffold.html#neofoam.io.scaffold.save_configs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">save_configs</span><span class="p">(</span><span class="n">configs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save each config to ``case_dir`` via its registered IO strategy.</span>
+<span class="w">    </span><span class="sd">"""Save each config to ``case_dir`` via its registered IO strategy.</span>
 
 <span class="sd">    Configs whose class has no ``@IOStrategy`` binding are skipped with a</span>
 <span class="sd">    warning rather than raising, so a heterogeneous collection (e.g. one</span>
@@ -676,12 +676,12 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The paths actually written, in input order.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span><span class="o">.</span><span class="n">io_config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Skipping </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: no IO strategy registered&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: no IO strategy registered"</span><span class="p">,</span>
                 <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">continue</span>
@@ -728,6 +728,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

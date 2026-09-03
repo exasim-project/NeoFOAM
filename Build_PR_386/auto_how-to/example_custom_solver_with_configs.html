@@ -671,15 +671,15 @@ are staged into a throwaway directory.</p>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_here</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marker used to locate this script on disk via inspect.getfile().&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Marker used to locate this script on disk via inspect.getfile()."""</span>
 
 
 <span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">_here</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-<span class="n">CASE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;neofoam_cfg_&quot;</span><span class="p">))</span>
+<span class="n">CASE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"neofoam_cfg_"</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">_name</span> <span class="ow">in</span> <span class="p">(</span>
-    <span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;per_model_fvSchemes.yaml&quot;</span><span class="p">,</span>
+    <span class="s2">"babylonian_config.yaml"</span><span class="p">,</span>
+    <span class="s2">"sqrt_solver_config.yaml"</span><span class="p">,</span>
+    <span class="s2">"per_model_fvSchemes.yaml"</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="n">_name</span><span class="p">,</span> <span class="n">CASE</span> <span class="o">/</span> <span class="n">_name</span><span class="p">)</span>
 </pre></div>
@@ -693,27 +693,27 @@ the consumption: <code class="docutils literal notranslate"><span class="pre">cf
 <code class="docutils literal notranslate"><span class="pre">x</span></code> is pulled from <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> by name. The operation body
 touches <code class="docutils literal notranslate"><span class="pre">cfg.target</span></code> directly — never <code class="docutils literal notranslate"><span class="pre">ctx</span></code> — and that is the
 whole point.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"babylonian_config.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProblemConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">initial_guess</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
 
-<span class="n">newton</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Newton&quot;</span><span class="p">)</span>
+<span class="n">newton</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Newton"</span><span class="p">)</span>
 <span class="n">newton</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">ProblemConfig</span><span class="p">)</span>  <span class="c1"># declare</span>
 
 
-<span class="nd">@newton</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="nd">@newton</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">ProblemConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">target</span> <span class="o">/</span> <span class="n">x</span><span class="p">)})</span>  <span class="c1"># consume</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"x"</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">target</span> <span class="o">/</span> <span class="n">x</span><span class="p">)})</span>  <span class="c1"># consume</span>
 
 
 <span class="n">rt</span> <span class="o">=</span> <span class="n">newton</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE</span><span class="p">)</span>
 <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">ProblemConfig</span><span class="p">)</span>  <span class="c1"># declare → autoloaded</span>
-<span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">initial_guess</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">"x"</span><span class="p">:</span> <span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">initial_guess</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
 <span class="n">rt</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>  <span class="c1"># consume → injected</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;model: x after one step =&quot;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
-<span class="k">assert</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"model: x after one step ="</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"x"</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"x"</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="mf">1.0</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>model: x after one step = 1.5
@@ -732,13 +732,13 @@ shared injector as the model — no separate mechanism.</p>
 graphs, DAG resolution) is plumbing for <em>running</em> an algorithm, not
 for <em>attaching configs</em>. It is covered in
 <a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html"><span class="doc">Build a scalar-transport solver from scratch</span></a>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"sqrt_solver_config.yaml"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ControlsConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
 
 
-<span class="n">sqrt</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;Sqrt&quot;</span><span class="p">)</span>
+<span class="n">sqrt</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">"Sqrt"</span><span class="p">)</span>
 <span class="n">sqrt</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">ControlsConfig</span><span class="p">)</span>  <span class="c1"># declare — same call as on the model</span>
 
 
@@ -747,12 +747,12 @@ for <em>attaching configs</em>. It is covered in
     <span class="c1"># Minimal initializer: load the config into state.core_models so</span>
     <span class="c1"># the framework can pick it up onto runtime.config.</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">core_models</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlsConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE</span><span class="p">)]</span>
-    <span class="k">return</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">return</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">"x"</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
 
 
-<span class="nd">@sqrt</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="nd">@sqrt</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"1.0"</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">ControlsConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;solver: tolerance=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">tolerance</span><span class="si">}</span><span class="s2">, x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># consume — by type</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"solver: tolerance=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">tolerance</span><span class="si">}</span><span class="s2">, x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># consume — by type</span>
 
 
 <span class="n">srt</span> <span class="o">=</span> <span class="n">sqrt</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
@@ -777,22 +777,22 @@ scheme unions in <a class="reference internal" href="../reference/api/neofoam.fo
 <p>The full story (multiple sections, <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> too, bad-input
 behaviour, independent subclasses per spec) lives in
 <a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Pimple&quot;</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"Pimple"</span><span class="p">)</span>
 <span class="n">PimpleFvSchemes</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSchemes</span><span class="p">)</span>  <span class="c1"># declare — returns a subclass</span>
-<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;per_model_fvSchemes.yaml&quot;</span><span class="p">))(</span><span class="n">PimpleFvSchemes</span><span class="p">)</span>
+<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">"per_model_fvSchemes.yaml"</span><span class="p">))(</span><span class="n">PimpleFvSchemes</span><span class="p">)</span>
 
 
-<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
-<span class="nd">@PimpleFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">div</span><span class="o">=</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">)</span>  <span class="c1"># consume — typed entry on the slice</span>
+<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">"2.1"</span><span class="p">)</span>
+<span class="nd">@PimpleFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">div</span><span class="o">=</span><span class="s2">"div(phi,U)"</span><span class="p">)</span>  <span class="c1"># consume — typed entry on the slice</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pretend U-momentum operation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Pretend U-momentum operation."""</span>
 
 
 <span class="n">schemes</span> <span class="o">=</span> <span class="n">PimpleFvSchemes</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;fvSchemes: div(phi,U) =&quot;</span><span class="p">,</span> <span class="n">schemes</span><span class="o">.</span><span class="n">divSchemes</span><span class="o">.</span><span class="n">div_phi_U</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"fvSchemes: div(phi,U) ="</span><span class="p">,</span> <span class="n">schemes</span><span class="o">.</span><span class="n">divSchemes</span><span class="o">.</span><span class="n">div_phi_U</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>fvSchemes: div(phi,U) = type=&#39;Gauss&#39; interpolation=Linear(type=&#39;linear&#39;)
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>fvSchemes: div(phi,U) = type='Gauss' interpolation=Linear(type='linear')
 </pre></div>
 </div>
 </section>

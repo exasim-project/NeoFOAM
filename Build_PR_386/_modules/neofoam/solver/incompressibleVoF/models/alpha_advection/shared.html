@@ -589,16 +589,16 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Shared build + types for the alpha-advection family.</span>
+<span class="sd">"""Shared build + types for the alpha-advection family.</span>
 
 <span class="sd">Every advection scheme (MULES, isoAdvector, …) owns the *same* set of fields —</span>
 <span class="sd">``phi``, ``mixture``, ``alpha1``, ``alpha2``, ``rho``, ``rhoPhi`` — and only its</span>
 <span class="sd">per-step ``alpha_advection`` operation differs. That common initialisation lives</span>
-<span class="sd">here so each family member&#39;s ``@build`` is a one-liner returning these steps</span>
+<span class="sd">here so each family member's ``@build`` is a one-liner returning these steps</span>
 <span class="sd">(isoAdvector appends its own ``advector`` model on top). The ``nAlphaSubCycles``</span>
 <span class="sd">machinery of ``alphaEqnSubCycle.H`` is shared for the same reason: interFoam and</span>
 <span class="sd">interIsoFoam sub-cycle the alpha equation identically.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
@@ -614,12 +614,12 @@
 <div class="viewcode-block" id="MixtureProtocol">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.shared.html#neofoam.solver.incompressibleVoF.models.alpha_advection.shared.MixtureProtocol">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MixtureProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Static-analysis view of ``immiscibleIncompressibleTwoPhaseMixture``.</span>
+<span class="w">    </span><span class="sd">"""Static-analysis view of ``immiscibleIncompressibleTwoPhaseMixture``.</span>
 
 <span class="sd">    The single protocol for every consumer of the mixture model: the</span>
 <span class="sd">    alpha-advection schemes use ``cAlpha``/``nHatf``, the PIMPLE momentum and</span>
 <span class="sd">    continuity operations use ``surfaceTensionForce``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">alpha1</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">alpha2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span> <span class="o">...</span>
@@ -636,16 +636,16 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.shared.html#neofoam.solver.incompressibleVoF.models.alpha_advection.shared.alpha_sub_cycle">[docs]</a>
 <span class="nd">@contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">alpha_sub_cycle</span><span class="p">(</span><span class="n">alpha1</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span> <span class="n">n_alpha_sub_cycles</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``subCycle&lt;volScalarField&gt;`` for the alpha equation; yields the sub-cycled ``Time``.</span>
+<span class="w">    </span><span class="sd">"""``subCycle&lt;volScalarField&gt;`` for the alpha equation; yields the sub-cycled ``Time``.</span>
 
 <span class="sd">    Wrap the ``nAlphaSubCycles &gt; 1`` loop of ``alphaEqnSubCycle.H`` in this —</span>
 <span class="sd">    MULES and isoAdvector sub-cycle identically, only the pass inside differs.</span>
 <span class="sd">    Call ``increment()`` on the yielded ``Foam::Time`` once per sub-step; on exit</span>
-<span class="sd">    the real time state and ``alpha1``&#39;s real old-time value are back, so read</span>
+<span class="sd">    the real time state and ``alpha1``'s real old-time value are back, so read</span>
 <span class="sd">    anything that refers to the *whole* step (the total ``deltaT``) before</span>
 <span class="sd">    entering. ``Time`` is advanced rather than ``phi`` scaled by ``1/n`` so that</span>
 <span class="sd">    time-dependent BCs (``waveAlpha``/``waveVelocity``) re-evaluate once per</span>
-<span class="sd">    sub-step at the sub-step&#39;s own time.</span>
+<span class="sd">    sub-step at the sub-step's own time.</span>
 
 <span class="sd">    Example::</span>
 
@@ -653,12 +653,12 @@
 <span class="sd">            for _ in range(3):</span>
 <span class="sd">                runtime.increment()</span>
 <span class="sd">                ...  # one alpha pass over deltaT/3</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">runtime</span> <span class="o">=</span> <span class="n">alpha1</span><span class="o">.</span><span class="n">mesh</span><span class="p">()</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
     <span class="c1"># First access rolls alpha1 into its old-time slot for this time step; take</span>
     <span class="c1"># the copy subCycleField keeps so the real old time can be restored after.</span>
-    <span class="n">alpha1_0</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;alpha1_0_&quot;</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">alpha1</span><span class="o">.</span><span class="n">oldTime</span><span class="p">())</span>
+    <span class="n">alpha1_0</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"alpha1_0_"</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">*</span> <span class="n">alpha1</span><span class="o">.</span><span class="n">oldTime</span><span class="p">())</span>
 
     <span class="n">runtime</span><span class="o">.</span><span class="n">subCycle</span><span class="p">(</span><span class="n">n_alpha_sub_cycles</span><span class="p">)</span>
     <span class="c1"># subCycleField::updateTimeIndex(): one ahead of the sub-cycle clock, so the</span>
@@ -669,7 +669,7 @@
         <span class="k">yield</span> <span class="n">runtime</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">runtime</span><span class="o">.</span><span class="n">endSubCycle</span><span class="p">()</span>
-        <span class="c1"># subCycleField&#39;s destructor: real old time back, time index back on the</span>
+        <span class="c1"># subCycleField's destructor: real old time back, time index back on the</span>
         <span class="c1"># global clock so the next real step rolls alpha1 exactly once.</span>
         <span class="n">alpha1</span><span class="o">.</span><span class="n">oldTime</span><span class="p">()</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">alpha1_0</span><span class="p">)</span>
         <span class="n">alpha1</span><span class="o">.</span><span class="n">setTimeIndex</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">timeIndex</span><span class="p">())</span>
@@ -680,80 +680,80 @@
 <div class="viewcode-block" id="shared_field_build_steps">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.shared.html#neofoam.solver.incompressibleVoF.models.alpha_advection.shared.shared_field_build_steps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">shared_field_build_steps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;InitSteps for the fields every advection scheme owns.</span>
+<span class="w">    </span><span class="sd">"""InitSteps for the fields every advection scheme owns.</span>
 
 <span class="sd">    phi (face flux from U) → mixture → alpha1/alpha2 → rho → rhoPhi.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_phi</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create face flux phi from U.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">createPhi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
+<span class="w">        </span><span class="sd">"""Create face flux phi from U."""</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">createPhi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_mixture</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create immiscibleIncompressibleTwoPhaseMixture and register alpha flux.&quot;&quot;&quot;</span>
-        <span class="n">U</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
+<span class="w">        </span><span class="sd">"""Create immiscibleIncompressibleTwoPhaseMixture and register alpha flux."""</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
         <span class="n">mixture</span> <span class="o">=</span> <span class="n">multiphase</span><span class="o">.</span><span class="n">immiscibleIncompressibleTwoPhaseMixture</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span>
         <span class="c1"># alpha.water face flux required for the alpha solve.</span>
         <span class="n">mesh</span><span class="o">.</span><span class="n">setFluxRequired</span><span class="p">(</span><span class="n">mixture</span><span class="o">.</span><span class="n">alpha1</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">mixture</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_alpha1</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">alpha1</span><span class="p">()</span>  <span class="c1"># type: ignore[no-any-return]</span>
+        <span class="k">return</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">]</span><span class="o">.</span><span class="n">alpha1</span><span class="p">()</span>  <span class="c1"># type: ignore[no-any-return]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_alpha2</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">alpha2</span><span class="p">()</span>  <span class="c1"># type: ignore[no-any-return]</span>
+        <span class="k">return</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">]</span><span class="o">.</span><span class="n">alpha2</span><span class="p">()</span>  <span class="c1"># type: ignore[no-any-return]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_rho</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="n">mixture</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">]</span>
-        <span class="n">alpha1</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.alpha1&quot;</span><span class="p">]</span>
-        <span class="n">alpha2</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.alpha2&quot;</span><span class="p">]</span>
+        <span class="n">mixture</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">]</span>
+        <span class="n">alpha1</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.alpha1"</span><span class="p">]</span>
+        <span class="n">alpha2</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.alpha2"</span><span class="p">]</span>
         <span class="n">rho1</span> <span class="o">=</span> <span class="n">mixture</span><span class="o">.</span><span class="n">rho1</span><span class="p">()</span>
         <span class="n">rho2</span> <span class="o">=</span> <span class="n">mixture</span><span class="o">.</span><span class="n">rho2</span><span class="p">()</span>
-        <span class="n">rho</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;rho&quot;</span><span class="p">),</span> <span class="n">alpha1</span> <span class="o">*</span> <span class="n">rho1</span> <span class="o">+</span> <span class="n">alpha2</span> <span class="o">*</span> <span class="n">rho2</span><span class="p">)</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"rho"</span><span class="p">),</span> <span class="n">alpha1</span> <span class="o">*</span> <span class="n">rho1</span> <span class="o">+</span> <span class="n">alpha2</span> <span class="o">*</span> <span class="n">rho2</span><span class="p">)</span>
         <span class="c1"># Store old-time so that fvm.ddt(rho, U) in momentum has a valid old value.</span>
         <span class="n">rho</span><span class="o">.</span><span class="n">oldTime</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">rho</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_rho_phi</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-        <span class="n">rho</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.rho&quot;</span><span class="p">]</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;rhoPhi&quot;</span><span class="p">),</span> <span class="n">fvc</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.rho"</span><span class="p">]</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"rhoPhi"</span><span class="p">),</span> <span class="n">fvc</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_alpha_phi_un</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Zero-init the MULES compressed flux (``createAlphaFluxes.H``).</span>
+<span class="w">        </span><span class="sd">"""Zero-init the MULES compressed flux (``createAlphaFluxes.H``).</span>
 
 <span class="sd">        Registered under its final name up front so it stays lookup-able for the</span>
 <span class="sd">        whole run; the alpha solve assigns into it in place.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;alphaPhiUn&quot;</span><span class="p">),</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"alphaPhiUn"</span><span class="p">),</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">phi</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_alpha_phi10</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Seed the MULES phase flux (``createAlphaFluxes.H``).</span>
+<span class="w">        </span><span class="sd">"""Seed the MULES phase flux (``createAlphaFluxes.H``).</span>
 
 <span class="sd">        Created once for the whole run because the Crank-Nicolson tail of</span>
 <span class="sd">        ``alphaEqn.H`` needs ``alphaPhi10.oldTime()``, which a per-solve field</span>
-<span class="sd">        would not have. Native&#39;s ``alphaPhi0.&lt;phase&gt;`` restart path is not ported.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]</span>
-        <span class="n">alpha1</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.alpha1&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;alphaPhi10&quot;</span><span class="p">),</span> <span class="n">phi</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">alpha1</span><span class="p">))</span>
+<span class="sd">        would not have. Native's ``alphaPhi0.&lt;phase&gt;`` restart path is not ported.</span>
+<span class="sd">        """</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]</span>
+        <span class="n">alpha1</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.alpha1"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">surfaceScalarField</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"alphaPhi10"</span><span class="p">),</span> <span class="n">phi</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">alpha1</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;mixture&quot;</span><span class="p">,</span> <span class="n">create_mixture</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">,</span> <span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;alpha1&quot;</span><span class="p">,</span> <span class="n">create_alpha1</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">]),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;alpha2&quot;</span><span class="p">,</span> <span class="n">create_alpha2</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
+        <span class="n">model</span><span class="p">(</span><span class="s2">"mixture"</span><span class="p">,</span> <span class="n">create_mixture</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">,</span> <span class="s2">"mesh"</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"alpha1"</span><span class="p">,</span> <span class="n">create_alpha1</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"alpha2"</span><span class="p">,</span> <span class="n">create_alpha2</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">]),</span>
         <span class="n">field</span><span class="p">(</span>
-            <span class="s2">&quot;rho&quot;</span><span class="p">,</span>
+            <span class="s2">"rho"</span><span class="p">,</span>
             <span class="n">create_rho</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;models.mixture&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.alpha1&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.alpha2&quot;</span><span class="p">],</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"models.mixture"</span><span class="p">,</span> <span class="s2">"fields.alpha1"</span><span class="p">,</span> <span class="s2">"fields.alpha2"</span><span class="p">],</span>
         <span class="p">),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;rhoPhi&quot;</span><span class="p">,</span> <span class="n">create_rho_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.rho&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">]),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;alphaPhiUn&quot;</span><span class="p">,</span> <span class="n">create_alpha_phi_un</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;alphaPhi10&quot;</span><span class="p">,</span> <span class="n">create_alpha_phi10</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.alpha1&quot;</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"rhoPhi"</span><span class="p">,</span> <span class="n">create_rho_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.rho"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"alphaPhiUn"</span><span class="p">,</span> <span class="n">create_alpha_phi_un</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]),</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">"alphaPhi10"</span><span class="p">,</span> <span class="n">create_alpha_phi10</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">,</span> <span class="s2">"fields.alpha1"</span><span class="p">]),</span>
     <span class="p">]</span></div>
 
 </pre></div>
@@ -795,6 +795,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

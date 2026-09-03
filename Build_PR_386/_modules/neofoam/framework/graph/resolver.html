@@ -590,7 +590,7 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;DAG resolver for StepBuilder hierarchies and model operation insertion.&quot;&quot;&quot;</span>
+<span class="sd">"""DAG resolver for StepBuilder hierarchies and model operation insertion."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -613,14 +613,14 @@
 <div class="viewcode-block" id="CyclicDependencyError">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.resolver.html#neofoam.framework.graph.resolver.CyclicDependencyError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CyclicDependencyError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a cyclic dependency is detected in the operation graph.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Raised when a cyclic dependency is detected in the operation graph."""</span></div>
 
 
 
 <div class="viewcode-block" id="MissingDependencyError">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.resolver.html#neofoam.framework.graph.resolver.MissingDependencyError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MissingDependencyError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when an operation depends on a non-existent operation.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Raised when an operation depends on a non-existent operation."""</span></div>
 
 
 
@@ -631,11 +631,11 @@
     <span class="n">tagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]],</span>
     <span class="n">scope_depth</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively tag operations with their scope and record loop-scope depths.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Recursively tag operations with their scope and record loop-scope depths."""</span>
     <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
         <span class="n">tagged</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">parent_scope</span><span class="p">,</span> <span class="n">op</span><span class="p">))</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
-            <span class="n">loop_scope</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="ow">or</span> <span class="s2">&quot;loop&quot;</span>
+            <span class="n">loop_scope</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="ow">or</span> <span class="s2">"loop"</span>
             <span class="n">scope_depth</span><span class="p">[</span><span class="n">loop_scope</span><span class="p">]</span> <span class="o">=</span> <span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span>
             <span class="n">_walk</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">,</span> <span class="n">loop_scope</span><span class="p">,</span> <span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tagged</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span>
 
@@ -644,20 +644,20 @@
     <span class="n">builder</span><span class="p">:</span> <span class="n">StepBuilder</span><span class="p">,</span>
     <span class="n">model_ops</span><span class="p">:</span> <span class="n">OperationCollection</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten the builder tree and model ops into ``[(scope_name, Operation)]``.</span>
+<span class="w">    </span><span class="sd">"""Flatten the builder tree and model ops into ``[(scope_name, Operation)]``.</span>
 
 <span class="sd">    Loop (``IterativeOp``) operations are tagged with their *parent* scope so</span>
 <span class="sd">    that the rebuild step can find them.  Sequential operations inside a loop</span>
-<span class="sd">    are tagged with the loop&#39;s own scope name.</span>
+<span class="sd">    are tagged with the loop's own scope name.</span>
 
 <span class="sd">    Model operations are placed into the scope that best matches their</span>
 <span class="sd">    dependency targets via :func:`infer_target_scope`, using actual nesting</span>
 <span class="sd">    depth to pick the innermost scope.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">tagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">scope_depth</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;root&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">scope_depth</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"root"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
 
-    <span class="n">_walk</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="s2">&quot;root&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tagged</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span>
+    <span class="n">_walk</span><span class="p">(</span><span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="s2">"root"</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tagged</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span>
 
     <span class="c1"># Build op-name → scope lookup for scope inference</span>
     <span class="n">op_to_scope</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -682,7 +682,7 @@
     <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">scope_depth</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the deepest scope; break ties alphabetically.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Pick the deepest scope; break ties alphabetically."""</span>
     <span class="k">if</span> <span class="n">scope_depth</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">scopes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">scope_depth</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">s</span><span class="p">))</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scopes</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -694,7 +694,7 @@
     <span class="n">all_scopes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">scope_depth</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine which scope a model operation belongs to.</span>
+<span class="w">    </span><span class="sd">"""Determine which scope a model operation belongs to.</span>
 
 <span class="sd">    Strategy:</span>
 <span class="sd">      1. Collect scopes of all ``depends_on`` / ``before`` targets.</span>
@@ -704,7 +704,7 @@
 <span class="sd">    When *scope_depth* is provided (as computed by</span>
 <span class="sd">    :func:`collect_tagged_ops`), nesting depth drives the selection.</span>
 <span class="sd">    Without it, alphabetical ordering is used as a fallback.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">dep_scopes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">or</span> <span class="p">[]:</span>
         <span class="k">if</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">op_to_scope</span><span class="p">:</span>
@@ -714,18 +714,18 @@
             <span class="n">dep_scopes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">op_to_scope</span><span class="p">[</span><span class="n">constraint</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">dep_scopes</span><span class="p">:</span>
-        <span class="n">non_root</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">dep_scopes</span> <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="s2">&quot;root&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">_deepest_scope</span><span class="p">(</span><span class="n">non_root</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span> <span class="k">if</span> <span class="n">non_root</span> <span class="k">else</span> <span class="s2">&quot;root&quot;</span>
+        <span class="n">non_root</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">dep_scopes</span> <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="s2">"root"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">_deepest_scope</span><span class="p">(</span><span class="n">non_root</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span> <span class="k">if</span> <span class="n">non_root</span> <span class="k">else</span> <span class="s2">"root"</span>
 
     <span class="c1"># Default: deepest available loop scope</span>
-    <span class="n">loop_scopes</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">all_scopes</span> <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="s2">&quot;root&quot;</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">_deepest_scope</span><span class="p">(</span><span class="n">loop_scopes</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span> <span class="k">if</span> <span class="n">loop_scopes</span> <span class="k">else</span> <span class="s2">&quot;root&quot;</span>
+    <span class="n">loop_scopes</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">all_scopes</span> <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="s2">"root"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_deepest_scope</span><span class="p">(</span><span class="n">loop_scopes</span><span class="p">,</span> <span class="n">scope_depth</span><span class="p">)</span> <span class="k">if</span> <span class="n">loop_scopes</span> <span class="k">else</span> <span class="s2">"root"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_global_graph</span><span class="p">(</span>
     <span class="n">tagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a single ``nx.DiGraph`` from all tagged operations.</span>
+<span class="w">    </span><span class="sd">"""Build a single ``nx.DiGraph`` from all tagged operations.</span>
 
 <span class="sd">    Only non-loop (sequential/conditional) operations with names become graph</span>
 <span class="sd">    nodes.  Loop operations are structural containers handled by</span>
@@ -733,7 +733,7 @@
 
 <span class="sd">    Returns the graph and an ``op_map`` mapping node names to</span>
 <span class="sd">    ``(scope, Operation)`` pairs.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
     <span class="n">op_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -748,15 +748,15 @@
         <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">depends_on</span> <span class="ow">or</span> <span class="p">[]:</span>
             <span class="k">if</span> <span class="n">dep</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_op_names</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">MissingDependencyError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Operation &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in scope &#39;</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">&#39; depends on &#39;</span><span class="si">{</span><span class="n">dep</span><span class="si">}</span><span class="s2">&#39; which does not exist&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Operation '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' in scope '</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">' depends on '</span><span class="si">{</span><span class="n">dep</span><span class="si">}</span><span class="s2">' which does not exist"</span>
                 <span class="p">)</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">before_target</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">before</span> <span class="ow">or</span> <span class="p">[]:</span>
             <span class="k">if</span> <span class="n">before_target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_op_names</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">MissingDependencyError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Operation &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; in scope &#39;</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;has before target &#39;</span><span class="si">{</span><span class="n">before_target</span><span class="si">}</span><span class="s2">&#39; which does not exist&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Operation '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' in scope '</span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s2">' "</span>
+                    <span class="sa">f</span><span class="s2">"has before target '</span><span class="si">{</span><span class="n">before_target</span><span class="si">}</span><span class="s2">' which does not exist"</span>
                 <span class="p">)</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">before_target</span><span class="p">)</span>
 
@@ -769,13 +769,13 @@
     <span class="n">tagged</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]],</span>
     <span class="n">sorter</span><span class="p">:</span> <span class="n">TopologicalSorter</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Topologically sort the global graph, grouping results back by scope.</span>
+<span class="w">    </span><span class="sd">"""Topologically sort the global graph, grouping results back by scope.</span>
 
 <span class="sd">    Ordering precedence among the sequential ops of a scope:</span>
 
 <span class="sd">    1. ``depends_on`` / ``before`` edges (hard topological constraint);</span>
 <span class="sd">    2. ``OperationNumber`` (numbered ops first, then by value);</span>
-<span class="sd">    3. **builder insertion order** — the op&#39;s position in the pre-order</span>
+<span class="sd">    3. **builder insertion order** — the op's position in the pre-order</span>
 <span class="sd">       ``tagged`` list — so explicitly stepped ops that carry no number keep the</span>
 <span class="sd">       order they were stepped in. (Model ops, appended after the builder walk,</span>
 <span class="sd">       sort last.)</span>
@@ -786,7 +786,7 @@
 <span class="sd">    relative to the surrounding ops; ops may therefore precede **and** follow a</span>
 <span class="sd">    loop in the same scope. Loops carry no edges, so interleaving them by builder</span>
 <span class="sd">    index is always dependency-safe.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Builder insertion order: position in the pre-order ``tagged`` list.</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">):</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tagged</span><span class="p">)}</span>
 
@@ -801,7 +801,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">sorted_names</span> <span class="o">=</span> <span class="n">sorter</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">_sort_key</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">nx</span><span class="o">.</span><span class="n">NetworkXUnfeasible</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">CyclicDependencyError</span><span class="p">(</span><span class="s2">&quot;Cyclic dependency detected in operation graph&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CyclicDependencyError</span><span class="p">(</span><span class="s2">"Cyclic dependency detected in operation graph"</span><span class="p">)</span>
 
     <span class="c1"># Sequential ops per scope, in topological order.</span>
     <span class="n">seq_by_scope</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
@@ -815,7 +815,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
             <span class="n">loops_by_scope</span><span class="p">[</span><span class="n">scope</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
 
-    <span class="c1"># Merge loops into each scope&#39;s sequential ops by builder order. The</span>
+    <span class="c1"># Merge loops into each scope's sequential ops by builder order. The</span>
     <span class="c1"># sequential ops keep their topological order; each loop is inserted ahead of</span>
     <span class="c1"># the first sequential op stepped after it.</span>
     <span class="n">by_scope</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -840,11 +840,11 @@
     <span class="n">original</span><span class="p">:</span> <span class="n">StepBuilder</span><span class="p">,</span>
     <span class="n">sorted_scopes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StepBuilder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reconstruct a ``StepBuilder`` from sorted scope data.</span>
+<span class="w">    </span><span class="sd">"""Reconstruct a ``StepBuilder`` from sorted scope data.</span>
 
 <span class="sd">    Walks the original builder tree to preserve nesting structure but</span>
-<span class="sd">    replaces each scope&#39;s operations with the sorted versions.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    replaces each scope's operations with the sorted versions.</span>
+<span class="sd">    """</span>
     <span class="n">new_builder</span> <span class="o">=</span> <span class="n">StepBuilder</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild</span><span class="p">(</span>
@@ -853,7 +853,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">original_ops</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
-                <span class="n">loop_name</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="ow">or</span> <span class="s2">&quot;loop&quot;</span>
+                <span class="n">loop_name</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="ow">or</span> <span class="s2">"loop"</span>
                 <span class="n">sorted_ops</span> <span class="o">=</span> <span class="n">sorted_scopes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">loop_name</span><span class="p">,</span> <span class="p">[])</span>
 
                 <span class="n">new_op</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">sub_operations</span><span class="o">=</span><span class="p">[])</span>
@@ -869,8 +869,8 @@
 
     <span class="k">if</span> <span class="n">has_loops</span><span class="p">:</span>
         <span class="n">_rebuild</span><span class="p">(</span><span class="n">original</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="n">new_builder</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="s2">&quot;root&quot;</span> <span class="ow">in</span> <span class="n">sorted_scopes</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">sorted_scopes</span><span class="p">[</span><span class="s2">&quot;root&quot;</span><span class="p">]:</span>
+    <span class="k">elif</span> <span class="s2">"root"</span> <span class="ow">in</span> <span class="n">sorted_scopes</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">sorted_scopes</span><span class="p">[</span><span class="s2">"root"</span><span class="p">]:</span>
             <span class="n">new_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">new_builder</span>
@@ -879,7 +879,7 @@
 <div class="viewcode-block" id="DAGResolver">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.resolver.html#neofoam.framework.graph.resolver.DAGResolver">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DAGResolver</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge and order operations by dependency across loop scopes.</span>
+<span class="w">    </span><span class="sd">"""Merge and order operations by dependency across loop scopes.</span>
 
 <span class="sd">    Thin orchestrator that delegates to pure functions::</span>
 
@@ -887,7 +887,7 @@
 
 <span class="sd">    The topological sorter is injected (DIP seam); default is</span>
 <span class="sd">    :class:`NetworkxTopologicalSorter`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorter</span><span class="p">:</span> <span class="n">TopologicalSorter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sorter</span><span class="p">:</span> <span class="n">TopologicalSorter</span> <span class="o">=</span> <span class="n">sorter</span> <span class="ow">or</span> <span class="n">NetworkxTopologicalSorter</span><span class="p">()</span>
@@ -941,6 +941,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The trust boundary: confine an untrusted case_id to a workspace root.</span>
+<span class="sd">"""The trust boundary: confine an untrusted case_id to a workspace root.</span>
 
 <span class="sd">A :class:`Workspace` resolves an untrusted (relative) ``case_id`` under a fixed root</span>
 <span class="sd">directory and rejects any path that escapes it — an absolute path, a ``..`` traversal</span>
@@ -600,7 +600,7 @@
 
 <span class="sd">Stdlib-only on purpose: importing this module pulls no trame / fastmcp / pybFoam, so</span>
 <span class="sd">it is the first, dependency-light module of the ``tooling`` frontend layer.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -612,12 +612,12 @@
 <div class="viewcode-block" id="CaseAccessError">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.CaseAccessError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CaseAccessError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An untrusted case path escaped its workspace root, or is absent/unreadable.</span>
+<span class="w">    </span><span class="sd">"""An untrusted case path escaped its workspace root, or is absent/unreadable.</span>
 
 <span class="sd">    Subclasses :class:`ValueError` so existing ``ValueError`` handling (and the MCP</span>
 <span class="sd">    ``ValueError -&gt; tool error`` surfacing) keeps working while callers that care can</span>
 <span class="sd">    catch the precise trust-boundary type.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    """</span></div>
 
 
 
@@ -625,65 +625,65 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.Workspace">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Workspace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Confines an untrusted ``case_id`` under :attr:`root`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Confines an untrusted ``case_id`` under :attr:`root`."""</span>
 
     <span class="n">root</span><span class="p">:</span> <span class="n">Path</span>
 
 <div class="viewcode-block" id="Workspace.at">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.Workspace.at">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Workspace&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build a workspace rooted at ``root`` (normalized to a resolved abs path).&quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">at</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Workspace"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a workspace rooted at ``root`` (normalized to a resolved abs path)."""</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="Workspace.resolve">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.Workspace.resolve">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;case_id&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve an untrusted (relative) ``case_id`` under :attr:`root`.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"case_id"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve an untrusted (relative) ``case_id`` under :attr:`root`.</span>
 
 <span class="sd">        Rejects an absolute ``case_id``, an empty/``.`` id that would name the root</span>
 <span class="sd">        itself, and any ``..``/symlink path that resolves outside the root — all with</span>
 <span class="sd">        :class:`CaseAccessError`. The returned path need **not** exist (this is the</span>
 <span class="sd">        confinement seam for a write *target*). ``kind`` labels the value in error</span>
-<span class="sd">        messages (e.g. ``&quot;source_dir&quot;``) so a caller can tell which path was rejected.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        messages (e.g. ``"source_dir"``) so a caller can tell which path was rejected.</span>
+<span class="sd">        """</span>
         <span class="n">candidate</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_id</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> must be a relative path, got absolute: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>  <span class="c1"># &quot;&quot; and &quot;.&quot; both normalize to the root — never a case</span>
+            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> must be a relative path, got absolute: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>  <span class="c1"># "" and "." both normalize to the root — never a case</span>
             <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> must name a case under the root, got empty/&#39;.&#39;: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> must name a case under the root, got empty/'.': </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">resolved</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">/</span> <span class="n">candidate</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_within</span><span class="p">(</span><span class="n">resolved</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> escapes the workspace root </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> escapes the workspace root </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">resolved</span></div>
 
 
 <div class="viewcode-block" id="Workspace.resolve_existing">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.Workspace.resolve_existing">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_existing</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">require_dir</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;case_id&quot;</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">case_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">require_dir</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"case_id"</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;:meth:`resolve` + require the target exists, is a dir, and is readable.</span>
+<span class="w">        </span><span class="sd">""":meth:`resolve` + require the target exists, is a dir, and is readable.</span>
 
 <span class="sd">        The pre-flight for a *source* case: a missing/unreadable source raises</span>
 <span class="sd">        :class:`CaseAccessError` before any downstream work (e.g. an LLM call).</span>
-<span class="sd">        ``kind`` labels the value in error messages (e.g. ``&quot;source_dir&quot;``).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        ``kind`` labels the value in error messages (e.g. ``"source_dir"``).</span>
+<span class="sd">        """</span>
         <span class="n">resolved</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">case_id</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> does not exist: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> does not exist: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">require_dir</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> is not a directory: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> is not a directory: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">access</span><span class="p">(</span><span class="n">resolved</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">R_OK</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> is not readable: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> is not readable: </span><span class="si">{</span><span class="n">case_id</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">resolved</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_within</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resolved</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;True when ``resolved`` is the root or lies beneath it.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""True when ``resolved`` is the root or lies beneath it."""</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">resolved</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -729,6 +729,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

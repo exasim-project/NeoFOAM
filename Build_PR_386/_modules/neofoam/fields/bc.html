@@ -589,12 +589,12 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Typed boundary-condition arms used by per-field schemas.</span>
+<span class="sd">"""Typed boundary-condition arms used by per-field schemas.</span>
 
 <span class="sd">Every BC arm is a Pydantic model carrying at minimum a ``type`` literal</span>
 <span class="sd">that doubles as the discriminator. :func:`build_bc_union` returns the</span>
-<span class="sd">``Annotated[Union[...], Field(discriminator=&quot;type&quot;)]`` annotation a</span>
-<span class="sd">per-field schema&#39;s ``boundaryField`` uses.</span>
+<span class="sd">``Annotated[Union[...], Field(discriminator="type")]`` annotation a</span>
+<span class="sd">per-field schema's ``boundaryField`` uses.</span>
 
 <span class="sd">Two typed arms ship with Phase 1:</span>
 
@@ -604,15 +604,15 @@
 
 <span class="sd">:class:`GenericBC` is the catch-all fallback. It keeps any unknown BC</span>
 <span class="sd">parsing — ``zeroGradient``, ``fixedFluxPressure``, wall-functions, … —</span>
-<span class="sd">through ``extra=&quot;allow&quot;`` so the LLM (or a hand-written case) never</span>
+<span class="sd">through ``extra="allow"`` so the LLM (or a hand-written case) never</span>
 <span class="sd">hits a schema wall on unseen BC types. Adding a new typed arm only</span>
 <span class="sd">means appending another ``BaseModel`` subclass and listing it in the</span>
-<span class="sd">relevant model&#39;s ``allowed_bcs=[...]``.</span>
+<span class="sd">relevant model's ``allowed_bcs=[...]``.</span>
 
 <span class="sd">A small :class:`ZeroGradientBC` is provided as a second concrete arm</span>
-<span class="sd">because it appears in every tutorial; it&#39;s still optional from the</span>
-<span class="sd">field&#39;s POV (each field&#39;s ``allowed_bcs`` decides what&#39;s permitted).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">because it appears in every tutorial; it's still optional from the</span>
+<span class="sd">field's POV (each field's ``allowed_bcs`` decides what's permitted).</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -637,27 +637,27 @@
 <div class="viewcode-block" id="NoSlipBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.NoSlipBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NoSlipBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``noSlip`` wall BC.</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``noSlip`` wall BC.</span>
 
 <span class="sd">    Carries no parameters; serialises to ``{ type noSlip; }``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;noSlip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;noSlip&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"noSlip"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"noSlip"</span></div>
 
 
 
 <div class="viewcode-block" id="FixedValueBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.FixedValueBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FixedValueBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``fixedValue`` BC.</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``fixedValue`` BC.</span>
 
 <span class="sd">    The ``value`` is stored as it appears on disk — an OpenFOAM uniform</span>
-<span class="sd">    literal (``&quot;uniform 0&quot;`` / ``&quot;uniform (0 0 0)&quot;``) or a bare Python</span>
-<span class="sd">    scalar / list for ergonomic Python use; the per-field schema&#39;s</span>
+<span class="sd">    literal (``"uniform 0"`` / ``"uniform (0 0 0)"``) or a bare Python</span>
+<span class="sd">    scalar / list for ergonomic Python use; the per-field schema's</span>
 <span class="sd">    serializer in Step 4 normalises the wire form.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fixedValue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fixedValue&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fixedValue"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"fixedValue"</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span></div>
 
 
@@ -665,9 +665,9 @@
 <div class="viewcode-block" id="ZeroGradientBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.ZeroGradientBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ZeroGradientBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``zeroGradient`` BC. No parameters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``zeroGradient`` BC. No parameters."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;zeroGradient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;zeroGradient&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"zeroGradient"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"zeroGradient"</span></div>
 
 
 
@@ -683,61 +683,61 @@
 <div class="viewcode-block" id="EmptyBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.EmptyBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EmptyBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``empty``. Topology marker for the empty direction in</span>
-<span class="sd">    1D / 2D meshes (wedges, slabs). Carries no parameters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``empty``. Topology marker for the empty direction in</span>
+<span class="sd">    1D / 2D meshes (wedges, slabs). Carries no parameters."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;empty&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;empty&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"empty"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"empty"</span></div>
 
 
 
 <div class="viewcode-block" id="SlipBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.SlipBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SlipBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``slip``. Free-slip wall — normal velocity zero,</span>
-<span class="sd">    tangential unconstrained. No parameters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``slip``. Free-slip wall — normal velocity zero,</span>
+<span class="sd">    tangential unconstrained. No parameters."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;slip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;slip&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"slip"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"slip"</span></div>
 
 
 
 <div class="viewcode-block" id="SymmetryBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.SymmetryBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SymmetryBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``symmetry``. Mirror BC for a generic-shape patch.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``symmetry``. Mirror BC for a generic-shape patch."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;symmetry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;symmetry&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"symmetry"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"symmetry"</span></div>
 
 
 
 <div class="viewcode-block" id="SymmetryPlaneBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.SymmetryPlaneBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SymmetryPlaneBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``symmetryPlane``. Mirror BC for a flat patch</span>
-<span class="sd">    (cheaper than the generic ``symmetry`` arm).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``symmetryPlane``. Mirror BC for a flat patch</span>
+<span class="sd">    (cheaper than the generic ``symmetry`` arm)."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;symmetryPlane&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;symmetryPlane&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"symmetryPlane"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"symmetryPlane"</span></div>
 
 
 
 <div class="viewcode-block" id="CyclicBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.CyclicBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CyclicBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``cyclic``. Periodic BC linked to a counterpart patch</span>
-<span class="sd">    in the polyMesh. No payload beyond ``type``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``cyclic``. Periodic BC linked to a counterpart patch</span>
+<span class="sd">    in the polyMesh. No payload beyond ``type``."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cyclic&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cyclic&quot;</span></div>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"cyclic"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"cyclic"</span></div>
 
 
 
 <div class="viewcode-block" id="CyclicAMIBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.CyclicAMIBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CyclicAMIBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``cyclicAMI``. Periodic BC with Arbitrary Mesh</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``cyclicAMI``. Periodic BC with Arbitrary Mesh</span>
 <span class="sd">    Interface — used between rotating / sliding patches that do not</span>
 <span class="sd">    share a node-conformal mesh. Carries an optional ``value``</span>
-<span class="sd">    placeholder some tutorials use to seed the AMI&#39;s initial state.&quot;&quot;&quot;</span>
+<span class="sd">    placeholder some tutorials use to seed the AMI's initial state."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cyclicAMI&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cyclicAMI&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"cyclicAMI"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"cyclicAMI"</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FieldValue</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
@@ -751,11 +751,11 @@
 <div class="viewcode-block" id="CalculatedBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.CalculatedBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CalculatedBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``calculated``. Derived BC — ``value`` is computed by</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``calculated``. Derived BC — ``value`` is computed by</span>
 <span class="sd">    another part of the solver (e.g. wall-function ``nut``); the</span>
-<span class="sd">    on-disk placeholder keeps the patch read/writeable.&quot;&quot;&quot;</span>
+<span class="sd">    on-disk placeholder keeps the patch read/writeable."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;calculated&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;calculated&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"calculated"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"calculated"</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span></div>
 
 
@@ -763,12 +763,12 @@
 <div class="viewcode-block" id="InletOutletBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.InletOutletBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InletOutletBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``inletOutlet``. Switches between ``inletValue`` when</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``inletOutlet``. Switches between ``inletValue`` when</span>
 <span class="sd">    flux is into the domain and ``zeroGradient`` when out. Both</span>
 <span class="sd">    payload fields accept the bare Python form (``float`` / ``list``)</span>
-<span class="sd">    or an OpenFOAM uniform / ``$internalField`` literal.&quot;&quot;&quot;</span>
+<span class="sd">    or an OpenFOAM uniform / ``$internalField`` literal."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;inletOutlet&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;inletOutlet&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"inletOutlet"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"inletOutlet"</span>
     <span class="n">inletValue</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span></div>
 
@@ -777,12 +777,12 @@
 <div class="viewcode-block" id="FixedFluxPressureBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.FixedFluxPressureBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FixedFluxPressureBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``fixedFluxPressure``. Pressure BC that balances the</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``fixedFluxPressure``. Pressure BC that balances the</span>
 <span class="sd">    flux through the patch given the density-weighted body force —</span>
 <span class="sd">    standard for ``p_rgh`` in Boussinesq buoyancy cases. ``rho`` names</span>
-<span class="sd">    the density field (e.g. ``&quot;rhok&quot;``) when needed.&quot;&quot;&quot;</span>
+<span class="sd">    the density field (e.g. ``"rhok"``) when needed."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fixedFluxPressure&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fixedFluxPressure&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fixedFluxPressure"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"fixedFluxPressure"</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span>
     <span class="n">rho</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
@@ -791,11 +791,11 @@
 <div class="viewcode-block" id="PressureInletOutletVelocityBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.PressureInletOutletVelocityBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureInletOutletVelocityBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``pressureInletOutletVelocity``. Velocity counterpart</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``pressureInletOutletVelocity``. Velocity counterpart</span>
 <span class="sd">    to a pressure inlet/outlet — tangential velocity zero on inflow,</span>
-<span class="sd">    zero-gradient on outflow. Vector-only.&quot;&quot;&quot;</span>
+<span class="sd">    zero-gradient on outflow. Vector-only."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;pressureInletOutletVelocity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;pressureInletOutletVelocity&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pressureInletOutletVelocity"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"pressureInletOutletVelocity"</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Vector</span><span class="p">]</span>
     <span class="n">inletValue</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FieldValue</span><span class="p">[</span><span class="n">Vector</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
@@ -804,13 +804,13 @@
 <div class="viewcode-block" id="MovingWallVelocityBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.MovingWallVelocityBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MovingWallVelocityBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``movingWallVelocity``. No-slip wall whose velocity</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``movingWallVelocity``. No-slip wall whose velocity</span>
 <span class="sd">    follows the mesh motion (rotating shafts, oscillating bodies,</span>
 <span class="sd">    sliding meshes). Vector-only. The ``value`` placeholder is what</span>
 <span class="sd">    the field initial-condition reader sees; the BC overrides it at</span>
-<span class="sd">    every time step from the mesh velocity.&quot;&quot;&quot;</span>
+<span class="sd">    every time step from the mesh velocity."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;movingWallVelocity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;movingWallVelocity&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"movingWallVelocity"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"movingWallVelocity"</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Vector</span><span class="p">]</span></div>
 
 
@@ -830,7 +830,7 @@
 <div class="viewcode-block" id="WallFunctionBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.WallFunctionBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WallFunctionBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM turbulence wall-function BCs sharing ``(type, value)``.</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM turbulence wall-function BCs sharing ``(type, value)``.</span>
 
 <span class="sd">    Covers ``kqRWallFunction`` (k at walls), ``nutkWallFunction`` /</span>
 <span class="sd">    ``nutUSpaldingWallFunction`` / ``nutLowReWallFunction`` (nut),</span>
@@ -838,15 +838,15 @@
 <span class="sd">    function picks which RAS variant the solver applies at the patch;</span>
 <span class="sd">    the on-disk payload is identical across variants, so they share</span>
 <span class="sd">    one typed arm.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
-        <span class="s2">&quot;kqRWallFunction&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;nutkWallFunction&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;nutUSpaldingWallFunction&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;nutLowReWallFunction&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;epsilonWallFunction&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;omegaWallFunction&quot;</span><span class="p">,</span>
+        <span class="s2">"kqRWallFunction"</span><span class="p">,</span>
+        <span class="s2">"nutkWallFunction"</span><span class="p">,</span>
+        <span class="s2">"nutUSpaldingWallFunction"</span><span class="p">,</span>
+        <span class="s2">"nutLowReWallFunction"</span><span class="p">,</span>
+        <span class="s2">"epsilonWallFunction"</span><span class="p">,</span>
+        <span class="s2">"omegaWallFunction"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span></div>
 
@@ -855,7 +855,7 @@
 <div class="viewcode-block" id="AlphatWallFunctionBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.AlphatWallFunctionBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AlphatWallFunctionBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Thermal-diffusivity wall functions for ``alphat``.</span>
+<span class="w">    </span><span class="sd">"""Thermal-diffusivity wall functions for ``alphat``.</span>
 
 <span class="sd">    The buoyant-flow tutorials use two variants on ``alphat`` patches:</span>
 <span class="sd">    ``compressible::alphatWallFunction`` (incl. the ``compressible::``</span>
@@ -863,11 +863,11 @@
 <span class="sd">    (the Jayatilleke thermal wall law). Both share the same</span>
 <span class="sd">    ``(type, value, Prt?)`` shape; ``Prt`` is the optional turbulent</span>
 <span class="sd">    Prandtl number some variants accept.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
-        <span class="s2">&quot;compressible::alphatWallFunction&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;alphatJayatillekeWallFunction&quot;</span><span class="p">,</span>
+        <span class="s2">"compressible::alphatWallFunction"</span><span class="p">,</span>
+        <span class="s2">"alphatJayatillekeWallFunction"</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span>
     <span class="n">Prt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -885,15 +885,15 @@
 <div class="viewcode-block" id="TurbulentIntensityKineticEnergyInletBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.TurbulentIntensityKineticEnergyInletBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulentIntensityKineticEnergyInletBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``turbulentIntensityKineticEnergyInlet``.</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``turbulentIntensityKineticEnergyInlet``.</span>
 
 <span class="sd">    Scalar inlet BC for ``k`` that computes its value from the local</span>
 <span class="sd">    velocity magnitude and a prescribed turbulence ``intensity``</span>
 <span class="sd">    (dimensionless fraction). The on-disk ``value`` is a placeholder</span>
 <span class="sd">    used until the first update from the inlet ``U``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;turbulentIntensityKineticEnergyInlet&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;turbulentIntensityKineticEnergyInlet&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"turbulentIntensityKineticEnergyInlet"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"turbulentIntensityKineticEnergyInlet"</span>
     <span class="n">intensity</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span></div>
 
@@ -902,16 +902,16 @@
 <div class="viewcode-block" id="TurbulentMixingLengthDissipationRateInletBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.TurbulentMixingLengthDissipationRateInletBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulentMixingLengthDissipationRateInletBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``turbulentMixingLengthDissipationRateInlet``.</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``turbulentMixingLengthDissipationRateInlet``.</span>
 
 <span class="sd">    Scalar inlet BC for ``epsilon`` that computes its value from the</span>
 <span class="sd">    local ``k`` and a prescribed ``mixingLength`` (length scale in m).</span>
 <span class="sd">    Pairs with :class:`TurbulentIntensityKineticEnergyInletBC` on the</span>
 <span class="sd">    upstream k field.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;turbulentMixingLengthDissipationRateInlet&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;turbulentMixingLengthDissipationRateInlet&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"turbulentMixingLengthDissipationRateInlet"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"turbulentMixingLengthDissipationRateInlet"</span>
     <span class="p">)</span>
     <span class="n">mixingLength</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span></div>
@@ -921,14 +921,14 @@
 <div class="viewcode-block" id="TurbulentMixingLengthFrequencyInletBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.TurbulentMixingLengthFrequencyInletBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulentMixingLengthFrequencyInletBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM ``turbulentMixingLengthFrequencyInlet``.</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM ``turbulentMixingLengthFrequencyInlet``.</span>
 
-<span class="sd">    Scalar inlet BC for ``omega``, k-omega&#39;s counterpart to the</span>
+<span class="sd">    Scalar inlet BC for ``omega``, k-omega's counterpart to the</span>
 <span class="sd">    dissipation-rate inlet. Computes ``omega`` from the local ``k``</span>
 <span class="sd">    and a prescribed ``mixingLength``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;turbulentMixingLengthFrequencyInlet&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;turbulentMixingLengthFrequencyInlet&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"turbulentMixingLengthFrequencyInlet"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"turbulentMixingLengthFrequencyInlet"</span>
     <span class="n">mixingLength</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">value</span><span class="p">:</span> <span class="n">FieldValue</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span></div>
 
@@ -937,33 +937,33 @@
 <div class="viewcode-block" id="GenericBC">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.GenericBC">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GenericBC</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fallback BC arm: any ``type`` string, free-form extra fields.</span>
+<span class="w">    </span><span class="sd">"""Fallback BC arm: any ``type`` string, free-form extra fields.</span>
 
 <span class="sd">    Allows the schema to consume BCs without a dedicated typed arm</span>
 <span class="sd">    (``fixedFluxPressure``, ``kqRWallFunction``, …) without losing the</span>
-<span class="sd">    payload. The OpenFOAM strategy&#39;s ``ConfigDict(extra=&quot;allow&quot;)`` path</span>
+<span class="sd">    payload. The OpenFOAM strategy's ``ConfigDict(extra="allow")`` path</span>
 <span class="sd">    already round-trips dict-shaped extras unchanged.</span>
 
 <span class="sd">    A non-fallback ``allowed_bcs=[...]`` that *omits* :class:`GenericBC`</span>
 <span class="sd">    will reject any unknown ``type`` at validation; including it adds</span>
 <span class="sd">    the fallback. See :func:`build_bc_union`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span>
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
 
-    <span class="nd">@model_serializer</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wrap&quot;</span><span class="p">)</span>
+    <span class="nd">@model_serializer</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"wrap"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">SerializationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Map open-set values to OpenFOAM literals when writing OpenFOAM.</span>
+<span class="w">        </span><span class="sd">"""Map open-set values to OpenFOAM literals when writing OpenFOAM.</span>
 
-<span class="sd">        ``GenericBC``&#39;s payload is untyped ``extra`` keys, so the per-field</span>
-<span class="sd">        :data:`FieldValue` serializer can&#39;t reach them; mirror it here — render</span>
+<span class="sd">        ``GenericBC``'s payload is untyped ``extra`` keys, so the per-field</span>
+<span class="sd">        :data:`FieldValue` serializer can't reach them; mirror it here — render</span>
 <span class="sd">        any list/number value as a ``uniform`` literal under the ``openfoam``</span>
 <span class="sd">        format context, pass everything else (incl. ``type`` and string values)</span>
 <span class="sd">        through. Plain ``model_dump`` is unchanged.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;format&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;openfoam&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"openfoam"</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">to_uniform_literal</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
         <span class="k">return</span> <span class="n">data</span></div>
 
@@ -972,7 +972,7 @@
 <span class="c1">#: Public union type alias for typing call sites that want the open set.</span>
 <span class="c1">#: ``build_bc_union`` returns the equivalent ``Annotated[...]`` annotation</span>
 <span class="c1">#: parameterised by a caller-chosen arm list, so this alias is only used</span>
-<span class="c1">#: where every concrete arm is acceptable (e.g. the agent&#39;s case-spec</span>
+<span class="c1">#: where every concrete arm is acceptable (e.g. the agent's case-spec</span>
 <span class="c1">#: aggregate; not for individual field schemas, which constrain the</span>
 <span class="c1">#: arms). ``GenericBC`` is intentionally NOT in this alias — it would</span>
 <span class="c1">#: collapse the discriminator dispatch into the smart-union fallback</span>
@@ -1001,14 +1001,14 @@
         <span class="n">TurbulentMixingLengthDissipationRateInletBC</span><span class="p">,</span>
         <span class="n">TurbulentMixingLengthFrequencyInletBC</span><span class="p">,</span>
     <span class="p">],</span>
-    <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;type&quot;</span><span class="p">),</span>
+    <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">),</span>
 <span class="p">]</span>
 
 
 <div class="viewcode-block" id="build_bc_union">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.bc.html#neofoam.fields.bc.build_bc_union">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_bc_union</span><span class="p">(</span><span class="n">arms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a discriminated-union annotation over the given BC ``arms``.</span>
+<span class="w">    </span><span class="sd">"""Return a discriminated-union annotation over the given BC ``arms``.</span>
 
 <span class="sd">    The returned annotation is suitable for a Pydantic model field:</span>
 
@@ -1020,17 +1020,17 @@
 <span class="sd">            boundaryField: dict[str, bc]</span>
 
 <span class="sd">    Discrimination is on the ``type`` field. The arms must therefore</span>
-<span class="sd">    each declare ``type: Literal[&quot;…&quot;]`` (the bundled :class:`NoSlipBC` /</span>
+<span class="sd">    each declare ``type: Literal["…"]`` (the bundled :class:`NoSlipBC` /</span>
 <span class="sd">    :class:`FixedValueBC` / :class:`ZeroGradientBC` arms already do; the</span>
 <span class="sd">    fallback :class:`GenericBC` uses ``type: str``).</span>
 
-<span class="sd">    Pydantic&#39;s discriminator dispatch is exact-match on the literal,</span>
+<span class="sd">    Pydantic's discriminator dispatch is exact-match on the literal,</span>
 <span class="sd">    so :class:`GenericBC` — whose ``type`` is ``str``, not a literal —</span>
 <span class="sd">    cannot share a discriminated union with literal arms. When</span>
 <span class="sd">    :class:`GenericBC` is included, this function builds a plain</span>
 <span class="sd">    ``Union[...]`` instead: validation still dispatches on ``type``</span>
-<span class="sd">    via Pydantic&#39;s smart-union mode, with :class:`GenericBC` acting as</span>
-<span class="sd">    the &quot;anything else&quot; fallback.</span>
+<span class="sd">    via Pydantic's smart-union mode, with :class:`GenericBC` acting as</span>
+<span class="sd">    the "anything else" fallback.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        arms: BC classes to include. Order is preserved; deduplicated</span>
@@ -1043,9 +1043,9 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: if ``arms`` is empty.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">arms</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;build_bc_union: at least one arm is required&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"build_bc_union: at least one arm is required"</span><span class="p">)</span>
 
     <span class="c1"># Dedupe while preserving order.</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1062,10 +1062,10 @@
     <span class="n">union</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">seen</span><span class="p">)]</span>  <span class="c1"># type: ignore[valid-type]</span>
     <span class="n">has_generic</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">arm</span> <span class="ow">is</span> <span class="n">GenericBC</span> <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">has_generic</span><span class="p">:</span>
-        <span class="c1"># Smart-union dispatch — GenericBC&#39;s ``type: str`` is incompatible</span>
-        <span class="c1"># with ``Field(discriminator=&quot;type&quot;)``.</span>
+        <span class="c1"># Smart-union dispatch — GenericBC's ``type: str`` is incompatible</span>
+        <span class="c1"># with ``Field(discriminator="type")``.</span>
         <span class="k">return</span> <span class="n">union</span>
-    <span class="k">return</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">union</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;type&quot;</span><span class="p">)]</span></div>
+    <span class="k">return</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">union</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)]</span></div>
 
 </pre></div>
         </article>
@@ -1106,6 +1106,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

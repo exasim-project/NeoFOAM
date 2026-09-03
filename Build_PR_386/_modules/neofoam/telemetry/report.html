@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Visualize an emitted telemetry trace — the offline viewer for the run.</span>
+<span class="sd">"""Visualize an emitted telemetry trace — the offline viewer for the run.</span>
 
 <span class="sd">Reads only the JSON the :class:`~neofoam.telemetry._sdk.FileSpanExporter`</span>
 <span class="sd">wrote (``rank&lt;N&gt;.spans.jsonl`` / ``rank&lt;N&gt;.summary.json``), so this module</span>
@@ -606,7 +606,7 @@
 <span class="sd">* :func:`plot_summary` / :func:`write_summary_plot` — the per-operation</span>
 <span class="sd">  aggregate as a horizontal matplotlib bar chart (total wall-clock), for a</span>
 <span class="sd">  static glance or a report (matplotlib is imported lazily).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -627,33 +627,33 @@
 <span class="n">_US_PER_S</span> <span class="o">=</span> <span class="mf">1e6</span>
 
 <span class="c1"># What FileSpanExporter writes, per rank.</span>
-<span class="n">_SPANS_GLOB</span> <span class="o">=</span> <span class="s2">&quot;rank*.spans.jsonl&quot;</span>
-<span class="n">_SUMMARY_GLOB</span> <span class="o">=</span> <span class="s2">&quot;rank*.summary.json&quot;</span>
+<span class="n">_SPANS_GLOB</span> <span class="o">=</span> <span class="s2">"rank*.spans.jsonl"</span>
+<span class="n">_SUMMARY_GLOB</span> <span class="o">=</span> <span class="s2">"rank*.summary.json"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_dir</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the directory holding the ``rank*`` telemetry files.</span>
+<span class="w">    </span><span class="sd">"""Find the directory holding the ``rank*`` telemetry files.</span>
 
 <span class="sd">    Accepts either that directory directly or a case directory containing a</span>
 <span class="sd">    ``telemetry/`` sub-dir (the default output location).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SPANS_GLOB</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SUMMARY_GLOB</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">p</span>
-    <span class="n">nested</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;telemetry&quot;</span>
+    <span class="n">nested</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="s2">"telemetry"</span>
     <span class="k">if</span> <span class="n">nested</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">nested</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SPANS_GLOB</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">nested</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SUMMARY_GLOB</span><span class="p">))):</span>
         <span class="k">return</span> <span class="n">nested</span>
-    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no telemetry files (</span><span class="si">{</span><span class="n">_SPANS_GLOB</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">_SUMMARY_GLOB</span><span class="si">}</span><span class="s2">) under </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no telemetry files (</span><span class="si">{</span><span class="n">_SPANS_GLOB</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">_SUMMARY_GLOB</span><span class="si">}</span><span class="s2">) under </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="load_spans">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.load_spans">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_spans</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read every span record from all ``rank&lt;N&gt;.spans.jsonl`` under *path*.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read every span record from all ``rank&lt;N&gt;.spans.jsonl`` under *path*."""</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">_resolve_dir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">spans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">spans_file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SPANS_GLOB</span><span class="p">)):</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">spans_file</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">spans_file</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">spans</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">spans</span></div>
 
@@ -662,95 +662,95 @@
 <div class="viewcode-block" id="load_summaries">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.load_summaries">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_summaries</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read every ``rank&lt;N&gt;.summary.json`` under *path*, keyed by MPI rank.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read every ``rank&lt;N&gt;.summary.json`` under *path*, keyed by MPI rank."""</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">_resolve_dir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">summaries</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">summary_file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SUMMARY_GLOB</span><span class="p">)):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">summary_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
-        <span class="n">rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mpi&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rank&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">summary_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mpi"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rank"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="n">summaries</span><span class="p">[</span><span class="n">rank</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
     <span class="k">return</span> <span class="n">summaries</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_epoch_us</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ISO-8601 span timestamp -&gt; microseconds since the epoch (float).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""ISO-8601 span timestamp -&gt; microseconds since the epoch (float)."""</span>
     <span class="c1"># OpenTelemetry emits e.g. ``2026-07-03T07:27:37.533827Z``; the trailing</span>
     <span class="c1"># ``Z`` is only accepted by ``fromisoformat`` from 3.11, so normalise it</span>
     <span class="c1"># (the package targets 3.10).</span>
-    <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;+00:00&quot;</span><span class="p">))</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">iso_timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Z"</span><span class="p">,</span> <span class="s2">"+00:00"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="n">_US_PER_S</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_span_rank</span><span class="p">(</span><span class="n">span</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attributes&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mpi.rank&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"resource"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"attributes"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mpi.rank"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="to_chrome_trace">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.to_chrome_trace">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_chrome_trace</span><span class="p">(</span><span class="n">spans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert emitted span records to the Chrome Trace-Event format.</span>
+<span class="w">    </span><span class="sd">"""Convert emitted span records to the Chrome Trace-Event format.</span>
 
-<span class="sd">    Each span becomes a complete (``ph: &quot;X&quot;``) event on a per-rank track, so</span>
+<span class="sd">    Each span becomes a complete (``ph: "X"``) event on a per-rank track, so</span>
 <span class="sd">    the natural time-nesting (a parent fully contains its children) renders as</span>
 <span class="sd">    a flame stack. Timestamps are shifted so the earliest span starts at 0.</span>
 <span class="sd">    The result is a ``dict`` ready for :func:`json.dump`; open it in</span>
 <span class="sd">    https://ui.perfetto.dev or ``chrome://tracing``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">timed</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spans</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_time&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;end_time&quot;</span><span class="p">)]</span>
+<span class="sd">    """</span>
+    <span class="n">timed</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spans</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"start_time"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"end_time"</span><span class="p">)]</span>
     <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">timed</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;traceEvents&quot;</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span> <span class="s2">&quot;displayTimeUnit&quot;</span><span class="p">:</span> <span class="s2">&quot;ms&quot;</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"traceEvents"</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span> <span class="s2">"displayTimeUnit"</span><span class="p">:</span> <span class="s2">"ms"</span><span class="p">}</span>
 
-    <span class="n">starts</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="n">_epoch_us</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;start_time&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">timed</span><span class="p">}</span>
+    <span class="n">starts</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="n">_epoch_us</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"start_time"</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">timed</span><span class="p">}</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">starts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
     <span class="k">for</span> <span class="n">rank</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">_span_rank</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">timed</span><span class="p">}):</span>
         <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;ph&quot;</span><span class="p">:</span> <span class="s2">&quot;M&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;process_name&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;pid&quot;</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
-                <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">},</span>
+                <span class="s2">"ph"</span><span class="p">:</span> <span class="s2">"M"</span><span class="p">,</span>
+                <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"process_name"</span><span class="p">,</span>
+                <span class="s2">"pid"</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
+                <span class="s2">"args"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">"</span><span class="p">},</span>
             <span class="p">}</span>
         <span class="p">)</span>
 
     <span class="k">for</span> <span class="n">span</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">timed</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">starts</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">s</span><span class="p">)]):</span>
         <span class="n">rank</span> <span class="o">=</span> <span class="n">_span_rank</span><span class="p">(</span><span class="n">span</span><span class="p">)</span>
         <span class="n">ts</span> <span class="o">=</span> <span class="n">starts</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">span</span><span class="p">)]</span> <span class="o">-</span> <span class="n">t0</span>
-        <span class="n">dur</span> <span class="o">=</span> <span class="n">_epoch_us</span><span class="p">(</span><span class="n">span</span><span class="p">[</span><span class="s2">&quot;end_time&quot;</span><span class="p">])</span> <span class="o">-</span> <span class="n">starts</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">span</span><span class="p">)]</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attributes&quot;</span><span class="p">,</span> <span class="p">{}))</span>
-        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;span_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;span_id&quot;</span><span class="p">)</span>
-        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;parent_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parent_id&quot;</span><span class="p">)</span>
+        <span class="n">dur</span> <span class="o">=</span> <span class="n">_epoch_us</span><span class="p">(</span><span class="n">span</span><span class="p">[</span><span class="s2">"end_time"</span><span class="p">])</span> <span class="o">-</span> <span class="n">starts</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">span</span><span class="p">)]</span>
+        <span class="n">args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"attributes"</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">"span_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"context"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"span_id"</span><span class="p">)</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">"parent_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"parent_id"</span><span class="p">)</span>
         <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;span&quot;</span><span class="p">),</span>
-                <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="s2">&quot;span&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;ph&quot;</span><span class="p">:</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;ts&quot;</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
-                <span class="s2">&quot;dur&quot;</span><span class="p">:</span> <span class="n">dur</span><span class="p">,</span>
-                <span class="s2">&quot;pid&quot;</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
-                <span class="s2">&quot;tid&quot;</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
-                <span class="s2">&quot;args&quot;</span><span class="p">:</span> <span class="n">args</span><span class="p">,</span>
+                <span class="s2">"name"</span><span class="p">:</span> <span class="n">span</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="s2">"span"</span><span class="p">),</span>
+                <span class="s2">"cat"</span><span class="p">:</span> <span class="s2">"span"</span><span class="p">,</span>
+                <span class="s2">"ph"</span><span class="p">:</span> <span class="s2">"X"</span><span class="p">,</span>
+                <span class="s2">"ts"</span><span class="p">:</span> <span class="n">ts</span><span class="p">,</span>
+                <span class="s2">"dur"</span><span class="p">:</span> <span class="n">dur</span><span class="p">,</span>
+                <span class="s2">"pid"</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
+                <span class="s2">"tid"</span><span class="p">:</span> <span class="n">rank</span><span class="p">,</span>
+                <span class="s2">"args"</span><span class="p">:</span> <span class="n">args</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;traceEvents&quot;</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span> <span class="s2">&quot;displayTimeUnit&quot;</span><span class="p">:</span> <span class="s2">&quot;ms&quot;</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"traceEvents"</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span> <span class="s2">"displayTimeUnit"</span><span class="p">:</span> <span class="s2">"ms"</span><span class="p">}</span></div>
 
 
 
 <div class="viewcode-block" id="write_chrome_trace">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.write_chrome_trace">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_chrome_trace</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a Chrome Trace-Event ``trace.json`` for the trace under *path*.</span>
+<span class="w">    </span><span class="sd">"""Write a Chrome Trace-Event ``trace.json`` for the trace under *path*.</span>
 
 <span class="sd">    *output* defaults to ``&lt;telemetry-dir&gt;/trace.json``. Returns the path</span>
 <span class="sd">    written. Open the file in https://ui.perfetto.dev or ``chrome://tracing``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">_resolve_dir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;trace.json&quot;</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"trace.json"</span>
     <span class="n">trace</span> <span class="o">=</span> <span class="n">to_chrome_trace</span><span class="p">(</span><span class="n">load_spans</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span>
-    <span class="n">out_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">)),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">out_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">)),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out_path</span></div>
 
 
@@ -758,7 +758,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_summary</span><span class="p">(</span><span class="n">summary</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">summary</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">summary</span>
-    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;dict[str, Any]&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"dict[str, Any]"</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)))</span>
 
 
 <div class="viewcode-block" id="plot_summary">
@@ -767,46 +767,46 @@
     <span class="n">summary</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">top</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;Axes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Figure&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Horizontal bar chart of per-operation total wall-clock (seconds).</span>
+    <span class="n">ax</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"Axes"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Figure"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Horizontal bar chart of per-operation total wall-clock (seconds).</span>
 
 <span class="sd">    *summary* is a ``rank&lt;N&gt;.summary.json`` path or its loaded ``dict``. Bars</span>
 <span class="sd">    are sorted by ``total_s`` descending; *top* keeps only the N slowest. Pass</span>
 <span class="sd">    an existing *ax* to draw into a caller-owned figure (e.g. so sphinx-gallery</span>
 <span class="sd">    or a notebook captures it); otherwise a fresh figure is created and</span>
 <span class="sd">    returned. Requires matplotlib (imported lazily).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">_Figure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - exercised via the error test</span>
         <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-            <span class="s2">&quot;plot_summary requires matplotlib: pip install matplotlib &quot;</span>
-            <span class="s2">&quot;(or install the neofoam[telemetry] extra)&quot;</span>
+            <span class="s2">"plot_summary requires matplotlib: pip install matplotlib "</span>
+            <span class="s2">"(or install the neofoam[telemetry] extra)"</span>
         <span class="p">)</span>
 
     <span class="n">data</span> <span class="o">=</span> <span class="n">_load_summary</span><span class="p">(</span><span class="n">summary</span><span class="p">)</span>
-    <span class="n">spans</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spans&quot;</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">ranked</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;total_s&quot;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">spans</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"spans"</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">ranked</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">spans</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">"total_s"</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">top</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ranked</span> <span class="o">=</span> <span class="n">ranked</span><span class="p">[:</span><span class="n">top</span><span class="p">]</span>
 
     <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ranked</span><span class="p">]</span>
-    <span class="n">totals</span> <span class="o">=</span> <span class="p">[</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;total_s&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">ranked</span><span class="p">]</span>
+    <span class="n">totals</span> <span class="o">=</span> <span class="p">[</span><span class="n">stats</span><span class="p">[</span><span class="s2">"total_s"</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">ranked</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">figure</span> <span class="o">=</span> <span class="n">_Figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
         <span class="n">axes</span> <span class="o">=</span> <span class="n">figure</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">axes</span> <span class="o">=</span> <span class="n">ax</span>
-        <span class="n">figure</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Figure&quot;</span><span class="p">,</span> <span class="n">axes</span><span class="o">.</span><span class="n">figure</span><span class="p">)</span>
+        <span class="n">figure</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Figure"</span><span class="p">,</span> <span class="n">axes</span><span class="o">.</span><span class="n">figure</span><span class="p">)</span>
 
     <span class="n">positions</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
-    <span class="n">axes</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">totals</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#4c78a8&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">totals</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#4c78a8"</span><span class="p">)</span>
     <span class="n">axes</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">positions</span><span class="p">))</span>
     <span class="n">axes</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
     <span class="n">axes</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>  <span class="c1"># slowest at the top</span>
-    <span class="n">axes</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;total wall-clock [s]&quot;</span><span class="p">)</span>
-    <span class="n">rank</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mpi&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rank&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="n">axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;operation totals (rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="n">axes</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"total wall-clock [s]"</span><span class="p">)</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mpi"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rank"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">axes</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"operation totals (rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
     <span class="n">figure</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">figure</span></div>
 
@@ -821,21 +821,21 @@
     <span class="n">top</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">rank</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a summary bar chart to an image file (PNG by default).</span>
+<span class="w">    </span><span class="sd">"""Render a summary bar chart to an image file (PNG by default).</span>
 
-<span class="sd">    Picks the lowest rank&#39;s summary unless *rank* is given. *output* defaults</span>
+<span class="sd">    Picks the lowest rank's summary unless *rank* is given. *output* defaults</span>
 <span class="sd">    to ``&lt;telemetry-dir&gt;/summary.png``. Returns the path written.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">directory</span> <span class="o">=</span> <span class="n">_resolve_dir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="n">summaries</span> <span class="o">=</span> <span class="n">load_summaries</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">summaries</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no </span><span class="si">{</span><span class="n">_SUMMARY_GLOB</span><span class="si">}</span><span class="s2"> under </span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no </span><span class="si">{</span><span class="n">_SUMMARY_GLOB</span><span class="si">}</span><span class="s2"> under </span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">chosen</span> <span class="o">=</span> <span class="n">rank</span> <span class="k">if</span> <span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">summaries</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">chosen</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">summaries</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rank </span><span class="si">{</span><span class="n">chosen</span><span class="si">}</span><span class="s2"> not among summaries </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">summaries</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rank </span><span class="si">{</span><span class="n">chosen</span><span class="si">}</span><span class="s2"> not among summaries </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">summaries</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">figure</span> <span class="o">=</span> <span class="n">plot_summary</span><span class="p">(</span><span class="n">summaries</span><span class="p">[</span><span class="n">chosen</span><span class="p">],</span> <span class="n">top</span><span class="o">=</span><span class="n">top</span><span class="p">)</span>
-    <span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">&quot;summary.png&quot;</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">output</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">directory</span> <span class="o">/</span> <span class="s2">"summary.png"</span>
     <span class="n">figure</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out_path</span></div>
 
@@ -878,6 +878,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

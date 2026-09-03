@@ -626,11 +626,11 @@ callables that write the produced value into <code class="docutils literal notra
 shape makes sense. Start from <code class="docutils literal notranslate"><span class="pre">default_router()</span></code> to inherit the
 four built-in handlers, then add your own.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_route_turbulence</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;turbulence.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="sa">f</span><span class="s2">"turbulence.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
 
 <span class="n">router</span> <span class="o">=</span> <span class="n">default_router</span><span class="p">()</span>
-<span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="n">_route_turbulence</span><span class="p">)</span>
+<span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="n">_route_turbulence</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -648,16 +648,16 @@ directly — <code class="docutils literal notranslate"><span class="pre">catego
 
 <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">InitStep</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"fields.U"</span><span class="p">,</span>
         <span class="n">depends_on</span><span class="o">=</span><span class="p">[],</span>
         <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="nb">object</span><span class="p">(),</span>  <span class="c1"># stand-in for a real field</span>
-        <span class="n">category</span><span class="o">=</span><span class="s2">&quot;fields&quot;</span><span class="p">,</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"fields"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="n">InitStep</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;turbulence.kepsilon&quot;</span><span class="p">,</span>
-        <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
-        <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">_KEpsilonModel</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-        <span class="n">category</span><span class="o">=</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"turbulence.kepsilon"</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
+        <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">_KEpsilonModel</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
+        <span class="n">category</span><span class="o">=</span><span class="s2">"turbulence"</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">]</span>
 </pre></div>
@@ -673,7 +673,7 @@ handlers plus the unknown-category fallback.</p>
 <span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;turbulence.turbulence.kepsilon&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>['turbulence.turbulence.kepsilon']
 </pre></div>
 </div>
 </section>

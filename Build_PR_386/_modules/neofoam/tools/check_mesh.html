@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;checkMesh tool: validate the prior mesh in-process and optionally fail the run.</span>
+<span class="sd">"""checkMesh tool: validate the prior mesh in-process and optionally fail the run.</span>
 
 <span class="sd">The ``@build`` initializer resolves the prior mesh from the live ``ctx`` at call time</span>
 <span class="sd">(never captured in a long-lived closure — that would create a mesh-bound reference cycle</span>
 <span class="sd">that segfaults across in-process runs). ``checkMesh`` is a module global so tests can</span>
 <span class="sd">monkeypatch it without building a mesh. checkMesh only validates; on success it passes</span>
 <span class="sd">the prior mesh straight through so the pipeline treats it like any mesh-advancing step.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
@@ -612,9 +612,9 @@
 <div class="viewcode-block" id="CheckMeshStep">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.check_mesh.html#neofoam.tools.check_mesh.CheckMeshStep">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CheckMeshStep</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the prior mesh; optionally fail the run on errors.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Validate the prior mesh; optionally fail the run on errors."""</span>
 
-    <span class="n">tool</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;checkMesh&quot;</span><span class="p">]</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"checkMesh"</span><span class="p">]</span>
     <span class="n">all_topology</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">all_geometry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">check_quality</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -622,13 +622,13 @@
 
 
 
-<span class="n">checkMeshTool</span> <span class="o">=</span> <span class="n">Tool</span><span class="p">(</span><span class="s2">&quot;checkMesh&quot;</span><span class="p">)</span>
+<span class="n">checkMeshTool</span> <span class="o">=</span> <span class="n">Tool</span><span class="p">(</span><span class="s2">"checkMesh"</span><span class="p">)</span>
 
 
 <span class="nd">@checkMeshTool</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_check</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">CheckMeshStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_prev_mesh&quot;</span><span class="p">]</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_prev_mesh"</span><span class="p">]</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">stats</span> <span class="o">=</span> <span class="n">checkMesh</span><span class="p">(</span>
                 <span class="n">mesh</span><span class="p">,</span>
@@ -639,18 +639,18 @@
         <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
             <span class="k">raise</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># binding-level failure</span>
-            <span class="k">raise</span> <span class="n">InitStepExecutionError</span><span class="p">(</span><span class="s2">&quot;preprocess.checkMesh&quot;</span><span class="p">,</span> <span class="p">[],</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
-        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">fail_on_error</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;passed&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">InitStepExecutionError</span><span class="p">(</span><span class="s2">"preprocess.checkMesh"</span><span class="p">,</span> <span class="p">[],</span> <span class="n">exc</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">fail_on_error</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">stats</span><span class="p">[</span><span class="s2">"passed"</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="n">InitStepExecutionError</span><span class="p">(</span>
-                <span class="s2">&quot;preprocess.checkMesh&quot;</span><span class="p">,</span>
+                <span class="s2">"preprocess.checkMesh"</span><span class="p">,</span>
                 <span class="p">[],</span>
-                <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mesh check failed: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_errors&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> error(s)&quot;</span><span class="p">),</span>
+                <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mesh check failed: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">'total_errors'</span><span class="p">]</span><span class="si">}</span><span class="s2"> error(s)"</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="c1"># checkMesh only validates; pass the mesh straight through so the</span>
         <span class="c1"># pipeline treats this like any other mesh-advancing step.</span>
         <span class="k">return</span> <span class="n">mesh</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">InitStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;preprocess.checkMesh&quot;</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">run</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">InitStep</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"preprocess.checkMesh"</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">run</span><span class="p">)]</span>
 
 
 <span class="n">register_tool</span><span class="p">(</span><span class="n">checkMeshTool</span><span class="p">)</span>
@@ -693,6 +693,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

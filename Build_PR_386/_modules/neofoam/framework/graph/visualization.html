@@ -590,12 +590,12 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Visualization helpers for graph structures.</span>
+<span class="sd">"""Visualization helpers for graph structures.</span>
 
 <span class="sd">Public entry points are :func:`digraph_to_pyvis_html` (HTML rendering) and</span>
 <span class="sd">:func:`dependency_dag` (compose per-domain operation DAGs into a single graph</span>
 <span class="sd">for rendering or diagnostics).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
@@ -610,7 +610,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_dag</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OperationMetadata</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a DAG from a list of OperationMetadata objects.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a DAG from a list of OperationMetadata objects."""</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
         <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span>
@@ -628,7 +628,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_global_dag</span><span class="p">(</span>
     <span class="n">domains</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">OperationMetadata</span><span class="p">]],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compose per-domain DAGs into a single global DAG.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Compose per-domain DAGs into a single global DAG."""</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">domains</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">sub_graph</span> <span class="o">=</span> <span class="n">_build_dag</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
@@ -639,22 +639,22 @@
 <div class="viewcode-block" id="dependency_dag">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.visualization.html#neofoam.framework.graph.visualization.dependency_dag">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dependency_dag</span><span class="p">(</span><span class="n">domains</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">OperationMetadata</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Public entry point: build the global dependency DAG for ``domains``.</span>
+<span class="w">    </span><span class="sd">"""Public entry point: build the global dependency DAG for ``domains``.</span>
 
 <span class="sd">    Thin wrapper over :func:`_build_global_dag` so callers (e.g.</span>
 <span class="sd">    :meth:`Simulation.dependency_graph`) bind to a stable public name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_build_global_dag</span><span class="p">(</span><span class="n">domains</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_nodes_order</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OperationMetadata</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deterministic topological order over the node metadata list.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Deterministic topological order over the node metadata list."""</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">_build_dag</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
     <span class="n">sorter</span> <span class="o">=</span> <span class="n">NetworkxTopologicalSorter</span><span class="p">(</span>
         <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">node_name</span><span class="p">:</span> <span class="p">(</span>
-            <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;operation_number&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;operation_number&quot;</span><span class="p">),</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"operation_number"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"operation_number"</span><span class="p">),</span>
             <span class="n">node_name</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
@@ -662,7 +662,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_compute_steps_order</span><span class="p">(</span><span class="n">op_col</span><span class="p">:</span> <span class="n">OperationCollection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order ``op_col``&#39;s operations to match :func:`_compute_nodes_order`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Order ``op_col``'s operations to match :func:`_compute_nodes_order`."""</span>
     <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">op_col</span><span class="o">.</span><span class="n">ops</span><span class="p">]</span>
     <span class="n">sorted_names</span> <span class="o">=</span> <span class="n">_compute_nodes_order</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
 
@@ -675,30 +675,30 @@
 
 <div class="viewcode-block" id="digraph_to_pyvis_html">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.visualization.html#neofoam.framework.graph.visualization.digraph_to_pyvis_html">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span> <span class="n">html_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dag.html&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a directed graph to a pyvis HTML file.&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span> <span class="n">html_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"dag.html"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Render a directed graph to a pyvis HTML file."""</span>
     <span class="n">net</span> <span class="o">=</span> <span class="n">Network</span><span class="p">(</span><span class="n">directed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">notebook</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="n">shape</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shape&quot;</span><span class="p">,</span> <span class="s2">&quot;ellipse&quot;</span><span class="p">)</span>
-        <span class="n">net</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="s2">&quot;lightblue&quot;</span><span class="p">))</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"shape"</span><span class="p">,</span> <span class="s2">"ellipse"</span><span class="p">)</span>
+        <span class="n">net</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"color"</span><span class="p">,</span> <span class="s2">"lightblue"</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
         <span class="n">net</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
     <span class="n">options</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;layout&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;hierarchical&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                <span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="s2">&quot;UD&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;sortMethod&quot;</span><span class="p">:</span> <span class="s2">&quot;directed&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;nodeSpacing&quot;</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span>
-                <span class="s2">&quot;levelSeparation&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>
+        <span class="s2">"layout"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"hierarchical"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"enabled"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">"direction"</span><span class="p">:</span> <span class="s2">"UD"</span><span class="p">,</span>
+                <span class="s2">"sortMethod"</span><span class="p">:</span> <span class="s2">"directed"</span><span class="p">,</span>
+                <span class="s2">"nodeSpacing"</span><span class="p">:</span> <span class="mi">180</span><span class="p">,</span>
+                <span class="s2">"levelSeparation"</span><span class="p">:</span> <span class="mi">150</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">},</span>
-        <span class="s2">&quot;physics&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-        <span class="s2">&quot;edges&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;arrows&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;to&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}},</span>
-            <span class="s2">&quot;smooth&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">&quot;font&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s2">&quot;align&quot;</span><span class="p">:</span> <span class="s2">&quot;middle&quot;</span><span class="p">},</span>
+        <span class="s2">"physics"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"enabled"</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+        <span class="s2">"edges"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"arrows"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"to"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"enabled"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}},</span>
+            <span class="s2">"smooth"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">"font"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"size"</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s2">"align"</span><span class="p">:</span> <span class="s2">"middle"</span><span class="p">},</span>
         <span class="p">},</span>
     <span class="p">}</span>
 
@@ -744,6 +744,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

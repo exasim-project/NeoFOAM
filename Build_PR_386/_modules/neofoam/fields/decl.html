@@ -589,19 +589,19 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Field declarations attached to :class:`~neofoam.framework.model.ModelSpec`.</span>
+<span class="sd">"""Field declarations attached to :class:`~neofoam.framework.model.ModelSpec`.</span>
 
 <span class="sd">A :class:`FieldDecl` is the immutable record :meth:`ModelSpec.field`</span>
 <span class="sd">returns. It carries the registration-time facts about an on-disk field</span>
 <span class="sd">— ``name``, ``dimensions``, ``value_type``, ``allowed_bcs``, the</span>
 <span class="sd">``write`` flag, and ``depends_on`` for the runtime init graph — and</span>
-<span class="sd">nothing else: instantiating the field at runtime is the framework&#39;s</span>
+<span class="sd">nothing else: instantiating the field at runtime is the framework's</span>
 <span class="sd">responsibility. :func:`~neofoam.fields.synthesis.synthesize_init_step`</span>
 <span class="sd">emits the matching :class:`~neofoam.framework.initialization.InitStep`</span>
 <span class="sd">that calls ``&lt;value_type&gt;.read_field(mesh, name)`` and applies the</span>
 <span class="sd">declared ``depends_on`` / ``write``. The model author writes the</span>
 <span class="sd">declaration once and never repeats it inside ``@build``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -616,40 +616,40 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.decl.html#neofoam.fields.decl.FieldDecl">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FieldDecl</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Immutable on-disk-field declaration registered via ``Model.field(...)``.</span>
+<span class="w">    </span><span class="sd">"""Immutable on-disk-field declaration registered via ``Model.field(...)``.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        name: Field name (e.g. ``&quot;U&quot;``, ``&quot;p&quot;``). Used both for the</span>
-<span class="sd">            runtime registry key (``&quot;fields.&lt;name&gt;&quot;``) and the on-disk</span>
-<span class="sd">            file path (``&quot;0/&lt;name&gt;&quot;``).</span>
+<span class="sd">        name: Field name (e.g. ``"U"``, ``"p"``). Used both for the</span>
+<span class="sd">            runtime registry key (``"fields.&lt;name&gt;"``) and the on-disk</span>
+<span class="sd">            file path (``"0/&lt;name&gt;"``).</span>
 <span class="sd">        dimensions: OpenFOAM dimension exponents</span>
 <span class="sd">            ``[M, L, T, Θ, N, I, J]``; checked verbatim on disk and</span>
 <span class="sd">            written back unchanged.</span>
 <span class="sd">        value_type: :class:`~neofoam.fields.value_types.Scalar` /</span>
 <span class="sd">            :class:`~neofoam.fields.value_types.Vector` marker.</span>
-<span class="sd">        allowed_bcs: BC arms permitted on this field&#39;s</span>
+<span class="sd">        allowed_bcs: BC arms permitted on this field's</span>
 <span class="sd">            ``boundaryField``. Build the discriminated union via</span>
 <span class="sd">            :func:`~neofoam.fields.bc.build_bc_union`. Include</span>
 <span class="sd">            :class:`~neofoam.fields.bc.GenericBC` to keep unknown</span>
 <span class="sd">            arms parsing as the catch-all.</span>
 <span class="sd">        write: ``True`` if the field should be auto-persisted by the</span>
 <span class="sd">            runtime (forwarded to the underlying ``InitStep``).</span>
-<span class="sd">        depends_on: Runtime dependencies for the field&#39;s factory.</span>
-<span class="sd">            Defaults to ``(&quot;mesh&quot;,)``; a field that reads another</span>
+<span class="sd">        depends_on: Runtime dependencies for the field's factory.</span>
+<span class="sd">            Defaults to ``("mesh",)``; a field that reads another</span>
 <span class="sd">            field declares the extra edge explicitly</span>
-<span class="sd">            (e.g. ``phi`` depends on ``(&quot;fields.U&quot;,)``).</span>
+<span class="sd">            (e.g. ``phi`` depends on ``("fields.U",)``).</span>
 <span class="sd">        initial_value: Optional default ``internalField`` baked into</span>
-<span class="sd">            scaffolded cases. ``None`` means &quot;no default&quot; — the loader</span>
-<span class="sd">            won&#39;t synthesise one. The synthesised schema still accepts</span>
+<span class="sd">            scaffolded cases. ``None`` means "no default" — the loader</span>
+<span class="sd">            won't synthesise one. The synthesised schema still accepts</span>
 <span class="sd">            any value supplied by the case author / agent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">dimensions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
     <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span>
     <span class="n">allowed_bcs</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">write</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">depends_on</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,)</span>
+    <span class="n">depends_on</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"mesh"</span><span class="p">,)</span>
     <span class="n">initial_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Kept private and out of the comparison/hash so model authors who</span>
     <span class="c1"># cache a ``FieldDecl`` by identity see the same object whether or</span>
@@ -697,6 +697,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

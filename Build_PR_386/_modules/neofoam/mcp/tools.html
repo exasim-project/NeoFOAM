@@ -589,9 +589,9 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Case-free tool logic — plain ``f(solver, ...)`` functions returning DTOs.</span>
+<span class="sd">"""Case-free tool logic — plain ``f(solver, ...)`` functions returning DTOs.</span>
 
-<span class="sd">These wrap the solver&#39;s case-free configuration seams</span>
+<span class="sd">These wrap the solver's case-free configuration seams</span>
 <span class="sd">(:mod:`neofoam.framework.solver.configurations` + :mod:`neofoam.io`) and the</span>
 <span class="sd">case read/load/save helpers into JSON-serializable Pydantic DTOs (the MCP surface</span>
 <span class="sd">is agent-free — LLM case-fill is a wizard/library concern, not a tool here). They</span>
@@ -599,7 +599,7 @@
 <span class="sd">protocol layer in</span>
 <span class="sd">:mod:`neofoam.mcp.server` wraps each one in a ``@mcp.tool`` decorator. Keeping</span>
 <span class="sd">the logic here (not in closures) makes it unit-testable without the ``mcp`` extra.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -649,22 +649,22 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tooling.workflow.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_mesh_inputs</span> <span class="k">as</span> <span class="n">_build</span>
 
 <span class="n">INTROSPECTION_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;list_solvers&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;model_catalog&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;tool_catalog&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;list_configs&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;config_schema&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;case_spec_schema&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;manifest_schema&quot;</span><span class="p">,</span>
+    <span class="s2">"list_solvers"</span><span class="p">,</span>
+    <span class="s2">"model_catalog"</span><span class="p">,</span>
+    <span class="s2">"tool_catalog"</span><span class="p">,</span>
+    <span class="s2">"list_configs"</span><span class="p">,</span>
+    <span class="s2">"config_schema"</span><span class="p">,</span>
+    <span class="s2">"case_spec_schema"</span><span class="p">,</span>
+    <span class="s2">"manifest_schema"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">WORKSPACE_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;workspace_info&quot;</span><span class="p">,)</span>
+<span class="n">WORKSPACE_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"workspace_info"</span><span class="p">,)</span>
 <span class="n">GEOMETRY_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;import_geometry&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;case_patches&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_mesh_inputs&quot;</span><span class="p">,</span>
+    <span class="s2">"import_geometry"</span><span class="p">,</span>
+    <span class="s2">"case_patches"</span><span class="p">,</span>
+    <span class="s2">"build_mesh_inputs"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">VALIDATION_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;validate_case&quot;</span><span class="p">,)</span>
-<span class="n">SCAFFOLDING_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;read_case&quot;</span><span class="p">,</span> <span class="s2">&quot;load_case&quot;</span><span class="p">,</span> <span class="s2">&quot;save_case&quot;</span><span class="p">)</span>
+<span class="n">VALIDATION_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"validate_case"</span><span class="p">,)</span>
+<span class="n">SCAFFOLDING_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"read_case"</span><span class="p">,</span> <span class="s2">"load_case"</span><span class="p">,</span> <span class="s2">"save_case"</span><span class="p">)</span>
 <span class="n">ALL_TOOL_NAMES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">INTROSPECTION_TOOL_NAMES</span>
     <span class="o">+</span> <span class="n">WORKSPACE_TOOL_NAMES</span>
@@ -679,7 +679,7 @@
 <div class="viewcode-block" id="list_solvers">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.list_solvers">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_solvers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Known solver spec names.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Known solver spec names."""</span>
     <span class="k">return</span> <span class="n">list_solver_names</span><span class="p">()</span></div>
 
 
@@ -687,12 +687,12 @@
 <div class="viewcode-block" id="case_spec_schema">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.case_spec_schema">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">case_spec_schema</span><span class="p">(</span><span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CaseSpecSchemaDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;JSON Schema of the ``save_case`` envelope (the aggregate ``CaseSpec``).</span>
+<span class="w">    </span><span class="sd">"""JSON Schema of the ``save_case`` envelope (the aggregate ``CaseSpec``).</span>
 
 <span class="sd">    Makes the ``case_spec`` argument self-describing: it lists every snake-case</span>
-<span class="sd">    config key the envelope accepts (all optional — fill only the case&#39;s subset),</span>
+<span class="sd">    config key the envelope accepts (all optional — fill only the case's subset),</span>
 <span class="sd">    so an agent authors ``save_case`` without reading ``agent/case_fill.py``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">build_case_output_model</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">CaseSpecSchemaDTO</span><span class="p">(</span>
@@ -705,14 +705,14 @@
 <div class="viewcode-block" id="manifest_schema">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.manifest_schema">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">manifest_schema</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ManifestSchemaDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;JSON Schema of the geometry manifest (``PatchSet``) ``import_geometry`` writes.</span>
+<span class="w">    </span><span class="sd">"""JSON Schema of the geometry manifest (``PatchSet``) ``import_geometry`` writes.</span>
 
 <span class="sd">    Makes the ``manifest`` argument self-describing — an agent learns the required</span>
 <span class="sd">    ``geometry_source``/``bbox``/``location_in_mesh``/``length_scale`` keys and the</span>
 <span class="sd">    per-patch shape without reading ``workflow/geometry.py``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">PatchSet</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
-    <span class="n">required</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"required"</span><span class="p">,</span> <span class="p">[]))</span>
     <span class="k">return</span> <span class="n">ManifestSchemaDTO</span><span class="p">(</span><span class="n">json_schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="n">required</span><span class="p">)</span></div>
 
 
@@ -723,12 +723,12 @@
 <div class="viewcode-block" id="workspace_info">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.workspace_info">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">workspace_info</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WorkspaceInfoDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Report whether path-confinement is on and the active root (F6).</span>
+<span class="w">    </span><span class="sd">"""Report whether path-confinement is on and the active root (F6).</span>
 
-<span class="sd">    Without this an agent discovers the &quot;paths must be relative under the root&quot;</span>
+<span class="sd">    Without this an agent discovers the "paths must be relative under the root"</span>
 <span class="sd">    rule only by triggering an opaque escape error. ``workspace is None`` means no</span>
 <span class="sd">    root is configured (trusted local use — absolute paths allowed).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">workspace</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">WorkspaceInfoDTO</span><span class="p">(</span><span class="n">confined</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">WorkspaceInfoDTO</span><span class="p">(</span><span class="n">confined</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">workspace</span><span class="o">.</span><span class="n">root</span><span class="p">))</span></div>
@@ -747,7 +747,7 @@
     <span class="n">stl_source_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeometryImportDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stage geometry into a case: write ``&lt;case&gt;/manifest.json`` (+ STLs), the</span>
+<span class="w">    </span><span class="sd">"""Stage geometry into a case: write ``&lt;case&gt;/manifest.json`` (+ STLs), the</span>
 <span class="sd">    hand-off contract :func:`case_patches` reads back (F1).</span>
 
 <span class="sd">    ``manifest`` is a :class:`~neofoam.tooling.workflow.patch_set.PatchSet` dump — call</span>
@@ -755,7 +755,7 @@
 <span class="sd">    ``geometry_source`` (a provenance string, e.g. the CAD file or tool that produced</span>
 <span class="sd">    the STLs), ``bbox`` (``{min, max}`` in metres), ``location_in_mesh`` (a point</span>
 <span class="sd">    inside the fluid, metres) and ``length_scale`` (characteristic mesh length,</span>
-<span class="sd">    metres); optional ``source_units`` (native CAD units, default ``&quot;mm&quot;``) and</span>
+<span class="sd">    metres); optional ``source_units`` (native CAD units, default ``"mm"``) and</span>
 <span class="sd">    ``scale_to_meters`` (factor applied on export, default ``1.0``) record the</span>
 <span class="sd">    coordinate system. ``patches`` is a list of</span>
 <span class="sd">    ``{name, role, stl, box_faces?, surface_refinement?}``. ``case_dir`` is set from</span>
@@ -766,18 +766,18 @@
 
 <span class="sd">    Paths are confined through ``workspace`` when given; a missing STL raises before</span>
 <span class="sd">    the manifest is written, so a half-staged case is never left behind.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">_confine</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
     <span class="k">case</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">tri_dir</span> <span class="o">=</span> <span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;constant&quot;</span> <span class="o">/</span> <span class="s2">&quot;triSurface&quot;</span>
+    <span class="n">tri_dir</span> <span class="o">=</span> <span class="n">case</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"triSurface"</span>
 
     <span class="n">source</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">_confine_existing</span><span class="p">(</span><span class="n">stl_source_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;stl_source_dir&quot;</span><span class="p">)</span>
+        <span class="n">_confine_existing</span><span class="p">(</span><span class="n">stl_source_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"stl_source_dir"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">stl_source_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">else</span> <span class="kc">None</span>
     <span class="p">)</span>
 
-    <span class="n">patch_set</span> <span class="o">=</span> <span class="n">PatchSet</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="o">**</span><span class="n">manifest</span><span class="p">,</span> <span class="s2">&quot;case_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)})</span>
+    <span class="n">patch_set</span> <span class="o">=</span> <span class="n">PatchSet</span><span class="o">.</span><span class="n">model_validate</span><span class="p">({</span><span class="o">**</span><span class="n">manifest</span><span class="p">,</span> <span class="s2">"case_dir"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)})</span>
 
     <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="n">patch_set</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
         <span class="n">rel</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">stl</span><span class="p">)</span>
@@ -785,17 +785,17 @@
             <span class="n">tri_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">src</span> <span class="o">=</span> <span class="n">source</span> <span class="o">/</span> <span class="n">rel</span><span class="o">.</span><span class="n">name</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;STL for patch </span><span class="si">{</span><span class="n">patch</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> not found: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"STL for patch </span><span class="si">{</span><span class="n">patch</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> not found: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">staged</span> <span class="o">=</span> <span class="n">tri_dir</span> <span class="o">/</span> <span class="n">rel</span><span class="o">.</span><span class="n">name</span>
             <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">staged</span><span class="p">)</span>
             <span class="n">patch</span><span class="o">.</span><span class="n">stl</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">staged</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">case</span><span class="p">))</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;STL for patch </span><span class="si">{</span><span class="n">patch</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> not found under case: </span><span class="si">{</span><span class="n">case</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rel</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="s2">&quot;(stage the STLs first, or pass stl_source_dir)&quot;</span>
+                <span class="sa">f</span><span class="s2">"STL for patch </span><span class="si">{</span><span class="n">patch</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> not found under case: </span><span class="si">{</span><span class="n">case</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">rel</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="s2">"(stage the STLs first, or pass stl_source_dir)"</span>
             <span class="p">)</span>
 
-    <span class="n">written</span> <span class="o">=</span> <span class="n">patch_set</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span><span class="p">)</span>
+    <span class="n">written</span> <span class="o">=</span> <span class="n">patch_set</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"manifest.json"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">GeometryImportDTO</span><span class="p">(</span>
         <span class="n">manifest</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">written</span><span class="p">),</span>
         <span class="n">patches</span><span class="o">=</span><span class="p">[</span><span class="n">PatchDTO</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">stl</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">stl</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">patch_set</span><span class="o">.</span><span class="n">patches</span><span class="p">],</span>
@@ -806,16 +806,16 @@
 <div class="viewcode-block" id="case_patches">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.case_patches">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">case_patches</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PatchDTO</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Boundary patches (name + role) of a staged case, from ``&lt;case&gt;/manifest.json``.</span>
+<span class="w">    </span><span class="sd">"""Boundary patches (name + role) of a staged case, from ``&lt;case&gt;/manifest.json``.</span>
 
 <span class="sd">    Lets an agent author boundary conditions without inventing patch names or roles:</span>
 <span class="sd">    the geometry is a given, extracted upstream and written to the manifest.</span>
 <span class="sd">    ``case_dir`` is confined through ``workspace`` (when given) and must exist.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">_confine_existing</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
-    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no geometry manifest at </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2"> (stage the geometry first)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no geometry manifest at </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2"> (stage the geometry first)"</span><span class="p">)</span>
     <span class="n">patch_set</span> <span class="o">=</span> <span class="n">PatchSet</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">PatchDTO</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">stl</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">stl</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">patch_set</span><span class="o">.</span><span class="n">patches</span><span class="p">]</span></div>
 
@@ -824,7 +824,7 @@
 <div class="viewcode-block" id="build_mesh_inputs">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.build_mesh_inputs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_mesh_inputs</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MeshInputsDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render the mesh dicts for a staged case from its ``&lt;case&gt;/manifest.json``.</span>
+<span class="w">    </span><span class="sd">"""Render the mesh dicts for a staged case from its ``&lt;case&gt;/manifest.json``.</span>
 
 <span class="sd">    Closes the manifest → mesh gap: reads the :class:`~neofoam.tooling.workflow.patch_set.PatchSet`</span>
 <span class="sd">    and writes ``system/blockMeshDict`` (background box + the ``box_faces`` boundary</span>
@@ -833,11 +833,11 @@
 <span class="sd">    checkMesh) — so ``neofoam preprocess`` can build the mesh with no hand-authored</span>
 <span class="sd">    dicts. ``case_dir`` is confined through ``workspace`` (when given) and must contain</span>
 <span class="sd">    a manifest.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">_confine_existing</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
-    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;manifest.json&quot;</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"manifest.json"</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no geometry manifest at </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2"> (stage the geometry first)&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no geometry manifest at </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2"> (stage the geometry first)"</span><span class="p">)</span>
     <span class="n">patch_set</span> <span class="o">=</span> <span class="n">PatchSet</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
     <span class="n">block</span><span class="p">,</span> <span class="n">snappy</span><span class="p">,</span> <span class="n">pre</span> <span class="o">=</span> <span class="n">_build</span><span class="p">(</span><span class="n">patch_set</span><span class="p">)</span>
 
@@ -858,13 +858,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_case</span><span class="p">(</span>
     <span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ValidationReportDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Static pre-flight of an authored case — no OpenFOAM run.</span>
+<span class="w">    </span><span class="sd">"""Static pre-flight of an authored case — no OpenFOAM run.</span>
 
 <span class="sd">    Delegates to :func:`neofoam.framework.validation.validate` (the CheckRegistry of</span>
 <span class="sd">    isolated checks). Kept here as a thin frontend shim so the MCP tool surface and</span>
 <span class="sd">    the existing tests keep working; the check logic lives in ``framework.validation``.</span>
 <span class="sd">    ``case_dir`` is confined through ``workspace`` (when given) and must exist.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">_confine_existing</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">validate</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">))</span></div>
 
@@ -874,37 +874,37 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_confine</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Confine ``path`` via ``workspace`` (a write target — need not exist).</span>
+<span class="w">    </span><span class="sd">"""Confine ``path`` via ``workspace`` (a write target — need not exist).</span>
 
-<span class="sd">    ``None`` keeps the legacy trusted-absolute behavior (today&#39;s direct callers).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    ``None`` keeps the legacy trusted-absolute behavior (today's direct callers).</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">workspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">workspace</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_confine_existing</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;case_dir&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Confine ``path`` and require it to be an existing, readable directory.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_confine_existing</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"case_dir"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Confine ``path`` and require it to be an existing, readable directory.</span>
 
 <span class="sd">    ``kind`` labels the path in the rejection message so an escaping/absent</span>
 <span class="sd">    ``source_dir`` is distinguishable from a bad ``case_dir`` under a workspace too.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">workspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">workspace</span><span class="o">.</span><span class="n">resolve_existing</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">)</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> does not exist or is not a directory: </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CaseAccessError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> does not exist or is not a directory: </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">resolved</span>
 
 
 <div class="viewcode-block" id="read_case">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.read_case">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_case</span><span class="p">(</span><span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CaseTextDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read every config-bound file of a case as raw text.</span>
+<span class="w">    </span><span class="sd">"""Read every config-bound file of a case as raw text.</span>
 
 <span class="sd">    ``case_dir`` is confined through ``workspace`` (when given) and must be an</span>
 <span class="sd">    existing, readable directory.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">_confine_existing</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">CaseTextDTO</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">read_case_text</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">),</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">))</span></div>
 
@@ -913,11 +913,11 @@
 <div class="viewcode-block" id="load_case">
 <a class="viewcode-back" href="../../../reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.load_case">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_case</span><span class="p">(</span><span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CaseSpecDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load each present config from disk into an aggregate CaseSpec dump.</span>
+<span class="w">    </span><span class="sd">"""Load each present config from disk into an aggregate CaseSpec dump.</span>
 
 <span class="sd">    ``case_dir`` is confined through ``workspace`` (when given) and must be an</span>
 <span class="sd">    existing, readable directory.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">_confine_existing</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
     <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">spec</span> <span class="o">=</span> <span class="n">load_case_from_disk</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">),</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="n">warnings</span><span class="p">)</span>
@@ -934,17 +934,17 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">workspace</span><span class="p">:</span> <span class="n">Workspace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SaveResultDTO</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate ``case_spec`` against the solver&#39;s aggregate model, then write.</span>
+<span class="w">    </span><span class="sd">"""Validate ``case_spec`` against the solver's aggregate model, then write.</span>
 
 <span class="sd">    ``target_dir`` is confined through ``workspace`` (when given) before any write, so</span>
 <span class="sd">    a malformed *or* escaping payload leaves the filesystem untouched.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">_confine</span><span class="p">(</span><span class="n">target_dir</span><span class="p">,</span> <span class="n">workspace</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">build_case_output_model</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">validated</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">case_spec</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid case_spec for solver: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"invalid case_spec for solver: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
     <span class="n">written</span> <span class="o">=</span> <span class="n">_save_case</span><span class="p">(</span><span class="n">validated</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">SaveResultDTO</span><span class="p">(</span>
         <span class="n">target_dir</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">),</span>
@@ -991,6 +991,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

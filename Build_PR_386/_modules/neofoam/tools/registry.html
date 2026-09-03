@@ -589,13 +589,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Process-wide registry of preprocessing tools.</span>
+<span class="sd">"""Process-wide registry of preprocessing tools.</span>
 
 <span class="sd">A tool module self-registers via :func:`register_tool` at import; importing the</span>
 <span class="sd">``neofoam.tools`` package imports every built-in tool module, so :func:`available_tools`</span>
 <span class="sd">returns them all. Resolution (``resolve_tools``) is scoped to this set — adding a tool is</span>
 <span class="sd">a new self-registering module, with no edit to any solver or the CLI.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.tools.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolSpec</span>
 
@@ -605,7 +605,7 @@
 <div class="viewcode-block" id="register_tool">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.registry.html#neofoam.tools.registry.register_tool">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_tool</span><span class="p">(</span><span class="n">tool</span><span class="p">:</span> <span class="n">ToolSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ToolSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register ``tool`` under its name (idempotent); return it for module-level use.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Register ``tool`` under its name (idempotent); return it for module-level use."""</span>
     <span class="n">_REGISTRY</span><span class="p">[</span><span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tool</span>
     <span class="k">return</span> <span class="n">tool</span></div>
 
@@ -614,7 +614,7 @@
 <div class="viewcode-block" id="available_tools">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.registry.html#neofoam.tools.registry.available_tools">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">available_tools</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ToolSpec</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Every registered tool (registry populated by importing ``neofoam.tools``).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Every registered tool (registry populated by importing ``neofoam.tools``)."""</span>
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">_REGISTRY</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
 
 </pre></div>
@@ -656,6 +656,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

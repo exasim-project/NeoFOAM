@@ -589,9 +589,9 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The :class:`PatchSet` -- the geometry contract between staging and case filling.</span>
+<span class="sd">"""The :class:`PatchSet` -- the geometry contract between staging and case filling.</span>
 
-<span class="sd">Whatever stages a case&#39;s geometry writes ``&lt;case&gt;/manifest.json``; the downstream</span>
+<span class="sd">Whatever stages a case's geometry writes ``&lt;case&gt;/manifest.json``; the downstream</span>
 <span class="sd">consumers (:mod:`neofoam.tooling.workflow.mesh_inputs` for the mesh dicts,</span>
 <span class="sd">:func:`neofoam.mcp.tools.case_patches` for boundary-condition filling) read it</span>
 <span class="sd">back, so the filesystem is the hand-off boundary and this module is the single</span>
@@ -601,7 +601,7 @@
 
 <span class="sd">The module imports only pydantic + stdlib so it stays importable from a minimal</span>
 <span class="sd">environment.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -617,40 +617,40 @@
 <div class="viewcode-block" id="PatchRole">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchRole">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PatchRole</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The CFD role of a boundary patch, used to pick its boundary condition.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The CFD role of a boundary patch, used to pick its boundary condition."""</span>
 
-    <span class="n">inlet</span> <span class="o">=</span> <span class="s2">&quot;inlet&quot;</span>
-    <span class="n">outlet</span> <span class="o">=</span> <span class="s2">&quot;outlet&quot;</span>
-    <span class="n">wall</span> <span class="o">=</span> <span class="s2">&quot;wall&quot;</span>
-    <span class="n">symmetry</span> <span class="o">=</span> <span class="s2">&quot;symmetry&quot;</span>
-    <span class="n">empty</span> <span class="o">=</span> <span class="s2">&quot;empty&quot;</span></div>
+    <span class="n">inlet</span> <span class="o">=</span> <span class="s2">"inlet"</span>
+    <span class="n">outlet</span> <span class="o">=</span> <span class="s2">"outlet"</span>
+    <span class="n">wall</span> <span class="o">=</span> <span class="s2">"wall"</span>
+    <span class="n">symmetry</span> <span class="o">=</span> <span class="s2">"symmetry"</span>
+    <span class="n">empty</span> <span class="o">=</span> <span class="s2">"empty"</span></div>
 
 
 
-<span class="n">BoxFace</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;x_min&quot;</span><span class="p">,</span> <span class="s2">&quot;x_max&quot;</span><span class="p">,</span> <span class="s2">&quot;y_min&quot;</span><span class="p">,</span> <span class="s2">&quot;y_max&quot;</span><span class="p">,</span> <span class="s2">&quot;z_min&quot;</span><span class="p">,</span> <span class="s2">&quot;z_max&quot;</span><span class="p">]</span>
+<span class="n">BoxFace</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"x_min"</span><span class="p">,</span> <span class="s2">"x_max"</span><span class="p">,</span> <span class="s2">"y_min"</span><span class="p">,</span> <span class="s2">"y_max"</span><span class="p">,</span> <span class="s2">"z_min"</span><span class="p">,</span> <span class="s2">"z_max"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PatchEntry">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchEntry">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PatchEntry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One named boundary patch backed by a triangulated surface.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One named boundary patch backed by a triangulated surface."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;OpenFOAM patch name, e.g. ``&quot;inlet&quot;``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""OpenFOAM patch name, e.g. ``"inlet"``."""</span>
     <span class="n">stl</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;STL path relative to ``case_dir``, e.g. ``constant/triSurface/inlet.stl``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""STL path relative to ``case_dir``, e.g. ``constant/triSurface/inlet.stl``."""</span>
     <span class="n">role</span><span class="p">:</span> <span class="n">PatchRole</span>
     <span class="n">box_faces</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BoxFace</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Which background-box faces this patch occupies (planar, axis-aligned</span>
+<span class="w">    </span><span class="sd">"""Which background-box faces this patch occupies (planar, axis-aligned</span>
 <span class="sd">    patches), or ``None`` for a snappy surface meshed from its STL. Stage 2</span>
 <span class="sd">    realises ``box_faces`` patches as blockMesh boundary patches and ``None``</span>
-<span class="sd">    patches as snappy ``refinementSurfaces``.&quot;&quot;&quot;</span>
+<span class="sd">    patches as snappy ``refinementSurfaces``."""</span>
     <span class="n">surface_refinement</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional snappy ``(min, max)`` surface refinement levels for this patch.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Optional snappy ``(min, max)`` surface refinement levels for this patch."""</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_snappy_surface</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if this patch is meshed by snappy (no background-box faces).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""True if this patch is meshed by snappy (no background-box faces)."""</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">box_faces</span></div>
 
 
@@ -658,7 +658,7 @@
 <div class="viewcode-block" id="BoundingBox">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.BoundingBox">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BoundingBox</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Axis-aligned bounding box of the geometry, in metres.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Axis-aligned bounding box of the geometry, in metres."""</span>
 
     <span class="nb">min</span><span class="p">:</span> <span class="n">Vec3</span>
     <span class="nb">max</span><span class="p">:</span> <span class="n">Vec3</span></div>
@@ -668,19 +668,19 @@
 <div class="viewcode-block" id="PatchSet">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchSet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PatchSet</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Everything stages 2 and 3 need to know about the extracted geometry.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Everything stages 2 and 3 need to know about the extracted geometry."""</span>
 
     <span class="n">case_dir</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">geometry_source</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">source_units</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mm&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Native CAD units; recorded for traceability.&quot;&quot;&quot;</span>
+    <span class="n">source_units</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mm"</span>
+<span class="w">    </span><span class="sd">"""Native CAD units; recorded for traceability."""</span>
     <span class="n">scale_to_meters</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Factor applied to native coordinates when exporting (mm -&gt; 0.001).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Factor applied to native coordinates when exporting (mm -&gt; 0.001)."""</span>
     <span class="n">bbox</span><span class="p">:</span> <span class="n">BoundingBox</span>
     <span class="n">location_in_mesh</span><span class="p">:</span> <span class="n">Vec3</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A point inside the fluid region (metres) -- snappy&#39;s ``locationInMesh``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A point inside the fluid region (metres) -- snappy's ``locationInMesh``."""</span>
     <span class="n">length_scale</span><span class="p">:</span> <span class="nb">float</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Characteristic length (metres) for background-mesh / refinement sizing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Characteristic length (metres) for background-mesh / refinement sizing."""</span>
     <span class="n">patches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PatchEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="c1"># -- io -----------------------------------------------------------------</span>
@@ -688,14 +688,14 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchSet.load">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PatchSet</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and validate a patch set from ``manifest.json``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Load and validate a patch set from ``manifest.json``."""</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="PatchSet.save">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchSet.save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write the patch set as pretty JSON; return the path written.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write the patch set as pretty JSON; return the path written."""</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">out</span></div>
@@ -705,14 +705,14 @@
 <div class="viewcode-block" id="PatchSet.patch_names">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchSet.patch_names">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">patch_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Patch names in declared order.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Patch names in declared order."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">patches</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="PatchSet.by_role">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.geometry.PatchSet.by_role">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">by_role</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="n">PatchRole</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PatchEntry</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;All patches with the given role.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""All patches with the given role."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">patches</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="n">role</span><span class="p">]</span></div>
 </div>
 
@@ -755,6 +755,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,14 +589,14 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The predefined Snakemake rule library for NeoFOAM parameter sweeps.</span>
+<span class="sd">"""The predefined Snakemake rule library for NeoFOAM parameter sweeps.</span>
 
 <span class="sd">Each :class:`RuleSpec` describes one packaged ``.smk`` file (shipped in this</span>
 <span class="sd">directory) — its Snakemake rule name, the file patterns it consumes/produces</span>
 <span class="sd">(``{case}`` = one sweep case, ``{mesh}`` = one mesh variant) and whether it is</span>
 <span class="sd">*keyed* (runs once per mesh variant) or per-case. A generated Snakefile is a</span>
 <span class="sd">thin header (build the :class:`~neofoam.tooling.workflow.paramspace.YamlParamSpace`,</span>
-<span class="sd">materialize the configs, define the plan&#39;s globals) followed by ``include:``</span>
+<span class="sd">materialize the configs, define the plan's globals) followed by ``include:``</span>
 <span class="sd">lines referencing these files, so the rule bodies stay versioned together with</span>
 <span class="sd">the ``python -m neofoam.tooling.workflow.sweep_runner`` CLI they shell out to.</span>
 
@@ -623,7 +623,7 @@
 <span class="sd">bodies must agree on verbatim, not something a rule-graph consumer needs to learn.</span>
 <span class="sd">They remain importable by name (``from …rules import RUN_DONE_PATTERN``) for the</span>
 <span class="sd">codegen; a caller who only wants the rule graph uses the model above.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -634,44 +634,44 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;DEFAULT_ENABLED&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;MESH_DIM&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RuleKind&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RulePlan&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RuleRegistry&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;RuleSpec&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;default_registry&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;rules_dir&quot;</span><span class="p">,</span>
+    <span class="s2">"DEFAULT_ENABLED"</span><span class="p">,</span>
+    <span class="s2">"MESH_DIM"</span><span class="p">,</span>
+    <span class="s2">"RuleKind"</span><span class="p">,</span>
+    <span class="s2">"RulePlan"</span><span class="p">,</span>
+    <span class="s2">"RuleRegistry"</span><span class="p">,</span>
+    <span class="s2">"RuleSpec"</span><span class="p">,</span>
+    <span class="s2">"default_registry"</span><span class="p">,</span>
+    <span class="s2">"rules_dir"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1">#: The reserved keyed dimension: mesh variants (params.yaml key / sweep column).</span>
-<span class="n">MESH_DIM</span> <span class="o">=</span> <span class="s2">&quot;mesh&quot;</span>
+<span class="n">MESH_DIM</span> <span class="o">=</span> <span class="s2">"mesh"</span>
 
 <span class="c1"># File patterns of the pipeline ({case} = sweep case, {mesh} = mesh variant).</span>
-<span class="n">MESH_CONFIG_PATTERN</span> <span class="o">=</span> <span class="s2">&quot;configs/mesh/</span><span class="si">{mesh}</span><span class="s2">.json&quot;</span>
-<span class="n">MESH_STAGE_STAMP</span> <span class="o">=</span> <span class="s2">&quot;.staged.json&quot;</span>  <span class="c1"># meshes/{mesh}/.staged.json</span>
-<span class="n">SETUP_CONFIG_PATTERN</span> <span class="o">=</span> <span class="s2">&quot;configs/</span><span class="si">{case}</span><span class="s2">/setup.json&quot;</span>
-<span class="n">SETUP_STAMP_PATTERN</span> <span class="o">=</span> <span class="s2">&quot;cases/</span><span class="si">{case}</span><span class="s2">/.applied.json&quot;</span>
-<span class="n">RUN_DONE_PATTERN</span> <span class="o">=</span> <span class="s2">&quot;cases/</span><span class="si">{case}</span><span class="s2">/done&quot;</span>
-<span class="n">POST_DONE_PATTERN</span> <span class="o">=</span> <span class="s2">&quot;cases/</span><span class="si">{case}</span><span class="s2">/.post.done&quot;</span>
+<span class="n">MESH_CONFIG_PATTERN</span> <span class="o">=</span> <span class="s2">"configs/mesh/</span><span class="si">{mesh}</span><span class="s2">.json"</span>
+<span class="n">MESH_STAGE_STAMP</span> <span class="o">=</span> <span class="s2">".staged.json"</span>  <span class="c1"># meshes/{mesh}/.staged.json</span>
+<span class="n">SETUP_CONFIG_PATTERN</span> <span class="o">=</span> <span class="s2">"configs/</span><span class="si">{case}</span><span class="s2">/setup.json"</span>
+<span class="n">SETUP_STAMP_PATTERN</span> <span class="o">=</span> <span class="s2">"cases/</span><span class="si">{case}</span><span class="s2">/.applied.json"</span>
+<span class="n">RUN_DONE_PATTERN</span> <span class="o">=</span> <span class="s2">"cases/</span><span class="si">{case}</span><span class="s2">/done"</span>
+<span class="n">POST_DONE_PATTERN</span> <span class="o">=</span> <span class="s2">"cases/</span><span class="si">{case}</span><span class="s2">/.post.done"</span>
 
 
 <div class="viewcode-block" id="rules_dir">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.rules_dir">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">rules_dir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The installed directory holding the packaged ``.smk`` files.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">&quot;neofoam.tooling.workflow.rules&quot;</span><span class="p">)))</span></div>
+<span class="w">    </span><span class="sd">"""The installed directory holding the packaged ``.smk`` files."""</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">importlib</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">"neofoam.tooling.workflow.rules"</span><span class="p">)))</span></div>
 
 
 
 <div class="viewcode-block" id="RuleKind">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.RuleKind">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RuleKind</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The wiring category of a rule — the single field that fixes how it is wired.</span>
+<span class="w">    </span><span class="sd">"""The wiring category of a rule — the single field that fixes how it is wired.</span>
 
 <span class="sd">    One kind per rule replaces the earlier bag of mutually-constraining booleans</span>
 <span class="sd">    (``creates_mesh``/``consumes_mesh_dim``/…), so an illegal combination (e.g.</span>
-<span class="sd">    &quot;creates a mesh AND stages the variant&quot;) is now unrepresentable and both</span>
+<span class="sd">    "creates a mesh AND stages the variant") is now unrepresentable and both</span>
 <span class="sd">    :meth:`RuleRegistry.plan` and the canvas resolver branch on one value.</span>
 
 <span class="sd">    Members:</span>
@@ -679,16 +679,16 @@
 <span class="sd">        MESH_STAGE: stages a clean mesh mini-case per variant (``setup_mesh``).</span>
 <span class="sd">        MESH_CREATE: creates the base mesh and starts the chain (``blockMesh``).</span>
 <span class="sd">        MESH_TOOL: refines/validates an existing mesh (``snappyHexMesh``/``checkMesh``).</span>
-<span class="sd">        CASE_SETUP: clones the base case + applies the case&#39;s configs (``setup``).</span>
+<span class="sd">        CASE_SETUP: clones the base case + applies the case's configs (``setup``).</span>
 <span class="sd">        CASE: a plain per-case rule (``solve``/``post``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">AGGREGATE</span> <span class="o">=</span> <span class="s2">&quot;aggregate&quot;</span>
-    <span class="n">MESH_STAGE</span> <span class="o">=</span> <span class="s2">&quot;mesh_stage&quot;</span>
-    <span class="n">MESH_CREATE</span> <span class="o">=</span> <span class="s2">&quot;mesh_create&quot;</span>
-    <span class="n">MESH_TOOL</span> <span class="o">=</span> <span class="s2">&quot;mesh_tool&quot;</span>
-    <span class="n">CASE_SETUP</span> <span class="o">=</span> <span class="s2">&quot;case_setup&quot;</span>
-    <span class="n">CASE</span> <span class="o">=</span> <span class="s2">&quot;case&quot;</span></div>
+    <span class="n">AGGREGATE</span> <span class="o">=</span> <span class="s2">"aggregate"</span>
+    <span class="n">MESH_STAGE</span> <span class="o">=</span> <span class="s2">"mesh_stage"</span>
+    <span class="n">MESH_CREATE</span> <span class="o">=</span> <span class="s2">"mesh_create"</span>
+    <span class="n">MESH_TOOL</span> <span class="o">=</span> <span class="s2">"mesh_tool"</span>
+    <span class="n">CASE_SETUP</span> <span class="o">=</span> <span class="s2">"case_setup"</span>
+    <span class="n">CASE</span> <span class="o">=</span> <span class="s2">"case"</span></div>
 
 
 
@@ -702,57 +702,57 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.RuleSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RuleSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One predefined Snakemake rule backed by a packaged ``.smk`` file.</span>
+<span class="w">    </span><span class="sd">"""One predefined Snakemake rule backed by a packaged ``.smk`` file.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        name: The Snakemake rule name (``blockMesh``).</span>
 <span class="sd">        smk_file: The packaged file (``block_mesh.smk``).</span>
-<span class="sd">        kind: The rule&#39;s wiring category (see :class:`RuleKind`) — the single</span>
+<span class="sd">        kind: The rule's wiring category (see :class:`RuleKind`) — the single</span>
 <span class="sd">            source of truth the boolean views below derive from.</span>
 <span class="sd">        inputs: Input file patterns (mesh-tool inputs are resolved per plan).</span>
 <span class="sd">        outputs: Output file patterns.</span>
 <span class="sd">        stamp_name: Override for the per-variant stamp basename (relative to</span>
 <span class="sd">            ``meshes/{mesh}/``); defaults to ``.{name}.done``.</span>
 <span class="sd">        title: Canvas display label.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">smk_file</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">kind</span><span class="p">:</span> <span class="n">RuleKind</span> <span class="o">=</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">CASE</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
-    <span class="n">stamp_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">stamp_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">keyed_by</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;``&quot;mesh&quot;`` when the rule runs once per mesh variant, else ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""``"mesh"`` when the rule runs once per mesh variant, else ``None``."""</span>
         <span class="k">return</span> <span class="n">MESH_DIM</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">_MESH_KEYED</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">consumes_case_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;``setup`` — gets every non-mesh dimension as a config port.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""``setup`` — gets every non-mesh dimension as a config port."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">CASE_SETUP</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">consumes_mesh_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;``setup_mesh`` — gets the mesh dimension&#39;s config port.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""``setup_mesh`` — gets the mesh dimension's config port."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_STAGE</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">creates_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A valid start of the mesh tool chain (``blockMesh``).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""A valid start of the mesh tool chain (``blockMesh``)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_CREATE</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_mesh_tool</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A keyed rule in the mesh tool chain (not the staging rule).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""A keyed rule in the mesh tool chain (not the staging rule)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">_MESH_TOOLS</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">stamp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The per-variant stamp a mesh tool writes (``.blockMesh.done``).&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stamp_name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.done&quot;</span></div>
+<span class="w">        </span><span class="sd">"""The per-variant stamp a mesh tool writes (``.blockMesh.done``)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stamp_name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.done"</span></div>
 
 
 
@@ -760,15 +760,15 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.RulePlan">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RulePlan</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A validated rule selection resolved into concrete wiring.</span>
+<span class="w">    </span><span class="sd">"""A validated rule selection resolved into concrete wiring.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        rules: The enabled rules, in registry order.</span>
-<span class="sd">        mesh_tool_input: Mesh-tool rule name -&gt; its predecessor&#39;s stamp</span>
+<span class="sd">        mesh_tool_input: Mesh-tool rule name -&gt; its predecessor's stamp</span>
 <span class="sd">            basename (the first tool chains off ``MESH_STAGE_STAMP``).</span>
-<span class="sd">        mesh_done: The mesh chain&#39;s sink stamp basename (what ``setup`` waits on).</span>
+<span class="sd">        mesh_done: The mesh chain's sink stamp basename (what ``setup`` waits on).</span>
 <span class="sd">        final_pattern: What the ``all`` rule expands over.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">rules</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RuleSpec</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">mesh_tool_input</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
@@ -783,7 +783,7 @@
         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">spec</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;rule &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is not part of this plan (enabled: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"rule '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' is not part of this plan (enabled: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
 
 
@@ -791,13 +791,13 @@
 <div class="viewcode-block" id="RuleRegistry">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.RuleRegistry">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RuleRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The predefined rules, in pipeline order.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The predefined rules, in pipeline order."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rules</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RuleSpec</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rules</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">rules</span><span class="p">)</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rules</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;duplicate rule names in registry: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"duplicate rule names in registry: </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -808,42 +808,42 @@
         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rules</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">spec</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;unknown rule &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; (registered: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"unknown rule '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' (registered: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RuleRegistry.plan">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.RuleRegistry.plan">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RulePlan</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve a rule selection into a validated :class:`RulePlan`.</span>
+<span class="w">        </span><span class="sd">"""Resolve a rule selection into a validated :class:`RulePlan`.</span>
 
 <span class="sd">        Selection order is irrelevant — rules resolve in registry (pipeline)</span>
 <span class="sd">        order. Raises ``ValueError`` on unknown names, a missing required rule,</span>
 <span class="sd">        a mesh chain that does not start with a mesh-creating tool, or ``post``</span>
 <span class="sd">        without ``solve``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">chosen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">DEFAULT_ENABLED</span> <span class="k">if</span> <span class="n">enabled</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">enabled</span><span class="p">)</span>
         <span class="n">unknown</span> <span class="o">=</span> <span class="n">chosen</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;unknown rule(s) </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2"> (registered: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"unknown rule(s) </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2"> (registered: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">required</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="s2">&quot;solve&quot;</span><span class="p">,</span> <span class="s2">&quot;setup_mesh&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">required</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"all"</span><span class="p">,</span> <span class="s2">"setup"</span><span class="p">,</span> <span class="s2">"solve"</span><span class="p">,</span> <span class="s2">"setup_mesh"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">required</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chosen</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;rule &#39;</span><span class="si">{</span><span class="n">required</span><span class="si">}</span><span class="s2">&#39; is required in every sweep pipeline&quot;</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"rule '</span><span class="si">{</span><span class="n">required</span><span class="si">}</span><span class="s2">' is required in every sweep pipeline"</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
         <span class="n">rules</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">spec</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rules</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">chosen</span><span class="p">)</span>
 
         <span class="n">chain</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">rules</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">is_mesh_tool</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">chain</span><span class="p">:</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;the mesh chain needs at least one mesh tool rule (e.g. blockMesh)&quot;</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">"the mesh chain needs at least one mesh tool rule (e.g. blockMesh)"</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="c1"># setup_mesh stages a clean variant, so the first tool in the chain must</span>
         <span class="c1"># create the mesh.</span>
         <span class="k">if</span> <span class="n">chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_CREATE</span><span class="p">:</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;the mesh chain starts at &#39;</span><span class="si">{</span><span class="n">chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;, which does not create &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;a mesh — setup_mesh stages a clean variant, so the first tool must &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;be a mesh creator (e.g. blockMesh)&quot;</span>
+                <span class="sa">f</span><span class="s2">"the mesh chain starts at '</span><span class="si">{</span><span class="n">chain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">', which does not create "</span>
+                <span class="sa">f</span><span class="s2">"a mesh — setup_mesh stages a clean variant, so the first tool must "</span>
+                <span class="sa">f</span><span class="s2">"be a mesh creator (e.g. blockMesh)"</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
@@ -853,7 +853,7 @@
             <span class="n">mesh_tool_input</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">prev</span>
             <span class="n">prev</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">stamp</span>
 
-        <span class="k">if</span> <span class="s2">&quot;post&quot;</span> <span class="ow">in</span> <span class="n">chosen</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"post"</span> <span class="ow">in</span> <span class="n">chosen</span><span class="p">:</span>
             <span class="n">final</span> <span class="o">=</span> <span class="n">POST_DONE_PATTERN</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">final</span> <span class="o">=</span> <span class="n">RUN_DONE_PATTERN</span>
@@ -870,86 +870,86 @@
 
 <span class="c1">#: The default pipeline selection (post is registered but opt-in).</span>
 <span class="n">DEFAULT_ENABLED</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;all&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;setup_mesh&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;checkMesh&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;setup&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;solve&quot;</span><span class="p">,</span>
+    <span class="s2">"all"</span><span class="p">,</span>
+    <span class="s2">"setup_mesh"</span><span class="p">,</span>
+    <span class="s2">"blockMesh"</span><span class="p">,</span>
+    <span class="s2">"snappyHexMesh"</span><span class="p">,</span>
+    <span class="s2">"checkMesh"</span><span class="p">,</span>
+    <span class="s2">"setup"</span><span class="p">,</span>
+    <span class="s2">"solve"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
 <div class="viewcode-block" id="default_registry">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.default_registry">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">default_registry</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RuleRegistry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The NeoFOAM rule library, in pipeline order.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The NeoFOAM rule library, in pipeline order."""</span>
     <span class="k">return</span> <span class="n">RuleRegistry</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="c1"># `all` is emitted INLINE by the Snakefile generator: Snakemake&#39;s</span>
+            <span class="c1"># `all` is emitted INLINE by the Snakefile generator: Snakemake's</span>
             <span class="c1"># implicit default target must be a rule of the MAIN Snakefile —</span>
             <span class="c1"># rules from include:d files are never picked as the default.</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"all"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"all"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;setup_mesh&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;setup_mesh.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"setup_mesh"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"setup_mesh.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_STAGE</span><span class="p">,</span>
                 <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">MESH_CONFIG_PATTERN</span><span class="p">,),</span>
-                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">MESH_STAGE_STAMP</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;stage mesh variant&quot;</span><span class="p">,</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">"meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">MESH_STAGE_STAMP</span><span class="si">}</span><span class="s2">"</span><span class="p">,),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"stage mesh variant"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;block_mesh.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"blockMesh"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"block_mesh.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_CREATE</span><span class="p">,</span>
-                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">MESH_STAGE_STAMP</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,),</span>
-                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;meshes/</span><span class="si">{mesh}</span><span class="s2">/.blockMesh.done&quot;</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">"meshes/</span><span class="se">{{</span><span class="s2">mesh</span><span class="se">}}</span><span class="s2">/</span><span class="si">{</span><span class="n">MESH_STAGE_STAMP</span><span class="si">}</span><span class="s2">"</span><span class="p">,),</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="s2">"meshes/</span><span class="si">{mesh}</span><span class="s2">/.blockMesh.done"</span><span class="p">,),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"blockMesh"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;snappy_hex_mesh.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"snappyHexMesh"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"snappy_hex_mesh.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_TOOL</span><span class="p">,</span>
-                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;meshes/</span><span class="si">{mesh}</span><span class="s2">/.blockMesh.done&quot;</span><span class="p">,),</span>
-                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;meshes/</span><span class="si">{mesh}</span><span class="s2">/.snappyHexMesh.done&quot;</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="s2">"meshes/</span><span class="si">{mesh}</span><span class="s2">/.blockMesh.done"</span><span class="p">,),</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="s2">"meshes/</span><span class="si">{mesh}</span><span class="s2">/.snappyHexMesh.done"</span><span class="p">,),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"snappyHexMesh"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;checkMesh&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;check_mesh.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"checkMesh"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"check_mesh.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">MESH_TOOL</span><span class="p">,</span>
-                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;meshes/</span><span class="si">{mesh}</span><span class="s2">/.snappyHexMesh.done&quot;</span><span class="p">,),</span>
-                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;meshes/</span><span class="si">{mesh}</span><span class="s2">/.checkMesh.done&quot;</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;checkMesh&quot;</span><span class="p">,</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="s2">"meshes/</span><span class="si">{mesh}</span><span class="s2">/.snappyHexMesh.done"</span><span class="p">,),</span>
+                <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="s2">"meshes/</span><span class="si">{mesh}</span><span class="s2">/.checkMesh.done"</span><span class="p">,),</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"checkMesh"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;setup&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;setup.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"setup"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"setup.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">CASE_SETUP</span><span class="p">,</span>
-                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">SETUP_CONFIG_PATTERN</span><span class="p">,</span> <span class="s2">&quot;meshes/</span><span class="si">{mesh}</span><span class="s2">/&lt;mesh_done&gt;&quot;</span><span class="p">),</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">SETUP_CONFIG_PATTERN</span><span class="p">,</span> <span class="s2">"meshes/</span><span class="si">{mesh}</span><span class="s2">/&lt;mesh_done&gt;"</span><span class="p">),</span>
                 <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="n">SETUP_STAMP_PATTERN</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;clone base + apply configs&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"clone base + apply configs"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solve&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;solve.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"solve"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"solve.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">CASE</span><span class="p">,</span>
                 <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">SETUP_STAMP_PATTERN</span><span class="p">,),</span>
                 <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="n">RUN_DONE_PATTERN</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;solve&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"solve"</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="n">RuleSpec</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;post&quot;</span><span class="p">,</span>
-                <span class="n">smk_file</span><span class="o">=</span><span class="s2">&quot;post.smk&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"post"</span><span class="p">,</span>
+                <span class="n">smk_file</span><span class="o">=</span><span class="s2">"post.smk"</span><span class="p">,</span>
                 <span class="n">kind</span><span class="o">=</span><span class="n">RuleKind</span><span class="o">.</span><span class="n">CASE</span><span class="p">,</span>
                 <span class="n">inputs</span><span class="o">=</span><span class="p">(</span><span class="n">RUN_DONE_PATTERN</span><span class="p">,),</span>
                 <span class="n">outputs</span><span class="o">=</span><span class="p">(</span><span class="n">POST_DONE_PATTERN</span><span class="p">,),</span>
-                <span class="n">title</span><span class="o">=</span><span class="s2">&quot;post-process&quot;</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="s2">"post-process"</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">]</span>
     <span class="p">)</span></div>
@@ -993,6 +993,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

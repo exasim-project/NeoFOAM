@@ -589,11 +589,11 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Alpha-advection plugin interface (family of interchangeable schemes).</span>
+<span class="sd">"""Alpha-advection plugin interface (family of interchangeable schemes).</span>
 
 <span class="sd">The phase-fraction transport scheme is a *core model family*: exactly one member</span>
 <span class="sd">is active per case. Members register here via</span>
-<span class="sd">``Model(&quot;name&quot;).register_with(advectionModel)`` and are discovered case-free by</span>
+<span class="sd">``Model("name").register_with(advectionModel)`` and are discovered case-free by</span>
 <span class="sd">name; the active one is chosen from the ``advectionScheme`` key in</span>
 <span class="sd">``system/fvSolution`` (default ``MULES``) — see :mod:`selection`.</span>
 
@@ -601,7 +601,7 @@
 <span class="sd">:class:`ModelSpec` + operations that owns the shared VoF fields (via</span>
 <span class="sd">``shared_field_build_steps``) and exposes an ``alpha_advection`` operation, so</span>
 <span class="sd">the solver entrypoint stays agnostic to which scheme is active.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -610,28 +610,28 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ModelSpec</span>  <span class="c1"># noqa: F401</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;advectionModel&quot;</span><span class="p">,</span> <span class="s2">&quot;Model&quot;</span><span class="p">,</span> <span class="s2">&quot;ModelRuntime&quot;</span><span class="p">,</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"advectionModel"</span><span class="p">,</span> <span class="s2">"Model"</span><span class="p">,</span> <span class="s2">"ModelRuntime"</span><span class="p">,</span> <span class="s2">"ModelSpec"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="advectionModel">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html#neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.advectionModel">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"model_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">advectionModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface for alpha (phase-fraction) advection schemes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Plugin interface for alpha (phase-fraction) advection schemes."""</span>
 
 <div class="viewcode-block" id="advectionModel.all_specs">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html#neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.advectionModel.all_specs">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">all_specs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every registered advection spec, without detection.&quot;&quot;&quot;</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">&quot;advectionModel&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Return every registered advection spec, without detection."""</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">"advectionModel"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">registry</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">plugin_cls</span><span class="o">.</span><span class="n">get_model_instance</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">&quot;get_model_instance&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">"get_model_instance"</span><span class="p">)</span>
         <span class="p">]</span></div>
 
 
@@ -639,7 +639,7 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html#neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.advectionModel.registered_names">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">registered_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ``spec.name`` of every registered advection scheme.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the ``spec.name`` of every registered advection scheme."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">all_specs</span><span class="p">()]</span></div>
 
 
@@ -647,7 +647,7 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html#neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.advectionModel.find_spec">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">find_spec</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the registered spec whose ``name`` matches, else ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the registered spec whose ``name`` matches, else ``None``."""</span>
         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">all_specs</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">spec</span>
@@ -658,12 +658,12 @@
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html#neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.advectionModel.detect_and_create">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">detect_and_create</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select the active advection scheme for the case in the cwd.</span>
+<span class="w">        </span><span class="sd">"""Select the active advection scheme for the case in the cwd.</span>
 
 <span class="sd">        The core-model-family hook: reads the ``advectionScheme`` key from</span>
 <span class="sd">        ``system/fvSolution`` and returns the matching registered spec (MULES</span>
 <span class="sd">        fallback on unknown/absent).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_from_case</span>  <span class="c1"># noqa: PLC0415  # circular: .selection</span>
 
         <span class="k">return</span> <span class="n">select_from_case</span><span class="p">()</span></div>
@@ -708,6 +708,8 @@
     <script src="../../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

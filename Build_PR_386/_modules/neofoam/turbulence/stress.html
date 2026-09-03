@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Viscous-stress objects — the momentum equation&#39;s stress collaborator.</span>
+<span class="sd">"""Viscous-stress objects — the momentum equation's stress collaborator.</span>
 
 <span class="sd">A ``viscousStress`` owns *how* the momentum stress term ``divDevReff(U)`` is</span>
 <span class="sd">assembled from the molecular ``nu`` and eddy ``nut`` viscosities. Its lifecycle:</span>
@@ -598,7 +598,7 @@
 <span class="sd">  (Context fields the viscosity and momentum-transport models own) and refreshes</span>
 <span class="sd">  the effective viscosity ``nuEff``; it does not modify ``nu``/``nut``. The</span>
 <span class="sd">  *operation* that calls ``update`` is owned by the momentum-transport model (e.g.</span>
-<span class="sd">  ``laminar``&#39;s ``update_viscous_stress``), not by this object.</span>
+<span class="sd">  ``laminar``'s ``update_viscous_stress``), not by this object.</span>
 <span class="sd">* ``divDevReff(U)`` is called **by the momentum equation** and uses the</span>
 <span class="sd">  refreshed ``nuEff``.</span>
 
@@ -607,7 +607,7 @@
 <span class="sd">A linear eddy-viscosity closure (laminar, kEpsilon, …) uses</span>
 <span class="sd">:class:`LinearViscousStress`; the OpenFOAM fallback uses :class:`OpenFOAMStress`,</span>
 <span class="sd">which delegates to the pybFoam model.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -615,13 +615,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvc</span><span class="p">,</span> <span class="n">fvm</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;LinearViscousStress&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;OpenFOAMStress&quot;</span><span class="p">,</span>
+    <span class="s2">"LinearViscousStress"</span><span class="p">,</span>
+    <span class="s2">"OpenFOAMStress"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_viscosity</span><span class="p">(</span><span class="n">nu</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">nut</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Effective viscosity ``nuEff = nu + nut``.</span>
+<span class="w">    </span><span class="sd">"""Effective viscosity ``nuEff = nu + nut``.</span>
 
 <span class="sd">    When ``nut`` is a field (RAS/LES) the sum is a ``tmp`` field, materialised</span>
 <span class="sd">    into a concrete ``volScalarField`` named ``nuEff`` (read twice by the</span>
@@ -629,55 +629,55 @@
 <span class="sd">    matches the ``laplacian(nuEff,U)`` scheme). When both are ``dimensionedScalar``</span>
 <span class="sd">    (laminar, ``nut = 0``) pybFoam binds no scalar+scalar add, so the sum is</span>
 <span class="sd">    rebuilt as a (reusable) ``dimensionedScalar``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">total</span> <span class="o">=</span> <span class="n">nu</span> <span class="o">+</span> <span class="n">nut</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span>
-            <span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nu</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="n">nu</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">+</span> <span class="n">nut</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
+            <span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">),</span> <span class="n">nu</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="n">nu</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">+</span> <span class="n">nut</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">total</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">),</span> <span class="n">total</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_materialize</span><span class="p">(</span><span class="n">nu</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``nuEff`` when there is no eddy viscosity — ``nu`` renamed to ``nuEff``.</span>
+<span class="w">    </span><span class="sd">"""``nuEff`` when there is no eddy viscosity — ``nu`` renamed to ``nuEff``.</span>
 
 <span class="sd">    Renaming matters: the assembly looks the coefficient up under ``nuEff`` (the</span>
 <span class="sd">    ``laplacian(nuEff,U)`` scheme). A field is wrapped as ``volScalarField``; a</span>
 <span class="sd">    ``dimensionedScalar`` (laminar) is rebuilt (it cannot seed a ``volScalarField``</span>
 <span class="sd">    without a mesh).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nu</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">),</span> <span class="n">nu</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nu</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="n">nu</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">),</span> <span class="n">nu</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="n">nu</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_negate</span><span class="p">(</span><span class="n">nuEff</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Negated ``nuEff`` for the implicit ``-laplacian(nuEff, U)``.</span>
+<span class="w">    </span><span class="sd">"""Negated ``nuEff`` for the implicit ``-laplacian(nuEff, U)``.</span>
 
 <span class="sd">    OpenFOAM negates the laplacian *matrix*; pybFoam binds no unary ``-`` on a</span>
 <span class="sd">    matrix, so the coefficient is negated instead — kept under the name ``nuEff``</span>
-<span class="sd">    so the case&#39;s ``laplacian(nuEff,U)`` scheme still resolves (the operator is</span>
+<span class="sd">    so the case's ``laplacian(nuEff,U)`` scheme still resolves (the operator is</span>
 <span class="sd">    linear in the coefficient, so this is identical). A ``dimensionedScalar`` is</span>
 <span class="sd">    rebuilt; a field is negated then materialised under the ``nuEff`` name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">negated</span> <span class="o">=</span> <span class="o">-</span><span class="n">nuEff</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nuEff</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="o">-</span><span class="n">nuEff</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">negated</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">),</span> <span class="n">nuEff</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="o">-</span><span class="n">nuEff</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">"nuEff"</span><span class="p">),</span> <span class="n">negated</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="LinearViscousStress">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.stress.html#neofoam.turbulence.stress.LinearViscousStress">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LinearViscousStress</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Boussinesq (linear eddy-viscosity) stress: ``nuEff = nu + nut``.</span>
+<span class="w">    </span><span class="sd">"""Boussinesq (linear eddy-viscosity) stress: ``nuEff = nu + nut``.</span>
 
 <span class="sd">    ``divDevReff(U) = -laplacian(nuEff, U) - div(nuEff*dev2(T(grad U)))``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">&quot;linear&quot;</span>
+    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">"linear"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_nuEff</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
@@ -685,30 +685,30 @@
 <div class="viewcode-block" id="LinearViscousStress.update">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.stress.html#neofoam.turbulence.stress.LinearViscousStress.update">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Refresh ``nuEff`` from the Context&#39;s ``nu`` and ``nut`` (read-only).</span>
+<span class="w">        </span><span class="sd">"""Refresh ``nuEff`` from the Context's ``nu`` and ``nut`` (read-only).</span>
 
 <span class="sd">        Called by the momentum predictor right before ``divDevReff`` consumes it.</span>
 <span class="sd">        ``nut`` is optional: a laminar momentum-transport model registers none, so an</span>
 <span class="sd">        absent ``nut`` means no eddy viscosity (``nuEff = nu``); a RAS/LES model</span>
 <span class="sd">        registers ``nut`` and ``nuEff = nu + nut``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">nut</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nut&quot;</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="n">nut</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"nut"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">nut</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_nuEff</span> <span class="o">=</span> <span class="n">_materialize</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;nu&quot;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nuEff</span> <span class="o">=</span> <span class="n">_materialize</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"nu"</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_nuEff</span> <span class="o">=</span> <span class="n">_add_viscosity</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;nu&quot;</span><span class="p">],</span> <span class="n">nut</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nuEff</span> <span class="o">=</span> <span class="n">_add_viscosity</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"nu"</span><span class="p">],</span> <span class="n">nut</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LinearViscousStress.divDevReff">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.stress.html#neofoam.turbulence.stress.LinearViscousStress.divDevReff">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">divDevReff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Momentum stress term assembled from the refreshed ``nuEff``.</span>
+<span class="w">        </span><span class="sd">"""Momentum stress term assembled from the refreshed ``nuEff``.</span>
 
-<span class="sd">        The tensor handed to ``div`` is stamped with OpenFOAM&#39;s canonical key</span>
-<span class="sd">        ``(nuEff*dev2(T(grad(U))))`` so the case&#39;s ``divScheme`` resolves it.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        The tensor handed to ``div`` is stamped with OpenFOAM's canonical key</span>
+<span class="sd">        ``(nuEff*dev2(T(grad(U))))`` so the case's ``divScheme`` resolves it.</span>
+<span class="sd">        """</span>
         <span class="n">nuEff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nuEff</span>
-        <span class="n">scheme_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(nuEff*dev2(T(grad(</span><span class="si">{</span><span class="n">U</span><span class="o">.</span><span class="n">name</span><span class="p">()</span><span class="si">}</span><span class="s2">))))&quot;</span>
+        <span class="n">scheme_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"(nuEff*dev2(T(grad(</span><span class="si">{</span><span class="n">U</span><span class="o">.</span><span class="n">name</span><span class="p">()</span><span class="si">}</span><span class="s2">))))"</span>
         <span class="n">stress</span> <span class="o">=</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volTensorField</span><span class="p">(</span>
             <span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">scheme_name</span><span class="p">),</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dev2</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">T</span><span class="p">(</span><span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">U</span><span class="p">)))</span> <span class="o">*</span> <span class="n">nuEff</span>
         <span class="p">)</span>
@@ -720,14 +720,14 @@
 <div class="viewcode-block" id="OpenFOAMStress">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.stress.html#neofoam.turbulence.stress.OpenFOAMStress">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OpenFOAMStress</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stress delegated to the OpenFOAM fallback model (it assembles its own).</span>
+<span class="w">    </span><span class="sd">"""Stress delegated to the OpenFOAM fallback model (it assembles its own).</span>
 
 <span class="sd">    Holds the momentum-transport adapter (which owns the pybFoam model); does not</span>
 <span class="sd">    capture it in an operation closure, so it stays out of the execution-graph</span>
 <span class="sd">    reference cycle (see [[project_pybfoam_op_closure_cycle]]).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">&quot;openfoam&quot;</span>
+    <span class="n">stress_kind</span> <span class="o">=</span> <span class="s2">"openfoam"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">turbulence</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_turbulence</span> <span class="o">=</span> <span class="n">turbulence</span>
@@ -735,7 +735,7 @@
 <div class="viewcode-block" id="OpenFOAMStress.update">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.stress.html#neofoam.turbulence.stress.OpenFOAMStress.update">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;No-op — the OpenFOAM model owns its eddy viscosity and stress.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""No-op — the OpenFOAM model owns its eddy viscosity and stress."""</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
@@ -781,6 +781,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

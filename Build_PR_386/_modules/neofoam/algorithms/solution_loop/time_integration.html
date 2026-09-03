@@ -589,10 +589,10 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;How a step advances — a plugin family of time-integration regimes.</span>
+<span class="sd">"""How a step advances — a plugin family of time-integration regimes.</span>
 
 <span class="sd">Whether each step is a slice of *physical time* (transient) or a unit</span>
-<span class="sd">*iteration* (steady relaxation) is neither the stepper&#39;s nor the loop&#39;s decision</span>
+<span class="sd">*iteration* (steady relaxation) is neither the stepper's nor the loop's decision</span>
 <span class="sd">to hard-code. :class:`TimeIntegration` is a</span>
 <span class="sd">:class:`~neofoam.core.plugin_system.PluginSystem` family: each regime registers</span>
 <span class="sd">itself (discriminated by ``time_integration_type``) and owns the three</span>
@@ -605,9 +605,9 @@
 
 <span class="sd">A new regime (pseudo-transient, local/dual time stepping, …) is a new</span>
 <span class="sd">``@TimeIntegration.register`` class — never an edit to a branch (OCP). The data</span>
-<span class="sd">that *selects* the regime is the case&#39;s ``ddtSchemes`` default</span>
+<span class="sd">that *selects* the regime is the case's ``ddtSchemes`` default</span>
 <span class="sd">(``steadyState`` ⇒ steady), mapped by :func:`integration_from_ddt`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -619,14 +619,14 @@
 
 <div class="viewcode-block" id="TimeIntegration">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.TimeIntegration">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;integration&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;time_integration_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"integration"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"time_integration_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TimeIntegration</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface: the regime-specific decisions of one advancement step.</span>
+<span class="w">    </span><span class="sd">"""Plugin interface: the regime-specific decisions of one advancement step.</span>
 
 <span class="sd">    Concrete regimes register with :meth:`TimeIntegration.register`; the</span>
 <span class="sd">    ``time_integration_type`` literal discriminates them. The stepper holds one</span>
 <span class="sd">    and delegates, so it carries no ``time``-vs-``iteration`` branch.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">initial_delta_t</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requested</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
@@ -640,16 +640,16 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.TransientIntegration">[docs]</a>
 <span class="nd">@TimeIntegration</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TransientIntegration</span><span class="p">(</span><span class="n">TimeIntegration</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``ddtScheme`` Euler/backward/CrankNicolson — advance physical time, ``deltaT``-sized.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``ddtScheme`` Euler/backward/CrankNicolson — advance physical time, ``deltaT``-sized."""</span>
 
-    <span class="n">time_integration_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;transient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;transient&quot;</span>
+    <span class="n">time_integration_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"transient"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"transient"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">initial_delta_t</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requested</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">requested</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="c1"># general float format (trims trailing zeros, like %g)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">precision</span><span class="si">}</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
@@ -657,9 +657,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.SteadyIntegration">[docs]</a>
 <span class="nd">@TimeIntegration</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SteadyIntegration</span><span class="p">(</span><span class="n">TimeIntegration</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``ddtScheme steadyState`` — unit step; &quot;time&quot; is the iteration index, fixed step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``ddtScheme steadyState`` — unit step; "time" is the iteration index, fixed step."""</span>
 
-    <span class="n">time_integration_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;steady&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;steady&quot;</span>
+    <span class="n">time_integration_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"steady"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"steady"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">initial_delta_t</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requested</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="mf">1.0</span>
@@ -672,8 +672,8 @@
 <div class="viewcode-block" id="integration_from_ddt">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.integration_from_ddt">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">integration_from_ddt</span><span class="p">(</span><span class="n">ddt_default</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TimeIntegration</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``ddtSchemes`` default ``steadyState`` ⇒ steady (iteration), else transient.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">ddt_default</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;steadyState&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``ddtSchemes`` default ``steadyState`` ⇒ steady (iteration), else transient."""</span>
+    <span class="k">if</span> <span class="n">ddt_default</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"steadyState"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">SteadyIntegration</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">TransientIntegration</span><span class="p">()</span></div>
 
@@ -716,6 +716,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

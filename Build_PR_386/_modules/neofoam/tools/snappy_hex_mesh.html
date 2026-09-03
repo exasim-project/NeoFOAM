@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;snappyHexMesh tool — the build step *and* the ``system/snappyHexMeshDict`` writer.</span>
+<span class="sd">"""snappyHexMesh tool — the build step *and* the ``system/snappyHexMeshDict`` writer.</span>
 
 <span class="sd">Two things live here, both keyed to the ``snappyHexMesh`` tool:</span>
 
@@ -608,7 +608,7 @@
 <span class="sd">  ``features ( )``) are OpenFOAM-syntax strings that ``pybFoam`` re-tokenises — so</span>
 <span class="sd">  no custom serializer is needed. A fresh dict is assembled via</span>
 <span class="sd">  :meth:`SnappyHexMeshDictConfig.castellate_and_snap`.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Tuple</span>
 
@@ -631,22 +631,22 @@
 <div class="viewcode-block" id="SnappyHexMeshStep">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappyHexMeshStep">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SnappyHexMeshStep</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refine/snap the prior mesh in-process from ``snappyHexMeshDict``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Refine/snap the prior mesh in-process from ``snappyHexMeshDict``."""</span>
 
-    <span class="n">tool</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">]</span>
-    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/snappyHexMeshDict&quot;</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"snappyHexMesh"</span><span class="p">]</span>
+    <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"system/snappyHexMeshDict"</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
 
-<span class="n">snappyHexMeshTool</span> <span class="o">=</span> <span class="n">Tool</span><span class="p">(</span><span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">,</span> <span class="n">consumes_mesh</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">snappyHexMeshTool</span> <span class="o">=</span> <span class="n">Tool</span><span class="p">(</span><span class="s2">"snappyHexMesh"</span><span class="p">,</span> <span class="n">consumes_mesh</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
 <span class="nd">@snappyHexMeshTool</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_snappy</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">SnappyHexMeshStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">gen</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_prev_mesh&quot;</span><span class="p">]</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_prev_mesh"</span><span class="p">]</span>
         <span class="n">generate_snappy_hex_mesh</span><span class="p">(</span>
             <span class="n">mesh</span><span class="p">,</span>
             <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">dict_file</span><span class="p">),</span>
@@ -655,7 +655,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">mesh</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;preprocess.snappyHexMesh&quot;</span><span class="p">,</span> <span class="n">gen</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"preprocess.snappyHexMesh"</span><span class="p">,</span> <span class="n">gen</span><span class="p">)]</span>
 
 
 <span class="n">register_tool</span><span class="p">(</span><span class="n">snappyHexMeshTool</span><span class="p">)</span>
@@ -668,87 +668,87 @@
 <span class="c1"># Fixed, sane control blocks (castellate + snap, no layers). These carry no</span>
 <span class="c1"># geometry-dependent knobs, so they are emitted verbatim as native sub-dicts.</span>
 <span class="n">_SNAP_CONTROLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;nSmoothPatch&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>
-    <span class="s2">&quot;nSolveIter&quot;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
-    <span class="s2">&quot;nRelaxIter&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="s2">&quot;nFeatureSnapIter&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="s2">&quot;implicitFeatureSnap&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="s2">&quot;explicitFeatureSnap&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="s2">&quot;multiRegionFeatureSnap&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">"nSmoothPatch"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">"tolerance"</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span>
+    <span class="s2">"nSolveIter"</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="s2">"nRelaxIter"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">"nFeatureSnapIter"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s2">"implicitFeatureSnap"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">"explicitFeatureSnap"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">"multiRegionFeatureSnap"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">_ADD_LAYERS_CONTROLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;relativeSizes&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="s2">&quot;layers&quot;</span><span class="p">:</span> <span class="p">{},</span>
-    <span class="s2">&quot;expansionRatio&quot;</span><span class="p">:</span> <span class="mf">1.2</span><span class="p">,</span>
-    <span class="s2">&quot;finalLayerThickness&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
-    <span class="s2">&quot;minThickness&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
-    <span class="s2">&quot;nGrow&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="s2">&quot;featureAngle&quot;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
-    <span class="s2">&quot;nRelaxIter&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
-    <span class="s2">&quot;nSmoothSurfaceNormals&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s2">&quot;nSmoothNormals&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="s2">&quot;nSmoothThickness&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="s2">&quot;maxFaceThicknessRatio&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="s2">&quot;maxThicknessToMedialRatio&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
-    <span class="s2">&quot;minMedialAxisAngle&quot;</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span>
-    <span class="s2">&quot;nBufferCellsNoExtrude&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="s2">&quot;nLayerIter&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="s2">"relativeSizes"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">"layers"</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="s2">"expansionRatio"</span><span class="p">:</span> <span class="mf">1.2</span><span class="p">,</span>
+    <span class="s2">"finalLayerThickness"</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
+    <span class="s2">"minThickness"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="s2">"nGrow"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">"featureAngle"</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="s2">"nRelaxIter"</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">"nSmoothSurfaceNormals"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"nSmoothNormals"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">"nSmoothThickness"</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s2">"maxFaceThicknessRatio"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="s2">"maxThicknessToMedialRatio"</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+    <span class="s2">"minMedialAxisAngle"</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span>
+    <span class="s2">"nBufferCellsNoExtrude"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">"nLayerIter"</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">_MESH_QUALITY_CONTROLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;maxNonOrtho&quot;</span><span class="p">:</span> <span class="mi">65</span><span class="p">,</span>
-    <span class="s2">&quot;maxBoundarySkewness&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
-    <span class="s2">&quot;maxInternalSkewness&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="s2">&quot;maxConcave&quot;</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span>
-    <span class="s2">&quot;minFlatness&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="s2">&quot;minVol&quot;</span><span class="p">:</span> <span class="mf">1e-13</span><span class="p">,</span>
-    <span class="s2">&quot;minTetQuality&quot;</span><span class="p">:</span> <span class="mf">1e-15</span><span class="p">,</span>
-    <span class="s2">&quot;minArea&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="s2">&quot;minTwist&quot;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span>
-    <span class="s2">&quot;minDeterminant&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
-    <span class="s2">&quot;minFaceWeight&quot;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>
-    <span class="s2">&quot;minVolRatio&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
-    <span class="s2">&quot;minTriangleTwist&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="s2">&quot;nSmoothScale&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="s2">&quot;errorReduction&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
+    <span class="s2">"maxNonOrtho"</span><span class="p">:</span> <span class="mi">65</span><span class="p">,</span>
+    <span class="s2">"maxBoundarySkewness"</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="s2">"maxInternalSkewness"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">"maxConcave"</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span>
+    <span class="s2">"minFlatness"</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="s2">"minVol"</span><span class="p">:</span> <span class="mf">1e-13</span><span class="p">,</span>
+    <span class="s2">"minTetQuality"</span><span class="p">:</span> <span class="mf">1e-15</span><span class="p">,</span>
+    <span class="s2">"minArea"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"minTwist"</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span>
+    <span class="s2">"minDeterminant"</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="s2">"minFaceWeight"</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span>
+    <span class="s2">"minVolRatio"</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="s2">"minTriangleTwist"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"nSmoothScale"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">"errorReduction"</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span>
 <span class="p">}</span>
 
 
 <div class="viewcode-block" id="SnappySurface">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappySurface">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SnappySurface</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One snappy ``geometry`` / ``refinementSurfaces`` surface backed by an STL.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""One snappy ``geometry`` / ``refinementSurfaces`` surface backed by an STL."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;snappy surface name = the resulting patch name (need not equal the file).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""snappy surface name = the resulting patch name (need not equal the file)."""</span>
     <span class="n">file</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;STL basename under ``constant/triSurface`` (e.g. ``&quot;tubes.stl&quot;``).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""STL basename under ``constant/triSurface`` (e.g. ``"tubes.stl"``)."""</span>
     <span class="n">level</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``(min, max)`` surface refinement levels.&quot;&quot;&quot;</span>
-    <span class="n">patch_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;wall&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``patchInfo`` type for the patch snappy creates (``wall`` / ``patch``).&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">"""``(min, max)`` surface refinement levels."""</span>
+    <span class="n">patch_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"wall"</span>
+<span class="w">    </span><span class="sd">"""``patchInfo`` type for the patch snappy creates (``wall`` / ``patch``)."""</span></div>
 
 
 
 <div class="viewcode-block" id="SnappyHexMeshDictConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappyHexMeshDictConfig">[docs]</a>
-<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/snappyHexMeshDict&quot;</span><span class="p">))</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">"system/snappyHexMeshDict"</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SnappyHexMeshDictConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``system/snappyHexMeshDict`` — a faithful load/write config.</span>
+<span class="w">    </span><span class="sd">"""``system/snappyHexMeshDict`` — a faithful load/write config.</span>
 
 <span class="sd">    The top-level sections are declared as passthrough fields: ``geometry`` and</span>
 <span class="sd">    the ``*Controls`` blocks are nested dictionaries the OpenFOAM strategy reads</span>
 <span class="sd">    and writes verbatim (their compound leaves — ``locationInMesh``, ``level``,</span>
 <span class="sd">    ``features`` — are OpenFOAM-syntax strings ``pybFoam`` re-tokenises), and</span>
-<span class="sd">    unmodeled top-level keys are kept via ``extra=&quot;allow&quot;``. So an existing dict</span>
-<span class="sd">    round-trips (to ``pybFoam``&#39;s 6-significant-figure write precision). Build a</span>
+<span class="sd">    unmodeled top-level keys are kept via ``extra="allow"``. So an existing dict</span>
+<span class="sd">    round-trips (to ``pybFoam``'s 6-significant-figure write precision). Build a</span>
 <span class="sd">    fresh castellate+snap dict with :meth:`castellate_and_snap` (used by</span>
 <span class="sd">    :func:`neofoam.tooling.workflow.mesh_inputs.snappy_dict`).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">castellatedMesh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">snap</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
@@ -760,12 +760,12 @@
     <span class="n">meshQualityControls</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">mergeTolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_drop_header</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop the ``FoamFile`` header — the writer re-injects a fresh one.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;FoamFile&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;FoamFile&quot;</span><span class="p">}</span>
+<span class="w">        </span><span class="sd">"""Drop the ``FoamFile`` header — the writer re-injects a fresh one."""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"FoamFile"</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"FoamFile"</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">data</span>
 
 <div class="viewcode-block" id="SnappyHexMeshDictConfig.castellate_and_snap">
@@ -774,25 +774,25 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">castellate_and_snap</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">surfaces</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;SnappySurface&quot;</span><span class="p">],</span>
+        <span class="n">surfaces</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="s2">"SnappySurface"</span><span class="p">],</span>
         <span class="n">location_in_mesh</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="n">n_cells_between_levels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">resolve_feature_angle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
         <span class="n">max_global_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2_000_000</span><span class="p">,</span>
         <span class="n">max_local_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1_000_000</span><span class="p">,</span>
         <span class="n">add_layers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SnappyHexMeshDictConfig&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Assemble a castellate+snap dict for a set of STL surfaces.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"SnappyHexMeshDictConfig"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Assemble a castellate+snap dict for a set of STL surfaces.</span>
 
 <span class="sd">        Each surface becomes a ``geometry`` entry (``triSurfaceMesh``) and a</span>
 <span class="sd">        ``refinementSurfaces`` entry; the snap / layer / quality control blocks are</span>
 <span class="sd">        the fixed sane defaults.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">geometry</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;triSurfaceMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">}</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">surfaces</span><span class="p">}</span>
+<span class="sd">        """</span>
+        <span class="n">geometry</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"triSurfaceMesh"</span><span class="p">,</span> <span class="s2">"file"</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s1">"'</span><span class="p">}</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">surfaces</span><span class="p">}</span>
         <span class="n">refinement_surfaces</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">s</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">level</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">level</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;patchInfo&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">patch_type</span><span class="p">},</span>
+                <span class="s2">"level"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">level</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">level</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+                <span class="s2">"patchInfo"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">patch_type</span><span class="p">},</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">surfaces</span>
         <span class="p">}</span>
@@ -802,17 +802,17 @@
             <span class="n">addLayers</span><span class="o">=</span><span class="n">add_layers</span><span class="p">,</span>
             <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">,</span>
             <span class="n">castellatedMeshControls</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;maxLocalCells&quot;</span><span class="p">:</span> <span class="n">max_local_cells</span><span class="p">,</span>
-                <span class="s2">&quot;maxGlobalCells&quot;</span><span class="p">:</span> <span class="n">max_global_cells</span><span class="p">,</span>
-                <span class="s2">&quot;minRefinementCells&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                <span class="s2">&quot;nCellsBetweenLevels&quot;</span><span class="p">:</span> <span class="n">n_cells_between_levels</span><span class="p">,</span>
-                <span class="s2">&quot;maxLoadUnbalance&quot;</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
-                <span class="s2">&quot;resolveFeatureAngle&quot;</span><span class="p">:</span> <span class="n">resolve_feature_angle</span><span class="p">,</span>
-                <span class="s2">&quot;allowFreeStandingZoneFaces&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="s2">&quot;( )&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;refinementSurfaces&quot;</span><span class="p">:</span> <span class="n">refinement_surfaces</span><span class="p">,</span>
-                <span class="s2">&quot;refinementRegions&quot;</span><span class="p">:</span> <span class="p">{},</span>
-                <span class="s2">&quot;locationInMesh&quot;</span><span class="p">:</span> <span class="n">point</span><span class="p">(</span><span class="n">location_in_mesh</span><span class="p">),</span>
+                <span class="s2">"maxLocalCells"</span><span class="p">:</span> <span class="n">max_local_cells</span><span class="p">,</span>
+                <span class="s2">"maxGlobalCells"</span><span class="p">:</span> <span class="n">max_global_cells</span><span class="p">,</span>
+                <span class="s2">"minRefinementCells"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">"nCellsBetweenLevels"</span><span class="p">:</span> <span class="n">n_cells_between_levels</span><span class="p">,</span>
+                <span class="s2">"maxLoadUnbalance"</span><span class="p">:</span> <span class="mf">0.10</span><span class="p">,</span>
+                <span class="s2">"resolveFeatureAngle"</span><span class="p">:</span> <span class="n">resolve_feature_angle</span><span class="p">,</span>
+                <span class="s2">"allowFreeStandingZoneFaces"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">"features"</span><span class="p">:</span> <span class="s2">"( )"</span><span class="p">,</span>
+                <span class="s2">"refinementSurfaces"</span><span class="p">:</span> <span class="n">refinement_surfaces</span><span class="p">,</span>
+                <span class="s2">"refinementRegions"</span><span class="p">:</span> <span class="p">{},</span>
+                <span class="s2">"locationInMesh"</span><span class="p">:</span> <span class="n">point</span><span class="p">(</span><span class="n">location_in_mesh</span><span class="p">),</span>
             <span class="p">},</span>
             <span class="n">snapControls</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">_SNAP_CONTROLS</span><span class="p">),</span>
             <span class="n">addLayersControls</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">_ADD_LAYERS_CONTROLS</span><span class="p">),</span>
@@ -860,6 +860,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

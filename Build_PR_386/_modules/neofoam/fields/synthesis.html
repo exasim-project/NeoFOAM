@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Auto-synthesize :class:`InitStep` objects from :class:`FieldDecl`s.</span>
+<span class="sd">"""Auto-synthesize :class:`InitStep` objects from :class:`FieldDecl`s.</span>
 
 <span class="sd">This module is the framework-side counterpart to the disk-schema</span>
 <span class="sd">synthesizer in :mod:`neofoam.fields.schema`. Where ``schema_for``</span>
@@ -601,7 +601,7 @@
 <span class="sd">declaration; the framework picks up that declaration in</span>
 <span class="sd">``ModelRuntime.run_build`` and emits the equivalent ``InitStep`` — no</span>
 <span class="sd">cross-link from ``@build`` required.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -616,7 +616,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_read_field</span><span class="p">(</span><span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the pybFoam ``&lt;Type&gt;.read_field`` callable for ``value_type``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the pybFoam ``&lt;Type&gt;.read_field`` callable for ``value_type``."""</span>
     <span class="n">dispatch</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">Scalar</span><span class="p">:</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">,</span>
         <span class="n">Vector</span><span class="p">:</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">,</span>
@@ -625,10 +625,10 @@
     <span class="n">fn</span> <span class="o">=</span> <span class="n">dispatch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value_type</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;auto-synthesize: no read_field dispatch for value_type &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">. Add it to &quot;</span>
-            <span class="s2">&quot;neofoam.fields.synthesis._resolve_read_field &quot;</span>
-            <span class="s2">&quot;(and update neofoam.fields.schema._FOAM_CLASS in lock-step).&quot;</span>
+            <span class="sa">f</span><span class="s2">"auto-synthesize: no read_field dispatch for value_type "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value_type</span><span class="si">!r}</span><span class="s2">. Add it to "</span>
+            <span class="s2">"neofoam.fields.synthesis._resolve_read_field "</span>
+            <span class="s2">"(and update neofoam.fields.schema._FOAM_CLASS in lock-step)."</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">fn</span>
 
@@ -636,19 +636,19 @@
 <div class="viewcode-block" id="synthesize_init_step">
 <a class="viewcode-back" href="../../../reference/api/neofoam.fields.synthesis.html#neofoam.fields.synthesis.synthesize_init_step">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">synthesize_init_step</span><span class="p">(</span><span class="n">decl</span><span class="p">:</span> <span class="n">FieldDecl</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the framework&#39;s default ``InitStep`` for one ``FieldDecl``.</span>
+<span class="w">    </span><span class="sd">"""Build the framework's default ``InitStep`` for one ``FieldDecl``.</span>
 
 <span class="sd">    The returned step calls</span>
-<span class="sd">    ``&lt;value_type&gt;.read_field(ctx[&quot;mesh&quot;], decl.name)`` and forwards</span>
+<span class="sd">    ``&lt;value_type&gt;.read_field(ctx["mesh"], decl.name)`` and forwards</span>
 <span class="sd">    ``depends_on`` / ``write`` straight from the declaration. Equivalent</span>
 <span class="sd">    to the now-removed ``FieldDecl.create(&lt;read_fn&gt;)`` adapter, but with</span>
 <span class="sd">    the factory generated from the declared value type rather than</span>
 <span class="sd">    supplied by each model.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">factory</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">read_field</span> <span class="o">=</span> <span class="n">_resolve_read_field</span><span class="p">(</span><span class="n">decl</span><span class="o">.</span><span class="n">value_type</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">decl</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">],</span> <span class="n">decl</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_field_step</span><span class="p">(</span>
         <span class="n">decl</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -696,6 +696,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

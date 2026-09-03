@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Snakefile generation for an exported parameter sweep.</span>
+<span class="sd">"""Snakefile generation for an exported parameter sweep.</span>
 
 <span class="sd">:func:`sweep_snakefile` emits the runnable ``Snakefile``: a thin header (build the</span>
 <span class="sd">:class:`~neofoam.tooling.workflow.paramspace.YamlParamSpace`, materialize the</span>
@@ -600,7 +600,7 @@
 <span class="sd">rules) is written separately as a JSON sidecar by</span>
 <span class="sd">:mod:`neofoam.tooling.workflow.sweep._io` — this module only produces the executable</span>
 <span class="sd">workflow, never the read-back contract.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -625,34 +625,34 @@
     <span class="n">registry</span><span class="p">:</span> <span class="n">RuleRegistry</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">enabled</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the Snakefile: a thin header + the packaged rule includes.</span>
+<span class="w">    </span><span class="sd">"""Generate the Snakefile: a thin header + the packaged rule includes.</span>
 
 <span class="sd">    The header builds the :class:`~neofoam.tooling.workflow.paramspace.YamlParamSpace`,</span>
 <span class="sd">    materializes the per-case and per-mesh-variant configs at parse time</span>
 <span class="sd">    (``write_if_changed`` keeps unchanged cases from re-running) and defines</span>
-<span class="sd">    the plain globals the static ``.smk`` files consume — Snakemake&#39;s</span>
-<span class="sd">    ``include:`` shares the Snakefile&#39;s namespace.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    the plain globals the static ``.smk`` files consume — Snakemake's</span>
+<span class="sd">    ``include:`` shares the Snakefile's namespace.</span>
+<span class="sd">    """</span>
     <span class="n">plan</span> <span class="o">=</span> <span class="p">(</span><span class="n">registry</span> <span class="ow">or</span> <span class="n">default_registry</span><span class="p">())</span><span class="o">.</span><span class="n">plan</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span>
     <span class="n">base</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">base_case</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
     <span class="n">setup_dims</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">MESH_DIM</span><span class="p">)</span>
-    <span class="n">includes</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s1">&#39;include: str(rules_dir() / &quot;</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">smk_file</span><span class="si">}</span><span class="s1">&quot;)&#39;</span>
+    <span class="n">includes</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'include: str(rules_dir() / "</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">smk_file</span><span class="si">}</span><span class="s1">")'</span>
         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">plan</span><span class="o">.</span><span class="n">rules</span>
         <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">smk_file</span>  <span class="c1"># `all` is emitted inline below</span>
     <span class="p">)</span>
-    <span class="c1"># MESH_STEM is the mesh mini-case dir used verbatim as the mesh-chain rules&#39;</span>
+    <span class="c1"># MESH_STEM is the mesh mini-case dir used verbatim as the mesh-chain rules'</span>
     <span class="c1"># static `output:` (so it stays a literal wildcard path, never a lambda);</span>
     <span class="c1"># _mesh_case / _mesh_dir_of compute the concrete dirs for the</span>
     <span class="c1"># input:/params: lambdas.</span>
     <span class="n">mesh_stem_block</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s1">&#39;MESH_STEM = &quot;meshes/</span><span class="si">{mesh}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="s2">&quot;def _mesh_case(wc):</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s1">&#39;    return f&quot;meshes/</span><span class="si">{wc.mesh}</span><span class="s1">&quot;</span><span class="se">\n</span><span class="s1">&#39;</span>
-        <span class="s2">&quot;def _mesh_dir_of(wc):</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s1">&#39;    return f&quot;meshes/{mesh_axis.of(wc)}&quot;&#39;</span>
+        <span class="s1">'MESH_STEM = "meshes/</span><span class="si">{mesh}</span><span class="s1">"</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="s2">"def _mesh_case(wc):</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s1">'    return f"meshes/</span><span class="si">{wc.mesh}</span><span class="s1">"</span><span class="se">\n</span><span class="s1">'</span>
+        <span class="s2">"def _mesh_dir_of(wc):</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s1">'    return f"meshes/{mesh_axis.of(wc)}"'</span>
     <span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&#39;&#39;# Generated by NeoFOAM — parameter sweep composed from the packaged rule</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'''# Generated by NeoFOAM — parameter sweep composed from the packaged rule</span>
 <span class="s1"># library (neofoam.tooling.workflow.rules; see the included .smk files for the rule</span>
 <span class="s1"># bodies). Run from this directory:  snakemake -n  (dry run),  snakemake -j4</span>
 <span class="s1"># Requires: the neofoam package (pybFoam) importable and snakemake to execute.</span>
@@ -665,12 +665,12 @@
 <span class="s1">BASE_CASE = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">base</span><span class="p">)</span><span class="si">}</span>
 <span class="s1">SETUP_DIMS = </span><span class="si">{</span><span class="n">setup_dims</span><span class="si">!r}</span>
 <span class="s1">MESH_TOOL_INPUT = </span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_tool_input</span><span class="si">!r}</span>
-<span class="s1">MESH_DONE = &quot;</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_done</span><span class="si">}</span><span class="s1">&quot;</span>
-<span class="s1">FINAL_PATTERN = &quot;</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">final_pattern</span><span class="si">}</span><span class="s1">&quot;</span>
+<span class="s1">MESH_DONE = "</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">mesh_done</span><span class="si">}</span><span class="s1">"</span>
+<span class="s1">FINAL_PATTERN = "</span><span class="si">{</span><span class="n">plan</span><span class="o">.</span><span class="n">final_pattern</span><span class="si">}</span><span class="s1">"</span>
 
-<span class="s1">space = YamlParamSpace(&quot;sweep.csv&quot;, &quot;params.yaml&quot;)</span>
-<span class="s1">space.materialize(</span><span class="se">{{</span><span class="s1">&quot;setup&quot;: SETUP_DIMS</span><span class="se">}}</span><span class="s1">, out_dir=&quot;configs&quot;)</span>
-<span class="s1">mesh_axis = space.keyed(&quot;</span><span class="si">{</span><span class="n">MESH_DIM</span><span class="si">}</span><span class="s1">&quot;, out_dir=&quot;configs&quot;)</span>
+<span class="s1">space = YamlParamSpace("sweep.csv", "params.yaml")</span>
+<span class="s1">space.materialize(</span><span class="se">{{</span><span class="s1">"setup": SETUP_DIMS</span><span class="se">}}</span><span class="s1">, out_dir="configs")</span>
+<span class="s1">mesh_axis = space.keyed("</span><span class="si">{</span><span class="n">MESH_DIM</span><span class="si">}</span><span class="s1">", out_dir="configs")</span>
 <span class="si">{</span><span class="n">mesh_stem_block</span><span class="si">}</span>
 <span class="s1">cases = space.cases</span>
 
@@ -682,7 +682,7 @@
 <span class="s1">rule all:</span>
 <span class="s1">    input:</span>
 <span class="s1">        expand(FINAL_PATTERN, case=cases)</span>
-<span class="s1">&#39;&#39;&#39;</span></div>
+<span class="s1">'''</span></div>
 
 </pre></div>
         </article>
@@ -723,6 +723,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

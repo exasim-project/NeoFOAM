@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Gradient scheme models.&quot;&quot;&quot;</span>
+<span class="sd">"""Gradient scheme models."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
 
@@ -603,20 +603,20 @@
 <div class="viewcode-block" id="GaussGrad">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.GaussGrad">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GaussGrad</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;Gauss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Gauss&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"Gauss"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"Gauss"</span>
     <span class="n">interpolation</span><span class="p">:</span> <span class="n">InterpolationScheme</span>
 
     <span class="nd">@model_serializer</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">interp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Gauss </span><span class="si">{</span><span class="n">interp</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="n">interp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Gauss </span><span class="si">{</span><span class="n">interp</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
 <div class="viewcode-block" id="LeastSquaresGrad">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.LeastSquaresGrad">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LeastSquaresGrad</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;pointCellsLeastSquares&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;pointCellsLeastSquares&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"pointCellsLeastSquares"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"pointCellsLeastSquares"</span>
 
     <span class="nd">@model_serializer</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -627,18 +627,18 @@
 <div class="viewcode-block" id="CellLimitedGrad">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.CellLimitedGrad">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CellLimitedGrad</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``cellLimited &lt;inner grad scheme&gt; &lt;k&gt;`` — minmod slope limiter on an inner scheme.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``cellLimited &lt;inner grad scheme&gt; &lt;k&gt;`` — minmod slope limiter on an inner scheme."""</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cellLimited&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cellLimited&quot;</span>
-    <span class="n">inner_scheme</span><span class="p">:</span> <span class="s2">&quot;GradScheme&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"cellLimited"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"cellLimited"</span>
+    <span class="n">inner_scheme</span><span class="p">:</span> <span class="s2">"GradScheme"</span>
     <span class="c1"># k is the limiter strength, 1 being full limiting (OpenFOAM widens the</span>
     <span class="c1"># admissible cell range by (1/k - 1)*(max - min)).</span>
     <span class="n">coefficient</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="nd">@model_serializer</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">inner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_scheme</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;cellLimited </span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="n">inner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_scheme</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"python"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"cellLimited </span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
@@ -646,14 +646,14 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_cell_limited_grad</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;``cellLimited Gauss linear 1`` — inner scheme in the middle, coefficient last.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""``cellLimited Gauss linear 1`` — inner scheme in the middle, coefficient last."""</span>
     <span class="n">tokens</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cellLimited grad needs an inner scheme and a coefficient: </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cellLimited grad needs an inner scheme and a coefficient: </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;cellLimited&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;inner_scheme&quot;</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="s2">&quot;coefficient&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"cellLimited"</span><span class="p">,</span>
+        <span class="s2">"inner_scheme"</span><span class="p">:</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="s2">"coefficient"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">tokens</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
     <span class="p">}</span>
 
 
@@ -661,18 +661,18 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">v</span>
     <span class="n">tokens</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;cellLimited&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"cellLimited"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_parse_cell_limited_grad</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;interpolation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">"interpolation"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">result</span>
 
 
 <span class="n">GradScheme</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
     <span class="n">Union</span><span class="p">[</span><span class="n">GaussGrad</span><span class="p">,</span> <span class="n">LeastSquaresGrad</span><span class="p">,</span> <span class="n">CellLimitedGrad</span><span class="p">],</span>
     <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_parse_grad</span><span class="p">),</span>
-    <span class="n">Discriminator</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">),</span>
+    <span class="n">Discriminator</span><span class="p">(</span><span class="s2">"type"</span><span class="p">),</span>
 <span class="p">]</span>
 
 <span class="c1"># CellLimitedGrad nests a GradScheme, which is only defined above — resolve it now.</span>
@@ -716,6 +716,8 @@
     <script src="../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

@@ -589,13 +589,13 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Standalone, solver-agnostic preprocessing runner.</span>
+<span class="sd">"""Standalone, solver-agnostic preprocessing runner.</span>
 
 <span class="sd">Resolves ``system/preprocess.yaml`` against the shared tool registry and runs ONLY the</span>
 <span class="sd">mesh DAG (+ ``_foam_time``) — no solver, fields, models, or time loop. This is the</span>
 <span class="sd">``neofoam preprocess`` entry point. ``pyf`` is a module global so the runner is testable</span>
 <span class="sd">without OpenFOAM.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -618,8 +618,8 @@
 <div class="viewcode-block" id="detect_tools">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.run.html#neofoam.tools.run.detect_tools">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">detect_tools</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ToolRuntime</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the enable file against the shared registry (absent file → ``[]``).&quot;&quot;&quot;</span>
-    <span class="n">effective</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="k">if</span> <span class="n">case_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Resolve the enable file against the shared registry (absent file → ``[]``)."""</span>
+    <span class="n">effective</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="k">if</span> <span class="n">case_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">PreprocessConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">effective</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
@@ -629,37 +629,37 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_case_dir_from_argv</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the ``-case &lt;dir&gt;`` value from argv, defaulting to ``.``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Extract the ``-case &lt;dir&gt;`` value from argv, defaulting to ``.``."""</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">argv</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;-case&quot;</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">argv</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">"-case"</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">argv</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">argv</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="s2">&quot;.&quot;</span>
+    <span class="k">return</span> <span class="s2">"."</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_with_absolute_case</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rewrite the ``-case`` value to ``case_dir`` (absolute), else append it.</span>
+<span class="w">    </span><span class="sd">"""Rewrite the ``-case`` value to ``case_dir`` (absolute), else append it.</span>
 
-<span class="sd">    We chdir into the case before running so the tools&#39; relative ``dict_file``</span>
+<span class="sd">    We chdir into the case before running so the tools' relative ``dict_file``</span>
 <span class="sd">    reads (``system/blockMeshDict`` …) resolve; a relative ``-case`` in argv would</span>
 <span class="sd">    then be re-interpreted against the new cwd and break, so pin it absolute.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">&quot;-case&quot;</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s2">"-case"</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
             <span class="n">out</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">out</span>
-    <span class="k">return</span> <span class="n">out</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;-case&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">out</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)]</span>
 
 
 <div class="viewcode-block" id="run_preprocess">
 <a class="viewcode-back" href="../../../reference/api/neofoam.tools.run.html#neofoam.tools.run.run_preprocess">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_preprocess</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build ``_foam_time`` + the resolved tool DAG and execute it; return the Context.</span>
+<span class="w">    </span><span class="sd">"""Build ``_foam_time`` + the resolved tool DAG and execute it; return the Context.</span>
 
 <span class="sd">    Resolves ``-case`` to an absolute path and runs the DAG from inside it, so</span>
 <span class="sd">    ``neofoam preprocess &lt;case&gt;`` works from any cwd (the tools read their dict</span>
 <span class="sd">    files relative to the working directory). The original cwd is always restored.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">resolved_argv</span> <span class="o">=</span> <span class="n">argv</span> <span class="ow">or</span> <span class="p">[]</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">_case_dir_from_argv</span><span class="p">(</span><span class="n">resolved_argv</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">foam_argv</span> <span class="o">=</span> <span class="n">_with_absolute_case</span><span class="p">(</span><span class="n">resolved_argv</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
@@ -667,7 +667,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create_foam_time</span><span class="p">(</span><span class="n">_ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">argList</span><span class="p">(</span><span class="n">foam_argv</span><span class="p">))</span>
 
-    <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">,</span> <span class="n">create_foam_time</span><span class="p">)]</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"_foam_time"</span><span class="p">,</span> <span class="n">create_foam_time</span><span class="p">)]</span>
     <span class="n">steps</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">tool_graph_steps</span><span class="p">(</span><span class="n">detect_tools</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)))</span>
     <span class="n">prev_cwd</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
     <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
@@ -715,6 +715,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

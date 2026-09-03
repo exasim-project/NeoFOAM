@@ -589,7 +589,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;The single momentum-transport plugin family.</span>
+<span class="sd">"""The single momentum-transport plugin family.</span>
 
 <span class="sd">:class:`momentumTransportModel` is the one plugin family holding every turbulence</span>
 <span class="sd">model as a :class:`~neofoam.framework.model.ModelSpec`. Both solvers bind it, and</span>
@@ -597,20 +597,20 @@
 <span class="sd">configured model by name and builds the handle for the requested backend</span>
 <span class="sd">(native NeoN or pybFoam fallback — see :mod:`neofoam.turbulence.selection`).</span>
 
-<span class="sd">The name follows OpenFOAM-13&#39;s ``momentumTransportModel``: it covers laminar,</span>
+<span class="sd">The name follows OpenFOAM-13's ``momentumTransportModel``: it covers laminar,</span>
 <span class="sd">RAS and LES under one honest umbrella and composes with rheology through the same</span>
 <span class="sd">``nu``/``nut`` Context fields.</span>
 
 <span class="sd">Native models register here via</span>
-<span class="sd">``register_momentum_transport(Model(&quot;name&quot;), family=&quot;RAS&quot;)``. There is **no</span>
+<span class="sd">``register_momentum_transport(Model("name"), family="RAS")``. There is **no</span>
 <span class="sd">per-model class**: a model is a :class:`ModelSpec` + config + operations, all in</span>
 <span class="sd">one file (a native ``@build`` / native ``@operation``s and/or a co-located</span>
 <span class="sd">``fallback=True`` ``correct`` op).</span>
 
-<span class="sd">Registration also records the closure&#39;s *turbulence family* (``laminar`` / ``RAS`` /</span>
+<span class="sd">Registration also records the closure's *turbulence family* (``laminar`` / ``RAS`` /</span>
 <span class="sd">``LES``): OpenFOAM keeps a separate run-time selection table per family, so a name</span>
 <span class="sd">alone does not identify a model.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
@@ -620,16 +620,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ModelSpec</span>  <span class="c1"># noqa: F401</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;momentumTransportModel&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;register_momentum_transport&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;TurbulenceFamily&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Model&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ModelRuntime&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ModelSpec&quot;</span><span class="p">,</span>
+    <span class="s2">"momentumTransportModel"</span><span class="p">,</span>
+    <span class="s2">"register_momentum_transport"</span><span class="p">,</span>
+    <span class="s2">"TurbulenceFamily"</span><span class="p">,</span>
+    <span class="s2">"Model"</span><span class="p">,</span>
+    <span class="s2">"ModelRuntime"</span><span class="p">,</span>
+    <span class="s2">"ModelSpec"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1">#: The same closed set as ``turbulenceProperties/simulationType``.</span>
-<span class="n">TurbulenceFamily</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;laminar&quot;</span><span class="p">,</span> <span class="s2">&quot;RAS&quot;</span><span class="p">,</span> <span class="s2">&quot;LES&quot;</span><span class="p">]</span>
+<span class="n">TurbulenceFamily</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"laminar"</span><span class="p">,</span> <span class="s2">"RAS"</span><span class="p">,</span> <span class="s2">"LES"</span><span class="p">]</span>
 
 <span class="c1">#: Family of each registered model, by spec name. Kept beside the registry rather</span>
 <span class="c1">#: than on the generic ``ModelSpec``: the family is turbulence-specific metadata.</span>
@@ -638,23 +638,23 @@
 
 <div class="viewcode-block" id="momentumTransportModel">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel">[docs]</a>
-<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"model_type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">momentumTransportModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plugin interface for momentum-transport (turbulence) models.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Plugin interface for momentum-transport (turbulence) models."""</span>
 
 <div class="viewcode-block" id="momentumTransportModel.all_specs">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel.all_specs">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">all_specs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return every registered momentum-transport spec, without detection.&quot;&quot;&quot;</span>
-        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">&quot;momentumTransportModel&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Return every registered momentum-transport spec, without detection."""</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="s2">"momentumTransportModel"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">registry</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">plugin_cls</span><span class="o">.</span><span class="n">get_model_instance</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">&quot;get_model_instance&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="s2">"get_model_instance"</span><span class="p">)</span>
         <span class="p">]</span></div>
 
 
@@ -662,7 +662,7 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel.registered_names">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">registered_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ``spec.name`` of every registered model.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the ``spec.name`` of every registered model."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">all_specs</span><span class="p">()]</span></div>
 
 
@@ -670,7 +670,7 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel.find_spec">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">find_spec</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelSpec</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the registered spec whose ``name`` matches, else ``None``.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return the registered spec whose ``name`` matches, else ``None``."""</span>
         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">all_specs</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">spec</span>
@@ -681,7 +681,7 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel.family_of">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">family_of</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TurbulenceFamily</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The family *name* was registered as, or ``None`` if it is not registered.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""The family *name* was registered as, or ``None`` if it is not registered."""</span>
         <span class="k">return</span> <span class="n">_MODEL_FAMILIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 </div>
 
@@ -690,14 +690,14 @@
 <div class="viewcode-block" id="register_momentum_transport">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.register_momentum_transport">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_momentum_transport</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">ModelSpec</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">family</span><span class="p">:</span> <span class="n">TurbulenceFamily</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelSpec</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register *spec* as a momentum-transport model of *family*.</span>
+<span class="w">    </span><span class="sd">"""Register *spec* as a momentum-transport model of *family*.</span>
 
 <span class="sd">    Use in place of ``spec.register_with(momentumTransportModel)``; the selector</span>
-<span class="sd">    rejects a spec whose family differs from the case&#39;s ``simulationType``.</span>
+<span class="sd">    rejects a spec whose family differs from the case's ``simulationType``.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        ``kEpsilon = register_momentum_transport(Model(&quot;kEpsilon&quot;), family=&quot;RAS&quot;)``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        ``kEpsilon = register_momentum_transport(Model("kEpsilon"), family="RAS")``</span>
+<span class="sd">    """</span>
     <span class="n">_MODEL_FAMILIES</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">family</span>
     <span class="k">return</span> <span class="n">spec</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">momentumTransportModel</span><span class="p">)</span></div>
 
@@ -740,6 +740,8 @@
     <script src="../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

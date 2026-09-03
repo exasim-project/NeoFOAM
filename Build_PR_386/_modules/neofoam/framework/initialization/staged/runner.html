@@ -590,7 +590,7 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">&quot;&quot;&quot;Execute a :class:`StagedInitSpec`.&quot;&quot;&quot;</span>
+<span class="sd">"""Execute a :class:`StagedInitSpec`."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -606,11 +606,11 @@
 <div class="viewcode-block" id="StagedInitRunner">
 <a class="viewcode-back" href="../../../../../reference/api/neofoam.framework.initialization.staged.runner.html#neofoam.framework.initialization.staged.runner.StagedInitRunner">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StagedInitRunner</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the LOAD → RESOLVE → BUILD pipeline of a frozen spec.</span>
+<span class="w">    </span><span class="sd">"""Run the LOAD → RESOLVE → BUILD pipeline of a frozen spec.</span>
 
 <span class="sd">    Mutable state (``argv``, ``core_models``, ``optional_models``, ``state``)</span>
 <span class="sd">    lives here, not on the spec — keeping the spec hashable and reusable.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">StagedInitSpec</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_spec</span> <span class="o">=</span> <span class="n">spec</span>
@@ -630,7 +630,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run_load</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">load_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No @</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.load defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No @</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.load defined"</span><span class="p">)</span>
         <span class="n">load_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">load_fn</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">core_models</span> <span class="o">=</span> <span class="n">load_result</span><span class="o">.</span><span class="n">core_models</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optional_models</span> <span class="o">=</span> <span class="n">load_result</span><span class="o">.</span><span class="n">optional_models</span>
@@ -642,7 +642,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run_build</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">build_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No @</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.build defined&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No @</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.build defined"</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spec</span><span class="o">.</span><span class="n">build_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">core_models</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optional_models</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
@@ -650,9 +650,9 @@
 
         <span class="n">config</span> <span class="o">=</span> <span class="n">ConfigContext</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">loaded_model</span> <span class="ow">in</span> <span class="n">load_result</span><span class="o">.</span><span class="n">all_models</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loaded_model</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">loaded_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">loaded_model</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">loaded_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate model registration key: &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duplicate model registration key: '</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
             <span class="n">config</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">loaded_model</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">run_resolve</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
@@ -699,6 +699,8 @@
     <script src="../../../../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

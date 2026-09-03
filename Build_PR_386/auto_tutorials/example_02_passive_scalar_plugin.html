@@ -646,7 +646,7 @@ plugin registry. The four decorators below populate it.</p>
     <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># diffusivity, m²/s</span>
 
 
-<span class="n">passive_scalar</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;passive_scalar&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
+<span class="n">passive_scalar</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"passive_scalar"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -661,7 +661,7 @@ config load, no operations, no overhead.</p>
 <span class="c1"># path probes the right file.</span>
 <span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">detect</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;constant/scalarProperties&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"constant/scalarProperties"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
@@ -669,8 +669,8 @@ config load, no operations, no overhead.</p>
 <h2>Load the diffusivity from the case<a class="headerlink" href="#load-the-diffusivity-from-the-case" title="Link to this heading">¶</a></h2>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">load</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">_case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">_instance_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PassiveScalarConfig</span><span class="p">:</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;constant/scalarProperties&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">PassiveScalarConfig</span><span class="p">(</span><span class="n">D</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">float</span><span class="p">](</span><span class="s2">&quot;D&quot;</span><span class="p">))</span>
+    <span class="n">props</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"constant/scalarProperties"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">PassiveScalarConfig</span><span class="p">(</span><span class="n">D</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">float</span><span class="p">](</span><span class="s2">"D"</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
@@ -682,9 +682,9 @@ framework finds the <code class="docutils literal notranslate"><span class="pre"
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">PassiveScalarConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_s</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">],</span> <span class="s2">"s"</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="n">create_s</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">field</span><span class="p">(</span><span class="s2">"s"</span><span class="p">,</span> <span class="n">create_s</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])]</span>
 </pre></div>
 </div>
 </section>
@@ -695,23 +695,23 @@ algorithm produces a divergence-free <code class="docutils literal notranslate">
 corrected flux is what keeps the scalar conservative.
 <code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add</span></code> / <code class="docutils literal notranslate"><span class="pre">&#64;fvSolution.add</span></code> declare requirements the
 framework’s verifier checks at startup.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;continuity&quot;</span><span class="p">])</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"continuity"</span><span class="p">])</span>
 <span class="c1"># @fvSchemes.add(</span>
-<span class="c1">#     ddt=&quot;ddt(s)&quot;,</span>
-<span class="c1">#     div=&quot;div(phi,s)&quot;,</span>
-<span class="c1">#     laplacian=&quot;laplacian(D,s)&quot;,</span>
+<span class="c1">#     ddt="ddt(s)",</span>
+<span class="c1">#     div="div(phi,s)",</span>
+<span class="c1">#     laplacian="laplacian(D,s)",</span>
 <span class="c1"># )</span>
-<span class="c1"># @fvSolution.add(&quot;s&quot;)</span>
+<span class="c1"># @fvSolution.add("s")</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">solve_s</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">s</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
     <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
     <span class="n">cfg</span><span class="p">:</span> <span class="n">PassiveScalarConfig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimViscosity</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimViscosity</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
     <span class="n">sEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
     <span class="n">sEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="n">s</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"s"</span><span class="p">:</span> <span class="n">s</span><span class="p">})</span>
 </pre></div>
 </div>
 </section>
@@ -724,47 +724,47 @@ inlet BC to <code class="docutils literal notranslate"><span class="pre">fixedVa
 clear advection-diffusion front develops. We truncate the runtime
 so the figure captures the dye plume mid-flight rather than a
 domain that has equilibrated to s ≈ 1 everywhere.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">&quot;passive_scalar_pitzDaily&quot;</span><span class="p">)</span>
-<span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;passive_scalar_pitzDaily.foam&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
-<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;-case&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">"passive_scalar_pitzDaily"</span><span class="p">)</span>
+<span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"passive_scalar_pitzDaily.foam"</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
+<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"blockMesh"</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="n">control_dict</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;controlDict&quot;</span><span class="p">))</span>
-<span class="n">control_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;endTime&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
-<span class="n">control_dict</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;controlDict&quot;</span><span class="p">))</span>
+<span class="n">control_dict</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"controlDict"</span><span class="p">))</span>
+<span class="n">control_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"endTime"</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+<span class="n">control_dict</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"controlDict"</span><span class="p">))</span>
 
 <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
-    <span class="n">run_incompressible</span><span class="p">([</span><span class="s2">&quot;neofoam&quot;</span><span class="p">])</span>
+    <span class="n">run_incompressible</span><span class="p">([</span><span class="s2">"neofoam"</span><span class="p">])</span>
 </pre></div>
 </div>
 </section>
 <section id="plot-the-dye-field">
 <h2>Plot the dye field<a class="headerlink" href="#plot-the-dye-field" title="Link to this heading">¶</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;passive_scalar_pitzDaily.foam&quot;</span><span class="p">))</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"passive_scalar_pitzDaily.foam"</span><span class="p">))</span>
 
 <span class="n">pl</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">Plotter</span><span class="p">(</span><span class="n">off_screen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">360</span><span class="p">))</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">open_gif</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;passive_scalar.gif&quot;</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">pl</span><span class="o">.</span><span class="n">open_gif</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"passive_scalar.gif"</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 
 <span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">&quot;internalMesh&quot;</span><span class="p">]</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">"internalMesh"</span><span class="p">]</span>
 <span class="n">pl</span><span class="o">.</span><span class="n">add_mesh</span><span class="p">(</span>
     <span class="n">mesh</span><span class="p">,</span>
-    <span class="n">scalars</span><span class="o">=</span><span class="s2">&quot;s&quot;</span><span class="p">,</span>
-    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;magma&quot;</span><span class="p">,</span>
+    <span class="n">scalars</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s2">"magma"</span><span class="p">,</span>
     <span class="n">clim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;s [-]&quot;</span><span class="p">},</span>
+    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"s [-]"</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="n">pl</span><span class="o">.</span><span class="n">view_xy</span><span class="p">()</span>
 <span class="n">pl</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">:</span>
     <span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-    <span class="n">mesh</span><span class="o">.</span><span class="n">copy_from</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">&quot;internalMesh&quot;</span><span class="p">])</span>
+    <span class="n">mesh</span><span class="o">.</span><span class="n">copy_from</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">"internalMesh"</span><span class="p">])</span>
     <span class="n">pl</span><span class="o">.</span><span class="n">write_frame</span><span class="p">()</span>
 
 <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<img src="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" srcset="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" alt="example 02 passive scalar plugin" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 18.590 seconds)</p>
+<img src="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" srcset="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" alt="example 02 passive scalar plugin" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 20.127 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-02-passive-scalar-plugin-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/950b58d46c511014879911267bc7ea71/example_02_passive_scalar_plugin.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_02_passive_scalar_plugin.ipynb</span></code></a></p>
