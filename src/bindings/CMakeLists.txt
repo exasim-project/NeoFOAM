@@ -39,6 +39,15 @@ nanobind_add_module(
   fieldRelaxation.cpp
   mrf.cpp)
 
+# nanobind builds the module -fvisibility=hidden, which also hides the typeinfo emitted here for the
+# NeoN types this module boxes (VolumeField and friends). std::any dispatches on type_info identity,
+# so a field boxed in this module is unrecognisable to an any_cast compiled into libNeoN --
+# rotate_old_times() then throws "bad any cast" with requested and actual printing the same name.
+# NeoN marks its own Dictionary/TokenList NEON_TYPE_VISIBLE for this reason (see
+# NeoN/core/visibility.hpp); default visibility does it for every type crossing this boundary.
+# nanobind's own symbols stay hidden: NB_NAMESPACE carries visibility("hidden") itself.
+set_target_properties(neofoam_bindings PROPERTIES CXX_VISIBILITY_PRESET default)
+
 # Workaround for nvcc_wrapper failing on -Os which nanobind might add
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_compile_options(neofoam_bindings PRIVATE -O3)
