@@ -104,16 +104,32 @@ std::unique_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>> makeGradOperator(
     if (fvSchemes.contains("gradSchemes"))
     {
         const auto& gradSchemes = fvSchemes.subDict("gradSchemes");
-        if (gradSchemes.contains(gradEntry) && !gradSchemes.isType<std::string>(gradEntry))
+        // A single-word scheme (e.g. "leastSquares") is stored as a std::string rather than a
+        // TokenList, so it has to be wrapped before the factory sees it -- the same
+        // normalisation expandSchemeDefaults applies. Reading it as a TokenList directly, or
+        // skipping string entries, would silently discretise with the fallback scheme instead.
+        auto readEntry = [&](const std::string& key)
         {
-            tokens = gradSchemes.get<NeoN::TokenList>(gradEntry);
-            found = true;
-        }
-        else if (gradSchemes.contains("default") && !gradSchemes.isType<std::string>("default"))
-        {
-            tokens = gradSchemes.get<NeoN::TokenList>("default");
-            found = true;
-        }
+            if (!gradSchemes.contains(key)) return false;
+            if (gradSchemes.isType<std::string>(key))
+            {
+                const auto& word = gradSchemes.get<std::string>(key);
+                // "none" declares that no scheme applies; picking one anyway would change the
+                // discretisation without saying so, so require an explicit entry instead.
+                NF_ASSERT(
+                    word != "none",
+                    "gradSchemes entry '" << key << "' is 'none'; add an explicit "
+                                          << gradEntry << " entry."
+                );
+                tokens = NeoN::TokenList({word});
+            }
+            else
+            {
+                tokens = gradSchemes.get<NeoN::TokenList>(key);
+            }
+            return true;
+        };
+        found = readEntry(gradEntry) || readEntry("default");
     }
     if (!found)
     {
