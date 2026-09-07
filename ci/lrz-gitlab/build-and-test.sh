@@ -10,6 +10,24 @@ set -euo pipefail
 # which otherwise surfaces as three silent retries that read like a network fault.
 export GIT_TERMINAL_PROMPT=0
 
+# Dependency clones (Kokkos, libdwarf via cpptrace, ...) are public and need no
+# credentials. A stale credential in the runner's git config makes GitHub answer
+# 401 to them, so disable any configured helper for every git call in this job.
+# GIT_CONFIG_* is applied last, overriding the system and global config.
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0=credential.helper
+export GIT_CONFIG_VALUE_0=
+
+# Report where credential/insteadOf config comes from should the above not be
+# enough (an insteadOf URL rewrite carries its own token). --name-only drops
+# values, but a rewrite embeds its token in the key itself
+# (url.https://<token>@github.com/.insteadOf), so strip any URL userinfo too.
+echo "=== git credential configuration ==="
+git config --list --show-origin --name-only \
+    | grep -Ei 'credential|insteadof' \
+    | sed -E 's#//[^/@[:space:]]*@#//***@#g' \
+    || echo "none"
+
 # Check required environment variables
 GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
 NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
