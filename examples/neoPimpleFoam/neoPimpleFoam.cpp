@@ -68,9 +68,8 @@ int main(int argc, char* argv[])
         // Gradient operator for the explicit deviatoric viscous-stress term.
         // The full viscous term is div(nuEff*(grad(U) + grad(U)^T)) = laplacian(nuEff,U)
         // + div(nuEff*dev2(T(grad(U)))); the implicit laplacian alone is not sufficient.
-        // grad(U) and grad(p) honour the configured gradSchemes (e.g. cellLimited).
-        auto gradOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(U)");
-        auto gradPOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(p)");
+        // grad(U) honours the configured gradSchemes (e.g. cellLimited).
+        const auto& gradOp = nf::gradScheme(rt, "grad(U)");
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
@@ -91,7 +90,7 @@ int main(int argc, char* argv[])
             fvcc::createCalculatedProcBCs<fvcc::VolumeBoundary<NeoN::Tensor>>(rt.nfMesh)
         );
         NeoN::fill(localGradU.internalVector(), NeoN::zero<NeoN::Tensor>());
-        gradOp->gradTensor(U, localGradU, dsl::Coeff {});
+        gradOp.gradTensor(U, localGradU, dsl::Coeff {});
         // Exchange the neighbour-cell gradient into the processor tail so the explicit
         // viscous-stress term sees correct proc-boundary gradients in parallel runs.
         localGradU.correctBoundaryConditions();
@@ -157,7 +156,7 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    gradOp->gradTensor(U, localGradU, dsl::Coeff {});
+                    gradOp.gradTensor(U, localGradU, dsl::Coeff {});
                     // Refill the processor tail with neighbour-cell gradients (see above).
                     localGradU.correctBoundaryConditions();
                     gradUPtr = &localGradU;
@@ -248,7 +247,7 @@ int main(int argc, char* argv[])
 
                     nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                    nf::updateVelocity(hByA, crAU, p, U, *gradPOp);
+                    nf::updateVelocity(hByA, crAU, p, U, rt);
                     U.correctBoundaryConditions();
                 }
 

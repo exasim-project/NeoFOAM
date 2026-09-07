@@ -401,7 +401,7 @@ void updateVelocity(
 )
 {
     // grad(p) for the velocity reconstruction honours the configured gradSchemes
-    // entry for grad(p) (e.g. cellLimited); the operator is built once by the solver.
+    // entry for grad(p) (e.g. cellLimited).
     auto gradP = gradPScheme.grad(p, NeoN::dsl::Coeff {});
     auto [iHbyA, iRAU, iGradP] =
         views(hByA.internalVector(), rAU.internalVector(), gradP.internalVector());
@@ -409,6 +409,17 @@ void updateVelocity(
     u.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - iRAU[celli] * iGradP[celli];
     });
+}
+
+void updateVelocity(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& p,
+    nnfvcc::VolumeField<Vec3>& u,
+    RunTime& runTime
+)
+{
+    updateVelocity(hByA, rAU, p, u, gradScheme(runTime, "grad(" + p.name + ")"));
 }
 
 nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
