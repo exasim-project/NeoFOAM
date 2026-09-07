@@ -128,15 +128,16 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    NeoN::Executor exec_;</div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keyword">const</span> NeoN::UnstructuredMesh&amp; mesh_;</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keyword">const</span> nnfvcc::VolumeField&lt;NeoN::scalar&gt;&amp; nu_;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    nnfvcc::GaussGreenGrad gradOp_;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    nnfvcc::VolumeField&lt;NeoN::Tensor&gt; gradU_;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    nnfvcc::SurfaceField&lt;NeoN::scalar&gt; nuEff_;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    nnfvcc::VolumeField&lt;NeoN::scalar&gt; nut_;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    nnfvcc::SurfaceInterpolation&lt;NeoN::scalar&gt; surfInterp_;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>};</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="comment">// gradSchemes-configured tensor-gradient operator, shared with RunTime&#39;s gradScheme cache</span></div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    std::shared_ptr&lt;nnfvcc::GradOperatorFactory&lt;NeoN::Vec3&gt;&gt; gradUOp_;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    nnfvcc::VolumeField&lt;NeoN::Tensor&gt; gradU_;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    nnfvcc::SurfaceField&lt;NeoN::scalar&gt; nuEff_;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    nnfvcc::VolumeField&lt;NeoN::scalar&gt; nut_;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    nnfvcc::SurfaceInterpolation&lt;NeoN::scalar&gt; surfInterp_;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>};</div>
 </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Laminar_html"><div class="ttname"><a href="classNeoFOAM_1_1Laminar.html">NeoFOAM::Laminar</a></div><div class="ttdoc">No-op turbulence model for laminar flow.</div><div class="ttdef"><b>Definition</b> <a href="laminar_8hpp_source.html#l00017">laminar.hpp:18</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Laminar_html_a233c808400e5b0970c6c13276fba07ca"><div class="ttname"><a href="classNeoFOAM_1_1Laminar.html#a233c808400e5b0970c6c13276fba07ca">NeoFOAM::Laminar::gradU</a></div><div class="ttdeci">const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp; gradU() const override</div><div class="ttdoc">Velocity gradient tensor (updated each correct()).</div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Laminar_html_a3464b55bf9a401d0ae0729b8cca0410e"><div class="ttname"><a href="classNeoFOAM_1_1Laminar.html#a3464b55bf9a401d0ae0729b8cca0410e">NeoFOAM::Laminar::doc</a></div><div class="ttdeci">static std::string doc()</div><div class="ttdef"><b>Definition</b> <a href="laminar_8hpp_source.html#l00022">laminar.hpp:22</a></div></div>

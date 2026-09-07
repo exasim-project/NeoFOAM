@@ -50,7 +50,9 @@ void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a34035f6d3333e85a487eb7f0a6830a4d
 void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a87cacbac58e89ed5fae3e2ac586257ff}{correct\+Nut\+Internal}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&k, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&epsilon, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut) const
 \begin{DoxyCompactList}\small\item\em Update ν\+\_\+t internal vector from new k, ε\+: ν\+\_\+t = Cμ·k²/ε. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a5c2ac35e716fe181f3092e68e63d7c0c}{calc\+Diffusivities}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut)
-\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current ν\+\_\+t. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current ν\+\_\+t. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a8636de0361868e6fd98036092c244e20}{set\+Grad\+UOperator}} (std\+::shared\+\_\+ptr$<$ nnfvcc\+::\+Grad\+Operator\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ op)
+\begin{DoxyCompactList}\small\item\em Replace the default Gauss-\/\+Green tensor-\/gradient operator with the grad\+Schemes-\/configured one, so grad(\+U) honours e.\+g. cell\+Limited. Used by the Run\+Time-\/constructed wrapper, which alone can reach the schemes dictionary. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -218,6 +220,20 @@ Effective viscosity on faces\+: ν + ν\+\_\+t (for momentum laplacian)
 
 
 Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00109}{109}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KEpsilon_a8636de0361868e6fd98036092c244e20}\label{classNeoFOAM_1_1KEpsilon_a8636de0361868e6fd98036092c244e20} 
+\index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!setGradUOperator@{setGradUOperator}}
+\index{setGradUOperator@{setGradUOperator}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
+\doxysubsubsection{\texorpdfstring{setGradUOperator()}{setGradUOperator()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+::set\+Grad\+UOperator (\begin{DoxyParamCaption}\item[{std\+::shared\+\_\+ptr$<$ nnfvcc\+::\+Grad\+Operator\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$}]{op }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Replace the default Gauss-\/\+Green tensor-\/gradient operator with the grad\+Schemes-\/configured one, so grad(\+U) honours e.\+g. cell\+Limited. Used by the Run\+Time-\/constructed wrapper, which alone can reach the schemes dictionary. 
+
+
+
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00148}{148}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KEpsilon_a6223b12ed0e3b180bf9c88e3b5cd592d}\label{classNeoFOAM_1_1KEpsilon_a6223b12ed0e3b180bf9c88e3b5cd592d} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!spEpsilonField@{spEpsilonField}}
