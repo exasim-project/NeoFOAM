@@ -7,6 +7,11 @@
 
 set -euo pipefail
 
+# Fail fast on a bad/expired credential instead of letting git block on a terminal
+# prompt: a stale github.com entry turns an anonymous-OK public clone into a 401,
+# which otherwise surfaces as three silent retries that read like a network fault.
+export GIT_TERMINAL_PROMPT=0
+
 PRESET="profiling"
 
 # Check required environment variables
@@ -145,7 +150,10 @@ build_and_benchmark() {
 
 # Push benchmark results to GitHub
 push_results() {
-    git clone "https://oauth2:${API_TOKEN_GITHUB}@${TARGET_REPO}"
+    # credential.helper= disables any configured helper for this clone, so the token is
+    # used but never written to ~/.git-credentials, where a later rotation would leave a
+    # stale github.com entry behind for every other job sharing this home directory.
+    git -c credential.helper= clone "https://oauth2:${API_TOKEN_GITHUB}@${TARGET_REPO}"
     cd "${REPO_NAME}"
 
     git config user.email "gitlab-ci@users.noreply.github.com"
