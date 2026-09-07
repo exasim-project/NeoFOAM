@@ -5,6 +5,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fail fast on a bad/expired credential instead of letting git block on a terminal
+# prompt: a stale github.com entry turns an anonymous-OK public clone into a 401,
+# which otherwise surfaces as three silent retries that read like a network fault.
+export GIT_TERMINAL_PROMPT=0
+
 # Check required environment variables
 GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
 NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
