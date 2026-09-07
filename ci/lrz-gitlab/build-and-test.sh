@@ -171,7 +171,7 @@ fi
 # -----------------------------
 SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
-    pushd tutorials/cavity >/dev/null
+    pushd tutorials/neoIcoFoam/cavity >/dev/null
     python3 cleanRunValidate.py --preset "$PRESET" --mode serial
     # currently intel is too slow and nvidia hangs
     if [[ "$GPU_VENDOR" != "intel" ]]; then

@@ -26,6 +26,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # =========================================================
+#  Utility: locate the repository root
+# =========================================================
+def repo_root(start: Path) -> Path:
+    """Walk up from start until the directory holding CMakePresets.json is found.
+
+    Anchoring on a marker rather than a fixed number of "../" keeps the build
+    directory reachable when a case is moved to a different depth under
+    tutorials/.
+    """
+    for candidate in (start, *start.parents):
+        if (candidate / "CMakePresets.json").is_file():
+            return candidate
+    logger.error(f"Could not locate the repository root above {start}")
+    sys.exit(1)
+
+
+# =========================================================
 #  Utility: Run shell commands
 # =========================================================
 def run(cmd: list[str], cwd: Path = None) -> None:
@@ -121,7 +138,7 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
         finally:
             decompose_log.close()
 
-    solver = case_path / f"../../build/{preset}/bin/neoIcoFoam"
+    solver = repo_root(case_path) / "build" / preset / "bin" / "neoIcoFoam"
     if not solver.exists():
         logger.error(f"Solver binary not found: {solver}")
         sys.exit(1)

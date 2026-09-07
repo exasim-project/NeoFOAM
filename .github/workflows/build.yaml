@@ -59,15 +59,28 @@ jobs:
           echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
           if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
             echo "NeoN branch exists; checking whether it is already merged into develop..."
-            # compare develop...<branch>: 'behind'/'identical' => branch fully contained in develop
-            NEON_STATUS=$(curl -s "https://api.github.com/repos/${NEON_REPO}/compare/develop...${NEOFOAM_BRANCH}" | jq -r '.status // empty' || echo "")
-            echo "compare(develop...${NEOFOAM_BRANCH}) status: ${NEON_STATUS:-<unknown>}"
-            if [ "$NEON_STATUS" = "behind" ] || [ "$NEON_STATUS" = "identical" ]; then
-              echo "NeoN branch is already merged into develop. Falling back to 'develop'."
+            # Containment is decided locally with git rather than the compare API. An
+            # unauthenticated api.github.com call shares a 60/hour per-IP budget across all
+            # Actions runners, and a throttled reply yields an empty status that no default
+            # handles safely: falling back would test a coordinated PR against the wrong NeoN,
+            # keeping the branch would rebuild the stale-branch failure this check prevents.
+            # A blobless fetch of the two refs carries full commit history for ~3 MB.
+            NEON_TMP="$(mktemp -d)"
+            git init -q --bare "$NEON_TMP"
+            if ! git -C "$NEON_TMP" fetch -q --filter=blob:none "$REPO_URL" \
+                 "refs/heads/${NEOFOAM_BRANCH}:refs/heads/branch" \
+                 "refs/heads/develop:refs/heads/develop"; then
+              echo "::error::Could not fetch NeoN refs to compare '${NEOFOAM_BRANCH}' against develop."
+              rm -rf "$NEON_TMP"
+              exit 1
+            fi
+            if git -C "$NEON_TMP" merge-base --is-ancestor refs/heads/branch refs/heads/develop; then
+              echo "NeoN branch is already contained in develop. Falling back to 'develop'."
             else
-              echo "NeoN branch has unmerged commits (or status unknown). Using it: $NEOFOAM_BRANCH"
+              echo "NeoN branch has commits not in develop. Using it: $NEOFOAM_BRANCH"
               NEON_BRANCH="$NEOFOAM_BRANCH"
             fi
+            rm -rf "$NEON_TMP"
           else
             echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
           fi

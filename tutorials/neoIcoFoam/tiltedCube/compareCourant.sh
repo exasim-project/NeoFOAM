@@ -11,7 +11,7 @@
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE" || exit 1
-NEOFOAM_BIN="${NEOFOAM_BIN:-$HERE/../../build/develop/bin/neoIcoFoam}"
+NEOFOAM_BIN="${NEOFOAM_BIN:-$HERE/../../../build/develop/bin/neoIcoFoam}"
 NPROCS="${1:-4}"
 
 if [ ! -d constant/polyMesh ]; then
