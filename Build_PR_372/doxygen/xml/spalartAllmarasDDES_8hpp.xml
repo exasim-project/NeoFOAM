@@ -6,40 +6,40 @@
     <includes refid="pde_8hpp" local="yes">NeoFOAM/datastructures/pde.hpp</includes>
     <includes refid="turbulenceModel_8hpp" local="yes">NeoFOAM/turbulenceModels/turbulenceModel.hpp</includes>
     <incdepgraph>
-      <node id="18">
+      <node id="16">
         <label>NeoFOAM/compatibility/fvSchemes.hpp</label>
         <link refid="fvSchemes_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
       </node>
-      <node id="15">
+      <node id="17">
         <label>NeoFOAM/compatibility/fvSolution.hpp</label>
         <link refid="fvSolution_8hpp"/>
         <childnode refid="6" relation="include">
         </childnode>
         <childnode refid="7" relation="include">
         </childnode>
-        <childnode refid="16" relation="include">
+        <childnode refid="18" relation="include">
         </childnode>
-        <childnode refid="17" relation="include">
+        <childnode refid="19" relation="include">
         </childnode>
         <childnode refid="8" relation="include">
         </childnode>
       </node>
-      <node id="13">
+      <node id="14">
         <label>NeoFOAM/datastructures/databaseWrapper.hpp</label>
         <link refid="databaseWrapper_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
-        <childnode refid="14" relation="include">
+        <childnode refid="15" relation="include">
         </childnode>
       </node>
-      <node id="10">
+      <node id="11">
         <label>NeoFOAM/datastructures/meshAdapter.hpp</label>
         <link refid="meshAdapter_8hpp"/>
-        <childnode refid="11" relation="include">
-        </childnode>
         <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
         </childnode>
         <childnode refid="2" relation="include">
         </childnode>
@@ -61,9 +61,9 @@
         </childnode>
         <childnode refid="8" relation="include">
         </childnode>
-        <childnode refid="15" relation="include">
+        <childnode refid="17" relation="include">
         </childnode>
-        <childnode refid="18" relation="include">
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="8">
@@ -75,7 +75,11 @@
         </childnode>
         <childnode refid="10" relation="include">
         </childnode>
-        <childnode refid="13" relation="include">
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="1">
@@ -85,10 +89,10 @@
         </childnode>
         <childnode refid="3" relation="include">
         </childnode>
-        <childnode refid="19" relation="include">
+        <childnode refid="20" relation="include">
         </childnode>
       </node>
-      <node id="19">
+      <node id="20">
         <label>NeoFOAM/turbulenceModels/turbulenceModel.hpp</label>
         <link refid="turbulenceModel_8hpp"/>
         <childnode refid="2" relation="include">
@@ -99,10 +103,10 @@
       <node id="2">
         <label>NeoN/NeoN.hpp</label>
       </node>
-      <node id="16">
+      <node id="18">
         <label>NeoN/core/dictionary.hpp</label>
       </node>
-      <node id="17">
+      <node id="19">
         <label>NeoN/core/primitives/scalar.hpp</label>
       </node>
       <node id="4">
@@ -111,19 +115,22 @@
       <node id="5">
         <label>cmath</label>
       </node>
-      <node id="11">
+      <node id="12">
         <label>functional</label>
       </node>
       <node id="9">
         <label>fvMesh.H</label>
       </node>
-      <node id="12">
+      <node id="10">
+        <label>map</label>
+      </node>
+      <node id="13">
         <label>memory</label>
       </node>
       <node id="6">
         <label>optional</label>
       </node>
-      <node id="14">
+      <node id="15">
         <label>regIOobject.H</label>
       </node>
       <node id="7">
@@ -345,19 +352,20 @@
 <codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>nuEff_;</highlight></codeline>
 <codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>nuTildaEff_;</highlight></codeline>
 <codeline lineno="251"><highlight class="normal"></highlight></codeline>
-<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Cached<sp/>gradient<sp/>operators<sp/>(constructed<sp/>once),<sp/>runtime-selected<sp/>from<sp/>gradSchemes<sp/>so</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>grad(U)<sp/>(tensor)<sp/>and<sp/>grad(nuTilda)<sp/>honour<sp/>the<sp/>configured<sp/>scheme<sp/>(e.g.<sp/>cellLimited).</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Default<sp/>to<sp/>Gauss-Green<sp/>when<sp/>no<sp/>scheme<sp/>dictionary<sp/>is<sp/>available.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/>std::unique_ptr&lt;nnfvcc::GradOperatorFactory&lt;Vec3&gt;&gt;<sp/>gradUOp_;</highlight></codeline>
-<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/>std::unique_ptr&lt;nnfvcc::GradOperatorFactory&lt;Vec3&gt;&gt;<sp/>gradNuTildaOp_;</highlight></codeline>
-<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceInterpolation&lt;scalar&gt;<sp/>surfInterp_;</highlight></codeline>
-<codeline lineno="258"><highlight class="normal"></highlight></codeline>
-<codeline lineno="259"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>SA-DDES<sp/>model<sp/>coefficients</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients" kindref="compound">Coefficients</ref><sp/>coeffs_;</highlight></codeline>
-<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref><sp/>cw1_;</highlight></codeline>
-<codeline lineno="262"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="263"><highlight class="normal"></highlight></codeline>
-<codeline lineno="264"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="252"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Cached<sp/>gradient<sp/>operators,<sp/>runtime-selected<sp/>from<sp/>gradSchemes<sp/>so<sp/>grad(U)<sp/>(tensor)<sp/>and</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>grad(nuTilda)<sp/>honour<sp/>the<sp/>configured<sp/>scheme<sp/>(e.g.<sp/>cellLimited).<sp/>Shared<sp/>with<sp/>RunTime&apos;s</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>gradScheme<sp/>cache;<sp/>the<sp/>exec/mesh<sp/>constructors<sp/>own<sp/>a<sp/>Gauss-Green<sp/>default<sp/>instead,<sp/>as</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>no<sp/>scheme<sp/>dictionary<sp/>is<sp/>available<sp/>there.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;nnfvcc::GradOperatorFactory&lt;Vec3&gt;&gt;<sp/>gradUOp_;</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;nnfvcc::GradOperatorFactory&lt;Vec3&gt;&gt;<sp/>gradNuTildaOp_;</highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceInterpolation&lt;scalar&gt;<sp/>surfInterp_;</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"></highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>SA-DDES<sp/>model<sp/>coefficients</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients" kindref="compound">Coefficients</ref><sp/>coeffs_;</highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref><sp/>cw1_;</highlight></codeline>
+<codeline lineno="263"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="264"><highlight class="normal"></highlight></codeline>
+<codeline lineno="265"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp"/>
   </compounddef>

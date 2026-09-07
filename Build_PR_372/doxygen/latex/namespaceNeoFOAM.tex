@@ -96,6 +96,8 @@ void \mbox{\hyperlink{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}{update
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_a1a89cbc2a1aaa29473e86e780907ca57}{update\+Velocity}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&h\+ByA, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&p, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, const nnfvcc\+::\+Grad\+Operator\+Factory$<$ Neo\+N\+::\+Vec3 $>$ \&grad\+PScheme)
 \item 
+void \mbox{\hyperlink{namespaceNeoFOAM_a62eb8e5a163de38a7fbebd7a25c7b624}{update\+Velocity}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&h\+ByA, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&p, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time)
+\item 
 nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&vol\+Field)
 \item 
 {\footnotesize template$<$typename NT , typename OT $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_adb3f301260a65dd30182893f75665a8a}{operator==}} (const Neo\+N\+::\+Vector$<$ NT $>$ \&nf, const Foam\+::\+Field$<$ OT $>$ \&of)
@@ -206,6 +208,10 @@ std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM
 \item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \mbox{\hyperlink{namespaceNeoFOAM_a999e61dc6e0868f9fe6cd7e4ea91f917}{operator\&}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ Value\+Type $>$ \&expr, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&psi)
 \item 
+const std\+::shared\+\_\+ptr$<$ fvcc\+::\+Grad\+Operator\+Factory$<$ Neo\+N\+::\+Vec3 $>$ $>$ \& \mbox{\hyperlink{namespaceNeoFOAM_ae0ba57edf5020731ae0454b2fe1a6716}{grad\+Scheme\+Ptr}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time, const std\+::string \&grad\+Entry)
+\begin{DoxyCompactList}\small\item\em Returns the grad\+Schemes-\/configured gradient operator for {\ttfamily grad\+Entry}. \end{DoxyCompactList}\item 
+const fvcc\+::\+Grad\+Operator\+Factory$<$ Neo\+N\+::\+Vec3 $>$ \& \mbox{\hyperlink{namespaceNeoFOAM_a902f23467793b2ff33c8cf9c537411de}{grad\+Scheme}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time, const std\+::string \&grad\+Entry)
+\begin{DoxyCompactList}\small\item\em As grad\+Scheme\+Ptr, for call sites that do not need to share ownership. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Registered\+Type , typename Initializer\+Type $>$ }\\Registered\+Type \& \mbox{\hyperlink{namespaceNeoFOAM_ae3448b9356abfd01a14f812c7acffc7c}{read\+Or\+Create}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time, std\+::string name, Initializer\+Type init)
 \begin{DoxyCompactList}\small\item\em convenience function to avoid recreating objects by storing them in the runtime db \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\\mbox{\hyperlink{namespaceNeoFOAM_aecef654291f22551aa7a3b014e46cb67}{Solver}} (Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&) -\/$>$ \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Solver}}$<$ Value\+Type $>$
@@ -548,6 +554,34 @@ auto Neo\+FOAM\+::from\+Foam\+Field (\begin{DoxyParamCaption}\item[{const Neo\+N
 
 Definition at line \mbox{\hyperlink{readers_8hpp_source_l00048}{48}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
+\Hypertarget{namespaceNeoFOAM_a902f23467793b2ff33c8cf9c537411de}\label{namespaceNeoFOAM_a902f23467793b2ff33c8cf9c537411de} 
+\index{NeoFOAM@{NeoFOAM}!gradScheme@{gradScheme}}
+\index{gradScheme@{gradScheme}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{gradScheme()}{gradScheme()}}
+{\footnotesize\ttfamily const fvcc\+::\+Grad\+Operator\+Factory$<$ Neo\+N\+::\+Vec3 $>$ \& Neo\+FOAM\+::grad\+Scheme (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{run\+Time,  }\item[{const std\+::string \&}]{grad\+Entry }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+As grad\+Scheme\+Ptr, for call sites that do not need to share ownership. 
+
+
+
+Definition at line \mbox{\hyperlink{runTime_8hpp_source_l00062}{62}} of file \mbox{\hyperlink{runTime_8hpp_source}{run\+Time.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_ae0ba57edf5020731ae0454b2fe1a6716}\label{namespaceNeoFOAM_ae0ba57edf5020731ae0454b2fe1a6716} 
+\index{NeoFOAM@{NeoFOAM}!gradSchemePtr@{gradSchemePtr}}
+\index{gradSchemePtr@{gradSchemePtr}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{gradSchemePtr()}{gradSchemePtr()}}
+{\footnotesize\ttfamily const std\+::shared\+\_\+ptr$<$ fvcc\+::\+Grad\+Operator\+Factory$<$ Neo\+N\+::\+Vec3 $>$ $>$ \& Neo\+FOAM\+::grad\+Scheme\+Ptr (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{run\+Time,  }\item[{const std\+::string \&}]{grad\+Entry }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Returns the grad\+Schemes-\/configured gradient operator for {\ttfamily grad\+Entry}. 
+
+Built on first use and cached, so call sites need not hoist the operator out of the time loop themselves. Lazy on purpose\+: solvers overwrite fv\+Schemes\+Dict with \doxylink{namespaceNeoFOAM_a152eff2c6ed8799eab60394fc259108d}{map\+Fv\+Schemes()} after the \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time} is created. 
+
+Definition at line \mbox{\hyperlink{runTime_8hpp_source_l00050}{50}} of file \mbox{\hyperlink{runTime_8hpp_source}{run\+Time.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}\label{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9} 
 \index{NeoFOAM@{NeoFOAM}!insert@{insert}}
 \index{insert@{insert}!NeoFOAM@{NeoFOAM}}
@@ -672,7 +706,7 @@ convenience function to avoid recreating objects by storing them in the runtime 
 
 
 
-Definition at line \mbox{\hyperlink{runTime_8hpp_source_l00040}{40}} of file \mbox{\hyperlink{runTime_8hpp_source}{run\+Time.\+hpp}}.
+Definition at line \mbox{\hyperlink{runTime_8hpp_source_l00070}{70}} of file \mbox{\hyperlink{runTime_8hpp_source}{run\+Time.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1}\label{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1} 
 \index{NeoFOAM@{NeoFOAM}!readSurfaceBoundaryConditions@{readSurfaceBoundaryConditions}}
@@ -771,8 +805,14 @@ Definition at line \mbox{\hyperlink{continuityError_8hpp_source_l00102}{102}} of
 \Hypertarget{namespaceNeoFOAM_a1a89cbc2a1aaa29473e86e780907ca57}\label{namespaceNeoFOAM_a1a89cbc2a1aaa29473e86e780907ca57} 
 \index{NeoFOAM@{NeoFOAM}!updateVelocity@{updateVelocity}}
 \index{updateVelocity@{updateVelocity}!NeoFOAM@{NeoFOAM}}
-\doxysubsubsection{\texorpdfstring{updateVelocity()}{updateVelocity()}}
+\doxysubsubsection{\texorpdfstring{updateVelocity()}{updateVelocity()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::update\+Velocity (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{h\+ByA,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{p,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{const nnfvcc\+::\+Grad\+Operator\+Factory$<$ Neo\+N\+::\+Vec3 $>$ \&}]{grad\+PScheme }\end{DoxyParamCaption})}
+
+\Hypertarget{namespaceNeoFOAM_a62eb8e5a163de38a7fbebd7a25c7b624}\label{namespaceNeoFOAM_a62eb8e5a163de38a7fbebd7a25c7b624} 
+\index{NeoFOAM@{NeoFOAM}!updateVelocity@{updateVelocity}}
+\index{updateVelocity@{updateVelocity}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{updateVelocity()}{updateVelocity()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::update\+Velocity (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{h\+ByA,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{p,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{run\+Time }\end{DoxyParamCaption})}
 
 \Hypertarget{namespaceNeoFOAM_a83dd7a8c4cb9a0c13d825e8ca93d8587}\label{namespaceNeoFOAM_a83dd7a8c4cb9a0c13d825e8ca93d8587} 
 \index{NeoFOAM@{NeoFOAM}!write@{write}}
