@@ -44,15 +44,11 @@ int main(int argc, char* argv[])
 
 #include "createFields.H"
 
-
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
-
-        // grad(p) for the velocity reconstruction honours the configured gradSchemes.
-        auto gradPOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(p)");
 
         fvcc::VectorCollection& vectorCollection =
             fvcc::VectorCollection::instance(rt.db, "VectorCollection");
@@ -163,7 +159,7 @@ int main(int argc, char* argv[])
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                nf::updateVelocity(hByA, crAU, p, U, *gradPOp);
+                nf::updateVelocity(hByA, crAU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

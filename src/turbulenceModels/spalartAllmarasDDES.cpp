@@ -302,11 +302,11 @@ nnfvcc::VolumeField<scalar> buildDelta(const NeoN::Executor& exec, MeshAdapter& 
 SpalartAllmarasDDES::SpalartAllmarasDDES(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : SpalartAllmarasDDES(rt.exec, rt.mesh, nu)
 {
-    // Override the default Gauss grad operators with the configured gradSchemes so
-    // grad(U)/grad(nuTilda) honour the chosen scheme (e.g. cellLimited). Falls back
-    // to gradSchemes "default", then to Gauss-Green.
-    gradUOp_ = makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(U)");
-    gradNuTildaOp_ = makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(nuTilda)");
+    // Replace the default Gauss grad operators with the gradSchemes-configured ones from
+    // the RunTime cache, so grad(U)/grad(nuTilda) honour the chosen scheme (e.g. cellLimited)
+    // and share a single instance with the solver's other grad(U) call sites.
+    gradUOp_ = gradSchemePtr(rt, "grad(U)");
+    gradNuTildaOp_ = gradSchemePtr(rt, "grad(nuTilda)");
 
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     if (solverDict.isDict("nuTilda"))

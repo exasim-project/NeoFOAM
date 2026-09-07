@@ -95,6 +95,19 @@ void updateVelocity(
     const nnfvcc::GradOperatorFactory<NeoN::Vec3>& gradPScheme
 );
 
+/* @brief Velocity corrector using the gradSchemes entry configured for @p p.
+ *
+ * Resolves "grad(<p.name>)" through RunTime::gradScheme, which builds and caches the
+ * operator, so solvers need not construct one themselves.
+ */
+void updateVelocity(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& p,
+    nnfvcc::VolumeField<Vec3>& U,
+    RunTime& runTime
+);
+
 
 /* @brief Face flux from a volume vector field: phi = U·Sf.
  */
