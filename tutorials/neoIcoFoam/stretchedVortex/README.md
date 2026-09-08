@@ -110,11 +110,27 @@ mechanism: inward spiral, axial outflow away from a dividing layer, angular
 momentum transported to smaller radii, swirl amplified as the core contracts,
 viscosity opposing it. That is worth being able to look at.
 
+## Results
+
+Run with `NPROCS=4 ./Allrun -par`. The figures cover the first 2 s of the 6 s run.
+
+![mid-plane swirl and approach to equilibrium](doc/vortexOverview.png)
+
+The core contracts (`r_peak` 0.675 -> 0.425) and the swirl amplifies
+(`u_theta` 0.169 -> 0.271, a factor 1.6) monotonically, as predicted. Two strain
+times is not yet enough to settle onto `delta = 0.2`.
+
+![meridional structure](doc/vortexStructure.png)
+
+The meridional plane shows the expected Burgers topology: radial inflow at the
+sides, a dividing layer at `z = 0`, axial outflow towards top and bottom, and
+`u_z = a z` as imposed.
+
 ## Caveat
 
-This case was written against the tutorial conventions in this repository but
-has **not been run** — no OpenFOAM installation was available. Expect to debug
-the two `setExpr*` steps first: `setExprFields` and `setExprBoundaryFields` are
-standard OpenFOAM v2406 utilities, but the dictionary syntax has shifted across
-versions. If they give trouble, check `blockMesh` output and the written `0/U`
-before blaming the solver.
+The square domain with an analytic `fixedValue` inflow on its sides is not
+axisymmetric -- corners sit at `r = 1.4`, mid-edges at `r = 1.0` -- and the
+mismatch propagates inwards as a four-lobed pattern. On the ring `r = 0.95` the
+azimuthal spread of `u_theta` is 0.152-0.156 at `t = 0` but 0.10-0.25 at
+`t = 1`. The core is still clean at `t = 2`, but the outer field is not; a wider
+box or a cylindrical mesh would remove it.
