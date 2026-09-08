@@ -262,7 +262,11 @@ KEpsilon::KEpsilon(
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(exec, mesh, NeoN::TokenList({std::string("Gauss"), std::string("linear")})))
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))

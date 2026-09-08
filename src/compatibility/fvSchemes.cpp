@@ -118,8 +118,8 @@ std::unique_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>> makeGradOperator(
                 // discretisation without saying so, so require an explicit entry instead.
                 NF_ASSERT(
                     word != "none",
-                    "gradSchemes entry '" << key << "' is 'none'; add an explicit "
-                                          << gradEntry << " entry."
+                    "gradSchemes entry '" << key << "' is 'none'; add an explicit " << gradEntry
+                                          << " entry."
                 );
                 tokens = NeoN::TokenList({word});
             }
