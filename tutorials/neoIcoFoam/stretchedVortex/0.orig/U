@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+// Placeholder values. setExprFields overwrites the internal field and
+// setExprBoundaryFields overwrites the "sides" patch values (see Allrun).
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    // Lateral inflow: radial inflow -a*r/2 plus the swirl of the outer vortex.
+    sides
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    // Axial outflow above and below the mid-plane; the axial velocity there is
+    // +/- a*H/2, so both patches are outflow for the whole run.
+    top
+    {
+        type            zeroGradient;
+    }
+
+    bottom
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //

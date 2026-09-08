@@ -1,0 +1,37 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+# stretchedVortex: a strained (Burgers) vortex whose core is squeezed by an
+# imposed axial strain until viscosity balances it. Illustration case only --
+# see README.md for what it does and does not demonstrate.
+#
+# Usage:
+#   ./Allrun                 # mesh + serial neoIcoFoam
+#   NPROCS=4 ./Allrun -par   # mesh + decompose + parallel neoIcoFoam
+#
+# Set NEOFOAM_BIN to override the solver binary (default: develop build).
+
+NEOFOAM_BIN="${NEOFOAM_BIN:-../../../build/develop/bin/neoIcoFoam}"
+NPROCS="${NPROCS:-4}"
+
+touch case.foam
+
+# 1. mesh
+runApplication blockMesh
+
+# 2. initial and boundary fields from the analytic Burgers solution
+restore0Dir
+runApplication setExprFields
+runApplication setExprBoundaryFields
+
+# 3. solve
+if [ "$1" = "-par" ] || [ "$1" = "-parallel" ]
+then
+    runApplication decomposePar -force
+    runParallel -np "$NPROCS" "$NEOFOAM_BIN"
+else
+    runApplication "$NEOFOAM_BIN"
+fi
+
+#------------------------------------------------------------------------------

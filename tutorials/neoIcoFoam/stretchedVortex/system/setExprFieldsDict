@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Initial condition: an axial strain field superposed on a Gaussian-cored
+// vortex whose core (r0 = 0.6) is deliberately three times WIDER than the
+// viscous equilibrium core delta = sqrt(4*nu/a) = 0.2.
+//
+//   u_r = -a*r/2,  u_z = a*z
+//   u_theta = (Gamma / 2*pi*r) * (1 - exp(-r^2/r0^2))
+//
+// The strain therefore has to squeeze the core down by a factor of three,
+// which is the whole point of the demo.
+
+expressions
+(
+    U
+    {
+        field       U;
+        dimensions  [0 1 -1 0 0 0 0];
+
+        variables
+        (
+            "a       = 1.0"
+            "Gamma   = 1.0"
+            "r0      = 0.6"
+            "xc      = pos().x()"
+            "yc      = pos().y()"
+            "zc      = pos().z()"
+            "rsq     = sqr(xc) + sqr(yc)"
+            // (1 - exp(-rsq/r0^2))/rsq is regular at the axis; the 1e-12
+            // guard only protects the division at rsq == 0 exactly.
+            "omega   = (Gamma/(2*pi()))*(1 - exp(-rsq/sqr(r0)))/(rsq + 1e-12)"
+        );
+
+        expression
+        #{
+            vector
+            (
+                -0.5*a*xc - omega*yc,
+                -0.5*a*yc + omega*xc,
+                 a*zc
+            )
+        #};
+    }
+);
+
+
+// ************************************************************************* //
