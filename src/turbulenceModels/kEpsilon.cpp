@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
 #include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
+#include "NeoFOAM/auxiliary/bound.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
@@ -448,17 +449,10 @@ void KEpsilon::correct(
     );
     epsEqn.solve();
 
-    // Bound ε > 0
-    {
-        auto epsView = epsilon.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(epsilon.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { epsView[i] = Kokkos::max(epsView[i], scalar(1e-10)); },
-            "kEpsilon::boundEpsilon"
-        );
-        epsilon.correctBoundaryConditions(ctx);
-    }
+    // Bound ε > 0. A plain clamp pins an undershooting cell at the floor, and ν_t = Cμ k²/ε then
+    // explodes; bound() refills those cells from the neighbourhood as OpenFOAM does.
+    bound(epsilon, epsilonMin_, boundCache_);
+    epsilon.correctBoundaryConditions(ctx);
 
     // Update spK from the new ε (ε/k destruction term)
     {
@@ -486,17 +480,9 @@ void KEpsilon::correct(
     );
     kEqn.solve();
 
-    // Bound k >= 0
-    {
-        auto kView = k.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(k.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { kView[i] = Kokkos::max(kView[i], scalar(0)); },
-            "kEpsilon::boundK"
-        );
-        k.correctBoundaryConditions(ctx);
-    }
+    // Bound k >= kMin
+    bound(k, kMin_, boundCache_);
+    k.correctBoundaryConditions(ctx);
 
     // Update ν_t = Cμ k²/ε from new k, ε
     correctNutInternal(k, epsilon, nut);

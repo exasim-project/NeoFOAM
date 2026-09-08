@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "NeoFOAM/auxiliary/bound.hpp"
+
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
@@ -245,10 +247,11 @@ private:
     NeoN::Vector<scalar> cornerWeightTmp_;
     bool cornerWeightsBuilt_ = false;
 
-    nnfvcc::VolumeField<scalar> boundFlooredTmp_;
-    nnfvcc::SurfaceField<scalar> surfBoundFlooredTmp_;
-    NeoN::Vector<scalar> sumFaceAreaTmp_;
-    bool sumFaceAreaBuilt_ = false;
+    // Lower bound applied to k after each solve, as OpenFOAM's kMin_.
+    scalar kMin_ = 0.0;
+
+    // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
+    mutable BoundCache boundCache_;
 };
 
 /**

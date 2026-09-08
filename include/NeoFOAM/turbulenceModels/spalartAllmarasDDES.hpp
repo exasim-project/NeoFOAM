@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "NeoFOAM/auxiliary/bound.hpp"
+
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
@@ -218,6 +220,12 @@ private:
 
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
+
+    // Lower bound applied to nuTilda after each solve, as OpenFOAM's bound(nuTilda_, Zero).
+    scalar nuTildaMin_ = 0.0;
+
+    // Mesh-derived scratch reused across bound() calls.
+    mutable BoundCache boundCache_;
 
     // Laminar viscosity: held by reference — must outlive this object
     const nnfvcc::VolumeField<scalar>& nu_;

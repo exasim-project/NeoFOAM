@@ -55,6 +55,14 @@ TEST_CASE("fvSolution")
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Bicgstab");
         }
+        // GAMG has no dictionary-level mapping: Ginkgo's Multigrid needs mg_level /
+        // coarse_solver entries this mapper cannot synthesise. It must be rejected here
+        // rather than reaching Ginkgo, which fails with an opaque config error instead.
+        SECTION("GAMG is rejected")
+        {
+            solver1.insert("solver", std::string("GAMG"));
+            REQUIRE_THROWS_AS(NeoFOAM::updateSolver(solver1), std::runtime_error);
+        }
     }
 
     SECTION("updatePreconditioner")
