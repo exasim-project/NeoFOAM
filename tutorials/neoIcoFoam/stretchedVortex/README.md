@@ -112,25 +112,35 @@ viscosity opposing it. That is worth being able to look at.
 
 ## Results
 
-Run with `NPROCS=4 ./Allrun -par`. The figures cover the first 2 s of the 6 s run.
+Run to `endTime 6` on 4 ranks (`NPROCS=4 ./Allrun -par`).
 
 ![mid-plane swirl and approach to equilibrium](doc/vortexOverview.png)
 
-The core contracts (`r_peak` 0.675 -> 0.425) and the swirl amplifies
-(`u_theta` 0.169 -> 0.271, a factor 1.6) monotonically, as predicted. Two strain
-times is not yet enough to settle onto `delta = 0.2`.
+The core contracts and the swirl amplifies as predicted for the first ~3 s
+(`r_peak` 0.675 -> 0.392, `u_theta` 0.169 -> 0.303), but it stalls well short of
+the equilibrium `delta = 0.2` and then reverses: by `t = 6` the core has spread
+back to `r_peak = 0.808` and the peak swirl has fallen to 0.260.
 
 ![meridional structure](doc/vortexStructure.png)
 
-The meridional plane shows the expected Burgers topology: radial inflow at the
-sides, a dividing layer at `z = 0`, axial outflow towards top and bottom, and
-`u_z = a z` as imposed.
+The meridional plane still shows the Burgers topology -- radial inflow at the
+sides, a dividing layer at `z = 0`, axial outflow towards top and bottom -- but
+weaker than imposed.
 
-## Caveat
+## Caveat: the imposed strain is not maintained
 
-The square domain with an analytic `fixedValue` inflow on its sides is not
-axisymmetric -- corners sit at `r = 1.4`, mid-edges at `r = 1.0` -- and the
-mismatch propagates inwards as a four-lobed pattern. On the ring `r = 0.95` the
-azimuthal spread of `u_theta` is 0.152-0.156 at `t = 0` but 0.10-0.25 at
-`t = 1`. The core is still clean at `t = 2`, but the outer field is not; a wider
-box or a cylindrical mesh would remove it.
+The reversal is not the physics; the driving strain decays away. The mean `u_z`
+on the `z = 0.39` plane should stay at `a z`, and it does not: it drops by half
+within the first write interval and reaches 4 % of the imposed value by `t = 6`,
+even though the `fixedValue` side patches are unchanged. The same case run with
+OpenFOAM's `icoFoam` (identical mesh, boundary conditions and schemes -- set
+`application icoFoam` and re-run) holds the strain at `a z` to machine accuracy
+and contracts the core faster, reaching `r_peak = 0.325` at `t = 2` where
+`neoIcoFoam` reaches 0.392.
+
+![strain comparison](doc/strainComparison.png)
+
+A second, smaller issue is the square domain itself: the analytic `fixedValue`
+inflow on its sides is not axisymmetric -- corners sit at `r = 1.4`, mid-edges at
+`r = 1.0` -- and the mismatch propagates inwards as a four-lobed pattern in the
+outer field. A wider box or a cylindrical mesh would remove that one.
