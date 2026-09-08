@@ -264,17 +264,21 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    nnfvcc::SurfaceField&lt;scalar&gt; nuEff_;</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    nnfvcc::SurfaceField&lt;scalar&gt; nuTildaEff_;</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span> </div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <span class="comment">// Cached operators (constructed once)</span></div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    nnfvcc::GaussGreenGrad gradOp_;</div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    nnfvcc::SurfaceInterpolation&lt;scalar&gt; surfInterp_;</div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span> </div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>    <span class="comment">// SA-DDES model coefficients</span></div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    <a class="code hl_struct" href="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html">Coefficients</a> coeffs_;</div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    <a class="code hl_typedef" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> cw1_;</div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span>};</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <span class="comment">// Cached gradient operators, runtime-selected from gradSchemes so grad(U) (tensor) and</span></div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    <span class="comment">// grad(nuTilda) honour the configured scheme (e.g. cellLimited). Shared with RunTime&#39;s</span></div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    <span class="comment">// gradScheme cache; the exec/mesh constructors own a Gauss-Green default instead, as</span></div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>    <span class="comment">// no scheme dictionary is available there.</span></div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span>    std::shared_ptr&lt;nnfvcc::GradOperatorFactory&lt;Vec3&gt;&gt; gradUOp_;</div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span>    std::shared_ptr&lt;nnfvcc::GradOperatorFactory&lt;Vec3&gt;&gt; gradNuTildaOp_;</div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span>    nnfvcc::SurfaceInterpolation&lt;scalar&gt; surfInterp_;</div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    <span class="comment">// SA-DDES model coefficients</span></div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    <a class="code hl_struct" href="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html">Coefficients</a> coeffs_;</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    <a class="code hl_typedef" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> cw1_;</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>};</div>
 </div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span> </div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aclassNeoFOAM_1_1MeshAdapter_html"><div class="ttname"><a href="classNeoFOAM_1_1MeshAdapter.html">NeoFOAM::MeshAdapter</a></div><div class="ttdef"><b>Definition</b> <a href="meshAdapter_8hpp_source.html#l00038">meshAdapter.hpp:39</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1SpalartAllmarasDDES_html"><div class="ttname"><a href="classNeoFOAM_1_1SpalartAllmarasDDES.html">NeoFOAM::SpalartAllmarasDDES</a></div><div class="ttdoc">Spalart-Allmaras DDES turbulence model.</div><div class="ttdef"><b>Definition</b> <a href="spalartAllmarasDDES_8hpp_source.html#l00033">spalartAllmarasDDES.hpp:34</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1SpalartAllmarasDDES_html_a133b9e8bdac102261ee8dd1ee9f64444"><div class="ttname"><a href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a133b9e8bdac102261ee8dd1ee9f64444">NeoFOAM::SpalartAllmarasDDES::calcMagSqrVec</a></div><div class="ttdeci">void calcMagSqrVec(nnfvcc::VolumeField&lt; scalar &gt; &amp;magSqr, const nnfvcc::VolumeField&lt; Vec3 &gt; &amp;in) const</div></div>
@@ -306,7 +310,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="ttc" id="apde_8hpp_html"><div class="ttname"><a href="pde_8hpp.html">pde.hpp</a></div></div>
 <div class="ttc" id="apressureVelocityCoupling_8hpp_html_acc912e7a5a44b028589fda3fd76ba7ea"><div class="ttname"><a href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a></div><div class="ttdeci">NeoN::scalar scalar</div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00011">pressureVelocityCoupling.hpp:11</a></div></div>
 <div class="ttc" id="apressureVelocityCoupling_8hpp_html_ae261b7f2859c508a432e8a334ad179d2"><div class="ttname"><a href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a></div><div class="ttdeci">NeoN::Vec3 Vec3</div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00012">pressureVelocityCoupling.hpp:12</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00018">runTime.hpp:19</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00021">runTime.hpp:22</a></div></div>
 <div class="ttc" id="astructNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients_html"><div class="ttname"><a href="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html">NeoFOAM::SpalartAllmarasDDES::Coefficients</a></div><div class="ttdef"><b>Definition</b> <a href="spalartAllmarasDDES_8hpp_source.html#l00041">spalartAllmarasDDES.hpp:42</a></div></div>
 <div class="ttc" id="astructNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients_html_a32019687db57a01df8b7b8b442c04055"><div class="ttname"><a href="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#a32019687db57a01df8b7b8b442c04055">NeoFOAM::SpalartAllmarasDDES::Coefficients::Cw2</a></div><div class="ttdeci">scalar Cw2</div><div class="ttdef"><b>Definition</b> <a href="spalartAllmarasDDES_8hpp_source.html#l00047">spalartAllmarasDDES.hpp:47</a></div></div>
 <div class="ttc" id="astructNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients_html_a3e6244b9c2f0101dbf042819d6f34ac3"><div class="ttname"><a href="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#a3e6244b9c2f0101dbf042819d6f34ac3">NeoFOAM::SpalartAllmarasDDES::Coefficients::Cv1</a></div><div class="ttdeci">scalar Cv1</div><div class="ttdef"><b>Definition</b> <a href="spalartAllmarasDDES_8hpp_source.html#l00049">spalartAllmarasDDES.hpp:49</a></div></div>

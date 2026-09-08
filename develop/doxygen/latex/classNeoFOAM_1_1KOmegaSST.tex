@@ -52,7 +52,9 @@ void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a016a735a33d7a93e62ccd0e566d507d
 void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a2ee8df7bd15c58d68c63a5506708e571}{correct\+Nut\+Internal}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&k, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&omega, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut) const
 \begin{DoxyCompactList}\small\item\em Update nut internal vector from new k, omega and current grad\+UTmp\+\_\+ (S2). \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a51802407e31708f1d17d7f5a82dde61f}{calc\+Diffusivities}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut)
-\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current nut and F1\+Tmp\+\_\+. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current nut and F1\+Tmp\+\_\+. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a1c498529d562fe4138daa0cd035e31b8}{set\+Grad\+UOperator}} (std\+::shared\+\_\+ptr$<$ nnfvcc\+::\+Grad\+Operator\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ op)
+\begin{DoxyCompactList}\small\item\em Replace the default Gauss-\/\+Green tensor-\/gradient operator with the grad\+Schemes-\/configured one, so grad(\+U) honours e.\+g. cell\+Limited. Used by the Run\+Time-\/constructed wrapper, which alone can reach the schemes dictionary. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -241,6 +243,20 @@ Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00132}{132}} of file 
 
 
 Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00130}{130}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSST_a1c498529d562fe4138daa0cd035e31b8}\label{classNeoFOAM_1_1KOmegaSST_a1c498529d562fe4138daa0cd035e31b8} 
+\index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!setGradUOperator@{setGradUOperator}}
+\index{setGradUOperator@{setGradUOperator}!NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}}
+\doxysubsubsection{\texorpdfstring{setGradUOperator()}{setGradUOperator()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SST\+::set\+Grad\+UOperator (\begin{DoxyParamCaption}\item[{std\+::shared\+\_\+ptr$<$ nnfvcc\+::\+Grad\+Operator\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$}]{op }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Replace the default Gauss-\/\+Green tensor-\/gradient operator with the grad\+Schemes-\/configured one, so grad(\+U) honours e.\+g. cell\+Limited. Used by the Run\+Time-\/constructed wrapper, which alone can reach the schemes dictionary. 
+
+
+
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00174}{174}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_ab9773af332df7754762363eef11381a5}\label{classNeoFOAM_1_1KOmegaSST_ab9773af332df7754762363eef11381a5} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!spKField@{spKField}}

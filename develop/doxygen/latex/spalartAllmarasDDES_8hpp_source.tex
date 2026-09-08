@@ -181,15 +181,19 @@
 \DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00249}00249\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuEff\_;}
 \DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00250}00250\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuTildaEff\_;}
 \DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00251}00251\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00252}00252\ \ \ \ \ \textcolor{comment}{//\ Cached\ operators\ (constructed\ once)}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00253}00253\ \ \ \ \ nnfvcc::GaussGreenGrad\ gradOp\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00254}00254\ \ \ \ \ nnfvcc::SurfaceInterpolation<scalar>\ surfInterp\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00255}00255\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00256}00256\ \ \ \ \ \textcolor{comment}{//\ SA-\/DDES\ model\ coefficients}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00257}00257\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}}\ coeffs\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00258}00258\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cw1\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00259}00259\ \};}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00260}00260\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00261}00261\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00252}00252\ \ \ \ \ \textcolor{comment}{//\ Cached\ gradient\ operators,\ runtime-\/selected\ from\ gradSchemes\ so\ grad(U)\ (tensor)\ and}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00253}00253\ \ \ \ \ \textcolor{comment}{//\ grad(nuTilda)\ honour\ the\ configured\ scheme\ (e.g.\ cellLimited).\ Shared\ with\ RunTime's}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00254}00254\ \ \ \ \ \textcolor{comment}{//\ gradScheme\ cache;\ the\ exec/mesh\ constructors\ own\ a\ Gauss-\/Green\ default\ instead,\ as}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00255}00255\ \ \ \ \ \textcolor{comment}{//\ no\ scheme\ dictionary\ is\ available\ there.}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00256}00256\ \ \ \ \ std::shared\_ptr<nnfvcc::GradOperatorFactory<Vec3>>\ gradUOp\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00257}00257\ \ \ \ \ std::shared\_ptr<nnfvcc::GradOperatorFactory<Vec3>>\ gradNuTildaOp\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00258}00258\ \ \ \ \ nnfvcc::SurfaceInterpolation<scalar>\ surfInterp\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00260}00260\ \ \ \ \ \textcolor{comment}{//\ SA-\/DDES\ model\ coefficients}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00261}00261\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}}\ coeffs\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00262}00262\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cw1\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00263}00263\ \};}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00264}00264\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00265}00265\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
