@@ -206,7 +206,11 @@ KOmegaSST::KOmegaSST(
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , gradOp_(exec, mesh)
-    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(exec, mesh, NeoN::TokenList({std::string("Gauss"), std::string("linear")})))
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , omegaWallValueTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
