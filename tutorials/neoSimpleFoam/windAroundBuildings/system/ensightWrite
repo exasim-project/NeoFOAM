@@ -1,0 +1,24 @@
+// -*- C++ -*-
+// Minimal example of using the ensight write function object.
+// Many more options possible
+ensightWrite
+{
+    type    ensightWrite;
+    libs    (utilityFunctionObjects);
+    log     true;
+
+    nodeValues  true;
+
+    // Fields to output (words or regex)
+    fields  (U p "(k|epsilon|omega)");
+
+    // Limit output region
+    bounds  (0 0 0) (245 180 80);
+
+    //- Write more frequent than fields
+    writeControl    timeStep;
+    writeInterval   5;
+}
+
+
+// ************************************************************************* //
