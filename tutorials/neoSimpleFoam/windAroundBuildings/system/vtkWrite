@@ -1,0 +1,89 @@
+// -*- C++ -*-
+// Minimal example of using the vtkWrite function object.
+vtkWrite
+{
+    type    vtkWrite;
+    libs    (utilityFunctionObjects);
+    log     true;
+
+    //- Write more frequent than fields
+    writeControl    timeStep;
+    writeInterval   25;
+
+    // Fields to output (words or regex)
+    fields  (U p "(k|epsilon|omega)");
+
+    //- Output format (ascii | binary) - Default=binary
+    // format  binary;
+
+    //- Use legacy output format - Default=false
+    // legacy  false;
+
+    //- Output directory name - Default="postProcessing/<name>"
+    // directory       "VTK";
+
+    //- Write cell ids as field - Default=true
+    writeIds    false;
+
+    //- These patches are uninteresting
+    excludePatches ( inlet outlet frontAndBack );
+}
+
+subset
+{
+    type    vtkWrite;
+    libs    (utilityFunctionObjects);
+    log     true;
+
+    //- Write more frequent than fields
+    writeControl    timeStep;
+    writeInterval   25;
+
+    // boundary    false;
+
+    interpolate true;
+
+    // Fields to output (words or regex)
+    fields      (U p);
+
+    //- Write cell ids as field - Default=true
+    writeIds    false;
+
+    //- These patches are uninteresting
+    excludePatches ( inlet outlet frontAndBack );
+
+    // Region of interest
+    selection
+    {
+        dome
+        {
+            action  use;
+            source  sphere;
+            origin  (125 100 0);
+            radius  100;
+        }
+        cylinder
+        {
+            action  subtract;
+            source  cylinder;
+            point1  (125 100 0);
+            point2  (125 100 100);
+            radius  20;
+        }
+        outlet
+        {
+            action  add;
+            source  box;
+            box     (300 -100 -100) (330 250 100);
+        }
+        clipping
+        {
+            action  subset;
+            source  box;
+            box     (-1000 -1000 -1000) (1000 1000 50);
+        }
+    }
+}
+
+
+// ************************************************************************* //
