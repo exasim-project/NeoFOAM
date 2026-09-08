@@ -35,13 +35,16 @@ void updateSolver(NeoN::Dictionary& solverDict)
     auto mapEntry = solverMap.find(solverName);
     if (mapEntry != solverMap.end())
     {
-        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
-        solverName = mapEntry->second.first;
+        // Reject before the rename below: solverName is a reference INTO the dictionary,
+        // so assigning mapEntry->second.first to it would overwrite the OpenFOAM name
+        // with "Ginkgo" and make this check unreachable for every solver.
         if (solverName == "GAMG")
         {
             throw std::runtime_error("\nGAMG Solver is not supported in NeoFOAM via dictionary "
                                      "entry, use configFile instead\n");
         }
+        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
+        solverName = mapEntry->second.first;
         solverDict.insert("type", mapEntry->second.second);
     }
 }

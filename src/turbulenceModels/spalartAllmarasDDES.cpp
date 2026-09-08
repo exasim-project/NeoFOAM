@@ -4,6 +4,7 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp"
+#include "NeoFOAM/auxiliary/bound.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
@@ -540,17 +541,10 @@ void SpalartAllmarasDDES::correct(
     );
     nuTildaEqn.solve();
 
-    // Bound nuTilda >= 0
-    {
-        auto nuTildaV = nuTilda.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(nuTilda.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { nuTildaV[i] = Kokkos::max(nuTildaV[i], scalar(0)); },
-            "SA-DDES::boundNuTilda"
-        );
-        nuTilda.correctBoundaryConditions();
-    }
+    // Bound nuTilda >= 0. bound() refills cells that undershot to zero or below from the
+    // neighbourhood, as OpenFOAM does; a plain clamp pins them at the floor.
+    bound(nuTilda, nuTildaMin_, boundCache_);
+    nuTilda.correctBoundaryConditions();
 
     calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff_);
     correctNut(nut, surfNut, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);

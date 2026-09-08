@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "NeoFOAM/auxiliary/bound.hpp"
+
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pde.hpp"
@@ -154,6 +156,15 @@ private:
 
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
+
+    // Lower bounds applied to k and epsilon after each solve, as OpenFOAM's kMin_/epsilonMin_.
+    // They floor the field; cells that undershoot to zero or below are refilled from the
+    // neighbourhood by bound() rather than pinned here.
+    scalar kMin_ = 0.0;
+    scalar epsilonMin_ = 1e-10;
+
+    // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
+    mutable BoundCache boundCache_;
 
     // Constant physics inputs (held by reference — must outlive this object)
     const nnfvcc::VolumeField<scalar>& nu_;
