@@ -140,12 +140,17 @@ dividing layer at `z = 0`, and axial outflow towards top and bottom with
 
 ![vortex animation](doc/stretchedVortex.gif)
 
-Left: the mid-plane swirl with streamlines of the in-plane velocity -- fluid
-spirals inward, carrying angular momentum to smaller radii, and the spiral
-tightens as the core contracts onto the dashed equilibrium radius. Right: the
-meridional plane, where the dividing layer at `z = 0` and the axial outflow that
-does the stretching hold steady for the whole run. Colour scales are fixed across
-frames. `doc/stretchedVortex.mp4` is the same animation at full resolution.
+The translucent surface is the locus of peak `u_theta` along every radial ray,
+sampled on a cylindrical grid: its shape is the contracting core, its colour the
+peak swirl on that surface (fixed 0.15-0.50 scale, so the intensification shows
+as brightening). The dark lines are RK4 traces of the instantaneous 3D velocity
+field, seeded on two rings hugging the mid-plane; they spiral inward, wind around
+the core and leave along the axis. The winding tightens from about 0.7 turns per
+trace at `t = 1` to 2.2 at `t = 6` -- angular momentum transported to smaller
+radii, which is the point of the case. The floor carries mid-plane `u_theta`
+contours for context and the camera rotates 40 degrees over the run.
+
+`doc/stretchedVortex.mp4` is the same animation at full resolution.
 
 ## Verification
 
