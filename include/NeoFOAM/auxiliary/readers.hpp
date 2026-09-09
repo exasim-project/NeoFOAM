@@ -87,15 +87,22 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"fixedValue",
          [](auto& dict)
          {
+             dict.insert("type", std::string("fixedValue"));
+
+             // A nonuniform patch value (`value nonuniform List<vector> ...`, as written by
+             // setExprBoundaryFields, mapFields or decomposePar) parses to a single token, so
+             // the uniform path below cannot read it. readVolBoundaryConditions has already
+             // copied the per-face values straight off the OpenFOAM patch field in that case.
+             if (dict.contains("fixedValues"))
+             {
+                 return;
+             }
+
              NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
              auto fixedValue = NeoN::zero<type_primitive_t>();
 
-             // NOTE FIXME in parallel cases we end up with token.size ==1
-             // leading to nonuniform as first token. This  means probably that
-             // parsing the foam dictionary aborts early and omits 0();
              if (tokenList.size() > 1)
              {
-                 dict.insert("type", std::string("fixedValue"));
                  // OpenFOAM classifies each numeric token independently: a literal
                  // with a decimal point is a SCALAR, a bare integer is a LABEL. A
                  // single vector value can therefore mix the two (e.g. `(0.1 0 0)`
@@ -120,9 +127,13 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              }
              else
              {
-                 // FIXME is this an empty boundary?
-                 dict.insert("type", std::string("empty"));
-                 // left blank
+                 // Never silently degrade to a patch that contributes nothing: an unreadable
+                 // fixedValue patch drops the boundary out of the assembled system, and the
+                 // solver then converges happily on the wrong problem.
+                 throw std::runtime_error(
+                     "Could not read the 'value' entry of a fixedValue patch: got "
+                     + std::to_string(tokenList.size()) + " token(s)."
+                 );
              }
          }},
         {"uniformFixedValue",
@@ -214,6 +225,19 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         it->second(dict);
     };
 
+    // The OpenFOAM patch field is the authority on the boundary values: it holds one value per
+    // face whether the file said `uniform` or `nonuniform List<...>`. Hand those to the BC
+    // directly instead of trying to recover them from the dictionary tokens, which only works
+    // for the uniform form.
+    auto insertPatchValues = [&](const Foam::word& patchName, NeoN::Dictionary& dict)
+    {
+        const auto patchID = ofVolField.mesh().boundaryMesh().findPatchID(patchName);
+        if (patchID < 0) return;
+        const auto& patchField = ofVolField.boundaryField()[patchID];
+        const auto* begin = reinterpret_cast<const type_primitive_t*>(patchField.cdata());
+        dict.insert("fixedValues", std::vector<type_primitive_t>(begin, begin + patchField.size()));
+    };
+
     int patchi = 0;
     std::vector<fvcc::VolumeBoundary<type_primitive_t>> bcs;
     // do non processor first
@@ -224,6 +248,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         if (bcType != "processor")
         {
             NeoN::Dictionary neoPatchDict = convert(patchDict);
+            if (bcType == "fixedValue") insertPatchValues(bName, neoPatchDict);
             applyVolInserter(bName, bcType, neoPatchDict);
             bcs.emplace_back(nfMesh, neoPatchDict, patchi);
             patchi++;
