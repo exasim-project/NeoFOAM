@@ -60,6 +60,7 @@ system/setExprFieldsDict          analytic initial condition
 system/setExprBoundaryFieldsDict  analytic lateral inflow values
 system/{controlDict,fvSchemes,fvSolution,decomposeParDict}
 coreHistory.py                    core radius + peak swirl vs. Burgers theory
+doc/                              result figures and the animation
 ```
 
 ## Running
@@ -134,6 +135,17 @@ Double the `blockMeshDict` counts for a resolution check.
 The meridional plane shows the expected topology: radial inflow at the sides, a
 dividing layer at `z = 0`, and axial outflow towards top and bottom with
 `u_z = a z` held to 1e-5 for the whole run.
+
+## Animation
+
+![vortex animation](doc/stretchedVortex.gif)
+
+Left: the mid-plane swirl with streamlines of the in-plane velocity -- fluid
+spirals inward, carrying angular momentum to smaller radii, and the spiral
+tightens as the core contracts onto the dashed equilibrium radius. Right: the
+meridional plane, where the dividing layer at `z = 0` and the axial outflow that
+does the stretching hold steady for the whole run. Colour scales are fixed across
+frames. `doc/stretchedVortex.mp4` is the same animation at full resolution.
 
 ## Verification
 
