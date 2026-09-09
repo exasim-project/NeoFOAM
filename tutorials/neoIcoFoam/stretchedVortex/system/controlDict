@@ -54,7 +54,10 @@ timeFormat      general;
 
 timePrecision   6;
 
-runTimeModifiable true;
+// false: with runTimeModifiable on, a parallel run re-reads this file whenever
+// its timestamp changes and looks for processor0/system/controlDict, which does
+// not exist -- the run then dies mid-solve.
+runTimeModifiable false;
 
 adjustTimeStep  no;
 
