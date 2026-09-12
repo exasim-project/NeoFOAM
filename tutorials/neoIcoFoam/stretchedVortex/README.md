@@ -86,6 +86,8 @@ system/setExprFieldsDict          analytic initial condition
 system/setExprBoundaryFieldsDict  analytic values on every patch
 system/{controlDict,fvSchemes,fvSolution,decomposeParDict}
 coreHistory.py                    core radius + peak swirl vs. exact delta(t)
+stretchedVortex.pvsm              ParaView state reproducing the animation
+makeParaViewState.py              regenerates that state with pvpython
 doc/                              result figures and the animation
 ```
 
@@ -187,6 +189,34 @@ of the case. The floor carries mid-plane `u_theta` contours and the camera
 rotates 40 degrees over the run.
 
 `doc/stretchedVortex.mp4` is the same animation at full resolution.
+
+### Reproducing it in ParaView
+
+`stretchedVortex.pvsm` is a ParaView state that builds the same picture from the
+written fields -- run the case, then from this directory:
+
+```bash
+paraview --state=stretchedVortex.pvsm
+```
+
+The state references `case.foam` relatively, so it resolves against whichever
+copy of the case you load it from. It sets up:
+
+- an iso-surface of `|omega| = 1` for the core, coloured by `u_theta`. Vorticity
+  decays monotonically outwards so one level gives one tube; an iso-surface of
+  `u_theta` has two branches -- inside and outside the swirl peak -- and the
+  outer shell hides the core. On the axis `|omega| = Gamma/(pi delta^2)`, so it
+  grows 0.88 -> 8 as the core contracts and the tube first appears at `t ~ 0.25`;
+- streamlines seeded on a line through the mid-plane, tubed for visibility;
+- the mid-plane slice coloured by `u_theta` for context.
+
+Press play to animate over the 60 written times. `makeParaViewState.py`
+regenerates the state (`pvpython makeParaViewState.py case.foam out.pvsm`) if you
+want to change the levels or the seeding.
+
+Built with ParaView 5.13. Note that `FeatureEdges` on this reader's output
+segfaults 5.13, which is why the domain outline uses the reader's own outline
+representation.
 
 ## Caveat
 
