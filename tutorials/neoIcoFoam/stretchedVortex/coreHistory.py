@@ -32,11 +32,23 @@ import os
 import re
 import sys
 
-# Must match system/blockMeshDict and system/setExprFieldsDict.
-NX, NY, NZ = 64, 64, 48
-XMIN, XMAX = -1.0, 1.0
-YMIN, YMAX = -1.0, 1.0
-ZMIN, ZMAX = -0.75, 0.75
+def read_mesh(path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "system", "blockMeshDict")):
+    """Cell counts and extents, read from blockMeshDict so setMeshDensity.py is
+    the only place the resolution is written down."""
+    text = open(path).read()
+    hexa = re.search(r"hex \(0 1 2 3 4 5 6 7\)\s*\(\s*(\d+)\s+(\d+)\s+(\d+)", text)
+    verts = re.findall(r"^\s*\(\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\)", text, re.M)
+    if not hexa or len(verts) < 8:
+        sys.exit("could not read the mesh from " + path)
+    counts = tuple(int(hexa.group(i)) for i in (1, 2, 3))
+    pts = [tuple(float(v) for v in p) for p in verts]
+    lo = tuple(min(p[i] for p in pts) for i in range(3))
+    hi = tuple(max(p[i] for p in pts) for i in range(3))
+    return counts, lo, hi
+
+
+(NX, NY, NZ), (XMIN, YMIN, ZMIN), (XMAX, YMAX, ZMAX) = read_mesh()
 
 NU = 0.01  # constant/transportProperties
 A = 1.0  # strain rate

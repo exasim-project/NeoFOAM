@@ -49,8 +49,22 @@ and the case has a known answer at **every** write time, not just at the end:
 | peak `u_theta` `0.638 Gamma / (2 pi delta(t))` | 0.169 | 0.352 | 0.503 | 0.508 |
 
 `coreHistory.py` measures both and prints the error against this solution.
-`delta = 0.2` is about 6.4 cells, which is thin but adequate; double the
-`blockMeshDict` counts for a resolution check.
+`delta = 0.2` is about 6.4 cells, which is thin but adequate.
+
+For a resolution study use `setMeshDensity.py` rather than editing the dict:
+
+```bash
+python3 setMeshDensity.py 2 --deltaT   # twice the cells per direction, Courant held
+python3 setMeshDensity.py 0.5          # half
+python3 setMeshDensity.py --dx 0.02    # target a spacing instead
+```
+
+It rewrites the cell counts in `blockMeshDict`, reports how many cells span
+`delta` and what the Courant number becomes, and optionally scales `deltaT` to
+hold it. Counts are forced even and the mesh stays uniform: the prescribed
+boundary flux balances only because cell centres are symmetric about the axis
+(see "Setup"), and `coreHistory.py` reads the counts back out of the dict so it
+follows along.
 
 Boundary conditions: velocity is `fixedValue` from the analytic field on **every**
 patch, including `top`/`bottom`. The exact solution has `du_z/dz = a` there, so
@@ -88,6 +102,7 @@ system/{controlDict,fvSchemes,fvSolution,decomposeParDict}
 coreHistory.py                    core radius + peak swirl vs. exact delta(t)
 stretchedVortex.pvsm              ParaView state reproducing the animation
 makeParaViewState.py              regenerates that state with pvpython
+setMeshDensity.py                 rescale the mesh for a resolution study
 doc/                              result figures and the animation
 ```
 
