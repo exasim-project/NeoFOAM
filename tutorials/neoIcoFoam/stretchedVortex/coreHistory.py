@@ -5,7 +5,19 @@
 
 Reads the ascii ``U`` files written by ``neoIcoFoam`` in this case, extracts the
 mid-plane azimuthal velocity profile, and compares the measured core radius and
-peak swirl against the analytic Burgers equilibrium.
+peak swirl against the exact unsteady Burgers solution at every write time, not
+just against the final equilibrium.
+
+The relaxation of a Gaussian-cored vortex under uniform axial strain has a
+closed-form solution: with vorticity ``omega = (Gamma/pi delta^2) exp(-r^2/delta^2)``
+the full Navier-Stokes system is satisfied exactly by
+
+    delta(t)^2 = 4 nu / a + (delta_0^2 - 4 nu / a) exp(-a t)
+
+so the core radius relaxes exponentially onto ``delta_eq = sqrt(4 nu / a)`` at
+rate ``a``. That makes this a verification case with a known answer throughout
+the transient, which is what lets the boundary treatment be checked rather than
+assumed.
 
 Assumes the single-block uniform mesh from ``system/blockMeshDict``: blockMesh
 numbers cells with i fastest, then j, then k, so the cell centre of index
@@ -21,18 +33,23 @@ import re
 import sys
 
 # Must match system/blockMeshDict and system/setExprFieldsDict.
-NX, NY, NZ = 64, 64, 32
+NX, NY, NZ = 64, 64, 48
 XMIN, XMAX = -1.0, 1.0
 YMIN, YMAX = -1.0, 1.0
-ZMIN, ZMAX = -0.5, 0.5
+ZMIN, ZMAX = -0.75, 0.75
 
 NU = 0.01  # constant/transportProperties
 A = 1.0  # strain rate
 GAMMA = 1.0  # circulation
 R0_INIT = 0.6  # initial core radius
 
-# Burgers equilibrium: u_theta = Gamma/(2 pi r) * (1 - exp(-r^2/delta^2))
+# Burgers: u_theta = Gamma/(2 pi r) * (1 - exp(-r^2/delta^2))
 DELTA_EQ = math.sqrt(4.0 * NU / A)
+
+
+def delta_exact(t):
+    """Exact core radius at time t (see module docstring)."""
+    return math.sqrt(DELTA_EQ**2 + (R0_INIT**2 - DELTA_EQ**2) * math.exp(-A * t))
 # max of (1 - exp(-s^2))/s occurs at s ~ 1.1209 with value ~ 0.63817
 S_PEAK, F_PEAK = 1.12091, 0.63817
 
@@ -109,27 +126,27 @@ def main():
     if not times:
         sys.exit("No time directories with a U field found. Run ./Allrun first.")
 
-    u_eq = F_PEAK * GAMMA / (2.0 * math.pi * DELTA_EQ)
-    r_eq = S_PEAK * DELTA_EQ
-    u_init = F_PEAK * GAMMA / (2.0 * math.pi * R0_INIT)
-    r_init = S_PEAK * R0_INIT
+    def analytic(t):
+        d = delta_exact(t)
+        return S_PEAK * d, F_PEAK * GAMMA / (2.0 * math.pi * d)
 
     rows = []
     for t, name in times:
-        r_peak, u_peak = peak(midplane_swirl(read_internal_vectors(os.path.join(name, "U"))))
-        rows.append((t, r_peak, u_peak))
+        r_num, u_num = peak(midplane_swirl(read_internal_vectors(os.path.join(name, "U"))))
+        r_ex, u_ex = analytic(t)
+        rows.append((t, r_num, u_num, r_ex, u_ex, 100.0 * (u_num - u_ex) / u_ex))
 
     with open("coreHistory.csv", "w") as fh:
-        fh.write("time,r_peak,uTheta_peak\n")
-        for t, r_peak, u_peak in rows:
-            fh.write(f"{t:g},{r_peak:.6g},{u_peak:.6g}\n")
+        fh.write("time,r_peak,uTheta_peak,r_exact,uTheta_exact,error_percent\n")
+        for row in rows:
+            fh.write("{:g},{:.6g},{:.6g},{:.6g},{:.6g},{:.4g}\n".format(*row))
 
-    print(f"analytic initial   : r_peak = {r_init:.4f}  uTheta_peak = {u_init:.4f}")
-    print(f"analytic equilibrium: r_peak = {r_eq:.4f}  uTheta_peak = {u_eq:.4f}")
+    r_eq, u_eq = S_PEAK * DELTA_EQ, F_PEAK * GAMMA / (2.0 * math.pi * DELTA_EQ)
+    print(f"equilibrium: delta = {DELTA_EQ:.4f}  r_peak = {r_eq:.4f}  uTheta_peak = {u_eq:.4f}")
     print()
-    print(f"{'time':>8}{'r_peak':>12}{'uTheta_peak':>14}{'u/u_init':>12}")
-    for t, r_peak, u_peak in rows:
-        print(f"{t:>8g}{r_peak:>12.4f}{u_peak:>14.4f}{u_peak / u_init:>12.2f}")
+    print(f"{'time':>7}{'r_peak':>10}{'r_exact':>10}{'uTheta':>10}{'uTheta_ex':>11}{'err %':>9}")
+    for t, r_num, u_num, r_ex, u_ex, err in rows:
+        print(f"{t:>7g}{r_num:>10.4f}{r_ex:>10.4f}{u_num:>10.4f}{u_ex:>11.4f}{err:>9.1f}")
     print("\nWrote coreHistory.csv")
 
     try:
@@ -141,14 +158,17 @@ def main():
         return
 
     ts = [r[0] for r in rows]
+    fine = [ts[0] + i * (ts[-1] - ts[0]) / 200.0 for i in range(201)] if len(ts) > 1 else ts
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(10, 4))
-    ax0.plot(ts, [r[1] for r in rows], "o-", label="measured")
-    ax0.axhline(r_eq, ls="--", c="k", label="Burgers equilibrium")
+    ax0.plot(ts, [r[1] for r in rows], "o", label="computed")
+    ax0.plot(fine, [analytic(t)[0] for t in fine], "-", c="k", label="exact")
+    ax0.axhline(r_eq, ls=":", c="0.5", label="equilibrium")
     ax0.set_xlabel("t [s]")
     ax0.set_ylabel(r"core radius $r_{peak}$ [m]")
     ax0.legend()
-    ax1.plot(ts, [r[2] for r in rows], "o-", label="measured")
-    ax1.axhline(u_eq, ls="--", c="k", label="Burgers equilibrium")
+    ax1.plot(ts, [r[2] for r in rows], "o", label="computed")
+    ax1.plot(fine, [analytic(t)[1] for t in fine], "-", c="k", label="exact")
+    ax1.axhline(u_eq, ls=":", c="0.5", label="equilibrium")
     ax1.set_xlabel("t [s]")
     ax1.set_ylabel(r"peak swirl $u_\theta$ [m/s]")
     ax1.legend()

@@ -17,7 +17,7 @@ FoamFile
 dimensions      [0 1 -1 0 0 0 0];
 
 // Placeholder values. setExprFields overwrites the internal field and
-// setExprBoundaryFields overwrites the "sides" patch values (see Allrun).
+// setExprBoundaryFields overwrites all three patches (see Allrun).
 internalField   uniform (0 0 0);
 
 boundaryField
@@ -29,16 +29,20 @@ boundaryField
         value           uniform (0 0 0);
     }
 
-    // Axial outflow above and below the mid-plane; the axial velocity there is
-    // +/- a*H/2, so both patches are outflow for the whole run.
+    // Axial outflow above and below the mid-plane. These are Dirichlet rather
+    // than zeroGradient: the exact solution has du_z/dz = a there, not zero, so
+    // zeroGradient is inconsistent with it at any mesh resolution. Velocity is
+    // therefore prescribed on every patch, which makes p all-Neumann.
     top
     {
-        type            zeroGradient;
+        type            fixedValue;
+        value           uniform (0 0 0);
     }
 
     bottom
     {
-        type            zeroGradient;
+        type            fixedValue;
+        value           uniform (0 0 0);
     }
 }
 

@@ -45,8 +45,11 @@ PISO
     momentumPredictor   yes;
     nCorrectors     2;
     nNonOrthogonalCorrectors 0;
-    // p is fixedValue on top/bottom, so these are unused; kept for parity
-    // with the other neoIcoFoam tutorials.
+    // U is prescribed on every patch, so p is Neumann everywhere and these
+    // are load-bearing: neoIcoFoam calls pEqn.setReference(pRefCell, pRefValue)
+    // whenever needReference() is true. Note that adjustPhi is still a TODO in
+    // the solver, so the prescribed boundary flux has to balance on its own --
+    // see the note in system/setExprBoundaryFieldsDict.
     pRefCell        0;
     pRefValue       0;
 }

@@ -25,18 +25,18 @@ boundaryField
         type            zeroGradient;
     }
 
-    // Fixing p on the two outflow patches pins the pressure level, so no
-    // pRefCell is needed.
+    // U is prescribed on every patch, so p is defined only up to a constant
+    // and is Neumann everywhere. The level is pinned by pRefCell/pRefValue in
+    // system/fvSolution; neoIcoFoam applies them via pEqn.setReference() when
+    // needReference() is true.
     top
     {
-        type            fixedValue;
-        value           uniform 0;
+        type            zeroGradient;
     }
 
     bottom
     {
-        type            fixedValue;
-        value           uniform 0;
+        type            zeroGradient;
     }
 }
 
