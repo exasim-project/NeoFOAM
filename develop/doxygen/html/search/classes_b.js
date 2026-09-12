@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['pde_0',['PDE',['../classNeoFOAM_1_1PDE.html',1,'NeoFOAM']]],
-  ['pimplecontrol_1',['PimpleControl',['../classNeoFOAM_1_1PimpleControl.html',1,'NeoFOAM']]]
+  ['omegawallfunction_0',['OmegaWallFunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction.html',1,'NeoN::finiteVolume::cellCentred::volumeBoundary']]]
 ];

@@ -1,7 +1,9 @@
 var searchData=
 [
-  ['makegradoperator_0',['makeGradOperator',['../namespaceNeoFOAM.html#ae4b24e9169459dcfb34d1931df618ad3',1,'NeoFOAM']]],
-  ['mapfvschemes_1',['mapFvSchemes',['../namespaceNeoFOAM.html#a152eff2c6ed8799eab60394fc259108d',1,'NeoFOAM']]],
-  ['mapfvsolution_2',['mapFvSolution',['../namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b',1,'NeoFOAM']]],
-  ['meshadapter_3',['meshadapter',['../classNeoFOAM_1_1MeshAdapter.html#af4b0769774c144cf8d2ab8bb939e6a27',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, const bool doInit=true)'],['../classNeoFOAM_1_1MeshAdapter.html#aaca2352e77f5723a5a91928625581ad3',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, const Foam::zero, bool syncPar=true)'],['../classNeoFOAM_1_1MeshAdapter.html#a86ad2242dbd1f66f91599973eab31494',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, Foam::pointField &amp;&amp;points, Foam::faceList &amp;&amp;faces, Foam::labelList &amp;&amp;allOwner, Foam::labelList &amp;&amp;allNeighbour, const bool syncPar=true)'],['../classNeoFOAM_1_1MeshAdapter.html#a1f7eb4c839cf4dd4f6db775b0629e5ec',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, Foam::pointField &amp;&amp;points, Foam::faceList &amp;&amp;faces, Foam::cellList &amp;&amp;cells, const bool syncPar=true)']]]
+  ['laminar_0',['Laminar',['../classNeoFOAM_1_1Laminar.html#a77e8c0f6fc163e3fc4bf2a8e8c58c1dd',1,'NeoFOAM::Laminar']]],
+  ['lastresult_1',['lastResult',['../classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7',1,'NeoFOAM::Forces']]],
+  ['linearsystem_2',['linearsystem',['../classNeoFOAM_1_1PDE.html#ad7837cb66df5a2d02a51079865fd9b69',1,'NeoFOAM::PDE::linearSystem()'],['../classNeoFOAM_1_1PDE.html#abf7d5b6d2580ccb4c3afdb73e06e39e9',1,'NeoFOAM::PDE::linearSystem() const']]],
+  ['lookupeqnrelaxation_3',['lookupEqnRelaxation',['../namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2',1,'NeoFOAM']]],
+  ['lookupfieldrelaxation_4',['lookupFieldRelaxation',['../namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a',1,'NeoFOAM']]],
+  ['loop_5',['loop',['../classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08',1,'NeoFOAM::PimpleControl']]]
 ];

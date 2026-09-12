@@ -2,6 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM" kind="namespace" language="C++">
     <compoundname>NeoFOAM</compoundname>
+    <innerclass refid="structNeoFOAM_1_1BoundCache" prot="public">NeoFOAM::BoundCache</innerclass>
     <innerclass refid="structNeoFOAM_1_1ContinuityErrors" prot="public">NeoFOAM::ContinuityErrors</innerclass>
     <innerclass refid="classNeoFOAM_1_1CreateFromFoamField" prot="public">NeoFOAM::CreateFromFoamField</innerclass>
     <innerclass refid="classNeoFOAM_1_1DatabaseWrapper" prot="public">NeoFOAM::DatabaseWrapper</innerclass>
@@ -338,6 +339,87 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="114" column="22" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="114" declcolumn="22"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a6cbdfd4b2fffd39d6929b34f32cb586f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool NeoFOAM::bound</definition>
+        <argsstring>(NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;vsf, const NeoN::scalar lowerBound, BoundCache &amp;cache)</argsstring>
+        <name>bound</name>
+        <qualifiedname>NeoFOAM::bound</qualifiedname>
+        <param>
+          <type>NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>vsf</declname>
+        </param>
+        <param>
+          <type>const NeoN::scalar</type>
+          <declname>lowerBound</declname>
+        </param>
+        <param>
+          <type><ref refid="structNeoFOAM_1_1BoundCache" kindref="compound">BoundCache</ref> &amp;</type>
+          <declname>cache</declname>
+        </param>
+        <briefdescription>
+<para>Bound a scalar field from below, following OpenFOAM&apos;s Foam::bound(). </para>
+        </briefdescription>
+        <detaileddescription>
+<para>A plain clamp to the lower bound is not equivalent and is actively harmful for the turbulence scalars: a cell whose solve undershoots to zero or below is pinned at a floor many orders below the physical scale of the field, and a subsequent quotient such as nu_t = Cmu k^2/eps then explodes. OpenFOAM instead REFILLS non-positive cells with the local neighbourhood value — fvc::average(max(vsf, lowerBound)), the face-area-weighted average of the linearly interpolated bounded field — and applies the floor only as an outer max. Cells that are positive but below the bound keep their value and are raised to the floor, exactly as in OpenFOAM.</para>
+<para>The min test and the reported extrema are global, so a distributed run bounds and reports the same way a serial one does.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>vsf</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[in,out] field to bound </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>lowerBound</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>the lower bound </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>cache</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[in,out] mesh-derived scratch, reused across calls </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if the field was out of bounds and has been modified </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/bound.hpp" line="44" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/bound.hpp" bodystart="44" bodyend="237"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a6e6b831af8b12c7823794018471346a6" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool NeoFOAM::bound</definition>
+        <argsstring>(NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;vsf, const NeoN::scalar lowerBound)</argsstring>
+        <name>bound</name>
+        <qualifiedname>NeoFOAM::bound</qualifiedname>
+        <param>
+          <type>NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>vsf</declname>
+        </param>
+        <param>
+          <type>const NeoN::scalar</type>
+          <declname>lowerBound</declname>
+        </param>
+        <briefdescription>
+<para><ref refid="namespaceNeoFOAM_1a6cbdfd4b2fffd39d6929b34f32cb586f" kindref="member">bound()</ref> without a caller-held cache; rebuilds the mesh scratch on every call. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Prefer the caching overload on any per-iteration path. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/bound.hpp" line="244" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/bound.hpp" bodystart="244" bodyend="251"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1adb3f301260a65dd30182893f75665a8a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
