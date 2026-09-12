@@ -9,49 +9,39 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      controlDict;
+    class       volScalarField;
+    object      k;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     neoSimpleFoam;
+kInlet          1.5;   // approx k = 1.5*(I*U)^2 ; I = 0.1
 
-startFrom       latestTime;
+dimensions      [0 2 -2 0 0 0 0];
 
-startTime       0;
+internalField   uniform $kInlet;
 
-stopAt          endTime;
-
-endTime         400;
-
-deltaT          1;
-
-writeControl    timeStep;
-
-writeInterval   50;
-
-purgeWrite      0;
-
-writeFormat     binary;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-runTimeModifiable true;
-
-functions
+boundaryField
 {
-    #include "ensightWrite"
-    #include "vtkWrite"
+    inlet
+    {
+        type            fixedValue;
+        value           uniform $kInlet;
+    }
 
-    // Demonstrate runTimePostProcessing
-    #include "visualization"
-    #include "profiling"
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      uniform $kInlet;
+        value           uniform $kInlet;
+    }
+
+    wall
+    {
+        type            kqRWallFunction;
+        value           uniform $kInlet;
+    }
+
+    #includeEtc "caseDicts/setConstraintTypes"
 }
 
 

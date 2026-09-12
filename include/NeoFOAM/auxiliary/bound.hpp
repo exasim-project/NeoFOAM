@@ -112,7 +112,7 @@ inline bool bound(
 
     // fvc::average(max(vsf, lowerBound)): face-area-weighted cell average of the linearly
     // interpolated bounded field. Accumulated per face over owner and neighbour, matching
-    // surfaceSum(magSf*ssf)/surfaceSum(magSf) over internal AND boundary faces.
+    // surfaceSum(magSf*ssf)/surfaceSum(magSf) over internal, boundary AND processor faces.
     NeoN::Vector<scalar> num(exec, nCells, scalar(0));
     auto numV = num.view();
 
@@ -158,10 +158,11 @@ inline bool bound(
     const auto [bOwners, bAreas] = NeoN::views(bMesh.faceOwners(), bMesh.faceAreas());
     const auto bVsfV = vsf.boundaryData().value().view();
     const auto nAllBoundaryFaces = vsf.boundaryData().value().size();
+    const auto nBoundaryFaces = mesh.nBoundaryFaces();
 
     NeoN::parallelFor(
         exec,
-        {0, nAllBoundaryFaces},
+        {0, nBoundaryFaces},
         NEON_LAMBDA(const localIdx bfi) {
             const auto own = bOwners[bfi];
             const scalar aSf = bAreas[bfi];
@@ -174,8 +175,42 @@ inline bool bound(
         "bound::averageBoundary"
     );
 
+    // Processor faces sit at the tail of boundaryData().value() starting at nBoundaryFaces and
+    // hold the GHOST-CELL value, not a face value. Interpolate owner and ghost with the boundary
+    // weight, so the average is the one fvc::average computes and does not depend on the
+    // decomposition.
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto bWeights = bMesh.weights().view();
+        NeoN::parallelFor(
+            exec,
+            {0, nProcFaces},
+            NEON_LAMBDA(const localIdx proci) {
+                const auto bfi = nBoundaryFaces + proci;
+                const auto own = bOwners[bfi];
+                const scalar w = bWeights[bfi];
+                const scalar bOwn = Kokkos::max(vsfV[own], lowerBound);
+                const scalar bGhost = Kokkos::max(bVsfV[bfi], lowerBound);
+                const scalar faceValue = w * bOwn + (scalar(1) - w) * bGhost;
+                const scalar aSf = bAreas[bfi];
+                Kokkos::atomic_add(&numV[own], aSf * faceValue);
+                if (buildSum)
+                {
+                    Kokkos::atomic_add(&denV[own], aSf);
+                }
+            },
+            "bound::averageProcBoundary"
+        );
+    }
+
     // max(max(vsf, average * pos0(-vsf)), lowerBound): the average only replaces cells that are
     // zero or negative; everything else keeps its value and is merely floored.
+    // Kokkos::max takes its arguments by const reference, and binding one to the namespace-scope
+    // NeoN::ROOTVSMALL would ODR-use a host-only constant from device code ("identifier
+    // NeoN::ROOTVSMALL is undefined in device code" under nvcc). Copy it into a local the lambda
+    // captures by value instead.
+    const scalar rootVSmall = NeoN::ROOTVSMALL;
     NeoN::parallelFor(
         exec,
         {0, nCells},
@@ -183,7 +218,7 @@ inline bool bound(
             // Floor the divisor rather than branch on it: the compiler if-converts such a branch
             // into an unconditional division, which would raise FE_INVALID under FOAM_SIGFPE for
             // a zero face-area sum even though the quotient is discarded.
-            const scalar avg = numV[celli] / Kokkos::max(denV[celli], NeoN::ROOTVSMALL);
+            const scalar avg = numV[celli] / Kokkos::max(denV[celli], rootVSmall);
             const scalar refill = vsfV[celli] <= scalar(0) ? avg : scalar(0);
             vsfV[celli] = Kokkos::max(Kokkos::max(vsfV[celli], refill), lowerBound);
         },
