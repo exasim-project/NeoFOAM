@@ -1,0 +1,60 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         Euler;
+    ddt(U)          Euler;
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+    grad(p)         Gauss linear;
+}
+
+// neoIcoFoam assembles dsl::imp::div(phi, U) and dsl::imp::laplacian(nu, U), so
+// those are the entries it reads. The "nf"-prefixed variants that other
+// neoIcoFoam tutorials carry (div(phi,nfU), laplacian(nfNu,nfU), ...) are not
+// looked up by this solver: setting div(phi,nfU) to a different scheme leaves
+// the result byte-identical, while changing div(phi,U) does not. They are left
+// out here so the file says what the run actually does.
+
+divSchemes
+{
+    default         none;
+    div(phi,U)      Gauss linear;
+}
+
+laplacianSchemes
+{
+    laplacian(nu,U)         Gauss linear corrected;
+    laplacian(rAUf,p)       Gauss linear corrected;
+    laplacian((1|A(U)),p)   Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         uncorrected;
+}
+
+
+// ************************************************************************* //

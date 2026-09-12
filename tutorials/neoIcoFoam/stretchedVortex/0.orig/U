@@ -1,0 +1,50 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+// Placeholder values. setExprFields overwrites the internal field and
+// setExprBoundaryFields overwrites all three patches (see Allrun).
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    // Lateral inflow: radial inflow -a*r/2 plus the swirl of the outer vortex.
+    sides
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    // Axial outflow above and below the mid-plane. These are Dirichlet rather
+    // than zeroGradient: the exact solution has du_z/dz = a there, not zero, so
+    // zeroGradient is inconsistent with it at any mesh resolution. Velocity is
+    // therefore prescribed on every patch, which makes p all-Neumann.
+    top
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    bottom
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+}
+
+
+// ************************************************************************* //

@@ -1,0 +1,130 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprBoundaryFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Velocity is prescribed on EVERY patch from the analytic Burgers field,
+// evaluated with the equilibrium core radius r0 = delta = 0.2.
+//
+// top/bottom are Dirichlet rather than zeroGradient because the exact solution
+// has du_z/dz = a there. zeroGradient imposes du_z/dz = 0, which puts an
+// O(a*dz/2) error in the outflow velocity -- first order, so refinement does
+// shrink it, but the condition is inconsistent with the solution at every
+// resolution and it is cheaper to prescribe the value that is already known.
+//
+// All three patches are nonuniform fixedValue, so this case needs a NeoFOAM
+// containing the fix for reading nonuniform patch values. Before it, such a
+// patch was silently read as "empty": every boundary would drop out of the
+// assembled system and the run would have no pressure anchor at all.
+//
+// Because neoIcoFoam does not currently call adjustPhi (see the TODO in
+// examples/neoIcoFoam/neoIcoFoam.cpp), the prescribed boundary flux must
+// balance to round-off by itself. It does, exactly:
+//   * the strain part is constant on each face, so midpoint quadrature is exact
+//     (-a*r/2 on the curved side, +a*Z on top/bottom, summing to zero);
+//   * the swirl is tangential and each side face is a chord whose normal runs
+//     through its own centre, so the swirl contributes nothing to it at all.
+// Measured residual on this mesh: see README.md.
+// Any change to these expressions or to the mesh symmetry must preserve that;
+// watch the continuity error neoIcoFoam prints each PISO iteration.
+
+U
+{
+    field   U;
+
+    expressions
+    (
+        {
+            patch   side;
+            target  value;
+
+            variables
+            (
+                "a       = 1.0"
+                "Gamma   = 1.0"
+                "r0      = 0.2"
+                "xf      = pos().x()"
+                "yf      = pos().y()"
+                "zf      = pos().z()"
+                "rsq     = sqr(xf) + sqr(yf)"
+                "omega   = (Gamma/(2*pi()))*(1 - exp(-rsq/sqr(r0)))/(rsq + 1e-12)"
+            );
+
+            expression
+            #{
+                vector
+                (
+                    -0.5*a*xf - omega*yf,
+                    -0.5*a*yf + omega*xf,
+                     a*zf
+                )
+            #};
+        }
+        {
+            patch   top;
+            target  value;
+
+            variables
+            (
+                "a       = 1.0"
+                "Gamma   = 1.0"
+                "r0      = 0.2"
+                "xf      = pos().x()"
+                "yf      = pos().y()"
+                "zf      = pos().z()"
+                "rsq     = sqr(xf) + sqr(yf)"
+                "omega   = (Gamma/(2*pi()))*(1 - exp(-rsq/sqr(r0)))/(rsq + 1e-12)"
+            );
+
+            expression
+            #{
+                vector
+                (
+                    -0.5*a*xf - omega*yf,
+                    -0.5*a*yf + omega*xf,
+                     a*zf
+                )
+            #};
+        }
+        {
+            patch   bottom;
+            target  value;
+
+            variables
+            (
+                "a       = 1.0"
+                "Gamma   = 1.0"
+                "r0      = 0.2"
+                "xf      = pos().x()"
+                "yf      = pos().y()"
+                "zf      = pos().z()"
+                "rsq     = sqr(xf) + sqr(yf)"
+                "omega   = (Gamma/(2*pi()))*(1 - exp(-rsq/sqr(r0)))/(rsq + 1e-12)"
+            );
+
+            expression
+            #{
+                vector
+                (
+                    -0.5*a*xf - omega*yf,
+                    -0.5*a*yf + omega*xf,
+                     a*zf
+                )
+            #};
+        }
+    );
+}
+
+
+// ************************************************************************* //

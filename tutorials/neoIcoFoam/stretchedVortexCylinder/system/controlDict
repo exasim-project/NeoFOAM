@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     neoIcoFoam;
+
+// NeoFOAM-specific keys (see tutorials/neoIcoFoam/tiltedCube/README.md):
+// omitting "allocator" fails immediately with
+// "FOAM FATAL IO ERROR: Entry 'allocator' not found".
+executor        GPU;
+
+allocator       default;
+
+memPoolSize     1;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+// Strain time 1/a = 1 s; viscous time across the equilibrium core
+// delta^2/nu = 4 s. Six seconds is enough to settle onto the steady state.
+endTime         6.0;
+
+// dx = 0.03125, |U|max ~ 0.55 -> Co ~ 0.09
+deltaT          5e-3;
+
+writeControl    runTime;
+
+writeInterval   0.1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  8;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+// false: with runTimeModifiable on, a parallel run re-reads this file whenever
+// its timestamp changes and looks for processor0/system/controlDict, which does
+// not exist -- the run then dies mid-solve.
+runTimeModifiable false;
+
+adjustTimeStep  no;
+
+maxCo           0.2;
+
+maxDeltaT       1;
+
+
+// ************************************************************************* //

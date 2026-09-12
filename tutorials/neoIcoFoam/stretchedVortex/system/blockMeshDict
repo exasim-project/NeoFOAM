@@ -1,0 +1,87 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1;
+
+// Box [-1,1] x [-1,1] x [-0.75,0.75], uniform dx = dy = dz = 0.03125.
+// The equilibrium Burgers core radius delta = sqrt(4*nu/a) = 0.2 is then
+// resolved by ~6.4 cells. Double the counts below for a convergence check.
+//
+// The half-height 0.75 is chosen so the top/bottom patches cannot influence
+// the core: viscous information travels sqrt(nu*T) = 0.245 over the 6 s run,
+// well short of 0.75, and the axial velocity advects away from the mid-plane
+// everywhere. See README.md, "Boundary treatment".
+
+vertices
+(
+    (-1 -1 -0.75)   // 0
+    ( 1 -1 -0.75)   // 1
+    ( 1  1 -0.75)   // 2
+    (-1  1 -0.75)   // 3
+    (-1 -1  0.75)   // 4
+    ( 1 -1  0.75)   // 5
+    ( 1  1  0.75)   // 6
+    (-1  1  0.75)   // 7
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (64 64 48) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    sides
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)   // x-min
+            (1 2 6 5)   // x-max
+            (0 1 5 4)   // y-min
+            (3 7 6 2)   // y-max
+        );
+    }
+
+    bottom
+    {
+        type patch;
+        faces
+        (
+            (0 3 2 1)   // z-min
+        );
+    }
+
+    top
+    {
+        type patch;
+        faces
+        (
+            (4 5 6 7)   // z-max
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //

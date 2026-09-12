@@ -1,0 +1,58 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-06;
+        relTol          0.01;
+    }
+
+    pFinal
+    {
+        $p;
+        tolerance       1e-07;
+        relTol          0;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  diagonal;
+        tolerance       1e-06;
+        relTol          0;
+    }
+}
+
+PISO
+{
+    momentumPredictor   yes;
+    nCorrectors     2;
+    nNonOrthogonalCorrectors 0;
+    // U is prescribed on every patch, so p is Neumann everywhere and these
+    // are load-bearing: neoIcoFoam calls pEqn.setReference(pRefCell, pRefValue)
+    // whenever needReference() is true. Note that adjustPhi is still a TODO in
+    // the solver, so the prescribed boundary flux has to balance on its own --
+    // see the note in system/setExprBoundaryFieldsDict.
+    pRefCell        0;
+    pRefValue       0;
+}
+
+
+// ************************************************************************* //

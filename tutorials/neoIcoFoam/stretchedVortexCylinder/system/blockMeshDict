@@ -1,0 +1,113 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// O-grid cylinder, radius 1, z in [-0.75, 0.75]. The domain is axisymmetric,
+// so the analytic Burgers field is imposed on a boundary the solution actually
+// has symmetry about -- a square cross-section leaves corners at r = 1.41 and
+// mid-edges at r = 1.0, and that mismatch shows up as an azimuthal ripple.
+//
+// The half-height 0.75 keeps the top/bottom patches away from the core: the
+// prescribed values use the equilibrium core while the true solution has
+// delta(t), and viscous information only travels sqrt(nu*T) = 0.245 in 6 s.
+//
+// Cell counts are set by setMeshDensity.py; keep them even so cell centres stay
+// symmetric about the axis (see system/setExprBoundaryFieldsDict).
+
+scale   1;
+
+vertices
+(
+    (-0.35 -0.35 -0.75)   // 0
+    (0.35 -0.35 -0.75)   // 1
+    (0.35 0.35 -0.75)   // 2
+    (-0.35 0.35 -0.75)   // 3
+    (-0.70710678 -0.70710678 -0.75)   // 4
+    (0.70710678 -0.70710678 -0.75)   // 5
+    (0.70710678 0.70710678 -0.75)   // 6
+    (-0.70710678 0.70710678 -0.75)   // 7
+    (-0.35 -0.35 0.75)   // 8
+    (0.35 -0.35 0.75)   // 9
+    (0.35 0.35 0.75)   // 10
+    (-0.35 0.35 0.75)   // 11
+    (-0.70710678 -0.70710678 0.75)   // 12
+    (0.70710678 -0.70710678 0.75)   // 13
+    (0.70710678 0.70710678 0.75)   // 14
+    (-0.70710678 0.70710678 0.75)   // 15
+);
+
+blocks
+(
+    hex (0 1 2 3 8 9 10 11)   (24 24 48) simpleGrading (1 1 1)   // core
+    hex (4 5 1 0 12 13 9 8)   (24 20 48) simpleGrading (1 1 1)   // south
+    hex (5 6 2 1 13 14 10 9)  (24 20 48) simpleGrading (1 1 1)   // east
+    hex (6 7 3 2 14 15 11 10) (24 20 48) simpleGrading (1 1 1)   // north
+    hex (7 4 0 3 15 12 8 11)  (24 20 48) simpleGrading (1 1 1)   // west
+);
+
+edges
+(
+    arc 4 5 (0 -1 -0.75)
+    arc 5 6 (1 0 -0.75)
+    arc 6 7 (0 1 -0.75)
+    arc 7 4 (-1 0 -0.75)
+    arc 12 13 (0 -1 0.75)
+    arc 13 14 (1 0 0.75)
+    arc 14 15 (0 1 0.75)
+    arc 15 12 (-1 0 0.75)
+);
+
+boundary
+(
+    side
+    {
+        type patch;
+        faces
+        (
+            (4 5 13 12)
+            (5 6 14 13)
+            (6 7 15 14)
+            (7 4 12 15)
+        );
+    }
+
+    bottom
+    {
+        type patch;
+        faces
+        (
+            (0 3 2 1)
+            (4 0 1 5)
+            (5 1 2 6)
+            (6 2 3 7)
+            (7 3 0 4)
+        );
+    }
+
+    top
+    {
+        type patch;
+        faces
+        (
+            (8 9 10 11)
+            (12 13 9 8)
+            (13 14 10 9)
+            (14 15 11 10)
+            (15 12 8 11)
+        );
+    }
+);
+
+// ************************************************************************* //
