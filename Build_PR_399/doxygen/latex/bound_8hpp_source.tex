@@ -90,7 +90,7 @@
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00112}00112\ }
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00113}00113\ \ \ \ \ \textcolor{comment}{//\ fvc::average(max(vsf,\ lowerBound)):\ face-\/area-\/weighted\ cell\ average\ of\ the\ linearly}}
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00114}00114\ \ \ \ \ \textcolor{comment}{//\ interpolated\ bounded\ field.\ Accumulated\ per\ face\ over\ owner\ and\ neighbour,\ matching}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00115}00115\ \ \ \ \ \textcolor{comment}{//\ surfaceSum(magSf*ssf)/surfaceSum(magSf)\ over\ internal\ AND\ boundary\ faces.}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00115}00115\ \ \ \ \ \textcolor{comment}{//\ surfaceSum(magSf*ssf)/surfaceSum(magSf)\ over\ internal,\ boundary\ AND\ processor\ faces.}}
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00116}00116\ \ \ \ \ NeoN::Vector<scalar>\ num(exec,\ nCells,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0));}
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00117}00117\ \ \ \ \ \textcolor{keyword}{auto}\ numV\ =\ num.view();}
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00118}00118\ }
@@ -136,58 +136,88 @@
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00158}00158\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ [bOwners,\ bAreas]\ =\ NeoN::views(bMesh.faceOwners(),\ bMesh.faceAreas());}
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00159}00159\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ bVsfV\ =\ vsf.boundaryData().value().view();}
 \DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00160}00160\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nAllBoundaryFaces\ =\ vsf.boundaryData().value().size();}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00161}00161\ }
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00162}00162\ \ \ \ \ NeoN::parallelFor(}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00163}00163\ \ \ \ \ \ \ \ \ exec,}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00164}00164\ \ \ \ \ \ \ \ \ \{0,\ nAllBoundaryFaces\},}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00165}00165\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ bfi)\ \{}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00166}00166\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ own\ =\ bOwners[bfi];}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ aSf\ =\ bAreas[bfi];}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&numV[own],\ aSf\ *\ Kokkos::max(bVsfV[bfi],\ lowerBound));}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buildSum)}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&denV[own],\ aSf);}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \},}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::averageBoundary"{}}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00175}00175\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00176}00176\ }
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00177}00177\ \ \ \ \ \textcolor{comment}{//\ max(max(vsf,\ average\ *\ pos0(-\/vsf)),\ lowerBound):\ the\ average\ only\ replaces\ cells\ that\ are}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00178}00178\ \ \ \ \ \textcolor{comment}{//\ zero\ or\ negative;\ everything\ else\ keeps\ its\ value\ and\ is\ merely\ floored.}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00179}00179\ \ \ \ \ NeoN::parallelFor(}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ exec,}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \{0,\ nCells\},}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00182}00182\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ celli)\ \{}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Floor\ the\ divisor\ rather\ than\ branch\ on\ it:\ the\ compiler\ if-\/converts\ such\ a\ branch}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ into\ an\ unconditional\ division,\ which\ would\ raise\ FE\_INVALID\ under\ FOAM\_SIGFPE\ for}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ a\ zero\ face-\/area\ sum\ even\ though\ the\ quotient\ is\ discarded.}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ avg\ =\ numV[celli]\ /\ Kokkos::max(denV[celli],\ NeoN::ROOTVSMALL);}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ refill\ =\ vsfV[celli]\ <=\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0)\ ?\ avg\ :\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0);}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ vsfV[celli]\ =\ Kokkos::max(Kokkos::max(vsfV[celli],\ refill),\ lowerBound);}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \},}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::apply"{}}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00191}00191\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00192}00192\ }
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00193}00193\ \ \ \ \ \textcolor{keyword}{auto}\ bValueV\ =\ vsf.boundaryData().value().view();}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00194}00194\ \ \ \ \ NeoN::parallelFor(}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ exec,}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \{0,\ nAllBoundaryFaces\},}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ bfi)\ \{\ bValueV[bfi]\ =\ Kokkos::max(bValueV[bfi],\ lowerBound);\ \},}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::applyBoundary"{}}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00199}00199\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00200}00200\ }
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00201}00201\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00202}00202\ \}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00203}00203\ }
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00209}\mbox{\hyperlink{namespaceNeoFOAM_a6e6b831af8b12c7823794018471346a6}{00209}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00210}00210\ \ \ \ \ NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>\&\ vsf,}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00211}00211\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ lowerBound}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00212}00212\ )}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00213}00213\ \{}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00214}00214\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{BoundCache}}\ scratch;}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00215}00215\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(vsf,\ lowerBound,\ scratch);}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00216}00216\ \}}
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00217}00217\ }
-\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00218}00218\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00161}00161\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nBoundaryFaces\ =\ mesh.nBoundaryFaces();}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00162}00162\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00163}00163\ \ \ \ \ NeoN::parallelFor(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00164}00164\ \ \ \ \ \ \ \ \ exec,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \{0,\ nBoundaryFaces\},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00166}00166\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ bfi)\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00167}00167\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ own\ =\ bOwners[bfi];}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00168}00168\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ aSf\ =\ bAreas[bfi];}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&numV[own],\ aSf\ *\ Kokkos::max(bVsfV[bfi],\ lowerBound));}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buildSum)}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&denV[own],\ aSf);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::averageBoundary"{}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00176}00176\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00177}00177\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00178}00178\ \ \ \ \ \textcolor{comment}{//\ Processor\ faces\ sit\ at\ the\ tail\ of\ boundaryData().value()\ starting\ at\ nBoundaryFaces\ and}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00179}00179\ \ \ \ \ \textcolor{comment}{//\ hold\ the\ GHOST-\/CELL\ value,\ not\ a\ face\ value.\ Interpolate\ owner\ and\ ghost\ with\ the\ boundary}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00180}00180\ \ \ \ \ \textcolor{comment}{//\ weight,\ so\ the\ average\ is\ the\ one\ fvc::average\ computes\ and\ does\ not\ depend\ on\ the}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00181}00181\ \ \ \ \ \textcolor{comment}{//\ decomposition.}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00182}00182\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nProcFaces\ =\ mesh.nProcBoundaryFaces();}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00183}00183\ \ \ \ \ \textcolor{keywordflow}{if}\ (nProcFaces\ >\ 0)}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00184}00184\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ bWeights\ =\ bMesh.weights().view();}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00186}00186\ \ \ \ \ \ \ \ \ NeoN::parallelFor(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ exec,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \{0,\ nProcFaces\},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ proci)\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ bfi\ =\ nBoundaryFaces\ +\ proci;}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ own\ =\ bOwners[bfi];}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ w\ =\ bWeights[bfi];}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ bOwn\ =\ Kokkos::max(vsfV[own],\ lowerBound);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ bGhost\ =\ Kokkos::max(bVsfV[bfi],\ lowerBound);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ faceValue\ =\ w\ *\ bOwn\ +\ (\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1)\ -\/\ w)\ *\ bGhost;}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ aSf\ =\ bAreas[bfi];}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&numV[own],\ aSf\ *\ faceValue);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (buildSum)}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Kokkos::atomic\_add(\&denV[own],\ aSf);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::averageProcBoundary"{}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00205}00205\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00206}00206\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00207}00207\ \ \ \ \ \textcolor{comment}{//\ max(max(vsf,\ average\ *\ pos0(-\/vsf)),\ lowerBound):\ the\ average\ only\ replaces\ cells\ that\ are}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00208}00208\ \ \ \ \ \textcolor{comment}{//\ zero\ or\ negative;\ everything\ else\ keeps\ its\ value\ and\ is\ merely\ floored.}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00209}00209\ \ \ \ \ NeoN::parallelFor(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ exec,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \{0,\ nCells\},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ celli)\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Floor\ the\ divisor\ rather\ than\ branch\ on\ it:\ the\ compiler\ if-\/converts\ such\ a\ branch}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ into\ an\ unconditional\ division,\ which\ would\ raise\ FE\_INVALID\ under\ FOAM\_SIGFPE\ for}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ a\ zero\ face-\/area\ sum\ even\ though\ the\ quotient\ is\ discarded.}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00216}00216\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ avg\ =\ numV[celli]\ /\ Kokkos::max(denV[celli],\ NeoN::ROOTVSMALL);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ refill\ =\ vsfV[celli]\ <=\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0)\ ?\ avg\ :\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \ \ \ \ vsfV[celli]\ =\ Kokkos::max(Kokkos::max(vsfV[celli],\ refill),\ lowerBound);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::apply"{}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00221}00221\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00222}00222\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00223}00223\ \ \ \ \ \textcolor{keyword}{auto}\ bValueV\ =\ vsf.boundaryData().value().view();}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00224}00224\ \ \ \ \ NeoN::parallelFor(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00225}00225\ \ \ \ \ \ \ \ \ exec,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \{0,\ nAllBoundaryFaces\},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00227}00227\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ bfi)\ \{\ bValueV[bfi]\ =\ Kokkos::max(bValueV[bfi],\ lowerBound);\ \},}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}bound::applyBoundary"{}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00229}00229\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00230}00230\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00231}00231\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00232}00232\ \}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00233}00233\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00239}\mbox{\hyperlink{namespaceNeoFOAM_a6e6b831af8b12c7823794018471346a6}{00239}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00240}00240\ \ \ \ \ NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>\&\ vsf,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00241}00241\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ lowerBound}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00242}00242\ )}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00243}00243\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00244}00244\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{BoundCache}}\ scratch;}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00245}00245\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(vsf,\ lowerBound,\ scratch);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00246}00246\ \}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00247}00247\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00248}00248\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
