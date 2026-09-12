@@ -9,49 +9,39 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      controlDict;
+    class       volScalarField;
+    object      epsilon;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     neoSimpleFoam;
+epsilonInlet  0.03; // Cmu^0.75 * k^1.5 / L ; L =10
 
-startFrom       latestTime;
+dimensions      [0 2 -3 0 0 0 0];
 
-startTime       0;
+internalField   uniform $epsilonInlet;
 
-stopAt          endTime;
-
-endTime         400;
-
-deltaT          1;
-
-writeControl    timeStep;
-
-writeInterval   50;
-
-purgeWrite      0;
-
-writeFormat     binary;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-runTimeModifiable true;
-
-functions
+boundaryField
 {
-    #include "ensightWrite"
-    #include "vtkWrite"
+    inlet
+    {
+        type            fixedValue;
+        value           uniform $epsilonInlet;
+    }
 
-    // Demonstrate runTimePostProcessing
-    #include "visualization"
-    #include "profiling"
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      uniform $epsilonInlet;
+        value           uniform $epsilonInlet;
+    }
+
+    wall
+    {
+        type            epsilonWallFunction;
+        value           uniform $epsilonInlet;
+    }
+
+    #includeEtc "caseDicts/setConstraintTypes"
 }
 
 
