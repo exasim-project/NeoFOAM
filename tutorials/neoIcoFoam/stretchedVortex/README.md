@@ -161,6 +161,11 @@ the end:
 Global continuity error runs at ~4e-20, twelve orders below what an outflow that
 needs rescaling produces.
 
+OpenFOAM's `icoFoam` on the identical case -- same mesh, boundary conditions and
+schemes, only `application` changed -- agrees with `neoIcoFoam` to 2.3e-04 on
+peak `u_theta` at every write time (the crosses in the figure), so the residual
+error above is the discretisation, not either solver.
+
 ![meridional structure](doc/vortexStructure.png)
 
 The meridional plane shows the expected topology: radial inflow at the sides, a
