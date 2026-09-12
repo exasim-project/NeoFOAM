@@ -103,6 +103,7 @@ coreHistory.py                    core radius + peak swirl vs. exact delta(t)
 stretchedVortex.pvsm              ParaView state reproducing the animation
 makeParaViewState.py              regenerates that state with pvpython
 setMeshDensity.py                 rescale the mesh for a resolution study
+compareRuns.py                    compare several runs against the exact solution
 doc/                              result figures and the animation
 ```
 
@@ -137,7 +138,22 @@ constructions is superficial and it would be easy to oversell:
 
 - **It reaches a steady state, not a singularity.** The Burgers vortex is the
   balance point. Nothing here grows without bound; that is exactly why it is
-  simulable.
+  simulable. Concretely, the core amplification `A = Gamma/(pi delta^2)` obeys
+
+  ```
+  d(ln A)/dt = a - 4 nu / delta^2
+  ```
+
+  so the growth rate is **bounded above by the strain rate `a` at every instant**,
+  for any `delta > 0`: tightening the core only makes the viscous term larger and
+  pushes the rate down. It decays monotonically to zero at `delta^2 = 4 nu / a`.
+  Measured, the rate peaks at 0.89 `a` at `t = 0` and ends at 0.02 `a`.
+
+  Blowup needs the growth rate itself to become unbounded, not merely positive.
+  Even switching viscosity off only pins the rate at `a`, giving `A ~ exp(a t)` --
+  unbounded as `t -> infinity` but finite at every finite time. With a diverging
+  strain `a(t) ~ 1/tau` the quasi-steady core gives `A ~ 1/tau` and
+  `d(ln A)/dt ~ 1/tau`, which is a genuine finite-time singularity.
 - **The blowup constructions are numerically unreachable.** In the OpenAI
   Navier-Stokes paper the oscillatory pulses sit at wavelength `q^(1/2+h/2)`
   against a core radius `q^(1/2)`, with `h < 1/100`. Getting even one decade of
@@ -151,6 +167,22 @@ constructions is superficial and it would be easy to oversell:
 - **Anisotropic contraction is not represented.** The construction has
   `l_r ~ tau^(1/2)` and `l_z ~ tau^(1/2-h)` with `l_r/l_z -> 0`. The Burgers
   vortex contracts radially only, in a domain of fixed height.
+- **The strain rate is held constant here and diverges there.** This is the
+  reason nothing in this case grows without bound. The paper's core satisfies
+  `|u_z|/l_z ~ tau^(-1)`, and that ratio *is* the axial strain rate, so it blows
+  up as `tau -> 0`; the velocity scales follow, `|u_theta|, |u_z| ~ tau^(-1/2-h)`
+  with the azimuthal component vanishing on the axis, so the axial velocity on
+  the centreline is itself unbounded. Here `a = 1` for all time, so `u_z = a z`
+  on the axis is fixed by construction: only the vorticity amplifies, and even
+  that saturates at `Gamma/(pi delta^2)` once viscosity balances the squeezing.
+
+  The two are consistent, which is a useful check on both. Put `a(t) = 1/tau`
+  into the Burgers balance and the paper's scalings come back out:
+  `delta^2 ~ 4 nu / a = 4 nu tau` gives `l_r ~ tau^(1/2)`, and the axial velocity
+  at the core's own height, `a l_z ~ tau^(-1) tau^(1/2-h)`, gives `tau^(-1/2-h)`.
+  Only the `h`, which comes from the axial anisotropy, is missing. Reproducing
+  the growth would mean a time-dependent strain, which `readers.hpp` cannot map
+  yet.
 
 What it does share with Section 2.1 of that paper is the qualitative core
 mechanism: inward spiral, axial outflow away from a dividing layer, angular
@@ -232,6 +264,48 @@ want to change the levels or the seeding.
 Built with ParaView 5.13. Note that `FeatureEdges` on this reader's output
 segfaults 5.13, which is why the domain outline uses the reader's own outline
 representation.
+
+## Comparing configurations
+
+`compareRuns.py` puts any number of finished runs side by side against the exact
+solution -- a different mesh, a different convection scheme, a different density:
+
+```bash
+python3 compareRuns.py box=. cylinder=../stretchedVortexCylinder -o doc/methodComparison.png
+```
+
+Each argument is `label=path`. The mesh is read from `0/Cx,Cy,Cz` when they exist
+and from a single-block `blockMeshDict` otherwise, so a box run and an O-grid run
+plot together.
+
+![comparison across configurations](doc/methodComparison.png)
+
+The lower panels are where methods separate; the upper ones agree at plotting
+accuracy. Bottom right is worth watching independently of the error panel: a
+coarse run can track the peak swirl well while losing the strain near the axis.
+
+`--blowup` instead asks how much of the *unarrested* growth each run keeps:
+
+```bash
+python3 compareRuns.py --blowup box=. cylinder=../stretchedVortexCylinder -o doc/blowupComparison.png
+```
+
+![how close each run stays to unarrested growth](doc/blowupComparison.png)
+
+Left is `A(t) / A(0) exp(a t)`, the fraction of the inviscid trajectory still
+retained; right is `d(ln A)/dt / a`, which starts near 0.89 and decays to zero as
+viscosity arrests the contraction. Since every run here shares one `a` and one
+`nu`, they must all arrest at the same physical time -- the exact curve is the
+target, and a run sitting *below* it is over-dissipating rather than being
+"further from blowup". Moving a case genuinely closer to blowup means changing
+`nu` or `a`, not the mesh.
+
+In the growth panel, `delta` is inferred from the measured core radius
+(`delta = r_peak / 1.121`) rather than from a vorticity gradient -- that is what
+lets the same script read any mesh, at the cost of inheriting the radial binning
+resolution. The dashed line is the same vortex with `nu = 0`, which would grow as
+`exp(a t)` without bound; the gap that opens after `t ~ 2.5` is the viscous
+arrest, and it is the reason this case has a steady state at all.
 
 ## Caveat
 

@@ -1,0 +1,36 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+# stretchedVortexCylinder: the stretchedVortex case on an axisymmetric domain.
+# See README.md for what it does and does not demonstrate.
+#
+# Usage:
+#   ./Allrun                 # mesh + serial neoIcoFoam
+#   NPROCS=4 ./Allrun -par   # mesh + decompose + parallel neoIcoFoam
+
+NEOFOAM_BIN="${NEOFOAM_BIN:-../../../build/develop/bin/neoIcoFoam}"
+NPROCS="${NPROCS:-4}"
+
+touch case.foam
+
+runApplication blockMesh
+
+restore0Dir
+runApplication setExprFields
+runApplication setExprBoundaryFields
+
+# coreHistory.py bins by radius, so it needs the cell centres of this
+# unstructured mesh -- the box case can compute them from the block counts.
+runApplication postProcess -func writeCellCentres -time 0
+
+if [ "$1" = "-par" ] || [ "$1" = "-parallel" ]
+then
+    runApplication decomposePar -force
+    runParallel -np "$NPROCS" "$NEOFOAM_BIN"
+    runApplication reconstructPar -newTimes
+else
+    runApplication "$NEOFOAM_BIN"
+fi
+
+#------------------------------------------------------------------------------
