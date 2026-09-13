@@ -29,3 +29,10 @@ Read them in order:
    dictionary by changing one decorator. Covers load / mutate / save
    round-trips, the subdict pattern that lets several configs share a
    file, and how Pydantic constraints catch bad input on load.
+5. **Monitor a run with in-situ post-processing.** Declare *tables* —
+   a source, a pipeline of nodes, a write cadence — and have the
+   solver append each one to ``postProcessing/<name>.csv`` while it
+   runs. Covers both front doors (``system/postProcess.yaml`` and
+   ``system/postProcess.py``), a case-defined ``@Node.register`` node
+   used by name from the YAML, and the cavity's kinetic energy
+   plotted over time.
