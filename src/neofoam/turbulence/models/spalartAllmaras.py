@@ -1,0 +1,275 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Pure-Python standard ``SpalartAllmaras`` RAS closure on NeoN — a :class:`ModelSpec`.
+
+A one-equation eddy-viscosity closure: it owns the transport unknown ``nuTilda``
+and defines ``nut = nuTilda * fv1(chi)``. Registered with the runtime-selectable
+:class:`~neofoam.turbulence.momentumTransport.momentumTransportModel` family under the
+``turbulenceProperties`` name ``SpalartAllmaras``.
+
+It matches ``Foam::RASModels::SpalartAllmaras::correct`` term for term for the
+incompressible case (``alpha = rho = 1``) with the default ``ft2 = false`` (so the
+trip term drops out) and ``dTilda = y`` (wall distance — the RAS model uses no DES
+length-scale limiter).
+
+The closure is authored as **readable field maths that runs entirely on-device**
+(CPU or GPU): the nonlinear Spalart-Allmaras functions (``chi``, ``fv1``, ``fv2``,
+``Stilda``, ``r``, ``g``, ``fw``) are chained NeoN ``ScalarVolumeField`` operators —
+``**`` (pow), ``field_max``/``field_min`` (elementwise against a field or a scalar),
+and the reflected ``scalar - field`` / ``scalar / field`` — so no host round-trip
+happens. Only the quantities needing mesh differencing / tensor algebra come from
+small bindings — :func:`~neofoam_bindings.read_wall_distance` (``y``),
+:func:`~neofoam_bindings.vorticity_magnitude` (``Omega = sqrt(2) mag(skew(gradU))``)
+and :func:`~neofoam_bindings.mag_sqr_grad` (``magSqr(grad(nuTilda))``) — and the
+implicit transport operators (``imp.ddt/div/laplacian/source``) drive the solve.
+
+Coefficients live in the typed :class:`SpalartAllmarasCoeffs`: its field defaults
+are OpenFOAM's ``SpalartAllmaras`` values, the ``RAS`` sub-dictionary's
+``SpalartAllmarasCoeffs`` entry overrides them per case
+(:func:`~neofoam.turbulence.config.model_coefficients`).
+"""
+
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Annotated, Any, Optional
+
+import neon._neon as nn
+import pybFoam as pyf
+
+from neofoam import neofoam_bindings as nfb
+from neofoam.framework.context import FieldUpdates
+from neofoam.framework.initialization import InitStep
+from neofoam.framework.initialization import field as init_field
+from neofoam.framework.initialization import model as init_model
+from neofoam.io import BaseConfig
+
+from ..config import TurbulencePropertiesConfig, load_with_coefficients
+from ..momentumTransport import Model, register_momentum_transport
+
+__all__ = ["spalartAllmaras", "SpalartAllmarasCoeffs"]
+
+
+class SpalartAllmarasCoeffs(BaseConfig):
+    """OpenFOAM ``SpalartAllmaras`` coefficients; a case's ``SpalartAllmarasCoeffs`` overrides.
+
+    ``Cw1`` is absent on purpose — OpenFOAM derives it, see :func:`_cw1`.
+    """
+
+    sigmaNut: float = 0.66666
+    kappa: float = 0.41
+    Cb1: float = 0.1355
+    Cb2: float = 0.622
+    Cw2: float = 0.3
+    Cw3: float = 2.0
+    Cv1: float = 7.1
+    Cs: float = 0.3
+
+
+# ft2_ defaults to false in OpenFOAM, so the trip term vanishes and is omitted.
+nuTildaMin = 0.0  # OpenFOAM bound(nuTilda, 0)
+SMALL = 1e-15  # Foam SMALL, the floor in r (Stilda >> SMALL in practice)
+
+
+def _cw1(c: SpalartAllmarasCoeffs) -> float:
+    """``Cw1 = Cb1/kappa^2 + (1+Cb2)/sigmaNut`` — derived, never read from the case."""
+    return c.Cb1 / c.kappa**2 + (1.0 + c.Cb2) / c.sigmaNut
+
+
+def _fv1(c: SpalartAllmarasCoeffs, chi: Any) -> Any:
+    """``fv1 = chi^3 / (chi^3 + Cv1^3)`` — chained field ops (runs on-device)."""
+    chi3 = chi**3.0
+    return chi3 / (chi3 + c.Cv1**3)
+
+
+spalartAllmaras = register_momentum_transport(Model("SpalartAllmaras"), family="RAS")
+spalartAllmaras.config(TurbulencePropertiesConfig)
+# Schema-only registration (see ``kEpsilon``): ``@spalartAllmaras.load`` still
+# resolves the instance out of the ``RAS`` block, but declaring the class here is
+# what exports its schema through ``configurations(solver)`` / the MCP.
+spalartAllmaras.config(SpalartAllmarasCoeffs)
+
+
+@spalartAllmaras.load
+def load(case_dir: Path, _instance_id: Optional[str]) -> SimpleNamespace:
+    """The dictionary + the resolved :class:`SpalartAllmarasCoeffs` the operations inject."""
+    return load_with_coefficients(case_dir, "SpalartAllmaras", SpalartAllmarasCoeffs)
+
+
+@spalartAllmaras.build
+def build(config: SimpleNamespace) -> list[InitStep]:
+    """Read ``nuTilda``, seed ``nut = nuTilda fv1``, and own the helper operators.
+
+    ``nut`` is seeded from the initial ``nuTilda`` (OpenFOAM's construction-time
+    ``correctNut``). The wall-distance field, surface-interpolation and
+    ``gradSchemes``-selected gradient operators are owned as models so the per-step
+    ``correct`` reuses them.
+    """
+    coeffs = config.coeffs
+
+    def read_nutilda(ctx: dict[str, Any]) -> Any:
+        return nfb.read_scalar_volume_field(ctx["models.neon_runtime"], "nuTilda")
+
+    def create_surf(ctx: dict[str, Any]) -> Any:
+        rt = ctx["models.neon_runtime"]
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
+
+    def create_grad(ctx: dict[str, Any]) -> Any:
+        # fvc::grad(U): the case's ``gradSchemes`` entry must limit the vorticity
+        # too. GradScheme falls back to Gauss linear when absent.
+        return nfb.GradScheme(ctx["models.neon_runtime"], "U")
+
+    def read_wall_dist(ctx: dict[str, Any]) -> Any:
+        return nfb.read_wall_distance(ctx["models.neon_runtime"])
+
+    def create_near_wall_dist(ctx: dict[str, Any]) -> Any:
+        # nearWallDist: boundary faces hold the owner-cell wall distance — the input
+        # the nutUSpaldingWallFunction reads via the BoundaryContext. Purely
+        # geometric, unlike the global wall distance read_wall_distance provides
+        # for the fw/fv2 terms.
+        rt = ctx["models.neon_runtime"]
+        return nfb.build_near_wall_dist(rt, pyf.nearWallDist(rt.mesh))
+
+    def seed_nut(ctx: dict[str, Any]) -> Any:
+        # nut = nuTilda * fv1(chi) — OpenFOAM correctNut in on-device field maths.
+        rt = ctx["models.neon_runtime"]
+        nut = nfb.read_scalar_volume_field(rt, "nut")
+        nu = nfb.read_transport_viscosity(rt)
+        nuTilda = ctx["fields.nuTilda"]
+        nut.assign(nuTilda * _fv1(coeffs, nuTilda / nu))
+        # nutUSpaldingWallFunction sets nut's wall faces from (U, nu, nearWallDist).
+        nfb.correct_scalar_bc_ctx_u(
+            nut, ctx["fields.U"], ctx["models.nu_vol"], ctx["models.sa_nearWallDist"]
+        )
+        return nut
+
+    def create_nu_eff(ctx: dict[str, Any]) -> Any:
+        # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
+        return ctx["models.sa_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
+
+    return [
+        init_field("nuTilda", read_nutilda, depends_on=["models.neon_runtime"]),
+        init_model("sa_surf", create_surf, depends_on=["models.neon_runtime"]),
+        init_model("sa_grad", create_grad, depends_on=["models.neon_runtime"]),
+        init_model("sa_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]),
+        init_model(
+            "sa_nearWallDist",
+            create_near_wall_dist,
+            depends_on=["models.neon_runtime"],
+        ),
+        init_field(
+            "nut",
+            seed_nut,
+            depends_on=[
+                "models.neon_runtime",
+                "fields.nuTilda",
+                "fields.U",
+                "models.nu_vol",
+                "models.sa_nearWallDist",
+            ],
+        ),
+        init_field(
+            "nuEff",
+            create_nu_eff,
+            depends_on=["fields.nut", "models.sa_surf", "models.nu_vol"],
+        ),
+    ]
+
+
+@spalartAllmaras.operation(name="spalartAllmarasCorrectNuTilda")
+def correct_nutilda(
+    self: Any,
+    neon_runtime: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
+    sa_surf: Annotated[Any, "models"],
+    sa_grad: Annotated[Any, "models"],
+    sa_wall_dist: Annotated[Any, "models"],
+    final_iter: Annotated[bool, "models"],
+    coeffs: SpalartAllmarasCoeffs,
+    U: Annotated[Any, "fields"],
+    phi: Annotated[Any, "fields"],
+    nuTilda: Annotated[Any, "fields"],
+) -> FieldUpdates:
+    """Advance the ``nuTilda`` transport PDE one step (OpenFOAM SA ``correct``, ft2=0).
+
+    Every coefficient is a chained ``ScalarVolumeField`` expression, so the whole
+    step runs on the executor the fields live on — no host transfer.
+    """
+    nn.rotate_old_times(nuTilda)
+    rt = neon_runtime
+    nu = nfb.read_transport_viscosity(rt)
+    y = sa_wall_dist
+
+    # Mesh-aware quantities (own kernels); everything else is chained field maths.
+    grad_u = sa_grad.grad_tensor(U)
+    omega = nfb.vorticity_magnitude(grad_u)  # sqrt(2) mag(skew(gradU))
+    mag_sqr_grad = nfb.mag_sqr_grad(rt, nuTilda)  # magSqr(grad(nuTilda))
+
+    c = coeffs
+    chi = nuTilda / nu
+    fv1 = _fv1(c, chi)
+    fv2 = 1.0 - chi / (1.0 + chi * fv1)
+    kd2 = (c.kappa * y) ** 2.0
+    Stilda = nn.field_max(omega + fv2 * nuTilda / kd2, c.Cs * omega)
+    r = nn.field_min(nuTilda / (nn.field_max(Stilda, SMALL) * kd2), 10.0)
+    g = r + c.Cw2 * (r**6.0 - r)
+    fw = g * ((1.0 + c.Cw3**6) / (g**6.0 + c.Cw3**6)) ** (1.0 / 6.0)
+
+    # nuTildaEqn == Cb1*Stilda*nuTilda + (Cb2/sigma)*magSqr(grad(nuTilda))  (explicit)
+    #             - Sp(Cw1*fw*nuTilda/y^2, nuTilda)  (implicit sink; coeff frozen)
+    explicit = (c.Cb2 / c.sigmaNut) * mag_sqr_grad + c.Cb1 * Stilda * nuTilda
+    sink_coeff = _cw1(c) * fw * nuTilda / (y**2.0)
+    d_eff = sa_surf.interpolate((nuTilda + nu_vol) / c.sigmaNut)
+
+    eqn = nfb.PDESolverScalar(
+        nn.imp.ddt(nuTilda)
+        + nn.imp.div(phi, nuTilda)
+        - nn.imp.laplacian(d_eff, nuTilda)
+        - nn.exp.source(explicit)
+        + nn.imp.source(sink_coeff, nuTilda),
+        nuTilda,
+        rt,
+    )
+    eqn.set_final_iter(final_iter)
+    eqn.relax()  # OpenFOAM SpalartAllmarasBase.C: nuTildaEqn.ref().relax()
+    eqn.solve()
+    nfb.bound(nuTilda, nuTildaMin)
+    # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
+    nuTilda.correct_boundary_conditions()
+    return FieldUpdates({"nuTilda": nuTilda})
+
+
+@spalartAllmaras.operation(name="spalartAllmarasCorrectNut")
+def correct_nut(
+    self: Any,
+    neon_runtime: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
+    sa_surf: Annotated[Any, "models"],
+    sa_nearWallDist: Annotated[Any, "models"],
+    coeffs: SpalartAllmarasCoeffs,
+    U: Annotated[Any, "fields"],
+    nuTilda: Annotated[Any, "fields"],
+    nut: Annotated[Any, "fields"],
+) -> FieldUpdates:
+    """correctNut: ``nut = nuTilda fv1(chi)``, then refresh the effective viscosity ``nuEff``."""
+    nu = nfb.read_transport_viscosity(neon_runtime)
+    nut.assign(nuTilda * _fv1(coeffs, nuTilda / nu))
+    # nutUSpaldingWallFunction sets nut's wall faces from (U, nu, nearWallDist).
+    nfb.correct_scalar_bc_ctx_u(nut, U, nu_vol, sa_nearWallDist)
+    return FieldUpdates({"nut": nut, "nuEff": sa_surf.interpolate(nut + nu_vol)})
+
+
+@spalartAllmaras.operation(name="spalartAllmarasCorrect", fallback=True)
+def correct(
+    self: Any,
+    turbulence: Annotated[Any, "models"],  # the wrapped pybFoam handle
+) -> FieldUpdates:
+    """Fallback path (incompressibleFluid): advance OpenFOAM's own spalartAllmaras.
+
+    Scheduled only when a solver selects fallback=True; the native NeoN
+    transport @operations above are skipped. The pybFoam handle owns nut
+    and its stress. Resolved from the Context, never captured in the closure
+    (see [[project_pybfoam_op_closure_cycle]]).
+    """
+    turbulence.correct()
+    return FieldUpdates({})

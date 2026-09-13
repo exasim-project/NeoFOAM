@@ -211,11 +211,41 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 }
 
 
+namespace
+{
+
+/* @brief The snGradSchemes entry for fieldName, mirroring fvc::snGrad's lookup. */
+NeoN::Input readSnGradScheme(const NeoN::Dictionary& fvSchemes, const std::string& fieldName)
+{
+    if (fvSchemes.contains("snGradSchemes"))
+    {
+        const NeoN::Dictionary& snGradSchemes = fvSchemes.subDict("snGradSchemes");
+        // Unlike gradSchemes, snGradSchemes falls through to "default" in OpenFOAM, and
+        // cases usually only set that. A multi-word scheme ("limited corrected 0.33")
+        // converts to a TokenList, a single-word one ("corrected") to a plain string.
+        for (const std::string& key : {"snGrad(" + fieldName + ")", std::string("default")})
+        {
+            if (snGradSchemes.isType<NeoN::TokenList>(key))
+            {
+                return snGradSchemes.get<NeoN::TokenList>(key);
+            }
+            if (snGradSchemes.isType<std::string>(key))
+            {
+                return NeoN::TokenList({snGradSchemes.get<std::string>(key)});
+            }
+        }
+    }
+    return NeoN::TokenList({std::string("corrected")});
+}
+
+} // namespace
+
 void addConsistentFluxCorrection(
     nnfvcc::SurfaceField<scalar>& phiHbyA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& rAtU,
-    const nnfvcc::VolumeField<scalar>& p
+    const nnfvcc::VolumeField<scalar>& p,
+    const NeoN::Dictionary& fvSchemes
 )
 {
     const auto exec = phiHbyA.exec();
@@ -235,8 +265,7 @@ void addConsistentFluxCorrection(
         nnfvcc::SurfaceInterpolation<scalar>(exec, mesh, NeoN::TokenList({std::string("linear")}));
     auto drAUf = linear.interpolate(drAU);
 
-    auto sng =
-        nnfvcc::FaceNormalGradient<scalar>(exec, mesh, NeoN::TokenList({std::string("corrected")}));
+    auto sng = nnfvcc::FaceNormalGradient<scalar>(exec, mesh, readSnGradScheme(fvSchemes, p.name));
     auto snGradP = sng.faceNormalGrad(p);
 
     const auto nInternalFaces = mesh.nInternalFaces();

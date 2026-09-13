@@ -85,6 +85,14 @@ createExecutor(const std::string execName, std::unique_ptr<NeoN::AllocatorStrate
     return NeoN::SerialExecutor();
 }
 
+NeoN::Executor createExecutor(const Foam::word& execName)
+{
+    // Declared in setup.hpp; create the named executor with the default allocator.
+    // Lets callers select an executor by name without a controlDict round-trip
+    // (used by the create_adapter_run_time Python binding to default to Serial).
+    return createExecutor(std::string(execName), std::make_unique<NeoN::DefaultAllocator>());
+}
+
 NeoN::Executor createExecutor(const Foam::dictionary& dict)
 {
     auto execName = std::string(dict.get<Foam::word>("executor"));

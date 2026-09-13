@@ -19,7 +19,64 @@ _skbuild/
 *.la
 *.so
 
-# Source archives
+# Derived files
+lex.yy.c
+
+# Core dumps
+
+# Dependency files - anywhere
+*.dep
+
+# lnInclude (symlink) directories - anywhere
+lnInclude
+
+# Build directories - anywhere
+linux*Clang*/
+linux*Gcc*/
+linux*Icc*/
+solaris*Gcc*/
+SunOS*Gcc*/
+platforms/
+
+# Top-level build directories
+build/
+review/
+/platforms/
+
+# Reinstate wmake rules that might look like build directories
+!/wmake/rules/*/
+
+# Doxygen generated
+doc/Doxygen/html
+doc/Doxygen/latex
+doc/Doxygen/man
+doc/Doxygen/DTAGS
+doc/_build
+
+# Sphinx-gallery generated artifacts
+doc/sg_execution_times.rst
+doc/auto_tutorials/
+doc/auto_how-to/
+
+# autosummary-generated API reference (see doc/reference/index.rst)
+doc/reference/api/
+
+# Generated files in the main and doc directories
+test/**/*.html
+/*.html
+/doc/*.html
+
+# Local scratch space, not part of the repo
+playground/
+
+# Untracked configuration/preferences files
+/etc/prefs.csh
+/etc/prefs.sh
+/etc/config.csh/prefs.*
+/etc/config.sh/prefs.*
+/wmake/rules/General/mplibUSER*
+
+# Source packages - anywhere
 *.tar
 *.tar.bz2
 *.tar.gz
@@ -56,7 +113,43 @@ test/**/system/controlDict
 # Benchmark intermediates
 benchmarks/benchmarkSuite/*/Cases/
 
-# Python tooling
+#python
+*.pyc
+*.pyo
 __pycache__/
-*.py[cod]
+_build/
 uv.lock
+
+lib
+_skbuild
+
+benchmarks/benchmarkSuite/**
+
+# spec-loop process artifacts (plan/implement/review handoffs + coverage)
+loop/
+
+# working specs (kept local, not part of the published tree)
+plans/
+reviews/
+report/
+
+# sphinx-gallery generated example artifacts
+examples/how-to/dag.html
+
+test/*/constant/polyMesh/
+tutorials/*/processor*/
+tutorials/*/*/processor*/
+*/constant/polyMesh/
+test/*/processor*/
+test/*/system/controlDict
+.venv/
+
+# A study directory tracks only its inputs — Snakefile, config*.yaml, discover.py.
+# Everything below is produced by running it: cases/ is the staging root, results/
+# the per-case JSON, report* the rendered report (report/, report.html, report.md).
+# work/ was the old combined pipeline's staging root.
+verification/foam_tutorials/*/work
+verification/foam_tutorials/*/cases
+verification/foam_tutorials/*/results
+verification/foam_tutorials/*/report*
+__marimo__/

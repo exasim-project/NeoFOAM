@@ -396,6 +396,7 @@ void KOmegaSST::correct(
     {
         omegaEqn.setConstraints(omegaWallMaskTmp_, omegaWallValueTmp_);
     }
+    omegaEqn.relax(); // OpenFOAM kOmegaSSTBase.C: omegaEqn.ref().relax()
     omegaEqn.solve();
 
     bound(omega, KOSST_OMEGA_MIN, boundCache_);
@@ -428,6 +429,7 @@ void KOmegaSST::correct(
         k,
         rt
     );
+    kEqn.relax(); // OpenFOAM kOmegaSSTBase.C: kEqn.ref().relax()
     kEqn.solve();
 
     bound(k, kMin_, boundCache_);
@@ -700,10 +702,7 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "omega", "kFinal", "omegaFinal"})
     {
-        if (solverDict.isDict(f))
-        {
-            solverDict.subDict(f) = mapFvSolution(solverDict.subDict(f));
-        }
+        mapSolverSettings(solverDict, f);
     }
 }
 

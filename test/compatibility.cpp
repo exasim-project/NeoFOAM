@@ -129,3 +129,229 @@ TEST_CASE("fvSolution")
         }
     }
 }
+
+TEST_CASE("fvSolution keyMatches")
+{
+    SECTION("exact literal key")
+    {
+        REQUIRE(NeoFOAM::keyMatches("U", "U"));
+        REQUIRE_FALSE(NeoFOAM::keyMatches("U", "p"));
+    }
+
+    SECTION("quoted key is a regular expression")
+    {
+        REQUIRE(NeoFOAM::keyMatches("\"(U|k)\"", "U"));
+        REQUIRE(NeoFOAM::keyMatches("\"(U|k)\"", "k"));
+        REQUIRE_FALSE(NeoFOAM::keyMatches("\"(U|k)\"", "p"));
+    }
+
+    SECTION("unquoted pattern is not a regular expression")
+    {
+        REQUIRE_FALSE(NeoFOAM::keyMatches("(U|k)", "U"));
+        // ... it is only ever an identical keyword
+        REQUIRE(NeoFOAM::keyMatches("(U|k)", "(U|k)"));
+    }
+
+    SECTION("the pattern must match the whole name")
+    {
+        REQUIRE_FALSE(NeoFOAM::keyMatches("\"(U|k)\"", "UFinal"));
+        REQUIRE_FALSE(NeoFOAM::keyMatches("\"U\"", "Uy"));
+        REQUIRE(NeoFOAM::keyMatches("\"(U|k).*\"", "UFinal"));
+    }
+}
+
+TEST_CASE("fvSolution matchKey")
+{
+    SECTION("an exact key wins over a regex key that also matches")
+    {
+        NeoN::Dictionary dict(
+            {{std::string("U"), std::string("exact")},
+             {std::string("\"(U|k)\""), std::string("pattern")}}
+        );
+        const auto key = NeoFOAM::matchKey(dict, "U");
+        REQUIRE(key.has_value());
+        REQUIRE(*key == "U");
+    }
+
+    SECTION("a regex key selects a field without its own entry")
+    {
+        NeoN::Dictionary dict({{std::string("\"(U|k)\""), std::string("pattern")}});
+        const auto key = NeoFOAM::matchKey(dict, "k");
+        REQUIRE(key.has_value());
+        REQUIRE(*key == "\"(U|k)\"");
+    }
+
+    SECTION("nothing matches")
+    {
+        NeoN::Dictionary dict({{std::string("\"(U|k)\""), std::string("pattern")}});
+        REQUIRE_FALSE(NeoFOAM::matchKey(dict, "p").has_value());
+    }
+
+    SECTION("two regex keys matching the same field are ambiguous")
+    {
+        NeoN::Dictionary dict(
+            {{std::string("\"(U|k)\""), std::string("first")},
+             {std::string("\"(U|epsilon)\""), std::string("second")}}
+        );
+        REQUIRE_THROWS_MATCHES(
+            NeoFOAM::matchKey(dict, "U"),
+            std::runtime_error,
+            Catch::Matchers::MessageMatches(Catch::Matchers::ContainsSubstring(
+                "Several fvSolution keys match the field 'U': \"(U|epsilon)\", \"(U|k)\""
+            ))
+        );
+    }
+}
+
+TEST_CASE("fvSolution solverSettings")
+{
+    NeoN::Dictionary solvers(
+        {{std::string("p"), NeoN::Dictionary({{std::string("solver"), std::string("PCG")}})},
+         {std::string("\"(U|k|epsilon)\""),
+          NeoN::Dictionary({{std::string("solver"), std::string("PBiCGStab")}})}}
+    );
+
+    SECTION("resolves through a regex key")
+    {
+        REQUIRE(NeoFOAM::hasSolverSettings(solvers, "k"));
+        REQUIRE(NeoFOAM::solverSettings(solvers, "k").get<std::string>("solver") == "PBiCGStab");
+    }
+
+    SECTION("resolves an exact key")
+    {
+        REQUIRE(NeoFOAM::hasSolverSettings(solvers, "p"));
+        REQUIRE(NeoFOAM::solverSettings(solvers, "p").get<std::string>("solver") == "PCG");
+    }
+
+    SECTION("a matching key holding a non-dictionary is no settings entry")
+    {
+        NeoN::Dictionary notADict({{std::string("U"), std::string("PCG")}});
+        REQUIRE_FALSE(NeoFOAM::hasSolverSettings(notADict, "U"));
+    }
+
+    SECTION("no matching key")
+    {
+        REQUIRE_FALSE(NeoFOAM::hasSolverSettings(solvers, "T"));
+        REQUIRE_THROWS_MATCHES(
+            NeoFOAM::solverSettings(solvers, "T"),
+            NeoFOAM::FvSolutionKeyNotFound,
+            Catch::Matchers::Message("No entry for field 'T' in system/fvSolution/solvers; "
+                                     "available keys: \"(U|k|epsilon)\", p")
+        );
+    }
+
+    SECTION("the exception carries the field and the available keys")
+    {
+        try
+        {
+            NeoFOAM::solverSettings(solvers, "T");
+            FAIL("solverSettings did not throw");
+        }
+        catch (const NeoFOAM::FvSolutionKeyNotFound& e)
+        {
+            REQUIRE(e.field() == "T");
+            REQUIRE(e.dictName() == "system/fvSolution/solvers");
+            REQUIRE(
+                e.availableKeys()
+                == std::vector<std::string> {"\"(U|k|epsilon)\"", std::string("p")}
+            );
+        }
+    }
+}
+
+TEST_CASE("fvSolution relaxation lookup")
+{
+    SECTION("equations and fields are independent")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("equations"),
+                    NeoN::Dictionary({{std::string("U"), NeoN::scalar(0.7)}})},
+                   {std::string("fields"), NeoN::Dictionary({{std::string("p"), NeoN::scalar(0.3)}})
+                   }}
+              )}}
+        );
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false) == NeoN::scalar(0.7));
+        REQUIRE_FALSE(NeoFOAM::lookupFieldRelaxation(fvSolution, "U", false).has_value());
+        REQUIRE(NeoFOAM::lookupFieldRelaxation(fvSolution, "p", false) == NeoN::scalar(0.3));
+        REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "p", false).has_value());
+    }
+
+    SECTION("the Final key wins on the final iteration")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("equations"),
+                    NeoN::Dictionary(
+                        {{std::string("U"), NeoN::scalar(0.7)},
+                         {std::string("UFinal"), NeoN::scalar(0.9)}}
+                    )}}
+              )}}
+        );
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true) == NeoN::scalar(0.9));
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false) == NeoN::scalar(0.7));
+    }
+
+    SECTION("the final iteration falls back to the base key")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("equations"),
+                    NeoN::Dictionary({{std::string("U"), NeoN::scalar(0.7)}})}}
+              )}}
+        );
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true) == NeoN::scalar(0.7));
+    }
+
+    SECTION("an int entry is coerced to scalar")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("fields"), NeoN::Dictionary({{std::string("pFinal"), 1}})}}
+              )}}
+        );
+        REQUIRE(NeoFOAM::lookupFieldRelaxation(fvSolution, "p", true) == NeoN::scalar(1));
+    }
+
+    SECTION("a regex key resolves both the base and the Final name")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary(
+                  {{std::string("equations"),
+                    NeoN::Dictionary({{std::string("\"(k|omega|epsilon).*\""), NeoN::scalar(0.7)}})}
+                  }
+              )}}
+        );
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "epsilon", false) == NeoN::scalar(0.7));
+        REQUIRE(NeoFOAM::lookupEqnRelaxation(fvSolution, "epsilon", true) == NeoN::scalar(0.7));
+        REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", true).has_value());
+    }
+
+    SECTION("no relaxationFactors entry")
+    {
+        NeoN::Dictionary fvSolution({{std::string("solvers"), NeoN::Dictionary()}});
+        REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false).has_value());
+        REQUIRE_FALSE(NeoFOAM::lookupFieldRelaxation(fvSolution, "U", false).has_value());
+    }
+
+    SECTION("relaxationFactors is not a dictionary")
+    {
+        NeoN::Dictionary fvSolution({{std::string("relaxationFactors"), std::string("0.7")}});
+        REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false).has_value());
+        REQUIRE_FALSE(NeoFOAM::lookupFieldRelaxation(fvSolution, "U", false).has_value());
+    }
+
+    SECTION("the equations sub-dict is not a dictionary")
+    {
+        NeoN::Dictionary fvSolution(
+            {{std::string("relaxationFactors"),
+              NeoN::Dictionary({{std::string("equations"), std::string("0.7")}})}}
+        );
+        REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false).has_value());
+    }
+}

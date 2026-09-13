@@ -1,0 +1,89 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Subprocess field reader: dump a ``vol*Field`` internal field to ``.npy``.
+
+Constructing a ``Foam::Time`` twice in one interpreter corrupts OpenFOAM per-process
+global state — later reads come back as ``nan`` — so every read runs in its own
+process. This module is the entry point :meth:`neofoam.tooling.casebuild.CaseDir.read_field`
+spawns; run it as ``python -m neofoam.tooling.casebuild._reader <case> <time> <field> <out.npy>``.
+
+The requested time directory is staged as ``0/`` in a temporary case so the field is
+read where a freshly-constructed ``Time`` (which starts at ``startTime``) can see it —
+the same trick the standalone comparison readers use.
+
+Only the ``internalField`` entry is read: constructing the whole ``vol*Field`` would
+construct every boundary condition with it, and a condition needing more than its own
+file (``fanPressure``, coupled types) aborts a read that only wants cell values.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+from typing import Union
+
+import numpy as np
+import pybFoam as pyf
+from pybFoam import scalarField, vectorField, volScalarField, volVectorField
+
+
+def _resolve_time_dir(case: Path, time: str) -> Path:
+    """Return the time directory to read: the latest numeric dir, or a named one."""
+    if time != "latest":
+        return case / time
+    numeric = [d for d in case.iterdir() if d.is_dir() and d.name.replace(".", "", 1).isdigit()]
+    if not numeric:
+        raise FileNotFoundError(f"No numeric time directory in {case}")
+    return max(numeric, key=lambda d: float(d.name))
+
+
+def _set_case_environment(case: Path) -> None:
+    """Export what ``argList`` would, so ``<case>``/``<system>`` includes resolve.
+
+    A directly-constructed ``Time`` skips ``argList``, which is what sets these.
+    """
+    os.environ["FOAM_CASE"] = str(case)
+    os.environ["FOAM_CASENAME"] = case.name
+
+
+def read_field(case: Path, time: str, name: str, out: Path) -> None:
+    """Read *name*'s internal field at *time* and save it to *out* as ``.npy``.
+
+    The ``np.save`` runs while the ``Time``/``fvMesh`` are still alive: the returned
+    field is sized from the mesh, and serializing it here (rather than returning it up
+    the stack) copies the values before the temporary case is removed.
+    """
+    time_dir = _resolve_time_dir(case, time)
+    with tempfile.TemporaryDirectory() as tmp:
+        staged = Path(tmp) / "case"
+        shutil.copytree(case / "system", staged / "system")
+        shutil.copytree(case / "constant", staged / "constant")
+        shutil.copytree(time_dir, staged / "0")
+
+        _set_case_environment(staged)
+        runtime = pyf.Time(str(staged.parent), staged.name)
+        mesh = pyf.fvMesh(runtime)
+        # Decode leniently: a binary-format field has an ASCII header but a
+        # non-UTF-8 internalField payload, which read_text() would choke on.
+        header = (staged / "0" / name).read_bytes().decode("utf-8", "replace")
+        internal: Union[scalarField, vectorField]
+        if "volScalarField" in header:
+            internal = volScalarField.read_internal_field(mesh, name)
+        elif "volVectorField" in header:
+            internal = volVectorField.read_internal_field(mesh, name)
+        else:
+            raise ValueError(f"Unsupported field type for {name}")
+        np.save(out, np.asarray(internal))
+
+
+def main() -> None:
+    case, time, name, out = sys.argv[1:5]
+    read_field(Path(case), time, name, Path(out))
+
+
+if __name__ == "__main__":
+    main()

@@ -14,6 +14,18 @@ if(NEOFOAM_WITH_MPI)
   find_package(MPI 3.1 REQUIRED)
 endif()
 
+if(NEOFOAM_BUILD_BINDINGS)
+  cpmaddpackage(
+    NAME
+    nanobind
+    GITHUB_REPOSITORY
+    wjakob/nanobind
+    GIT_TAG
+    v2.10.2
+    SYSTEM
+    YES)
+endif()
+
 if(NEOFOAM_NEON_VIA_CPM)
   if(NOT DEFINED NEOFOAM_NEON_VERSION)
     # grab the SHA from submodule automatically

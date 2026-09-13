@@ -93,6 +93,9 @@ int main(int argc, char* argv[])
                 rt
             );
 
+            // simpleFoam/UEqn.H: UEqn.relax()
+            UEqn.relax();
+
             if (simple.momentumPredictor())
             {
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
@@ -119,7 +122,7 @@ int main(int argc, char* argv[])
 
                 if (consistent)
                 {
-                    nf::addConsistentFluxCorrection(phiHbyA, crAU, crAtU, p);
+                    nf::addConsistentFluxCorrection(phiHbyA, crAU, crAtU, p, rt.fvSchemesDict);
                     nf::subtractConsistentHbyA(hByA, crAU, crAtU, p);
                 }
 

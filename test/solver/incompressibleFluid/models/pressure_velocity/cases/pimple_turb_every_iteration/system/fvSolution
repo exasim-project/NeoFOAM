@@ -1,0 +1,22 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+// The pimpleFoam laminar/planarContraction combination: the transport /
+// turbulence correction runs in every outer iteration, and the `Final` linear
+// solver settings are restricted to the last outer iteration.
+PIMPLE
+{
+    nOuterCorrectors    3;
+    nCorrectors         1;
+    nNonOrthogonalCorrectors 0;
+    turbOnFinalIterOnly no;
+    finalOnLastPimpleIterOnly yes;
+}
+
+
+// ************************************************************************* //

@@ -447,6 +447,7 @@ void KEpsilon::correct(
         epsilon,
         rt
     );
+    epsEqn.relax(); // OpenFOAM kEpsilon.C: epsEqn.ref().relax()
     epsEqn.solve();
 
     // Bound ε > 0. A plain clamp pins an undershooting cell at the floor, and ν_t = Cμ k²/ε then
@@ -478,6 +479,7 @@ void KEpsilon::correct(
         k,
         rt
     );
+    kEqn.relax(); // OpenFOAM kEpsilon.C: kEqn.ref().relax()
     kEqn.solve();
 
     // Bound k >= kMin
@@ -629,10 +631,7 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "epsilon", "kFinal", "epsilonFinal"})
     {
-        if (solverDict.isDict(f))
-        {
-            solverDict.subDict(f) = mapFvSolution(solverDict.subDict(f));
-        }
+        mapSolverSettings(solverDict, f);
     }
 }
 
