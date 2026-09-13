@@ -70,6 +70,21 @@ def _registered_field(fields: Mapping[str, Any], name: str) -> Any:
     raise KeyError(f"postProcess: field {name!r} is not registered; available: {sorted(fields)}")
 
 
+def _internal_values(field: Any) -> "np.ndarray[Any, Any]":
+    """The internal values of a volume field as host numpy, pybFoam or NeoN.
+
+    A pybFoam volume field hands its cell values over as ``internalField()``; a
+    NeoN one keeps them in a ``Vector`` on its executor, which may be a device,
+    so ``copy_to_host`` is the only way in — NeoN's ``__array__`` refuses a
+    device vector outright. Duck-typed on the accessor rather than on the class
+    so this module keeps importing neither NeoN nor its bindings.
+    """
+    internal_field = getattr(field, "internalField", None)
+    if internal_field is not None:
+        return np.asarray(internal_field())
+    return np.asarray(field.internal_vector().copy_to_host())
+
+
 def _in_mesh(values: "np.ndarray[Any, Any]") -> "np.ndarray[Any, Any]":
     """Which sampled values are real — the rest carry the ``OUT_OF_MESH`` sentinel.
 
@@ -90,7 +105,9 @@ class InternalField(Source):
     The default source: use it whenever a table works on cell values. The
     ``field`` is the key the solver registered, or the name the field itself
     carries (incompressibleVoF registers ``alpha.water`` as ``alpha1``, and
-    either spelling finds it). Build it through :func:`field`::
+    either spelling finds it). A pybFoam field and a NeoN one are both read —
+    the NeoN one through a host copy of its internal vector. Build it through
+    :func:`field`::
 
         field("p") | VolIntegrate()
     """
@@ -101,7 +118,7 @@ class InternalField(Source):
     def resolve(self, ctx: Context) -> DataSet:
         return DataSet(
             name=self.field,
-            values=np.asarray(_registered_field(ctx.fields, self.field).internalField()),
+            values=_internal_values(_registered_field(ctx.fields, self.field)),
             geometry=CellGeometry(ctx.mesh),
         )
 
