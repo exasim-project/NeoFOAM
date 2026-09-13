@@ -631,9 +631,10 @@ RESOLVE → wire optional-model dependencies via ConfigContext
 BUILD   → emit lazy InitSteps for the NeoN runtime, fields, and turbulence</p>
 <p>Differences from the pybFoam <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> init graph:</p>
 <ul class="simple">
-<li><p>no <code class="docutils literal notranslate"><span class="pre">mesh</span></code> step and no mesh-preprocess pipeline — <code class="docutils literal notranslate"><span class="pre">create_adapter_run_time</span></code>
-constructs its own <code class="docutils literal notranslate"><span class="pre">MeshAdapter</span></code> (fvMesh) on the <code class="docutils literal notranslate"><span class="pre">Foam::Time</span></code> registry;
-also creating a pybFoam <code class="docutils literal notranslate"><span class="pre">fvMesh</span></code> would double-register the default region;</p></li>
+<li><p>no mesh-<em>read</em> step and no mesh-preprocess pipeline — <code class="docutils literal notranslate"><span class="pre">create_adapter_run_time</span></code>
+constructs its own <code class="docutils literal notranslate"><span class="pre">MeshAdapter</span></code> (fvMesh) on the <code class="docutils literal notranslate"><span class="pre">Foam::Time</span></code> registry, and
+the <code class="docutils literal notranslate"><span class="pre">mesh</span></code> step only aliases it onto the Context; also creating a pybFoam
+<code class="docutils literal notranslate"><span class="pre">fvMesh</span></code> would double-register the default region;</p></li>
 <li><p>the NeoN <code class="docutils literal notranslate"><span class="pre">RunTime</span></code> adapter is the central resource: an init-only
 <code class="docutils literal notranslate"><span class="pre">_neon_runtime</span></code> (never routed onto the Context) plus a
 <code class="docutils literal notranslate"><span class="pre">models.neon_runtime</span></code> alias so operations inject it by name;</p></li>

@@ -669,9 +669,9 @@ regimes, and model families.</p>
 <dt><code class="docutils literal notranslate"><span class="pre">postprocess/</span></code></dt><dd><p>In-situ post-processing: a case declares <em>tables</em> (a source, pipeline nodes
 and a write cadence) in <code class="docutils literal notranslate"><span class="pre">system/postProcess.yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">system/postProcess.py</span></code>
 and the <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model appends them to <code class="docutils literal notranslate"><span class="pre">postProcessing/&lt;name&gt;.csv</span></code>
-while the solver runs (wired into <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> and
-<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code>; <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> is wired too but refuses
-a declared table until NeoN fields can be copied to the host).
+while the solver runs (wired into <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>,
+<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> and <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code>; on the NeoN backend
+only the <code class="docutils literal notranslate"><span class="pre">internal</span></code> source works, see <a class="reference internal" href="postprocessing.html"><span class="doc">In-situ post-processing</span></a>).
 The data contract (<code class="docutils literal notranslate"><span class="pre">node.py</span></code>), the two front doors (<code class="docutils literal notranslate"><span class="pre">config.py</span></code>,
 <code class="docutils literal notranslate"><span class="pre">script.py</span></code>) and the table registry stay at the top level;
 the plugins are grouped into <code class="docutils literal notranslate"><span class="pre">postprocess/nodes/</span></code> (selectors, binning,

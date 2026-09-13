@@ -689,6 +689,21 @@
     <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"postProcess: field </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is not registered; available: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_internal_values</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The internal values of a volume field as host numpy, pybFoam or NeoN.</span>
+
+<span class="sd">    A pybFoam volume field hands its cell values over as ``internalField()``; a</span>
+<span class="sd">    NeoN one keeps them in a ``Vector`` on its executor, which may be a device,</span>
+<span class="sd">    so ``copy_to_host`` is the only way in — NeoN's ``__array__`` refuses a</span>
+<span class="sd">    device vector outright. Duck-typed on the accessor rather than on the class</span>
+<span class="sd">    so this module keeps importing neither NeoN nor its bindings.</span>
+<span class="sd">    """</span>
+    <span class="n">internal_field</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">"internalField"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">internal_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">internal_field</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">internal_vector</span><span class="p">()</span><span class="o">.</span><span class="n">copy_to_host</span><span class="p">())</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_in_mesh</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Which sampled values are real — the rest carry the ``OUT_OF_MESH`` sentinel.</span>
 
@@ -711,7 +726,9 @@
 <span class="sd">    The default source: use it whenever a table works on cell values. The</span>
 <span class="sd">    ``field`` is the key the solver registered, or the name the field itself</span>
 <span class="sd">    carries (incompressibleVoF registers ``alpha.water`` as ``alpha1``, and</span>
-<span class="sd">    either spelling finds it). Build it through :func:`field`::</span>
+<span class="sd">    either spelling finds it). A pybFoam field and a NeoN one are both read —</span>
+<span class="sd">    the NeoN one through a host copy of its internal vector. Build it through</span>
+<span class="sd">    :func:`field`::</span>
 
 <span class="sd">        field("p") | VolIntegrate()</span>
 <span class="sd">    """</span>
@@ -722,7 +739,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">DataSet</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span>
-            <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_registered_field</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)</span><span class="o">.</span><span class="n">internalField</span><span class="p">()),</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">_internal_values</span><span class="p">(</span><span class="n">_registered_field</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)),</span>
             <span class="n">geometry</span><span class="o">=</span><span class="n">CellGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">),</span>
         <span class="p">)</span></div>
 

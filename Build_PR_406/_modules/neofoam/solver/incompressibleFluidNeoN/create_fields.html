@@ -628,9 +628,10 @@
 
 <span class="sd">Differences from the pybFoam ``incompressibleFluid`` init graph:</span>
 
-<span class="sd">* no ``mesh`` step and no mesh-preprocess pipeline — ``create_adapter_run_time``</span>
-<span class="sd">  constructs its own ``MeshAdapter`` (fvMesh) on the ``Foam::Time`` registry;</span>
-<span class="sd">  also creating a pybFoam ``fvMesh`` would double-register the default region;</span>
+<span class="sd">* no mesh-*read* step and no mesh-preprocess pipeline — ``create_adapter_run_time``</span>
+<span class="sd">  constructs its own ``MeshAdapter`` (fvMesh) on the ``Foam::Time`` registry, and</span>
+<span class="sd">  the ``mesh`` step only aliases it onto the Context; also creating a pybFoam</span>
+<span class="sd">  ``fvMesh`` would double-register the default region;</span>
 <span class="sd">* the NeoN ``RunTime`` adapter is the central resource: an init-only</span>
 <span class="sd">  ``_neon_runtime`` (never routed onto the Context) plus a</span>
 <span class="sd">  ``models.neon_runtime`` alias so operations inject it by name;</span>
@@ -662,7 +663,7 @@
     <span class="n">model</span> <span class="k">as</span> <span class="n">init_model</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableSet</span><span class="p">,</span> <span class="n">postProcess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">postProcess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.neon_runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">requested_executor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.turbulence.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TurbulencePropertiesConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.turbulence.selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_turbulence_model</span>
@@ -694,28 +695,6 @@
 <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_refuse_post_processing_tables</span><span class="p">(</span><span class="n">tables</span><span class="p">:</span> <span class="n">TableSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Reject a case that declares tables: the NeoN backend cannot read fields yet.</span>
-
-<span class="sd">    The sources hand every pipeline a host numpy array, and the NeoN bindings</span>
-<span class="sd">    still only copy host-&gt;device (see risk R12) — so a table over NeoN fields</span>
-<span class="sd">    has nothing to read. ``incompressibleFluid`` and ``incompressibleVoF`` run</span>
-<span class="sd">    tables serially and decomposed alike; on this backend no table runs at all.</span>
-<span class="sd">    The guard sits at the solver seam so the case fails at LOAD, before any</span>
-<span class="sd">    solve time is spent.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">tables</span><span class="o">.</span><span class="n">tables</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-        <span class="s2">"postProcess is not supported by incompressibleFluidNeoN: the tables "</span>
-        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">tables</span><span class="o">.</span><span class="n">tables</span><span class="p">]</span><span class="si">}</span><span class="s2"> cannot be evaluated because NeoN "</span>
-        <span class="s2">"fields have no device-to-host copy yet, so they cannot be read into "</span>
-        <span class="s2">"numpy. Tables are supported by incompressibleFluid and "</span>
-        <span class="s2">"incompressibleVoF; remove system/postProcess.yaml / system/postProcess.py "</span>
-        <span class="s2">"to run this case on the NeoN backend."</span>
-    <span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_optional_models_by_name</span><span class="p">(</span><span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Map each active optional model to its model name (see incompressibleFluid)."""</span>
     <span class="k">return</span> <span class="p">{</span><span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">optional_models</span><span class="p">}</span>
@@ -744,10 +723,8 @@
         <span class="n">field_writer_model</span> <span class="o">=</span> <span class="n">fieldWriter</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span>
 
         <span class="c1"># postProcess is a third such Model: it LOADs the case's tables and is</span>
-        <span class="c1"># stepped last in the time loop. On this backend only the empty set gets</span>
-        <span class="c1"># past the guard below.</span>
+        <span class="c1"># stepped last in the time loop.</span>
         <span class="n">post_process_model</span> <span class="o">=</span> <span class="n">postProcess</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="s2">"main"</span><span class="p">)</span>
-        <span class="n">_refuse_post_processing_tables</span><span class="p">(</span><span class="n">post_process_model</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
 
         <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">pressure_model</span><span class="p">,</span>
@@ -805,6 +782,13 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">alias_neon_runtime</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span>
 
+        <span class="k">def</span><span class="w"> </span><span class="nf">alias_mesh</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+            <span class="c1"># The adapter's MeshAdapter *is* a Foam::fvMesh (see runtime.cpp), so</span>
+            <span class="c1"># routing it onto ``Context.mesh`` gives the mesh-reading seams — the</span>
+            <span class="c1"># postProcess sources' cell geometry above all — the same object the</span>
+            <span class="c1"># pybFoam solvers put there, without a second fvMesh on the registry.</span>
+            <span class="k">return</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]</span><span class="o">.</span><span class="n">mesh</span>
+
         <span class="k">def</span><span class="w"> </span><span class="nf">create_nu_vol</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="c1"># Volume nu for the explicit dev2 viscous-stress term (nuEff/nut</span>
             <span class="c1"># come from the turbulence model below).</span>
@@ -844,6 +828,7 @@
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"_foam_time"</span><span class="p">,</span> <span class="n">create_foam_time</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_arg_list"</span><span class="p">]))</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"_neon_runtime"</span><span class="p">,</span> <span class="n">create_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_foam_time"</span><span class="p">]))</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init_model</span><span class="p">(</span><span class="s2">"neon_runtime"</span><span class="p">,</span> <span class="n">alias_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="n">alias_mesh</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"_neon_runtime"</span><span class="p">]))</span>
 
         <span class="c1"># solutionLoop + fieldWriter are the framework *core* Models; the NeoN</span>
         <span class="c1"># touch-points (NeoNTimeSync backend, write hook, logger, reporter) are</span>

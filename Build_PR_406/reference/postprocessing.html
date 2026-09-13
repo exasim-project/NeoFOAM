@@ -633,14 +633,25 @@ what format — CSV unless the table says otherwise).</p>
 <p>Nothing runs unless the case declares something: with neither
 <code class="docutils literal notranslate"><span class="pre">system/postProcess.yaml</span></code> nor <code class="docutils literal notranslate"><span class="pre">system/postProcess.py</span></code> present, the
 <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model is a no-op and no <code class="docutils literal notranslate"><span class="pre">postProcessing/</span></code> directory is created.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model is wired into <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> and
-<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> today, and into
-<code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code>, which refuses a declared table until NeoN fields can
-be copied to the host —
+<p>The <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model is wired into <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>,
+<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> and <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> today —
 another solver picks it up by adding the same seam to its <code class="docutils literal notranslate"><span class="pre">create_fields.py</span></code>
 (instantiate the model) and its execution-graph step (step <code class="docutils literal notranslate"><span class="pre">post_process</span></code> after
 <code class="docutils literal notranslate"><span class="pre">write_output</span></code>); until it does, a declaration in one of its cases is ignored
 silently.</p>
+<p>On <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> only the <code class="docutils literal notranslate"><span class="pre">internal</span></code> source works. Its fields
+live on the NeoN executor, and the source reads them through a host copy of the
+field’s internal vector — a few hundred microseconds per million cells on a host
+executor, a few milliseconds off a GPU, and only on the steps a table is actually
+due. The cell geometry comes off the run-time adapter’s mesh, which <em>is</em> an
+fvMesh, so volume and surface integrals need no separate path. The other sources
+interpolate a <em>pybFoam</em> field onto a sampled surface or set, and NeoN never
+writes its values back into the OpenFOAM registry while the run goes on: a
+<code class="docutils literal notranslate"><span class="pre">patch</span></code>, <code class="docutils literal notranslate"><span class="pre">line</span></code>, <code class="docutils literal notranslate"><span class="pre">plane</span></code> or <code class="docutils literal notranslate"><span class="pre">isoSurface</span></code> table on a NeoN case raises
+<code class="docutils literal notranslate"><span class="pre">postProcess:</span> <span class="pre">cannot</span> <span class="pre">sample</span> <span class="pre">'&lt;field&gt;';</span> <span class="pre">ScalarVolumeField</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">one</span> <span class="pre">of</span>
+<span class="pre">['volScalarField',</span> <span class="pre">'volVectorField']</span></code> at the table’s first evaluation. So does
+<code class="docutils literal notranslate"><span class="pre">residuals</span></code>, which reads the fvMesh’s <code class="docutils literal notranslate"><span class="pre">solverPerformanceDict</span></code> — NeoN solves
+through Ginkgo and never fills it.</p>
 <p>Field names follow the solver’s registry, which is not always the name on disk:
 <code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> registers the phase fractions as <code class="docutils literal notranslate"><span class="pre">alpha1</span></code> and <code class="docutils literal notranslate"><span class="pre">alpha2</span></code>
 while the files are <code class="docutils literal notranslate"><span class="pre">alpha.water</span></code> and <code class="docutils literal notranslate"><span class="pre">alpha.air</span></code>. The <code class="docutils literal notranslate"><span class="pre">internal</span></code> source
