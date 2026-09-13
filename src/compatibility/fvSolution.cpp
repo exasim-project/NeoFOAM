@@ -11,14 +11,13 @@
 
 #include <algorithm>
 #include <map>
+#include <regex>
 #include <set>
 
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
-
-#include "regExp.H"
 
 
 namespace NeoFOAM
@@ -67,10 +66,13 @@ bool keyMatches(const std::string& key, const std::string& name)
 {
     if (key == name) return true;
 
-    // Only a quoted keyword is a regular expression (see NeoFOAM::dictKey); the pattern
-    // must match the whole name, as Foam::dictionary's pattern lookup does.
+    // Only a quoted keyword is a regular expression (see NeoFOAM::dictKey); regex_match
+    // requires the whole name to match, as Foam::dictionary's pattern lookup does.
+    // std::regex rather than Foam::regExp: the latter is a typedef for regExpCxx, the
+    // same std::regex underneath, but constructing one aborts against OpenFOAM 2512 on
+    // macOS -- going direct drops the OpenFOAM symbol without changing the semantics.
     if (key.size() < 2 || key.front() != '"' || key.back() != '"') return false;
-    return Foam::regExp(key.substr(1, key.size() - 2)).match(name);
+    return std::regex_match(name, std::regex(key.substr(1, key.size() - 2)));
 }
 
 std::optional<std::string> matchKey(const NeoN::Dictionary& dict, const std::string& name)
