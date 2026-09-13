@@ -1,0 +1,42 @@
+# The tables the serial/decomposed comparison runs on, one per shape whose
+# reduction could go wrong when the 3x3x1 cavity is cut in two along x:
+# a plain sum, both extrema, a masked and binned volume integral, a patch
+# integral over a boundary both ranks own, and a sampled surface only one of
+# them touches.
+tables:
+  # The cell measure summed over the mesh: the whole 0.1 x 0.1 x 0.01 m volume,
+  # not one rank's share of it.
+  - name: mesh_volume
+    source: {type: internal, field: p}
+    pipeline:
+      - {type: area}
+      - {type: sum, name: mesh_volume}
+  # The extrema are the values most easily left rank-local: each rank fills its
+  # empty bins with -/+GREAT, so a missing reduction shows up as a sentinel.
+  - name: p_max
+    source: {type: internal, field: p}
+    pipeline: [{type: max, name: p_max}]
+  - name: p_min
+    source: {type: internal, field: p}
+    pipeline: [{type: min, name: p_min}]
+  # Masked *and* binned: the box drops the right-hand third of the cells (which
+  # after `simple (2 1 1)` is rank 1's whole subdomain minus nothing), and the
+  # three y-bins come from the binner's spec, so both ranks report three rows.
+  - name: binned_p
+    source: {type: internal, field: p}
+    pipeline:
+      - {type: box, min: [-0.01, -0.01, -0.01], max: [0.0667, 0.11, 0.011]}
+      - {type: directional, bins: [0.0333, 0.0667], direction: [0.0, 1.0, 0.0]}
+      - {type: volIntegrate, name: binned_p}
+  # The lid spans both subdomains, so this face integral is split across ranks.
+  - name: wall_p
+    source: {type: patch, field: p, patch: movingWall}
+    pipeline: [{type: surfIntegrate, name: wall_p}]
+  # x = 0.05 lies inside rank 0's subdomain, so rank 1 samples an empty surface
+  # and its mean has to come entirely from the other rank.
+  - name: plane_speed
+    source: {type: plane, point: [0.05, 0.0, 0.0], normal: [1.0, 0.0, 0.0]}
+    pipeline:
+      - {type: sample, field: U}
+      - {type: mag}
+      - {type: mean, name: plane_speed}

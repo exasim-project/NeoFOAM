@@ -1,0 +1,18 @@
+# One unknown key per mapping: a source's, a node's and a writer's. Each is a
+# key the family would otherwise accept as optional data, so nothing but the
+# extra-key check can reject it.
+tables:
+  - name: typo_source
+    source: {type: patch, field: p, patch: movingWall, region: lid}
+    pipeline: [{type: surfIntegrate, name: typo_source}]
+
+  - name: typo_node
+    source: {type: internal, field: p}
+    pipeline:
+      - {type: directional, bins: [0.5], direction: [1, 0, 0], origins: [0, 0, 0]}
+      - {type: sum, name: typo_node}
+
+  - name: typo_writer
+    source: {type: internal, field: p}
+    pipeline: [{type: volIntegrate, name: typo_writer}]
+    writer: {type: csv, delimiter: ";"}

@@ -31,7 +31,8 @@ class PluginSystem:
     - Central registry (_registry) for all plugin base types and their plugin classes.
     - Decorator API for explicit registration of plugin families and plugin config classes.
     - Supports multiple independent plugin families, each with its own registry
-      and extensible model.
+      and extensible model, keyed by the base class name — so two base classes
+      sharing a name cannot both be families and the second one raises.
     - Uses a PluginRegistry dataclass to store metadata for each plugin base type:
         - base_cls: The plugin base class (usually a Pydantic model).
         - plugin_registry: List of registered plugin config classes for this type.
@@ -68,6 +69,7 @@ class PluginSystem:
         discriminator_variable: str, discriminator: str
     ) -> Callable[[Type[BaseModel]], Type[BaseModel]]:
         def base_decorator(base_cls: Type[BaseModel]) -> Type[BaseModel]:
+            PluginSystem._reject_foreign_family(base_cls)
             # Store metadata for this base class in the registry as a dataclass
             PluginSystem._registry[base_cls.__name__] = PluginRegistry(
                 base_cls=base_cls,
@@ -114,6 +116,29 @@ class PluginSystem:
             return base_cls
 
         return base_decorator
+
+    @staticmethod
+    def _reject_foreign_family(base_cls: Type[BaseModel]) -> None:
+        """Refuse a family name another class already holds; a re-run for the same class is fine."""
+        registered = PluginSystem._registry.get(base_cls.__name__)
+        if registered is None:
+            return
+        previous = registered.base_cls
+        # A module reload builds a new class object at the same definition site;
+        # that is the same family being declared again, not a clash.
+        same_definition_site = (
+            previous.__module__ == base_cls.__module__
+            and previous.__qualname__ == base_cls.__qualname__
+        )
+        if previous is base_cls or same_definition_site:
+            return
+        raise ValueError(
+            f"plugin family '{base_cls.__name__}' is already registered by "
+            f"{previous.__module__}.{previous.__qualname__}; "
+            f"{base_cls.__module__}.{base_cls.__qualname__} cannot register under the same "
+            "name because the registry is keyed by class name — rename one of the two base "
+            "classes."
+        )
 
     @classmethod
     def get_registered(cls, base_cls_name: str) -> Optional["PluginRegistry"]:

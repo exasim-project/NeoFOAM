@@ -168,3 +168,37 @@ def test_list_plugins() -> None:
     animal_plugin_names = [cls.__name__ for cls in plugins["AnimalInterface"]]
     assert "Dog" in animal_plugin_names
     assert "Cat" in animal_plugin_names
+
+
+@PluginSystem.register(discriminator_variable="widget", discriminator="widget_type")
+class WidgetInterface(BaseModel):
+    color: str
+
+
+def test_a_second_class_cannot_claim_a_registered_family_name() -> None:
+    """The registry is keyed by class name: a clash must be loud, not a silent takeover."""
+    impostor = type("WidgetInterface", (BaseModel,), {"__module__": "other_package.widgets"})
+
+    with pytest.raises(ValueError) as excinfo:
+        PluginSystem.register(discriminator_variable="widget", discriminator="widget_type")(
+            impostor
+        )
+
+    message = str(excinfo.value)
+    assert "WidgetInterface" in message
+    assert WidgetInterface.__module__ in message
+    assert "other_package.widgets" in message
+    registry = PluginSystem.get_registered("WidgetInterface")
+    assert registry is not None
+    assert registry.base_cls is WidgetInterface
+
+
+def test_registering_the_same_class_again_is_tolerated() -> None:
+    """A module reload re-runs the decorator on its own base class; that stays a no-op."""
+    PluginSystem.register(discriminator_variable="widget", discriminator="widget_type")(
+        WidgetInterface
+    )
+
+    registry = PluginSystem.get_registered("WidgetInterface")
+    assert registry is not None
+    assert registry.base_cls is WidgetInterface

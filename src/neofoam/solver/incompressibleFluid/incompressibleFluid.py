@@ -32,6 +32,7 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
+from neofoam.postprocess import PostProcessConfig
 from neofoam.telemetry import TelemetrySettings
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
@@ -116,6 +117,7 @@ incompressibleFluid.config(PreprocessConfig)  # mesh pipeline enable file (confi
 incompressibleFluid.config(BlockMeshDictConfig)
 incompressibleFluid.config(SnappyHexMeshDictConfig)
 incompressibleFluid.config(TelemetryDictConfig)  # opt-in tracing (controlDict subdict)
+incompressibleFluid.config(PostProcessConfig)  # in-situ tables (system/postProcess.yaml)
 
 incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
 incompressibleFluid.models(viscosityModel, required=True)  # molecular nu
@@ -152,6 +154,7 @@ def execution_graph(
     # adjustment. Persisting fields is the separate fieldWriter model.
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
+    post_ops = Operations(_core_model(self.state, "postProcess").operations)
 
     time_loop_op = Operation(
         func=IterativeOp(SolutionLoopPredicate()),
@@ -188,6 +191,9 @@ def execution_graph(
                 inner_builder.step(_under_turb_corr(op))
 
         time_builder.step(writer_ops["write_output"])
+        # Last in the loop: a pure reader, so a CSV row and the time directory
+        # just written describe the same state.
+        time_builder.step(post_ops["post_process"])
 
     # Optional-model operations are merged by the resolver (placed by their own
     # depends_on / operation_number).
