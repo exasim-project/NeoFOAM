@@ -1,56 +1,135 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The ``postProcess`` seam of incompressibleFluidNeoN — wired, but table-free.
+"""End-to-end: a NeoN case's declared tables become ``postProcessing/<name>.csv``.
 
-**Case-free.** The NeoN backend cannot be solved here at all (the bindings are a
-separate build), and none of the three things this module pins needs a run: the
-guard is a function of the loaded ``TableSet``, the schema set is static, and the
-loop order is a property of the built graph.
+**Integration, real NeoN + OpenFOAM.** The unit tests under ``test/postprocess``
+pin the package; this module pins the *NeoN* seam — that ``incompressibleFluidNeoN``
+loads the case's declaration, that the ``internal`` source reads a NeoN volume
+field (a host copy of its internal vector, not ``internalField()``), that the
+cell geometry comes off the adapter's ``MeshAdapter`` on ``Context.mesh``, and
+that the number in the CSV is the volume integral of the field as it was written.
 
-**Why the guard.** Every source hands its pipeline a host numpy array, and the
-NeoN bindings still copy host->device only (risk R12) — so a table over NeoN
-fields has nothing to read. Rather than let it fail deep inside a pipeline, the
-solver refuses the declaration at load. ``incompressibleFluid`` and
-``incompressibleVoF`` run tables serially and decomposed alike; on this backend
-no table runs at all, so the parallel case needs no separate branch.
+**The case.** ``test/setup_pimple`` under the ``casebuild`` pipeline, the same
+cavity ``test_cavity_run.py`` runs: 20x20x1 uniform cells in a 0.1 m box, so
+every cell carries the same volume. Three steps of 0.005 s with
+``writeInterval 1`` so the last time directory and the last CSV row describe the
+same state. NeoN/Kokkos and OpenFOAM keep per-process global state, so the
+solver runs in a fresh interpreter.
+
+**Tolerance.** The reference value is recomputed from the *written* time
+directory, so its error budget is the ASCII round-trip of those files — the case
+writes ``writePrecision 15``, and ``_RTOL`` leaves several decades of headroom
+over the sum of 400 cell values.
 
 **Loop order.** That ``post_process`` is stepped *after* ``write_output`` is what
 a CSV row would mean, and it is asserted on the built graph with the core models
-the graph step reads faked down to their spec name and op names.
+the graph step reads faked down to their spec name and op names — case-free.
 """
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import numpy as np
 import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
-from neofoam.postprocess.table import tables_for_case
 from neofoam.solver.incompressibleFluidNeoN import config_classes
-from neofoam.solver.incompressibleFluidNeoN.create_fields import _refuse_post_processing_tables
 from neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN import execution_graph
+from neofoam.tooling.casebuild import CaseDir, block_mesh, from_template, patch
+from solver.incompressibleFluid.solved_case import read_table
 
 _CASES = Path(__file__).parent / "cases"
 
+#: ``test/setup_pimple/system/blockMeshDict``: 20x20x1 cells, ``scale 0.1`` on a
+#: unit box, so every cell is (0.1/20) x (0.1/20) x 0.1 m.
+_CELL_VOLUME = 0.1 / 20 * 0.1 / 20 * 0.1
 
-def test_a_declared_table_is_refused_by_the_neon_backend() -> None:
-    tables = tables_for_case(_CASES / "postprocess_yaml")
+#: Three steps of the case's ``deltaT 0.005``.
+_END_TIME = 0.015
 
-    with pytest.raises(NotImplementedError, match="volume_p"):
-        _refuse_post_processing_tables(tables)
+#: See the module docstring: ASCII round-trip of ``writePrecision 15``.
+_RTOL = 1e-10
 
 
-def test_a_case_declaring_no_table_passes_the_guard() -> None:
-    tables = tables_for_case(_CASES / "regexSolverKeys")
+def _overlay(source: Path) -> Any:
+    """Copy a checked-in declaration directory over the built case."""
 
-    assert _refuse_post_processing_tables(tables) is None
+    def step(case: CaseDir) -> None:
+        shutil.copytree(source, case.path, dirs_exist_ok=True)
+
+    return step
+
+
+@pytest.fixture(scope="module")
+def cavity_with_tables(tmp_path_factory: pytest.TempPathFactory) -> CaseDir:
+    """The NeoN cavity solved for three steps with ``cases/postprocess_yaml`` on it."""
+    case = (
+        from_template(Path(__file__).parents[2] / "setup_pimple")
+        | patch("system/controlDict", endTime=_END_TIME, writeInterval=1)
+        | _overlay(_CASES / "postprocess_yaml")
+        | block_mesh()
+    ).build_at(tmp_path_factory.mktemp("postprocess") / "cavity")
+
+    solve = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from neofoam.solver.incompressibleFluidNeoN import run;"
+            " run(['incompressibleFluidNeoN'])",
+        ],
+        cwd=str(case.path),
+        env={**os.environ, "FOAM_SIGFPE": "false"},
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert solve.returncode == 0, (
+        f"incompressibleFluidNeoN aborted on {case.path.name}:\n"
+        f"{solve.stdout[-2000:]}\n{solve.stderr[-2000:]}"
+    )
+    return case
+
+
+def test_a_declared_table_gets_one_row_per_time_step(cavity_with_tables: CaseDir) -> None:
+    header, rows = read_table(cavity_with_tables, "volume_p")
+
+    assert header == ["time", "volume_p"]
+    assert [float(row[0]) for row in rows] == pytest.approx([0.005, 0.01, 0.015])
+
+
+def test_the_scalar_row_is_the_volume_integral_of_p_as_written(
+    cavity_with_tables: CaseDir,
+) -> None:
+    written_p = cavity_with_tables.read_field("p", time=str(_END_TIME))
+
+    _, rows = read_table(cavity_with_tables, "volume_p")
+
+    assert float(rows[-1][1]) == pytest.approx(float(written_p.sum()) * _CELL_VOLUME, rel=_RTOL), (
+        "volume_p at the last step is not the volume integral of the written p"
+    )
+
+
+def test_the_vector_row_is_the_volume_integral_of_mag_U_as_written(
+    cavity_with_tables: CaseDir,
+) -> None:
+    written_u = cavity_with_tables.read_field("U", time=str(_END_TIME))
+
+    _, rows = read_table(cavity_with_tables, "volume_mag_U")
+
+    assert float(rows[-1][1]) == pytest.approx(
+        float(np.linalg.norm(written_u, axis=1).sum()) * _CELL_VOLUME, rel=_RTOL
+    ), "volume_mag_U at the last step is not the volume integral of the written |U|"
 
 
 def test_post_process_config_is_part_of_the_solver_schema() -> None:

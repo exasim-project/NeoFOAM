@@ -69,9 +69,9 @@ incompressibleFluidNeoN.config(PreprocessConfig)  # mesh pipeline enable file (c
 # them the sweep's mesh dimension is unavailable.
 incompressibleFluidNeoN.config(BlockMeshDictConfig)
 incompressibleFluidNeoN.config(SnappyHexMeshDictConfig)
-# In-situ tables (system/postProcess.yaml). Declared so the schema matches the
-# other solvers; a case that actually declares a table is refused at load —
-# NeoN fields cannot be read into numpy yet (see create_fields).
+# In-situ tables (system/postProcess.yaml). The ``internal`` source reads a NeoN
+# field through a host copy of its internal vector; the sampling sources need a
+# pybFoam field and raise on this backend (see doc/reference/postprocessing.rst).
 incompressibleFluidNeoN.config(PostProcessConfig)
 # The NeoN C++ factories read constant/transportProperties /
 # constant/turbulenceProperties directly at solve time; declaring the (single-phase)

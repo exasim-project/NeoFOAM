@@ -95,9 +95,9 @@ the linked reference pages for the full API.
     In-situ post-processing: a case declares *tables* (a source, pipeline nodes
     and a write cadence) in ``system/postProcess.yaml`` or ``system/postProcess.py``
     and the ``postProcess`` model appends them to ``postProcessing/<name>.csv``
-    while the solver runs (wired into ``incompressibleFluid`` and
-    ``incompressibleVoF``; ``incompressibleFluidNeoN`` is wired too but refuses
-    a declared table until NeoN fields can be copied to the host).
+    while the solver runs (wired into ``incompressibleFluid``,
+    ``incompressibleVoF`` and ``incompressibleFluidNeoN``; on the NeoN backend
+    only the ``internal`` source works, see :doc:`postprocessing`).
     The data contract (``node.py``), the two front doors (``config.py``,
     ``script.py``) and the table registry stay at the top level;
     the plugins are grouped into ``postprocess/nodes/`` (selectors, binning,

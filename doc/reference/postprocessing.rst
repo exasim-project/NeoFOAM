@@ -11,14 +11,26 @@ Nothing runs unless the case declares something: with neither
 ``system/postProcess.yaml`` nor ``system/postProcess.py`` present, the
 ``postProcess`` model is a no-op and no ``postProcessing/`` directory is created.
 
-The ``postProcess`` model is wired into ``incompressibleFluid`` and
-``incompressibleVoF`` today, and into
-``incompressibleFluidNeoN``, which refuses a declared table until NeoN fields can
-be copied to the host —
+The ``postProcess`` model is wired into ``incompressibleFluid``,
+``incompressibleVoF`` and ``incompressibleFluidNeoN`` today —
 another solver picks it up by adding the same seam to its ``create_fields.py``
 (instantiate the model) and its execution-graph step (step ``post_process`` after
 ``write_output``); until it does, a declaration in one of its cases is ignored
 silently.
+
+On ``incompressibleFluidNeoN`` only the ``internal`` source works. Its fields
+live on the NeoN executor, and the source reads them through a host copy of the
+field's internal vector — a few hundred microseconds per million cells on a host
+executor, a few milliseconds off a GPU, and only on the steps a table is actually
+due. The cell geometry comes off the run-time adapter's mesh, which *is* an
+fvMesh, so volume and surface integrals need no separate path. The other sources
+interpolate a *pybFoam* field onto a sampled surface or set, and NeoN never
+writes its values back into the OpenFOAM registry while the run goes on: a
+``patch``, ``line``, ``plane`` or ``isoSurface`` table on a NeoN case raises
+``postProcess: cannot sample '<field>'; ScalarVolumeField is not one of
+['volScalarField', 'volVectorField']`` at the table's first evaluation. So does
+``residuals``, which reads the fvMesh's ``solverPerformanceDict`` — NeoN solves
+through Ginkgo and never fills it.
 
 Field names follow the solver's registry, which is not always the name on disk:
 ``incompressibleVoF`` registers the phase fractions as ``alpha1`` and ``alpha2``
