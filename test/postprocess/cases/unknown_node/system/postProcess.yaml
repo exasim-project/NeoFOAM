@@ -1,0 +1,9 @@
+# pipeline[1] names a node nobody registered — the resolution error must point
+# at this table and at position 1 (position 0 is a perfectly good node).
+tables:
+  - name: volume_p
+    source: {type: internal, field: p}
+    pipeline:
+      - {type: scale, factor: 2.0}
+      - {type: notANode}
+      - {type: volIntegrate, name: volume_p}

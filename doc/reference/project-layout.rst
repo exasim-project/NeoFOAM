@@ -91,6 +91,22 @@ the linked reference pages for the full API.
     ``PluginSystem`` — discriminated registries for constraints, time-integration
     regimes, and model families.
 
+``postprocess/``
+    In-situ post-processing: a case declares *tables* (a source, pipeline nodes
+    and a write cadence) in ``system/postProcess.yaml`` or ``system/postProcess.py``
+    and the ``postProcess`` model appends them to ``postProcessing/<name>.csv``
+    while the solver runs (wired into ``incompressibleFluid`` and
+    ``incompressibleVoF``; ``incompressibleFluidNeoN`` is wired too but refuses
+    a declared table until NeoN fields can be copied to the host).
+    The data contract (``node.py``), the two front doors (``config.py``,
+    ``script.py``) and the table registry stay at the top level;
+    the plugins are grouped into ``postprocess/nodes/`` (selectors, binning,
+    field functions, aggregators, row output, debug), ``postprocess/sources/``
+    (cell/patch/probe fields, sampled surfaces, solver residuals, and the
+    geometry adapters they hand the nodes) and ``postprocess/writers/`` (the
+    ``TableWriter`` interface and the CSV writer a table gets by default).
+    See :doc:`postprocessing`.
+
 ``tooling/``
     The "above the library" layer: the stdlib-only ``Workspace`` path sandbox and
     other frontend/trust-boundary concerns.
