@@ -48,7 +48,9 @@ inline void setEpsilonWallFunction(
     const scalar Cmu75 = Kokkos::pow(Cmu, scalar(0.75));
 
     auto kInternal = k.internalVector().view();
-    const auto nuBoundary = nu.boundaryData().value().view();
+    // nu is kept in the signature/context: it is what the lowReCorrection branch would
+    // need, and every caller already supplies it.
+    (void)nu;
     const auto nearWallBoundary = nearWallDist.boundaryData().value().view();
 
     auto [refGrad, value, valueFraction, refValue, faceOwners] = views(
@@ -65,12 +67,14 @@ inline void setEpsilonWallFunction(
         NEON_LAMBDA(const localIdx i) {
             const localIdx owner = faceOwners[i];
             const scalar y = nearWallBoundary[i];
-            const scalar nuw = nuBoundary[i];
             const scalar kw = Kokkos::max(kInternal[owner], scalar(0));
 
-            const scalar eVis = scalar(2) * kw * nuw / (y * y);
+            // OpenFOAM switches, it does not blend: epsilonWallFunction.C:242-248 picks
+            // epsilonVis only when `lowReCorrection` is on AND yPlus < yPlusLam, and that
+            // flag defaults to false (line 405). So the log-law branch is the default for
+            // every face. (omegaWallFunction *is* a BINOMIAL blend -- epsilon is not.)
             const scalar eLog = Cmu75 * Kokkos::pow(kw, scalar(1.5)) / (kappa * y);
-            const scalar eOmega = Kokkos::sqrt(eVis * eVis + eLog * eLog);
+            const scalar eOmega = eLog;
 
             value[i] = eOmega;
             refValue[i] = eOmega;
