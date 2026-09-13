@@ -9,6 +9,7 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 
+from neofoam.postprocess._reduce import _is_parallel_run
 from neofoam.postprocess.node import AggregatedDataSet, DataSet, Node
 
 
@@ -23,12 +24,25 @@ class Rows(Node):
     a selector upstream) are left out entirely::
 
         line("U", start, end, 20) | Mag() | Rows(name="U_profile")
+
+    Serial only: an aggregator reduces its per-bin numbers over the ranks, but a
+    row table would need the elements themselves gathered onto the master, and
+    pybFoam binds no gather. Rather than write the master's share and silently
+    drop every other rank's points, a decomposed run raises here.
     """
 
     type: Literal["rows"] = "rows"
     name: Optional[str] = None
 
     def compute(self, dataset: DataSet) -> AggregatedDataSet:
+        if _is_parallel_run():
+            raise NotImplementedError(
+                f"postProcess: the rows table {self.name or dataset.name!r} cannot run "
+                "decomposed — its elements live on every rank and pybFoam binds no gather "
+                "onto the master, so only the master rank's points would be written. Use an "
+                "aggregator (sum, mean, max, min, volIntegrate, surfIntegrate), which does "
+                "reduce over the ranks, or run the case serially."
+            )
         values = np.asarray(dataset.values, dtype=float)
         components = values if values.ndim > 1 else values[:, None]
         positions = np.asarray(dataset.geometry.positions, dtype=float)

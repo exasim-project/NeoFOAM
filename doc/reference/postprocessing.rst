@@ -569,13 +569,22 @@ scratch truncates it.
 
 .. note::
 
-   Post-processing is **serial-only** for now. The file side is already
-   decomposition-safe — every rank evaluates its due tables and only the master
-   rank's writer touches the filesystem, so a run leaves one set of CSVs and not
-   one per processor — but the aggregators still have no MPI reduction, so they
-   would sum over the local cells alone. Rather than write per-rank partial
-   values, a ``-parallel`` run of a case that declares tables is refused with a
-   ``NotImplementedError`` naming the tables.
+   **Decomposed runs.** Every rank evaluates its due tables over its own cells,
+   the aggregators reduce their per-bin numbers over all ranks through pybFoam's
+   collectives (``gSum`` for the additive ones, ``gMax``/``gMin`` for the
+   extrema), and only the master rank's writer touches the filesystem — so a
+   ``-parallel`` run leaves one set of CSVs at the case root, holding the same
+   numbers a serial run of the same case writes. The number of rows comes from
+   the binner's spec rather than from the local data, so every rank reports the
+   same bins. ``residuals`` needs no reduction: a linear solve is itself
+   collective, so its dictionary already holds the global residuals on every
+   rank.
+
+   The one exception is ``rows``: it writes the elements themselves rather than
+   a reduction of them, and pybFoam binds no gather onto the master, so a
+   decomposed run of a row table would silently drop every non-master rank's
+   points. It raises a ``NotImplementedError`` naming the table instead — use an
+   aggregator, or run that case serially.
 
 Try it
 ------

@@ -55,6 +55,29 @@ def _overlay(source: Path) -> Step:
     return step
 
 
+def built_cavity(
+    dest: Path,
+    *,
+    declarations_dir: Optional[Path] = None,
+    end_time: float = 0.003,
+    delta_t: float = 0.001,
+    write_precision: int = 12,
+) -> CaseDir:
+    """Build :data:`CAVITY_TEMPLATE` at *dest* and overlay *declarations_dir*, unsolved.
+
+    The meshed case :func:`solved_cavity` then runs; separate so a decomposed
+    run can put ``decomposePar`` between the two.
+    """
+    pipeline = (
+        from_template(CAVITY_TEMPLATE)
+        | configs(*lid_driven_cavity(end_time=end_time, delta_t=delta_t))
+        | patch("system/controlDict", writePrecision=write_precision)
+    )
+    if declarations_dir is not None:
+        pipeline = pipeline | _overlay(declarations_dir)
+    return (pipeline | block_mesh()).build_at(dest)
+
+
 def solved_cavity(
     dest: Path,
     *,
@@ -69,15 +92,19 @@ def solved_cavity(
     ``.py``) as *declarations_dir*, or leave it out for a case that declares no
     table. The default three steps of 0.001 s are what the tables are read at.
     """
-    pipeline = (
-        from_template(CAVITY_TEMPLATE)
-        | configs(*lid_driven_cavity(end_time=end_time, delta_t=delta_t))
-        | patch("system/controlDict", writePrecision=write_precision)
+    case = built_cavity(
+        dest,
+        declarations_dir=declarations_dir,
+        end_time=end_time,
+        delta_t=delta_t,
+        write_precision=write_precision,
     )
-    if declarations_dir is not None:
-        pipeline = pipeline | _overlay(declarations_dir)
-    case = (pipeline | block_mesh()).build_at(dest)
+    solve_serially(case)
+    return case
 
+
+def solve_serially(case: CaseDir) -> None:
+    """Run ``incompressibleFluid`` to the end in ``case``, in a fresh interpreter."""
     solve = subprocess.run(
         [sys.executable, "-c", _SOLVER_DRIVER],
         cwd=case.path,
@@ -86,10 +113,9 @@ def solved_cavity(
         timeout=600,
     )
     assert solve.returncode == 0, (
-        f"incompressibleFluid aborted on {dest.name}:\n"
+        f"incompressibleFluid aborted on {case.path.name}:\n"
         f"{solve.stdout[-2000:]}\n{solve.stderr[-2000:]}"
     )
-    return case
 
 
 def read_table(case: CaseDir, name: str) -> tuple[list[str], list[list[str]]]:

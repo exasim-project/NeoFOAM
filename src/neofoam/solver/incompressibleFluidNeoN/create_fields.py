@@ -80,10 +80,10 @@ def _refuse_post_processing_tables(tables: TableSet) -> None:
 
     The sources hand every pipeline a host numpy array, and the NeoN bindings
     still only copy host->device (see risk R12) — so a table over NeoN fields
-    has nothing to read. This is stricter than the serial-only guard of
-    ``incompressibleFluid``: no table runs on this backend, parallel or not.
-    Like that guard it sits at the solver seam so the case fails at LOAD,
-    before any solve time is spent.
+    has nothing to read. ``incompressibleFluid`` and ``incompressibleVoF`` run
+    tables serially and decomposed alike; on this backend no table runs at all.
+    The guard sits at the solver seam so the case fails at LOAD, before any
+    solve time is spent.
     """
     if not tables.tables:
         return

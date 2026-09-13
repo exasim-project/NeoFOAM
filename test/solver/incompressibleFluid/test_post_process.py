@@ -17,9 +17,8 @@ it in a fresh interpreter is :func:`solved_case.solved_cavity`, shared with the
 ``test/postprocess`` e2e modules; the reference read of ``p`` gets its own
 process again via ``CaseDir.read_field``.
 
-**Serial-only.** Step 1 has no MPI reduction, so the guard at the seam is pinned
-here too — with a patched ``Pstream.parRun``, since spinning up ``mpirun`` to
-watch an exception would prove nothing more.
+**Parallel.** A decomposed run of the same case is
+``test_post_process_parallel.py``; nothing here needs MPI.
 
 **Tolerance.** The reference value is recomputed from the *written* ``0.003/p``,
 so its error budget is the ASCII round-trip of that file — the case writes
@@ -42,14 +41,11 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-import pybFoam
 import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
-from neofoam.postprocess.table import tables_for_case
-from neofoam.solver.incompressibleFluid.create_fields import _refuse_parallel_post_processing
 from neofoam.solver.incompressibleFluid.incompressibleFluid import execution_graph
 from neofoam.tooling.casebuild import CaseDir
 
@@ -109,29 +105,6 @@ def test_a_case_declaring_no_table_writes_no_output_directory(tmp_path: Path) ->
     case = solved_cavity(tmp_path / "cavity")
 
     assert not (case.path / "postProcessing").exists()
-
-
-@pytest.mark.parametrize(
-    ("declaration", "parallel", "refused"),
-    [
-        ("postprocess_yaml", True, True),
-        ("postprocess_yaml", False, False),
-        # A case that declares nothing must still run decomposed.
-        ("cavity3x3", True, False),
-    ],
-    ids=["declared_and_parallel", "declared_and_serial", "nothing_declared"],
-)
-def test_a_parallel_run_is_refused_only_when_the_case_declares_tables(
-    declaration: str, parallel: bool, refused: bool, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setattr(pybFoam.Pstream, "parRun", staticmethod(lambda: parallel))
-    tables = tables_for_case(_CASES / declaration)
-
-    if not refused:
-        assert _refuse_parallel_post_processing(tables) is None
-        return
-    with pytest.raises(NotImplementedError, match="serial-only"):
-        _refuse_parallel_post_processing(tables)
 
 
 def _core_model(spec_name: str, op_names: list[str]) -> SimpleNamespace:
