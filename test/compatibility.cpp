@@ -55,13 +55,19 @@ TEST_CASE("fvSolution")
             REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
             REQUIRE(solver1.get<std::string>("type") == "solver::Bicgstab");
         }
-        // GAMG has no dictionary-level mapping: Ginkgo's Multigrid needs mg_level /
-        // coarse_solver entries this mapper cannot synthesise. It must be rejected here
-        // rather than reaching Ginkgo, which fails with an opaque config error instead.
-        SECTION("GAMG is rejected")
+        // GAMG maps to a CG outer iteration preconditioned by Ginkgo's Pgm algebraic
+        // multigrid: the solver entry becomes Ginkgo/solver::Cg and the multigrid is
+        // synthesised into the preconditioner sub-dict, replacing the OpenFOAM one.
+        SECTION("GAMG")
         {
             solver1.insert("solver", std::string("GAMG"));
-            REQUIRE_THROWS_AS(NeoFOAM::updateSolver(solver1), std::runtime_error);
+            NeoFOAM::updateSolver(solver1);
+            REQUIRE(solver1.get<std::string>("solver") == "Ginkgo");
+            REQUIRE(solver1.get<std::string>("type") == "solver::Cg");
+
+            auto& multigrid = solver1.subDict("preconditioner");
+            REQUIRE(multigrid.get<std::string>("type") == "solver::Multigrid");
+            REQUIRE(multigrid.subDict("mg_level").get<std::string>("type") == "multigrid::Pgm");
         }
     }
 
