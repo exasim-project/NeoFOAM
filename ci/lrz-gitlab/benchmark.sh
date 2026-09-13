@@ -7,6 +7,20 @@
 
 set -euo pipefail
 
+# Fail fast on a bad/expired credential instead of letting git block on a terminal
+# prompt: a stale github.com entry turns an anonymous-OK public clone into a 401,
+# which otherwise surfaces as three silent retries that read like a network fault.
+export GIT_TERMINAL_PROMPT=0
+
+# Dependency clones (Kokkos, libdwarf via cpptrace, ...) are public and need no
+# credentials. A stale credential in the runner's git config makes GitHub answer
+# 401 to them, so disable any configured helper for every git call in this job.
+# GIT_CONFIG_* is applied last, overriding the system and global config. The token
+# push_results uses is inlined in its clone URL, so it is unaffected.
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0=credential.helper
+export GIT_CONFIG_VALUE_0=
+
 PRESET="profiling"
 
 # Check required environment variables
@@ -16,7 +30,6 @@ PR_NUMBER=${PR_NUMBER:?Error: Must set PR number}
 RESULTS_DIR=${RESULTS_DIR:-results}
 TARGET_REPO=${TARGET_REPO:?Must set TARGET_REPO}
 REPO_NAME=$(basename "$TARGET_REPO" .git)
-TARGET_BRANCH=${TARGET_BRANCH:?Must set TARGET_BRANCH}
 RUN_IDENTIFIER=${RUN_IDENTIFIER:?Must set RUN_IDENTIFIER}
 API_TOKEN_GITHUB=${API_TOKEN_GITHUB:?Must set API_TOKEN_GITHUB}
 
@@ -145,7 +158,10 @@ build_and_benchmark() {
 
 # Push benchmark results to GitHub
 push_results() {
-    git clone "https://oauth2:${API_TOKEN_GITHUB}@${TARGET_REPO}"
+    # credential.helper= disables any configured helper for this clone, so the token is
+    # used but never written to ~/.git-credentials, where a later rotation would leave a
+    # stale github.com entry behind for every other job sharing this home directory.
+    git -c credential.helper= clone "https://oauth2:${API_TOKEN_GITHUB}@${TARGET_REPO}"
     cd "${REPO_NAME}"
 
     git config user.email "gitlab-ci@users.noreply.github.com"

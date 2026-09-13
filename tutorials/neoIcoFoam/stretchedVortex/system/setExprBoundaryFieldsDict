@@ -1,0 +1,59 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      setExprBoundaryFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Lateral boundary values: the same analytic field, but evaluated with the
+// EQUILIBRIUM core radius r0 = delta = 0.2, so the far field the solver is
+// driven towards is the exact steady Burgers vortex. On the "sides" patch
+// r >= 1 = 5*delta, where the exponential is negligible anyway, so this is
+// effectively u_theta = Gamma/(2*pi*r).
+
+U
+{
+    field   U;
+
+    expressions
+    (
+        {
+            patch   sides;
+            target  value;
+
+            variables
+            (
+                "a       = 1.0"
+                "Gamma   = 1.0"
+                "r0      = 0.2"
+                "xf      = pos().x()"
+                "yf      = pos().y()"
+                "zf      = pos().z()"
+                "rsq     = sqr(xf) + sqr(yf)"
+                "omega   = (Gamma/(2*pi()))*(1 - exp(-rsq/sqr(r0)))/(rsq + 1e-12)"
+            );
+
+            expression
+            #{
+                vector
+                (
+                    -0.5*a*xf - omega*yf,
+                    -0.5*a*yf + omega*xf,
+                     a*zf
+                )
+            #};
+        }
+    );
+}
+
+
+// ************************************************************************* //

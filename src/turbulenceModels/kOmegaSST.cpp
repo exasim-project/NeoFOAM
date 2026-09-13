@@ -206,6 +206,11 @@ KOmegaSST::KOmegaSST(
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , gradOp_(exec, mesh)
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , omegaWallValueTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
@@ -245,7 +250,7 @@ void KOmegaSST::validate(
 {
     reserveScratch(); // re-grow per-step scratch released by a previous correct()/validate()
 
-    gradOp_.gradTensor(U, gradUTmp_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
     gradOp_.grad(k, gradKTmp_);
     gradOp_.grad(omega, gradOmegaTmp_);
@@ -277,7 +282,7 @@ void KOmegaSST::correct(
     reserveScratch();
 
     // Compute gradients once — reused for production, CDkOmega, and correctNut
-    gradOp_.gradTensor(U, gradUTmp_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
     gradOp_.grad(k, gradKTmp_);
     gradOp_.grad(omega, gradOmegaTmp_);
@@ -538,7 +543,7 @@ const nnfvcc::VolumeField<Tensor>& KOmegaSST::gradU() const { return gradUTmp_; 
 
 void KOmegaSST::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
 {
-    gradOp_.gradTensor(U, gradUTmp_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
 }
 
@@ -774,6 +779,10 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
     , wallDist_(buildWallDistKOmega(rt.exec, rt.mesh))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
+    // grad(U) honours the configured gradSchemes; the operator is shared with the
+    // solver's other grad(U) call sites via RunTime's cache.
+    model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarField(rt.mesh, "k"), true);

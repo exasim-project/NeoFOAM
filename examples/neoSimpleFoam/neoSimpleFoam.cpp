@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
                 );
                 p.correctBoundaryConditions();
 
-                nf::updateVelocity(hByA, crAtU, p, U);
+                nf::updateVelocity(hByA, crAtU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

@@ -262,7 +262,11 @@ KEpsilon::KEpsilon(
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , gradOp_(exec, mesh)
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
@@ -286,7 +290,7 @@ void KEpsilon::validate(
     nnfvcc::VolumeField<scalar>& nut
 )
 {
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     gradU_.correctBoundaryConditions();
 
     computeSources(k, epsilon, nut, gradU_);
@@ -314,7 +318,7 @@ void KEpsilon::correct(
 )
 {
     // Compute ∇U once — reused for the production term
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     gradU_.correctBoundaryConditions();
 
     fvcc::BoundaryContext ctx;
@@ -514,7 +518,7 @@ const nnfvcc::VolumeField<Tensor>& KEpsilon::gradU() const { return gradU_; }
 
 void KEpsilon::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
 {
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     gradU_.correctBoundaryConditions();
 }
 
@@ -627,6 +631,10 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     , wallDist_(buildWallDistKEps(rt.exec, rt.mesh))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
+    // grad(U) honours the configured gradSchemes; the operator is shared with the
+    // solver's other grad(U) call sites via RunTime's cache.
+    model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "k"), true);

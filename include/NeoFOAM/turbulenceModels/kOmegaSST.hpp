@@ -168,6 +168,14 @@ public:
      */
     void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
 
+    /** @brief Replace the default Gauss-Green tensor-gradient operator with the
+     *  gradSchemes-configured one, so grad(U) honours e.g. cellLimited. Used by the
+     *  RunTime-constructed wrapper, which alone can reach the schemes dictionary. */
+    void setGradUOperator(std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> op)
+    {
+        gradUOp_ = std::move(op);
+    }
+
 private:
 
     void reserveScratch();
@@ -219,7 +227,11 @@ private:
     nnfvcc::SurfaceField<scalar> domegaEffFTmp_;
 
     // Cached operators (constructed once)
+    // Scalar grad(k)/grad(omega): the factory interface exposes only a Vector<Vec3> output
+    // overload, so these stay on GaussGreenGrad until NeoN offers a VolumeField one.
     nnfvcc::GaussGreenGrad gradOp_;
+    // gradSchemes-configured tensor-gradient operator, shared with RunTime's gradScheme cache
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // Model coefficients

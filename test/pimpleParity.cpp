@@ -325,7 +325,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
 
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                nf::updateVelocity(hByA, crAU, p, U);
+                nf::updateVelocity(hByA, crAU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

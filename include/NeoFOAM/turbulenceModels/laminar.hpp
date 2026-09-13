@@ -58,7 +58,8 @@ private:
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
     const nnfvcc::VolumeField<NeoN::scalar>& nu_;
-    nnfvcc::GaussGreenGrad gradOp_;
+    // gradSchemes-configured tensor-gradient operator, shared with RunTime's gradScheme cache
+    std::shared_ptr<nnfvcc::GradOperatorFactory<NeoN::Vec3>> gradUOp_;
     nnfvcc::VolumeField<NeoN::Tensor> gradU_;
     nnfvcc::SurfaceField<NeoN::scalar> nuEff_;
     nnfvcc::VolumeField<NeoN::scalar> nut_;

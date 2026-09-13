@@ -249,8 +249,12 @@ private:
     nnfvcc::SurfaceField<scalar> nuEff_;
     nnfvcc::SurfaceField<scalar> nuTildaEff_;
 
-    // Cached operators (constructed once)
-    nnfvcc::GaussGreenGrad gradOp_;
+    // Cached gradient operators, runtime-selected from gradSchemes so grad(U) (tensor) and
+    // grad(nuTilda) honour the configured scheme (e.g. cellLimited). Shared with RunTime's
+    // gradScheme cache; the exec/mesh constructors own a Gauss-Green default instead, as
+    // no scheme dictionary is available there.
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradNuTildaOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // SA-DDES model coefficients

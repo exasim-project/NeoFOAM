@@ -59,7 +59,7 @@ NPROCS=4 ./Allrun -par
 number**. Serial is the ground truth; a correct distributed solve must match it.
 
 ```bash
-NEOFOAM_BIN=../../build/develop/bin/neoIcoFoam ./compareCourant.sh 4
+NEOFOAM_BIN=../../../build/develop/bin/neoIcoFoam ./compareCourant.sh 4
 ```
 
 NOTE: serial is run with whatever `executor` is in controlDict (GPU = fast), parallel
