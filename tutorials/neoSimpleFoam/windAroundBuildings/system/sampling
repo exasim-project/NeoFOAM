@@ -1,0 +1,55 @@
+// -*- C++ -*-
+
+planes
+{
+    type            surfaces;
+    libs            (sampling);
+
+    // Time control etc
+    ${_visualization};
+
+    fields          ( p U );
+
+    // surfaceFormat   vtk;
+    surfaceFormat   none;
+
+    store           true;
+
+    interpolationScheme cellPoint;
+
+    _plane
+    {
+        type            cuttingPlane;
+        interpolate     false;
+    }
+
+    surfaces
+    {
+        plane0
+        {
+            ${_plane}
+            point       (100 100 50);
+            normal      (1 -1 0);
+            enabled     false;
+        }
+
+        plane1
+        {
+            ${_plane}
+            point       (100 100 50);
+            normal      (1 1 0);
+        }
+
+        plane2
+        {
+            ${_plane}
+            point       (200 100 50);
+            normal      (1 0 0);
+        }
+    };
+
+    #remove _plane
+}
+
+
+// ************************************************************************* //
