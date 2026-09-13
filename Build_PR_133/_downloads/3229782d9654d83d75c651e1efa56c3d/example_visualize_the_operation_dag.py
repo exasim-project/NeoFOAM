@@ -120,4 +120,4 @@ if not report.is_valid:
 #
 # - :doc:`/explanation/operations-and-the-dag` — design rationale and
 #   the resolver pipeline.
-# - :doc:`/reference/graph/visualization` — full API.
+# - :mod:`neofoam.framework.graph.visualization` — full API.

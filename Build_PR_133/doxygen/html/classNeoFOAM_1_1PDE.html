@@ -114,6 +114,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a12a547d6a089a5805df40f91c0a48318" id="r_a12a547d6a089a5805df40f91c0a48318"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDE.html#a12a547d6a089a5805df40f91c0a48318">setFinalIter</a> (bool finalIter)</td></tr>
 <tr class="memdesc:a12a547d6a089a5805df40f91c0a48318"><td class="mdescLeft">&#160;</td><td class="mdescRight">When true, selects the &lt;field&gt;Final relaxation factor and solver subdict.  <br /></td></tr>
 <tr class="separator:a12a547d6a089a5805df40f91c0a48318"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f3d060625b54e55b1877b210e9b1f23" id="r_a3f3d060625b54e55b1877b210e9b1f23"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDE.html#a3f3d060625b54e55b1877b210e9b1f23">relax</a> (bool on=true)</td></tr>
+<tr class="memdesc:a3f3d060625b54e55b1877b210e9b1f23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request <code>relaxationFactors.equations</code> under-relaxation of this matrix.  <br /></td></tr>
+<tr class="separator:a3f3d060625b54e55b1877b210e9b1f23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa2dcd0c96d7c1593df5b41cbb867ab2" id="r_afa2dcd0c96d7c1593df5b41cbb867ab2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDE.html#afa2dcd0c96d7c1593df5b41cbb867ab2">setConstraints</a> (const NeoN::Vector&lt; NeoN::scalar &gt; &amp;mask, const NeoN::Vector&lt; ValueType &gt; &amp;values)</td></tr>
 <tr class="memdesc:afa2dcd0c96d7c1593df5b41cbb867ab2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hard-pin a set of cells to prescribed values after assembly (omega wall function).  <br /></td></tr>
 <tr class="separator:afa2dcd0c96d7c1593df5b41cbb867ab2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,6 +150,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a665045e1ab13f9c86f3b80f70827288e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb2db6a18334f46d42794e5b5aef0fdb" id="r_adb2db6a18334f46d42794e5b5aef0fdb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDE.html#adb2db6a18334f46d42794e5b5aef0fdb">relaxOwnedLs</a> ()</td></tr>
 <tr class="separator:adb2db6a18334f46d42794e5b5aef0fdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6651b874bb117d327e8c923255c8d0fc" id="r_a6651b874bb117d327e8c923255c8d0fc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDE.html#a6651b874bb117d327e8c923255c8d0fc">applyRelaxation</a> (LinearSystem &amp;ls, VolumeField &amp;psi, const <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;rt)</td></tr>
+<tr class="separator:a6651b874bb117d327e8c923255c8d0fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -232,7 +237,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>Construct from expression only; field and <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> are injected on first assemble(psi, rt) or solveWith(...) call via <a class="el" href="classNeoFOAM_1_1Solver.html" title="Caches a NeoN::la::Solver instance for a given field to avoid reconstructing it (and re-parsing the s...">Solver</a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00104">104</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00103">103</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -262,7 +267,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00111">111</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00110">110</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -294,6 +299,52 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a6651b874bb117d327e8c923255c8d0fc" name="a6651b874bb117d327e8c923255c8d0fc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6651b874bb117d327e8c923255c8d0fc">&#9670;&#160;</a></span>applyRelaxation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typename IndexType  = NeoN::localIdx&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classNeoFOAM_1_1PDE.html">NeoFOAM::PDE</a>&lt; ValueType, MatrixValueType, IndexType &gt;::applyRelaxation </td>
+          <td>(</td>
+          <td class="paramtype">LinearSystem &amp;&#160;</td>
+          <td class="paramname"><em>ls</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">VolumeField &amp;&#160;</td>
+          <td class="paramname"><em>psi</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;&#160;</td>
+          <td class="paramname"><em>rt</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00448">448</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a56dc3d06d1616cf7726cee7c009fa756" name="a56dc3d06d1616cf7726cee7c009fa756"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a56dc3d06d1616cf7726cee7c009fa756">&#9670;&#160;</a></span>assemble() <span class="overload">[1/3]</span></h2>
 
@@ -321,7 +372,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>assemble the linear system owned by the solver based on the current expression </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00193">193</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00202">202</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -358,7 +409,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 <li>the new linear system with rhs is returned </li>
 </ol>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00228">228</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00238">238</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -400,7 +451,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>assemble using injected field and runTime (for lazy-init <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a>) </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00201">201</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00210">210</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -430,9 +481,9 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </div><div class="memdoc">
 
 <p>Assemble and relax the owned ls_ without solving. </p>
-<p>Ensures computeRAUandHByA reads the relaxed diagonal even when the momentum predictor is disabled. With no relaxation factor configured, this is a no-op. </p>
+<p>Ensures computeRAUandHByA reads the relaxed diagonal even when the momentum predictor is disabled. Without <a class="el" href="classNeoFOAM_1_1PDE.html#a3f3d060625b54e55b1877b210e9b1f23" title="Request relaxationFactors.equations under-relaxation of this matrix.">relax()</a> (or with no relaxation factor configured), this is a plain <a class="el" href="classNeoFOAM_1_1PDE.html#a56dc3d06d1616cf7726cee7c009fa756" title="assemble the linear system owned by the solver based on the current expression">assemble()</a>. </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00214">214</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00224">224</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -461,7 +512,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00132">132</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00131">131</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -490,7 +541,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00129">129</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00128">128</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -519,7 +570,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00127">127</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00126">126</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -548,7 +599,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00119">119</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00118">118</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -577,7 +628,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00121">121</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00120">120</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -606,7 +657,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00123">123</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00122">122</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -635,7 +686,40 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00125">125</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00124">124</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a3f3d060625b54e55b1877b210e9b1f23" name="a3f3d060625b54e55b1877b210e9b1f23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f3d060625b54e55b1877b210e9b1f23">&#9670;&#160;</a></span>relax()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typename IndexType  = NeoN::localIdx&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classNeoFOAM_1_1PDE.html">NeoFOAM::PDE</a>&lt; ValueType, MatrixValueType, IndexType &gt;::relax </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>on</em> = <code>true</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Request <code>relaxationFactors.equations</code> under-relaxation of this matrix. </p>
+<p>Mirrors <code>Foam::fvMatrix::relax()</code>: OpenFOAM relaxes a matrix only where the solver explicitly asks for it — the momentum and turbulence transport equations — and never the pressure equation, whose Poisson operator would become a Helmholtz one. Relaxation is therefore opt-in and OFF by default; the flag is read after assembly, so call it any time before <a class="el" href="classNeoFOAM_1_1PDE.html#adc6783a51aa3e6a0b2bf822e8d354c95">solve()</a>/assembleAndRelax(). </p>
+
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00177">177</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -664,7 +748,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00440">440</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00444">444</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -706,7 +790,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>Hard-pin a set of cells to prescribed values after assembly (omega wall function). </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00172">172</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00181">181</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -748,7 +832,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>As setConstraints, but the <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a> keeps its own copies of the mask/values so the caller need not keep them alive until <a class="el" href="classNeoFOAM_1_1PDE.html#adc6783a51aa3e6a0b2bf822e8d354c95">solve()</a> — used by the Python one-shot epsilon-wall-cell pin helper (epsilonWallFunction). </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00181">181</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00190">190</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -780,7 +864,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>When true, selects the &lt;field&gt;Final relaxation factor and solver subdict. </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00168">168</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00167">167</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -820,7 +904,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00145">145</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00144">144</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -849,7 +933,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00238">238</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00248">248</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -885,7 +969,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 <li>a temporary linear system with rhs assembled and solved </li>
 </ol>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00250">250</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00260">260</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -925,7 +1009,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00379">379</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00385">385</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -973,7 +1057,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>solve using a pre-created, cached NeoN::la::Solver </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00284">284</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00294">294</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -1027,7 +1111,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>solve with additional rhs using a pre-created, cached NeoN::la::Solver </p>
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00329">329</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00337">337</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>
@@ -1057,7 +1141,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00450">450</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pde_8hpp_source.html#l00459">459</a> of file <a class="el" href="pde_8hpp_source.html">pde.hpp</a>.</p>
 
 </div>
 </div>

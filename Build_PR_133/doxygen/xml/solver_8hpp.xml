@@ -6,40 +6,44 @@
     <includes refid="pde_8hpp" local="yes">NeoFOAM/datastructures/pde.hpp</includes>
     <includes refid="runTime_8hpp" local="yes">NeoFOAM/datastructures/runTime.hpp</includes>
     <incdepgraph>
-      <node id="18">
+      <node id="16">
         <label>NeoFOAM/compatibility/fvSchemes.hpp</label>
         <link refid="fvSchemes_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
       </node>
-      <node id="15">
+      <node id="17">
         <label>NeoFOAM/compatibility/fvSolution.hpp</label>
         <link refid="fvSolution_8hpp"/>
         <childnode refid="6" relation="include">
         </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
         <childnode refid="7" relation="include">
         </childnode>
-        <childnode refid="16" relation="include">
+        <childnode refid="19" relation="include">
         </childnode>
-        <childnode refid="17" relation="include">
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
         </childnode>
         <childnode refid="8" relation="include">
         </childnode>
       </node>
-      <node id="13">
+      <node id="14">
         <label>NeoFOAM/datastructures/databaseWrapper.hpp</label>
         <link refid="databaseWrapper_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
-        <childnode refid="14" relation="include">
+        <childnode refid="15" relation="include">
         </childnode>
       </node>
-      <node id="10">
+      <node id="11">
         <label>NeoFOAM/datastructures/meshAdapter.hpp</label>
         <link refid="meshAdapter_8hpp"/>
-        <childnode refid="11" relation="include">
-        </childnode>
         <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
         </childnode>
         <childnode refid="2" relation="include">
         </childnode>
@@ -61,9 +65,9 @@
         </childnode>
         <childnode refid="8" relation="include">
         </childnode>
-        <childnode refid="15" relation="include">
+        <childnode refid="17" relation="include">
         </childnode>
-        <childnode refid="18" relation="include">
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="8">
@@ -75,7 +79,11 @@
         </childnode>
         <childnode refid="10" relation="include">
         </childnode>
-        <childnode refid="13" relation="include">
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="1">
@@ -91,10 +99,10 @@
       <node id="2">
         <label>NeoN/NeoN.hpp</label>
       </node>
-      <node id="16">
+      <node id="20">
         <label>NeoN/core/dictionary.hpp</label>
       </node>
-      <node id="17">
+      <node id="21">
         <label>NeoN/core/primitives/scalar.hpp</label>
       </node>
       <node id="4">
@@ -103,23 +111,32 @@
       <node id="5">
         <label>cmath</label>
       </node>
-      <node id="11">
+      <node id="12">
         <label>functional</label>
       </node>
       <node id="9">
         <label>fvMesh.H</label>
       </node>
-      <node id="12">
+      <node id="10">
+        <label>map</label>
+      </node>
+      <node id="13">
         <label>memory</label>
       </node>
       <node id="6">
         <label>optional</label>
       </node>
-      <node id="14">
+      <node id="15">
         <label>regIOobject.H</label>
+      </node>
+      <node id="18">
+        <label>stdexcept</label>
       </node>
       <node id="7">
         <label>string</label>
+      </node>
+      <node id="19">
+        <label>vector</label>
       </node>
     </incdepgraph>
     <innerclass refid="classNeoFOAM_1_1Solver" prot="public">NeoFOAM::Solver</innerclass>
@@ -182,7 +199,7 @@
 <codeline lineno="69"><highlight class="normal"></highlight></codeline>
 <codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>NeoN::la::Solver<sp/>createCachedSolver(VolumeField&amp;<sp/>field,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt)</highlight></codeline>
 <codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>solverDict<sp/>=<sp/>rt.<ref refid="structNeoFOAM_1_1RunTime_1aa1b497275ede724281d9a6a8540e5080" kindref="member">fvSolutionDict</ref>.subDict(</highlight><highlight class="stringliteral">&quot;solvers&quot;</highlight><highlight class="normal">).subDict(field.name);</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>solverDict<sp/>=<sp/><ref refid="namespaceNeoFOAM_1a767c1c39b482e365574ff872327ae9f1" kindref="member">solverSettings</ref>(rt.<ref refid="structNeoFOAM_1_1RunTime_1aa1b497275ede724281d9a6a8540e5080" kindref="member">fvSolutionDict</ref>.subDict(</highlight><highlight class="stringliteral">&quot;solvers&quot;</highlight><highlight class="normal">),<sp/>field.name);</highlight></codeline>
 <codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1PDE_1a4e30324f164b229f31bedac3d023484c" kindref="member">PDEType::stripNeoFOAMKeys</ref>(solverDict);</highlight></codeline>
 <codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NeoN::la::Solver(field.exec(),<sp/>solverDict);</highlight></codeline>
 <codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>

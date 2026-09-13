@@ -43,7 +43,7 @@ there.
 Solver imports
 --------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 26-67
+.. GENERATED FROM PYTHON SOURCE LINES 26-66
 
 .. code-block:: Python
 
@@ -64,7 +64,6 @@ Solver imports
     )
 
     from neofoam import Depends, FieldUpdates, Solver, field
-
     from neofoam.framework.context import Context
     from neofoam.framework.graph import DAGResolver
     from neofoam.framework.initialization import (
@@ -95,7 +94,7 @@ Solver imports
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 68-74
+.. GENERATED FROM PYTHON SOURCE LINES 67-73
 
 Define the spec and the time-loop predicate
 -------------------------------------------
@@ -104,7 +103,7 @@ the analogue of ``Model`` from tutorial 2. ``TimeLoop`` is the
 iteration condition for the outer loop; ``IterativeOp`` runs it
 until it returns False.
 
-.. GENERATED FROM PYTHON SOURCE LINES 74-84
+.. GENERATED FROM PYTHON SOURCE LINES 73-83
 
 .. code-block:: Python
 
@@ -125,7 +124,7 @@ until it returns False.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 85-98
+.. GENERATED FROM PYTHON SOURCE LINES 84-97
 
 Build the staged initializer
 ----------------------------
@@ -141,7 +140,7 @@ per object with ``depends_on`` listing prerequisite step names.
 ``create_phi`` reads ``ctx["fields.U"]`` (the prefixed name) because
 ``field("U", ...)`` produces an ``InitStep`` named ``fields.U``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 98-145
+.. GENERATED FROM PYTHON SOURCE LINES 97-140
 
 .. code-block:: Python
 
@@ -159,15 +158,11 @@ per object with ``depends_on`` listing prerequisite step names.
             pass
 
         @spec_builder.build
-        def build_lazy(
-            core_models: list[Any], optional_models: list[Any]
-        ) -> list[InitStep]:
+        def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
             argv = runner.argv
             builder = InitializerBuilder()
             builder.add(lazy("time", lambda _ctx: pyf.Time(pyf.argList(argv))))
-            builder.add(
-                lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"])
-            )
+            builder.add(lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"]))
 
             def create_T(ctx: dict[str, Any]) -> volScalarField:
                 return volScalarField.read_field(ctx["mesh"], "T")
@@ -199,7 +194,7 @@ per object with ``depends_on`` listing prerequisite step names.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 146-151
+.. GENERATED FROM PYTHON SOURCE LINES 141-146
 
 Register the initializer
 ------------------------
@@ -207,7 +202,7 @@ Every solver has exactly one ``@initializer``. The
 ``Annotated[..., Depends(create_init)]`` marker tells the framework
 to call ``create_init()`` and pass its return value as ``init_obj``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-161
+.. GENERATED FROM PYTHON SOURCE LINES 146-156
 
 .. code-block:: Python
 
@@ -228,7 +223,7 @@ to call ``create_init()`` and pass its return value as ``init_obj``.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 162-167
+.. GENERATED FROM PYTHON SOURCE LINES 157-162
 
 Define the execution graph
 --------------------------
@@ -236,7 +231,7 @@ Define the execution graph
 new loop's body. We return an empty ``Operations()`` because no
 plugin contributes operations to this solver.
 
-.. GENERATED FROM PYTHON SOURCE LINES 167-189
+.. GENERATED FROM PYTHON SOURCE LINES 162-184
 
 .. code-block:: Python
 
@@ -269,7 +264,7 @@ plugin contributes operations to this solver.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 190-195
+.. GENERATED FROM PYTHON SOURCE LINES 185-190
 
 Add the solver's operations
 ---------------------------
@@ -277,7 +272,7 @@ Three operations: increment time, solve ``T``, write output.
 Parameter-name injection on ``solve_T`` pulls ``T``, ``U``, ``phi``,
 ``D`` from ``ctx.fields``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 195-222
+.. GENERATED FROM PYTHON SOURCE LINES 190-217
 
 .. code-block:: Python
 
@@ -315,7 +310,7 @@ Parameter-name injection on ``solve_T`` pulls ``T``, ``U``, ``phi``,
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 223-230
+.. GENERATED FROM PYTHON SOURCE LINES 218-225
 
 Read a graph error
 ------------------
@@ -325,7 +320,7 @@ the cycle detector refuses to run. The fix is to delete the
 bogus edge: ``U`` is read from disk and depends only on ``mesh``;
 ``phi`` *derives from* ``U``, not the other way around.
 
-.. GENERATED FROM PYTHON SOURCE LINES 230-240
+.. GENERATED FROM PYTHON SOURCE LINES 225-235
 
 .. code-block:: Python
 
@@ -352,7 +347,7 @@ bogus edge: ``U`` is read from disk and depends only on ``mesh``;
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 241-246
+.. GENERATED FROM PYTHON SOURCE LINES 236-241
 
 Run the new solver on the bundled case
 --------------------------------------
@@ -360,7 +355,7 @@ Run the new solver on the bundled case
 uniform inflow ``U=(0.5, 0, 0)`` and a tracer-1 inlet driving
 advection-diffusion of ``T``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 246-259
+.. GENERATED FROM PYTHON SOURCE LINES 241-254
 
 .. code-block:: Python
 
@@ -384,7 +379,7 @@ advection-diffusion of ``T``.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 260-265
+.. GENERATED FROM PYTHON SOURCE LINES 255-260
 
 Animate the diffusion-advection front
 -------------------------------------
@@ -392,7 +387,7 @@ Watch ``T`` sweep across the domain as advection pushes the
 inlet's ``T = 1`` boundary condition downstream and diffusion
 smears the front. A static frame would mean ``solve_T`` never ran.
 
-.. GENERATED FROM PYTHON SOURCE LINES 265-295
+.. GENERATED FROM PYTHON SOURCE LINES 260-290
 
 .. code-block:: Python
 
@@ -444,7 +439,7 @@ smears the front. A static frame would mean ``solve_T`` never ran.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 1.367 seconds)
+   **Total running time of the script:** (0 minutes 1.173 seconds)
 
 
 .. _sphx_glr_download_auto_tutorials_example_03_build_a_solver.py:

@@ -117,7 +117,7 @@ works for any solver, because the classes are declared on its spec.
 
  .. code-block:: none
 
-    config classes: ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
+    config classes: ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'PisoAlgorithmConfig', 'PisoDynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'SimpleAlgorithmConfig', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'KEpsilonCoeffs', 'KOmegaSSTCoeffs', 'SpalartAllmarasCoeffs', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig', 'MRFPropertiesConfig', 'FvOptionsConfig']
     ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     PreprocessConfig             fields: ['tools']
     BlockMeshDictConfig          fields: ['blocks', 'boundary', 'edges', 'merge_patch_pairs', 'scale', 'vertices']
@@ -125,14 +125,22 @@ works for any solver, because the classes are declared on its spec.
     TelemetryDictConfig          fields: ['directory', 'enabled', 'summary']
     Pimple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
     Pimple_fvSolution            fields: ['PIMPLE', 'solvers']
+    PimpleAlgorithmConfig        fields: ['finalOnLastPimpleIterOnly', 'momentumPredictor', 'nCorrectors', 'nNonOrthogonalCorrectors', 'nOuterCorrectors', 'turbCorr', 'turbOnFinalIterOnly']
+    DynamicMeshControls          fields: ['checkMeshCourantNo', 'correctPhi', 'moveMeshOuterCorrectors']
+    PisoAlgorithmConfig          fields: ['finalOnLastPimpleIterOnly', 'momentumPredictor', 'nCorrectors', 'nNonOrthogonalCorrectors', 'nOuterCorrectors', 'turbCorr', 'turbOnFinalIterOnly']
+    PisoDynamicMeshControls      fields: ['checkMeshCourantNo', 'correctPhi', 'moveMeshOuterCorrectors']
     UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     Simple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
     Simple_fvSolution            fields: ['SIMPLE', 'solvers']
+    SimpleAlgorithmConfig        fields: ['consistent', 'momentumPredictor', 'nNonOrthogonalCorrectors']
     UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     TransportPropertiesConfig    fields: ['nu', 'transportModel']
     TurbulencePropertiesConfig   fields: ['LES', 'RAS', 'simulationType']
+    KEpsilonCoeffs               fields: ['C1', 'C2', 'C3', 'Cmu', 'sigmaEps', 'sigmak']
+    KOmegaSSTCoeffs              fields: ['a1', 'alphaK1', 'alphaK2', 'alphaOmega1', 'alphaOmega2', 'b1', 'beta1', 'beta2', 'betaStar', 'c1', 'gamma1', 'gamma2']
+    SpalartAllmarasCoeffs        fields: ['Cb1', 'Cb2', 'Cs', 'Cv1', 'Cw2', 'Cw3', 'kappa', 'sigmaNut']
     BoussinesqConfig             fields: ['Pr', 'Prt', 'TRef', 'beta', 'hRef']
     GravityConfig                fields: ['FoamFile', 'dimensions', 'value']
     boussinesq_fvSchemes         fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'laplacianSchemes']
@@ -142,11 +150,13 @@ works for any solver, because the classes are declared on its spec.
     alphatFieldConfig            fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     CourantConfig                fields: ['maxCo']
     MaxDeltaTConfig              fields: ['maxDeltaT']
+    MRFPropertiesConfig          fields: []
+    FvOptionsConfig              fields: []
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 76-85
+.. GENERATED FROM PYTHON SOURCE LINES 76-88
 
 Dict configs vs ``0/<name>`` field schemas
 ------------------------------------------
@@ -156,14 +166,17 @@ schemas declared via ``Model.field(...)`` (``0/<name>`` files). The
 ``.dicts`` and ``.fields`` properties filter the view so callers can
 walk only one kind. The fields list reflects what the bound model
 specs declare — ``pimple`` owns ``0/U`` / ``0/p``, ``boussinesq``
-adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
+adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``. Schema-only configs (the
+turbulence coefficient blocks) have no file of their own — they
+resolve out of ``constant/turbulenceProperties`` at load — so they
+carry no ``io_config``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 85-89
+.. GENERATED FROM PYTHON SOURCE LINES 88-92
 
 .. code-block:: Python
 
 
-    print("dict files:", sorted(cls.io_config.file for cls in schema.dicts))
+    print("dict files:", sorted(cls.io_config.file for cls in schema.dicts if cls.io_config))
     print("0/* fields:", sorted(cls.io_config.file for cls in schema.fields))
 
 
@@ -174,20 +187,20 @@ adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
 
  .. code-block:: none
 
-    dict files: ['constant/g', 'constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/blockMeshDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/preprocess.yaml', 'system/snappyHexMeshDict']
+    dict files: ['constant/MRFProperties', 'constant/fvOptions', 'constant/g', 'constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/blockMeshDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/preprocess.yaml', 'system/snappyHexMeshDict']
     0/* fields: ['0/T', '0/U', '0/U', '0/alphat', '0/p', '0/p', '0/p_rgh']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 90-94
+.. GENERATED FROM PYTHON SOURCE LINES 93-97
 
 Look a class up, and read its JSON Schema
 -----------------------------------------
 The view is subscriptable by class name, and ``json_schema()`` returns the
 JSON Schema of every class — the form most agent / UI tooling consumes.
 
-.. GENERATED FROM PYTHON SOURCE LINES 94-116
+.. GENERATED FROM PYTHON SOURCE LINES 97-119
 
 .. code-block:: Python
 
@@ -222,19 +235,19 @@ JSON Schema of every class — the form most agent / UI tooling consumes.
  .. code-block:: none
 
     ControlDictConfig fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
-    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
+    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'PisoAlgorithmConfig', 'PisoDynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'SimpleAlgorithmConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'KEpsilonCoeffs', 'KOmegaSSTCoeffs', 'SpalartAllmarasCoeffs', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig', 'MRFPropertiesConfig', 'FvOptionsConfig']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 117-121
+.. GENERATED FROM PYTHON SOURCE LINES 120-124
 
 Collect from the pitzDaily case
 -------------------------------
 ``clone_case`` copies a bundled case to a throwaway tempdir. pitzDaily is
 a plain turbulent case — PIMPLE only, no optional models.
 
-.. GENERATED FROM PYTHON SOURCE LINES 121-129
+.. GENERATED FROM PYTHON SOURCE LINES 124-132
 
 .. code-block:: Python
 
@@ -255,12 +268,12 @@ a plain turbulent case — PIMPLE only, no optional models.
  .. code-block:: none
 
     instances: ['TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
-    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
+    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'PisoAlgorithmConfig', 'PisoDynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 130-135
+.. GENERATED FROM PYTHON SOURCE LINES 133-138
 
 Print the loaded instances
 --------------------------
@@ -268,7 +281,7 @@ Each config knows the file it came from (``file_name``) and, if it lives
 under a sub-dictionary, its ``subdict``. ``model_dump()`` is the parsed,
 validated content.
 
-.. GENERATED FROM PYTHON SOURCE LINES 135-143
+.. GENERATED FROM PYTHON SOURCE LINES 138-146
 
 .. code-block:: Python
 
@@ -307,7 +320,7 @@ validated content.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 144-151
+.. GENERATED FROM PYTHON SOURCE LINES 147-154
 
 Print the declared schema set
 -----------------------------
@@ -317,7 +330,7 @@ appear here as *classes* even though their instances are not loaded (the
 OpenFOAM reader does not yet parse their typed scheme values). This is the
 schema an agent fills to scaffold a case.
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-156
+.. GENERATED FROM PYTHON SOURCE LINES 154-159
 
 .. code-block:: Python
 
@@ -336,6 +349,10 @@ schema an agent fills to scaffold a case.
 
     Pimple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
     Pimple_fvSolution            fields: ['PIMPLE', 'solvers']
+    PimpleAlgorithmConfig        fields: ['finalOnLastPimpleIterOnly', 'momentumPredictor', 'nCorrectors', 'nNonOrthogonalCorrectors', 'nOuterCorrectors', 'turbCorr', 'turbOnFinalIterOnly']
+    DynamicMeshControls          fields: ['checkMeshCourantNo', 'correctPhi', 'moveMeshOuterCorrectors']
+    PisoAlgorithmConfig          fields: ['finalOnLastPimpleIterOnly', 'momentumPredictor', 'nCorrectors', 'nNonOrthogonalCorrectors', 'nOuterCorrectors', 'turbCorr', 'turbOnFinalIterOnly']
+    PisoDynamicMeshControls      fields: ['checkMeshCourantNo', 'correctPhi', 'moveMeshOuterCorrectors']
     UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     TimeControlConfig            fields: ['deltaT', 'endTime', 'startTime', 'writeControl', 'writeInterval']
@@ -347,7 +364,7 @@ schema an agent fills to scaffold a case.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 157-162
+.. GENERATED FROM PYTHON SOURCE LINES 160-165
 
 Save the configs back to a fresh directory
 ------------------------------------------
@@ -355,7 +372,7 @@ Save the configs back to a fresh directory
 path under ``case_dir``, reconstructing the case layout. Configs without
 an IO strategy are skipped with a warning rather than raising.
 
-.. GENERATED FROM PYTHON SOURCE LINES 162-171
+.. GENERATED FROM PYTHON SOURCE LINES 165-174
 
 .. code-block:: Python
 
@@ -386,7 +403,7 @@ an IO strategy are skipped with a warning rather than raising.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 172-179
+.. GENERATED FROM PYTHON SOURCE LINES 175-182
 
 Collect from the hotRoom case
 -----------------------------
@@ -396,7 +413,7 @@ LOAD and flips ``use_boussinesq`` during RESOLVE. Its configs join the
 collection: ``BoussinesqConfig`` as an instance, plus the boussinesq
 ``fvSchemes`` / ``fvSolution`` slices in the schema set.
 
-.. GENERATED FROM PYTHON SOURCE LINES 179-187
+.. GENERATED FROM PYTHON SOURCE LINES 182-190
 
 .. code-block:: Python
 
@@ -417,12 +434,12 @@ collection: ``BoussinesqConfig`` as an instance, plus the boussinesq
  .. code-block:: none
 
     instances: ['TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'BoussinesqConfig']
-    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig']
+    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'PimpleAlgorithmConfig', 'DynamicMeshControls', 'PisoAlgorithmConfig', 'PisoDynamicMeshControls', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 188-194
+.. GENERATED FROM PYTHON SOURCE LINES 191-197
 
 Saving hotRoom's configs
 ------------------------
@@ -431,7 +448,7 @@ Saving hotRoom's configs
 ``save_configs`` skips it (with a warning) and writes it once via the
 transport config. We print its values so nothing is lost.
 
-.. GENERATED FROM PYTHON SOURCE LINES 194-203
+.. GENERATED FROM PYTHON SOURCE LINES 197-206
 
 .. code-block:: Python
 
@@ -451,7 +468,7 @@ transport config. We print its values so nothing is lost.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 204-214
+.. GENERATED FROM PYTHON SOURCE LINES 207-217
 
 Read and write ``0/<name>`` fields with ``load_fields`` / ``save_fields``
 ------------------------------------------------------------------------
@@ -464,7 +481,7 @@ orchestrate the per-file read/write directly. The mapping returned by
 caller can mutate one BC and save just that field — or save the whole
 set.
 
-.. GENERATED FROM PYTHON SOURCE LINES 214-230
+.. GENERATED FROM PYTHON SOURCE LINES 217-233
 
 .. code-block:: Python
 
@@ -504,7 +521,7 @@ set.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 231-238
+.. GENERATED FROM PYTHON SOURCE LINES 234-241
 
 Scaffold a case from configs alone
 ----------------------------------
@@ -514,7 +531,7 @@ with ``save()``. An empty directory becomes a valid (partial) case. This
 is the building block for generating a case programmatically — an agent
 fills ``schema`` and saves it.
 
-.. GENERATED FROM PYTHON SOURCE LINES 238-264
+.. GENERATED FROM PYTHON SOURCE LINES 241-267
 
 .. code-block:: Python
 
@@ -560,7 +577,7 @@ fills ``schema`` and saves it.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 265-274
+.. GENERATED FROM PYTHON SOURCE LINES 268-277
 
 See also
 --------
@@ -572,7 +589,7 @@ See also
 - :doc:`example_work_with_config_files` — loading and validating a single
   config file.
 
-.. GENERATED FROM PYTHON SOURCE LINES 274-277
+.. GENERATED FROM PYTHON SOURCE LINES 277-280
 
 .. code-block:: Python
 
@@ -589,7 +606,7 @@ See also
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.096 seconds)
+   **Total running time of the script:** (0 minutes 0.112 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_collect_and_save_configs.py:

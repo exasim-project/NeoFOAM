@@ -1,9 +1,10 @@
 var searchData=
 [
-  ['omegasourcefield_0',['omegaSourceField',['../classNeoFOAM_1_1KOmegaSST.html#a4575863206a00bd6bde5e2c0ebf839b4',1,'NeoFOAM::KOmegaSST']]],
-  ['omegawallfunction_1',['OmegaWallFunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction.html#ac0943294b58f4309efe67121dd9f4ebb',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction']]],
-  ['operator_26_2',['operator&amp;',['../namespaceNeoFOAM.html#a999e61dc6e0868f9fe6cd7e4ea91f917',1,'NeoFOAM']]],
-  ['operator_28_29_3',['operator()',['../classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f',1,'NeoFOAM::CreateFromFoamField']]],
-  ['operator_3d_3d_4',['operator==',['../namespaceNeoFOAM.html#adb3f301260a65dd30182893f75665a8a',1,'NeoFOAM::operator==(const NeoN::Vector&lt; NT &gt; &amp;nf, const Foam::Field&lt; OT &gt; &amp;of)'],['../namespaceNeoFOAM.html#ab57ab173a9df89dbffffcf9a42aa673d',1,'NeoFOAM::operator==(fvcc::VolumeField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvPatchField, Foam::volMesh &gt; &amp;of)'],['../namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805',1,'NeoFOAM::operator==(const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)']]],
-  ['outputdir_5',['outputDir',['../classNeoFOAM_1_1FunctionObjectIO.html#a598af1cff8c3269503ff0d2cc5c483b9',1,'NeoFOAM::FunctionObjectIO']]]
+  ['makegradoperator_0',['makeGradOperator',['../namespaceNeoFOAM.html#ae4b24e9169459dcfb34d1931df618ad3',1,'NeoFOAM']]],
+  ['mapfvschemes_1',['mapFvSchemes',['../namespaceNeoFOAM.html#a152eff2c6ed8799eab60394fc259108d',1,'NeoFOAM']]],
+  ['mapfvsolution_2',['mapFvSolution',['../namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b',1,'NeoFOAM']]],
+  ['mapsolversettings_3',['mapSolverSettings',['../namespaceNeoFOAM.html#a19255962008ebc4f9db56a5c2c205e58',1,'NeoFOAM']]],
+  ['matchkey_4',['matchKey',['../namespaceNeoFOAM.html#affc53205d5ed24f1f120968fc0d21c95',1,'NeoFOAM']]],
+  ['meanunitnormal_5',['meanUnitNormal',['../namespaceNeoFOAM_1_1detail.html#a53f3814af050089e9e1102903162706b',1,'NeoFOAM::detail']]],
+  ['meshadapter_6',['meshadapter',['../classNeoFOAM_1_1MeshAdapter.html#af4b0769774c144cf8d2ab8bb939e6a27',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, const bool doInit=true)'],['../classNeoFOAM_1_1MeshAdapter.html#aaca2352e77f5723a5a91928625581ad3',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, const Foam::zero, bool syncPar=true)'],['../classNeoFOAM_1_1MeshAdapter.html#a86ad2242dbd1f66f91599973eab31494',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, Foam::pointField &amp;&amp;points, Foam::faceList &amp;&amp;faces, Foam::labelList &amp;&amp;allOwner, Foam::labelList &amp;&amp;allNeighbour, const bool syncPar=true)'],['../classNeoFOAM_1_1MeshAdapter.html#a1f7eb4c839cf4dd4f6db775b0629e5ec',1,'NeoFOAM::MeshAdapter::MeshAdapter(const NeoN::Executor exec, const Foam::IOobject &amp;io, Foam::pointField &amp;&amp;points, Foam::faceList &amp;&amp;faces, Foam::cellList &amp;&amp;cells, const bool syncPar=true)']]]
 ];

@@ -19,102 +19,109 @@
 \DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00015}00015\ }
 \DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00016}\mbox{\hyperlink{namespaceNeoFOAM_a152eff2c6ed8799eab60394fc259108d}{00016}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_a152eff2c6ed8799eab60394fc259108d}{mapFvSchemes}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ schemesDict);}
 \DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00017}00017\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00031}00031\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00032}\mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{00032}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{expandSchemeDefaults}}(}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00033}00033\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Dictionary\&\ schemesDict,}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00034}00034\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::dsl::Expression<ValueType>\&\ expr,}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00035}00035\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ fieldName}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00036}00036\ )}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00037}00037\ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00038}00038\ \ \ \ \ NeoN::Dictionary\ resolved\ =\ schemesDict;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00039}00039\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00040}00040\ \ \ \ \ \textcolor{keyword}{auto}\ fillDefault\ =\ [\&](\textcolor{keyword}{const}\ std::string\&\ subName,\ \textcolor{keyword}{const}\ std::string\&\ key)}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00041}00041\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!resolved.contains(subName))\ \textcolor{keywordflow}{return};}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ sub\ =\ resolved.subDict(subName);}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!sub.contains(key)\ \&\&\ sub.contains(\textcolor{stringliteral}{"{}default"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sub.template\ isType<std::string>(\textcolor{stringliteral}{"{}default"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ defaultStr\ =\ sub.get<std::string>(\textcolor{stringliteral}{"{}default"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (defaultStr\ ==\ \textcolor{stringliteral}{"{}none"{}})}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ \textcolor{comment}{//\ "{}none"{}\ means\ no\ fallback\ —\ require\ explicit\ entry}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::TokenList\ tl;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tl.insert(defaultStr);}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sub.insert(key,\ tl);}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sub.insert(key,\ sub.get<NeoN::TokenList>(\textcolor{stringliteral}{"{}default"{}}));}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00058}00058\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00059}00059\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00060}00060\ \ \ \ \ \textcolor{comment}{//\ ddt:\ DdtOperator::read()\ expects\ std::string,\ not\ TokenList\ —\ insert\ directly}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keywordflow}{if}\ (resolved.contains(\textcolor{stringliteral}{"{}ddtSchemes"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00062}00062\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ ddtSub\ =\ resolved.subDict(\textcolor{stringliteral}{"{}ddtSchemes"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ ddtKey\ =\ \textcolor{stringliteral}{"{}ddt("{}}\ +\ fieldName\ +\ \textcolor{stringliteral}{"{})"{}};}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!ddtSub.contains(ddtKey)\ \&\&\ ddtSub.contains(\textcolor{stringliteral}{"{}default"{}})}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ ddtSub.template\ isType<std::string>(\textcolor{stringliteral}{"{}default"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ def\ =\ ddtSub.get<std::string>(\textcolor{stringliteral}{"{}default"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (def\ !=\ \textcolor{stringliteral}{"{}none"{}})\ ddtSub.insert(ddtKey,\ def);}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00071}00071\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00072}00072\ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}gradSchemes"{}},\ \textcolor{stringliteral}{"{}grad("{}}\ +\ fieldName\ +\ \textcolor{stringliteral}{"{})"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00074}00074\ \ \ \ \ \textcolor{comment}{//\ div\ and\ laplacian\ need\ the\ flux/gamma\ names\ from\ each\ operator's\ config}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00075}00075\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ op\ :\ expr.spatialOperators())}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00076}00076\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}ViscousStressOperator"{}})}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}divSchemes"{}},\ \textcolor{stringliteral}{"{}div((nuEff*dev2(T(grad(U)))))"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00034}\mbox{\hyperlink{namespaceNeoFOAM_ae4b24e9169459dcfb34d1931df618ad3}{00034}}\ std::unique\_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>>\ \mbox{\hyperlink{namespaceNeoFOAM_ae4b24e9169459dcfb34d1931df618ad3}{makeGradOperator}}(}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00035}00035\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\&\ exc,}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00036}00036\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh,}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00037}00037\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Dictionary\&\ fvSchemes,}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ gradEntry}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00039}00039\ );}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00054}00054\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00055}\mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{00055}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{expandSchemeDefaults}}(}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Dictionary\&\ schemesDict,}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00057}00057\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::dsl::Expression<ValueType>\&\ expr,}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ fieldName}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00059}00059\ )}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00060}00060\ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00061}00061\ \ \ \ \ NeoN::Dictionary\ resolved\ =\ schemesDict;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00063}00063\ \ \ \ \ \textcolor{keyword}{auto}\ fillDefault\ =\ [\&](\textcolor{keyword}{const}\ std::string\&\ subName,\ \textcolor{keyword}{const}\ std::string\&\ key)}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00064}00064\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!resolved.contains(subName))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ sub\ =\ resolved.subDict(subName);}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!sub.contains(key)\ \&\&\ sub.contains(\textcolor{stringliteral}{"{}default"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (sub.template\ isType<std::string>(\textcolor{stringliteral}{"{}default"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ defaultStr\ =\ sub.get<std::string>(\textcolor{stringliteral}{"{}default"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (defaultStr\ ==\ \textcolor{stringliteral}{"{}none"{}})}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ \textcolor{comment}{//\ "{}none"{}\ means\ no\ fallback\ —\ require\ explicit\ entry}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::TokenList\ tl;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tl.insert(defaultStr);}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sub.insert(key,\ tl);}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ sub.insert(key,\ sub.get<NeoN::TokenList>(\textcolor{stringliteral}{"{}default"{}}));}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00081}00081\ \ \ \ \ \};}
 \DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00082}00082\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}GradOperator"{}})}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ config\ =\ op.getConfig();}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (config.contains(\textcolor{stringliteral}{"{}field"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ scalarField\ =}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<NeoN::detail::RefHolder<fvcc::VolumeField<NeoN::scalar>>>(}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}field"{}}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}gradSchemes"{}},\ \textcolor{stringliteral}{"{}grad("{}}\ +\ scalarField.name\ +\ \textcolor{stringliteral}{"{})"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00098}00098\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ config\ =\ op.getConfig();}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!config.contains(\textcolor{stringliteral}{"{}field"{}}))\ \textcolor{keywordflow}{continue};}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00101}00101\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ field\ =}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \ \ config.template\ get<NeoN::detail::RefHolder<fvcc::VolumeField<ValueType>>>(\textcolor{stringliteral}{"{}field"{}}).c;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00104}00104\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00105}00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}DivOperator"{}}\ \&\&\ config.contains(\textcolor{stringliteral}{"{}flux"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}\ =}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<NeoN::detail::RefHolder<fvcc::SurfaceField<NeoN::scalar>>>(\textcolor{stringliteral}{"{}flux"{}})}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}divSchemes"{}},\ \textcolor{stringliteral}{"{}div("{}}\ +\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}.name\ +\ \textcolor{stringliteral}{"{},"{}}\ +\ field.name\ +\ \textcolor{stringliteral}{"{})"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}LaplacianOperator"{}}\ \&\&\ config.contains(\textcolor{stringliteral}{"{}gamma"{}}))}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gamma\ =}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<NeoN::detail::RefHolder<fvcc::SurfaceField<NeoN::scalar>>>(\textcolor{stringliteral}{"{}gamma"{}}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}laplacianSchemes"{}},\ \textcolor{stringliteral}{"{}laplacian("{}}\ +\ gamma.name\ +\ \textcolor{stringliteral}{"{},"{}}\ +\ field.name\ +\ \textcolor{stringliteral}{"{})"{}});}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00122}00122\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00123}00123\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00124}00124\ \ \ \ \ \textcolor{keywordflow}{return}\ resolved;}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00125}00125\ \}}
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00126}00126\ }
-\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00127}00127\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00083}00083\ \ \ \ \ \textcolor{comment}{//\ ddt:\ DdtOperator::read()\ expects\ std::string,\ not\ TokenList\ —\ insert\ directly}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00084}00084\ \ \ \ \ \textcolor{keywordflow}{if}\ (resolved.contains(\textcolor{stringliteral}{"{}ddtSchemes"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00085}00085\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\&\ ddtSub\ =\ resolved.subDict(\textcolor{stringliteral}{"{}ddtSchemes"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ ddtKey\ =\ \textcolor{stringliteral}{"{}ddt("{}}\ +\ fieldName\ +\ \textcolor{stringliteral}{"{})"{}};}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!ddtSub.contains(ddtKey)\ \&\&\ ddtSub.contains(\textcolor{stringliteral}{"{}default"{}})}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ ddtSub.template\ isType<std::string>(\textcolor{stringliteral}{"{}default"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ def\ =\ ddtSub.get<std::string>(\textcolor{stringliteral}{"{}default"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (def\ !=\ \textcolor{stringliteral}{"{}none"{}})\ ddtSub.insert(ddtKey,\ def);}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00094}00094\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00095}00095\ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}gradSchemes"{}},\ \textcolor{stringliteral}{"{}grad("{}}\ +\ fieldName\ +\ \textcolor{stringliteral}{"{})"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00097}00097\ \ \ \ \ \textcolor{comment}{//\ div\ and\ laplacian\ need\ the\ flux/gamma\ names\ from\ each\ operator's\ config}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00098}00098\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ op\ :\ expr.spatialOperators())}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00099}00099\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00100}00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}ViscousStressOperator"{}})}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00101}00101\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00102}00102\ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}divSchemes"{}},\ \textcolor{stringliteral}{"{}div((nuEff*dev2(T(grad(U)))))"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00103}00103\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00104}00104\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00105}00105\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00106}00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}GradOperator"{}})}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00107}00107\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ config\ =\ op.getConfig();}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (config.contains(\textcolor{stringliteral}{"{}field"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ scalarField\ =}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<NeoN::detail::RefHolder<fvcc::VolumeField<NeoN::scalar>>>(}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}field"{}}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}gradSchemes"{}},\ \textcolor{stringliteral}{"{}grad("{}}\ +\ scalarField.name\ +\ \textcolor{stringliteral}{"{})"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00121}00121\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ config\ =\ op.getConfig();}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!config.contains(\textcolor{stringliteral}{"{}field"{}}))\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ field\ =}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ config.template\ get<NeoN::detail::RefHolder<fvcc::VolumeField<ValueType>>>(\textcolor{stringliteral}{"{}field"{}}).c;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00127}00127\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}DivOperator"{}}\ \&\&\ config.contains(\textcolor{stringliteral}{"{}flux"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}\ =}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<NeoN::detail::RefHolder<fvcc::SurfaceField<NeoN::scalar>>>(\textcolor{stringliteral}{"{}flux"{}})}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}divSchemes"{}},\ \textcolor{stringliteral}{"{}div("{}}\ +\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}.name\ +\ \textcolor{stringliteral}{"{},"{}}\ +\ field.name\ +\ \textcolor{stringliteral}{"{})"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00136}00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (op.getName()\ ==\ \textcolor{stringliteral}{"{}LaplacianOperator"{}}\ \&\&\ config.contains(\textcolor{stringliteral}{"{}gamma"{}}))}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ gamma\ =}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ config}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<NeoN::detail::RefHolder<fvcc::SurfaceField<NeoN::scalar>>>(\textcolor{stringliteral}{"{}gamma"{}}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .c;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ fillDefault(\textcolor{stringliteral}{"{}laplacianSchemes"{}},\ \textcolor{stringliteral}{"{}laplacian("{}}\ +\ gamma.name\ +\ \textcolor{stringliteral}{"{},"{}}\ +\ field.name\ +\ \textcolor{stringliteral}{"{})"{}});}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00145}00145\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00146}00146\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00147}00147\ \ \ \ \ \textcolor{keywordflow}{return}\ resolved;}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00148}00148\ \}}
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{fvSchemes_8hpp_source_l00150}00150\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}

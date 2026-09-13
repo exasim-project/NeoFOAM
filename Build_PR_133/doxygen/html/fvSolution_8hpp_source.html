@@ -92,81 +92,164 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;NeoN/core/dictionary.hpp&quot;</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;NeoN/core/primitives/scalar.hpp&quot;</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;<a class="code" href="runTime_8hpp.html">NeoFOAM/datastructures/runTime.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;NeoN/core/dictionary.hpp&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &quot;NeoN/core/primitives/scalar.hpp&quot;</span></div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span> </div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>{</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">   22</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">updateSolver</a>(NeoN::Dictionary&amp; solverDict);</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &quot;<a class="code" href="runTime_8hpp.html">NeoFOAM/datastructures/runTime.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">   24</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">updatePreconditioner</a>(NeoN::Dictionary&amp; solverDict);</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment">/* @brief Look up the equation under-relaxation factor for a field from fvSolution.</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> * Parses the OpenFOAM `relaxationFactors.equations` sub-dictionary and returns the</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> * scalar relaxation factor for the given field. When `finalIter` is true the</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="comment"> * `&lt;field&gt;Final` key is preferred (Final-suffix seam), falling back to the base</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="comment"> * `&lt;field&gt;` key. Returns std::nullopt when no entry exists -&gt; the caller uses 1.0 -&gt;</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment"> * the kernel is a no-op (matches OpenFOAM&#39;s &quot;no entry, no relax&quot; semantics).</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment"> * Keeping this parsing in NeoFOAM means NeoN&#39;s applyMatrixRelaxation only ever</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment"> * sees a plain scalar; NeoN stays OpenFOAM-dictionary-agnostic.</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment"> * @param fvSolution  The parsed fvSolution dictionary (e.g. RunTime::fvSolutionDict).</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment"> * @param field       The field name (e.g. &quot;U&quot;).</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment"> * @param finalIter   Whether the final outer iteration is active (selects the *Final key).</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>std::optional&lt;NeoN::scalar&gt;</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2">   42</a></span><a class="code hl_function" href="namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2">lookupEqnRelaxation</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; fvSolution, <span class="keyword">const</span> std::string&amp; field, <span class="keywordtype">bool</span> finalIter);</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment">/* @brief No fvSolution entry matches a field name.</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> * Carries the field, the dictionary that was searched (e.g. &quot;system/fvSolution/solvers&quot;)</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> * and the keys that dictionary offers, so the message alone explains the failure —</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> * replacing the bare `unordered_map::at` the NeoN dictionary raises otherwise.</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> */</span></div>
+<div class="foldopen" id="foldopen00030" data-start="{" data-end="};">
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html">   30</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html">FvSolutionKeyNotFound</a> : <span class="keyword">public</span> std::runtime_error</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>{</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#a2c035d8ee4e513ece7bc35a091e210eb">   34</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#a2c035d8ee4e513ece7bc35a091e210eb">FvSolutionKeyNotFound</a>(</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        <span class="keyword">const</span> std::string&amp; <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#aacd55c5b03422e4444509742b1a2d534">field</a>,</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        <span class="keyword">const</span> std::string&amp; <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#abee7a6e9ef57a1a51b68f6fb362b80f8">dictName</a>,</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        <span class="keyword">const</span> std::vector&lt;std::string&gt;&amp; <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#adb5209f7c37ea9e7fb1e164c4d934255">availableKeys</a></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    );</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#aacd55c5b03422e4444509742b1a2d534">   40</a></span>    [[nodiscard]] <span class="keyword">const</span> std::string&amp; <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#aacd55c5b03422e4444509742b1a2d534">field</a>() const noexcept { <span class="keywordflow">return</span> field_; }</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#abee7a6e9ef57a1a51b68f6fb362b80f8">   42</a></span>    [[nodiscard]] <span class="keyword">const</span> std::string&amp; <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#abee7a6e9ef57a1a51b68f6fb362b80f8">dictName</a>() const noexcept { <span class="keywordflow">return</span> dictName_; }</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="comment">/* @brief Look up the explicit field under-relaxation factor for a field from fvSolution.</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="comment"> * Parses the OpenFOAM `relaxationFactors.fields` sub-dictionary and returns the scalar</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="comment"> * relaxation factor for the given field. When `finalIter` is true the `&lt;field&gt;Final` key is</span></div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="comment"> * preferred (Final-suffix seam), falling back to the base `&lt;field&gt;` key. Returns</span></div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment"> * std::nullopt when no entry exists -&gt; the caller uses 1.0 -&gt; the kernel is a no-op (matches</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="comment"> * OpenFOAM&#39;s &quot;no entry, no relax&quot; semantics).</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment"> * `relaxationFactors.equations` and `relaxationFactors.fields` are independent dicts:</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment"> * a field present only under `equations` (e.g. momentum `U`) returns nullopt here, so</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="comment"> * field-URF is a no-op on it and momentum is never double-relaxed. Shares the int-tolerant,</span></div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment"> * isDict-guarded lookup body with lookupEqnRelaxation.</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="comment"> * @param fvSolution  The parsed fvSolution dictionary (e.g. RunTime::fvSolutionDict).</span></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="comment"> * @param field       The field name (e.g. &quot;p&quot;).</span></div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="comment"> * @param finalIter   Whether the final outer iteration is active (selects the *Final key).</span></div>
+<div class="foldopen" id="foldopen00044" data-start="{" data-end="}">
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#adb5209f7c37ea9e7fb1e164c4d934255">   44</a></span>    [[nodiscard]] <span class="keyword">const</span> std::vector&lt;std::string&gt;&amp; <a class="code hl_function" href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#adb5209f7c37ea9e7fb1e164c4d934255">availableKeys</a>() const noexcept</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    {</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keywordflow">return</span> availableKeys_;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
+</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    std::string field_;</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    std::string dictName_;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    std::vector&lt;std::string&gt; availableKeys_;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>};</div>
+</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment">/* @brief Does the dictionary key `key` select `name` under OpenFOAM&#39;s lookup rules?</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="comment"> * True for an identical keyword, or for a quoted regex keyword (see dictKey) whose</span></div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="comment"> * pattern matches `name` entirely — the `keyType::REGEX` behaviour of Foam::dictionary.</span></div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>std::optional&lt;NeoN::scalar&gt;</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a">   62</a></span><a class="code hl_function" href="namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a">lookupFieldRelaxation</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; fvSolution, <span class="keyword">const</span> std::string&amp; field, <span class="keywordtype">bool</span> finalIter);</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="comment">/* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.</span></div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="comment"> * The returned dictionary additionally carries a &quot;reportName&quot; meta key holding</span></div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment"> * the Ginkgo solver/preconditioner label (e.g. &quot;Ic+Cg&quot;) used by the per-solve</span></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment"> * residual report. The Ginkgo backend&#39;s config parser ignores that key.</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="comment"> * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).</span></div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">   72</a></span>NeoN::Dictionary <a class="code hl_function" href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">mapFvSolution</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; solverDict);</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#afa00770785106f67fddae9d945e9e9d0">   80</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#afa00770785106f67fddae9d945e9e9d0">createMappedFvSolutionDicts</a>(<a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; rt);</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a1c14b5d90ddd3e7e7b6c0cd7e386744f">   61</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a1c14b5d90ddd3e7e7b6c0cd7e386744f">keyMatches</a>(<span class="keyword">const</span> std::string&amp; key, <span class="keyword">const</span> std::string&amp; name);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="comment">/* @brief The key of `dict` that OpenFOAM&#39;s dictionary lookup would select for `name`.</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="comment"> * An identical keyword wins over any pattern, mirroring Foam::dictionary. Returns</span></div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="comment"> * std::nullopt when nothing matches. Throws when several regex keys match: the NeoN</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment"> * dictionary is unordered, so OpenFOAM&#39;s &quot;last pattern in the file wins&quot; precedence</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment"> * cannot be reproduced and guessing would silently pick the wrong settings.</span></div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#affc53205d5ed24f1f120968fc0d21c95">   70</a></span>std::optional&lt;std::string&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#affc53205d5ed24f1f120968fc0d21c95">matchKey</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; dict, <span class="keyword">const</span> std::string&amp; name);</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment">/* @brief Does the fvSolution `solvers` dictionary hold settings for `field`? */</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a2b038624585d8850cda16add325c3791">   73</a></span><span class="keywordtype">bool</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a2b038624585d8850cda16add325c3791">hasSolverSettings</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; solvers, <span class="keyword">const</span> std::string&amp; field);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment">/* @brief The `solvers` sub-dictionary OpenFOAM would use for `field` (regex keys honoured).</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="comment"> * @throws FvSolutionKeyNotFound when no key matches.</span></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a767c1c39b482e365574ff872327ae9f1">   79</a></span>NeoN::Dictionary&amp; <a class="code hl_function" href="namespaceNeoFOAM.html#a767c1c39b482e365574ff872327ae9f1">solverSettings</a>(NeoN::Dictionary&amp; solvers, <span class="keyword">const</span> std::string&amp; field);</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#abc46b4350a98be3404e35df437aa1117">   81</a></span><span class="keyword">const</span> NeoN::Dictionary&amp; <a class="code hl_function" href="namespaceNeoFOAM.html#a767c1c39b482e365574ff872327ae9f1">solverSettings</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; solvers, <span class="keyword">const</span> std::string&amp; field);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="comment">/* @brief Map the `solvers` entry selected by `field` to NeoN/Ginkgo settings, in place.</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment"> * A no-op when the case defines no settings for `field`. One regex key can be selected</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="comment"> * by several field names, so this must not map an entry twice (mapFvSolution is not</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="comment"> * idempotent) — it relies on mapFvSolution&#39;s already-mapped short circuit.</span></div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a19255962008ebc4f9db56a5c2c205e58">   89</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a19255962008ebc4f9db56a5c2c205e58">mapSolverSettings</a>(NeoN::Dictionary&amp; solvers, <span class="keyword">const</span> std::string&amp; field);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">   91</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">updateSolver</a>(NeoN::Dictionary&amp; solverDict);</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">   93</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">updatePreconditioner</a>(NeoN::Dictionary&amp; solverDict);</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="comment">/* @brief Look up the equation under-relaxation factor for a field from fvSolution.</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="comment"> * Parses the OpenFOAM `relaxationFactors.equations` sub-dictionary and returns the</span></div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span><span class="comment"> * scalar relaxation factor for the given field. When `finalIter` is true the</span></div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span><span class="comment"> * `&lt;field&gt;Final` key is preferred (Final-suffix seam), falling back to the base</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="comment"> * `&lt;field&gt;` key. Returns std::nullopt when no entry exists -&gt; the caller uses 1.0 -&gt;</span></div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span><span class="comment"> * the kernel is a no-op (matches OpenFOAM&#39;s &quot;no entry, no relax&quot; semantics).</span></div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span><span class="comment"> * Keeping this parsing in NeoFOAM means NeoN&#39;s applyMatrixRelaxation only ever</span></div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="comment"> * sees a plain scalar; NeoN stays OpenFOAM-dictionary-agnostic.</span></div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="comment"> * @param fvSolution  The parsed fvSolution dictionary (e.g. RunTime::fvSolutionDict).</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span><span class="comment"> * @param field       The field name (e.g. &quot;U&quot;).</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="comment"> * @param finalIter   Whether the final outer iteration is active (selects the *Final key).</span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>std::optional&lt;NeoN::scalar&gt;</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2">  111</a></span><a class="code hl_function" href="namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2">lookupEqnRelaxation</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; fvSolution, <span class="keyword">const</span> std::string&amp; field, <span class="keywordtype">bool</span> finalIter);</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span><span class="comment">/* @brief Look up the explicit field under-relaxation factor for a field from fvSolution.</span></div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span><span class="comment"> * Parses the OpenFOAM `relaxationFactors.fields` sub-dictionary and returns the scalar</span></div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="comment"> * relaxation factor for the given field. When `finalIter` is true the `&lt;field&gt;Final` key is</span></div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="comment"> * preferred (Final-suffix seam), falling back to the base `&lt;field&gt;` key. Returns</span></div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="comment"> * std::nullopt when no entry exists -&gt; the caller uses 1.0 -&gt; the kernel is a no-op (matches</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span><span class="comment"> * OpenFOAM&#39;s &quot;no entry, no relax&quot; semantics).</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span><span class="comment"> * `relaxationFactors.equations` and `relaxationFactors.fields` are independent dicts:</span></div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="comment"> * a field present only under `equations` (e.g. momentum `U`) returns nullopt here, so</span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="comment"> * field-URF is a no-op on it and momentum is never double-relaxed. Shares the int-tolerant,</span></div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="comment"> * isDict-guarded lookup body with lookupEqnRelaxation.</span></div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="comment"> * @param fvSolution  The parsed fvSolution dictionary (e.g. RunTime::fvSolutionDict).</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="comment"> * @param field       The field name (e.g. &quot;p&quot;).</span></div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span><span class="comment"> * @param finalIter   Whether the final outer iteration is active (selects the *Final key).</span></div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>std::optional&lt;NeoN::scalar&gt;</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a">  131</a></span><a class="code hl_function" href="namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a">lookupFieldRelaxation</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; fvSolution, <span class="keyword">const</span> std::string&amp; field, <span class="keywordtype">bool</span> finalIter);</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="comment">/* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.</span></div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="comment"> * The returned dictionary additionally carries a &quot;reportName&quot; meta key holding</span></div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="comment"> * the Ginkgo solver/preconditioner label (e.g. &quot;Ic+Cg&quot;) used by the per-solve</span></div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="comment"> * residual report. The Ginkgo backend&#39;s config parser ignores that key.</span></div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="comment"> * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).</span></div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">  141</a></span>NeoN::Dictionary <a class="code hl_function" href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">mapFvSolution</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; solverDict);</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span> </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#afa00770785106f67fddae9d945e9e9d0">  149</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#afa00770785106f67fddae9d945e9e9d0">createMappedFvSolutionDicts</a>(<a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; rt);</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span> </div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="ttc" id="aclassNeoFOAM_1_1FvSolutionKeyNotFound_html"><div class="ttname"><a href="classNeoFOAM_1_1FvSolutionKeyNotFound.html">NeoFOAM::FvSolutionKeyNotFound</a></div><div class="ttdef"><b>Definition</b> <a href="fvSolution_8hpp_source.html#l00030">fvSolution.hpp:31</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1FvSolutionKeyNotFound_html_a2c035d8ee4e513ece7bc35a091e210eb"><div class="ttname"><a href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#a2c035d8ee4e513ece7bc35a091e210eb">NeoFOAM::FvSolutionKeyNotFound::FvSolutionKeyNotFound</a></div><div class="ttdeci">FvSolutionKeyNotFound(const std::string &amp;field, const std::string &amp;dictName, const std::vector&lt; std::string &gt; &amp;availableKeys)</div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1FvSolutionKeyNotFound_html_aacd55c5b03422e4444509742b1a2d534"><div class="ttname"><a href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#aacd55c5b03422e4444509742b1a2d534">NeoFOAM::FvSolutionKeyNotFound::field</a></div><div class="ttdeci">const std::string &amp; field() const noexcept</div><div class="ttdef"><b>Definition</b> <a href="fvSolution_8hpp_source.html#l00040">fvSolution.hpp:40</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1FvSolutionKeyNotFound_html_abee7a6e9ef57a1a51b68f6fb362b80f8"><div class="ttname"><a href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#abee7a6e9ef57a1a51b68f6fb362b80f8">NeoFOAM::FvSolutionKeyNotFound::dictName</a></div><div class="ttdeci">const std::string &amp; dictName() const noexcept</div><div class="ttdef"><b>Definition</b> <a href="fvSolution_8hpp_source.html#l00042">fvSolution.hpp:42</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1FvSolutionKeyNotFound_html_adb5209f7c37ea9e7fb1e164c4d934255"><div class="ttname"><a href="classNeoFOAM_1_1FvSolutionKeyNotFound.html#adb5209f7c37ea9e7fb1e164c4d934255">NeoFOAM::FvSolutionKeyNotFound::availableKeys</a></div><div class="ttdeci">const std::vector&lt; std::string &gt; &amp; availableKeys() const noexcept</div><div class="ttdef"><b>Definition</b> <a href="fvSolution_8hpp_source.html#l00044">fvSolution.hpp:44</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a10696ee81bee18fb95ff3175e368d99a"><div class="ttname"><a href="namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a">NeoFOAM::lookupFieldRelaxation</a></div><div class="ttdeci">std::optional&lt; NeoN::scalar &gt; lookupFieldRelaxation(const NeoN::Dictionary &amp;fvSolution, const std::string &amp;field, bool finalIter)</div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a19255962008ebc4f9db56a5c2c205e58"><div class="ttname"><a href="namespaceNeoFOAM.html#a19255962008ebc4f9db56a5c2c205e58">NeoFOAM::mapSolverSettings</a></div><div class="ttdeci">void mapSolverSettings(NeoN::Dictionary &amp;solvers, const std::string &amp;field)</div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a1c14b5d90ddd3e7e7b6c0cd7e386744f"><div class="ttname"><a href="namespaceNeoFOAM.html#a1c14b5d90ddd3e7e7b6c0cd7e386744f">NeoFOAM::keyMatches</a></div><div class="ttdeci">bool keyMatches(const std::string &amp;key, const std::string &amp;name)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a26d70bfdefea0c104b27867a553012d2"><div class="ttname"><a href="namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2">NeoFOAM::lookupEqnRelaxation</a></div><div class="ttdeci">std::optional&lt; NeoN::scalar &gt; lookupEqnRelaxation(const NeoN::Dictionary &amp;fvSolution, const std::string &amp;field, bool finalIter)</div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a2b038624585d8850cda16add325c3791"><div class="ttname"><a href="namespaceNeoFOAM.html#a2b038624585d8850cda16add325c3791">NeoFOAM::hasSolverSettings</a></div><div class="ttdeci">bool hasSolverSettings(const NeoN::Dictionary &amp;solvers, const std::string &amp;field)</div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a767c1c39b482e365574ff872327ae9f1"><div class="ttname"><a href="namespaceNeoFOAM.html#a767c1c39b482e365574ff872327ae9f1">NeoFOAM::solverSettings</a></div><div class="ttdeci">NeoN::Dictionary &amp; solverSettings(NeoN::Dictionary &amp;solvers, const std::string &amp;field)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a809d8c49b332a3c4eb473b770d901e5b"><div class="ttname"><a href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">NeoFOAM::mapFvSolution</a></div><div class="ttdeci">NeoN::Dictionary mapFvSolution(const NeoN::Dictionary &amp;solverDict)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a8c1ca67d102991ab4a3c1bc3a2a8fb03"><div class="ttname"><a href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">NeoFOAM::updatePreconditioner</a></div><div class="ttdeci">void updatePreconditioner(NeoN::Dictionary &amp;solverDict)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_ab68574263e9c80758820191001d6d256"><div class="ttname"><a href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">NeoFOAM::updateSolver</a></div><div class="ttdeci">void updateSolver(NeoN::Dictionary &amp;solverDict)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_afa00770785106f67fddae9d945e9e9d0"><div class="ttname"><a href="namespaceNeoFOAM.html#afa00770785106f67fddae9d945e9e9d0">NeoFOAM::createMappedFvSolutionDicts</a></div><div class="ttdeci">void createMappedFvSolutionDicts(RunTime &amp;rt)</div><div class="ttdoc">Map the p, U, pFinal, and UFinal solver subdicts in rt.fvSolutionDict to NeoN/Ginkgo format.</div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_affc53205d5ed24f1f120968fc0d21c95"><div class="ttname"><a href="namespaceNeoFOAM.html#affc53205d5ed24f1f120968fc0d21c95">NeoFOAM::matchKey</a></div><div class="ttdeci">std::optional&lt; std::string &gt; matchKey(const NeoN::Dictionary &amp;dict, const std::string &amp;name)</div></div>
 <div class="ttc" id="arunTime_8hpp_html"><div class="ttname"><a href="runTime_8hpp.html">runTime.hpp</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00018">runTime.hpp:19</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00021">runTime.hpp:22</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

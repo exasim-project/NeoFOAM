@@ -26,7 +26,7 @@
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00022}00022\ \textcolor{comment}{//\ wall\ nut\ converges\ to\ a\ slightly\ different\ uTau\ and\ the\ momentum\ solve\ drifts.}}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00023}00023\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ TOLERANCE\ =\ 0.01;}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00024}00024\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ KAPPA\ =\ 0.41;}
-\DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00025}00025\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ E\_COEFF\ =\ 9.8;}
+\DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00025}00025\ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ eCoeff\ =\ 9.8;}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00026}00026\ }
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00027}00027\ \textcolor{comment}{//\ tolerance\ mirrors\ OpenFOAM's\ dict-\/configurable\ tolerance\_\ (default\ 0.01):\ the}}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00028}00028\ \textcolor{comment}{//\ Newton\ loop\ stops\ on\ the\ relative\ uTau\ update,\ not\ on\ full\ convergence.}}
@@ -57,9 +57,9 @@
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ fkUu\ =\ Kokkos::exp(kUu)\ -\/\ 1.0\ -\/\ kUu\ *\ (1.0\ +\ 0.5\ *\ kUu);}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00054}00054\ }
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ f\ =}
-\DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ -\/ut\ *\ y\ /\ nuw\ +\ magUp\ /\ ut\ +\ (1.0\ /\ E\_COEFF)\ *\ (fkUu\ -\/\ (1.0\ /\ 6.0)\ *\ kUu\ *\ kUu\ *\ kUu);}
+\DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ -\/ut\ *\ y\ /\ nuw\ +\ magUp\ /\ ut\ +\ (1.0\ /\ eCoeff)\ *\ (fkUu\ -\/\ (1.0\ /\ 6.0)\ *\ kUu\ *\ kUu\ *\ kUu);}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00057}00057\ }
-\DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ df\ =\ y\ /\ nuw\ +\ magUp\ /\ (ut\ *\ ut)\ +\ (1.0\ /\ E\_COEFF)\ *\ kUu\ *\ fkUu\ /\ ut;}
+\DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ df\ =\ y\ /\ nuw\ +\ magUp\ /\ (ut\ *\ ut)\ +\ (1.0\ /\ eCoeff)\ *\ kUu\ *\ fkUu\ /\ ut;}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00059}00059\ }
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ uTauNew\ =\ ut\ +\ f\ /\ df;}
 \DoxyCodeLine{\Hypertarget{nutWallFunction_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ err\ =\ NeoN::mag((ut\ -\/\ uTauNew)\ /\ ut);}

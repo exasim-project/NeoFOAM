@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['c1_0',['c1',['../structNeoFOAM_1_1KOmegaSST_1_1Coefficients.html#a31516dcc69d6cfc8a6a18d3a99d90383',1,'NeoFOAM::KOmegaSST::Coefficients::c1'],['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a18970a36a04c7510282918b7590e08c8',1,'NeoFOAM::KEpsilon::Coefficients::C1']]],
+  ['c1_0',['c1',['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a18970a36a04c7510282918b7590e08c8',1,'NeoFOAM::KEpsilon::Coefficients::C1'],['../structNeoFOAM_1_1KOmegaSST_1_1Coefficients.html#a31516dcc69d6cfc8a6a18d3a99d90383',1,'NeoFOAM::KOmegaSST::Coefficients::c1']]],
   ['c2_1',['C2',['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a00e03e97d6b63998bc5435713eed70fd',1,'NeoFOAM::KEpsilon::Coefficients']]],
   ['cb1_2',['Cb1',['../structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#a7e8610a0c3139e28379f7164a23359ef',1,'NeoFOAM::SpalartAllmarasDDES::Coefficients']]],
   ['cb2_3',['Cb2',['../structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#ad183ce431e5168e2681c30e8bbf6fc56',1,'NeoFOAM::SpalartAllmarasDDES::Coefficients']]],

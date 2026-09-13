@@ -210,6 +210,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/extend-operations.html">Extend operations from another model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
@@ -223,51 +224,316 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/framework/index.html">neofoam.framework</a><input aria-label="Toggle navigation of neofoam.framework" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/context.html">neofoam.framework.context</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/operations.html">neofoam.framework.operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/types.html">neofoam.framework.types</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/conditions.html">neofoam.framework.conditions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/decorator.html">neofoam.framework.decorator</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/config_injection.html">neofoam.framework.config_injection</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/framework/dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/project-layout.html">Project layout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/build-and-test.html">Building and testing NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/graph/index.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../reference/graph/sorter.html">neofoam.framework.graph.sorter</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/graph/resolver.html">neofoam.framework.graph.resolver</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/graph/validation.html">neofoam.framework.graph.validation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/graph/visualization.html">neofoam.framework.graph.visualization</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.algorithms.constraints.html">neofoam.algorithms.constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.algorithms.correct_phi.html">neofoam.algorithms.correct_phi</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.field_writer.html">neofoam.algorithms.field_writer</a><input aria-label="Toggle navigation of neofoam.algorithms.field_writer" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.field_writer.field_writer.html">neofoam.algorithms.field_writer.field_writer</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.field_writer.write_control.html">neofoam.algorithms.field_writer.write_control</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.field_writer.writer.html">neofoam.algorithms.field_writer.writer</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/initialization/index.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/init_step.html">neofoam.framework.initialization.init_step</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/helpers.html">neofoam.framework.initialization.helpers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/config_context.html">neofoam.framework.initialization.config_context</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/depends.html">neofoam.framework.initialization.depends</a></li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/initialization/execution/index.html">neofoam.framework.initialization.execution</a><input aria-label="Toggle navigation of neofoam.framework.initialization.execution" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/init_result.html">neofoam.framework.initialization.execution.init_result</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/validation.html">neofoam.framework.initialization.execution.validation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/ordering.html">neofoam.framework.initialization.execution.ordering</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/executor.html">neofoam.framework.initialization.execution.executor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/context_builder.html">neofoam.framework.initialization.execution.context_builder</a></li>
-</ul>
-</li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/initialization/staged/index.html">neofoam.framework.initialization.staged</a><input aria-label="Toggle navigation of neofoam.framework.initialization.staged" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/staged/spec.html">neofoam.framework.initialization.staged.spec</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/staged/runner.html">neofoam.framework.initialization.staged.runner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.algorithms.pressure_reference.html">neofoam.algorithms.pressure_reference</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.html">neofoam.algorithms.solution_loop</a><input aria-label="Toggle navigation of neofoam.algorithms.solution_loop" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.config.html">neofoam.algorithms.solution_loop.config</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.control.html">neofoam.algorithms.solution_loop.control</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.foam_time.html">neofoam.algorithms.solution_loop.foam_time</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.interfaces.html">neofoam.algorithms.solution_loop.interfaces</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.loop_state.html">neofoam.algorithms.solution_loop.loop_state</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.solution_loop.html">neofoam.algorithms.solution_loop.solution_loop</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.algorithms.solution_loop.time_integration.html">neofoam.algorithms.solution_loop.time_integration</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/model/index.html">neofoam.framework.model</a><input aria-label="Toggle navigation of neofoam.framework.model" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../reference/model/spec.html">neofoam.framework.model.spec</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/model/runtime.html">neofoam.framework.model.runtime</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/solver/index.html">neofoam.framework.solver</a><input aria-label="Toggle navigation of neofoam.framework.solver" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../reference/solver/spec.html">neofoam.framework.solver.spec</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../reference/solver/runtime.html">neofoam.framework.solver.runtime</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.fields.html">neofoam.fields</a><input aria-label="Toggle navigation of neofoam.fields" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.fields.bc.html">neofoam.fields.bc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.fields.decl.html">neofoam.fields.decl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.fields.loader.html">neofoam.fields.loader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.fields.schema.html">neofoam.fields.schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.fields.synthesis.html">neofoam.fields.synthesis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.fields.value_types.html">neofoam.fields.value_types</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.foam.html">neofoam.foam</a><input aria-label="Toggle navigation of neofoam.foam" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.foam.algorithm_configs.html">neofoam.foam.algorithm_configs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.foam.fv_configs.html">neofoam.foam.fv_configs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.foam.initialization.html">neofoam.foam.initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.foam.libraries.html">neofoam.foam.libraries</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.html">neofoam.foam.schemes</a><input aria-label="Toggle navigation of neofoam.foam.schemes" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.ddt.html">neofoam.foam.schemes.ddt</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.div.html">neofoam.foam.schemes.div</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.grad.html">neofoam.foam.schemes.grad</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.interpolation.html">neofoam.foam.schemes.interpolation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.laplacian.html">neofoam.foam.schemes.laplacian</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.foam.schemes.sn_grad.html">neofoam.foam.schemes.sn_grad</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.html">neofoam.framework</a><input aria-label="Toggle navigation of neofoam.framework" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.conditions.html">neofoam.framework.conditions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.config_context.html">neofoam.framework.initialization.config_context</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.depends.html">neofoam.framework.initialization.depends</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.execution.html">neofoam.framework.initialization.execution</a><input aria-label="Toggle navigation of neofoam.framework.initialization.execution" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.execution.context_builder.html">neofoam.framework.initialization.execution.context_builder</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.execution.executor.html">neofoam.framework.initialization.execution.executor</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.execution.init_result.html">neofoam.framework.initialization.execution.init_result</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.execution.ordering.html">neofoam.framework.initialization.execution.ordering</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.execution.validation.html">neofoam.framework.initialization.execution.validation</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.helpers.html">neofoam.framework.initialization.helpers</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.init_step.html">neofoam.framework.initialization.init_step</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.staged.html">neofoam.framework.initialization.staged</a><input aria-label="Toggle navigation of neofoam.framework.initialization.staged" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.staged.runner.html">neofoam.framework.initialization.staged.runner</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.framework.initialization.staged.spec.html">neofoam.framework.initialization.staged.spec</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.model.html">neofoam.framework.model</a><input aria-label="Toggle navigation of neofoam.framework.model" class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.model.extension.html">neofoam.framework.model.extension</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.model.interface.html">neofoam.framework.model.interface</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.model.runtime.html">neofoam.framework.model.runtime</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.model.spec.html">neofoam.framework.model.spec</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.operations.html">neofoam.framework.operations</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.solver.html">neofoam.framework.solver</a><input aria-label="Toggle navigation of neofoam.framework.solver" class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.solver.configurations.html">neofoam.framework.solver.configurations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.solver.registry.html">neofoam.framework.solver.registry</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.solver.runtime.html">neofoam.framework.solver.runtime</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.solver.spec.html">neofoam.framework.solver.spec</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.tools.html">neofoam.framework.tools</a><input aria-label="Toggle navigation of neofoam.framework.tools" class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.tools.graph.html">neofoam.framework.tools.graph</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.tools.spec.html">neofoam.framework.tools.spec</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.framework.types.html">neofoam.framework.types</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.framework.validation.html">neofoam.framework.validation</a><input aria-label="Toggle navigation of neofoam.framework.validation" class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.validation.checks.html">neofoam.framework.validation.checks</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.framework.validation.registry.html">neofoam.framework.validation.registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.fv_options.html">neofoam.fv_options</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.io.html">neofoam.io</a><input aria-label="Toggle navigation of neofoam.io" class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.base.html">neofoam.io.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.decorator.html">neofoam.io.decorator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.dictfile.html">neofoam.io.dictfile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.dictread.html">neofoam.io.dictread</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.input_validation.html">neofoam.io.input_validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.pydantic_schema.html">neofoam.io.pydantic_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.scaffold.html">neofoam.io.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.schema.html">neofoam.io.schema</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.io.strategies.html">neofoam.io.strategies</a><input aria-label="Toggle navigation of neofoam.io.strategies" class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" role="switch" type="checkbox"/><label for="toctree-checkbox-21"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.io.strategies.json_strategy.html">neofoam.io.strategies.json_strategy</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.io.strategies.openfoam_strategy.html">neofoam.io.strategies.openfoam_strategy</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.io.strategies.yaml_strategy.html">neofoam.io.strategies.yaml_strategy</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.validation_types.html">neofoam.io.validation_types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.io.write_configs.html">neofoam.io.write_configs</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.mcp.html">neofoam.mcp</a><input aria-label="Toggle navigation of neofoam.mcp" class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" role="switch" type="checkbox"/><label for="toctree-checkbox-22"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.mcp.dto.html">neofoam.mcp.dto</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.mcp.registry.html">neofoam.mcp.registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.mcp.tools.html">neofoam.mcp.tools</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.html">neofoam.solver</a><input aria-label="Toggle navigation of neofoam.solver" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.solver.icofoam.html">neofoam.solver.icofoam</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.html">neofoam.solver.incompressibleFluid</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluid" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.config_schema.html">neofoam.solver.incompressibleFluid.config_schema</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.configs.html">neofoam.solver.incompressibleFluid.configs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.create_fields.html">neofoam.solver.incompressibleFluid.create_fields</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.incompressibleFluid.html">neofoam.solver.incompressibleFluid.incompressibleFluid</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.html">neofoam.solver.incompressibleFluid.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluid.models" class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" role="switch" type="checkbox"/><label for="toctree-checkbox-25"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.boussinesq.html">neofoam.solver.incompressibleFluid.models.boussinesq</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.courant.html">neofoam.solver.incompressibleFluid.models.courant</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.field_writer.html">neofoam.solver.incompressibleFluid.models.field_writer</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html">neofoam.solver.incompressibleFluid.models.incompressibleFluidModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.max_delta_t.html">neofoam.solver.incompressibleFluid.models.max_delta_t</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.mrf.html">neofoam.solver.incompressibleFluid.models.mrf</a></li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.html">neofoam.solver.incompressibleFluid.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluid.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.extension.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.extension</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.config_schema.html">neofoam.solver.incompressibleFluidNeoN.config_schema</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.configs.html">neofoam.solver.incompressibleFluidNeoN.configs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.create_fields.html">neofoam.solver.incompressibleFluidNeoN.create_fields</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.html">neofoam.solver.incompressibleFluidNeoN.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.courant.html">neofoam.solver.incompressibleFluidNeoN.models.courant</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.field_writer.html">neofoam.solver.incompressibleFluidNeoN.models.field_writer</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.html">neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.html">neofoam.solver.incompressibleFluidNeoN.models.max_delta_t</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.mrf.html">neofoam.solver.incompressibleFluidNeoN.models.mrf</a></li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.configs.html">neofoam.solver.incompressibleVoF.configs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.create_fields.html">neofoam.solver.incompressibleVoF.create_fields</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.incompressibleVoF.html">neofoam.solver.incompressibleVoF.incompressibleVoF</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.html">neofoam.solver.incompressibleVoF.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models" class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.html">neofoam.solver.incompressibleVoF.models.alpha_advection</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models.alpha_advection" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html">neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel</a></li>
+<li class="toctree-l7 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.models.html">neofoam.solver.incompressibleVoF.models.alpha_advection.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models.alpha_advection.models" class="toctree-checkbox" id="toctree-checkbox-33" name="toctree-checkbox-33" role="switch" type="checkbox"/><label for="toctree-checkbox-33"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l8"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector.html">neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector</a></li>
+<li class="toctree-l8"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules.html">neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules</a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html">neofoam.solver.incompressibleVoF.models.alpha_advection.selection</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.shared.html">neofoam.solver.incompressibleVoF.models.alpha_advection.shared</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.incompressibleVoFModel.html">neofoam.solver.incompressibleVoF.models.incompressibleVoFModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.mrf.html">neofoam.solver.incompressibleVoF.models.mrf</a></li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.html">neofoam.solver.incompressibleVoF.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-34" name="toctree-checkbox-34" role="switch" type="checkbox"/><label for="toctree-checkbox-34"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.base.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.extension.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.extension</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.solver.neoPimpleFoam.html">neofoam.solver.neoPimpleFoam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.telemetry.api.html">neofoam.telemetry.api</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.telemetry.mpi.html">neofoam.telemetry.mpi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.telemetry.report.html">neofoam.telemetry.report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.telemetry.settings.html">neofoam.telemetry.settings</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.tooling.html">neofoam.tooling</a><input aria-label="Toggle navigation of neofoam.tooling" class="toctree-checkbox" id="toctree-checkbox-36" name="toctree-checkbox-36" role="switch" type="checkbox"/><label for="toctree-checkbox-36"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.tooling.casebuild.html">neofoam.tooling.casebuild</a><input aria-label="Toggle navigation of neofoam.tooling.casebuild" class="toctree-checkbox" id="toctree-checkbox-37" name="toctree-checkbox-37" role="switch" type="checkbox"/><label for="toctree-checkbox-37"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.casebuild.meshing.html">neofoam.tooling.casebuild.meshing</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.casebuild.pipeline.html">neofoam.tooling.casebuild.pipeline</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.casebuild.reader.html">neofoam.tooling.casebuild.reader</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.casebuild.steps.html">neofoam.tooling.casebuild.steps</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.html">neofoam.tooling.workflow</a><input aria-label="Toggle navigation of neofoam.tooling.workflow" class="toctree-checkbox" id="toctree-checkbox-38" name="toctree-checkbox-38" role="switch" type="checkbox"/><label for="toctree-checkbox-38"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.dag.html">neofoam.tooling.workflow.dag</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.geometry.html">neofoam.tooling.workflow.geometry</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.mesh_inputs.html">neofoam.tooling.workflow.mesh_inputs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.paramspace.html">neofoam.tooling.workflow.paramspace</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.patch_set.html">neofoam.tooling.workflow.patch_set</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.rules.html">neofoam.tooling.workflow.rules</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.sweep.html">neofoam.tooling.workflow.sweep</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.tooling.workflow.sweep_runner.html">neofoam.tooling.workflow.sweep_runner</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.tooling.workspace.html">neofoam.tooling.workspace</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.tools.html">neofoam.tools</a><input aria-label="Toggle navigation of neofoam.tools" class="toctree-checkbox" id="toctree-checkbox-39" name="toctree-checkbox-39" role="switch" type="checkbox"/><label for="toctree-checkbox-39"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.tools.block_mesh.html">neofoam.tools.block_mesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.tools.check_mesh.html">neofoam.tools.check_mesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.tools.registry.html">neofoam.tools.registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.tools.run.html">neofoam.tools.run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.tools.snappy_hex_mesh.html">neofoam.tools.snappy_hex_mesh</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.turbulence.html">neofoam.turbulence</a><input aria-label="Toggle navigation of neofoam.turbulence" class="toctree-checkbox" id="toctree-checkbox-40" name="toctree-checkbox-40" role="switch" type="checkbox"/><label for="toctree-checkbox-40"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.base.html">neofoam.turbulence.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.config.html">neofoam.turbulence.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.fallback.html">neofoam.turbulence.fallback</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.turbulence.models.html">neofoam.turbulence.models</a><input aria-label="Toggle navigation of neofoam.turbulence.models" class="toctree-checkbox" id="toctree-checkbox-41" name="toctree-checkbox-41" role="switch" type="checkbox"/><label for="toctree-checkbox-41"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.turbulence.models.kEpsilon.html">neofoam.turbulence.models.kEpsilon</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.turbulence.models.kOmegaSST.html">neofoam.turbulence.models.kOmegaSST</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.turbulence.models.laminar.html">neofoam.turbulence.models.laminar</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.turbulence.models.realizableKE.html">neofoam.turbulence.models.realizableKE</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.turbulence.models.spalartAllmaras.html">neofoam.turbulence.models.spalartAllmaras</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.momentumTransport.html">neofoam.turbulence.momentumTransport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.native.html">neofoam.turbulence.native</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.protocol.html">neofoam.turbulence.protocol</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.selection.html">neofoam.turbulence.selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.turbulence.stress.html">neofoam.turbulence.stress</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.selection.html">neofoam.viscosity.selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.viscosityModel.html">neofoam.viscosity.viscosityModel</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -419,15 +685,15 @@ sequenceDiagram
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.lazy_init</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
 
 <span class="c1"># Create the initialization manager</span>
-<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">&quot;MySolverInit&quot;</span><span class="p">)</span>
+<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">"MySolverInit"</span><span class="p">)</span>
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">load</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stage 1: Load configuration and models.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Read OpenFOAM dictionaries or other config</span>
-    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">read_dictionary</span><span class="p">(</span><span class="s2">&quot;system/fvSolution&quot;</span><span class="p">)</span>
+    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">read_dictionary</span><span class="p">(</span><span class="s2">"system/fvSolution"</span><span class="p">)</span>
 
     <span class="c1"># Instantiate model classes (lightweight, no fields yet)</span>
     <span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="n">TurbulenceModel</span><span class="p">(),</span> <span class="n">TransportModel</span><span class="p">()]</span>
@@ -436,26 +702,26 @@ sequenceDiagram
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">resolve</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_dependencies</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stage 2: Connect models.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Example: Transport model might need to know about Turbulence</span>
     <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">optional_models</span><span class="p">:</span>
          <span class="n">model</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
 <span class="nd">@init</span><span class="o">.</span><span class="n">build</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_runtime</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Stage 3: Create runtime objects (Lazy Execution).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">initializers</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># Define how to create fields</span>
     <span class="n">initializers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
         <span class="n">InitStep</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span>
-            <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_vector_field</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">),</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"fields.U"</span><span class="p">,</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_vector_field</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">),</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -469,7 +735,7 @@ sequenceDiagram
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">Context</span><span class="p">,</span> <span class="n">Depends</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
 
-<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;MySolver&quot;</span><span class="p">)</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">"MySolver"</span><span class="p">)</span>
 
 <span class="nd">@solver</span><span class="o">.</span><span class="n">initializer</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="n">init_manager</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">get_init_manager</span><span class="p">)])</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
@@ -507,23 +773,23 @@ sequenceDiagram
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">lazy</span><span class="p">,</span> <span class="n">model</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MySolver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of lazy initializers instead of executing immediately.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return list of lazy initializers instead of executing immediately."""</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="c1"># Runtime and mesh (no dependencies)</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;runtime&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"runtime"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">"runtime"</span><span class="p">]),</span>
 
             <span class="c1"># Fields depend on mesh</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity_field</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
 
             <span class="c1"># Operators depend on fields</span>
-            <span class="n">operator</span><span class="p">(</span><span class="s2">&quot;div_phi&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_divergence</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-            <span class="n">operator</span><span class="p">(</span><span class="s2">&quot;laplacian_p&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_laplacian</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]),</span>
+            <span class="n">operator</span><span class="p">(</span><span class="s2">"div_phi"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_divergence</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
+            <span class="n">operator</span><span class="p">(</span><span class="s2">"laplacian_p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_laplacian</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
@@ -531,13 +797,13 @@ sequenceDiagram
         <span class="k">return</span> <span class="n">runtime</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="n">runtime</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]</span>
+        <span class="n">runtime</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">]</span>
         <span class="n">mesh</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">runtime</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mesh</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_pressure_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When <code class="docutils literal notranslate"><span class="pre">SolverInitializer.initialize()</span></code> executes the BUILD stage, it:</p>
@@ -551,17 +817,17 @@ sequenceDiagram
 <p>The framework provides helper functions to create <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects with automatic naming:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">lazy</span><span class="p">,</span> <span class="n">model</span>
 
-<span class="c1"># field(name, initializer, dependencies) -&gt; InitStep with name=&quot;fields.{name}&quot;</span>
-<span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+<span class="c1"># field(name, initializer, dependencies) -&gt; InitStep with name="fields.{name}"</span>
+<span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">read_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
-<span class="c1"># operator(name, initializer, dependencies) -&gt; InitStep with name=&quot;operators.{name}&quot;</span>
-<span class="n">operator</span><span class="p">(</span><span class="s2">&quot;div_phi&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_div</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
+<span class="c1"># operator(name, initializer, dependencies) -&gt; InitStep with name="operators.{name}"</span>
+<span class="n">operator</span><span class="p">(</span><span class="s2">"div_phi"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_div</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">])</span>
 
-<span class="c1"># model(name, initializer, dependencies) -&gt; InitStep with name=&quot;models.{name}&quot;</span>
-<span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_turbulence</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">])</span>
+<span class="c1"># model(name, initializer, dependencies) -&gt; InitStep with name="models.{name}"</span>
+<span class="n">model</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_turbulence</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.p"</span><span class="p">])</span>
 
 <span class="c1"># lazy(name, initializer, dependencies) -&gt; InitStep with custom name</span>
-<span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_algorithm</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">])</span>
+<span class="n">lazy</span><span class="p">(</span><span class="s2">"algorithm"</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_algorithm</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>All helpers default to an empty dependency list <code class="docutils literal notranslate"><span class="pre">[]</span></code> if not specified.</p>
@@ -574,22 +840,22 @@ sequenceDiagram
 <p>Example dependency chain:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">runtime</span> <span class="p">(</span><span class="n">no</span> <span class="n">deps</span><span class="p">)</span>
   <span class="err">↓</span>
-<span class="n">mesh</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">])</span>
+<span class="n">mesh</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"runtime"</span><span class="p">])</span>
   <span class="err">↓</span>
-<span class="n">fields</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">U</span> <span class="p">(</span><span class="n">both</span> <span class="n">depend</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+<span class="n">fields</span><span class="o">.</span><span class="n">p</span><span class="p">,</span> <span class="n">fields</span><span class="o">.</span><span class="n">U</span> <span class="p">(</span><span class="n">both</span> <span class="n">depend</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
   <span class="err">↓</span>
-<span class="n">models</span><span class="o">.</span><span class="n">turbulence</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">])</span>
+<span class="n">models</span><span class="o">.</span><span class="n">turbulence</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.p"</span><span class="p">])</span>
   <span class="err">↓</span>
-<span class="n">algorithm</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">])</span>
+<span class="n">algorithm</span> <span class="p">(</span><span class="n">depends</span> <span class="n">on</span> <span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Execution order: <code class="docutils literal notranslate"><span class="pre">runtime</span> <span class="pre">→</span> <span class="pre">mesh</span> <span class="pre">→</span> <span class="pre">fields.p</span> <span class="pre">→</span> <span class="pre">fields.U</span> <span class="pre">→</span> <span class="pre">models.turbulence</span> <span class="pre">→</span> <span class="pre">algorithm</span></code></p>
 <p>Each initializer receives a <code class="docutils literal notranslate"><span class="pre">context</span></code> dictionary containing all previously initialized objects:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_create_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
     <span class="c1"># Access dependencies via their names</span>
-    <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">]</span>
-    <span class="n">p_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]</span>
-    <span class="n">U_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]</span>
+    <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">]</span>
+    <span class="n">p_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]</span>
+    <span class="n">U_field</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]</span>
 
     <span class="c1"># Create algorithm using dependencies</span>
     <span class="n">algorithm</span> <span class="o">=</span> <span class="n">PIMPLEAlgorithm</span><span class="p">(</span>
@@ -607,72 +873,72 @@ sequenceDiagram
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">IncompressibleSolver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lazy initialization with explicit dependencies.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Lazy initialization with explicit dependencies."""</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="c1"># Core runtime objects</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;runtime&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">]),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"runtime"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runtime</span><span class="p">),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"mesh"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh</span><span class="p">,</span> <span class="p">[</span><span class="s2">"runtime"</span><span class="p">]),</span>
 
             <span class="c1"># Read fields from disk</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
-            <span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_flux</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pressure</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_velocity</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
+            <span class="n">field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_flux</span><span class="p">,</span> <span class="p">[</span><span class="s2">"mesh"</span><span class="p">]),</span>
 
             <span class="c1"># Create physics models</span>
-            <span class="n">model</span><span class="p">(</span><span class="s2">&quot;laminarTransport&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_transport</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]),</span>
-            <span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span>
-                  <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.laminarTransport&quot;</span><span class="p">]),</span>
+            <span class="n">model</span><span class="p">(</span><span class="s2">"laminarTransport"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_transport</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
+            <span class="n">model</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span>
+                  <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">,</span> <span class="s2">"fields.laminarTransport"</span><span class="p">]),</span>
 
             <span class="c1"># Create algorithm (needs all fields and models)</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_algorithm</span><span class="p">,</span>
-                 <span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;models.turbulence&quot;</span><span class="p">]),</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">"algorithm"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_algorithm</span><span class="p">,</span>
+                 <span class="p">[</span><span class="s2">"fields.p"</span><span class="p">,</span> <span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"models.turbulence"</span><span class="p">]),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;runtime&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"runtime"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_pressure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_velocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_flux</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">surfaceScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">surfaceScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="s2">"phi"</span><span class="p">,</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_transport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">singlePhaseTransportModel</span><span class="p">(</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">]</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">]</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">incompressibleTurbulenceModel</span><span class="o">.</span><span class="n">New</span><span class="p">(</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.phi&quot;</span><span class="p">],</span>
-            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.laminarTransport&quot;</span><span class="p">]</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.phi"</span><span class="p">],</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">"fields.laminarTransport"</span><span class="p">]</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
         <span class="c1"># Access all dependencies</span>
-        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">]</span>
-        <span class="n">U</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]</span>
-        <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">]</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.p"</span><span class="p">]</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]</span>
+        <span class="n">turbulence</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">"models.turbulence"</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">PIMPLEAlgorithm</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">turbulence</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Explicit Dependencies</strong>: Dependencies are visible in code, not implicit in execution order</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clear that turbulence needs U and phi</span>
-<span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.phi&quot;</span><span class="p">])</span>
+<span class="n">model</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_turbulence</span><span class="p">,</span> <span class="p">[</span><span class="s2">"fields.U"</span><span class="p">,</span> <span class="s2">"fields.phi"</span><span class="p">])</span>
 </pre></div>
 </div>
 <p><strong>Testability</strong>: Test individual initialization steps in isolation</p>
@@ -681,9 +947,9 @@ sequenceDiagram
 
     <span class="c1"># Mock context with only required dependencies</span>
     <span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;fields.U&quot;</span><span class="p">:</span> <span class="n">mock_velocity_field</span><span class="p">,</span>
-        <span class="s2">&quot;fields.phi&quot;</span><span class="p">:</span> <span class="n">mock_flux_field</span><span class="p">,</span>
-        <span class="s2">&quot;fields.laminarTransport&quot;</span><span class="p">:</span> <span class="n">mock_transport</span><span class="p">,</span>
+        <span class="s2">"fields.U"</span><span class="p">:</span> <span class="n">mock_velocity_field</span><span class="p">,</span>
+        <span class="s2">"fields.phi"</span><span class="p">:</span> <span class="n">mock_flux_field</span><span class="p">,</span>
+        <span class="s2">"fields.laminarTransport"</span><span class="p">:</span> <span class="n">mock_transport</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="c1"># Test individual initializer</span>
@@ -702,10 +968,10 @@ sequenceDiagram
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">TransportModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transport properties - no dependencies on other models.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Transport properties - no dependencies on other models."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;transport&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"transport"</span>
     <span class="n">viscosity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="n">density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
 
@@ -718,7 +984,7 @@ sequenceDiagram
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">viscosity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid viscosity&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Invalid viscosity"</span><span class="p">)</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
@@ -727,23 +993,23 @@ sequenceDiagram
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">TurbulenceModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Turbulence model - depends on transport for viscosity.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Turbulence model - depends on transport for viscosity."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;turbulence&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"turbulence"</span>
     <span class="n">coefficients</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">transport_ref</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Set during RESOLVE_DEPENDENCIES</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C_mu&quot;</span><span class="p">:</span> <span class="mf">0.09</span><span class="p">,</span> <span class="s2">&quot;sigma_k&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"C_mu"</span><span class="p">:</span> <span class="mf">0.09</span><span class="p">,</span> <span class="s2">"sigma_k"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">connect_transport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="c1"># Get transport model for viscosity access</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transport_ref</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;transport&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transport_ref</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"transport"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">transport_ref</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Transport model required&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Transport model required"</span><span class="p">)</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">build</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">):</span>
@@ -754,9 +1020,9 @@ sequenceDiagram
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PimpleSolver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;PIMPLE solver with multiple models.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""PIMPLE solver with multiple models."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TransportModel</span><span class="p">)</span>
     <span class="n">turbulence</span><span class="p">:</span> <span class="n">TurbulenceModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">TurbulenceModel</span><span class="p">)</span>
@@ -765,7 +1031,7 @@ sequenceDiagram
     <span class="n">all_models_ready</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Required: Tell initializer which models we have.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Required: Tell initializer which models we have."""</span>
         <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">transport</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">turbulence</span><span class="p">]</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">load</span>
@@ -776,10 +1042,10 @@ sequenceDiagram
     <span class="k">def</span><span class="w"> </span><span class="nf">verify_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="c1"># Verify all models configured correctly</span>
         <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_models</span><span class="p">():</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;transport_ref&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;transport&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">'transport_ref'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"transport"</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">transport_ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> missing transport reference&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> missing transport reference"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">all_models_ready</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">build</span>
@@ -814,9 +1080,9 @@ sequenceDiagram
 <p>Raise exceptions in any stage to halt initialization:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">connect_required_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-    <span class="n">required</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required_model&quot;</span><span class="p">)</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"required_model"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">required</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Required model not found in registry&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Required model not found in registry"</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">required_ref</span> <span class="o">=</span> <span class="n">required</span>
 </pre></div>
 </div>
@@ -831,15 +1097,15 @@ sequenceDiagram
 <span class="c1"># Implementations for different behaviors</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StandardPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;solve_pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;correct_velocity&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"solve_pressure"</span><span class="p">,</span> <span class="s2">"correct_velocity"</span><span class="p">]</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BuoyantPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;add_buoyancy&quot;</span><span class="p">,</span> <span class="s2">&quot;solve_pressure_buoyant&quot;</span><span class="p">,</span> <span class="s2">&quot;correct_velocity&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"add_buoyancy"</span><span class="p">,</span> <span class="s2">"solve_pressure_buoyant"</span><span class="p">,</span> <span class="s2">"correct_velocity"</span><span class="p">]</span>
 
 <span class="c1"># Model with adaptable behavior</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureAlgorithm</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pressure&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pressure"</span>
 
     <span class="c1"># Configurable - other models can change this</span>
     <span class="n">use_buoyancy</span><span class="p">:</span> <span class="n">Configurable</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
@@ -860,12 +1126,12 @@ sequenceDiagram
 </div>
 <p>Other models modify adaptable fields during RESOLVE_DEPENDENCIES:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">BuoyancyModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;buoyancy&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"buoyancy"</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
         <span class="c1"># Get pressure algorithm</span>
-        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
 
         <span class="c1"># Switch it to buoyancy variant</span>
         <span class="n">pressure</span><span class="o">.</span><span class="n">use_buoyancy</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># ← Switches implementation!</span>
@@ -874,20 +1140,20 @@ sequenceDiagram
 <p>Result: <code class="docutils literal notranslate"><span class="pre">pressure.get_operations()</span></code> now returns buoyancy operations automatically.</p>
 <p>Models can have multiple adaptable fields for complex dispatch:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PressureVelocityCoupling</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pressure_velocity&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pressure_velocity"</span>
 
     <span class="c1"># Multiple adaptable fields</span>
-    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
+    <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"SIMPLE"</span><span class="p">)</span>
     <span class="n">use_buoyancy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># Tuple-based dispatch</span>
     <span class="n">_implementations</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">SIMPLEStandard</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">SIMPLEBuoyant</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PISOStandard</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PISO&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PISOBuoyant</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PIMPLEStandard</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PIMPLEBuoyant</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">SIMPLEStandard</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">SIMPLEBuoyant</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PISO"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PISOStandard</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PISO"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PISOBuoyant</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="n">PIMPLEStandard</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="n">PIMPLEBuoyant</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -899,26 +1165,26 @@ sequenceDiagram
 <p>Use <code class="docutils literal notranslate"><span class="pre">ConfigContext.get_adaptable_fields()</span></code> to discover what’s adaptable:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-    <span class="c1"># See what&#39;s adaptable</span>
-    <span class="n">adaptable</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_adaptable_fields</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
-    <span class="c1"># Returns: {&quot;use_buoyancy&quot;: False}</span>
+    <span class="c1"># See what's adaptable</span>
+    <span class="n">adaptable</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_adaptable_fields</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
+    <span class="c1"># Returns: {"use_buoyancy": False}</span>
 
     <span class="c1"># Check before modifying</span>
-    <span class="k">if</span> <span class="s2">&quot;use_buoyancy&quot;</span> <span class="ow">in</span> <span class="n">adaptable</span><span class="p">:</span>
-        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"use_buoyancy"</span> <span class="ow">in</span> <span class="n">adaptable</span><span class="p">:</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
         <span class="n">pressure</span><span class="o">.</span><span class="n">use_buoyancy</span> <span class="o">=</span> <span class="kc">True</span>
 </pre></div>
 </div>
 <p>Models can have multiple instances (e.g., multiple heat sources):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">HeatSource</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;heat_source_1&quot;, &quot;heat_source_2&quot;, etc.</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "heat_source_1", "heat_source_2", etc.</span>
 
     <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;add_heat_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"add_heat_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">[]</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Solver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -927,9 +1193,9 @@ sequenceDiagram
     <span class="nd">@Solver</span><span class="o">.</span><span class="n">load</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">heat_sources</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;heat_source_1&quot;</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">),</span>
-            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;heat_source_2&quot;</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">500.0</span><span class="p">),</span>
-            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;heat_source_3&quot;</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">2000.0</span><span class="p">),</span>
+            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"heat_source_1"</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">),</span>
+            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"heat_source_2"</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">500.0</span><span class="p">),</span>
+            <span class="n">HeatSource</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"heat_source_3"</span><span class="p">,</span> <span class="n">power</span><span class="o">=</span><span class="mf">2000.0</span><span class="p">),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -946,8 +1212,8 @@ sequenceDiagram
             <span class="n">source</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># Or by name prefix</span>
-    <span class="n">sources</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_by_prefix</span><span class="p">(</span><span class="s2">&quot;heat_source_&quot;</span><span class="p">)</span>
-    <span class="c1"># Returns: {&quot;heat_source_1&quot;: ..., &quot;heat_source_2&quot;: ..., ...}</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_by_prefix</span><span class="p">(</span><span class="s2">"heat_source_"</span><span class="p">)</span>
+    <span class="c1"># Returns: {"heat_source_1": ..., "heat_source_2": ..., ...}</span>
 </pre></div>
 </div>
 <ol class="arabic simple">
@@ -961,16 +1227,16 @@ sequenceDiagram
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Implementations</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">StandardPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"pressure"</span><span class="p">,</span> <span class="s2">"correct"</span><span class="p">]</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BuoyantPressure</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="s2">&quot;buoyancy_source&quot;</span><span class="p">,</span> <span class="s2">&quot;pressure_buoyant&quot;</span><span class="p">,</span> <span class="s2">&quot;correct&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">"momentum"</span><span class="p">,</span> <span class="s2">"buoyancy_source"</span><span class="p">,</span> <span class="s2">"pressure_buoyant"</span><span class="p">,</span> <span class="s2">"correct"</span><span class="p">]</span>
 
 <span class="c1"># Pressure model with adaptable behavior</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PressureModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;pressure&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pressure"</span>
 
     <span class="n">use_buoyancy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Configurable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -984,18 +1250,18 @@ sequenceDiagram
 
 <span class="c1"># Buoyancy model that adapts pressure</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BuoyancyModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;buoyancy&quot;</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"buoyancy"</span>
 
     <span class="nd">@Model</span><span class="o">.</span><span class="n">resolve_dependencies</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">):</span>
-        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pressure&quot;</span><span class="p">)</span>
+        <span class="n">pressure</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"pressure"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pressure</span><span class="p">:</span>
             <span class="n">pressure</span><span class="o">.</span><span class="n">use_buoyancy</span> <span class="o">=</span> <span class="kc">True</span>
 
 <span class="c1"># Solver</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Solver</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;arbitrary_types_allowed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"arbitrary_types_allowed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
     <span class="n">pressure</span><span class="p">:</span> <span class="n">PressureModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">PressureModel</span><span class="p">)</span>
     <span class="n">buoyancy</span><span class="p">:</span> <span class="n">BuoyancyModel</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">BuoyancyModel</span><span class="p">)</span>
 
@@ -1009,7 +1275,7 @@ sequenceDiagram
 
 <span class="c1"># Pressure automatically uses buoyancy variant</span>
 <span class="n">ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">pressure</span><span class="o">.</span><span class="n">get_operations</span><span class="p">()</span>
-<span class="c1"># Returns: [&quot;momentum&quot;, &quot;buoyancy_source&quot;, &quot;pressure_buoyant&quot;, &quot;correct&quot;]</span>
+<span class="c1"># Returns: ["momentum", "buoyancy_source", "pressure_buoyant", "correct"]</span>
 </pre></div>
 </div>
 </section>
@@ -1046,14 +1312,14 @@ sequenceDiagram
 
     <span class="c1"># Verify expected initializers</span>
     <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="s2">&quot;runtime&quot;</span> <span class="ow">in</span> <span class="n">names</span>
-    <span class="k">assert</span> <span class="s2">&quot;mesh&quot;</span> <span class="ow">in</span> <span class="n">names</span>
-    <span class="k">assert</span> <span class="s2">&quot;fields.p&quot;</span> <span class="ow">in</span> <span class="n">names</span>
+    <span class="k">assert</span> <span class="s2">"runtime"</span> <span class="ow">in</span> <span class="n">names</span>
+    <span class="k">assert</span> <span class="s2">"mesh"</span> <span class="ow">in</span> <span class="n">names</span>
+    <span class="k">assert</span> <span class="s2">"fields.p"</span> <span class="ow">in</span> <span class="n">names</span>
 
     <span class="c1"># Verify dependencies</span>
     <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="s2">&quot;mesh&quot;</span> <span class="ow">in</span> <span class="n">li</span><span class="o">.</span><span class="n">depends_on</span>
+        <span class="k">if</span> <span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"fields.p"</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s2">"mesh"</span> <span class="ow">in</span> <span class="n">li</span><span class="o">.</span><span class="n">depends_on</span>
 </pre></div>
 </div>
 <p>For integration testing, use <code class="docutils literal notranslate"><span class="pre">SolverInitializer</span></code> to execute the full initialization:</p>
@@ -1065,9 +1331,9 @@ sequenceDiagram
     <span class="n">context</span> <span class="o">=</span> <span class="n">initializer</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># Verify context contains all initialized objects</span>
-    <span class="k">assert</span> <span class="s2">&quot;runtime&quot;</span> <span class="ow">in</span> <span class="n">context</span>
-    <span class="k">assert</span> <span class="s2">&quot;mesh&quot;</span> <span class="ow">in</span> <span class="n">context</span>
-    <span class="k">assert</span> <span class="s2">&quot;fields.p&quot;</span> <span class="ow">in</span> <span class="n">context</span>
+    <span class="k">assert</span> <span class="s2">"runtime"</span> <span class="ow">in</span> <span class="n">context</span>
+    <span class="k">assert</span> <span class="s2">"mesh"</span> <span class="ow">in</span> <span class="n">context</span>
+    <span class="k">assert</span> <span class="s2">"fields.p"</span> <span class="ow">in</span> <span class="n">context</span>
 
     <span class="c1"># Verify solver state updated</span>
     <span class="k">assert</span> <span class="n">solver</span><span class="o">.</span><span class="n">setup_complete</span>
@@ -1146,6 +1412,8 @@ sequenceDiagram
     <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
 
 
 

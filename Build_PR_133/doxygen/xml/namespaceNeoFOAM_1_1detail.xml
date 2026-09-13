@@ -6,6 +6,7 @@
     <innerclass refid="structNeoFOAM_1_1detail_1_1IsSurfaceField_3_01fvcc_1_1SurfaceField_3_01ValueType_01_4_01_4" prot="public">NeoFOAM::detail::IsSurfaceField&lt; fvcc::SurfaceField&lt; ValueType &gt; &gt;</innerclass>
     <innerclass refid="structNeoFOAM_1_1detail_1_1IsVolumeField" prot="public">NeoFOAM::detail::IsVolumeField</innerclass>
     <innerclass refid="structNeoFOAM_1_1detail_1_1IsVolumeField_3_01fvcc_1_1VolumeField_3_01ValueType_01_4_01_4" prot="public">NeoFOAM::detail::IsVolumeField&lt; fvcc::VolumeField&lt; ValueType &gt; &gt;</innerclass>
+    <innerclass refid="structNeoFOAM_1_1detail_1_1PatchNormal" prot="public">NeoFOAM::detail::PatchNormal</innerclass>
     <sectiondef kind="typedef">
       <memberdef kind="typedef" id="namespaceNeoFOAM_1_1detail_1a8affbab6ab257914abb3164c473fc9f6" prot="public" static="no">
         <type>NeoN::la::LinearSystem&lt; NeoN::scalar, NeoN::scalar &gt;</type>
@@ -87,7 +88,92 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="34" column="21" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="34" bodyend="43"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="35" column="21" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="35" bodyend="44"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1a53f3814af050089e9e1102903162706b" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structNeoFOAM_1_1detail_1_1PatchNormal" kindref="compound">PatchNormal</ref></type>
+        <definition>PatchNormal NeoFOAM::detail::meanUnitNormal</definition>
+        <argsstring>(const Foam::fvPatch &amp;patch)</argsstring>
+        <name>meanUnitNormal</name>
+        <qualifiedname>NeoFOAM::detail::meanUnitNormal</qualifiedname>
+        <param>
+          <type>const Foam::fvPatch &amp;</type>
+          <declname>patch</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="60" column="20" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="60" bodyend="84"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1aee7cc4a29790d7f04bec4428d964a0b2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::detail::insertFrozenTotalPressure</definition>
+        <argsstring>(NeoN::Dictionary &amp;dict)</argsstring>
+        <name>insertFrozenTotalPressure</name>
+        <qualifiedname>NeoFOAM::detail::insertFrozenTotalPressure</qualifiedname>
+        <param>
+          <type>NeoN::Dictionary &amp;</type>
+          <declname>dict</declname>
+        </param>
+        <briefdescription>
+<para>Pin a total-pressure patch at the value OpenFOAM evaluated when the field was read. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Shared by <computeroutput>totalPressure</computeroutput> and <computeroutput>uniformTotalPressure</computeroutput>: <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> models neither the dynamic-head correction nor a time-dependent p0, so the patch becomes a fixedValue at the start-time total pressure. Non-scalar (or valueless) falls back to zeroGradient. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="94" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="94" bodyend="111"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1ab6d4fad0fbdff64ba988634993e84733" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::detail::insertUniformValue</definition>
+        <argsstring>(NeoN::Dictionary &amp;dict, const std::string &amp;sourceKey, const std::string &amp;targetKey, const std::string &amp;patchName, const Foam::fvPatch *patch)</argsstring>
+        <name>insertUniformValue</name>
+        <qualifiedname>NeoFOAM::detail::insertUniformValue</qualifiedname>
+        <param>
+          <type>NeoN::Dictionary &amp;</type>
+          <declname>dict</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>sourceKey</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>targetKey</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>patchName</declname>
+        </param>
+        <param>
+          <type>const Foam::fvPatch *</type>
+          <declname>patch</declname>
+        </param>
+        <briefdescription>
+<para>Copy a <computeroutput>uniform</computeroutput> primitive from one dictionary entry into another key. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The freestream family stores its patch value under <computeroutput>freestreamValue</computeroutput> in the same <computeroutput>uniform &lt;value&gt;</computeroutput> form the <computeroutput>value</computeroutput>/<computeroutput>inletValue</computeroutput> entries use: the components start at token index 1, one for a scalar and three for a vector, each promoted on its own because OpenFOAM types the numeric tokens independently (see tokenAsScalar).</para>
+<para>A short token list has exactly one benign cause: a decomposed run writes <computeroutput>nonuniform List&lt;...&gt; 0</computeroutput> for a patch that owns no faces on this rank, and the parse reduces that to a single token (the same quirk the <computeroutput>fixedValue</computeroutput> entry below sidesteps by reading the patch field). No face carries the value there, so zero is safe. With faces present it is an error, not a zero — the freestream family is a far-field datum, and silently reading it as zero would remove the only forcing in an external-aerodynamics case. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="129" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="129" bodyend="164"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1aaf277cdfa64f90d5470e3b9d751249af" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>

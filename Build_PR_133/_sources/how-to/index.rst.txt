@@ -9,6 +9,7 @@ see the :doc:`tutorials </auto_tutorials/index>` instead.
    :maxdepth: 1
 
    install
+   extend-operations
    /auto_how-to/example_register_a_model
    /auto_how-to/example_add_an_init_step_category
    /auto_how-to/example_work_with_config_files
