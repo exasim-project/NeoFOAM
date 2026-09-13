@@ -222,7 +222,7 @@ class NeoPimpleFoam:
                         f"global = {global_err}, cumulative = {cumulative_cont_err}"
                     )
 
-                    nfb.update_velocity(hByA, rAU, p, U)
+                    nfb.update_velocity(hByA, rAU, p, U, rt)
                     U.correct_boundary_conditions()
 
                 if have_p_res:

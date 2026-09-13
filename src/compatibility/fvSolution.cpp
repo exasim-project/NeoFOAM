@@ -329,8 +329,7 @@ void updateSolver(NeoN::Dictionary& solverDict)
     auto mapEntry = solverMap.find(foamSolverName);
     if (mapEntry != solverMap.end())
     {
-ck unreachable for every solver.
-        if (solverName == "GAMG")
+        if (foamSolverName == "GAMG")
         {
             // OpenFOAM GAMG -> Krylov-accelerated algebraic multigrid: a CG outer iteration
             // preconditioned by one V-cycle of Pgm multigrid. GAMG is selected for the SPD
@@ -347,7 +346,7 @@ ck unreachable for every solver.
             solverDict.insert("preconditioner", multigrid);
             return;
         }
-        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
+        NeoN::Logging::warn("Replacing solver {} by {}", foamSolverName, mapEntry->second.second);
         solverName = mapEntry->second.first;
         solverDict.insert("type", mapEntry->second.second);
     }

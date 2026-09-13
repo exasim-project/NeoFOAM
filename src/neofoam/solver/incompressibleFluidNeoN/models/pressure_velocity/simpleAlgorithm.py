@@ -390,7 +390,7 @@ def continuity(
     )
     p.correct_boundary_conditions()
 
-    nfb.update_velocity(hByA, rAtU, p, U)
+    nfb.update_velocity(hByA, rAtU, p, U, rt)
     U.correct_boundary_conditions()
     ext.constrain_corrected_velocity(U)
 

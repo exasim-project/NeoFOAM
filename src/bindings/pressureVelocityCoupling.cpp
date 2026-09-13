@@ -115,12 +115,14 @@ void registerPressureVelocityCoupling(nb::module_& m)
         [](const fvcc::VolumeField<NeoN::Vec3>& hByA,
            const fvcc::VolumeField<NeoN::scalar>& rAU,
            const fvcc::VolumeField<NeoN::scalar>& p,
-           fvcc::VolumeField<NeoN::Vec3>& U) { nf::updateVelocity(hByA, rAU, p, U); },
+           fvcc::VolumeField<NeoN::Vec3>& U,
+           nf::RunTime& rt) { nf::updateVelocity(hByA, rAU, p, U, rt); },
         "hByA"_a,
         "rAU"_a,
         "p"_a,
         "U"_a,
-        "Update cell velocity: U = HbyA - rAU * grad(p)"
+        "runtime"_a,
+        "Update cell velocity: U = HbyA - rAU * grad(p), using the configured gradScheme"
     );
 
     m.def(

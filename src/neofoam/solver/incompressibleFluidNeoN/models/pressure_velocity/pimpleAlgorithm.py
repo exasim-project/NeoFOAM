@@ -428,7 +428,7 @@ def continuity(
             f"global = {global_err}, cumulative = {state.cumulative_cont_err}"
         )
 
-        nfb.update_velocity(hByA, rAU, p, U)
+        nfb.update_velocity(hByA, rAU, p, U, rt)
         U.correct_boundary_conditions()
         ext.constrain_corrected_velocity(U)
 
