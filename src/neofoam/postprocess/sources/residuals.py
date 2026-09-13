@@ -76,6 +76,10 @@ class Residuals(Source):
     that field within the step (the PIMPLE correctors), and a vector solve
     reports one row per component (``Ux``, ``Uy``, ``Uz``) the way OpenFOAM
     records it. A step that solved nothing yields no rows.
+
+    Decomposed, the rows need no reduction: a linear solve is itself collective,
+    so ``solverPerformanceDict`` already holds the same global residuals on every
+    rank and the master rank writing alone loses nothing.
     """
 
     type: Literal["residuals"] = "residuals"

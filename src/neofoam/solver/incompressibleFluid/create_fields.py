@@ -32,7 +32,6 @@ from neofoam.framework.initialization import (
 from neofoam.framework.model import ModelRuntime, ModelSpec
 from neofoam.framework.tools import tool_graph_steps
 from neofoam.postprocess import postProcess
-from neofoam.solver._post_process_guard import _refuse_parallel_post_processing
 from neofoam.tools.run import detect_tools
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
@@ -160,7 +159,6 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # in the time loop. A case declaring no table loads an empty set and the
         # model does nothing.
         post_process_model = postProcess.instantiate(resolved_case_dir, "main")
-        _refuse_parallel_post_processing(post_process_model.config)
 
         # Solver-core configs, so ``LoadResult.configs`` exposes the
         # configs the solver consumes (collectible / savable / printable).

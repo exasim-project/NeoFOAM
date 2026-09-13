@@ -35,7 +35,6 @@ from neofoam.framework.initialization import (
 )
 from neofoam.framework.model import ModelRuntime
 from neofoam.postprocess import postProcess
-from neofoam.solver._post_process_guard import _refuse_parallel_post_processing
 
 from .models.alpha_advection import advectionModel  # noqa: F401  (registers schemes)
 from .models.incompressibleVoFModel import incompressibleVoFModel
@@ -98,7 +97,6 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # last in the time loop. A case declaring no table loads an empty set and
         # the model does nothing.
         post_process_model = postProcess.instantiate(resolved_case_dir, "main")
-        _refuse_parallel_post_processing(post_process_model.config)
 
         core_models: list[Any] = [alpha_model, pressure_model, post_process_model]
         return LoadResult(core_models=core_models, optional_models=optional_models)

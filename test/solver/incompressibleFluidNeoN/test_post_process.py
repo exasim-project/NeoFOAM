@@ -11,9 +11,9 @@ loop order is a property of the built graph.
 **Why the guard.** Every source hands its pipeline a host numpy array, and the
 NeoN bindings still copy host->device only (risk R12) — so a table over NeoN
 fields has nothing to read. Rather than let it fail deep inside a pipeline, the
-solver refuses the declaration at load. This is stricter than the serial-only
-guard of ``incompressibleFluid``: on this backend no table runs at all, so the
-parallel case needs no separate branch.
+solver refuses the declaration at load. ``incompressibleFluid`` and
+``incompressibleVoF`` run tables serially and decomposed alike; on this backend
+no table runs at all, so the parallel case needs no separate branch.
 
 **Loop order.** That ``post_process`` is stepped *after* ``write_output`` is what
 a CSV row would mean, and it is asserted on the built graph with the core models

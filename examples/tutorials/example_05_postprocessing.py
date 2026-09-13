@@ -183,5 +183,6 @@ fig.tight_layout()
 # ---------------------
 # - :doc:`/reference/postprocessing` lists the available nodes, the
 #   write-cadence options and the recipe for adding your own node.
-# - Post-processing is serial-only for now: a ``-parallel`` run of a case
-#   that declares tables is refused rather than writing per-rank partials.
+# - Decomposed runs work: every rank evaluates its tables, the aggregators
+#   reduce over all ranks and the master rank writes one set of CSVs. Only
+#   ``rows`` is serial-only — there is no gather to collect its elements.

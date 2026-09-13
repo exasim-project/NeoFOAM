@@ -8,6 +8,10 @@ whole backend. What it has to get right is the column layout the CsvWriter turns
 into a header (``x,y,z`` then one column per component) and that a masked-out
 element leaves no row behind — which is how a line probe that pokes out of the
 mesh still writes a clean file.
+
+The one thing it cannot do is run decomposed — its elements are spread over the
+ranks and there is no gather — so the refusal is pinned here with a patched
+``Pstream.parRun``, the same way ``test_reduce.py`` reaches the parallel branch.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import numpy as np
+import pybFoam as pyf
 import pytest
 
 from neofoam.postprocess.node import DataSet
@@ -87,3 +92,12 @@ def test_every_row_has_as_many_entries_as_there_are_headers(
     result = Rows().compute(build(values))
 
     assert {len(row) for row in result.rows} == {len(result.headers)}
+
+
+def test_a_decomposed_run_is_refused_rather_than_writing_the_master_ranks_share(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(pyf.Pstream, "parRun", lambda: True)
+
+    with pytest.raises(NotImplementedError, match="rows table 'U_profile' cannot run decomposed"):
+        Rows(name="U_profile").compute(_dataset(SCALARS))
