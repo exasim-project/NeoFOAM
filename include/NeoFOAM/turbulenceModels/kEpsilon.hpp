@@ -203,6 +203,11 @@ private:
     // Built once on first correct() since wall topology is static.
     NeoN::Vector<scalar> cornerWeight_;
     bool cornerWeightsBuilt_ = false;
+
+    // Per-cell epsilon wall pin (equivalent of epsilonWallFunction::manipulateMatrix): the
+    // log-law value each wall-adjacent cell is fixed to, and the 0/1 mask selecting them.
+    NeoN::Vector<scalar> epsilonWallValue_;
+    NeoN::Vector<scalar> epsilonWallMask_;
 };
 
 /**

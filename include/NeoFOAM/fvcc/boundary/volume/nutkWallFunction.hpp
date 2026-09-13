@@ -25,13 +25,34 @@ inline constexpr scalar NUTK_WF_DEFAULT_KAPPA = 0.41;
 inline constexpr scalar NUTK_WF_DEFAULT_E = 9.8;
 
 /**
+ * @brief Iterate OpenFOAM's yPlusLam: the y+ where the viscous and log laws meet.
+ *
+ * Foam::wallFunctionCoefficients solves yPlusLam = log(max(E·yPlusLam, 1))/κ by fixed-point
+ * iteration from 11; ~11.53 for the default κ=0.41, E=9.8.
+ */
+inline scalar nutkYPlusLam(scalar kappa, scalar E)
+{
+    scalar ypl = scalar(11);
+    for (int i = 0; i < 10; ++i)
+    {
+        ypl = Kokkos::log(Kokkos::max(E * ypl, scalar(1))) / kappa;
+    }
+    return ypl;
+}
+
+/**
  * @brief Apply the nutkWallFunction kernel face-by-face.
  *
- * Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the BINOMIAL n=2 blender:
+ * Mirrors Foam::nutkWallFunctionFvPatchScalarField::nut() for the STEPWISE blender, which is
+ * upstream's default (wallFunctionBlenders.C:53):
  *   - y⁺       = C_µ^0.25·y·√k/ν
  *   - ν_t,log  = ν·y⁺·κ/log(max(E·y⁺, 1+1e-4))
  *   - ν_t,vis  = ν   (viscous sublayer)
- *   - ν_t,w    = √(ν_t,vis² + ν_t,log²)
+ *   - ν_t,w    = (y⁺ > y⁺_lam ? ν_t,log : ν_t,vis) − ν_t,vis
+ *
+ * The trailing subtraction is upstream's unconditional `nutw -= nutVis`
+ * (nutkWallFunctionFvPatchScalarField.C:168): nut is the *turbulent* viscosity, so it must
+ * fall to exactly zero in the sublayer rather than to ν.
  *
  * k is read from the BoundaryContext; the boundary face value is written,
  * no internal-cell stomp.
@@ -49,6 +70,7 @@ inline void setNutkWallFunction(
 )
 {
     const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
+    const scalar yPlusLam = nutkYPlusLam(kappa, E);
 
     const auto kInternal = k.internalVector().view();
     const auto nuBoundary = nu.boundaryData().value().view();
@@ -74,7 +96,10 @@ inline void setNutkWallFunction(
             const scalar yPlus = Cmu25 * y * Kokkos::sqrt(kw) / nuw;
             const scalar nutLog =
                 nuw * yPlus * kappa / Kokkos::log(Kokkos::max(E * yPlus, scalar(1) + scalar(1e-4)));
-            const scalar nutw = Kokkos::sqrt(nuw * nuw + nutLog * nutLog);
+            // STEPWISE, then take off the viscous part so nut is turbulent-only and the
+            // sublayer yields exactly zero.
+            const scalar nutTotal = yPlus > yPlusLam ? nutLog : nuw;
+            const scalar nutw = Kokkos::max(nutTotal - nuw, scalar(0));
 
             value[i] = nutw;
             refValue[i] = nutw;
