@@ -62,14 +62,18 @@ _ADVECTION_CASES = Path(__file__).parent / "models" / "alpha_advection" / "cases
 _MULES_CASE = _ADVECTION_CASES / "damBreak_mules"
 
 # The graph ``create_init`` emits for a MULES case: the argList/runtime/mesh
-# triple, the two core models, the alpha-advection family's fields, PIMPLE's
-# fields + controls, and the two-phase turbulence model last.
+# triple, the ``ctx.time`` view onto that runtime, the three core models, the
+# alpha-advection family's fields, PIMPLE's fields + controls, and the two-phase
+# turbulence model last.
 MULES_STEPS = [
     "models.foam_arglist",
     "runtime",
     "mesh",
+    "time",
     "models.alpha_advection",
     "models.pressure_velocity",
+    "models.post_process_model",
+    "models.post_processor",
     "fields.phi",
     "models.mixture",
     "fields.alpha1",
@@ -118,14 +122,22 @@ def test_create_init_is_the_solver_runner_with_all_three_stages() -> None:
     [
         # The damBreak fvSolution has no advectionScheme key -> the MULES
         # default; VoF always couples with PIMPLE. Advection first: it runs
-        # before PIMPLE in every outer corrector.
-        pytest.param("damBreak_mules", True, ["MULES", "Pimple"], id="mules"),
+        # before PIMPLE in every outer corrector. ``postProcess_main`` is the
+        # third, case-independent core model (the in-situ tables).
+        pytest.param("damBreak_mules", True, ["MULES", "Pimple", "postProcess_main"], id="mules"),
         # ``advectionScheme isoAdvector;`` swaps the advection member, nothing else.
-        pytest.param("damBreak_isoAdvector", True, ["isoAdvector", "Pimple"], id="isoAdvector"),
+        pytest.param(
+            "damBreak_isoAdvector",
+            True,
+            ["isoAdvector", "Pimple", "postProcess_main"],
+            id="isoAdvector",
+        ),
         # ``case_dir=None`` -> Path("."). Only optional-model detection is handed
         # that path, and no optional model is registered today, so this pins the
         # default resolving at all (not a case-dir-specific outcome).
-        pytest.param("damBreak_mules", False, ["MULES", "Pimple"], id="cwd_default"),
+        pytest.param(
+            "damBreak_mules", False, ["MULES", "Pimple", "postProcess_main"], id="cwd_default"
+        ),
     ],
 )
 def test_load_selects_the_advection_scheme_the_case_asks_for(
@@ -199,8 +211,8 @@ def test_build_of_an_isoadvector_case_adds_the_advector_model(
     runner = create_init(case_dir=case)
     runner.run_load()
     names = [step.name for step in runner.run_build()]
-    assert MULES_STEPS[13] == "models.alphaPhi1Corr0"
-    assert names == MULES_STEPS[:13] + ["models.advector"] + MULES_STEPS[14:]
+    assert MULES_STEPS[16] == "models.alphaPhi1Corr0"
+    assert names == MULES_STEPS[:16] + ["models.advector"] + MULES_STEPS[17:]
 
 
 def test_turbulence_step_depends_on_the_fields_it_wraps(
@@ -229,7 +241,8 @@ def test_turbulence_step_depends_on_the_fields_it_wraps(
 def test_the_pipeline_builds_every_field_and_model_of_the_vof_solver(
     vof_row4: BuiltCase,
 ) -> None:
-    # The models are both core models under their solver-facing names, the
+    # The models are the three core models under their solver-facing names
+    # (``post_processor`` is the one the postProcess model builds), the
     # mixture and turbulence models, the PIMPLE controls (including the
     # mesh-motion switches and the face velocity ``Uf``, which is None on this
     # static case), the Foam::Time (which has no Context slot of its own and
@@ -264,6 +277,8 @@ def test_the_pipeline_builds_every_field_and_model_of_the_vof_solver(
         "last_rAU",
         "mixture",
         "pimple_control",
+        "post_process_model",
+        "post_processor",
         "pressure_reference",
         "pressure_velocity",
         "runtime",

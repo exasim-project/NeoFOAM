@@ -31,6 +31,8 @@ from neofoam.framework.initialization import (
 )
 from neofoam.framework.model import ModelRuntime, ModelSpec
 from neofoam.framework.tools import tool_graph_steps
+from neofoam.postprocess import postProcess
+from neofoam.solver._post_process_guard import _refuse_parallel_post_processing
 from neofoam.tools.run import detect_tools
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
@@ -153,6 +155,13 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
         field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 
+        # postProcess is a third such Model: it LOADs the case's tables (its
+        # ``system/postProcess.py`` script and/or spec file) and is stepped last
+        # in the time loop. A case declaring no table loads an empty set and the
+        # model does nothing.
+        post_process_model = postProcess.instantiate(resolved_case_dir, "main")
+        _refuse_parallel_post_processing(post_process_model.config)
+
         # Solver-core configs, so ``LoadResult.configs`` exposes the
         # configs the solver consumes (collectible / savable / printable).
         # ``validate=False`` keeps loading lenient — ``LoadResult.validate()``
@@ -165,7 +174,12 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # part of the schema set. Their instances are not loaded here: the
         # OpenFOAM reader does not yet parse the typed scheme values
         # (``DivScheme`` …) / ``dict`` solver entries those slices carry.
-        core_models = [pressure_model, solution_loop_model, field_writer_model]
+        core_models = [
+            pressure_model,
+            solution_loop_model,
+            field_writer_model,
+            post_process_model,
+        ]
         core_models += [
             ControlDictConfig.load(case_dir=resolved_case_dir, validate=False),
             TransportPropertiesConfig.load(case_dir=resolved_case_dir, validate=False),
@@ -248,6 +262,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             [
                 ("solution_loop_model", solution_loop_model),
                 ("field_writer_model", field_writer_model),
+                ("post_process_model", _by_spec("postProcess")),
             ]
         )
         builder.extend(loop_backend_steps())

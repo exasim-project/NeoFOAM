@@ -1,0 +1,7 @@
+# A declaration the NeoN backend must refuse: its fields cannot be read into
+# numpy yet. The same table runs on incompressibleFluid
+# (../../../incompressibleFluid/cases/postprocess_yaml).
+tables:
+  - name: volume_p
+    source: {type: internal, field: p}
+    pipeline: [{type: volIntegrate, name: volume_p}]

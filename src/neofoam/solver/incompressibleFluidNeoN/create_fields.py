@@ -43,6 +43,7 @@ from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime
+from neofoam.postprocess import TableSet, postProcess
 from neofoam.solver.neon_runtime import requested_executor
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
@@ -74,6 +75,28 @@ _MAPPED_SOLVER_DICTS = (
 )
 
 
+def _refuse_post_processing_tables(tables: TableSet) -> None:
+    """Reject a case that declares tables: the NeoN backend cannot read fields yet.
+
+    The sources hand every pipeline a host numpy array, and the NeoN bindings
+    still only copy host->device (see risk R12) — so a table over NeoN fields
+    has nothing to read. This is stricter than the serial-only guard of
+    ``incompressibleFluid``: no table runs on this backend, parallel or not.
+    Like that guard it sits at the solver seam so the case fails at LOAD,
+    before any solve time is spent.
+    """
+    if not tables.tables:
+        return
+    raise NotImplementedError(
+        "postProcess is not supported by incompressibleFluidNeoN: the tables "
+        f"{[t.name for t in tables.tables]} cannot be evaluated because NeoN "
+        "fields have no device-to-host copy yet, so they cannot be read into "
+        "numpy. Tables are supported by incompressibleFluid and "
+        "incompressibleVoF; remove system/postProcess.yaml / system/postProcess.py "
+        "to run this case on the NeoN backend."
+    )
+
+
 def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
     """Map each active optional model to its model name (see incompressibleFluid)."""
     return {m.name: m for m in optional_models}
@@ -99,10 +122,17 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
         field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 
+        # postProcess is a third such Model: it LOADs the case's tables and is
+        # stepped last in the time loop. On this backend only the empty set gets
+        # past the guard below.
+        post_process_model = postProcess.instantiate(resolved_case_dir, "main")
+        _refuse_post_processing_tables(post_process_model.config)
+
         core_models: list[Any] = [
             pressure_model,
             solution_loop_model,
             field_writer_model,
+            post_process_model,
         ]
         core_models.append(ControlDictConfig.load(case_dir=resolved_case_dir, validate=False))
 
@@ -201,6 +231,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             [
                 ("solution_loop_model", solution_loop_model),
                 ("field_writer_model", field_writer_model),
+                ("post_process_model", _by_spec("postProcess")),
             ]
         )
         builder.extend(neon_loop_backend_steps())
