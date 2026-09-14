@@ -19,7 +19,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from neofoam.agent.case_fill import (
     build_case_output_model,
@@ -29,6 +29,7 @@ from neofoam.agent.case_fill import (
 from neofoam.agent.case_fill import (
     save_case as _save_case,
 )
+from neofoam.framework.tools.graph import PreprocessConfig, resolve_tools
 from neofoam.framework.validation import validate
 from neofoam.io import write_configs
 from neofoam.io.schema import (  # re-export: canonical home is neofoam.io.schema
@@ -41,6 +42,9 @@ from neofoam.io.schema import (
     model_catalog as model_catalog,
 )
 from neofoam.io.schema import (
+    post_catalog as post_catalog,
+)
+from neofoam.io.schema import (
     tool_catalog as tool_catalog,
 )
 from neofoam.mcp.dto import (
@@ -51,14 +55,22 @@ from neofoam.mcp.dto import (
     ManifestSchemaDTO,
     MeshInputsDTO,
     PatchDTO,
+    PostSaveDTO,
+    PreprocessSaveDTO,
     SaveResultDTO,
     ValidationReportDTO,
     WorkspaceInfoDTO,
 )
 from neofoam.mcp.registry import list_solver_names
+from neofoam.postprocess import PostProcessConfig
+from neofoam.postprocess.config import resolve_table
+from neofoam.postprocess.config import spec_file as post_spec_file
+from neofoam.preprocess import SetFieldsConfig, resolve_regions
+from neofoam.preprocess.config import spec_file as set_fields_spec_file
 from neofoam.tooling import CaseAccessError, Workspace
 from neofoam.tooling.workflow.geometry import PatchSet
 from neofoam.tooling.workflow.geometry import build_mesh_inputs as _build
+from neofoam.tools import available_tools
 
 INTROSPECTION_TOOL_NAMES: tuple[str, ...] = (
     "list_solvers",
@@ -75,14 +87,20 @@ GEOMETRY_TOOL_NAMES: tuple[str, ...] = (
     "case_patches",
     "build_mesh_inputs",
 )
+#: Next to the geometry tools: ``build_mesh_inputs`` already writes a preprocess.yaml,
+#: and ``save_preprocess`` is how that same pipeline is extended or hand-authored.
+PREPROCESS_TOOL_NAMES: tuple[str, ...] = ("save_preprocess",)
 VALIDATION_TOOL_NAMES: tuple[str, ...] = ("validate_case",)
 SCAFFOLDING_TOOL_NAMES: tuple[str, ...] = ("read_case", "load_case", "save_case")
+POSTPROCESS_TOOL_NAMES: tuple[str, ...] = ("post_catalog", "save_post")
 ALL_TOOL_NAMES: tuple[str, ...] = (
     INTROSPECTION_TOOL_NAMES
     + WORKSPACE_TOOL_NAMES
     + GEOMETRY_TOOL_NAMES
+    + PREPROCESS_TOOL_NAMES
     + VALIDATION_TOOL_NAMES
     + SCAFFOLDING_TOOL_NAMES
+    + POSTPROCESS_TOOL_NAMES
 )
 
 # -- introspection (case-free) ------------------------------------------------
@@ -331,3 +349,159 @@ def save_case(
         written=[str(p) for p in written],
         case_spec=validated.model_dump(),
     )
+
+
+# -- post-processing ----------------------------------------------------------
+
+
+def _validated(model: type[BaseModel], payload: dict[str, Any], label: str) -> Any:
+    """``payload`` validated against ``model``; a validation error names ``label``."""
+    try:
+        return model.model_validate(payload)
+    except ValidationError as exc:
+        raise ValueError(f"invalid {label}: {exc}") from exc
+
+
+def _refuse_shadowed_spec(existing: Path | None, written: str, case: Path) -> None:
+    """Refuse to write ``written`` when a spec file the loader prefers is already there.
+
+    The loaders take the first of the YAML/YML/JSON names that exists, so a
+    ``.yaml`` written next to a hand-authored ``.json`` would be read instead of it
+    and the hand-authored file would silently stop having any effect.
+    """
+    if existing is None or existing.name == Path(written).name:
+        return
+    raise ValueError(
+        f"{existing.relative_to(case)} already declares this; writing {written} would "
+        f"shadow it, since the loader reads the first spec file that exists — "
+        f"remove or rename {existing.name} first"
+    )
+
+
+def save_post(
+    case_dir: str,
+    post_spec: dict[str, Any],
+    *,
+    workspace: Workspace | None = None,
+) -> PostSaveDTO:
+    """Validate a post-processing spec and write it as ``<case>/system/postProcess.yaml``.
+
+    ``post_spec`` is a :class:`~neofoam.postprocess.config.PostProcessConfig` dump
+    (``{"tables": [{name, source, pipeline, write_control, writer}, …]}``); every
+    table is resolved against the plugin families, so an unknown ``type`` or a
+    misspelt key inside a source/node/write control/writer is rejected — naming the
+    table and the pipeline position — before anything is written. Call
+    :func:`post_catalog` for the accepted ``type`` strings and their schemas.
+    ``case_dir`` is confined through ``workspace`` (when given) and created if
+    missing. The file is **replaced, not merged** — a call carries the case's whole
+    table set — and a case that already declares its tables in a
+    ``system/postProcess.json`` / ``.yml`` is refused rather than shadowed. A table
+    name that collides with one the case's ``system/postProcess.py``
+    script declares is *not* detected here — that clash only surfaces when the case
+    runs, because no case script is executed by this server.
+    """
+    case = _confine(case_dir, workspace)
+    config = _validated(PostProcessConfig, post_spec, "post_spec")
+    for spec in config.tables:
+        resolve_table(spec)
+    _refuse_shadowed_spec(post_spec_file(case), "system/postProcess.yaml", case)
+    case.mkdir(parents=True, exist_ok=True)
+    report = write_configs([config], case_dir=str(case))
+    return PostSaveDTO(written=sorted(report.keys()), tables=[t.name for t in config.tables])
+
+
+# -- pre-processing -----------------------------------------------------------
+
+
+def _resolve_tool_entries(config: PreprocessConfig) -> list[str]:
+    """The pipeline's tool names, each entry resolved against the registered tools.
+
+    Entries are resolved one at a time so an unknown tool or a bad step option names
+    the position it was declared in, not just the offending value.
+    """
+    specs = available_tools()
+    names: list[str] = []
+    for index, entry in enumerate(config.tools):
+        try:
+            runtime = resolve_tools(specs, PreprocessConfig(tools=[entry]))[0]
+        except ValueError as exc:
+            raise ValueError(f"preprocess tools[{index}] {entry.get('tool')!r}: {exc}") from exc
+        names.append(runtime.spec.name)
+    return names
+
+
+def _check_dependencies(config: PreprocessConfig, names: list[str]) -> None:
+    """Every ``depends_on`` is a list naming tools this pipeline declares.
+
+    ``ToolSpec`` takes any sequence, so a bare string is read character by character
+    and an unknown name reaches the run as the misdiagnosis "must have exactly one
+    sink tool"; both are the agent's most likely mistake, and neither needs the graph
+    to spot.
+    """
+    declared = set(names)
+    for index, entry in enumerate(config.tools):
+        depends_on = entry.get("depends_on", [])
+        if isinstance(depends_on, str) or not isinstance(depends_on, (list, tuple)):
+            raise ValueError(
+                f"preprocess tools[{index}] {entry.get('tool')!r}: depends_on must be a list "
+                f"of tool names declared in this pipeline, not {depends_on!r}"
+            )
+        unknown = sorted(set(depends_on) - declared)
+        if unknown:
+            raise ValueError(
+                f"preprocess tools[{index}] {entry.get('tool')!r}: depends_on names "
+                f"{unknown!r}, which this pipeline does not declare; declared tools: "
+                f"{sorted(declared)}"
+            )
+
+
+def save_preprocess(
+    case_dir: str,
+    preprocess: dict[str, Any],
+    set_fields: dict[str, Any] | None = None,
+    *,
+    workspace: Workspace | None = None,
+) -> PreprocessSaveDTO:
+    """Validate a pre-processing pipeline (+ its setFields declaration) and write it.
+
+    ``preprocess`` is a :class:`~neofoam.framework.tools.graph.PreprocessConfig` dump
+    (``{"tools": [{"tool": …, "depends_on": [...], …options}, …]}``); every entry is
+    resolved against the registered tools, so an unknown tool name, a misspelt step
+    option or a ``depends_on`` that is not a list of tools this pipeline declares is
+    rejected — naming the entry's position — before anything is written. Call
+    :func:`tool_catalog` for the tools and their step schemas. ``set_fields`` is an
+    optional :class:`~neofoam.preprocess.config.SetFieldsConfig` dump written alongside
+    as ``system/setFields.yaml``; its region mappings are resolved against the ``Node``
+    selectors (see :func:`post_catalog`, family ``Node``), and it is refused when no
+    entry runs the ``setFields`` tool, because nothing would ever read the file. Omitted
+    (``None``), it leaves an existing declaration on disk untouched. Each file written
+    is **replaced, not merged** — a call carries the whole pipeline — and a case that
+    already declares one in a ``.json`` / ``.yml`` spec file is refused rather than
+    shadowed. ``case_dir`` is confined through ``workspace`` (when given) and created
+    if missing.
+
+    The returned ``tools`` are in the order the entries were declared: the pipeline runs
+    in ``depends_on`` order, which only the init graph knows (and building it needs a
+    mesh source), so it is not available here.
+    """
+    case = _confine(case_dir, workspace)
+    config = _validated(PreprocessConfig, preprocess, "preprocess")
+    names = _resolve_tool_entries(config)
+    _check_dependencies(config, names)
+
+    configs: list[Any] = [config]
+    if set_fields is not None:
+        if "setFields" not in names:
+            raise ValueError(
+                "set_fields was given but no preprocess entry runs the 'setFields' tool — "
+                "add {'tool': 'setFields', 'depends_on': [<the mesh tool>]} to the pipeline, "
+                "or drop set_fields (nothing would ever read the spec file)"
+            )
+        fields = _validated(SetFieldsConfig, set_fields, "set_fields")
+        resolve_regions(fields)
+        _refuse_shadowed_spec(set_fields_spec_file(case), "system/setFields.yaml", case)
+        configs.append(fields)
+
+    case.mkdir(parents=True, exist_ok=True)
+    report = write_configs(configs, case_dir=str(case))
+    return PreprocessSaveDTO(written=sorted(report.keys()), tools=names)

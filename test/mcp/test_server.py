@@ -19,6 +19,8 @@ from neofoam.mcp.server import (  # noqa: E402
     model_catalog,
     read_case,
     registered_tool_names,
+    save_post,
+    save_preprocess,
 )
 from neofoam.mcp.tools import ALL_TOOL_NAMES  # noqa: E402
 from neofoam.tooling import CaseAccessError  # noqa: E402
@@ -78,6 +80,11 @@ def test_solvers_resource_lists_known_solvers() -> None:
     assert "incompressibleFluid" in _resource_json("neofoam://solvers")
 
 
+def test_post_catalog_resource_mirrors_post_catalog() -> None:
+    expected = [d.model_dump() for d in tools.post_catalog()]
+    assert _resource_json("neofoam://post/catalog") == expected
+
+
 def test_config_schema_resource_returns_schema() -> None:
     payload = _resource_json("neofoam://incompressibleFluid/config/ControlDictConfig/schema")
     assert payload["name"] == "control_dict_config"
@@ -120,3 +127,17 @@ def test_root_env_var_confines_when_no_explicit_root(
     monkeypatch.setenv(ROOT_ENV_VAR, str(tmp_path))
     with pytest.raises(CaseAccessError):
         read_case("/etc/passwd")
+
+
+def test_configured_root_rejects_an_escaping_post_spec_target(confined_root: Path) -> None:
+    # save_post writes into the case, so its case_dir is confined like every other
+    # write target: an escaping path is a tool error and no spec file is written.
+    with pytest.raises(CaseAccessError):
+        save_post("../escape", {"tables": []})
+
+
+def test_configured_root_rejects_an_escaping_preprocess_target(confined_root: Path) -> None:
+    # save_preprocess writes into the case, so its case_dir is confined like every other
+    # write target: an escaping path is a tool error and no pipeline file is written.
+    with pytest.raises(CaseAccessError):
+        save_preprocess("../escape", {"tools": []})

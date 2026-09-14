@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+import json
 import shutil
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,7 @@ import pytest
 
 from neofoam.agent.case_fill import load_case_from_disk
 from neofoam.framework.solver.configurations import configurations
+from neofoam.framework.tools.graph import PreprocessConfig
 from neofoam.framework.validation import checks as checks_mod
 from neofoam.io import write_configs
 from neofoam.mcp import tools
@@ -21,6 +23,8 @@ from neofoam.mcp.dto import (
 )
 from neofoam.mcp.registry import resolve_solver
 from neofoam.mcp.tools import ALL_TOOL_NAMES
+from neofoam.postprocess import PostProcessConfig
+from neofoam.preprocess import SetFieldsConfig
 from neofoam.solver.incompressibleFluid.incompressibleFluid import (
     incompressibleFluid,
 )
@@ -52,10 +56,13 @@ def test_all_tool_names_match_the_spec_literal_list() -> None:
         "import_geometry",
         "case_patches",
         "build_mesh_inputs",
+        "save_preprocess",
         "validate_case",
         "read_case",
         "load_case",
         "save_case",
+        "post_catalog",
+        "save_post",
     )
 
 
@@ -527,3 +534,274 @@ def test_read_verbs_reject_an_escaping_case_dir(solver: Any, tmp_path: Path, ver
     args = (solver, "../escape") if verb != "case_patches" else ("../escape",)
     with pytest.raises(CaseAccessError):
         fn(*args, workspace=ws)
+
+
+#: Every ``type`` string the shipped plugins answer to, per family — the same
+#: inventory ``test/postprocess/test_imports.py`` pins against the registries
+#: (re-stated here because ``test/mcp`` cannot import it: it is not a package).
+SHIPPED_POST_TYPES: dict[str, set[str]] = {
+    "Source": {"internal", "patch", "line", "plane", "isoSurface", "residuals"},
+    "Node": {
+        "box",
+        "sphere",
+        "not",
+        "binary",
+        "directional",
+        "mag",
+        "component",
+        "area",
+        "sample",
+        "sum",
+        "mean",
+        "max",
+        "min",
+        "surfIntegrate",
+        "volIntegrate",
+        "rows",
+        "scale",
+        "print",
+    },
+    "TableWriter": {"csv"},
+    "WriteControl": {"stepper", "timeStep", "runTime"},
+}
+
+
+def _post_catalog_by_key() -> dict[tuple[str, str], Any]:
+    return {(entry.family, entry.type): entry for entry in tools.post_catalog()}
+
+
+def _post_spec() -> dict[str, Any]:
+    """One declared table: an internal source, an aggregating node, a cadence."""
+    return {
+        "tables": [
+            {
+                "name": "volume_p",
+                "source": {"type": "internal", "field": "p"},
+                "pipeline": [{"type": "volIntegrate", "name": "volume_p"}],
+                "write_control": {"write_control_type": "timeStep", "interval": 10},
+            }
+        ]
+    }
+
+
+@pytest.mark.parametrize(("family", "shipped"), sorted(SHIPPED_POST_TYPES.items()))
+def test_post_catalog_lists_every_shipped_type_of_a_family(family: str, shipped: set[str]) -> None:
+    """The catalog is where a spec author learns the open mappings' ``type`` strings."""
+    published = {entry.type for entry in tools.post_catalog() if entry.family == family}
+
+    assert shipped <= published
+
+
+def test_post_catalog_publishes_a_nested_region_as_an_open_object() -> None:
+    """``not``/``binary`` hold another selector, and the schema has to admit one.
+
+    The nested annotation is a bare ``Selector``, which serialises as a closed,
+    property-less schema: an agent validating its payload against the catalog —
+    the catalog's whole purpose — would refuse the very mapping ``save_post``
+    accepts.
+    """
+    by_key = _post_catalog_by_key()
+    region = by_key[("Node", "not")].json_schema["properties"]["region"]
+    left = by_key[("Node", "binary")].json_schema["properties"]["left"]
+
+    assert region["type"] == "object"
+    assert region.get("additionalProperties") is not False
+    assert left["type"] == "object"
+
+
+def test_post_catalog_entry_schema_pins_its_own_type() -> None:
+    by_key = _post_catalog_by_key()
+    assert by_key[("Node", "volIntegrate")].json_schema["properties"]["type"]["const"] == (
+        "volIntegrate"
+    )
+    # the WriteControl family discriminates on ``write_control_type``, not ``type``
+    policy = by_key[("WriteControl", "timeStep")].json_schema["properties"]
+    assert policy["write_control_type"]["const"] == "timeStep"
+
+
+def test_post_catalog_marks_the_node_that_accepts_an_aggregation() -> None:
+    by_key = _post_catalog_by_key()
+    assert by_key[("Node", "print")].accepts_aggregated is True
+    assert by_key[("Node", "sum")].accepts_aggregated is False
+    # the flag is a node's; the other families carry none
+    assert by_key[("TableWriter", "csv")].accepts_aggregated is None
+
+
+def test_post_catalog_marks_the_source_that_aggregates_itself() -> None:
+    by_key = _post_catalog_by_key()
+    assert by_key[("Source", "residuals")].self_aggregating is True
+    assert by_key[("Source", "internal")].self_aggregating is False
+    assert by_key[("Node", "sum")].self_aggregating is None
+
+
+def test_save_post_writes_a_spec_the_config_reads_back(tmp_path: Path) -> None:
+    result = tools.save_post(str(tmp_path), _post_spec())
+
+    assert result.written == ["system/postProcess.yaml"]
+    assert result.tables == ["volume_p"]
+    assert PostProcessConfig.load(case_dir=str(tmp_path)) == PostProcessConfig.model_validate(
+        _post_spec()
+    )
+
+
+def test_save_post_rejects_an_unknown_node_type_naming_the_table_and_position(
+    tmp_path: Path,
+) -> None:
+    spec = _post_spec()
+    spec["tables"][0]["pipeline"].append({"type": "nope"})
+
+    with pytest.raises(ValueError, match=r"'volume_p'.*pipeline\[1\]"):
+        tools.save_post(str(tmp_path), spec)
+    # the tables are resolved before anything is written
+    assert not (tmp_path / "system" / "postProcess.yaml").exists()
+
+
+def test_save_post_replaces_the_previous_spec(tmp_path: Path) -> None:
+    """The file is written whole: a second call is the case's table set, not an addition."""
+    two_tables = _post_spec()
+    two_tables["tables"].append({**_post_spec()["tables"][0], "name": "volume_U"})
+    tools.save_post(str(tmp_path), two_tables)
+
+    tools.save_post(str(tmp_path), _post_spec())
+
+    assert [t.name for t in PostProcessConfig.load(case_dir=str(tmp_path)).tables] == ["volume_p"]
+
+
+def test_save_post_refuses_to_shadow_a_spec_file_the_loader_prefers(tmp_path: Path) -> None:
+    """A ``.yaml`` beside a hand-authored ``.json`` would make the ``.json`` dead."""
+    existing = tmp_path / "system" / "postProcess.json"
+    existing.parent.mkdir(parents=True)
+    existing.write_text(json.dumps(_post_spec()))
+
+    with pytest.raises(ValueError, match=r"system/postProcess\.json"):
+        tools.save_post(str(tmp_path), _post_spec())
+    assert not (tmp_path / "system" / "postProcess.yaml").exists()
+
+
+def _preprocess_spec() -> dict[str, Any]:
+    """A two-tool pipeline: build the mesh, then initialise the fields on it."""
+    return {
+        "tools": [
+            {"tool": "blockMesh"},
+            {"tool": "setFields", "depends_on": ["blockMesh"]},
+        ]
+    }
+
+
+def _set_fields_spec() -> dict[str, Any]:
+    """One default plus one box region — the declaration setFields reads."""
+    return {
+        "defaults": {"alpha.water": 0.0},
+        "regions": [
+            {
+                "region": {"type": "box", "min": [0.0, 0.0, 0.0], "max": [1.0, 1.0, 1.0]},
+                "values": {"alpha.water": 1.0},
+            }
+        ],
+    }
+
+
+def test_save_preprocess_writes_a_pipeline_and_a_spec_both_configs_read_back(
+    tmp_path: Path,
+) -> None:
+    result = tools.save_preprocess(str(tmp_path), _preprocess_spec(), _set_fields_spec())
+
+    assert result.written == ["system/preprocess.yaml", "system/setFields.yaml"]
+    assert result.tools == ["blockMesh", "setFields"]
+    assert PreprocessConfig.load(case_dir=str(tmp_path)) == PreprocessConfig.model_validate(
+        _preprocess_spec()
+    )
+    assert SetFieldsConfig.load(case_dir=str(tmp_path)) == SetFieldsConfig.model_validate(
+        _set_fields_spec()
+    )
+
+
+def test_save_preprocess_rejects_an_unknown_tool_naming_the_entry(tmp_path: Path) -> None:
+    spec = _preprocess_spec()
+    spec["tools"].append({"tool": "nope"})
+
+    with pytest.raises(ValueError, match=r"tools\[2\] 'nope'"):
+        tools.save_preprocess(str(tmp_path), spec)
+    # the pipeline is resolved before anything is written
+    assert not (tmp_path / "system" / "preprocess.yaml").exists()
+
+
+def test_save_preprocess_rejects_an_invalid_step_option_naming_the_entry(tmp_path: Path) -> None:
+    spec = _preprocess_spec()
+    spec["tools"][0]["verbose"] = "maybe"
+
+    with pytest.raises(ValueError, match=r"tools\[0\] 'blockMesh'"):
+        tools.save_preprocess(str(tmp_path), spec)
+    assert not (tmp_path / "system" / "preprocess.yaml").exists()
+
+
+def test_save_preprocess_rejects_an_unknown_region_type_naming_the_position(
+    tmp_path: Path,
+) -> None:
+    fields = _set_fields_spec()
+    fields["regions"].append({"region": {"type": "nope"}, "values": {"alpha.water": 1.0}})
+
+    with pytest.raises(ValueError, match=r"regions\[1\]"):
+        tools.save_preprocess(str(tmp_path), _preprocess_spec(), fields)
+    # the regions are resolved before anything is written
+    assert not (tmp_path / "system" / "setFields.yaml").exists()
+
+
+def test_save_preprocess_rejects_set_fields_the_pipeline_never_reads(tmp_path: Path) -> None:
+    """A spec file no entry runs setFields for is a silent mistake, not a no-op."""
+    pipeline = {"tools": [{"tool": "blockMesh"}]}
+
+    with pytest.raises(ValueError, match="setFields"):
+        tools.save_preprocess(str(tmp_path), pipeline, _set_fields_spec())
+    assert not (tmp_path / "system" / "setFields.yaml").exists()
+
+
+def test_save_preprocess_without_set_fields_leaves_an_existing_declaration_alone(
+    tmp_path: Path,
+) -> None:
+    write_configs([SetFieldsConfig.model_validate(_set_fields_spec())], case_dir=str(tmp_path))
+    before = (tmp_path / "system" / "setFields.yaml").read_text()
+
+    result = tools.save_preprocess(str(tmp_path), _preprocess_spec())
+
+    assert result.written == ["system/preprocess.yaml"]
+    assert (tmp_path / "system" / "setFields.yaml").read_text() == before
+
+
+@pytest.mark.parametrize("depends_on", [["nosuch"], "blockMesh"], ids=["unknown", "bare_string"])
+def test_save_preprocess_rejects_a_depends_on_the_pipeline_cannot_satisfy(
+    tmp_path: Path, depends_on: Any
+) -> None:
+    """Neither reaches the run as itself: an unknown name and a string that reads as
+    a list of characters both surface there as "must have exactly one sink tool"."""
+    spec = _preprocess_spec()
+    spec["tools"][1]["depends_on"] = depends_on
+
+    with pytest.raises(ValueError, match=r"tools\[1\] 'setFields'.*depends_on"):
+        tools.save_preprocess(str(tmp_path), spec)
+    assert not (tmp_path / "system" / "preprocess.yaml").exists()
+
+
+def test_save_preprocess_replaces_the_previous_pipeline(tmp_path: Path) -> None:
+    tools.save_preprocess(str(tmp_path), _preprocess_spec())
+
+    result = tools.save_preprocess(str(tmp_path), {"tools": [{"tool": "blockMesh"}]})
+
+    assert result.tools == ["blockMesh"]
+    assert PreprocessConfig.load(case_dir=str(tmp_path)) == PreprocessConfig.model_validate(
+        {"tools": [{"tool": "blockMesh"}]}
+    )
+
+
+def test_save_preprocess_refuses_to_shadow_a_set_fields_file_the_loader_prefers(
+    tmp_path: Path,
+) -> None:
+    existing = tmp_path / "system" / "setFields.json"
+    existing.parent.mkdir(parents=True)
+    existing.write_text(json.dumps(_set_fields_spec()))
+
+    with pytest.raises(ValueError, match=r"system/setFields\.json"):
+        tools.save_preprocess(str(tmp_path), _preprocess_spec(), _set_fields_spec())
+    assert not (tmp_path / "system" / "setFields.yaml").exists()
+    # nothing at all is written: the pipeline shares the call
+    assert not (tmp_path / "system" / "preprocess.yaml").exists()

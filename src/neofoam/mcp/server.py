@@ -12,7 +12,8 @@ an unknown name raises ``ValueError`` (surfaced as a tool error). The
 ``neofoam://{solver_name}/…`` resources resolve by name the same way.
 
 Filesystem tools (``read_case``/``load_case``/``save_case``/``validate_case``/
-``case_patches``) confine their path arguments under a workspace root when one is
+``case_patches``/``import_geometry``/``build_mesh_inputs``/``save_preprocess``/
+``save_post``) confine their path arguments under a workspace root when one is
 configured (:func:`configure_root`, ``mcp serve --root``, or ``NEOFOAM_MCP_ROOT``):
 paths must then be relative and any escape is rejected as a tool error. With no root
 set, absolute paths are allowed — for trusted, local (stdio) use only.
@@ -44,6 +45,9 @@ from neofoam.mcp.dto import (
     MeshInputsDTO,
     ModelEntryDTO,
     PatchDTO,
+    PostPluginInfoDTO,
+    PostSaveDTO,
+    PreprocessSaveDTO,
     SaveResultDTO,
     ToolInfoDTO,
     ValidationReportDTO,
@@ -77,9 +81,18 @@ the CLI to run. Intended tool order:
   3. import_geometry      — stage geometry (writes <case>/manifest.json, the geometry
      hand-off contract; required keys geometry_source/bbox/location_in_mesh/
      length_scale — see manifest_schema); case_patches reads the patch names + roles
-     back; build_mesh_inputs renders the mesh dicts from the manifest.
+     back; build_mesh_inputs renders the mesh dicts from the manifest. To add setFields
+     or otherwise change the pipeline, save_preprocess; the region selectors and their
+     schemas come from post_catalog family "Node", the setFields YAML schema from
+     config_schema("set_fields_config").
   4. save_case            — author the case (validated against the solver's model).
-  5. validate_case        — static pre-flight (completeness + BC/mesh-patch checks).
+  5. post_catalog / save_post — declare in-situ post-processing tables. post_catalog
+     lists every registered source/node/writer/write control with its JSON Schema —
+     the only place the accepted "type" strings appear, because the
+     post_process_config schema keeps those four mappings open; save_post validates
+     a spec against them and writes <case>/system/postProcess.yaml. Optional: a case
+     with no spec file simply post-processes nothing.
+  6. validate_case        — static pre-flight (completeness + BC/mesh-patch checks).
 
 Workspace: when the server is started with a root (`mcp serve --root` /
 NEOFOAM_MCP_ROOT), every path argument must be a RELATIVE path under that root;
@@ -202,6 +215,14 @@ def build_mesh_inputs(case_dir: str) -> MeshInputsDTO:
     return tools.build_mesh_inputs(case_dir, workspace=_workspace())
 
 
+@mcp.tool(tags={"authoring"}, meta=_META)
+def save_preprocess(
+    case_dir: str, preprocess: dict[str, Any], set_fields: dict[str, Any] | None = None
+) -> PreprocessSaveDTO:
+    """Validate a preprocessing pipeline (+ optional setFields), then write it into the case."""
+    return tools.save_preprocess(case_dir, preprocess, set_fields, workspace=_workspace())
+
+
 @mcp.tool(tags={"validation"}, meta=_META)
 def validate_case(case_dir: str, solver: str = DEFAULT_SOLVER) -> ValidationReportDTO:
     """Static pre-flight: completeness + BC/mesh-patch + fvSolution/fvSchemes checks (no run)."""
@@ -231,6 +252,21 @@ def save_case(
     return tools.save_case(resolve_solver(solver), case_spec, target_dir, workspace=_workspace())
 
 
+# -- post-processing ----------------------------------------------------------
+
+
+@mcp.tool(tags={"introspection"}, meta=_META)
+def post_catalog() -> list[PostPluginInfoDTO]:
+    """Registered post-processing sources/nodes/writers/write controls + their schemas."""
+    return tools.post_catalog()
+
+
+@mcp.tool(tags={"authoring"}, meta=_META)
+def save_post(case_dir: str, post_spec: dict[str, Any]) -> PostSaveDTO:
+    """Validate a post-processing spec, then write ``<case>/system/postProcess.yaml``."""
+    return tools.save_post(case_dir, post_spec, workspace=_workspace())
+
+
 # -- read-only resources mirroring the introspection tools --------------------
 # Each returns a JSON string (one ``text/plain`` content); a bare ``list[dict]``
 # return is otherwise read by FastMCP as *multiple* contents.
@@ -244,6 +280,12 @@ def solvers_resource() -> str:
 @mcp.resource("neofoam://{solver_name}/catalog")
 def catalog_resource(solver_name: str) -> str:
     entries = tools.model_catalog(resolve_solver(solver_name))
+    return json.dumps([d.model_dump() for d in entries])
+
+
+@mcp.resource("neofoam://post/catalog")
+def post_catalog_resource() -> str:
+    entries = tools.post_catalog()
     return json.dumps([d.model_dump() for d in entries])
 
 
