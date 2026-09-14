@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/compatibility/fvSchemes.hpp"
 
+#include <any>
 #include <map>
 #include <memory>
 
@@ -51,28 +52,147 @@ void updateDdtSchemes(NeoN::Dictionary& schemeDict)
     }
 }
 
-// OpenFOAM allows "bounded <scheme> ..." as a div scheme prefix for bounded convection.
-// NeoN has no separate "bounded" constructor — strip the prefix so NeoN sees "Gauss ...".
-static void stripBoundedDivSchemes(NeoN::Dictionary& schemeDict)
+// The reconstruction gradient of linearUpwind arrives as a *key* into gradSchemes, e.g.
+// "div(phi,U) bounded Gauss linearUpwind limited" alongside "limited cellLimited Gauss
+// linear 1". NeoN holds no gradSchemes table, so it cannot resolve that key and falls back
+// to the unlimited Gauss-Green gradient -- an unclipped, systematically more aggressive
+// convection term. fvSchemes lives here, so expand the key to its definition first.
+//
+// A spec that already names its gradient inline ("linearUpwind cellLimited Gauss linear 1")
+// is left alone, as is one whose key has no gradSchemes entry.
+static void expandLinearUpwindGradSchemes(NeoN::Dictionary& schemeDict)
 {
-    if (!schemeDict.contains("divSchemes")) return;
+    if (!schemeDict.contains("divSchemes") || !schemeDict.contains("gradSchemes")) return;
+
+    const NeoN::Dictionary& gradSchemes = schemeDict.subDict("gradSchemes");
     NeoN::Dictionary& divSchemes = schemeDict.subDict("divSchemes");
+
     for (const auto& key : divSchemes.keys())
     {
         if (!divSchemes.isType<NeoN::TokenList>(key)) continue;
         NeoN::TokenList& tl = divSchemes.get<NeoN::TokenList>(key);
-        if (tl.size() == 0) continue;
-        try
+
+        auto& toks = tl.tokens();
+        for (std::size_t i = 0; i + 1 < toks.size(); ++i)
         {
-            if (tl.get<std::string>(0) == "bounded")
+            if (toks[i].type() != typeid(std::string)) continue;
+            const auto& word = std::any_cast<const std::string&>(toks[i]);
+            if (word != "linearUpwind" && word != "linearUpwindV") continue;
+
+            if (toks[i + 1].type() != typeid(std::string)) break;
+            const auto gradKey = std::any_cast<const std::string&>(toks[i + 1]);
+
+            // Already an inline gradient spec rather than a key.
+            if (gradKey == "Gauss" || gradKey == "cellLimited" || gradKey == "leastSquares") break;
+            if (!gradSchemes.contains(gradKey)) break;
+
+            std::vector<std::any> expanded;
+            if (gradSchemes.isType<NeoN::TokenList>(gradKey))
             {
-                NeoN::Logging::warn("Stripping 'bounded' prefix from div scheme '{}'", key);
-                tl.remove(0);
-                tl.reset();
+                // get() on a const Dictionary yields a const TokenList, whose tokens() is
+                // non-const; copy through a mutable one.
+                NeoN::TokenList g = gradSchemes.get<NeoN::TokenList>(gradKey);
+                expanded = g.tokens();
+            }
+            else if (gradSchemes.isType<std::string>(gradKey))
+            {
+                expanded.emplace_back(gradSchemes.get<std::string>(gradKey));
+            }
+            else
+            {
+                break;
+            }
+
+            NeoN::Logging::warn(
+                "Expanding linearUpwind gradient '{}' in div scheme '{}' to its gradSchemes "
+                "definition",
+                gradKey,
+                key
+            );
+            toks.erase(toks.begin() + static_cast<std::ptrdiff_t>(i) + 1);
+            toks.insert(
+                toks.begin() + static_cast<std::ptrdiff_t>(i) + 1,
+                expanded.begin(),
+                expanded.end()
+            );
+            tl.reset();
+            break;
+        }
+    }
+}
+
+// limitedLinear builds its TVD ratio from the gradient of the transported field, which
+// OpenFOAM resolves through gradSchemes as grad(<field>) (LimitedScheme.C calls the one-argument
+// fvc::grad, and limitFuncs::magSqr<scalar> passes a scalar field through unchanged, so the
+// lookup key carries the field's own name). NeoN's limitedLinear has no gradSchemes table and
+// would always use the unlimited Gauss-Green gradient; that reports a larger upwind-cell slope,
+// hence a larger TVD ratio, a limiter nearer 1 and a blend nearer pure central differencing.
+//
+// So resolve grad(<field>) here -- <field> being the second argument of "div(phi,<field>)" -- and
+// append the marker NeoN's spec accepts when it is a cellLimited scheme. A div key that is not of
+// that form, or a field with no cellLimited gradient entry, is left alone.
+static void appendLimitedLinearGradSchemes(NeoN::Dictionary& schemeDict)
+{
+    if (!schemeDict.contains("divSchemes") || !schemeDict.contains("gradSchemes")) return;
+
+    const NeoN::Dictionary& gradSchemes = schemeDict.subDict("gradSchemes");
+    NeoN::Dictionary& divSchemes = schemeDict.subDict("divSchemes");
+
+    for (const auto& key : divSchemes.keys())
+    {
+        if (!divSchemes.isType<NeoN::TokenList>(key)) continue;
+
+        // "div(phi,k)" -> "k"; anything else (div((nuEff*dev2(T(grad(U)))))) is not a transported
+        // field and has no gradSchemes entry to find.
+        const auto comma = key.find(',');
+        if (key.rfind("div(", 0) != 0 || comma == std::string::npos || key.back() != ')') continue;
+        const std::string field = key.substr(comma + 1, key.size() - comma - 2);
+        if (field.empty() || field.find('(') != std::string::npos) continue;
+
+        NeoN::TokenList& tl = divSchemes.get<NeoN::TokenList>(key);
+        auto& toks = tl.tokens();
+
+        // The coefficient follows the scheme name, so the marker goes at the very end; only act
+        // when limitedLinear is the last *word* in the spec.
+        bool hasLimitedLinear = false;
+        for (const auto& tok : toks)
+        {
+            if (tok.type() != typeid(std::string)) continue;
+            hasLimitedLinear = std::any_cast<const std::string&>(tok) == "limitedLinear";
+        }
+        if (!hasLimitedLinear) continue;
+
+        // A field without its own entry falls back to "default", exactly as OpenFOAM's
+        // mesh.gradScheme() does.
+        std::string gradKey = "grad(" + field + ")";
+        if (!gradSchemes.contains(gradKey)) gradKey = "default";
+        if (!gradSchemes.contains(gradKey)) continue;
+
+        // The entry may be a key into gradSchemes itself ("grad(k) $limited") -- OpenFOAM expands
+        // those macros while reading, so by the time it reaches here it is the definition.
+        std::string firstWord;
+        if (gradSchemes.isType<NeoN::TokenList>(gradKey))
+        {
+            NeoN::TokenList g = gradSchemes.get<NeoN::TokenList>(gradKey);
+            if (!g.tokens().empty() && g.tokens().front().type() == typeid(std::string))
+            {
+                firstWord = std::any_cast<const std::string&>(g.tokens().front());
             }
         }
-        catch (const std::bad_any_cast&)
-        {}
+        else if (gradSchemes.isType<std::string>(gradKey))
+        {
+            firstWord = gradSchemes.get<std::string>(gradKey);
+        }
+        if (firstWord != "cellLimited") continue;
+
+        NeoN::Logging::warn(
+            "Marking limitedLinear in div scheme '{}' as cellLimited, following gradSchemes "
+            "entry '{}'",
+            key,
+            gradKey
+        );
+        toks.emplace_back(std::string("cellLimited"));
+        tl.reset();
     }
 }
 
@@ -81,7 +201,11 @@ NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict)
     NeoN::Dictionary modSchemesDict = schemesDict;
 
     updateDdtSchemes(modSchemesDict);
-    stripBoundedDivSchemes(modSchemesDict);
+    // The "bounded <scheme>" convection prefix is handed to NeoN untouched: BoundedDiv
+    // implements it, subtracting the Sp(div(phi), psi) term that compensates a non-zero
+    // continuity error in a steady run. Stripping the prefix silently dropped that term.
+    expandLinearUpwindGradSchemes(modSchemesDict);
+    appendLimitedLinearGradSchemes(modSchemesDict);
     // snGrad scheme names (corrected, uncorrected, limited [corrected] <coeff>)
     // are accepted by NeoN's factories directly — no remapping required.
     // gradSchemes likewise need no remapping: OpenFOAM's "Gauss <interp>" and

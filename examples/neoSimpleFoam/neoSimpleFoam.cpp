@@ -143,7 +143,14 @@ int main(int argc, char* argv[])
                     }
 
                     pEqn.solve();
-                    p.correctBoundaryConditions();
+                    // totalPressure needs phi and U to subtract the dynamic head on inflow
+                    // faces; without them it degenerates to a fixedValue at p0.
+                    {
+                        fvcc::BoundaryContext pCtx;
+                        pCtx.insert("phi", phi);
+                        pCtx.insert("U", U);
+                        p.correctBoundaryConditions(pCtx);
+                    }
 
                     if (simple.finalNonOrthogonalIter())
                     {
@@ -158,7 +165,12 @@ int main(int argc, char* argv[])
                     nf::lookupFieldRelaxation(rt.fvSolutionDict, "p", false)
                         .value_or(NeoN::scalar(1))
                 );
-                p.correctBoundaryConditions();
+                {
+                    fvcc::BoundaryContext pCtx;
+                    pCtx.insert("phi", phi);
+                    pCtx.insert("U", U);
+                    p.correctBoundaryConditions(pCtx);
+                }
 
                 nf::updateVelocity(hByA, crAtU, p, U, rt);
                 U.correctBoundaryConditions();

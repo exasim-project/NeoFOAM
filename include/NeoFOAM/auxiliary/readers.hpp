@@ -42,6 +42,33 @@ inline NeoN::scalar tokenAsScalar(NeoN::TokenList& tokenList, std::size_t idx)
     return NeoN::scalar(tokenList.get<Foam::label>(idx));
 }
 
+/**
+ * @brief Pin a total-pressure patch at the value OpenFOAM evaluated when the field was read.
+ *
+ * NeoN models neither the dynamic-head correction nor a time-dependent p0, so the patch
+ * becomes a fixedValue at the start-time total pressure. Non-scalar (or valueless) falls
+ * back to zeroGradient.
+ */
+template<typename ValueType>
+void insertFrozenTotalPressure(NeoN::Dictionary& dict)
+{
+    if constexpr (std::is_same<ValueType, NeoN::scalar>::value)
+    {
+        if (dict.contains("value"))
+        {
+            NeoN::TokenList tokenList = dict.get<NeoN::TokenList>("value");
+            if (tokenList.size() > 1)
+            {
+                dict.insert("type", std::string("fixedValue"));
+                dict.insert("fixedValue", tokenAsScalar(tokenList, 1));
+                return;
+            }
+        }
+    }
+    dict.insert("type", std::string("fixedGradient"));
+    dict.insert("fixedGradient", NeoN::zero<ValueType>());
+}
+
 } // namespace detail
 
 template<typename FoamType>
@@ -181,6 +208,35 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [](auto& dict) { dict.insert("type", std::string("epsilonWallFunction")); }},
         {"nutkWallFunction",
          [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }},
+        {"pressureInletOutletVelocity",
+         [](auto& dict)
+         {
+             // Outflow-side zeroGradient with an inflow value tied to the flux; NeoN's
+             // no-context correction cannot see phi, so take the zeroGradient branch, which
+             // is what the patch does wherever the flow leaves the domain.
+             dict.insert("type", std::string("fixedGradient"));
+             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+         }},
+        {"totalPressure",
+         [](auto& dict)
+         {
+             // NeoN models this patch properly: p0 on outflow, p0 minus the dynamic head on
+             // inflow, read from phi and U in the BoundaryContext. Only p0 needs translating
+             // -- it arrives as the token list "uniform <value>", and the BC wants a plain
+             // scalar, same as inletValue above.
+             dict.insert("type", std::string("totalPressure"));
+             if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+             {
+                 if (dict.contains("p0"))
+                 {
+                     NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("p0");
+                     if (tokenList.size() > 1)
+                     {
+                         dict.insert("p0", detail::tokenAsScalar(tokenList, 1));
+                     }
+                 }
+             }
+         }},
         {"inletOutlet",
          [](auto& dict)
          {

@@ -22,6 +22,24 @@ void applyFixedValueConstraints(
     pin(ls);
 }
 
+void assignFixedValues(
+    NeoN::Vector<NeoN::scalar>& psi,
+    NeoN::View<const NeoN::scalar> mask,
+    NeoN::View<const NeoN::scalar> values,
+    NeoN::localIdx nCells
+)
+{
+    auto psiV = psi.view();
+    NeoN::parallelFor(
+        psi.exec(),
+        {0, nCells},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            if (mask[i] != NeoN::scalar(0)) psiV[i] = values[i];
+        },
+        "assignFixedValues"
+    );
+}
+
 void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::scalar refValue)
 {
     NeoN::dsl::SetReference<NeoN::scalar> refFunct(refCell, refValue);
