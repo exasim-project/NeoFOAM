@@ -16,6 +16,7 @@
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
 - Distributed/restart robustness: preserve OpenFOAM BC types and promote vector BC components on read for restart; default the smoothSolver preconditioner to diagonal (avoids a ParIc FPE on the non-symmetric momentum matrix) [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
+- kEpsilon/neoSimpleFoam OpenFOAM parity: resolve limitedLinear's TVD limiter gradient through `gradSchemes/grad(<field>)` (and linearUpwind's key through `default`) instead of a hardcoded Gauss-Green gradient; zero the accumulating `surfaceIntegrate` target so the dilatation `divU` cannot amplify by 1/V per iteration; assign constrained values into the field as `fvMatrix::setValues` does; pin near-wall epsilon, evaluate nut on boundary faces and take the wall-function `y` from `nearWallDist`; keep the `bounded` convection prefix; translate the `totalPressure` and `pressureInletOutletVelocity` boundaries [#407](https://github.com/exasim-project/NeoFOAM/pull/407)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)
