@@ -36,6 +36,21 @@ namespace NeoFOAM
  * Coefficients are the upstream defaults from `kEpsilon.C` (Cμ=0.09, C1=1.44,
  * C2=1.92, σ_k=1.0, σ_ε=1.3).
  */
+/**
+ * @brief A volScalarField carrying OpenFOAM's per-patch near-wall distance on its boundary.
+ *
+ * This is turbulenceModel::y(): the distance from each wall-adjacent cell centre to its own
+ * patch, which is what the wall functions consume. It is deliberately NOT Foam::wallDist --
+ * that is the distance to the nearest wall anywhere in the domain, so on a mesh with more
+ * than one wall patch the two disagree and eLog ~ 1/y comes out too large on whichever
+ * patch is not the closest. Foam::wallDist would also demand an `fvSchemes/wallDist` entry
+ * that stock OpenFOAM cases do not ship.
+ *
+ * Internal values are zero: kEpsilon only ever reads the boundary. Build the field through
+ * this helper everywhere, tests included, so the boundary is always populated.
+ */
+Foam::volScalarField makeNearWallDistField(MeshAdapter& mesh);
+
 class KEpsilon
 {
 public:
@@ -47,6 +62,8 @@ public:
         scalar C2 = 1.92;
         scalar sigmaK = 1.0;
         scalar sigmaEps = 1.3;
+        // Upstream's C3 (kEpsilon.C:259) scales the epsilon dilatation sink; 0 by default.
+        scalar C3 = 0.0;
     };
 
     /**
@@ -208,6 +225,9 @@ private:
     // log-law value each wall-adjacent cell is fixed to, and the 0/1 mask selecting them.
     NeoN::Vector<scalar> epsilonWallValue_;
     NeoN::Vector<scalar> epsilonWallMask_;
+
+    // fvc::div(phi) for the dilatation sinks, recomputed each correct().
+    nnfvcc::VolumeField<scalar> divU_;
 };
 
 /**

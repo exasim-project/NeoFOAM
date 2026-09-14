@@ -33,6 +33,21 @@ void applyFixedValueConstraints(
     NeoN::localIdx nCells
 );
 void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::scalar refValue);
+
+/* @brief Write the constrained values into the solution field itself.
+ *
+ * fvMatrix::setValuesFromList assigns `psi[celli] = value` before it touches the matrix, so a
+ * constrained cell already holds its value no matter what the linear solver then does. Pinning
+ * only the matrix leaves that cell to the iterative solver, and a solve that exits after zero
+ * iterations (its normalised residual is already under the tolerance) leaves the cell at its
+ * previous value -- an unpinned near-wall dissipation for that iteration.
+ */
+void assignFixedValues(
+    NeoN::Vector<NeoN::scalar>& psi,
+    NeoN::View<const NeoN::scalar> mask,
+    NeoN::View<const NeoN::scalar> values,
+    NeoN::localIdx nCells
+);
 } // namespace detail
 
 /*@brief extends expression by giving access to assembled matrix
@@ -394,6 +409,14 @@ public:
                 const NeoN::localIdx nCells = psi_->mesh().nCells();
                 detail::applyFixedValueConstraints(
                     ls,
+                    constraintMask_->view(),
+                    constraintValues_->view(),
+                    nCells
+                );
+                // Assign the field too, as fvMatrix::setValuesFromList does: the decoupled row
+                // only yields the pinned value once the solver has actually worked on it.
+                detail::assignFixedValues(
+                    psi_->internalVector(),
                     constraintMask_->view(),
                     constraintValues_->view(),
                     nCells

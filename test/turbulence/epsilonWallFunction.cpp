@@ -227,8 +227,9 @@ TEST_CASE("epsilonWallFunction: near-wall cells are pinned as OpenFOAM does")
         == "epsilonWallFunction"
     );
 
-    Foam::wallDist wd(mesh);
-    const Foam::volScalarField& wallDist = wd.y();
+    // Build it the way production does: the per-patch near-wall distance, on the
+    // boundary. Foam::wallDist would leave the wall faces at ~0 and blow up eLog ~ 1/y.
+    const Foam::volScalarField wallDist = nf::makeNearWallDistField(mesh);
 
     auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U, false);
     auto& nfP = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
