@@ -114,8 +114,9 @@ TEST_CASE("kEpsilon: computeSources matches OpenFOAM")
     const Foam::volScalarField& ofEps = mesh.lookupObject<Foam::volScalarField>("epsilon");
     const Foam::volScalarField& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
 
-    Foam::wallDist wd(mesh);
-    const Foam::volScalarField& wallDist = wd.y();
+    // Build it the way production does: the per-patch near-wall distance, on the
+    // boundary. Foam::wallDist would leave the wall faces at ~0 and blow up eLog ~ 1/y.
+    const Foam::volScalarField wallDist = nf::makeNearWallDistField(mesh);
 
     // --- OpenFOAM reference source terms ---
     // GbyNu0 = gradU && devTwoSymm(gradU)
@@ -234,8 +235,9 @@ TEST_CASE("kEpsilon: NeoFOAM wrapper validate()+correct() matches OpenFOAM")
     const Foam::volScalarField& ofEps = mesh.lookupObject<Foam::volScalarField>("epsilon");
     const Foam::volScalarField& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
 
-    Foam::wallDist wd(mesh);
-    const Foam::volScalarField& wallDist = wd.y();
+    // Build it the way production does: the per-patch near-wall distance, on the
+    // boundary. Foam::wallDist would leave the wall faces at ~0 and blow up eLog ~ 1/y.
+    const Foam::volScalarField wallDist = nf::makeNearWallDistField(mesh);
 
     // --- NeoFOAM fields ---
     auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U, false);

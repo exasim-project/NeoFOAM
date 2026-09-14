@@ -11,6 +11,7 @@
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include "wallDist.H"
+#include "nearWallDist.H"
 #include "IOobject.H"
 #include "volFields.H"
 
@@ -187,14 +188,19 @@ void initNearWallDistBoundary(
     nnfvcc::VolumeField<scalar>& nearWallDist
 )
 {
-    const auto wdInternal = wallDist.internalVector().view();
-    const auto faceOwners = mesh.boundaryMesh().faceOwners().view();
+    // The wall functions need the distance to *their own* patch, not the distance to the
+    // nearest wall anywhere in the domain; with more than one wall patch those differ, and
+    // eLog ~ 1/y then comes out too large on whichever patch is not the closest. OpenFOAM
+    // draws this from turbulenceModel::y() (Foam::nearWallDist), which buildWallDistKEps
+    // has already copied onto this field's boundary -- so take it from there rather than
+    // from the owner cell's global wallDist.
+    const auto wdBoundary = wallDist.boundaryData().value().view();
     auto nwdBoundary = nearWallDist.boundaryData().value().view();
     const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
     NeoN::parallelFor(
         exec,
         {0, nBoundaryFaces},
-        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
+        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdBoundary[i]; },
         "kEpsilon::initNearWallDistBoundary"
     );
 }
@@ -643,8 +649,7 @@ namespace kEpsilonDetail
 
 nnfvcc::VolumeField<scalar> buildWallDistKEps(const NeoN::Executor& exec, MeshAdapter& mesh)
 {
-    Foam::wallDist y(mesh);
-    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), y.y());
+    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), makeNearWallDistField(mesh));
 }
 
 Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string& fieldName)
@@ -663,6 +668,32 @@ Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string&
 }
 
 } // namespace kEpsilonDetail
+
+Foam::volScalarField makeNearWallDistField(MeshAdapter& mesh)
+{
+    Foam::volScalarField y(
+        Foam::IOobject(
+            "nearWallDist",
+            mesh.time().timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("zero", Foam::dimLength, Foam::scalar(0))
+    );
+    const Foam::nearWallDist nwd(mesh);
+    forAll(mesh.boundary(), patchi)
+    {
+        Foam::fvPatchScalarField& yPatch = y.boundaryFieldRef()[patchi];
+        const Foam::scalarField& nwdPatch = nwd[patchi];
+        forAll(yPatch, facei)
+        {
+            yPatch[facei] = nwdPatch[facei];
+        }
+    }
+    return y;
+}
 
 KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : nu_(nu)
