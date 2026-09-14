@@ -33,6 +33,7 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
+from neofoam.preprocess import SetFieldsConfig
 from neofoam.telemetry import TelemetrySettings
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
@@ -118,6 +119,7 @@ incompressibleFluid.config(BlockMeshDictConfig)
 incompressibleFluid.config(SnappyHexMeshDictConfig)
 incompressibleFluid.config(TelemetryDictConfig)  # opt-in tracing (controlDict subdict)
 incompressibleFluid.config(PostProcessConfig)  # in-situ tables (system/postProcess.yaml)
+incompressibleFluid.config(SetFieldsConfig)  # region initialisation (system/setFields.yaml)
 
 incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
 incompressibleFluid.models(viscosityModel, required=True)  # molecular nu

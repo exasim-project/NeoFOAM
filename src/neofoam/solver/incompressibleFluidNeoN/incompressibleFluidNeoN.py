@@ -31,6 +31,7 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
+from neofoam.preprocess import SetFieldsConfig
 from neofoam.solver.neon_runtime import NeoNControlConfig, ensure_neon_initialized
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
@@ -73,6 +74,7 @@ incompressibleFluidNeoN.config(SnappyHexMeshDictConfig)
 # field through a host copy of its internal vector; the sampling sources need a
 # pybFoam field and raise on this backend (see doc/reference/postprocessing.rst).
 incompressibleFluidNeoN.config(PostProcessConfig)
+incompressibleFluidNeoN.config(SetFieldsConfig)  # region initialisation (system/setFields.yaml)
 # The NeoN C++ factories read constant/transportProperties /
 # constant/turbulenceProperties directly at solve time; declaring the (single-phase)
 # Python config classes here does not change that — it only surfaces the two

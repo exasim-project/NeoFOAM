@@ -132,6 +132,11 @@ class Source(BaseConfig):
 
     model_config = ConfigDict(extra="forbid")
 
+    #: Whether :meth:`resolve` already returns the terminal
+    #: :class:`AggregatedDataSet`; such a source's table carries no nodes, and
+    #: :meth:`Pipeline.compute` refuses one that does.
+    self_aggregating: ClassVar[bool] = False
+
     def resolve(self, ctx: Context) -> Union[DataSet, AggregatedDataSet]:
         raise NotImplementedError
 

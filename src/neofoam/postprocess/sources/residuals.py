@@ -6,7 +6,7 @@
 
 """The linear solver residuals of the step, read off the mesh's solverPerformanceDict."""
 
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from neofoam.framework.context import Context
 from neofoam.postprocess.node import AggregatedDataSet, Pipeline, Source
@@ -83,6 +83,8 @@ class Residuals(Source):
     """
 
     type: Literal["residuals"] = "residuals"
+
+    self_aggregating: ClassVar[bool] = True
 
     def resolve(self, ctx: Context) -> AggregatedDataSet:
         solver_dict = ctx.mesh.solverPerformanceDict()

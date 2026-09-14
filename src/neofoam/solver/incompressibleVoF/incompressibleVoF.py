@@ -41,6 +41,7 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
+from neofoam.preprocess import SetFieldsConfig
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
@@ -133,6 +134,7 @@ incompressibleVoF.config(TransportPropertiesConfig)  # two-phase phases/nu/rho/s
 incompressibleVoF.config(GravityConfig)  # constant/g
 incompressibleVoF.config(TurbulencePropertiesConfig)  # simulationType
 incompressibleVoF.config(PostProcessConfig)  # in-situ tables (system/postProcess.yaml)
+incompressibleVoF.config(SetFieldsConfig)  # region initialisation (system/setFields.yaml)
 
 incompressibleVoF.models(advectionModel, required=True)  # alpha advection (pick ONE)
 incompressibleVoF.models(PressureVelocityAlgorithm, required=True)  # VoF PIMPLE

@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Annotated, Any, Literal, cast
 
 import numpy as np
-from pydantic import BeforeValidator, SerializeAsAny
+from pydantic import BeforeValidator, SerializeAsAny, WithJsonSchema
 
 from neofoam.postprocess.node import DataSet, Node
 
@@ -59,8 +59,22 @@ def _resolve_selector(value: Any) -> Any:
 #: A selector held by another selector. A plain ``Selector`` annotation would
 #: validate a mapping into an empty base instance, so resolve it here against
 #: the ``Node`` union as it stands at validation time — a selector registered by
-#: a case script is nestable too.
-NestedSelector = Annotated[SerializeAsAny[Selector], BeforeValidator(_resolve_selector)]
+#: a case script is nestable too. The published JSON Schema is an open object for
+#: the same reason: the bare ``Selector`` base serialises as a closed, property-less
+#: schema, which would tell a catalog consumer that ``region`` must be ``{}``.
+NestedSelector = Annotated[
+    SerializeAsAny[Selector],
+    BeforeValidator(_resolve_selector),
+    WithJsonSchema(
+        {
+            "type": "object",
+            "description": (
+                "a selector mapping from the Node family — its 'type' strings are in "
+                "the post-processing catalog"
+            ),
+        }
+    ),
+]
 
 
 @Node.register
