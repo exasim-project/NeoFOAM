@@ -37,21 +37,21 @@ TEST_CASE("PDESetConstraints")
 
     // Pin a handful of scattered cells to values far from anything the random field holds, so a
     // cell that kept its pre-solve value cannot pass by coincidence.
-    NeoN::Vector<NeoN::scalar> mask(exec, nCells, NeoN::scalar(0));
-    NeoN::Vector<NeoN::scalar> values(exec, nCells, NeoN::scalar(0));
+    // Build the pin arrays on the host, then hand them to the executor at construction.
+    // Filling a copyToHost() result and assigning it back would abort on "Executors are not
+    // the same" for every non-serial executor.
     std::vector<NeoN::localIdx> pinned {0, 3, 7};
+    std::vector<NeoN::scalar> maskHost(static_cast<std::size_t>(nCells), NeoN::scalar(0));
+    std::vector<NeoN::scalar> valueHost(static_cast<std::size_t>(nCells), NeoN::scalar(0));
+    for (std::size_t i = 0; i < pinned.size(); ++i)
     {
-        auto maskHost = mask.copyToHost();
-        auto valuesHost = values.copyToHost();
-        for (std::size_t i = 0; i < pinned.size(); ++i)
-        {
-            if (pinned[i] >= nCells) continue;
-            maskHost.view()[pinned[i]] = NeoN::scalar(1);
-            valuesHost.view()[pinned[i]] = NeoN::scalar(100) + static_cast<NeoN::scalar>(i);
-        }
-        mask = maskHost;
-        values = valuesHost;
+        if (pinned[i] >= nCells) continue;
+        const auto cell = static_cast<std::size_t>(pinned[i]);
+        maskHost[cell] = NeoN::scalar(1);
+        valueHost[cell] = NeoN::scalar(100) + static_cast<NeoN::scalar>(i);
     }
+    NeoN::Vector<NeoN::scalar> mask(exec, maskHost);
+    NeoN::Vector<NeoN::scalar> values(exec, valueHost);
 
     // maxIter 0 -> the Ginkgo iteration criterion is met immediately, so the solver returns
     // without touching the solution. This is the deterministic stand-in for the "No Iterations 0"
@@ -78,11 +78,10 @@ TEST_CASE("PDESetConstraints")
         REQUIRE(numIter == 0);
 
         auto psiHost = nfP.internalVector().copyToHost();
-        auto valuesHost = values.copyToHost();
         for (auto cell : pinned)
         {
             if (cell >= nCells) continue;
-            REQUIRE(psiHost.view()[cell] == valuesHost.view()[cell]);
+            REQUIRE(psiHost.view()[cell] == valueHost[static_cast<std::size_t>(cell)]);
         }
     }
 }
