@@ -200,6 +200,25 @@ TEST_CASE("fvSchemes")
         );
     }
 
+    SECTION("linearUpwind gradient key falls back to default when it has no entry")
+    {
+        // OpenFOAM's schemesLookup::lookupDetail::lookup returns the "default" entry when the
+        // named one is absent, so "linearUpwind grad(U)" against a gradSchemes that only
+        // defines "default" must still resolve. Left unexpanded, NeoN sees the bare key
+        // "grad(U)", fails to recognise it as cellLimited, and silently uses its unlimited
+        // Gauss-Green gradient -- the very defect this mapping exists to prevent.
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("linearUpwind"),
+            std::string("grad(U)")
+        };
+        REQUIRE(
+            mapDiv(div, "div(phi,U)", cellLimitedGrad, "default")
+            == "bounded Gauss linearUpwind cellLimited Gauss linear 1.000000"
+        );
+    }
+
     SECTION("bounded survives the rewrite")
     {
         // BoundedDiv implements the prefix; stripping it dropped the Sp(div(phi), psi) term that
