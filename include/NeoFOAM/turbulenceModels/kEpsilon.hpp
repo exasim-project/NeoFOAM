@@ -72,7 +72,11 @@ public:
      * @param exec     Kokkos executor (Serial/CPU/GPU)
      * @param mesh     NeoN unstructured mesh
      * @param nu       Laminar kinematic viscosity (cell-centred)
-     * @param wallDist Cell-centred wall distances (Foam::wallDist::y())
+     * @param wallDist Per-patch near-wall distance carried on the BOUNDARY, i.e.
+     *                 turbulenceModel::y() / Foam::nearWallDist -- see makeNearWallDistField.
+     *                 Only the boundary values are read; the internal field is unused. This is
+     *                 deliberately NOT Foam::wallDist::y(), whose boundary values are ~0 and
+     *                 would divide by zero in the wall functions' eLog ~ 1/y.
      */
     KEpsilon(
         const NeoN::Executor& exec,

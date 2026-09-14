@@ -84,19 +84,26 @@ static void expandLinearUpwindGradSchemes(NeoN::Dictionary& schemeDict)
 
             // Already an inline gradient spec rather than a key.
             if (gradKey == "Gauss" || gradKey == "cellLimited" || gradKey == "leastSquares") break;
-            if (!gradSchemes.contains(gradKey)) break;
+
+            // A key with no entry of its own resolves through "default", exactly as
+            // OpenFOAM's mesh.gradScheme() does -- without this a spec like
+            // "linearUpwind grad(U)" whose gradSchemes only defines "default" would be left
+            // unresolved and NeoN would fall back to its unlimited gradient.
+            std::string gradEntry = gradKey;
+            if (!gradSchemes.contains(gradEntry)) gradEntry = "default";
+            if (!gradSchemes.contains(gradEntry)) break;
 
             std::vector<std::any> expanded;
-            if (gradSchemes.isType<NeoN::TokenList>(gradKey))
+            if (gradSchemes.isType<NeoN::TokenList>(gradEntry))
             {
                 // get() on a const Dictionary yields a const TokenList, whose tokens() is
                 // non-const; copy through a mutable one.
-                NeoN::TokenList g = gradSchemes.get<NeoN::TokenList>(gradKey);
+                NeoN::TokenList g = gradSchemes.get<NeoN::TokenList>(gradEntry);
                 expanded = g.tokens();
             }
-            else if (gradSchemes.isType<std::string>(gradKey))
+            else if (gradSchemes.isType<std::string>(gradEntry))
             {
-                expanded.emplace_back(gradSchemes.get<std::string>(gradKey));
+                expanded.emplace_back(gradSchemes.get<std::string>(gradEntry));
             }
             else
             {
@@ -105,9 +112,10 @@ static void expandLinearUpwindGradSchemes(NeoN::Dictionary& schemeDict)
 
             NeoN::Logging::warn(
                 "Expanding linearUpwind gradient '{}' in div scheme '{}' to its gradSchemes "
-                "definition",
+                "definition '{}'",
                 gradKey,
-                key
+                key,
+                gradEntry
             );
             toks.erase(toks.begin() + static_cast<std::ptrdiff_t>(i) + 1);
             toks.insert(
