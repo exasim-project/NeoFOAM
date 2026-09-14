@@ -56,6 +56,8 @@ Run only the mesh preprocessing pipeline for a case and stop (no time loop):
 
     neofoam preprocess my_case
 
+The pipeline and the tools it can run are described in :doc:`preprocessing`.
+
 MCP server — ``neofoam mcp``
 ----------------------------
 
