@@ -594,6 +594,20 @@ void KEpsilon::correctNutInternal(
         nut.internalVector(),
         coeffs_.cmu
     );
+
+    // OpenFOAM's correctNut is a GeometricField assignment (kEpsilon.C:45,
+    // nut_ = Cmu*sqr(k)/epsilon), so it evaluates the boundary faces too; only then does
+    // correctBoundaryConditions() overwrite the wall-function patches. Doing the interior
+    // alone leaves every other patch -- `calculated` inlets/outlets above all -- pinned at
+    // whatever the 0/ file held, which is usually zero, and that zero then propagates into
+    // nuEff on those faces.
+    kernelCorrectNutInternal(
+        exec_,
+        k.boundaryData().value(),
+        epsilon.boundaryData().value(),
+        nut.boundaryData().value(),
+        coeffs_.cmu
+    );
 }
 
 void KEpsilon::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
