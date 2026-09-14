@@ -67,9 +67,10 @@ inline void setEpsilonWallFunction(
             const scalar y = nearWallBoundary[i];
             const scalar kw = Kokkos::max(kInternal[owner], scalar(0));
 
-            // STEPWISE blender (OpenFOAM v2406 default) with lowReCorrection off:
-            // epsilon0 = epsilonLog = Cmu^0.75 k^1.5 / (kappa y). (The viscous
-            // sublayer branch is only taken when lowReCorrection && yPlus < yPlusLam.)
+            // OpenFOAM switches, it does not blend: epsilonWallFunction.C:242-248 picks
+            // epsilonVis only when `lowReCorrection` is on AND yPlus < yPlusLam, and that
+            // flag defaults to false (line 405). So the log-law branch is the default for
+            // every face. (omegaWallFunction *is* a BINOMIAL blend -- epsilon is not.)
             const scalar eLog = Cmu75 * Kokkos::pow(kw, scalar(1.5)) / (kappa * y);
             const scalar eOmega = eLog;
 

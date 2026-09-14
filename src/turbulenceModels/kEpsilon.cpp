@@ -271,6 +271,8 @@ KEpsilon::KEpsilon(
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , epsilonWallValue_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , epsilonWallMask_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
 {
     surfInterp_.interpolate(nu_, surfNu_);
 
@@ -344,8 +346,10 @@ void KEpsilon::correct(
     // source that balances the wall-function ε boundary value.
     //
     // Identifies wall-function patches by name on epsilon's BC list.
+    bool anyEpsilonWF = false;
     {
         const scalar cmu25 = Kokkos::pow(coeffs_.cmu, scalar(0.25));
+        const scalar cmu75 = Kokkos::pow(coeffs_.cmu, scalar(0.75));
         const scalar kappa_ = scalar(0.41); // matches epsilonWallFunction default
         const auto& epsilonBCs = epsilon.boundaryConditions();
         const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
@@ -390,9 +394,25 @@ void KEpsilon::correct(
                 },
                 "kEpsilon::epsilonWFInvertCount"
             );
+            // The pin mask follows the same static topology, so build it here rather than
+            // from the face loop below: a corner cell is touched by several faces at once
+            // and a per-face store would be a data race even though every writer stores 1.
+            auto maskBuild = epsilonWallMask_.view();
+            NeoN::parallelFor(
+                exec_,
+                {0, nCells},
+                NEON_LAMBDA(const NeoN::localIdx c) {
+                    maskBuild[c] = cwBuild[c] > scalar(0) ? scalar(1) : scalar(0);
+                },
+                "kEpsilon::epsilonWFBuildMask"
+            );
             cornerWeightsBuilt_ = true;
         }
         const auto cornerWeightV = cornerWeight_.view();
+
+        // Only the value is per-step (it tracks k); the mask is topology and stays put.
+        NeoN::fill(epsilonWallValue_, scalar(0));
+        auto epsWallValueV = epsilonWallValue_.view();
 
         // Zero Pk_ at wall cells before accumulation (computeSources wrote bulk production there).
         NeoN::parallelFor(
@@ -412,6 +432,7 @@ void KEpsilon::correct(
             {
                 continue;
             }
+            anyEpsilonWF = true;
             const auto [start, end] = epsilon.boundaryData().range(patchID);
             NeoN::parallelFor(
                 exec_,
@@ -431,6 +452,13 @@ void KEpsilon::correct(
                     const scalar gWall =
                         (nutw + nuw) * magGradUw * cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
                     Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
+
+                    // Cell half of epsilonWallFunction, corner-averaged onto the owner, and
+                    // the same value setEpsilonWallFunction puts on the face: the log-law
+                    // branch, which is what OpenFOAM uses for every face unless the
+                    // non-default lowReCorrection is switched on.
+                    const scalar eLog = cmu75 * Kokkos::pow(kc, scalar(1.5)) / (kappa_ * y);
+                    Kokkos::atomic_add(&epsWallValueV[owner], cw * eLog);
                 },
                 "kEpsilon::epsilonWFGFeedback"
             );
@@ -447,6 +475,16 @@ void KEpsilon::correct(
         epsilon,
         rt
     );
+    // Hard-pin the near-wall cells to the log-law epsilon built above. This is the cell half
+    // of OpenFOAM's epsilonWallFunction, which fixes epsilon in the wall-adjacent cells via
+    // manipulateMatrix/fvMatrix::setValues rather than solving for them. Without it the
+    // near-wall dissipation is under-predicted, the eps/k destruction of k is too weak, and
+    // k runs high through the whole boundary layer. Mirrors the omega pin in KOmegaSST,
+    // which likewise constrains before relaxing.
+    if (anyEpsilonWF)
+    {
+        epsEqn.setConstraints(epsilonWallMask_, epsilonWallValue_);
+    }
     epsEqn.relax(); // OpenFOAM kEpsilon.C: epsEqn.ref().relax()
     epsEqn.solve();
 
