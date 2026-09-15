@@ -1,8 +1,6 @@
 var searchData=
 [
-  ['kepsilon_0',['KEpsilon',['../classNeoFOAM_1_1KEpsilon.html#a5c2f61f4f1bb0bcee497f83e959d7ba5',1,'NeoFOAM::KEpsilon']]],
-  ['kepsilonmodel_1',['KEpsilonModel',['../classNeoFOAM_1_1KEpsilonModel.html#ac49be3df6bd744bd61560c8a01b0ee74',1,'NeoFOAM::KEpsilonModel']]],
-  ['komegasst_2',['KOmegaSST',['../classNeoFOAM_1_1KOmegaSST.html#abbf17dd80fdb2a06824694d5f4ba9154',1,'NeoFOAM::KOmegaSST']]],
-  ['komegasstmodel_3',['KOmegaSSTModel',['../classNeoFOAM_1_1KOmegaSSTModel.html#aa8fe7e1df42075a950c87c3031cd9e7b',1,'NeoFOAM::KOmegaSSTModel']]],
-  ['kqrwallfunction_4',['KqRWallFunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction.html#a0d4a27065a60bbaba08aa60fcf109061',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::KqRWallFunction']]]
+  ['implicitoperation_0',['implicitOperation',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator.html#af6dadfefe54f0a91521c12ae2c85717e',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperator']]],
+  ['initialize_1',['initialize',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ac43050c3c177a80bad14cf5a56284c6c',1,'NeoFOAM::SpalartAllmarasDDES::initialize()'],['../classNeoFOAM_1_1TurbulenceModel.html#ad6c3e347eb9ee939dfb3a1d10f5836de',1,'NeoFOAM::TurbulenceModel::initialize()']]],
+  ['insert_2',['insert',['../namespaceNeoFOAM.html#af3b37c9dbbd37df8a0849a0f383f06d9',1,'NeoFOAM']]]
 ];
