@@ -13,40 +13,40 @@
         <childnode refid="3" relation="include">
         </childnode>
       </node>
-      <node id="18">
+      <node id="16">
         <label>NeoFOAM/compatibility/fvSchemes.hpp</label>
         <link refid="fvSchemes_8hpp"/>
         <childnode refid="3" relation="include">
         </childnode>
       </node>
-      <node id="15">
+      <node id="17">
         <label>NeoFOAM/compatibility/fvSolution.hpp</label>
         <link refid="fvSolution_8hpp"/>
         <childnode refid="6" relation="include">
         </childnode>
         <childnode refid="7" relation="include">
         </childnode>
-        <childnode refid="16" relation="include">
+        <childnode refid="18" relation="include">
         </childnode>
-        <childnode refid="17" relation="include">
+        <childnode refid="19" relation="include">
         </childnode>
         <childnode refid="8" relation="include">
         </childnode>
       </node>
-      <node id="13">
+      <node id="14">
         <label>NeoFOAM/datastructures/databaseWrapper.hpp</label>
         <link refid="databaseWrapper_8hpp"/>
         <childnode refid="3" relation="include">
         </childnode>
-        <childnode refid="14" relation="include">
+        <childnode refid="15" relation="include">
         </childnode>
       </node>
-      <node id="10">
+      <node id="11">
         <label>NeoFOAM/datastructures/meshAdapter.hpp</label>
         <link refid="meshAdapter_8hpp"/>
-        <childnode refid="11" relation="include">
-        </childnode>
         <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
         </childnode>
         <childnode refid="3" relation="include">
         </childnode>
@@ -68,9 +68,9 @@
         </childnode>
         <childnode refid="8" relation="include">
         </childnode>
-        <childnode refid="15" relation="include">
+        <childnode refid="17" relation="include">
         </childnode>
-        <childnode refid="18" relation="include">
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="8">
@@ -82,16 +82,20 @@
         </childnode>
         <childnode refid="10" relation="include">
         </childnode>
-        <childnode refid="13" relation="include">
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+        <childnode refid="16" relation="include">
         </childnode>
       </node>
       <node id="3">
         <label>NeoN/NeoN.hpp</label>
       </node>
-      <node id="16">
+      <node id="18">
         <label>NeoN/core/dictionary.hpp</label>
       </node>
-      <node id="17">
+      <node id="19">
         <label>NeoN/core/primitives/scalar.hpp</label>
       </node>
       <node id="4">
@@ -100,19 +104,22 @@
       <node id="5">
         <label>cmath</label>
       </node>
-      <node id="11">
+      <node id="12">
         <label>functional</label>
       </node>
       <node id="9">
         <label>fvMesh.H</label>
       </node>
-      <node id="12">
+      <node id="10">
+        <label>map</label>
+      </node>
+      <node id="13">
         <label>memory</label>
       </node>
       <node id="6">
         <label>optional</label>
       </node>
-      <node id="14">
+      <node id="15">
         <label>regIOobject.H</label>
       </node>
       <node id="7">
@@ -242,19 +249,33 @@
 <codeline lineno="87"><highlight class="normal"></highlight></codeline>
 <codeline lineno="88"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Velocity<sp/>corrector:<sp/>U<sp/>=<sp/>HbyA<sp/>-<sp/>rAU*grad(p).</highlight></codeline>
 <codeline lineno="89"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90" refid="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" kindref="member">updateVelocity</ref>(</highlight></codeline>
+<codeline lineno="90" refid="namespaceNeoFOAM_1a1a89cbc2a1aaa29473e86e780907ca57" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a1a89cbc2a1aaa29473e86e780907ca57" kindref="member">updateVelocity</ref>(</highlight></codeline>
 <codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
 <codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
 <codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
-<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>U</highlight></codeline>
-<codeline lineno="95"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>U,</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::GradOperatorFactory&lt;NeoN::Vec3&gt;&amp;<sp/>gradPScheme</highlight></codeline>
+<codeline lineno="96"><highlight class="normal">);</highlight></codeline>
 <codeline lineno="97"><highlight class="normal"></highlight></codeline>
-<codeline lineno="98"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Face<sp/>flux<sp/>from<sp/>a<sp/>volume<sp/>vector<sp/>field:<sp/>phi<sp/>=<sp/>U·Sf.</highlight></codeline>
-<codeline lineno="99"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="100" refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" kindref="member">flux</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>volField);</highlight></codeline>
-<codeline lineno="101"><highlight class="normal"></highlight></codeline>
-<codeline lineno="102"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Velocity<sp/>corrector<sp/>using<sp/>the<sp/>gradSchemes<sp/>entry<sp/>configured<sp/>for<sp/>@p<sp/>p.</highlight></codeline>
+<codeline lineno="99"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="100"><highlight class="comment"><sp/>*<sp/>Resolves<sp/>&quot;grad(&lt;p.name&gt;)&quot;<sp/>through<sp/>RunTime::gradScheme,<sp/>which<sp/>builds<sp/>and<sp/>caches<sp/>the</highlight></codeline>
+<codeline lineno="101"><highlight class="comment"><sp/>*<sp/>operator,<sp/>so<sp/>solvers<sp/>need<sp/>not<sp/>construct<sp/>one<sp/>themselves.</highlight></codeline>
+<codeline lineno="102"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="103" refid="namespaceNeoFOAM_1a62eb8e5a163de38a7fbebd7a25c7b624" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a1a89cbc2a1aaa29473e86e780907ca57" kindref="member">updateVelocity</ref>(</highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>U,</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>runTime</highlight></codeline>
+<codeline lineno="109"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Face<sp/>flux<sp/>from<sp/>a<sp/>volume<sp/>vector<sp/>field:<sp/>phi<sp/>=<sp/>U·Sf.</highlight></codeline>
+<codeline lineno="113"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114" refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" kindref="member">flux</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>volField);</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp"/>
   </compounddef>

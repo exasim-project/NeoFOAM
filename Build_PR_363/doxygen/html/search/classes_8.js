@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['meshadapter_0',['MeshAdapter',['../classNeoFOAM_1_1MeshAdapter.html',1,'NeoFOAM']]]
+  ['laminar_0',['Laminar',['../classNeoFOAM_1_1Laminar.html',1,'NeoFOAM']]]
 ];
