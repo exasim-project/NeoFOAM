@@ -87,5 +87,19 @@ public:
 
 private:
     NeoN::Executor exec_;
+
+    // check that permutation is valid for mesh (host side)
+    void validate(
+        const NeoN::UnstructuredMesh& mesh,
+        const Permutation& permutation) const;
+    
+    template<typename T>
+    void reorderField(
+        NeoN::Field<T>& field,
+        const Permutation& permutation) const;
+    
+    void remapCellReferences(
+        NeoN::UnstructuredMesh& mesh,
+        const Permutation& permutation) const;
 };
 } // namespace NeoFOAM
