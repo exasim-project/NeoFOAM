@@ -2,11 +2,16 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # verification/baseline/*.json are archived run evidence, not source: the
+      # formatting and the captured solver log_tails are the record. Reformatting
+      # or spell-correcting them rewrites what they exist to preserve.
       - id: check-yaml
       - id: end-of-file-fixer
+        exclude: ^verification/baseline/.*\.json$
       - id: trailing-whitespace
       - id: pretty-format-json
         args: [--autofix, --no-sort-keys]
+        exclude: ^verification/baseline/.*\.json$
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: 'v17.0.6'  # The default in Ubuntu 22.04, which is used in our CI
     hooks:
@@ -25,3 +30,23 @@ repos:
     rev: v1.23.1
     hooks:
       - id: typos
+        exclude: ^verification/baseline/.*\.json$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+      - id: ruff-format
+        exclude: \.cmake-format\.py$
+      - id: ruff
+        args: [--fix]
+        exclude: \.cmake-format\.py$
+
+  - repo: local
+    hooks:
+      # mypy needs project dependencies (pydantic plugin, etc.),
+      # so it must run in the project venv. --frozen skips uv sync/rebuild.
+      - id: type-check
+        name: Mypy Type Check
+        entry: mypy
+        language: system
+        pass_filenames: false

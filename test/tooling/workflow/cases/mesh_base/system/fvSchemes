@@ -1,0 +1,16 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// Minimal schemes: constructing an fvMesh needs fvSchemes to exist; blockMesh
+// itself only reads blockMeshDict, so divSchemes may stay `none`.
+
+ddtSchemes           { default steadyState; }
+gradSchemes          { default Gauss linear; }
+divSchemes           { default none; }
+laplacianSchemes     { default Gauss linear corrected; }
+interpolationSchemes { default linear; }
+snGradSchemes        { default corrected; }

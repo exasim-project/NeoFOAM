@@ -1,0 +1,44 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+// Every key the typed algorithm-block configs declare, set to the OPPOSITE of
+// its schema default, so a test that reads it back cannot pass on a default.
+
+PIMPLE
+{
+    nOuterCorrectors            3;
+    nCorrectors                 4;
+    nNonOrthogonalCorrectors    2;
+    momentumPredictor           no;
+    turbCorr                    no;
+    turbOnFinalIterOnly         no;
+    finalOnLastPimpleIterOnly   yes;
+    frozenFlow                  yes;
+
+    correctPhi                  no;
+    checkMeshCourantNo          yes;
+    moveMeshOuterCorrectors     yes;
+}
+
+PISO
+{
+    nCorrectors                 4;
+    nNonOrthogonalCorrectors    2;
+    momentumPredictor           no;
+
+    correctPhi                  no;
+    checkMeshCourantNo          yes;
+    moveMeshOuterCorrectors     yes;
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors    2;
+    momentumPredictor           no;
+    consistent                  yes;
+}

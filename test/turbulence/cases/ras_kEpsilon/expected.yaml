@@ -1,0 +1,13 @@
+# Expected values for the RAS / kEpsilon case. kEpsilon is a registered dual
+# model: the native NeoN closure (fallback=False) and the pybFoam fallback
+# (fallback=True) both build from this case.
+config:                       # cross-checked against the real turbulenceProperties read
+  simulationType: RAS
+  RAS:                        # full sub-dictionary, compared wholesale
+    RASModel: kEpsilon
+    turbulence: true
+    printCoeffs: true
+  LES: null
+selection:
+  model_name: kEpsilon
+  resolves_to: native         # native (registered) | unregistered

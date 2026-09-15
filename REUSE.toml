@@ -13,7 +13,7 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
-    "CMakePresets.json", ".clang-format", ".clang-tidy", ".pre-commit-config.yaml", "spack.yaml", "REUSE.toml",  ".vscode/**.json", "*.log"
+    "CMakePresets.json", ".clang-format", ".clang-tidy", ".pre-commit-config.yaml", "spack.yaml", "REUSE.toml",  ".vscode/**.json", "*.log", ".claude/**", "CLAUDE.md"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2023 - 2024 NeoFOAM authors"
@@ -24,6 +24,7 @@ path = [
     "test/**",
      "benchmarks/**",
      "tutorials/**",
+     "examples/**",
      ".github/workflows/build.yaml",
      ".github/workflows/static_checks.yaml",
      ".github/workflows/pubkey.gpg",
@@ -32,7 +33,10 @@ path = [
      "CHANGELOG.md",
      "README.md",
      "AGENTS.md",
+     "CLAUDE.md",
+     ".claude/**",
      ".gitmodules",
+     ".coverage",
      "environment.yml",
     "CMakePresets.json",
     ".clang-format",
@@ -40,8 +44,15 @@ path = [
     ".pre-commit-config.yaml",
     "spack.yaml",
     "**/case/**",
-    "REUSE.toml"
+    "verification/baseline/*.json",
+    # Study output: cases/, results/, report*, .snakemake/ and __pycache__ are all
+    # git-ignored, but reuse walks the filesystem rather than the index and sees them.
+    "verification/**",
+    "REUSE.toml",
+    "ruff.toml",
+    "pyproject.toml",
+    "uv.lock"
 ]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2023 - 2024 NeoFOAM authors"
+SPDX-FileCopyrightText = "2023 - 2025 NeoFOAM authors"
 SPDX-License-Identifier = "Unlicense"

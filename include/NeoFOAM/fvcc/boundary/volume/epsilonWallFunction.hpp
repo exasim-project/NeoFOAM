@@ -48,10 +48,8 @@ inline void setEpsilonWallFunction(
     const scalar Cmu75 = Kokkos::pow(Cmu, scalar(0.75));
 
     auto kInternal = k.internalVector().view();
-    // nu is kept in the signature/context: it is what the lowReCorrection branch would
-    // need, and every caller already supplies it.
-    (void)nu;
     const auto nearWallBoundary = nearWallDist.boundaryData().value().view();
+    (void)nu; // molecular viscosity only used by the (disabled) viscous-sublayer branch
 
     auto [refGrad, value, valueFraction, refValue, faceOwners] = views(
         epsilon.boundaryData().refGrad(),

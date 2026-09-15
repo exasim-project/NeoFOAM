@@ -4,8 +4,26 @@
 
 #include "NeoFOAM/solutionControl/pimpleControl.hpp"
 
+#include <algorithm>
+
+#include "NeoFOAM/compatibility/fvSolution.hpp"
+
 namespace NeoFOAM
 {
+
+// A residualControl keyword may be an OpenFOAM regex (e.g. "(U|k|epsilon)"), so the
+// per-field residual is matched with dictionary semantics rather than by identity.
+static ResidualMap::const_iterator
+findResidual(const ResidualMap& residuals, const std::string& key)
+{
+    const auto exact = residuals.find(key);
+    if (exact != residuals.end()) return exact;
+    return std::find_if(
+        residuals.begin(),
+        residuals.end(),
+        [&key](const auto& residual) { return keyMatches(key, residual.first); }
+    );
+}
 
 // Coerce an int-typed dictionary entry to scalar; bare-integer tolerance values
 // (e.g. `tolerance 0;`) are stored as int and rejected by get<scalar>.
@@ -92,7 +110,7 @@ bool PimpleControl::criteriaSatisfied(const ResidualMap& residuals)
     bool checked = false; // safety that some checks were indeed performed
     for (auto& fc : residualControl_)
     {
-        auto it = residuals.find(fc.name);
+        auto it = findResidual(residuals, fc.name);
         if (it == residuals.end())
         {
             continue;

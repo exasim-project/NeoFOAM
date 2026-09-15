@@ -3,8 +3,8 @@
 
 [project]
 name = "neofoam"
-version = "0.2.0"
-description = "Python tooling for running, validating, and post-processing NeoFOAM CFD simulations"
+version = "0.3.0"
+description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "Henning Scheufler", email = "henning.scheufler@web.de" },
@@ -12,21 +12,193 @@ authors = [
     { name = "Chih-Ta Wang", email = "chihta.wang@tum.de" },
     { name = "Dheeraj Raghunathan", email = "dheeraj.raghunathan@tum.de" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "numpy",
     "matplotlib",
     "foamlib",
+    "pybFoam>=0.5.3",
+    "typer",
+    "pydantic>=2.0.0",
+    "networkx>=3.0",
+    "matplotlib>=3.0.0",
+    "pyvis>=0.3.2",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "pytest-xdist",
+    "pydantic-settings",
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+    "pandas>=2.0.0",
+    "poethepoet>=0.37.0",
+    "ruff>=0.14.2",
+    "mypy",
+    "pre-commit",
+    "types-PyYAML",
+    # build deps needed in env when no-build-isolation is enabled
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
+]
+docs = [
+    "sphinx>=4.0",
+    "myst-parser",
+    "sphinx-sitemap",
+    "furo",
+    "sphinxcontrib-mermaid",
+    "sphinx-togglebutton>=0.3.2",
+    "breathe",
+    "pyvista>=0.43",
+    "sphinx-gallery>=0.16",
+    # Interactive .vtksz scenes embedded under each pyvista figure
+    # via DynamicScraper; trame materialises the vtk.js viewer and
+    # nest_asyncio2 lets pyvista launch the in-memory trame server
+    # synchronously from inside `Plotter.export_vtksz`. sphinx-design
+    # provides the tab-set / tab-item directives DynamicScraper emits
+    # to switch between the static PNG and the interactive viewer.
+    "trame",
+    "trame-vtk",
+    "trame-vuetify",
+    "nest_asyncio2",
+    "sphinx-design",
+    # GIF animations from pl.open_gif() / pl.write_frame() in
+    # tutorials 02 and 03.
+    "imageio",
+    # The telemetry how-to (example_trace_solver_performance) traces a
+    # real solver run at gallery-build time.
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+]
+agent = [
+    # OpenAI-compatible client (local Ollama, OpenAI-style endpoints) plus the
+    # Anthropic backend for hosted Claude models (e.g. Haiku).
+    "pydantic-ai-slim[openai,anthropic]>=0.0.40",
+]
+mcp = [
+    # MCP server: FastMCP v3 protocol layer (pulls the `mcp` SDK transitively)
+    # + FastAPI/uvicorn web server. httpx backs the FastAPI TestClient / MCP client.
+    "fastmcp>=3,<4",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
+telemetry = [
+    # Opt-in performance tracing (neofoam.telemetry); the shim itself works
+    # without these — only activating telemetry requires the SDK.
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    # neofoam.telemetry.report renders the emitted trace: the Chrome/Perfetto
+    # export is dependency-free, the summary bar chart needs matplotlib.
+    "matplotlib>=3.5",
+]
+verification = [
+    # verification/foam_tutorials: the OpenFOAM tutorial drop-in studies. Each
+    # study now carries its own copy of the pipeline under its `rules/` (see
+    # `verification/README.md`) and runs it with snakemake, which is therefore an
+    # execution-time dependency of the studies, not of the neofoam package —
+    # nothing under src/ imports it. PyYAML is a base dependency (the study loader
+    # and the paramspace both read YAML), so it is not repeated here.
+    # snakemake 8 requires Python >= 3.11, while the package still supports 3.10;
+    # the marker keeps `.[all]` installable there (the studies then need 3.11+).
+    "snakemake>=8; python_version >= '3.11'",
+]
+all = [
+    "neofoam[dev,docs,agent,mcp,telemetry,verification]",
 ]
 
 [project.scripts]
-clean-run-validate = "tutorials.cavity.cleanRunValidate:main"
-clean-run-plot = "tutorials.cavity.cleanRunPlot:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
+neofoam = "neofoam.cli.app:app"
 
 [build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.version = ">=3.22"
+cmake.args = ["--preset=python-bindings"]
+build.verbose = true
+build-dir = "_skbuild"
+editable.mode = "redirect"
+editable.verbose = true
+editable.rebuild = false
+
+[tool.scikit-build.cmake.define]
+NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
+
+[tool.uv]
+no-build-isolation-package = ["neofoam"]
+
+[tool.uv.sources]
+pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+include = ["pyproject.toml", "src/**/*.py", "test/**/*.py"]
+extend-exclude = ["build/", "dist/", "src/NeoN"]
+
+[tool.ruff.lint]
+select = ["E","F","I"]  # enable isort (I) + basic lint
+extend-select = ["PLC0415"]
+
+# optional per-rule ignores
+ignore = []
+
+# isort options (import sorting)
+[tool.ruff.lint.isort]
+known-first-party = ["neofoam"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra --showlocals"
+testpaths = [
+    "test"
+]
+markers = [
+    "slow: mesh-building tests (blockMesh/snappyHexMesh + checkMesh); deselect with -m 'not slow'",
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+files = ["src"]                  # verification/ is not part of this branch
+mypy_path = ["src"]              # so imports from src resolve
+strict = true                    # optional but recommended
+
+# Exclude src/Neon and everything beneath it
+# (mypy applies this regex to the normalized file path)
+exclude = [
+  "src/NeoN",
+]
+
+# If other code imports src/NeoN and you want mypy to never follow into it:
+[[tool.mypy.overrides]]
+module = ["NeoN", "NeoN.*", "pybFoam", "pybFoam.*", "neon", "neon.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
+# opentelemetry is the optional [telemetry] extra — absent in most envs.
+[[tool.mypy.overrides]]
+module = ["opentelemetry", "opentelemetry.*"]
+ignore_missing_imports = true
+
+[tool.poe.executor]
+type = "simple"
+
+[tool.poe.tasks]
+test = "pytest"
+lint = "ruff check"
+format = "ruff format src test"
+type_check = "mypy"
+build_docs = "sphinx-build -b html doc doc/_build"
+serve_docs = { shell = "cd doc/_build && python -m http.server 8000" }
+view_docs = { shell = "python -m webbrowser -t http://localhost:8000/index.html" }

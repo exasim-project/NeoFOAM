@@ -292,3 +292,25 @@ void GaussViscousStress::viscousStress(
 }
 
 } // namespace NeoN::finiteVolume::cellCentred
+
+
+namespace NeoFOAM
+{
+
+NeoN::dsl::SpatialOperator<NeoN::Vec3> makeViscousStress(
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nu,
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nut,
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU
+)
+{
+    namespace fvcc = NeoN::finiteVolume::cellCentred;
+    // Force the "Gauss" strategy into the ViscousStressOperatorFactory's runtime-
+    // selection table from inside libNeoFOAM. The automatic static self-registration
+    // (Register<GaussViscousStress>::REGISTERED) is unreliable when the operator is
+    // only ever reached through the -fvisibility=hidden Python bindings. addSubType()
+    // is idempotent.
+    fvcc::ViscousStressOperatorFactory::Register<fvcc::GaussViscousStress>::addSubType();
+    return NeoN::dsl::exp::viscousStress(nu, nut, gradU);
+}
+
+} // namespace NeoFOAM
