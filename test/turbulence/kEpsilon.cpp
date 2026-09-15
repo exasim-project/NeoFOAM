@@ -288,17 +288,18 @@ TEST_CASE("kEpsilon: NeoFOAM wrapper validate()+correct() matches OpenFOAM")
     const Foam::volScalarField& epsFoam = mesh.lookupObject<Foam::volScalarField>("epsilon");
     const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
 
-    // Tolerances are looser than 1e-10 because OpenFOAM's kEpsilon includes a
-    // compressibility correction -(2/3)*div(U) in both equations which is
-    // non-zero for a single uncoupled step on a small mesh.
-    REQUIRE_THAT(nfK, EqualsInternal(kFoam, ApproxScalar(5e-5)));
+    // These used to absorb the -(2/3)*div(U) dilatation sinks, which NeoFOAM did not carry.
+    // Now that KEpsilon::correct applies them the tolerances tighten by about an order of
+    // magnitude each: k 5e-5 -> 5e-6, epsilon 5e-4 -> 1e-6, nut 5e-7 -> 1e-7. What remains is
+    // ordinary single-step round-off on this mesh.
+    REQUIRE_THAT(nfK, EqualsInternal(kFoam, ApproxScalar(5e-6)));
     REQUIRE_THAT(nfK.boundaryData(), EqualsBoundary(kFoam, ApproxScalar(5e-5)));
 
-    REQUIRE_THAT(nfEps, EqualsInternal(epsFoam, ApproxScalar(5e-4)));
+    REQUIRE_THAT(nfEps, EqualsInternal(epsFoam, ApproxScalar(1e-6)));
     REQUIRE_THAT(nfEps.boundaryData(), EqualsBoundary(epsFoam, ApproxScalar(5e-4)));
 
     // nut = Cmu*k²/eps inherits the compressibility-correction artifact from k/epsilon;
     // 5e-7 covers the observed O(1.5e-7) spread on this mesh.
-    REQUIRE_THAT(nfNut, EqualsInternal(nutFoam, ApproxScalar(5e-7)));
+    REQUIRE_THAT(nfNut, EqualsInternal(nutFoam, ApproxScalar(1e-7)));
     REQUIRE_THAT(nfNut.boundaryData(), EqualsBoundary(nutFoam, ApproxScalar(5e-7)));
 }

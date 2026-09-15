@@ -62,6 +62,8 @@ public:
         scalar C2 = 1.92;
         scalar sigmaK = 1.0;
         scalar sigmaEps = 1.3;
+        // Upstream's C3 (kEpsilon.C:259) scales the epsilon dilatation sink; 0 by default.
+        scalar C3 = 0.0;
     };
 
     /**
@@ -70,7 +72,11 @@ public:
      * @param exec     Kokkos executor (Serial/CPU/GPU)
      * @param mesh     NeoN unstructured mesh
      * @param nu       Laminar kinematic viscosity (cell-centred)
-     * @param wallDist Cell-centred wall distances (Foam::wallDist::y())
+     * @param wallDist Per-patch near-wall distance carried on the BOUNDARY, i.e.
+     *                 turbulenceModel::y() / Foam::nearWallDist -- see makeNearWallDistField.
+     *                 Only the boundary values are read; the internal field is unused. This is
+     *                 deliberately NOT Foam::wallDist::y(), whose boundary values are ~0 and
+     *                 would divide by zero in the wall functions' eLog ~ 1/y.
      */
     KEpsilon(
         const NeoN::Executor& exec,
@@ -223,6 +229,9 @@ private:
     // log-law value each wall-adjacent cell is fixed to, and the 0/1 mask selecting them.
     NeoN::Vector<scalar> epsilonWallValue_;
     NeoN::Vector<scalar> epsilonWallMask_;
+
+    // fvc::div(phi) for the dilatation sinks, recomputed each correct().
+    nnfvcc::VolumeField<scalar> divU_;
 };
 
 /**

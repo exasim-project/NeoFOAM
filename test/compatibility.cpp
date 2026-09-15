@@ -361,3 +361,157 @@ TEST_CASE("fvSolution relaxation lookup")
         REQUIRE_FALSE(NeoFOAM::lookupEqnRelaxation(fvSolution, "U", false).has_value());
     }
 }
+
+
+// mapFvSchemes rewrites the scheme dictionaries so NeoN's factories see specs they can resolve.
+// Two rewrites need covering, both of which silently degrade the convection term when missing:
+// linearUpwind's reconstruction gradient arrives as a *key* into gradSchemes, and limitedLinear's
+// limiter gradient is not in its spec at all (OpenFOAM looks it up as grad(<field>)).
+TEST_CASE("fvSchemes")
+{
+    using NeoN::TokenList;
+
+    // Renders a token list as space-separated words/numbers so a spec can be asserted in one go.
+    auto spell = [](const TokenList& tl)
+    {
+        std::string out;
+        // Named copy: tokens() hands back a reference into the list, so binding it straight from
+        // a temporary would dangle before the loop body runs.
+        TokenList copy(tl);
+        for (const auto& tok : copy.tokens())
+        {
+            if (!out.empty()) out += " ";
+            if (tok.type() == typeid(std::string)) out += std::any_cast<const std::string&>(tok);
+            else if (tok.type() == typeid(NeoN::scalar))
+                out += std::to_string(std::any_cast<NeoN::scalar>(tok));
+            else if (tok.type() == typeid(NeoN::label))
+                out += std::to_string(std::any_cast<NeoN::label>(tok));
+            else
+                out += "?";
+        }
+        return out;
+    };
+
+    auto mapDiv = [&](const TokenList& div,
+                      const std::string& divKey,
+                      const TokenList& grad,
+                      const std::string& gradKey)
+    {
+        NeoN::Dictionary divSchemes;
+        divSchemes.insert(divKey, div);
+        NeoN::Dictionary gradSchemes;
+        gradSchemes.insert(gradKey, grad);
+
+        NeoN::Dictionary schemes;
+        schemes.insert("divSchemes", divSchemes);
+        schemes.insert("gradSchemes", gradSchemes);
+
+        auto mapped = NeoFOAM::mapFvSchemes(schemes);
+        return spell(mapped.subDict("divSchemes").get<TokenList>(divKey));
+    };
+
+    const TokenList cellLimitedGrad {
+        std::string("cellLimited"),
+        std::string("Gauss"),
+        std::string("linear"),
+        NeoN::scalar(1)
+    };
+    const TokenList plainGrad {std::string("Gauss"), std::string("linear")};
+
+    SECTION("linearUpwind gradient key expands to its gradSchemes definition")
+    {
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("linearUpwind"),
+            std::string("limited")
+        };
+        REQUIRE(
+            mapDiv(div, "div(phi,U)", cellLimitedGrad, "limited")
+            == "bounded Gauss linearUpwind cellLimited Gauss linear 1.000000"
+        );
+    }
+
+    SECTION("linearUpwind gradient key falls back to default when it has no entry")
+    {
+        // OpenFOAM's schemesLookup::lookupDetail::lookup returns the "default" entry when the
+        // named one is absent, so "linearUpwind grad(U)" against a gradSchemes that only
+        // defines "default" must still resolve. Left unexpanded, NeoN sees the bare key
+        // "grad(U)", fails to recognise it as cellLimited, and silently uses its unlimited
+        // Gauss-Green gradient -- the very defect this mapping exists to prevent.
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("linearUpwind"),
+            std::string("grad(U)")
+        };
+        REQUIRE(
+            mapDiv(div, "div(phi,U)", cellLimitedGrad, "default")
+            == "bounded Gauss linearUpwind cellLimited Gauss linear 1.000000"
+        );
+    }
+
+    SECTION("bounded survives the rewrite")
+    {
+        // BoundedDiv implements the prefix; stripping it dropped the Sp(div(phi), psi) term that
+        // compensates a steady run's continuity error.
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("linearUpwind"),
+            std::string("limited")
+        };
+        REQUIRE(mapDiv(div, "div(phi,U)", cellLimitedGrad, "limited").rfind("bounded", 0) == 0);
+    }
+
+    SECTION("limitedLinear is marked cellLimited after a cellLimited grad(<field>)")
+    {
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("limitedLinear"),
+            NeoN::scalar(1)
+        };
+        REQUIRE(
+            mapDiv(div, "div(phi,k)", cellLimitedGrad, "grad(k)")
+            == "bounded Gauss limitedLinear 1.000000 cellLimited"
+        );
+    }
+
+    SECTION("limitedLinear is left alone after an unlimited grad(<field>)")
+    {
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("limitedLinear"),
+            NeoN::scalar(1)
+        };
+        REQUIRE(
+            mapDiv(div, "div(phi,epsilon)", plainGrad, "grad(epsilon)")
+            == "bounded Gauss limitedLinear 1.000000"
+        );
+    }
+
+    SECTION("a field without its own grad entry falls back to default")
+    {
+        const TokenList div {
+            std::string("bounded"),
+            std::string("Gauss"),
+            std::string("limitedLinear"),
+            NeoN::scalar(1)
+        };
+        REQUIRE(
+            mapDiv(div, "div(phi,k)", cellLimitedGrad, "default")
+            == "bounded Gauss limitedLinear 1.000000 cellLimited"
+        );
+    }
+
+    SECTION("a div key that names no transported field is left alone")
+    {
+        const TokenList div {std::string("Gauss"), std::string("limitedLinear"), NeoN::scalar(1)};
+        REQUIRE(
+            mapDiv(div, "div((nuEff*dev2(T(grad(U)))))", cellLimitedGrad, "grad(U)")
+            == "Gauss limitedLinear 1.000000"
+        );
+    }
+}

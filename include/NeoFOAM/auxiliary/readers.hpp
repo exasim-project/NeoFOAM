@@ -411,6 +411,9 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
             {"pressureInletOutletVelocity",
              [&](auto& dict)
              {
+                 // Outflow-side zeroGradient with an inflow value tied to the flux; NeoN's
+                 // no-context correction cannot see phi, so take the zeroGradient branch, which
+                 // is what the patch does wherever the flow leaves the domain.
                  dict.insert("type", std::string("fixedGradient"));
                  dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
              }},
@@ -426,11 +429,23 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
             {"totalPressure",
              [&](auto& dict)
              {
-                 // p_rgh atmosphere: pin the pressure datum with a fixedValue at the stored
-                 // patch value so the p_rgh solve is well-posed. The dynamic-head correction
-                 // is negligible for the gravity-driven damBreak first version and is deferred
-                 // with surface tension. Non-scalar (or valueless) falls back to zeroGradient.
-                 detail::insertFrozenTotalPressure<type_primitive_t>(dict);
+                 // NeoN models this patch properly: p0 on outflow, p0 minus the dynamic head on
+                 // inflow, read from phi and U in the BoundaryContext. Only p0 needs translating
+                 // -- it arrives as the token list "uniform <value>", and the BC wants a plain
+                 // scalar, same as inletValue above. A solver that does not pass a
+                 // BoundaryContext gets the documented fallback: a fixedValue at p0.
+                 dict.insert("type", std::string("totalPressure"));
+                 if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     if (dict.contains("p0"))
+                     {
+                         NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("p0");
+                         if (tokenList.size() > 1)
+                         {
+                             dict.insert("p0", detail::tokenAsScalar(tokenList, 1));
+                         }
+                     }
+                 }
              }},
             {"uniformTotalPressure",
              [&](auto& dict)

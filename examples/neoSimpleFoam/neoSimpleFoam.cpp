@@ -128,8 +128,21 @@ int main(int argc, char* argv[])
 
                 auto pPrev = NeoN::dsl::fieldRelaxationSnapshot(p);
 
+                // totalPressure needs phi and U to subtract the dynamic head on inflow
+                // faces; without them it degenerates to a fixedValue at p0.
+                fvcc::BoundaryContext pCtx;
+                pCtx.insert("phi", phi);
+                pCtx.insert("U", U);
+
                 while (simple.correctNonOrthogonal())
                 {
+                    // Refresh the pressure boundary BEFORE assembly. OpenFOAM's fvMatrix
+                    // constructor calls psi.boundaryField().updateCoeffs(), so the
+                    // total-pressure value built from the current phi/U is what the laplacian
+                    // discretises; correcting only after the solve would assemble every
+                    // iteration against the previous one's boundary value.
+                    p.correctBoundaryConditions(pCtx);
+
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
@@ -146,7 +159,9 @@ int main(int argc, char* argv[])
                     }
 
                     pEqn.solve();
-                    p.correctBoundaryConditions();
+                    // Mirrors the psi.correctBoundaryConditions() that closes
+                    // fvMatrix::solveSegregated, so the boundary tracks the new solution.
+                    p.correctBoundaryConditions(pCtx);
 
                     if (simple.finalNonOrthogonalIter())
                     {
@@ -161,7 +176,7 @@ int main(int argc, char* argv[])
                     nf::lookupFieldRelaxation(rt.fvSolutionDict, "p", false)
                         .value_or(NeoN::scalar(1))
                 );
-                p.correctBoundaryConditions();
+                p.correctBoundaryConditions(pCtx);
 
                 nf::updateVelocity(hByA, crAtU, p, U, rt);
                 U.correctBoundaryConditions();

@@ -279,6 +279,7 @@ KEpsilon::KEpsilon(
     , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , epsilonWallValue_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , epsilonWallMask_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , divU_(exec, "divU", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
 {
     surfInterp_.interpolate(nu_, surfNu_);
 
@@ -471,6 +472,71 @@ void KEpsilon::correct(
         }
     }
 
+    // Dilatation sinks, applied after the wall-function block so they survive the Pk_
+    // overwrite at wall cells -- upstream's SuSp is a matrix contribution independent of the
+    // G the wall function imposes there.
+    //
+    // kEpsilon.C:280,259 carry -fvm::SuSp((2/3)*divU, k) and
+    // -fvm::SuSp(((2/3)*C1 - C3)*divU, eps). divU is the *flux* divergence
+    // fvc::div(fvc::absolute(phi, U)) (kEpsilon.C:232) -- the discrete continuity error --
+    // not the trace of grad(U); the two differ on a discrete mesh. A SIMPLE/PIMPLE run never
+    // drives it to exactly zero, so leaving these out holds k and epsilon high.
+    //
+    // SuSp, not Sp: the positive part goes on the diagonal, the negative part moves to the
+    // explicit source, so a locally negative divU cannot eat the diagonal. On the LHS the
+    // term is +SuSp(s, psi), so the explicit half lands on the source that is subtracted
+    // there -- hence the -min(s, 0) * psi.
+    {
+        // divU = fvc::div(phi): surfaceIntegrate sums the face fluxes and divides by the cell
+        // volume, which is exactly what OpenFOAM's fvc::div of a surface field does.
+        //
+        // surfaceIntegrate ACCUMULATES into its result (atomic_add per face, then a single
+        // divide by the volume), so the target must start at zero. divU_ is a persistent member
+        // rather than a per-call temporary, so without this fill it would carry the previous
+        // iteration's value into the divide and evaluate divU_prev/V + div(phi) -- a geometric
+        // amplification by 1/V per iteration in every cell whose volume is below unity.
+        NeoN::fill(divU_.internalVector(), scalar(0));
+        nnfvcc::surfaceIntegrate<scalar>(
+            exec_,
+            mesh_.nInternalFaces(),
+            mesh_.faceNeighbors().view(),
+            mesh_.faceOwners().view(),
+            mesh_.boundaryMesh().faceOwners().view(),
+            phi.internalVector().view(),
+            phi.boundaryData().value().view(),
+            mesh_.cellVolumes().view(),
+            divU_.internalVector().view(),
+            NeoN::dsl::Coeff(1.0)
+        );
+
+        const scalar c1 = coeffs_.C1;
+        const scalar c3 = coeffs_.C3;
+        const auto divUV = divU_.internalVector().view();
+        const auto kV = k.internalVector().view();
+        const auto epsV = epsilon.internalVector().view();
+        auto pkV = Pk_.internalVector().view();
+        auto spKV = spK_.internalVector().view();
+        auto epsSV = epsilonSource_.internalVector().view();
+        auto spEpsV = spEpsilon_.internalVector().view();
+        NeoN::parallelFor(
+            exec_,
+            {0, static_cast<NeoN::localIdx>(k.internalVector().size())},
+            NEON_LAMBDA(const NeoN::localIdx i) {
+                const scalar divU = divUV[i];
+                const scalar suspK = (scalar(2) / scalar(3)) * divU;
+                const scalar suspEps = ((scalar(2) / scalar(3)) * c1 - c3) * divU;
+                const scalar kI = Kokkos::max(kV[i], scalar(0));
+                const scalar epsI = Kokkos::max(epsV[i], scalar(0));
+
+                spKV[i] += Kokkos::max(suspK, scalar(0));
+                pkV[i] -= Kokkos::min(suspK, scalar(0)) * kI;
+                spEpsV[i] += Kokkos::max(suspEps, scalar(0));
+                epsSV[i] -= Kokkos::min(suspEps, scalar(0)) * epsI;
+            },
+            "kEpsilon::dilatationSources"
+        );
+    }
+
     // ----- epsilon equation -----
     // Solved BEFORE k so spK can be updated from the new ε to match OF's
     // sequencing (kEpsilon.C:251-291: ε first, then k).
@@ -498,6 +564,46 @@ void KEpsilon::correct(
     // explodes; bound() refills those cells from the neighbourhood as OpenFOAM does.
     bound(epsilon, epsilonMin_, boundCache_);
     epsilon.correctBoundaryConditions(ctx);
+
+    // Corner averaging of the wall face value. Upstream writes the corner-weighted
+    // epsilon0[celli] onto every face of a wall-adjacent cell (updateCoeffs, then
+    // setValues(faceCells, patchInternalField())), so a cell touched by several wall faces
+    // carries one averaged value rather than a different value per face. The BC cannot do
+    // that itself: it sees one patch at a time, while a corner cell can touch two -- upstream
+    // solves this with a master patch that aggregates across all of them. epsilonWallValue_
+    // is already that cross-patch corner-weighted value (it is what the pin uses, built from
+    // the same k), so scatter it back onto the faces here.
+    if (anyEpsilonWF)
+    {
+        const auto epsWallValueV = epsilonWallValue_.view();
+        const auto maskV = epsilonWallMask_.view();
+        const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
+        auto [epsValueV, epsRefValueV] =
+            NeoN::views(epsilon.boundaryData().value(), epsilon.boundaryData().refValue());
+        const auto& epsilonBCs = epsilon.boundaryConditions();
+        for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
+             ++patchID)
+        {
+            if (epsilonBCs[static_cast<size_t>(patchID)].name() != "epsilonWallFunction")
+            {
+                continue;
+            }
+            const auto [start, end] = epsilon.boundaryData().range(patchID);
+            NeoN::parallelFor(
+                exec_,
+                {start, end},
+                NEON_LAMBDA(const NeoN::localIdx i) {
+                    const auto owner = faceOwnersV[i];
+                    if (maskV[owner] > scalar(0))
+                    {
+                        epsValueV[i] = epsWallValueV[owner];
+                        epsRefValueV[i] = epsWallValueV[owner];
+                    }
+                },
+                "kEpsilon::epsilonWFCornerAverage"
+            );
+        }
+    }
 
     // Update spK from the new ε (ε/k destruction term)
     {
