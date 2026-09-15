@@ -256,7 +256,31 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp" line="37" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp" bodystart="37" bodyend="83"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp" line="37" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp" bodystart="37" bodyend="84"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1a556970e18049bb8c677c019642bd31d6" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
+        <definition>scalar NeoN::finiteVolume::cellCentred::volumeBoundary::detail::nutkYPlusLam</definition>
+        <argsstring>(scalar kappa, scalar E)</argsstring>
+        <name>nutkYPlusLam</name>
+        <qualifiedname>NeoN::finiteVolume::cellCentred::volumeBoundary::detail::nutkYPlusLam</qualifiedname>
+        <param>
+          <type><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
+          <declname>kappa</declname>
+        </param>
+        <param>
+          <type><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
+          <declname>E</declname>
+        </param>
+        <briefdescription>
+<para>Iterate OpenFOAM&apos;s yPlusLam: the y+ where the viscous and log laws meet. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Foam::wallFunctionCoefficients solves yPlusLam = log(max(E·yPlusLam, 1))/κ by fixed-point iteration from 11; ~11.53 for the default κ=0.41, E=9.8. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp" line="33" column="15" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp" bodystart="33" bodyend="41"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1a87f4e12c3134a79f464aeb051efba390" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>void</type>
@@ -304,18 +328,19 @@
 <para>Apply the nutkWallFunction kernel face-by-face. </para>
         </briefdescription>
         <detaileddescription>
-<para>Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the BINOMIAL n=2 blender:<itemizedlist>
+<para>Mirrors Foam::nutkWallFunctionFvPatchScalarField::nut() for the STEPWISE blender, which is upstream&apos;s default (wallFunctionBlenders.C:53):<itemizedlist>
 <listitem><para>y⁺ = C_µ^0.25·y·√k/ν</para>
 </listitem><listitem><para>ν_t,log = ν·y⁺·κ/log(max(E·y⁺, 1+1e-4))</para>
 </listitem><listitem><para>ν_t,vis = ν (viscous sublayer)</para>
-</listitem><listitem><para>ν_t,w = √(ν_t,vis² + ν_t,log²)</para>
+</listitem><listitem><para>ν_t,w = (y⁺ &gt; y⁺_lam ? ν_t,log : ν_t,vis) − ν_t,vis</para>
 </listitem></itemizedlist>
 </para>
+<para>The trailing subtraction is upstream&apos;s unconditional <computeroutput>nutw -= nutVis</computeroutput> (nutkWallFunctionFvPatchScalarField.C:168): nut is the <emphasis>turbulent</emphasis> viscosity, so it must fall to exactly zero in the sublayer rather than to ν.</para>
 <para>k is read from the BoundaryContext; the boundary face value is written, no internal-cell stomp. </para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp" line="39" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp" bodystart="39" bodyend="100"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp" line="60" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp" bodystart="60" bodyend="115"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1a6eda4a8f1d5150b72f10f0cc3a2ce3ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>KOKKOS_INLINE_FUNCTION <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
