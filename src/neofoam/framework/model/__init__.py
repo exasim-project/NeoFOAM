@@ -14,6 +14,7 @@ from .extension import (
     BoundExtension,
     Extension,
     Hook,
+    Kind,
     fold,
     negated,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "BoundExtension",
     "Extension",
     "Hook",
+    "Kind",
     "fold",
     "negated",
 ]

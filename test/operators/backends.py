@@ -152,18 +152,31 @@ class PybFvc:
     def grad(self, field: "Field") -> np.ndarray:
         return _of_worker(field).evaluate("fvc.grad", (field.name,))
 
+    def grad_tensor(self, field: "Field", scheme: str) -> np.ndarray:
+        """grad(field) under ``scheme``, as (n, 9) per-cell tensor components."""
+        return _of_worker(field).evaluate("fvc.gradTensor", (field.name,), scheme)
+
     def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _of_worker(fields[0]).evaluate("fvc.div", _names(fields), scheme)
 
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
         return _of_worker(field).evaluate("fvc.laplacian", (gamma.name, field.name))
 
+    def simplec_flux_correction(
+        self, rau: "Field", ratu: "Field", p: "Field", scheme: str
+    ) -> np.ndarray:
+        """``interpolate(rAtU - rAU) * snGrad(p) * magSf`` under ``scheme``.
+
+        The SIMPLEC flux correction as the ``incompressibleFluid`` solver
+        writes it; ``scheme`` is handed to ``fvc.snGrad`` inline."""
+        return _of_worker(rau).evaluate("fvc.simplecFluxCorrection", _names((rau, ratu, p)), scheme)
+
 
 class PybFvm:
     """``pybFoam.fvm`` — implicit operators, returned as the matrix applied to
     the current field (``M & psi``)."""
 
-    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
+    def div(self, *fields: "Field", scheme: str | None = "linear") -> np.ndarray:
         return _of_worker(fields[0]).evaluate("fvm.div", _names(fields), scheme)
 
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
@@ -184,6 +197,11 @@ class NeonExp:
     def grad(self, field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("exp.grad", (field.name,))
 
+    def grad_tensor(self, field: "Field", scheme: str) -> np.ndarray:
+        """``nfb.GradScheme(...).grad_tensor(field)`` under the staged
+        ``grad(<field>_<scheme>)`` entry, as (n, 9) components."""
+        return _neon_worker(field).evaluate("exp.gradTensor", (field.name,), scheme)
+
     def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _neon_worker(fields[0]).evaluate("exp.div", _names(fields), scheme)
 
@@ -193,9 +211,12 @@ class NeonExp:
 
 class NeonImp:
     """``neon.imp`` — implicit DSL operators, assembled via
-    ``nfb.evaluate_implicit`` and returned as ``(A·psi - b) / V``."""
+    ``nfb.evaluate_implicit`` and returned as ``(A·psi - b) / V``.
 
-    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
+    ``scheme=None`` skips the per-request tokens so the operator resolves its
+    scheme from the mapped ``fvSchemes`` dictionary instead."""
+
+    def div(self, *fields: "Field", scheme: str | None = "linear") -> np.ndarray:
         return _neon_worker(fields[0]).evaluate("imp.div", _names(fields), scheme)
 
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
@@ -205,9 +226,9 @@ class NeonImp:
 class NeonBackend:
     """The neon (NeoN) backend.
 
-    Surface results (``interpolate``, ``flux``) keep NeoN's layout — internal
-    faces first, boundary faces appended — the tests slice to the OpenFOAM
-    length.
+    Surface results (``interpolate``, ``flux``, ``simplec_flux_correction``)
+    keep NeoN's layout — internal faces first, boundary faces appended — the
+    tests slice to the OpenFOAM length.
     """
 
     def __init__(self) -> None:
@@ -219,6 +240,16 @@ class NeonBackend:
 
     def flux(self, field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("flux", (field.name,))
+
+    def simplec_flux_correction(
+        self, rau: "Field", ratu: "Field", p: "Field", scheme: str
+    ) -> np.ndarray:
+        """``nfb.add_consistent_flux_correction`` on a zeroed ``phiHbyA``.
+
+        The result is the correction term alone; ``scheme`` reaches the
+        operator as the ``snGradSchemes/default`` entry of the fvSchemes
+        dictionary the worker hands over, as ``fvc::snGrad`` reads it."""
+        return _neon_worker(rau).evaluate("simplecFluxCorrection", _names((rau, ratu, p)), scheme)
 
 
 pyb = PybBackend()

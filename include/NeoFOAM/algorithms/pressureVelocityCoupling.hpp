@@ -50,14 +50,15 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 
 /* @brief SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf.
  *
- * snGrad(p) uses the corrected face-normal gradient to retain non-orthogonal contributions.
- * Applied to internal and non-processor boundary faces.
+ * The face-normal gradient scheme is resolved from the snGradSchemes subdict of fvSchemes,
+ * as fvc::snGrad(p) does. Applied to internal and non-processor boundary faces.
  */
 void addConsistentFluxCorrection(
     nnfvcc::SurfaceField<scalar>& phiHbyA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& rAtU,
-    const nnfvcc::VolumeField<scalar>& p
+    const nnfvcc::VolumeField<scalar>& p,
+    const NeoN::Dictionary& fvSchemes
 );
 
 /* @brief SIMPLEC HbyA correction: hByA -= (rAU - rAtU)*grad(p).
@@ -91,7 +92,21 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
-    nnfvcc::VolumeField<Vec3>& U
+    nnfvcc::VolumeField<Vec3>& U,
+    const nnfvcc::GradOperatorFactory<NeoN::Vec3>& gradPScheme
+);
+
+/* @brief Velocity corrector using the gradSchemes entry configured for @p p.
+ *
+ * Resolves "grad(<p.name>)" through RunTime::gradScheme, which builds and caches the
+ * operator, so solvers need not construct one themselves.
+ */
+void updateVelocity(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& p,
+    nnfvcc::VolumeField<Vec3>& U,
+    RunTime& runTime
 );
 
 /* @brief Face flux from a volume vector field: phi = U·Sf.

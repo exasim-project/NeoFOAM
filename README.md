@@ -3,9 +3,23 @@
 **[Documentation](https://exasim-project.com/NeoFOAM/develop)** |
 # NeoFOAM
 
-NeoFOAM provides platform-portable implementations of common CFD algorithms and solvers using
-[NeoN](https://github.com/exasim-project/NeoN) as a computational backend.
-Additionally, It implements converters between OpenFOAM and NeoN datastructures such that you can run examples, benchmarks and tests on accelerator devices.
+**NeoFOAM** is an open-source **performance-portable finite-volume CFD framework** built on top of [NeoN](https://github.com/exasim-project/NeoN) and primarily implemented in **modern C++**. It is designed for modern heterogeneous computing systems, enabling the same CFD solver implementation to run efficiently on both **CPUs and GPUs** while remaining portable across **Linux, macOS, and Windows**.
+
+NeoFOAM includes fluid-flow solvers that correspond to established OpenFOAM solvers.
+For example, `neoIcoFoam` is the NeoFOAM equivalent of OpenFOAM `icoFoam` for transient
+incompressible laminar flow simulations of Newtonian fluids.
+
+## Key Features
+
+- Execution on
+  - serial CPU
+  - multithreaded CPU
+  - MPI-based distributed systems
+  - GPUs from NVIDIA, AMD, and Intel
+- Portability across Linux, macOS, and Windows
+- OpenFOAM-compatible mesh and field conversion utilities
+- OpenFOAM-equivalent solver implementations (e.g., `neoIcoFoam`)
+- Validation against OpenFOAM or literature results for numerical reproducibility
 
 ## Requirements
 

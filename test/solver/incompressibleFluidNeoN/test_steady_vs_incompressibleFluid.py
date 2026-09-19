@@ -37,6 +37,11 @@ Two comparisons with different discriminating power:
 A third test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
 the native ``simpleFoam`` binary, which is bitwise on this case.
 
+A fourth covers the *SIMPLEC* branch (``consistent yes``): the same case with
+``solution/simplec/fvSolution`` overlaid on both solvers, again at two
+iterations. Both backends then take the consistent path (rAtU, the phiHbyA and
+HbyA corrections, the rAtU velocity corrector) instead of plain SIMPLE.
+
 Process hygiene follows the established comparison tests: each solver runs in
 its own subprocess (NeoN/Kokkos + OpenFOAM per-process global state), and each
 case is read back in its own subprocess too (``pyfoam_field_reader``).
@@ -56,6 +61,7 @@ import pytest
 
 _HERE = Path(__file__).parent
 _CASE = _HERE / "cases" / "pitzDailySteady"
+_SOLUTION = _CASE / "solution"
 _FIELD_READER = _HERE.parent / "pyfoam_field_reader.py"
 
 # Per-model comparison spec:
@@ -85,13 +91,20 @@ MODELS = {
 }
 
 
-def _prepare_case(model: str, dest: Path, end_time: int) -> None:
+def _prepare_case(
+    model: str,
+    dest: Path,
+    end_time: int,
+    fv_solution: Path | None = None,
+) -> None:
     """Copy the committed case, overlay the model, set the iteration count, mesh it."""
-    shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models"))
+    shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models", "solution"))
     overlay = _CASE / "models" / model
     shutil.copyfile(overlay / "turbulenceProperties", dest / "constant" / "turbulenceProperties")
     for field in (overlay / "0").iterdir():
         shutil.copyfile(field, dest / "0" / field.name)
+    if fv_solution is not None:
+        shutil.copyfile(fv_solution, dest / "system" / "fvSolution")
     control_dict = dest / "system" / "controlDict"
     text = control_dict.read_text()
     text = re.sub(r"^endTime\s+\S+;", f"endTime         {end_time};", text, count=1, flags=re.M)
@@ -282,4 +295,82 @@ def test_reference_steady_matches_native_simpleFoam(model: str, tmp_path: Path) 
 
     _assert_fields_match(
         reference_case, native_case, tmp_path, f"{model}_native", fields, 1e-10, 1e-15
+    )
+
+
+def test_neon_regex_equation_relaxation_leaves_the_pressure_equation_alone(
+    tmp_path: Path,
+) -> None:
+    """A catch-all ``equations { ".*" }`` must not matrix-relax the pressure equation.
+
+    ``solution/regexEquations/fvSolution`` is the stock pitzDaily relaxation set:
+    ``equations { U 0.7; ".*" 0.9; }``. The regex resolves for *every* field name,
+    ``p`` included — but ``simpleFoam`` calls ``fvMatrix::relax()`` only on the
+    momentum and turbulence matrices, so the pressure Poisson equation is solved
+    unrelaxed. Relaxing it divides the pressure diagonal by 0.9, i.e. adds a
+    ``-0.111 rAUf`` reaction term: the CG solve then converges in a handful of
+    iterations to the wrong field, the outlet flux collapses and most of the domain
+    stalls at ``U = 0``. Parity against ``incompressibleFluid`` (OpenFOAM's own
+    ``relax()`` placement) is therefore the assertion: it fails by O(peak) if the
+    NeoN backend relaxes ``p``, and it also covers the other half of the claim —
+    ``U`` at 0.7 and ``k``/``epsilon`` at the regex's 0.9 *are* relaxed.
+
+    Ten iterations rather than two: matrix relaxation of ``p`` changes the *rate*
+    the flow develops at, which needs a few iterations to grow past the tolerance.
+    """
+    fv_solution = _SOLUTION / "regexEquations" / "fvSolution"
+    neon_case = tmp_path / "neon"
+    reference_case = tmp_path / "reference"
+    _prepare_case("kEpsilon", neon_case, end_time=10, fv_solution=fv_solution)
+    _prepare_case("kEpsilon", reference_case, end_time=10, fv_solution=fv_solution)
+
+    _run_neon(neon_case)
+    _run_reference(reference_case)
+
+    _assert_fields_match(
+        neon_case,
+        reference_case,
+        tmp_path,
+        "kEpsilon_regexEquations",
+        ("U", "p", "k", "epsilon", "nut"),
+        1e-8,
+        1e-10,
+    )
+
+
+def test_neon_simplec_two_iterations_roundoff(tmp_path: Path) -> None:
+    """Per-iteration SIMPLEC (``consistent yes``) parity is machine precision.
+
+    The overlaid ``solution/simplec/fvSolution`` is what a real SIMPLEC case
+    ships: ``consistent yes`` and no ``relaxationFactors.fields.p``. It drives
+    the consistent branch of both backends (rAtU, the phiHbyA correction, the
+    HbyA correction and the rAtU velocity corrector), which plain SIMPLE would
+    skip entirely — so this fails if the NeoN path silently runs plain SIMPLE:
+    without the implicit pressure relaxation SIMPLEC brings, and with no
+    ``fields.p`` factor to stand in for it, plain SIMPLE diverges here (U off by
+    ~1x its peak by the second iteration).
+
+    It runs on the case's own ``snGradSchemes { default uncorrected; }``: the
+    consistent flux correction resolves snGrad(p) from that dictionary on both
+    backends, so this also covers the lookup itself. Anything that reverts the
+    NeoN side to a fixed face-normal gradient fails here on the non-orthogonal
+    pitzDaily mesh.
+    """
+    fv_solution = _SOLUTION / "simplec" / "fvSolution"
+    neon_case = tmp_path / "neon"
+    reference_case = tmp_path / "reference"
+    _prepare_case("kEpsilon", neon_case, end_time=2, fv_solution=fv_solution)
+    _prepare_case("kEpsilon", reference_case, end_time=2, fv_solution=fv_solution)
+
+    _run_neon(neon_case)
+    _run_reference(reference_case)
+
+    _assert_fields_match(
+        neon_case,
+        reference_case,
+        tmp_path,
+        "kEpsilon_simplec2",
+        ("U", "p", "k", "epsilon", "nut"),
+        1e-8,
+        1e-10,
     )

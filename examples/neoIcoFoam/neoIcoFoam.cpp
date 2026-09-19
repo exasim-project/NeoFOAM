@@ -44,7 +44,6 @@ int main(int argc, char* argv[])
 
 #include "createFields.H"
 
-
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -160,7 +159,7 @@ int main(int argc, char* argv[])
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                nf::updateVelocity(hByA, crAU, p, U);
+                nf::updateVelocity(hByA, crAU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

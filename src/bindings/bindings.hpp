@@ -18,5 +18,6 @@ void registerExplicitOperators(nanobind::module_& m);
 void registerTurbulenceModel(nanobind::module_& m);
 void registerWallFunctions(nanobind::module_& m);
 void registerFieldRelaxation(nanobind::module_& m);
+void registerMRF(nanobind::module_& m);
 
 } // namespace NeoFOAM::bindings

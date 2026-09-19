@@ -4,9 +4,11 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp"
+#include "NeoFOAM/auxiliary/bound.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/compatibility/fvSchemes.hpp"
 
 #include "wallDist.H"
 #include "nearWallDist.H"
@@ -301,6 +303,12 @@ nnfvcc::VolumeField<scalar> buildDelta(const NeoN::Executor& exec, MeshAdapter& 
 SpalartAllmarasDDES::SpalartAllmarasDDES(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : SpalartAllmarasDDES(rt.exec, rt.mesh, nu)
 {
+    // Replace the default Gauss grad operators with the gradSchemes-configured ones from
+    // the RunTime cache, so grad(U)/grad(nuTilda) honour the chosen scheme (e.g. cellLimited)
+    // and share a single instance with the solver's other grad(U) call sites.
+    gradUOp_ = gradSchemePtr(rt, "grad(U)");
+    gradNuTildaOp_ = gradSchemePtr(rt, "grad(nuTilda)");
+
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"nuTilda", "nuTildaFinal"})
     {
@@ -390,7 +398,16 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , gradOp_(exec, mesh)
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
+    , gradNuTildaOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , cw1_(coeffs_.Cb1 / (coeffs_.kappa * coeffs_.kappa) + (1.0 + coeffs_.Cb2) / coeffs_.sigmaNut)
@@ -464,12 +481,6 @@ void SpalartAllmarasDDES::correct(
 {
     updateGradU(U);
 
-    nnfvcc::VolumeField<Vec3> gradNuTilda(
-        exec_,
-        "gradNuTilda",
-        mesh_,
-        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh_)
-    );
     nnfvcc::VolumeField<scalar> magSqrGradNuTilda(
         exec_,
         "magSqrGradNuTilda",
@@ -500,7 +511,10 @@ void SpalartAllmarasDDES::correct(
         mesh_,
         fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
     );
-    gradOp_.grad(nuTilda, gradNuTilda);
+    // The Vector-out overload accumulates into the buffer without zeroing it first (it's meant to
+    // be composed by callers who already own a zeroed accumulator), so use the value-returning
+    // overload here instead, which zero-fills and includes the boundary gradient.
+    nnfvcc::VolumeField<Vec3> gradNuTilda = gradNuTildaOp_->grad(nuTilda, NeoN::dsl::Coeff {});
     calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
 
     computeProdSpDDES(
@@ -524,17 +538,10 @@ void SpalartAllmarasDDES::correct(
     nuTildaEqn.relax(); // OpenFOAM SpalartAllmarasBase.C: nuTildaEqn.ref().relax()
     nuTildaEqn.solve();
 
-    // Bound nuTilda >= 0
-    {
-        auto nuTildaV = nuTilda.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(nuTilda.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { nuTildaV[i] = Kokkos::max(nuTildaV[i], scalar(0)); },
-            "SA-DDES::boundNuTilda"
-        );
-        nuTilda.correctBoundaryConditions();
-    }
+    // Bound nuTilda >= 0. bound() refills cells that undershot to zero or below from the
+    // neighbourhood, as OpenFOAM does; a plain clamp pins them at the floor.
+    bound(nuTilda, nuTildaMin_, boundCache_);
+    nuTilda.correctBoundaryConditions();
 
     calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff_);
     correctNut(nut, surfNut, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
@@ -548,7 +555,7 @@ const nnfvcc::VolumeField<Tensor>& SpalartAllmarasDDES::gradU() const { return g
 
 void SpalartAllmarasDDES::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
 {
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     // Exchange the neighbour-cell gradient into gradU's processor tail (proc patches carry the
     // processor BC; physical patches are 'calculated' no-ops, so their boundary gradient is kept).
     gradU_.correctBoundaryConditions();

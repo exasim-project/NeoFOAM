@@ -129,18 +129,33 @@ class _OFBackend(_Backend):
         self.node = node
         self.path = path
 
+    def _stored(self, key: str) -> str:
+        """Match a quoted regex key against the unquoted form the parser stored."""
+        if not (len(key) > 1 and key.startswith('"') and key.endswith('"')):
+            return key
+        bare = key[1:-1]
+        # Not ``found``: it applies the dict's patterns, so ``".*"`` answers any key.
+        if any(str(stored) == bare for stored in self.node.toc()):
+            return bare
+        return key  # absent: keep the quotes so the write is a regex key again
+
     def found(self, key: str) -> bool:
+        key = self._stored(key)
         return bool(self.node.found(key))
 
     def has_dict(self, key: str) -> bool:
+        key = self._stored(key)
         return bool(self.node.found(key) and self.node.isDict(key))
 
     def get(self, key: str, typ: type) -> Any:
+        key = self._stored(key)
         if not self.node.found(key):
             raise KeyError(key)
         return self.node.get[typ](key)
 
     def set(self, key: str, value: object) -> None:
+        # Deliberately not ``_stored``-normalized: pybFoam's ``set`` strips the
+        # quotes, so a regex-keyed scalar must fail loudly, not write ``.*  0.7;``.
         if isinstance(value, Mapping):
             self.child_or_add(key).overwrite(value)
             return
@@ -157,14 +172,15 @@ class _OFBackend(_Backend):
         _OF_STRATEGY._write(self.node, dict(mapping))
 
     def remove(self, key: str) -> None:
-        self.node.remove(key)  # pybFoam >= 0.5.1; returns False when absent
+        self.node.remove(self._stored(key))  # pybFoam >= 0.5.1; returns False when absent
 
     def child(self, key: str) -> "_Backend":
         if not self.has_dict(key):
             raise KeyError(f"Subdict '{key}' not found")
-        return _OFBackend(self.root, self.node.subDict(key), self.path)
+        return _OFBackend(self.root, self.node.subDict(self._stored(key)), self.path)
 
     def child_or_add(self, key: str) -> "_Backend":
+        key = self._stored(key)
         # subDictOrAdd returns a detached handle; re-fetch via subDict for a live one.
         self.node.subDictOrAdd(key)
         return _OFBackend(self.root, self.node.subDict(key), self.path)

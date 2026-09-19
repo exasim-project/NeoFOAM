@@ -104,7 +104,7 @@ class NeoIcoFoam:
                     if piso.final_non_orthogonal_iter():
                         nfb.update_face_velocity(phiHbyA, pEqn, phi)
 
-                nfb.update_velocity(hByA, rAU, p, U)
+                nfb.update_velocity(hByA, rAU, p, U, rt)
                 U.correct_boundary_conditions()
 
             if runTime.outputTime():

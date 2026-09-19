@@ -8,6 +8,7 @@
 #include "common.hpp"
 
 #include "gaussConvectionScheme.H"
+#include "boundedConvectionScheme.H"
 
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -181,6 +182,34 @@ TEST_CASE("matrix multiplication")
 
         // diag and rhs differ from the foam matrix as openfoam does not add the boundary values to
         // the matrix; the deferred correction lives in the rhs, so we check the operator action.
+        auto result = NeoFOAM::applyOperator(ls, nfT);
+        REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
+    }
+
+    SECTION("div bounded_" + execName)
+    {
+        // Foam::fv::boundedConvectionScheme::fvmDiv adds -fvm::Sp(fvc::surfaceIntegrate(faceFlux),
+        // T) to the inner scheme's matrix; ofPhi is a random, non-solenoidal flux so this
+        // correction is actually nonzero and exercised here (unlike a divergence-free flux, where
+        // it vanishes and the "div_" section above already covers the plain-Gauss path).
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
+        auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
+
+        Foam::IStringStream isInner("Gauss upwind");
+        Foam::fv::boundedConvectionScheme<Foam::scalar> foamBoundedDiv(mesh, ofPhi, isInner);
+        Foam::fvScalarMatrix matrix(foamBoundedDiv.fvmDiv(ofPhi, ofT));
+        Foam::volScalarField divT("divT", matrix & ofT);
+        auto divV = divT * mesh.V();
+
+        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("bounded"), std::string("Gauss"), std::string("upwind")});
+        fvcc::DivOperatorFactory<NeoN::scalar>::create(exec, rt.nfMesh, scheme)
+            ->div(ls, nfPhi, nfT, dsl::Coeff(1.0));
+
+        // diag and rhs differ from the foam matrix as openfoam does not add the boundary values to
+        // the matrix; check the operator action instead (same convention as "div linearUpwind_").
         auto result = NeoFOAM::applyOperator(ls, nfT);
         REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
     }

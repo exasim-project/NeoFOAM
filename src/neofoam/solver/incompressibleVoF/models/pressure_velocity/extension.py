@@ -7,7 +7,7 @@ A model hooks into interFoam's ``UEqn.H`` / ``pEqn.H`` with
 ``@<model>.contributes(<extension>.<hook>)``; the algorithm calls each hook once
 on the injected handle, so no operation has to know which models a case
 activated. Hooks are per operation, and the contributions themselves live next to
-each model's spec (``neofoam.mrf``, ``neofoam.fv_options``).
+each model's spec (``models.mrf``, ``neofoam.fv_options``).
 
 These are the *mass-weighted* twins of the single-phase seams in
 ``solver/incompressibleFluid/models/pressure_velocity/extension.py`` — momentum

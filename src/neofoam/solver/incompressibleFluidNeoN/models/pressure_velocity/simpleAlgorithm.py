@@ -58,6 +58,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -68,6 +69,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
+from .extension import momentum_extension, pressure_extension
 
 simpleNeoN = Model("SimpleNeoN")
 
@@ -163,6 +165,17 @@ class SimpleNeoNState:
         self.outer_open: bool = True
 
 
+def _build_simple_state(fv_solution: Any) -> SimpleNeoNState:
+    """Read the SIMPLE loop state from the case's ``SIMPLE`` control block."""
+    simple_dict = fv_solution.subDict("SIMPLE")
+    piso = PisoControl(
+        n_correctors=1,
+        n_non_orthogonal_correctors=_read_int(simple_dict, "nNonOrthogonalCorrectors", 0),
+        momentum_predictor=_read_switch(simple_dict, "momentumPredictor", True),
+    )
+    return SimpleNeoNState(piso, _read_switch(simple_dict, "consistent", False))
+
+
 @simpleNeoN.build
 def build(self: Any) -> list[Any]:
     """Lazy initializers for the NeoN SIMPLE state (see pimpleAlgorithm)."""
@@ -177,14 +190,7 @@ def build(self: Any) -> list[Any]:
         return nfb.create_phi(context["_neon_runtime"], "U")
 
     def create_simple_state(context: dict[str, Any]) -> SimpleNeoNState:
-        rt = context["_neon_runtime"]
-        simple_dict = rt.fv_solution_dict.subDict("SIMPLE")
-        piso = PisoControl(
-            n_correctors=1,
-            n_non_orthogonal_correctors=_read_int(simple_dict, "nNonOrthogonalCorrectors", 0),
-            momentum_predictor=_read_switch(simple_dict, "momentumPredictor", True),
-        )
-        return SimpleNeoNState(piso, _read_switch(simple_dict, "consistent", False))
+        return _build_simple_state(context["_neon_runtime"].fv_solution_dict)
 
     def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         rt = context["_neon_runtime"]
@@ -253,6 +259,7 @@ def momentum(
     grad_op: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     """Assemble (and optionally solve) the steady momentum equation.
 
@@ -265,13 +272,18 @@ def momentum(
     # solve (consumed by continuity).
     prev_p = nfb.field_relaxation_snapshot(p)
 
+    # as in UEqn.H: constrain the velocity before assembly — it feeds the
+    # boundary coefficients of ``div(phi,U)``.
+    ext.constrain(U)
+
     # grad(U) for the explicit dev2 viscous stress; kept alive via FieldUpdates.
     grad_u = grad_op.grad_tensor(U)
 
     UEqn = nfb.PDESolverVec3(
         nn.imp.div(phi, U)
         - nn.imp.laplacian(turbulence.nu_eff(), U)
-        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u),
+        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u)
+        + ext.terms(U),
         U,
         neon_runtime,
     )
@@ -307,6 +319,7 @@ def continuity(
     surf_interp: Annotated[Any, "models"],
     pressure_reference: Annotated[PressureReference, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
     """The SIMPLE pressure correction: solve, flux + velocity update, p relax.
 
@@ -333,8 +346,12 @@ def continuity(
     rAUf.name = "rAUf"
 
     phiHbyA = nfb.flux(hByA)
+
+    # pEqn.H transforms the predicted flux here, before the SIMPLEC correction.
+    phiHbyA = ext.predicted_flux(phiHbyA)
+
     if state.consistent:
-        nfb.add_consistent_flux_correction(phiHbyA, rAU, rAtU, p)
+        nfb.add_consistent_flux_correction(phiHbyA, rAU, rAtU, p, rt.fv_schemes_dict)
         nfb.subtract_consistent_hbya(hByA, rAU, rAtU, p)
 
     have_p_res = False
@@ -373,8 +390,9 @@ def continuity(
     )
     p.correct_boundary_conditions()
 
-    nfb.update_velocity(hByA, rAtU, p, U)
+    nfb.update_velocity(hByA, rAtU, p, U, rt)
     U.correct_boundary_conditions()
+    ext.constrain_corrected_velocity(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 
@@ -386,7 +404,11 @@ def turbulence_correct(
     turbulence: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
 ) -> None:
-    """Update the turbulence model once per SIMPLE iteration."""
+    """Update the turbulence model once per SIMPLE iteration.
+
+    ``final_iter`` stays false: simpleFoam has no final outer iteration, so the
+    transport solves use the plain ``<field>`` settings throughout.
+    """
     turbulence.correct(U, phi, neon_runtime)
 
 

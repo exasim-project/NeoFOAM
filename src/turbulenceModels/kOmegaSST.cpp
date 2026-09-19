@@ -7,6 +7,7 @@
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/auxiliary/bound.hpp"
 #include "NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp"
 
 #include "wallDist.H"
@@ -26,24 +27,6 @@ namespace NeoFOAM
 // Named per-model so this model's SYCL device-kernel names stay unique across TUs.
 namespace kOmegaSSTDetail
 {
-scalar reportBounding(
-    const NeoN::Executor& exec,
-    const nnfvcc::VolumeField<scalar>& field,
-    const std::string& name,
-    scalar lowerBound,
-    bool isDistributed
-);
-void boundLowerSmoothRepair(
-    const NeoN::Executor& exec,
-    nnfvcc::VolumeField<scalar>& field,
-    const NeoN::UnstructuredMesh& mesh,
-    const nnfvcc::SurfaceInterpolation<scalar>& surfInterp,
-    nnfvcc::VolumeField<scalar>& floored,
-    nnfvcc::SurfaceField<scalar>& surfFloored,
-    NeoN::Vector<scalar>& sumFaceArea,
-    bool& sumFaceAreaBuilt,
-    scalar lowerBound
-);
 void kernelComputeF1AndSources(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& kVec,
@@ -206,24 +189,16 @@ KOmegaSST::KOmegaSST(
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , gradOp_(exec, mesh)
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
     , omegaWallValueTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , omegaWallMaskTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , cornerWeightTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
-    , boundFlooredTmp_(
-          exec,
-          "omegaBoundFloored",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      )
-    , surfBoundFlooredTmp_(
-          exec,
-          "surfBoundFloored",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
-      )
-    , sumFaceAreaTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
 {
     surfInterp_.interpolate(nu_, surfNuTmp_);
 
@@ -245,7 +220,7 @@ void KOmegaSST::validate(
 {
     reserveScratch(); // re-grow per-step scratch released by a previous correct()/validate()
 
-    gradOp_.gradTensor(U, gradUTmp_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
     gradOp_.grad(k, gradKTmp_);
     gradOp_.grad(omega, gradOmegaTmp_);
@@ -277,7 +252,7 @@ void KOmegaSST::correct(
     reserveScratch();
 
     // Compute gradients once — reused for production, CDkOmega, and correctNut
-    gradOp_.gradTensor(U, gradUTmp_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
     gradOp_.grad(k, gradKTmp_);
     gradOp_.grad(omega, gradOmegaTmp_);
@@ -424,37 +399,8 @@ void KOmegaSST::correct(
     omegaEqn.relax(); // OpenFOAM kOmegaSSTBase.C: omegaEqn.ref().relax()
     omegaEqn.solve();
 
-    {
-        const scalar gMin = kOmegaSSTDetail::reportBounding(
-            exec_,
-            omega,
-            "omega",
-            KOSST_OMEGA_MIN,
-            mesh_.boundaryMesh().isDistributed()
-        );
-        if (gMin < KOSST_OMEGA_MIN)
-        {
-            if (boundFlooredTmp_.internalVector().size()
-                != static_cast<NeoN::localIdx>(mesh_.nCells()))
-                boundFlooredTmp_.internalVector().resize(static_cast<NeoN::localIdx>(mesh_.nCells())
-                );
-            if (surfBoundFlooredTmp_.internalVector().size() != surfNuTmp_.internalVector().size())
-                surfBoundFlooredTmp_.internalVector().resize(surfNuTmp_.internalVector().size());
-            kOmegaSSTDetail::boundLowerSmoothRepair(
-                exec_,
-                omega,
-                mesh_,
-                surfInterp_,
-                boundFlooredTmp_,
-                surfBoundFlooredTmp_,
-                sumFaceAreaTmp_,
-                sumFaceAreaBuilt_,
-                KOSST_OMEGA_MIN
-            );
-            freeVecs(boundFlooredTmp_.internalVector(), surfBoundFlooredTmp_.internalVector());
-        }
-        omega.correctBoundaryConditions(ctx);
-    }
+    bound(omega, KOSST_OMEGA_MIN, boundCache_);
+    omega.correctBoundaryConditions(ctx);
 
     freeVecs(
         omegaSourceTmp_.internalVector(),
@@ -486,37 +432,8 @@ void KOmegaSST::correct(
     kEqn.relax(); // OpenFOAM kOmegaSSTBase.C: kEqn.ref().relax()
     kEqn.solve();
 
-    {
-        const scalar gMin = kOmegaSSTDetail::reportBounding(
-            exec_,
-            k,
-            "k",
-            scalar(0),
-            mesh_.boundaryMesh().isDistributed()
-        );
-        if (gMin < scalar(0))
-        {
-            if (boundFlooredTmp_.internalVector().size()
-                != static_cast<NeoN::localIdx>(mesh_.nCells()))
-                boundFlooredTmp_.internalVector().resize(static_cast<NeoN::localIdx>(mesh_.nCells())
-                );
-            if (surfBoundFlooredTmp_.internalVector().size() != surfNuTmp_.internalVector().size())
-                surfBoundFlooredTmp_.internalVector().resize(surfNuTmp_.internalVector().size());
-            kOmegaSSTDetail::boundLowerSmoothRepair(
-                exec_,
-                k,
-                mesh_,
-                surfInterp_,
-                boundFlooredTmp_,
-                surfBoundFlooredTmp_,
-                sumFaceAreaTmp_,
-                sumFaceAreaBuilt_,
-                scalar(0)
-            );
-            freeVecs(boundFlooredTmp_.internalVector(), surfBoundFlooredTmp_.internalVector());
-        }
-        k.correctBoundaryConditions(ctx);
-    }
+    bound(k, kMin_, boundCache_);
+    k.correctBoundaryConditions(ctx);
 
     freeVecs(PkTmp_.internalVector(), spKTmp_.internalVector(), dkEffFTmp_.internalVector());
     correctNutInternal(k, omega, nut);
@@ -538,7 +455,7 @@ const nnfvcc::VolumeField<Tensor>& KOmegaSST::gradU() const { return gradUTmp_; 
 
 void KOmegaSST::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
 {
-    gradOp_.gradTensor(U, gradUTmp_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
 }
 
@@ -732,12 +649,10 @@ void KOmegaSST::releaseScratch()
         spKTmp_.internalVector(),
         omegaSourceTmp_.internalVector(),
         spOmegaTmp_.internalVector(),
-        boundFlooredTmp_.internalVector(),
         surfNutTmp_.internalVector(),
         surfF1Tmp_.internalVector(),
         dkEffFTmp_.internalVector(),
         domegaEffFTmp_.internalVector(),
-        surfBoundFlooredTmp_.internalVector(),
         omegaWallValueTmp_,
         omegaWallMaskTmp_
     );
@@ -774,6 +689,10 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
     , wallDist_(buildWallDistKOmega(rt.exec, rt.mesh))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
+    // grad(U) honours the configured gradSchemes; the operator is shared with the
+    // solver's other grad(U) call sites via RunTime's cache.
+    model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarField(rt.mesh, "k"), true);

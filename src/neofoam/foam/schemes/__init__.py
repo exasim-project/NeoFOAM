@@ -18,6 +18,7 @@ from .div import (
     NoneDiv,
 )
 from .grad import (
+    CellLimitedGrad,
     GaussGrad,
     GradScheme,
     LeastSquaresGrad,
@@ -76,6 +77,7 @@ __all__ = [
     "GradScheme",
     "GaussGrad",
     "LeastSquaresGrad",
+    "CellLimitedGrad",
     # Divergence
     "DivScheme",
     "NoneDiv",

@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                nf::updateVelocity(hByA, crAU, p, U);
+                nf::updateVelocity(hByA, crAU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

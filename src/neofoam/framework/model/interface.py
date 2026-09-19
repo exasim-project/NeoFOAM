@@ -56,7 +56,14 @@ def _resolve_contribution_kwargs(
     sig = inspect.signature(func)
     kwargs: dict[str, Any] = {}
     for pname in sig.parameters:
-        if pname in ("self", "cls"):
+        if pname == "self":
+            # Same contract as ``@model.operation`` (see
+            # wrap_with_dependency_resolution): ``self`` is the *contributing*
+            # runtime, so a contribution reads the handle its ``@build`` stashed
+            # there instead of looking it up on the Context by name.
+            kwargs[pname] = runtime
+            continue
+        if pname == "cls":
             kwargs[pname] = None  # operation-method form: skip the receiver
             continue
         if pname not in resolved:

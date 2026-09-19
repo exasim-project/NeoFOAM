@@ -65,13 +65,17 @@ void registerPressureVelocityCoupling(nb::module_& m)
         [](fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const fvcc::VolumeField<NeoN::scalar>& rAU,
            const fvcc::VolumeField<NeoN::scalar>& rAtU,
-           const fvcc::VolumeField<NeoN::scalar>& p)
-        { nf::addConsistentFluxCorrection(phiHbyA, rAU, rAtU, p); },
+           const fvcc::VolumeField<NeoN::scalar>& p,
+           const NeoN::Dictionary& fvSchemes)
+        { nf::addConsistentFluxCorrection(phiHbyA, rAU, rAtU, p, fvSchemes); },
         "phi_hbya"_a,
         "rAU"_a,
         "rAtU"_a,
         "p"_a,
-        "SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf"
+        "fv_schemes"_a,
+        "SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf. The "
+        "snGrad scheme comes from the snGradSchemes subdict of fv_schemes (key snGrad(<p>), "
+        "else default)"
     );
 
     m.def(
@@ -111,12 +115,14 @@ void registerPressureVelocityCoupling(nb::module_& m)
         [](const fvcc::VolumeField<NeoN::Vec3>& hByA,
            const fvcc::VolumeField<NeoN::scalar>& rAU,
            const fvcc::VolumeField<NeoN::scalar>& p,
-           fvcc::VolumeField<NeoN::Vec3>& U) { nf::updateVelocity(hByA, rAU, p, U); },
+           fvcc::VolumeField<NeoN::Vec3>& U,
+           nf::RunTime& rt) { nf::updateVelocity(hByA, rAU, p, U, rt); },
         "hByA"_a,
         "rAU"_a,
         "p"_a,
         "U"_a,
-        "Update cell velocity: U = HbyA - rAU * grad(p)"
+        "runtime"_a,
+        "Update cell velocity: U = HbyA - rAU * grad(p), using the configured gradScheme"
     );
 
     m.def(

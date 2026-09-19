@@ -52,6 +52,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -62,6 +63,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
+from .extension import momentum_extension, pressure_extension
 
 pimpleNeoN = Model("PimpleNeoN")
 
@@ -134,6 +136,23 @@ def _read_switch(d: Any, key: str, default: bool) -> bool:
     return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
+def _control_block_name(fv_solution: Any) -> str:
+    """Pick the fvSolution block the pressure-velocity control is read from.
+
+    Mirrors the pybFoam control factory: a pisoFoam case ships ``PISO`` (a
+    single-outer-loop PIMPLE) instead of ``PIMPLE``. Corrector counts and
+    ``pRefCell``/``pRefValue`` come from the same block, so both readers share
+    this selection.
+    """
+    for name in ("PIMPLE", "PISO"):
+        if fv_solution.contains(name):
+            return name
+    raise ValueError(
+        "incompressibleFluidNeoN: system/fvSolution has neither a PIMPLE "
+        "nor a PISO block to build the pressure-velocity control from."
+    )
+
+
 def _reduce_u(stats: Any) -> tuple[float, float]:
     """Max-component reduction: Ux/Uy/Uz entries -> one {init, final} pair."""
     mi = 0.0
@@ -182,22 +201,10 @@ def build(self: Any) -> list[Any]:
 
     def create_pimple_state(context: dict[str, Any]) -> PimpleNeoNState:
         rt = context["_neon_runtime"]
-        # Inner-corrector counts live in the "PIMPLE" subdict for a stock
-        # pimpleFoam case; a pisoFoam case ships a "PISO" block instead (a
-        # single-outer-loop PIMPLE), so mirror the pybFoam control factory:
-        # prefer PIMPLE, fall back to PISO. OpenFOAM's solutionControl defaults
-        # momentumPredictor to true; the outer-loop count comes from
-        # nfb.PimpleControl, which defaults to 1 without a PIMPLE block.
+        # momentumPredictor defaults to true (OpenFOAM solutionControl); the outer
+        # loop count comes from nfb.PimpleControl, 1 without a PIMPLE block.
         fv_solution = rt.fv_solution_dict
-        if fv_solution.contains("PIMPLE"):
-            control_dict = fv_solution.subDict("PIMPLE")
-        elif fv_solution.contains("PISO"):
-            control_dict = fv_solution.subDict("PISO")
-        else:
-            raise ValueError(
-                "incompressibleFluidNeoN: system/fvSolution has neither a PIMPLE "
-                "nor a PISO block to build the pressure-velocity control from."
-            )
+        control_dict = fv_solution.subDict(_control_block_name(fv_solution))
         piso = PisoControl(
             n_correctors=_read_int(control_dict, "nCorrectors", 1),
             n_non_orthogonal_correctors=_read_int(control_dict, "nNonOrthogonalCorrectors", 0),
@@ -207,10 +214,9 @@ def build(self: Any) -> list[Any]:
 
     def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         rt = context["_neon_runtime"]
-        # pRefCell/pRefValue live in the same control block as the corrector
-        # counts, so pass the block the case ships — a pisoFoam case would
-        # otherwise abort with *Entry 'PIMPLE' not found in fvSolution*.
-        algorithm = "PIMPLE" if rt.fv_solution_dict.contains("PIMPLE") else "PISO"
+        # Same block as the corrector counts: a pisoFoam case would otherwise
+        # abort with *Entry 'PIMPLE' not found in fvSolution*.
+        algorithm = _control_block_name(rt.fv_solution_dict)
         cell, value, needs_ref = nfb.set_ref_cell(rt, "p", algorithm)
         return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
 
@@ -291,6 +297,7 @@ def momentum(
     grad_op: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     """Assemble (and optionally solve) the momentum equation — one outer pass.
 
@@ -304,6 +311,8 @@ def momentum(
     # pressure solve (explicit field under-relaxation, consumed by continuity).
     prev_p = nfb.field_relaxation_snapshot(p)
 
+    ext.constrain(U)
+
     # grad(U) for the explicit dev2 viscous stress. Keep ``grad_u`` alive for
     # the whole outer pass (the operator holds a reference) — it rides to
     # ctx.fields via the FieldUpdates below.
@@ -313,7 +322,8 @@ def momentum(
         nn.imp.ddt(U)
         + nn.imp.div(phi, U)
         - nn.imp.laplacian(turbulence.nu_eff(), U)
-        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u),
+        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u)
+        + ext.terms(U),
         U,
         neon_runtime,
     )
@@ -355,6 +365,7 @@ def continuity(
     surf_interp: Annotated[Any, "models"],
     pressure_reference: Annotated[PressureReference, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
     """The PISO corrector: pressure solve, flux + velocity update.
 
@@ -380,6 +391,7 @@ def continuity(
         rAUf.name = "rAUf"
 
         phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
+        phiHbyA = ext.predicted_flux(phiHbyA)
 
         while state.piso.correct_non_orthogonal():
             pEqn = nfb.PDESolverScalar(
@@ -416,8 +428,9 @@ def continuity(
             f"global = {global_err}, cumulative = {state.cumulative_cont_err}"
         )
 
-        nfb.update_velocity(hByA, rAU, p, U)
+        nfb.update_velocity(hByA, rAU, p, U, rt)
         U.correct_boundary_conditions()
+        ext.constrain_corrected_velocity(U)
 
     if have_p_res:
         state.residuals["p"] = p_res
@@ -436,8 +449,14 @@ def turbulence_correct(
 
     Solves the nuTilda transport PDE and refreshes nut/gradU for SA-DDES; a
     no-op recompute for laminar.
+
+    This is pimpleFoam's ``turbOnFinalIterOnly true`` position — the correction
+    runs on the final outer pass, where OpenFOAM has ``isFinalIteration()`` set,
+    so the transport solves take their ``<field>Final`` solver settings and
+    equation relaxation. The control cannot be queried for it here: ``loop()``
+    zeroes its corrector count on the pass that ends the loop.
     """
-    turbulence.correct(U, phi, neon_runtime)
+    turbulence.correct(U, phi, neon_runtime, final_iter=True)
 
 
 def _alias_operation(

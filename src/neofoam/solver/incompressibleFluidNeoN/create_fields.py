@@ -43,6 +43,7 @@ from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime
+from neofoam.solver.neon_runtime import requested_executor
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
 
@@ -139,7 +140,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             return pyf.Time(ctx["_arg_list"])
 
         def create_neon_runtime(ctx: dict[str, Any]) -> Any:
-            rt = nfb.create_adapter_run_time(ctx["_foam_time"])
+            rt = nfb.create_adapter_run_time(ctx["_foam_time"], requested_executor())
             # Map OpenFOAM dictionaries to NeoN/Ginkgo equivalents once, up
             # front (mirrors the legacy port's setup block).
             rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)

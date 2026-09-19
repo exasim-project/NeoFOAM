@@ -400,10 +400,21 @@ namespace NeoFOAM::bindings
 void registerTurbulenceModel(nb::module_& m)
 {
     // -------------------------------------------------------------------
-    // VolumeField<Tensor> — opaque handle so Python can hold the velocity
-    // gradient between gradTensor() and the viscousStress() operator.
+    // VolumeField<Tensor> — the handle Python holds the velocity gradient in
+    // between gradTensor() and the viscousStress() operator. internal_vector
+    // exposes the 9 components (as NeoN's TensorVector) so a tensor-valued
+    // gradient can be compared against OpenFOAM's; note NeoN stores
+    // grad(U)_ij = dU_i/dx_j, the transpose of OpenFOAM's convention.
     // -------------------------------------------------------------------
-    nb::class_<fvcc::VolumeField<NeoN::Tensor>>(m, "TensorVolumeField");
+    nb::class_<fvcc::VolumeField<NeoN::Tensor>>(m, "TensorVolumeField")
+        .def(
+            "internal_vector",
+            static_cast<NeoN::Vector<NeoN::Tensor>& (fvcc::VolumeField<NeoN::Tensor>::*)()>(
+                &fvcc::VolumeField<NeoN::Tensor>::internalVector
+            ),
+            nb::rv_policy::reference_internal,
+            "Get the internal vector"
+        );
 
     // -------------------------------------------------------------------
     // Gauss-Green gradient operator — gradTensor(U) -> VolumeField<Tensor>.

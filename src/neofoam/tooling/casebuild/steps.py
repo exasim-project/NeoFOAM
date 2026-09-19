@@ -9,6 +9,7 @@ Each is a free function returning a :data:`~neofoam.tooling.casebuild.pipeline.S
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from typing import Optional, Union
 
@@ -17,10 +18,14 @@ from pydantic import BaseModel
 from neofoam.io import DictFile, write_configs
 from neofoam.tooling.casebuild.pipeline import CaseDir, Step
 
+# One address segment: a double-quoted OpenFOAM regex key, or a run without dots.
+_SEGMENT = re.compile(r'"[^"]*"|[^.]+')
+
 
 def _addr(key: str) -> Union[str, tuple[str, ...]]:
-    """A dotted key becomes a :class:`DictFile` tuple address; a plain key stays."""
-    return tuple(key.split(".")) if "." in key else key
+    """Split a dotted key into a tuple address; a quoted key stays one segment."""
+    parts = _SEGMENT.findall(key)
+    return tuple(parts) if len(parts) > 1 else key
 
 
 def patch(
@@ -39,9 +44,11 @@ def patch(
     committing a second template, e.g.
     ``patch("system/controlDict", remove=["adjustTimeStep"])``). Both accept
     dotted keys addressing sub-dicts, e.g.
-    ``patch("system/fvSolution", **{"PIMPLE.nCorrectors": 2})``. Removing an
-    absent key is a no-op. The file's format (OpenFOAM / JSON / YAML) is chosen
-    by suffix -- see :class:`neofoam.io.DictFile`.
+    ``patch("system/fvSolution", **{"PIMPLE.nCorrectors": 2})``; a double-quoted
+    regex key is one literal segment, dots included, and its value must be a
+    sub-dict (pybFoam cannot write a regex-keyed scalar). Removing an absent key
+    is a no-op. The file's format (OpenFOAM / JSON / YAML) is chosen by suffix --
+    see :class:`neofoam.io.DictFile`.
     """
     merged: dict[str, object] = {**(overrides or {}), **kwargs}
     removals = list(remove)

@@ -4,9 +4,9 @@
 """incompressibleVoF solver-local model plugins."""
 
 from neofoam.fv_options import fvOptions
-from neofoam.mrf import mrf
 
 from .incompressibleVoFModel import incompressibleVoFModel
+from .mrf import mrf
 
 # MRF and fvOptions are shared with incompressibleFluid, so their specs cannot
 # register themselves at definition time.

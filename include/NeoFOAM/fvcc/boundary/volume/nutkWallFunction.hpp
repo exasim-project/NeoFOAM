@@ -25,13 +25,34 @@ inline constexpr scalar NUTK_WF_DEFAULT_KAPPA = 0.41;
 inline constexpr scalar NUTK_WF_DEFAULT_E = 9.8;
 
 /**
+ * @brief Iterate OpenFOAM's yPlusLam: the y+ where the viscous and log laws meet.
+ *
+ * Foam::wallFunctionCoefficients solves yPlusLam = log(max(E·yPlusLam, 1))/κ by fixed-point
+ * iteration from 11; ~11.53 for the default κ=0.41, E=9.8.
+ */
+inline scalar nutkYPlusLam(scalar kappa, scalar E)
+{
+    scalar ypl = scalar(11);
+    for (int i = 0; i < 10; ++i)
+    {
+        ypl = Kokkos::log(Kokkos::max(E * ypl, scalar(1))) / kappa;
+    }
+    return ypl;
+}
+
+/**
  * @brief Apply the nutkWallFunction kernel face-by-face.
  *
- * Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the BINOMIAL n=2 blender:
+ * Mirrors Foam::nutkWallFunctionFvPatchScalarField::nut() for the STEPWISE blender, which is
+ * upstream's default (wallFunctionBlenders.C:53):
  *   - y⁺       = C_µ^0.25·y·√k/ν
  *   - ν_t,log  = ν·y⁺·κ/log(max(E·y⁺, 1+1e-4))
  *   - ν_t,vis  = ν   (viscous sublayer)
- *   - ν_t,w    = √(ν_t,vis² + ν_t,log²)
+ *   - ν_t,w    = (y⁺ > y⁺_lam ? ν_t,log : ν_t,vis) − ν_t,vis
+ *
+ * The trailing subtraction is upstream's unconditional `nutw -= nutVis`
+ * (nutkWallFunctionFvPatchScalarField.C:168): nut is the *turbulent* viscosity, so it must
+ * fall to exactly zero in the sublayer rather than to ν.
  *
  * k is read from the BoundaryContext; the boundary face value is written,
  * no internal-cell stomp.
@@ -49,14 +70,8 @@ inline void setNutkWallFunction(
 )
 {
     const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
-
-    // yPlusLam: the STEPWISE viscous/log switch-over point. Matches OpenFOAM
-    // wallFunctionCoefficients::calcYPlusLam (10 fixed-point iterations from 11).
-    scalar yPlusLam = scalar(11);
-    for (int it = 0; it < 10; ++it)
-    {
-        yPlusLam = Kokkos::log(Kokkos::max(E * yPlusLam, scalar(1))) / kappa;
-    }
+    // The STEPWISE viscous/log switch-over point; see nutkYPlusLam.
+    const scalar yPlusLam = nutkYPlusLam(kappa, E);
 
     const auto kInternal = k.internalVector().view();
     const auto nuBoundary = nu.boundaryData().value().view();

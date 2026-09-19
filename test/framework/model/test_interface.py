@@ -4,8 +4,9 @@
 """Tests for model-owned interfaces: ``@<model>.interface`` declares a gather
 :class:`Hook` on a model-private extension — the declaration body receives the
 active contributions' results and combines them. Covers declaration, empty-fold
-default, contribution registration, live-Context dispatch, and resolver
-injection of a hook-annotated parameter."""
+default, contribution registration, live-Context dispatch, the ``self``
+receiver bound to the contributing runtime, and resolver injection of a
+hook-annotated parameter."""
 
 # NOTE: no `from __future__ import annotations` — a Hook handle is used as a live
 # operation-parameter annotation; keep these modules PEP 563-free so annotations
@@ -71,6 +72,11 @@ def _needs_deltaT(deltaT: float) -> float:
 
 def _cap_from_config(cfg: _CapConfig) -> float:
     return cfg.value
+
+
+def _cap_from_its_runtime(self: Any) -> float:
+    """Operation-method form: the cap rides on the runtime, as a ``@build`` leaves it."""
+    return float(self.cap)
 
 
 # ---------------------------------------------------------------------------
@@ -255,7 +261,7 @@ def test_owner_of_unregistered_function_raises(constraint: Any) -> None:
             lambda self, deltaT: deltaT,
             {"deltaT": 0.2},
             0.2,
-        ),  # method form: self skipped
+        ),  # method form: self is the contributing runtime
     ],
 )
 def test_resolved_interface_folds_a_single_active_contribution(
@@ -292,6 +298,13 @@ def test_contribution_resolves_config_param_from_its_own_runtime(
     constraint: Any,
 ) -> None:
     capped_rt = contributor(constraint, _cap_from_config, "capped", config=_CapConfig(value=0.05))
+    assert bound(constraint, [capped_rt])() == pytest.approx(0.05)
+
+
+def test_contribution_receives_its_own_runtime_as_self(constraint: Any) -> None:
+    capped_rt = contributor(constraint, _cap_from_its_runtime, "capped")
+    capped_rt.cap = 0.05  # the handle a ``@build`` stashes on its runtime
+
     assert bound(constraint, [capped_rt])() == pytest.approx(0.05)
 
 

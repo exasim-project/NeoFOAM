@@ -8,6 +8,7 @@
 
 #include "fv.H"
 #include "gaussConvectionScheme.H"
+#include "boundedConvectionScheme.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
@@ -133,6 +134,28 @@ TEST_CASE("Interpolation")
         REQUIRE_THAT(nfDivT, EqualsInternal(ofDivT, ApproxScalar(1e-11)));
     }
 
+    // bounded Gauss upwind = upwind divergence with the -surfaceIntegrate(phi)*T continuity-error
+    // correction subtracted (Foam::fv::boundedConvectionScheme). ofPhi is a random, non-solenoidal
+    // flux (not derived from a potential), so div(phi) != 0 generically and the correction is
+    // actually exercised rather than vanishing.
+    SECTION("GaussGreenDiv bounded[scalar] on " + execName)
+    {
+        Foam::IStringStream isInner("Gauss upwind");
+        Foam::fv::boundedConvectionScheme<Foam::scalar> foamBoundedDivScalar(mesh, ofPhi, isInner);
+        Foam::volScalarField ofDivT("ofDivT", foamBoundedDivScalar.fvcDiv(ofPhi, ofT));
+
+        auto nfDivT = NeoFOAM::constructFrom(exec, nfMesh, ofDivT);
+        zero(nfDivT, 0.0);
+
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("bounded"), std::string("Gauss"), std::string("upwind")});
+        fvcc::DivOperatorFactory<NeoN::scalar>::create(exec, nfMesh, scheme)
+            ->div(nfDivT, nfPhi, nfT, dsl::Coeff(1.0));
+        nfDivT.correctBoundaryConditions();
+
+        REQUIRE_THAT(nfDivT, EqualsInternal(ofDivT, ApproxScalar(1e-11)));
+    }
+
     auto ofU = randomVectorField(runTime, mesh, "U");
     auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
 
@@ -160,5 +183,35 @@ TEST_CASE("Interpolation")
                 && Catch::Approx(of[2]).epsilon(1e-6).margin(1.0) == nf[2];
         };
         REQUIRE_THAT(nfDivU, EqualsInternal(ofDivU, approxRel));
+    }
+
+    SECTION("GaussGreenDiv bounded[vector] on " + execName)
+    {
+        Foam::IStringStream isInnerVec("Gauss linearUpwind grad(U)");
+        Foam::fv::boundedConvectionScheme<Foam::vector> foamBoundedDivVec(mesh, ofPhi, isInnerVec);
+        Foam::volVectorField ofDivU("ofDivU", foamBoundedDivVec.fvcDiv(ofPhi, ofU));
+
+        auto nfDivU = NeoFOAM::constructFrom(exec, nfMesh, ofDivU);
+        zero(nfDivU, NeoN::Vec3(0.0, 0.0, 0.0));
+
+        NeoN::TokenList scheme = NeoN::TokenList(
+            {std::string("bounded"),
+             std::string("Gauss"),
+             std::string("linearUpwind"),
+             std::string("grad(U)")}
+        );
+        fvcc::DivOperatorFactory<NeoN::Vec3>::create(exec, nfMesh, scheme)
+            ->div(nfDivU, nfPhi, nfU, dsl::Coeff(1.0));
+        nfDivU.correctBoundaryConditions();
+
+        // Divergence values are O(1e6) here (see the linearUpwind[vector] section above), so a
+        // relative tolerance per component is used rather than an absolute one.
+        auto approxRelBounded = [](NeoN::Vec3 nf, Foam::vector of)
+        {
+            return Catch::Approx(of[0]).epsilon(1e-6).margin(1.0) == nf[0]
+                && Catch::Approx(of[1]).epsilon(1e-6).margin(1.0) == nf[1]
+                && Catch::Approx(of[2]).epsilon(1e-6).margin(1.0) == nf[2];
+        };
+        REQUIRE_THAT(nfDivU, EqualsInternal(ofDivU, approxRelBounded));
     }
 }

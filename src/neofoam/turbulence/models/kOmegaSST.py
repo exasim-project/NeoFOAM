@@ -314,6 +314,7 @@ def correct_omega(
     nu_vol: Annotated[Any, "models"],
     komega_surf: Annotated[Any, "models"],
     komega_nearWallDist: Annotated[Any, "models"],
+    final_iter: Annotated[bool, "models"],
     coeffs: KOmegaSSTCoeffs,
     komega_F1: Annotated[Any, "fields"],
     komega_omega_prod: Annotated[Any, "fields"],
@@ -342,7 +343,7 @@ def correct_omega(
         omega,
         neon_runtime,
     )
-    eqn.set_final_iter(False)
+    eqn.set_final_iter(final_iter)
     eqn.relax()  # OpenFOAM kOmegaSSTBase.C: omegaEqn.ref().relax()
     # omegaWallFunction pins the near-wall CELL omega to the blended wall value
     # (OpenFOAM's matrix.setValues); apply it after assembly, before solve.
@@ -362,6 +363,7 @@ def correct_k(
     nu_vol: Annotated[Any, "models"],
     komega_surf: Annotated[Any, "models"],
     komega_nearWallDist: Annotated[Any, "models"],
+    final_iter: Annotated[bool, "models"],
     coeffs: KOmegaSSTCoeffs,
     komega_F1: Annotated[Any, "fields"],
     komega_G: Annotated[Any, "fields"],
@@ -392,7 +394,7 @@ def correct_k(
         k,
         neon_runtime,
     )
-    eqn.set_final_iter(False)
+    eqn.set_final_iter(final_iter)
     eqn.relax()  # OpenFOAM kOmegaSSTBase.C: kEqn.ref().relax()
     eqn.solve()
     nfb.bound(k, kMin)

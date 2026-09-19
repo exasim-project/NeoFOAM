@@ -45,7 +45,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from neofoam.mrf import mrf
+from neofoam.solver.incompressibleFluid.models.mrf import mrf
 
 from .row4_cases import row4
 

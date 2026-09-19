@@ -9,7 +9,7 @@ on the injected handle, so no operation has to know which models a case
 activated. A model that owns a *single* value folded by one rule wants
 ``@<model>.interface`` instead. Hooks are per operation, so a contribution only
 ever sees the hooks of the operation it extends; the contributions themselves
-live next to each model's spec (``neofoam.mrf``, ``neofoam.fv_options``).
+live next to each model's spec (``models.mrf``, ``neofoam.fv_options``).
 
 Example::
 

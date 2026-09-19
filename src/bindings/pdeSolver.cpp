@@ -45,6 +45,11 @@ void registerPDESolver(nb::module_& m)
             "expr"_a,
             "psi"_a,
             "runtime"_a,
+            // keep_alive<1,2>: ``expr`` is taken by value, so nanobind drops the Python
+            // Expression once this returns — and with it the chain of keep_alives holding
+            // any field a contribution built on the fly (e.g. cross(omega, U)). The
+            // operators inside the copied Expression still reference those fields.
+            nb::keep_alive<1, 2>(),
             nb::keep_alive<1, 3>(),
             nb::keep_alive<1, 4>()
         )
@@ -91,6 +96,11 @@ void registerPDESolver(nb::module_& m)
             "expr"_a,
             "psi"_a,
             "runtime"_a,
+            // keep_alive<1,2>: ``expr`` is taken by value, so nanobind drops the Python
+            // Expression once this returns — and with it the chain of keep_alives holding
+            // any field a contribution built on the fly (e.g. cross(omega, U)). The
+            // operators inside the copied Expression still reference those fields.
+            nb::keep_alive<1, 2>(),
             nb::keep_alive<1, 3>(),
             nb::keep_alive<1, 4>()
         )
