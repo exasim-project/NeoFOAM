@@ -65,6 +65,15 @@ the linked reference pages for the full API.
     ``TableWriter`` interface and the CSV writer a table gets by default).
     See :doc:`postprocessing`.
 
+``preprocess/``
+    Pre-processing: a case declares a default per field plus a list of regions in
+    ``system/setFields.yaml`` or ``system/setFields.py`` and the ``setFields``
+    tool writes the values into the case's ``0/`` fields before the run. The
+    regions are the post-processing selectors, imported from ``postprocess/``.
+    The two front doors (``config.py``, ``script.py``) are pure numpy;
+    ``apply.py`` is the one module that touches pybFoam, which is what makes the
+    tool pybFoam-only. See :doc:`preprocessing`.
+
 ``tooling/``
     The "above the library" layer: the stdlib-only ``Workspace`` path sandbox and
     other frontend/trust-boundary concerns.

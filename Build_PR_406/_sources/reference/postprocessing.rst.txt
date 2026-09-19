@@ -73,6 +73,24 @@ An unknown ``type`` raises, naming the table and the pipeline position, and so
 does an unknown *key* inside a source, node, write control or writer — a
 misspelt field is rejected on load rather than silently ignored.
 
+Authoring the spec over MCP
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two MCP tools cover this file (see :doc:`cli`, ``neofoam mcp serve``).
+``post_catalog`` lists every registered source, node, writer and write control
+with its ``type`` string, its one-line purpose and its JSON Schema — plus
+``accepts_aggregated`` for a node and ``self_aggregating`` for a source. It is
+the source of truth for those strings: the four mappings stay open in the
+``post_process_config`` schema (they are resolved against the plugin families at
+load time), so the schema alone shows them as free objects.
+
+``save_post`` takes the same tree as the file above, resolves every table the way
+a run does and then writes ``system/postProcess.yaml``; an unknown ``type`` or a
+misspelt key is refused — naming the table and the pipeline position — before
+anything is written. It never runs a case and never executes
+``system/postProcess.py``, so a table name that collides with a script's is only
+found when the case runs.
+
 The script front door
 ---------------------
 
