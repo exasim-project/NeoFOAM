@@ -933,7 +933,7 @@
     <span class="s2">"nf.patch"</span><span class="p">:</span> <span class="s2">"Patch name, e.g. inlet"</span><span class="p">,</span>
     <span class="s2">"nf.entry"</span><span class="p">:</span> <span class="s2">"Entry, e.g. div(phi,k)"</span><span class="p">,</span>
     <span class="s2">"nf.solver"</span><span class="p">:</span> <span class="s2">"Field, e.g. p"</span><span class="p">,</span>
-    <span class="s2">"nf.option"</span><span class="p">:</span> <span class="s2">"Option, e.g. tolerance"</span><span class="p">,</span>
+    <span class="s2">"nf.option"</span><span class="p">:</span> <span class="s2">"Option, e.g. maxIter"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="c1"># JSONForms addresses form data by dotted path (``boundaryField.inlet.type``), so a key</span>
@@ -979,6 +979,48 @@
         <span class="n">node</span><span class="p">[</span><span class="s2">"nfCompact"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">node</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.solver"</span>
+
+
+<span class="c1"># Which key sits next to ``solver`` in a linear-solver block: a Krylov solver takes a</span>
+<span class="c1"># preconditioner, a smoothing one a smoother. These are the OpenFOAM solvers the NeoN</span>
+<span class="c1"># backend maps too, so every suggestion runs on both.</span>
+<span class="n">_SOLVER_COMPANION</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"PCG"</span><span class="p">:</span> <span class="s2">"preconditioner"</span><span class="p">,</span>
+    <span class="s2">"PBiCGStab"</span><span class="p">:</span> <span class="s2">"preconditioner"</span><span class="p">,</span>
+    <span class="s2">"PBiCG"</span><span class="p">:</span> <span class="s2">"preconditioner"</span><span class="p">,</span>
+    <span class="s2">"smoothSolver"</span><span class="p">:</span> <span class="s2">"smoother"</span><span class="p">,</span>
+    <span class="s2">"GAMG"</span><span class="p">:</span> <span class="s2">"smoother"</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">_PRECONDITIONERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"DIC"</span><span class="p">,</span> <span class="s2">"FDIC"</span><span class="p">,</span> <span class="s2">"DILU"</span><span class="p">,</span> <span class="s2">"diagonal"</span><span class="p">,</span> <span class="s2">"GAMG"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">]</span>
+<span class="n">_SMOOTHERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"symGaussSeidel"</span><span class="p">,</span> <span class="s2">"GaussSeidel"</span><span class="p">,</span> <span class="s2">"DICGaussSeidel"</span><span class="p">,</span> <span class="s2">"DIC"</span><span class="p">,</span> <span class="s2">"DILU"</span><span class="p">]</span>
+
+
+<span class="c1"># The keys every linear-solver block has. Choices are ``examples``, never an ``enum``: a</span>
+<span class="c1"># loaded case may name a solver OpenFOAM does not know (``Ginkgo``), and a</span>
+<span class="c1"># GAMG-preconditioned PCG nests a dictionary under ``preconditioner``.</span>
+<span class="n">_SOLVER_CONTROLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"solver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">_SOLVER_COMPANION</span><span class="p">)},</span>
+    <span class="s2">"preconditioner"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"string"</span><span class="p">,</span> <span class="s2">"object"</span><span class="p">],</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="n">_PRECONDITIONERS</span><span class="p">},</span>
+    <span class="s2">"smoother"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="n">_SMOOTHERS</span><span class="p">},</span>
+    <span class="s2">"tolerance"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
+    <span class="s2">"relTol"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_pin_solver_controls</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Draw the ``solvers`` section's blocks as grids of their standard keys (mutates ``node``).</span>
+
+<span class="sd">    The config keeps a block schemaless (any key, written back as read); only the form</span>
+<span class="sd">    declares the keys, so the bundled renderer can offer dropdowns and number fields.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"_solvers"</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">node</span><span class="p">[</span><span class="s2">"nfSolvers"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">block</span><span class="p">[</span><span class="s2">"nfSolver"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_SOLVER_COMPANION</span>
+        <span class="n">block</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">control</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">control</span> <span class="ow">in</span> <span class="n">_SOLVER_CONTROLS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_patch_adder</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -1083,6 +1125,7 @@
 <span class="sd">    * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.</span>
 <span class="sd">    * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.</span>
 <span class="sd">    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.</span>
+<span class="sd">    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.</span>
 <span class="sd">    """</span>
     <span class="n">class_names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{}))</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">inline_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
@@ -1140,6 +1183,7 @@
         <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_accepts_new_keys</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
             <span class="k">del</span> <span class="n">node</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span>
         <span class="n">_tag_adders</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">_pin_solver_controls</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="c1"># A def that *is* a discriminated arm: title it by its const type.</span>
         <span class="n">const</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"const"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">const</span> <span class="ow">and</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
