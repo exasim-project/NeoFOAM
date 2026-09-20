@@ -37,7 +37,7 @@
 // An object of scalars only (`nfGrid`, see forms.py `_tag_scalar_grid`) keeps JSONForms'
 // generated layout and controls; its layout renderer just sets them in a wrapping grid.
 
-import { computed, defineComponent, h, ref, watch } from 'vue'
+import { computed, defineComponent, h, nextTick, ref, watch } from 'vue'
 import {
   DispatchRenderer,
   JsonForms,
@@ -97,6 +97,9 @@ const formatNumber = (value) => {
   return value.toExponential().replace('e+', 'e')
 }
 
+// What a number looks like while it is still being typed: `-`, `.`, `1e`, `1e-`.
+const PARTIAL_NUMBER = /^[-+]?\d*\.?\d*(e[-+]?)?$/i
+
 const NfNumberControl = defineComponent({
   name: 'nf-number-control',
   props: { ...rendererProps() },
@@ -111,6 +114,16 @@ const NfNumberControl = defineComponent({
       const v = this.control.data
       return v === undefined || v === null ? '' : formatNumber(v)
     },
+    // Text that can never become a number (`abc`, `0,5`) is not stored, so say so.
+    inputError() {
+      const t = (this.editing ?? '').trim()
+      const fits = this.acceptsText || Number.isFinite(Number(t)) || PARTIAL_NUMBER.test(t)
+      return fits ? null : `'${t}' is not a number (write 0.5 or 1e-5)`
+    },
+    // An untyped option (`nSweeps 2`, `cacheAgglomeration on`) holds either.
+    acceptsText() {
+      return [this.control.schema.type].flat().includes('string')
+    },
   },
   methods: {
     onInput(txt) {
@@ -118,9 +131,7 @@ const NfNumberControl = defineComponent({
       const t = (txt ?? '').trim()
       const n = Number(t)
       if (t !== '' && Number.isFinite(n)) this.handleChange(this.control.path, n)
-      // An untyped option (`nSweeps 2`, `cacheAgglomeration on`) holds either.
-      else if ([this.control.schema.type].flat().includes('string'))
-        this.handleChange(this.control.path, t)
+      else if (this.acceptsText) this.handleChange(this.control.path, t)
       else if (t === '') this.handleChange(this.control.path, undefined)
       // Partial input ("1e-", "-") keeps the last valid value until it parses.
     },
@@ -133,9 +144,8 @@ const NfNumberControl = defineComponent({
       modelValue: this.display,
       label: c.label + (c.required ? '*' : ''),
       disabled: !c.enabled,
-      errorMessages: c.errors,
+      errorMessages: this.inputError ?? c.errors,
       hint: c.description,
-      inputmode: 'decimal',
       class: 'nf-number',
       ...INLINE_FIELD[c.uischema.options?.nfInline ? 'on' : 'off'],
       'onUpdate:modelValue': this.onInput,
@@ -320,7 +330,12 @@ const NfCompactSection = defineComponent({
       // A keyword of a free-form dictionary starts as a text value.
       const value = createDefaultValue(this.like ?? { type: 'string' }, this.control.rootSchema)
       this.handleChange(this.control.path, { ...this.control.data, [this.newName]: value })
+      this.closeAdder()
+    },
+    // The name field unmounts on close; without this the focus falls to <body>.
+    closeAdder() {
       this.newName = null
+      nextTick(() => this.$refs.addButton?.$el.focus())
     },
     remove(key) {
       const data = { ...this.control.data }
@@ -402,6 +417,7 @@ const NfCompactSection = defineComponent({
         return h(
           VBtn,
           {
+            ref: 'addButton',
             variant: 'text',
             size: 'small',
             color: 'primary',
@@ -420,8 +436,12 @@ const NfCompactSection = defineComponent({
           errorMessages: this.nameError ?? [],
           'onUpdate:modelValue': (name) => (this.newName = name ?? ''),
           onKeydown: (event) => {
-            if (event.key === 'Enter') this.add()
-            if (event.key === 'Escape') this.newName = null
+            if (event.key === 'Enter') {
+              // Prevented, or the key press goes on to click the refocused button.
+              event.preventDefault()
+              this.add()
+            }
+            if (event.key === 'Escape') this.closeAdder()
           },
         }),
         h(
