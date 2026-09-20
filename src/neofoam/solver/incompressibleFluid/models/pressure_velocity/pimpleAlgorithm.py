@@ -67,6 +67,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata
 
+from ..boussinesq import BoussinesqFvSchemes, BoussinesqFvSolution
 from ..incompressibleFluidModel import Model
 from .control_factory import create_dynamic_mesh_controls, create_pimple_control
 from .extension import (
@@ -464,10 +465,15 @@ def continuity(
 @PimpleFvSchemes.add(
     ddt="ddt(U)",
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
+)
+# The buoyancy-only entries go on the Boussinesq slices, so a case without the
+# model is neither asked for them nor written with them.
+@BoussinesqFvSchemes.add(
     # ``grad(rhok)`` is needed by the ``corrected`` ``snGrad(rhok)`` below: the
     # non-orthogonal correction of ``fvc::snGrad(rhok)`` looks up the cell gradient.
-    grad=["grad(U)", "grad(rhok)"],
-    laplacian="laplacian(nuEff,U)",
+    grad="grad(rhok)",
     snGrad="snGrad(rhok)",
 )
 @PimpleFvSolution.add("U")
@@ -502,13 +508,13 @@ def momentum_boussinesq(
 
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum_boussinesq"])
-@PimpleFvSchemes.add(
+@BoussinesqFvSchemes.add(
     grad="grad(p_rgh)",
     laplacian="laplacian(rAUf,p_rgh)",
     interpolation="flux(U)",
     snGrad="snGrad(p_rgh)",
 )
-@PimpleFvSolution.add("p_rgh")
+@BoussinesqFvSolution.add("p_rgh")
 def continuity_boussinesq(
     U: volVectorField,
     p: volScalarField,

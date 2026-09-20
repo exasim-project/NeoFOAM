@@ -64,27 +64,21 @@ def lid_driven_cavity(
                 "default": "Gauss linear",
                 "grad(U)": "Gauss linear",
                 "grad(p)": "Gauss linear",
-                "grad(p_rgh)": "Gauss linear",
-                "grad(rhok)": "Gauss linear",
             },
             "laplacianSchemes": {
                 "default": "Gauss linear corrected",
                 "laplacian(nuEff,U)": "Gauss linear corrected",
                 "laplacian(rAU,p)": "Gauss linear corrected",
-                "laplacian(rAUf,p_rgh)": "Gauss linear corrected",
             },
             "interpolationSchemes": {
                 "default": "linear",
                 "flux(HbyA)": "linear",
                 "interpolate(rAU)": "linear",
                 "dotInterpolate(S,U_0)": "linear",
-                "flux(U)": "linear",
             },
             "snGradSchemes": {
                 "default": "corrected",
                 "snGrad(p)": "corrected",
-                "snGrad(rhok)": "corrected",
-                "snGrad(p_rgh)": "corrected",
             },
         }
     )
@@ -98,18 +92,6 @@ def lid_driven_cavity(
                     "relTol": 0.05,
                 },
                 "pFinal": {
-                    "solver": "PCG",
-                    "preconditioner": "DIC",
-                    "tolerance": 1e-7,
-                    "relTol": 0.0,
-                },
-                "p_rgh": {
-                    "solver": "PCG",
-                    "preconditioner": "DIC",
-                    "tolerance": 1e-7,
-                    "relTol": 0.05,
-                },
-                "p_rghFinal": {
                     "solver": "PCG",
                     "preconditioner": "DIC",
                     "tolerance": 1e-7,
@@ -256,13 +238,34 @@ def buoyant_cavity(
         {
             "ddtSchemes": {"default": "Euler"},
             "divSchemes": {"div(phi,T)": "Gauss upwind"},
-            "gradSchemes": {"grad(T)": "Gauss linear"},
-            "laplacianSchemes": {"default": "Gauss linear corrected"},
+            "gradSchemes": {
+                "grad(T)": "Gauss linear",
+                "grad(p_rgh)": "Gauss linear",
+                "grad(rhok)": "Gauss linear",
+            },
+            "laplacianSchemes": {
+                "default": "Gauss linear corrected",
+                "laplacian(rAUf,p_rgh)": "Gauss linear corrected",
+            },
+            "interpolationSchemes": {"flux(U)": "linear"},
+            "snGradSchemes": {"snGrad(rhok)": "corrected", "snGrad(p_rgh)": "corrected"},
         }
     )
     bouss_solution = cfgs["boussinesq_fvSolution"].model_validate(
         {
             "solvers": {
+                "p_rgh": {
+                    "solver": "PCG",
+                    "preconditioner": "DIC",
+                    "tolerance": 1e-7,
+                    "relTol": 0.05,
+                },
+                "p_rghFinal": {
+                    "solver": "PCG",
+                    "preconditioner": "DIC",
+                    "tolerance": 1e-7,
+                    "relTol": 0.0,
+                },
                 "T": {
                     "solver": "PBiCGStab",
                     "preconditioner": "DILU",

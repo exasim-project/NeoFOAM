@@ -109,7 +109,11 @@ def test_openfoam_dict_keys_are_titled_verbatim():
     # user cannot recover (p_rghFinal read as "P Rghfinal") and no longer names
     # anything in the written case file.
     entries = {e.key: e for e in build_forms(_solver())}
-    solvers = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]
+    # The buoyant pressure solvers sit on the Boussinesq model's own slice.
+    solvers = {
+        **entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"],
+        **entries["dict:boussinesq_fvSolution"].schema["properties"]["solvers"]["properties"],
+    }
     assert [solvers[k]["title"] for k in ("p", "pFinal", "p_rgh", "p_rghFinal")] == [
         "p",
         "pFinal",
