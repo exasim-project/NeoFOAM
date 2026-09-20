@@ -1,0 +1,56 @@
+\doxysection{setup.\+hpp}
+\hypertarget{setup_8hpp_source}{}\label{setup_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/setup.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/setup.hpp}}
+\mbox{\hyperlink{setup_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2023\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00003}00003\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00005}00005\ \textcolor{preprocessor}{\#include\ <tuple>}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runTime_8hpp}{NeoFOAM/datastructures/runTime.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}argList.H"{}}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}fvc.H"{}}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00013}00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00014}00014\ \{}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00015}00015\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00016}00016\ \textcolor{comment}{/*@brief\ based\ on\ the\ Courant\ number\ this\ function\ synchronizes\ the\ deltaT\ value\ in\ both\ runtimes*/}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00017}\mbox{\hyperlink{namespaceNeoFOAM_a39bc76acefb5a1dd3074b0feba5864eb}{00017}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a39bc76acefb5a1dd3074b0feba5864eb}{setDeltaT}}(Foam::Time\&\ ofRunTime,\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ nfRunTime,\ Foam::scalar\ coNum);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00019}00019\ \textcolor{comment}{/*@brief\ syncroncize\ between\ OpenFOAM\ and\ NeoFOAM\ runtimes\ */}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00020}\mbox{\hyperlink{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156}{00020}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156}{syncRunTimes}}(Foam::Time\&\ ofRunTime,\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ nfRunTime,\ Foam::scalar\ coNum);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00022}00022\ \textcolor{comment}{/*\ @brief\ create\ a\ NeoN\ executor\ from\ a\ dictionary}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00023}00023\ \textcolor{comment}{\ *\ @return\ the\ Neon::Executor}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00024}00024\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00025}\mbox{\hyperlink{namespaceNeoFOAM_a2d15e0c07e7e714cd7cb24248c0e0a64}{00025}}\ NeoN::Executor\ \mbox{\hyperlink{namespaceNeoFOAM_a2d15e0c07e7e714cd7cb24248c0e0a64}{createExecutor}}(\textcolor{keyword}{const}\ Foam::dictionary\&\ dict);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00026}00026\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00027}00027\ \textcolor{comment}{/*\ @brief\ create\ a\ NeoN\ executor\ from\ its\ name}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00028}00028\ \textcolor{comment}{\ *\ @return\ the\ Neon::Executor}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00029}00029\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00030}\mbox{\hyperlink{namespaceNeoFOAM_ac77aa23b184bcb66d69edc48540b1892}{00030}}\ NeoN::Executor\ \mbox{\hyperlink{namespaceNeoFOAM_a2d15e0c07e7e714cd7cb24248c0e0a64}{createExecutor}}(\textcolor{keyword}{const}\ Foam::word\&\ execName);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00031}00031\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00032}00032\ \textcolor{comment}{/*\ @brief\ create\ a\ NeoN\ executor,\ preferring\ the\ -\/executor\ CLI\ flag\ over\ the\ dictionary\ entry}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00033}00033\ \textcolor{comment}{\ *\ @return\ the\ NeoN::Executor}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00034}00034\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00035}\mbox{\hyperlink{namespaceNeoFOAM_a74e50825b6254ddbd19daae97ecf9dea}{00035}}\ NeoN::Executor\ \mbox{\hyperlink{namespaceNeoFOAM_a2d15e0c07e7e714cd7cb24248c0e0a64}{createExecutor}}(\textcolor{keyword}{const}\ Foam::argList\&\ args,\ \textcolor{keyword}{const}\ Foam::dictionary\&\ dict);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00036}00036\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00037}00037\ \textcolor{comment}{/*\ @brief\ create\ the\ commonly\ required\ objects\ for\ a\ simulation}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00038}00038\ \textcolor{comment}{\ *\ @return\ a\ tuple\ of\ the\ executor,\ the\ controlDict,\ the\ schemesDict,\ the\ \ solutionDict*/}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00039}\mbox{\hyperlink{namespaceNeoFOAM_aa712c3e1651e243f84deb034fe0e42ec}{00039}}\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\ \mbox{\hyperlink{namespaceNeoFOAM_aa712c3e1651e243f84deb034fe0e42ec}{createAdapterRunTime}}(\textcolor{keyword}{const}\ Foam::Time\&\ runTime,\ \textcolor{keyword}{const}\ NeoN::Executor\ exec);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00041}00041\ \textcolor{comment}{/*\ @brief\ create\ a\ struct\ holding\ the\ commonly\ required\ objects\ for\ a\ simulation}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00042}00042\ \textcolor{comment}{\ *\ @return\ the\ RunTime\ instance*/}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00043}\mbox{\hyperlink{namespaceNeoFOAM_a070bec2a3a31c4ed6c81b2babb1350a8}{00043}}\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\ \mbox{\hyperlink{namespaceNeoFOAM_aa712c3e1651e243f84deb034fe0e42ec}{createAdapterRunTime}}(\textcolor{keyword}{const}\ Foam::Time\&\ runTime);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00044}00044\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00045}00045\ \textcolor{comment}{/*\ @brief\ create\ a\ struct\ holding\ the\ commonly\ required\ objects\ for\ a\ simulation,}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00046}00046\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ honouring\ the\ -\/executor\ CLI\ flag\ when\ present}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00047}00047\ \textcolor{comment}{\ *\ @return\ the\ RunTime\ instance*/}}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00048}\mbox{\hyperlink{namespaceNeoFOAM_a6c9e120cd8b2e367f692e122caa17c8e}{00048}}\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\ \mbox{\hyperlink{namespaceNeoFOAM_aa712c3e1651e243f84deb034fe0e42ec}{createAdapterRunTime}}(\textcolor{keyword}{const}\ Foam::Time\&\ runTime,\ \textcolor{keyword}{const}\ Foam::argList\&\ args);}
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00049}00049\ }
+\DoxyCodeLine{\Hypertarget{setup_8hpp_source_l00050}00050\ \}\ \textcolor{comment}{//\ namespace\ NeoFoam}}
+
+\end{DoxyCode}

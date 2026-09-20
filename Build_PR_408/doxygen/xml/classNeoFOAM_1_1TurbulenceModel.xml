@@ -1,0 +1,276 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="classNeoFOAM_1_1TurbulenceModel" kind="class" language="C++" prot="public" abstract="yes">
+    <compoundname>NeoFOAM::TurbulenceModel</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">NeoN::RuntimeSelectionFactory&lt; TurbulenceModel, NeoN::Parameters&lt; RunTime &amp;, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp; &gt; &gt;</basecompoundref>
+    <includes refid="turbulenceModel_8hpp" local="no">turbulenceModel.hpp</includes>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a9e88a63a740f6b15b2bca5afe44341aa" prot="public" static="no" const="no" explicit="no" inline="no" virt="virtual">
+        <type></type>
+        <definition>virtual NeoFOAM::TurbulenceModel::~TurbulenceModel</definition>
+        <argsstring>()=default</argsstring>
+        <name>~TurbulenceModel</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::~TurbulenceModel</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="32" column="13"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1ad6c3e347eb9ee939dfb3a1d10f5836de" prot="public" static="no" const="no" explicit="no" inline="yes" virt="virtual">
+        <type>void</type>
+        <definition>virtual void NeoFOAM::TurbulenceModel::initialize</definition>
+        <argsstring>(const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;nuTildaInit, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;nutInit)</argsstring>
+        <name>initialize</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::initialize</qualifiedname>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>nuTildaInit</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>nutInit</declname>
+        </param>
+        <briefdescription>
+<para>Seed internal transport scalars from disk-read <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> fields. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Optional hook; the default is a no-op. Override to initialise model-owned fields (e.g. nuTilda) from values already loaded from disk by the caller. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="52" column="18" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" bodystart="52" bodyend="59"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a0d62c0f93efa69172798d2abe0c1a919" prot="public" static="no" const="no" explicit="no" inline="no" virt="pure-virtual">
+        <type>void</type>
+        <definition>virtual void NeoFOAM::TurbulenceModel::validate</definition>
+        <argsstring>(const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;U)=0</argsstring>
+        <name>validate</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::validate</qualifiedname>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;</type>
+          <declname>U</declname>
+        </param>
+        <briefdescription>
+<para>Seed gradU and nut before the time loop. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="62" column="18"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1abadc7ca738620793708e34a467610289" prot="public" static="no" const="no" explicit="no" inline="no" virt="pure-virtual">
+        <type>void</type>
+        <definition>virtual void NeoFOAM::TurbulenceModel::correct</definition>
+        <argsstring>(const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;U, nnfvcc::SurfaceField&lt; NeoN::scalar &gt; &amp;phi, RunTime &amp;rt)=0</argsstring>
+        <name>correct</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::correct</qualifiedname>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;</type>
+          <declname>U</declname>
+        </param>
+        <param>
+          <type>nnfvcc::SurfaceField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>phi</declname>
+        </param>
+        <param>
+          <type><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> &amp;</type>
+          <declname>rt</declname>
+        </param>
+        <briefdescription>
+<para>Update the turbulence model after the momentum solve each time step. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="65" column="18"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a39bed7c59f3724ff70fcf9ce3001d343" prot="public" static="no" const="no" explicit="no" inline="no" virt="pure-virtual">
+        <type>nnfvcc::SurfaceField&lt; NeoN::scalar &gt; &amp;</type>
+        <definition>virtual nnfvcc::SurfaceField&lt; NeoN::scalar &gt; &amp; NeoFOAM::TurbulenceModel::nuEff</definition>
+        <argsstring>()=0</argsstring>
+        <name>nuEff</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::nuEff</qualifiedname>
+        <briefdescription>
+<para>Surface effective viscosity (ν + ν_t) for the momentum laplacian. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="72" column="34"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a86fcc51daef2c0f4b5ac0d6cc6e2b76f" prot="public" static="no" const="yes" explicit="no" inline="no" virt="pure-virtual">
+        <type>const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+        <definition>virtual const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp; NeoFOAM::TurbulenceModel::nut</definition>
+        <argsstring>() const =0</argsstring>
+        <name>nut</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::nut</qualifiedname>
+        <briefdescription>
+<para>Cell-centred turbulent viscosity for the explicit viscousStress term. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="75" column="39"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1aef72cb4809fc873b080a0d4ae3f00d4b" prot="public" static="no" const="yes" explicit="no" inline="no" virt="pure-virtual">
+        <type>const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp;</type>
+        <definition>virtual const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp; NeoFOAM::TurbulenceModel::gradU</definition>
+        <argsstring>() const =0</argsstring>
+        <name>gradU</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::gradU</qualifiedname>
+        <briefdescription>
+<para>Velocity gradient tensor updated each <ref refid="classNeoFOAM_1_1TurbulenceModel_1abadc7ca738620793708e34a467610289" kindref="member">correct()</ref> call. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="78" column="39"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1ac20133231a12abcd1199bd00d8d72a89" prot="public" static="no" const="no" explicit="no" inline="no" virt="pure-virtual">
+        <type>void</type>
+        <definition>virtual void NeoFOAM::TurbulenceModel::updateGradU</definition>
+        <argsstring>(const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;U)=0</argsstring>
+        <name>updateGradU</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::updateGradU</qualifiedname>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;</type>
+          <declname>U</declname>
+        </param>
+        <briefdescription>
+<para>Recompute the model-owned gradU in place at the given velocity. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Includes internal, boundary, and proc-halo exchange. Lets the PIMPLE outer loop refresh gradU for its 2nd+ correctors by reusing this one buffer instead of allocating a separate VolumeField&lt;Tensor&gt; per solver. Safe because <ref refid="classNeoFOAM_1_1TurbulenceModel_1abadc7ca738620793708e34a467610289" kindref="member">correct()</ref> recomputes gradU afterwards; the first corrector reads the U^n <ref refid="classNeoFOAM_1_1TurbulenceModel_1aef72cb4809fc873b080a0d4ae3f00d4b" kindref="member">gradU()</ref> left by the previous step&apos;s <ref refid="classNeoFOAM_1_1TurbulenceModel_1abadc7ca738620793708e34a467610289" kindref="member">correct()</ref>. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="89" column="18"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a6af2db926d7eb7d289a1afc6b8df18e9" prot="public" static="no" const="no" explicit="no" inline="no" virt="pure-virtual">
+        <type>void</type>
+        <definition>virtual void NeoFOAM::TurbulenceModel::rotateOldTimes</definition>
+        <argsstring>()=0</argsstring>
+        <name>rotateOldTimes</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::rotateOldTimes</qualifiedname>
+        <briefdescription>
+<para>Rotate time-dependent fields for BDF2 time advancement. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="92" column="18"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a732733c4179c9ae7a361ce73ccb408ec" prot="public" static="no" const="yes" explicit="no" inline="no" virt="pure-virtual">
+        <type>void</type>
+        <definition>virtual void NeoFOAM::TurbulenceModel::write</definition>
+        <argsstring>(MeshAdapter &amp;mesh) const =0</argsstring>
+        <name>write</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::write</qualifiedname>
+        <param>
+          <type><ref refid="classNeoFOAM_1_1MeshAdapter" kindref="compound">MeshAdapter</ref> &amp;</type>
+          <declname>mesh</declname>
+        </param>
+        <briefdescription>
+<para>Write model-owned fields (nuTilda, nut, …) to disk. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="95" column="18"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a057e4bc3c9f6c0776fa975c519434f95" prot="public" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::string</type>
+        <definition>static std::string NeoFOAM::TurbulenceModel::name</definition>
+        <argsstring>()</argsstring>
+        <name>name</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::name</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="34" column="24" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" bodystart="34" bodyend="34"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1TurbulenceModel_1a49dee8641d6055c7fa2b88be94e8448a" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::unique_ptr&lt; <ref refid="classNeoFOAM_1_1TurbulenceModel" kindref="compound">TurbulenceModel</ref> &gt;</type>
+        <definition>static std::unique_ptr&lt; TurbulenceModel &gt; NeoFOAM::TurbulenceModel::create</definition>
+        <argsstring>(RunTime &amp;rt, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;nu)</argsstring>
+        <name>create</name>
+        <qualifiedname>NeoFOAM::TurbulenceModel::create</qualifiedname>
+        <param>
+          <type><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> &amp;</type>
+          <declname>rt</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>nu</declname>
+        </param>
+        <briefdescription>
+<para>Read the model name from constant/turbulenceProperties and create the model. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Reads simulationType; for LES it also reads the LESModel subkey. Equivalent to <computeroutput>create(modelKey, rt, nu)</computeroutput> but without the solver needing to know which turbulence model is selected. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="44" column="5"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Abstract base for <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> turbulence models with runtime selection. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>Concrete models register via <computeroutput>TurbulenceModel::Register&lt;Derived&gt;</computeroutput> and are instantiated by name through <computeroutput>TurbulenceModel::create(rt, nu)</computeroutput>, which reads the model name from constant/turbulenceProperties. Models own all transport scalars (nuTilda, nut, …) and map their own solver subdicts in their constructors. </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>NeoFOAM::TurbulenceModel</label>
+        <link refid="classNeoFOAM_1_1TurbulenceModel"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>NeoN::RuntimeSelectionFactory&lt; TurbulenceModel, NeoN::Parameters&lt; RunTime &amp;, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp; &gt; &gt;</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>NeoFOAM::TurbulenceModel</label>
+        <link refid="classNeoFOAM_1_1TurbulenceModel"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>NeoN::RuntimeSelectionFactory&lt; TurbulenceModel, NeoN::Parameters&lt; RunTime &amp;, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp; &gt; &gt;</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="22" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" bodystart="29" bodyend="96"/>
+    <listofallmembers>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1abadc7ca738620793708e34a467610289" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>correct</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a49dee8641d6055c7fa2b88be94e8448a" prot="public" virt="non-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>create</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1aef72cb4809fc873b080a0d4ae3f00d4b" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>gradU</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1ad6c3e347eb9ee939dfb3a1d10f5836de" prot="public" virt="virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>initialize</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a057e4bc3c9f6c0776fa975c519434f95" prot="public" virt="non-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>name</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a39bed7c59f3724ff70fcf9ce3001d343" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>nuEff</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a86fcc51daef2c0f4b5ac0d6cc6e2b76f" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>nut</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a6af2db926d7eb7d289a1afc6b8df18e9" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>rotateOldTimes</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1ac20133231a12abcd1199bd00d8d72a89" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>updateGradU</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a0d62c0f93efa69172798d2abe0c1a919" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>validate</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a732733c4179c9ae7a361ce73ccb408ec" prot="public" virt="pure-virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>write</name></member>
+      <member refid="classNeoFOAM_1_1TurbulenceModel_1a9e88a63a740f6b15b2bca5afe44341aa" prot="public" virt="virtual"><scope>NeoFOAM::TurbulenceModel</scope><name>~TurbulenceModel</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
