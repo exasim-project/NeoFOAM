@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from neofoam.ui.form_schema import _NF_PATCHES
-
 if TYPE_CHECKING:
     from neofoam.ui.forms import FormEntry
 
@@ -134,23 +132,3 @@ def patch_bc_schema(bc_entry: FormEntry, names: list[str]) -> dict[str, Any]:
         **base,
         "properties": {**base.get("properties", {}), "boundaryField": new_bf},
     }
-
-
-def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
-    """A ``boundaryField`` schema drawn as one row per patch, its "add a key" row adding a patch.
-
-    ``nfPatches`` picks the bundled row renderer, which binds a patch through the map's
-    data, so a name holding ``.`` (``wall.left``) works. The row is labelled as a
-    patch-name box, and the BC union is typed ``object``: a new key is seeded from the
-    ``type``, and with none it would be the string ``""``. Its ``default`` is the BC a
-    scan seeds on a wall, so a hand-added patch shows and saves a real type from the start.
-    """
-    props = schema["properties"]
-    boundary_field = {**props["boundaryField"], "i18n": "nf.patch", _NF_PATCHES: True}
-    union = boundary_field["additionalProperties"]
-    boundary_field["additionalProperties"] = {
-        **union,
-        "type": "object",
-        "default": _role_bc_seed("wall", _arm_titles(union)),
-    }
-    return {**schema, "properties": {**props, "boundaryField": boundary_field}}

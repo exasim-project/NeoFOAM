@@ -21,7 +21,6 @@ from neofoam.agent.case_forms import INPUT_KEYS, field_name, is_scheme_config
 from neofoam.framework.solver.configurations import configurations
 from neofoam.io.pydantic_schema import slice_schema
 from neofoam.mcp import tools
-from neofoam.ui.boundary_forms import _patch_adder
 from neofoam.ui.form_schema import alternatives_uischema, humanize, jsonforms_schema
 
 __all__ = [
@@ -231,7 +230,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     config_name=info.name,
                     cls_name=info.cls_name,
                     title=f"{fname} — boundary conditions",
-                    schema=_patch_adder(jsonforms_schema(slice_schema(dto.json_schema, _BC_KEYS))),
+                    schema=jsonforms_schema(slice_schema(dto.json_schema, _BC_KEYS)),
                     defaults=_slice_defaults(dto.defaults, _BC_KEYS),
                     state_key=js_identifier(f"form_{info.name}__bc"),
                     kind="field_bc",
@@ -324,7 +323,7 @@ def build_field_forms(solver: Any) -> list[FormEntry]:
                 config_name=info.name,
                 cls_name=info.cls_name,
                 title=f"{fname} — field",
-                schema=_patch_adder(jsonforms_schema(dto.json_schema)),
+                schema=jsonforms_schema(dto.json_schema),
                 defaults=dto.defaults,
                 state_key=js_identifier(f"form_{info.name}"),
                 kind="dict",

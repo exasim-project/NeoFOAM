@@ -26,7 +26,7 @@
 // options, "+ add option" at the foot. Each block is its own JSONForms instance, so its
 // paths start at the block: a solver named `alpha.water` never enters a dotted path.
 //
-// A `boundaryField` map (`nfPatches`, see boundary_forms.py `_patch_adder`) is drawn as rows too, one
+// A `boundaryField` map (`nfPatches`, see form_schema.py `_patch_adder`) is drawn as rows too, one
 // per patch. In every variant an entry whose key holds `.`, `[` or `]` (`wall.left`,
 // `div(phi,alpha.water)`) is such a form of its own as well, written back through the
 // section's data; all other entries keep the cheap path binding.

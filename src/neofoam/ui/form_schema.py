@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Any
 
 from neofoam.framework.validation import SOLVER_COMPANION
+from neofoam.ui.boundary_forms import _arm_titles, _role_bc_seed
 
 __all__ = [
     "ADDER_TRANSLATIONS",
@@ -333,6 +335,30 @@ def _dictionary_cards(schema: dict[str, Any]) -> dict[str, Any]:
     return {**untitled, "additionalProperties": card, _NF_DICTS: True, "i18n": prefix}
 
 
+def _patch_adder(node: dict[str, Any]) -> None:
+    """Draw a ``boundaryField`` map as patch rows whose adder adds a patch (mutates ``node``).
+
+    Keyed on the property name, so no caller can forget it: the stock adder corrupts a
+    dotted patch name. ``nfPatches`` picks the bundled row renderer, which binds a patch
+    through the map's data, so a name holding ``.`` (``wall.left``) works. The row is
+    labelled as a patch-name box, and the BC union is typed ``object``: a new key is
+    seeded from the ``type``, and with none it would be the string ``""``. Its
+    ``default`` is the BC a scan seeds on a wall, so a hand-added patch shows and saves
+    a real type from the start.
+    """
+    boundary_field = node.get("properties", {}).get("boundaryField")
+    union = boundary_field.get("additionalProperties") if boundary_field else None
+    if not isinstance(union, dict):
+        return
+    boundary_field = {**boundary_field, "i18n": "nf.patch", _NF_PATCHES: True}
+    boundary_field["additionalProperties"] = {
+        **union,
+        "type": "object",
+        "default": _role_bc_seed("wall", _arm_titles(union)),
+    }
+    node["properties"]["boundaryField"] = boundary_field
+
+
 def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     """Resolve every ``#/$defs/...`` ``$ref`` into a self-contained subtree.
 
@@ -389,6 +415,146 @@ def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+@dataclass(frozen=True)
+class _SchemaNames:
+    """What rewriting one node needs from the whole schema."""
+
+    defs: dict[str, Any]
+    """The ``$defs`` :func:`inline_refs` had to keep (cyclic refs)."""
+    class_names: frozenset[str]
+    """Every model class name: a title equal to one is an auto-title."""
+
+
+def _unwrapped_optional(node: dict[str, Any], comb: str, arm: dict[str, Any]) -> dict[str, Any]:
+    """``Optional[X]`` as ``X``: the one non-null ``arm`` plus the keys only ``node`` has."""
+    merged = dict(arm)
+    for k, v in node.items():
+        if k != comb:
+            merged.setdefault(k, v)
+    return merged
+
+
+def _title_arms(node: dict[str, Any], comb: str, non_null: list[Any], names: _SchemaNames) -> bool:
+    """Make a discriminated union a ``oneOf`` titled by the arms' ``const`` (mutates ``node``)."""
+    consts = [_const_type_of(a, names.defs) for a in non_null if isinstance(a, dict)]
+    if sum(c is not None for c in consts) < 2:
+        return False
+    node.pop(comb, None)
+    node["oneOf"] = [
+        ({**a, "title": c} if c else _transform(a, names)) for a, c in zip(non_null, consts)
+    ]
+    return True
+
+
+def _non_null_arms(node: dict[str, Any], comb: str) -> list[Any]:
+    """The arms of ``node``'s ``comb`` union that are not ``null``; none without that union."""
+    arms = node.get(comb)
+    if not isinstance(arms, list):
+        return []
+    return [a for a in arms if not (isinstance(a, dict) and a.get("type") == "null")]
+
+
+def _rewrite_union(node: dict[str, Any], names: _SchemaNames) -> dict[str, Any] | None:
+    """The node a collapsing union becomes, else ``None`` (its arms then titled in ``node``)."""
+    for comb in ("anyOf", "oneOf"):
+        non_null = _non_null_arms(node, comb)
+        if len(non_null) == 1 and len(non_null) < len(node[comb]):
+            return _transform_object(_unwrapped_optional(node, comb, non_null[0]), names)
+        if _is_value_union(non_null):
+            return _string_field(node)
+        if _title_arms(node, comb, non_null, names):
+            break
+    return None
+
+
+def _transform_property(key: str, value: Any, in_block: bool, names: _SchemaNames) -> Any:
+    """One rewritten, titled property; ``dimensions`` is keyed on its name."""
+    if key == "dimensions" and isinstance(value, dict) and value.get("type") == "array":
+        return _dimensions_field(value)
+    return _label_title(
+        key, _transform(value, names), in_block=in_block, class_names=names.class_names
+    )
+
+
+def _transform_properties(node: dict[str, Any], names: _SchemaNames) -> None:
+    """Rewrite and title ``node``'s properties, minus the file header (mutates ``node``)."""
+    if not isinstance(node.get("properties"), dict):
+        return
+    in_block = _is_openfoam_block(node)
+    node["properties"] = {
+        k: _transform_property(k, v, in_block, names)
+        for k, v in node["properties"].items()
+        if k != _FILE_HEADER
+    }
+
+
+def _transform_arm(arm: Any, names: _SchemaNames) -> Any:
+    """One rewritten ``oneOf`` arm; a titled ``$ref`` (a cycle) stays as it is."""
+    return arm if ("$ref" in arm and "title" in arm) else _transform(arm, names)
+
+
+def _transform_children(node: dict[str, Any], names: _SchemaNames) -> None:
+    """Rewrite every sub-schema of ``node`` (mutates ``node``)."""
+    _transform_properties(node, names)
+    if isinstance(node.get("$defs"), dict):
+        node["$defs"] = {k: _transform(v, names) for k, v in node["$defs"].items()}
+    for key in ("items", "additionalProperties"):
+        if isinstance(node.get(key), dict):
+            node[key] = _transform(node[key], names)
+    if isinstance(node.get("oneOf"), list):
+        node["oneOf"] = [_transform_arm(a, names) for a in node["oneOf"]]
+
+
+def _drop_useless_adder(node: dict[str, Any]) -> None:
+    """Hide the "add a key" row where :func:`_accepts_new_keys` says no (mutates ``node``)."""
+    if node.get("additionalProperties") is True and not _accepts_new_keys(node):
+        del node["additionalProperties"]
+
+
+def _hide_discriminator(node: dict[str, Any]) -> None:
+    """Title a discriminated arm by its ``const`` type and hide that property (mutates ``node``)."""
+    const = node.get("properties", {}).get("type", {}).get("const")
+    if const and "title" in node:
+        node["title"] = const
+    if const:
+        node["properties"]["type"] = _hidden_discriminator(const)
+
+
+# The passes run on every node, in this order, once its children are rewritten, so a
+# pass sees finished children. Two ordering constraints; the other passes commute:
+# * _drop_useless_adder before _tag_adders: a label goes on a row that is still there
+#   (_tag_adders reads ``additionalProperties``); a fixed card such as PIMPLE gets none.
+# * _tag_adders before _pin_solver_controls: a solver block is recognised as an open
+#   dict (``nf.option``) by having no ``properties``, which pinning then gives it.
+_NODE_PASSES = (
+    _drop_useless_adder,
+    _tag_adders,
+    _pin_solver_controls,
+    _patch_adder,
+    _tag_scalar_grid,
+    _hide_discriminator,
+)
+
+
+def _transform(node: Any, names: _SchemaNames) -> Any:
+    """``node`` rewritten for JSONForms when it is a schema object, else as it is."""
+    return _transform_object(node, names) if isinstance(node, dict) else node
+
+
+def _transform_object(node: dict[str, Any], names: _SchemaNames) -> dict[str, Any]:
+    """One schema object rewritten: union, then children, then :data:`_NODE_PASSES`."""
+    node = dict(node)
+    if isinstance(node.get("description"), str):
+        node["description"] = _clean_description(node["description"])
+    collapsed = _rewrite_union(node, names)
+    if collapsed is not None:
+        return collapsed
+    _transform_children(node, names)
+    for node_pass in _NODE_PASSES:
+        node_pass(node)
+    return node
+
+
 def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     """Make a pydantic JSON Schema render cleanly in JSONForms (generic, no per-config).
 
@@ -417,75 +583,13 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.
     * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.
     * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.
-    * **Open configs as cards** — see :func:`_dictionary_cards`.
+    * **Patch rows for ``boundaryField``** — see :func:`_patch_adder`.
+    * **Open configs as cards** — see :func:`_dictionary_cards` (whole schema, last).
     """
     class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)
-    defs: dict[str, Any] = schema.get("$defs", {})
-
-    def transform(node: Any) -> Any:
-        if not isinstance(node, dict):
-            return node
-        node = dict(node)
-        if isinstance(node.get("description"), str):
-            node["description"] = _clean_description(node["description"])
-
-        for comb in ("anyOf", "oneOf"):
-            arms = node.get(comb)
-            if not isinstance(arms, list):
-                continue
-            non_null = [a for a in arms if not (isinstance(a, dict) and a.get("type") == "null")]
-            if len(non_null) == 1 and len(non_null) < len(arms):
-                merged = dict(non_null[0])
-                for k, v in node.items():
-                    if k != comb:
-                        merged.setdefault(k, v)
-                return transform(merged)
-            if _is_value_union(non_null):
-                return _string_field(node)
-            consts = [_const_type_of(a, defs) for a in non_null if isinstance(a, dict)]
-            if sum(c is not None for c in consts) >= 2:
-                node.pop(comb, None)
-                node["oneOf"] = [
-                    ({**a, "title": c} if c else transform(a)) for a, c in zip(non_null, consts)
-                ]
-                break
-
-        if isinstance(node.get("properties"), dict):
-            in_block = _is_openfoam_block(node)
-            node["properties"] = {
-                k: (
-                    _dimensions_field(v)
-                    if k == "dimensions" and isinstance(v, dict) and v.get("type") == "array"
-                    else _label_title(k, transform(v), in_block=in_block, class_names=class_names)
-                )
-                for k, v in node["properties"].items()
-                if k != _FILE_HEADER
-            }
-        if isinstance(node.get("$defs"), dict):
-            node["$defs"] = {k: transform(v) for k, v in node["$defs"].items()}
-        if isinstance(node.get("items"), dict):
-            node["items"] = transform(node["items"])
-        if isinstance(node.get("additionalProperties"), dict):
-            node["additionalProperties"] = transform(node["additionalProperties"])
-        if isinstance(node.get("oneOf"), list):
-            node["oneOf"] = [
-                a if ("$ref" in a and "title" in a) else transform(a) for a in node["oneOf"]
-            ]
-        if node.get("additionalProperties") is True and not _accepts_new_keys(node):
-            del node["additionalProperties"]
-        _tag_adders(node)
-        _pin_solver_controls(node)
-        _tag_scalar_grid(node)
-        # A def that *is* a discriminated arm: title it by its const type.
-        const = node.get("properties", {}).get("type", {}).get("const")
-        if const and "title" in node:
-            node["title"] = const
-        if const:
-            node["properties"]["type"] = _hidden_discriminator(const)
-        return node
-
-    return _dictionary_cards(transform(schema))
+    names = _SchemaNames(defs=schema.get("$defs", {}), class_names=class_names)
+    return _dictionary_cards(_transform(schema, names))
 
 
 def alternatives_uischema(schema: dict[str, Any]) -> dict[str, Any] | None:
