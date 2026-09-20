@@ -40,6 +40,7 @@ from neofoam.foam.schemes import (
     Linear,
     SnGradScheme,
 )
+from neofoam.foam.schemes._variant import OPENFOAM_CONTEXT
 
 DDT = TypeAdapter(DdtScheme)
 DIV = TypeAdapter(DivScheme)
@@ -61,7 +62,10 @@ def test_limited_sn_grad_accepts_both_spellings(spec: str) -> None:
 
 @pytest.mark.parametrize("spec", ["limited 0.33", "limited corrected 0.33"])
 def test_limited_sn_grad_serializes_to_the_terse_form(spec: str) -> None:
-    assert SN_GRAD.dump_python(SN_GRAD.validate_python(spec)) == "limited 0.33"
+    assert (
+        SN_GRAD.dump_python(SN_GRAD.validate_python(spec), context=OPENFOAM_CONTEXT)
+        == "limited 0.33"
+    )
 
 
 @pytest.mark.parametrize("spec", ["limited uncorrected 0.33", "limited orthogonal 0.33"])
@@ -73,7 +77,7 @@ def test_limited_sn_grad_rejects_an_unsupported_sub_scheme(spec: str) -> None:
 def test_laplacian_accepts_the_verbose_limited_sn_grad() -> None:
     """The verbose form reaches the snGrad parser through laplacianSchemes too."""
     scheme = LAPLACIAN.validate_python("Gauss linear limited corrected 0.33")
-    assert LAPLACIAN.dump_python(scheme) == "Gauss linear limited 0.33"
+    assert LAPLACIAN.dump_python(scheme, context=OPENFOAM_CONTEXT) == "Gauss linear limited 0.33"
 
 
 # ---------------------------------------------------------------------------
@@ -96,7 +100,7 @@ def test_cell_limited_grad_parses_its_inner_scheme_as_a_model() -> None:
     ],
 )
 def test_cell_limited_grad_round_trips(spec: str) -> None:
-    assert GRAD.dump_python(GRAD.validate_python(spec)) == spec
+    assert GRAD.dump_python(GRAD.validate_python(spec), context=OPENFOAM_CONTEXT) == spec
 
 
 @pytest.mark.parametrize("spec", ["cellLimited Gauss linear 2", "cellLimited Gauss linear -0.5"])
@@ -132,7 +136,7 @@ def test_cell_limited_grad_rejects_a_missing_inner_scheme_or_coefficient(spec: s
 )
 def test_openfoam_only_schemes_stay_accepted(adapter: TypeAdapter[Any], spec: str) -> None:
     """pybFoam cases discretise in OpenFOAM, where these are all valid."""
-    assert adapter.dump_python(adapter.validate_python(spec)) == spec
+    assert adapter.dump_python(adapter.validate_python(spec), context=OPENFOAM_CONTEXT) == spec
 
 
 if __name__ == "__main__":
