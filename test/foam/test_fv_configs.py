@@ -396,5 +396,47 @@ def test_without_default_missing_required_entry_still_raises() -> None:
         Sub.model_validate({"gradSchemes": {"grad(U)": "Gauss linear"}})
 
 
+# ---------------------------------------------------------------------------
+# Undeclared entries — a form hands them over structured, a case file as tokens
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("entry", "token"),
+    [
+        (
+            {"type": "Gauss", "interpolation": {"type": "linearUpwind", "grad_field": "grad(k)"}},
+            "Gauss linearUpwind grad(k)",
+        ),
+        ({"type": "none"}, "none"),
+        # a token the scheme union does not model stays the raw string it was read as
+        ("Gauss LUST grad(k)", "Gauss LUST grad(k)"),
+    ],
+)
+def test_undeclared_scheme_entry_is_dumped_as_its_openfoam_token(entry: object, token: str) -> None:
+    """An undeclared key skips the typed fields, so a structured value has to be
+    tokenised on the way in or the writer emits it as a sub-dictionary."""
+    spec = Model("UndeclaredEntry")
+    Sub = spec.config(fvSchemes)
+    Sub.add(div="div(phi,U)")
+
+    inst = Sub.model_validate({"divSchemes": {"div(phi,U)": "Gauss upwind", "div(phi,k)": entry}})
+
+    dumped = inst.model_dump(by_alias=True, context=OPENFOAM_CONTEXT)["divSchemes"]
+    assert dumped["div(phi,k)"] == token
+
+
+def test_undeclared_scheme_entry_with_a_half_picked_scheme_is_rejected() -> None:
+    """``Gauss`` without its interpolation is not writable; fail instead of guessing."""
+    spec = Model("UndeclaredHalfPicked")
+    Sub = spec.config(fvSchemes)
+    Sub.add(div="div(phi,U)")
+
+    with pytest.raises(ValidationError, match="interpolation"):
+        Sub.model_validate(
+            {"divSchemes": {"div(phi,U)": "Gauss upwind", "div(phi,k)": {"type": "Gauss"}}}
+        )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

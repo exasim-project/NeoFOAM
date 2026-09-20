@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, ClassVar, Optional
 
-from pydantic import ConfigDict, Field, create_model, model_validator
+from pydantic import ConfigDict, Field, TypeAdapter, create_model, model_validator
 from pydantic.fields import FieldInfo
 
 from neofoam.foam.schemes import (
@@ -58,6 +58,9 @@ _SCHEMES_SECTIONS: dict[str, tuple[str, Any]] = {
     "snGrad": ("snGradSchemes", SnGradScheme),
     "interpolation": ("interpolationSchemes", InterpolationScheme),
 }
+
+#: Section name → value type, for the entries of a section no operation declared.
+_SCHEME_TYPE_BY_SECTION: dict[str, Any] = dict(_SCHEMES_SECTIONS.values())
 
 
 def _sanitize_name(s: str) -> str:
@@ -134,6 +137,27 @@ _EXPAND_DEFAULT_VALIDATOR: Any = model_validator(mode="before")(
 )
 
 
+def _tokenize_extras_validator(scheme_type: Any) -> Any:
+    """Before-validator that turns a structured undeclared entry into its OpenFOAM token."""
+    adapter: TypeAdapter[Any] = TypeAdapter(scheme_type)
+
+    def _tokenize_extras(cls: type, data: Any) -> Any:
+        # An undeclared key bypasses the typed fields, so a form-shaped scheme
+        # (``{"type": "Gauss", ...}``) would otherwise be written as a sub-dict.
+        if not isinstance(data, dict):
+            return data
+        fields = cls.model_fields  # type: ignore[attr-defined]
+        declared = set(fields) | {info.alias for info in fields.values()}
+        return {
+            key: adapter.validate_python(value).openfoam_str()
+            if isinstance(value, dict) and key not in declared
+            else value
+            for key, value in data.items()
+        }
+
+    return model_validator(mode="before")(classmethod(_tokenize_extras))  # type: ignore[arg-type]
+
+
 def _rebuild_sections(cls: type) -> None:
     """(Re)synthesise every section submodel and re-attach to ``cls``.
 
@@ -153,12 +177,17 @@ def _rebuild_sections(cls: type) -> None:
                 )
             else:
                 field_defs[attr] = (value_type, Field(alias=alias))
+        validators = {"_expand_default": _EXPAND_DEFAULT_VALIDATOR}
+        if section_name in _SCHEME_TYPE_BY_SECTION:
+            validators["_tokenize_extras"] = _tokenize_extras_validator(
+                _SCHEME_TYPE_BY_SECTION[section_name]
+            )
         fresh = create_model(
             f"_{section_name}",
             __config__=ConfigDict(extra="allow", populate_by_name=True),
             # Attach the ``default``-expansion before-validator to the synthesized
             # section model so a tutorial that leans on ``default`` round-trips.
-            __validators__={"_expand_default": _EXPAND_DEFAULT_VALIDATOR},
+            __validators__=validators,
             **field_defs,
         )
         cls.model_fields[section_name] = FieldInfo(  # type: ignore[attr-defined]

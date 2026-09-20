@@ -392,6 +392,33 @@ def test_save_case_writes_no_piso_block_beside_pimple(tmp_path):
     assert "PISO" not in fv_solution
 
 
+def test_save_case_writes_a_hand_added_scheme_entry_as_openfoam_tokens(tmp_path):
+    # The Numerics step's "+ add entry" puts a key the schema does not declare into a
+    # scheme section, as the same structured object its declared siblings hold.
+    server = build_app(server=get_server("neofoam_ui_test_added_scheme"), plugins=[])
+    schemes = server.state.form_pimple_fv_schemes
+    _seed_transport_defaults(server)
+    server.state.form_pimple_fv_schemes = {
+        **schemes,
+        "divSchemes": {
+            **schemes["divSchemes"],
+            "div(phi,k)": {
+                "type": "Gauss",
+                "interpolation": {"type": "linearUpwind", "grad_field": "grad(k)"},
+            },
+            "div(phi,epsilon)": {"type": "none"},  # added, scheme not picked yet
+        },
+    }
+
+    server.state.target_dir = str(tmp_path)
+    server.controller.save_case()
+
+    written = (tmp_path / "system" / "fvSchemes").read_text().splitlines()
+    entries = [" ".join(line.split()) for line in written]
+    assert "div(phi,k) Gauss linearUpwind grad(k);" in entries
+    assert "div(phi,epsilon) none;" in entries
+
+
 def _turbulence_properties(server) -> dict:
     entries = {e.cls_name: e for e in server.controller.get_entries()}
     return server.state[entries["TurbulencePropertiesConfig"].state_key]
