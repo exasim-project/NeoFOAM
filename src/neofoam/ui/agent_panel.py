@@ -207,8 +207,13 @@ class AgentPanel:
             # it, so the agent's configs are applied last and win per entry.
             configs = [*self._loaded.get("configs", []), *case_spec_to_configs(result.output)]
 
+            loaded_dir = self._loaded.get("dir")
             filled_models = apply_configs_to_forms(
-                self._state, self._entries, self._families, configs
+                self._state,
+                self._entries,
+                self._families,
+                configs,
+                Path(loaded_dir) if loaded_dir else None,
             )
             saved = self._autosave(configs)
             self._say("assistant", _summary(configs, filled_models, self._loaded.get("dir"), saved))

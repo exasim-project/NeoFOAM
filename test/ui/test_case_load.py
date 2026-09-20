@@ -4,9 +4,10 @@
 """Reopening a case: what is read off disk and what it does to the wizard forms.
 
 The input is the checked-in ``simulationType laminar`` PIMPLE case; a test that
-changes it works on a copy. Which pressure-velocity algorithm a load selects is
-left out on purpose: the case's fvSchemes/fvSolution validate as the Pimple *and*
-the Simple slices, so both count as filled.
+changes it works on a copy. A case's fvSchemes validate as the Pimple *and* the
+Simple slices, so both models count as filled and Python's set order used to pick
+the algorithm: the decision is therefore asserted with the filled models in both
+orders, and the end-to-end tests start from the *other* algorithm.
 """
 
 from __future__ import annotations
@@ -20,11 +21,31 @@ pytest.importorskip("pybFoam")
 pytest.importorskip("trame")
 pytest.importorskip("trame_flow")  # the wizard fixture renders the sweep canvas
 
-from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs  # noqa: E402
-from neofoam.ui.steps import build_model_families  # noqa: E402
+from neofoam.ui.case_load import (  # noqa: E402
+    apply_configs_to_forms,
+    case_algorithm,
+    models_to_select,
+    read_case_configs,
+)
+from neofoam.ui.steps import build_model_families, select_model_state  # noqa: E402
 
 #: A checked-in ``simulationType laminar`` case (read-only).
 _LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
+_TEST_ROOT = Path(__file__).resolve().parents[1]
+
+#: Checked-in cases (read-only) → the algorithm their fvSolution control block names.
+_ALGORITHM_CASES = [
+    pytest.param("setup_pimple", "Pimple", "Simple", id="PIMPLE"),
+    pytest.param(
+        "solver/incompressibleFluidNeoN/cases/pitzDailySteady", "Simple", "Pimple", id="SIMPLE"
+    ),
+    pytest.param(
+        "solver/incompressibleFluid/models/pressure_velocity/cases/piso_cavity",
+        "Pimple",
+        "Simple",
+        id="PISO",
+    ),
+]
 
 
 def _form_data(server, cls_name: str) -> dict:
@@ -83,3 +104,59 @@ def test_loaded_case_moves_the_turbulence_choice_to_the_loaded_model(wizard, sol
     assert wizard.state.choice_momentumTransportModel == "laminar"
     assert wizard.state.sel_laminar is True
     assert wizard.state.sel_kEpsilon is False
+
+
+@pytest.mark.parametrize("filled", [["Pimple", "Simple"], ["Simple", "Pimple"]])
+def test_models_to_select_follows_the_case_algorithm_in_either_fill_order(solver, filled):
+    selected = models_to_select(filled, build_model_families(solver), "Pimple")
+
+    assert selected == ["Pimple"]
+
+
+def test_models_to_select_leaves_an_undecided_family_alone(solver):
+    selected = models_to_select(
+        ["Simple", "boussinesq", "Pimple"], build_model_families(solver), None
+    )
+
+    assert selected == ["boussinesq"]
+
+
+def test_models_to_select_takes_the_only_filled_member_without_a_case(solver):
+    selected = models_to_select(["Simple"], build_model_families(solver), None)
+
+    assert selected == ["Simple"]
+
+
+@pytest.mark.parametrize(("case", "algorithm", "_other"), _ALGORITHM_CASES)
+def test_case_algorithm_reads_the_fv_solution_control_block(wizard, case, algorithm, _other):
+    assert case_algorithm(_TEST_ROOT / case, wizard.controller.get_entries()) == algorithm
+
+
+def test_case_algorithm_is_none_without_an_fv_solution(tmp_path, wizard):
+    assert case_algorithm(tmp_path, wizard.controller.get_entries()) is None
+
+
+@pytest.mark.parametrize(("case", "algorithm", "other"), _ALGORITHM_CASES)
+def test_loaded_case_moves_the_algorithm_choice_to_its_control_block(
+    wizard, solver, case, algorithm, other
+):
+    families = build_model_families(solver)
+    wizard.state.update(select_model_state(families, other))
+    configs = read_case_configs(_TEST_ROOT / case, solver)
+
+    selected = apply_configs_to_forms(
+        wizard.state, wizard.controller.get_entries(), families, configs, _TEST_ROOT / case
+    )
+
+    assert wizard.state.choice_PressureVelocityAlgorithm == algorithm
+    assert other not in selected
+
+
+def test_loaded_configs_without_a_case_keep_the_current_algorithm(wizard, solver):
+    families = build_model_families(solver)
+    wizard.state.update(select_model_state(families, "Simple"))
+    configs = read_case_configs(_LAMINAR_CASE, solver)
+
+    apply_configs_to_forms(wizard.state, wizard.controller.get_entries(), families, configs)
+
+    assert wizard.state.choice_PressureVelocityAlgorithm == "Simple"

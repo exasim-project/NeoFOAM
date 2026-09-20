@@ -10,15 +10,21 @@ read the same configs and select the same models.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
+from neofoam.io.dictread import read_keys
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.steps import ModelFamily, loaded_turbulence_model, select_model_state
 
-__all__ = ["read_case_configs", "apply_configs_to_forms"]
+__all__ = ["read_case_configs", "apply_configs_to_forms", "case_algorithm", "models_to_select"]
+
+#: ``system/fvSolution`` control block → the block the owning member's form declares,
+#: in the order ``detect_and_create`` looks for them (PISO is a single-outer-loop PIMPLE).
+_CONTROL_BLOCKS = {"PIMPLE": "PIMPLE", "SIMPLE": "SIMPLE", "PISO": "PIMPLE"}
 
 
 def read_case_configs(
@@ -38,30 +44,73 @@ def read_case_configs(
     return case_spec_to_configs(load_case_from_disk(case_dir, solver=solver, warnings=warnings))
 
 
+def case_algorithm(case_dir: Path, entries: list[FormEntry]) -> str | None:
+    """The pressure-velocity model the case's ``system/fvSolution`` control block names.
+
+    The same evidence the solver's ``detect_and_create`` runs on, so the wizard opens a
+    case on the algorithm it would run with. ``None`` when the file has no control block
+    or no selectable model declares it (a solver with a single algorithm)::
+
+        algorithm = case_algorithm(Path(case_dir), entries)
+    """
+    keys = read_keys(case_dir / "system" / "fvSolution")
+    if not isinstance(keys, frozenset):
+        return None
+    declared = next((block for name, block in _CONTROL_BLOCKS.items() if name in keys), None)
+    owners = (e.owner_model for e in entries if declared in e.schema.get("properties", {}))
+    return next((owner for owner in owners if owner), None)
+
+
+def models_to_select(
+    filled: Iterable[str], families: list[ModelFamily], algorithm: str | None
+) -> list[str]:
+    """The filled models a load switches on, in a fixed order.
+
+    A pick-one family contributes one member at most: ``algorithm`` when it is one of
+    its members, else its only filled member. Several filled members are no evidence —
+    a PIMPLE case's fvSchemes validate as the Simple slice too — so the family then
+    keeps the wizard's current choice::
+
+        models_to_select({"Pimple", "Simple", "boussinesq"}, families, "Pimple")
+    """
+    member_names = [{choice.name for choice in family.members} for family in families]
+    chosen = {name for name in filled if not any(name in names for names in member_names)}
+    for names in member_names:
+        rivals = names.intersection(filled)
+        if algorithm in names:
+            chosen.add(str(algorithm))
+        elif len(rivals) == 1:
+            chosen |= rivals
+    return sorted(chosen)
+
+
 def apply_configs_to_forms(
     state: Any,
     entries: list[FormEntry],
     families: list[ModelFamily],
     configs: list[Any],
+    case_dir: Path | None = None,
 ) -> set[str]:
-    """Push ``configs`` into the live form state; returns the models they filled.
+    """Push ``configs`` into the live form state; returns the models it selected.
 
     Overwrites whatever the forms currently hold for those configs, so a caller
-    that can lose user edits asks first. Must run on trame's event loop like
-    every other state write::
+    that can lose user edits asks first. Pass the ``case_dir`` the configs were read
+    from so a pick-one family follows the case (:func:`case_algorithm`). Must run on
+    trame's event loop like every other state write::
 
-        filled = apply_configs_to_forms(state, entries, families, configs)
+        selected = apply_configs_to_forms(state, entries, families, configs, case_dir)
     """
     by_key = {e.key: e for e in entries}
     for key, data in configs_to_form_state(entries, configs).items():
         state[by_key[key].state_key] = data
-    filled_models = models_filled_by(entries, configs)
-    for model in filled_models:
-        # A filled member of a pick-one family (a loaded SIMPLE case) deselects
-        # its siblings rather than joining them.
+    algorithm = case_algorithm(case_dir, entries) if case_dir else None
+    selected = models_to_select(models_filled_by(entries, configs), families, algorithm)
+    for model in selected:
+        # A member of a pick-one family (a loaded SIMPLE case) deselects its
+        # siblings rather than joining them.
         state.update(select_model_state(families, model))
     # turbulenceProperties has no owning model; only a family member has a choice to move.
     turbulence = loaded_turbulence_model(entries, state)
     if any(c.name == turbulence for family in families for c in family.members):
         state.update(select_model_state(families, str(turbulence)))
-    return filled_models
+    return set(selected)

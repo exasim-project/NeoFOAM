@@ -858,7 +858,7 @@ class SweepPanel:
         state = self._server.state
         state.target_dir = base_case
         configs = read_case_configs(Path(base_case), self._solver)
-        apply_configs_to_forms(state, self._entries, self._families, configs)
+        apply_configs_to_forms(state, self._entries, self._families, configs, Path(base_case))
 
     def confirm_load(self) -> None:
         """The load dialog's "Load anyway" action — the base case replaces the forms."""
