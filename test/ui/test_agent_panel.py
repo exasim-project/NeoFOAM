@@ -17,10 +17,10 @@ pytest.importorskip("trame")
 
 from trame.app import get_server  # noqa: E402
 
-from neofoam.agent.case_fill import build_case_output_model  # noqa: E402
+from neofoam.agent.case_fill import build_case_output_model, case_spec_to_configs  # noqa: E402
 from neofoam.framework.solver.configurations import configurations  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
-from neofoam.ui.agent_panel import build_agent_panel  # noqa: E402
+from neofoam.ui.agent_panel import _summary, build_agent_panel  # noqa: E402
 from neofoam.ui.forms import build_forms  # noqa: E402
 
 _COUNTER = {"n": 0}
@@ -298,6 +298,10 @@ def test_message_sent_while_busy_is_dropped():
     assert server.state.ai_busy is False
 
 
+def _must_not_write(*_args: Any, **_kw: Any) -> list[str]:
+    raise AssertionError("_summary wrote to disk")
+
+
 def _empty_case_spec(solver: Any) -> Any:
     """A CaseSpec with every field null — an agent that only called a tool."""
     return build_case_output_model(solver=solver)()
@@ -402,3 +406,45 @@ def test_loaded_case_is_not_reapplied_on_the_next_turn():
 
     asyncio.run(send("thanks"))
     assert server.state[_tp_key(entries)] == {"transportModel": "edited by hand"}
+
+
+def test_summary_is_pure_string_building(tmp_path, monkeypatch):
+    solver = _solver()
+    configs = case_spec_to_configs(_prebuilt_case_spec(solver))
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("neofoam.ui.agent_panel.write_configs", _must_not_write)
+
+    text = _summary(configs, {"boussinesq"}, None, ["**Wrote to** `/case`:", "- g"])
+
+    assert text == (
+        "**Filled:** BoussinesqConfig, TransportPropertiesConfig\n\n"
+        "**Selected models:** boussinesq\n\n"
+        "**Wrote to** `/case`:\n\n"
+        "- g\n\n"
+        "Review the forms; click **Save case** when ready."
+    )
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_agent_output_is_auto_saved_before_the_reply(tmp_path):
+    solver = _solver()
+    server = _server()
+    server.state.target_dir = str(tmp_path)
+    refined = build_case_output_model(solver=solver).model_construct(
+        transport_properties_config=configurations(solver)[
+            "TransportPropertiesConfig"
+        ].model_construct(transportModel="Newtonian", nu=1e-05)
+    )
+
+    send = build_agent_panel(
+        server, build_forms(solver), solver, agent_factory=lambda **_kw: _StubAgent(refined)
+    )
+    asyncio.run(send("water, laminar"))
+
+    assert (tmp_path / "constant" / "transportProperties").is_file()
+    assert server.state.chat_log[-1]["content"] == (
+        "**Filled:** TransportPropertiesConfig\n\n"
+        f"**Wrote to** `{tmp_path}`:\n\n"
+        "- transportProperties\n\n"
+        "Review the forms; click **Save case** when ready."
+    )

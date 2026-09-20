@@ -28,7 +28,7 @@ from neofoam.ui import case_spec as cs
 from neofoam.ui import jsonforms_module
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open, _toggle
-from neofoam.ui.agent_panel import build_agent_panel, render_agent_drawer
+from neofoam.ui.agent_panel import AgentPanel
 from neofoam.ui.forms import (
     ADDER_TRANSLATIONS,
     FormEntry,
@@ -580,7 +580,7 @@ def build_app(
     _seed_state(server.state, wizard)
     _register_case_controllers(server, wizard)
     geometry_panel = GeometryPanel(server, wizard.entries)
-    build_agent_panel(server, wizard.entries, wizard.solver)
+    agent_panel = AgentPanel(server, wizard.entries, wizard.solver)
     sweep_panel = SweepPanel(server, wizard.entries, wizard.solver, solver_name)
 
     # Contributed steps (§ neofoam.ui.plugins): each seeds its own state +
@@ -607,7 +607,7 @@ def build_app(
         with layout.toolbar:
             _toolbar(ctx)
         with layout.root:
-            render_agent_drawer(server.controller, v3, html)
+            agent_panel.render(v3, html)
         with layout.content, v3.VContainer(fluid=True, classes="pa-4 pa-md-6"):
             _content(ctx, wizard, geometry_panel)
 
