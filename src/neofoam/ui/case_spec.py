@@ -17,7 +17,6 @@ from neofoam.agent.case_forms import merge_field_config, split_field_dump
 from neofoam.ui.forms import FormEntry
 
 __all__ = [
-    "owned_entry_keys_by_model",
     "state_to_case_spec",
     "configs_to_form_state",
     "models_filled_by",
@@ -37,15 +36,6 @@ def _defaults_complete(cls: Any) -> bool:
     except Exception:  # noqa: BLE001 - any validation error ⇒ user input required
         return False
     return True
-
-
-def owned_entry_keys_by_model(entries: list[FormEntry]) -> dict[str, list[str]]:
-    """Optional-model name → the form-entry keys it owns (for hide/skip)."""
-    owned: dict[str, list[str]] = {}
-    for entry in entries:
-        if entry.owner_model:
-            owned.setdefault(entry.owner_model, []).append(entry.key)
-    return owned
 
 
 def state_to_case_spec(

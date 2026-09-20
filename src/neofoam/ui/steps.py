@@ -77,8 +77,8 @@ def build_steps(
     Membership follows ``FormEntry.step`` (``models``/``schemes``/``bcs``/``initial``);
     ``geometry``/``sweep``/``review`` are form-less bespoke panels. Each plugin adds
     one extra step, slotted after its ``after`` anchor (an existing step id) or
-    appended when the anchor is absent; ``plugins`` is assumed pre-ordered
-    (see :func:`neofoam.ui.plugins.order_steps`). A plugin's form-entry keys follow
+    appended when the anchor is absent; ``plugins`` keep their discovery order
+    among those sharing an anchor. A plugin's form-entry keys follow
     ``FormEntry.step == plugin.id`` (usually empty — plugins are bespoke panels).
     """
     step_ids = {sid for sid, _ in _STEP_DEFS} | {p.id for p in plugins}

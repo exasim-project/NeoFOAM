@@ -257,13 +257,11 @@ class SweepPanel:
         ctrl.sweep_load = self.load_exported
         ctrl.sweep_confirm_load = self.confirm_load
         ctrl.sweep_refresh_dag = self.refresh_dag
-        ctrl.sweep_rewire = self.rewire
         ctrl.sweep_get_nodes = lambda: list(self._editor.nodes) if self._editor else []
         ctrl.sweep_get_dag_nodes = lambda: list(self._dag_view.nodes) if self._dag_view else []
         # The variant ops are node-template event handlers; registering them on
         # the controller too gives headless drivers (tests, scripted examples)
         # the same seam the browser uses.
-        ctrl.sweep_variant_select = self._on_variant_select
         ctrl.sweep_variant_add = self._on_variant_add
         ctrl.sweep_variant_delete = self._on_variant_delete
         ctrl.sweep_variant_rename = self._on_variant_rename
@@ -283,7 +281,6 @@ class SweepPanel:
         ctrl.sweep_cfg_variant_delete = self.cfg_variant_delete
         ctrl.sweep_cfg_variant_rename = self.cfg_variant_rename
         ctrl.sweep_cfg_rename_buffer = self.cfg_rename_buffer
-        ctrl.sweep_cfg_open_generator = self.cfg_open_generator
         # The in-node JSONForms change handler dispatches through a trigger
         # (it needs a raw JS expression to also mirror the edit client-side).
         server.trigger("nf_sweep_edit")(self._on_variant_edit)

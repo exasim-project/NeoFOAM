@@ -12,7 +12,6 @@ from neofoam.mcp.registry import resolve_solver
 from neofoam.ui.case_spec import (
     configs_to_form_state,
     models_filled_by,
-    owned_entry_keys_by_model,
     state_to_case_spec,
 )
 from neofoam.ui.forms import build_forms
@@ -92,15 +91,6 @@ def test_field_merges_from_one_half():
     spec = state_to_case_spec(entries, state, selected_models=set())
     assert "u_field_config" in spec
     assert isinstance(spec["u_field_config"], dict)
-
-
-def test_owned_entry_keys_by_model():
-    entries = build_forms(_solver())
-    owned = owned_entry_keys_by_model(entries)
-    assert "boussinesq" in owned
-    assert any(k.startswith("dict:BoussinesqConfig") for k in owned["boussinesq"])
-    # Required models own nothing here (their configs have owner_model=None).
-    assert "Newtonian" not in owned
 
 
 def test_configs_to_form_state_maps_dict_and_field_halves():
