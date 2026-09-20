@@ -52,8 +52,6 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.foam.algorithm_configs import (
     DynamicMeshControls,
     PimpleAlgorithmConfig,
-    PisoAlgorithmConfig,
-    PisoDynamicMeshControls,
 )
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -89,14 +87,13 @@ PimpleFvSolution = pimple.config(fvSolution)
 # these stay optional and only serialise when the case author sets them.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
-# Both block spellings (``PIMPLE``, and ``PISO`` for a pisoFoam case) are
-# declared so ``configurations(solver)`` and the MCP export the full key set.
+# Only the ``PIMPLE`` spelling is declared: a declared config is also written,
+# and ``control_factory`` ignores a ``PISO`` block once a ``PIMPLE`` one exists.
 # Loading is unaffected: this spec is used as its own runtime and never
-# auto-loads its configs — ``control_factory`` drives instantiation.
+# auto-loads its configs — ``control_factory`` still reads a pisoFoam case's
+# ``PISO`` block through the undeclared Piso classes.
 pimple.config(PimpleAlgorithmConfig)
 pimple.config(DynamicMeshControls)
-pimple.config(PisoAlgorithmConfig)
-pimple.config(PisoDynamicMeshControls)
 
 # 0/<name> field declarations PIMPLE owns. The framework auto-synthesises
 # the matching read_field InitStep (see

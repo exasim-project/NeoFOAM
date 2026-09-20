@@ -378,6 +378,20 @@ def test_save_case_writes_only_the_chosen_algorithm(tmp_path):
     assert "PIMPLE" not in simple
 
 
+def test_save_case_writes_no_piso_block_beside_pimple(tmp_path):
+    # A PISO block is only read when no PIMPLE block exists, so writing both left
+    # the user a block (and two wizard panels) whose edits never took effect.
+    server = build_app(server=get_server("neofoam_ui_test_no_piso"), plugins=[])
+    _seed_transport_defaults(server)
+
+    server.state.target_dir = str(tmp_path)
+    server.controller.save_case()
+
+    fv_solution = (tmp_path / "system" / "fvSolution").read_text()
+    assert "PIMPLE" in fv_solution
+    assert "PISO" not in fv_solution
+
+
 def _turbulence_properties(server) -> dict:
     entries = {e.cls_name: e for e in server.controller.get_entries()}
     return server.state[entries["TurbulencePropertiesConfig"].state_key]
