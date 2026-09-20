@@ -21,8 +21,13 @@ pytest.importorskip("pybFoam")
 pytest.importorskip("trame")
 pytest.importorskip("trame_flow")  # the wizard fixture renders the sweep canvas
 
+from trame.app import get_server  # noqa: E402
+
+from neofoam.mcp.registry import resolve_solver  # noqa: E402
+from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.case_load import (  # noqa: E402
     apply_configs_to_forms,
+    case_advection_model,
     case_algorithm,
     models_to_select,
     read_case_configs,
@@ -47,6 +52,19 @@ _ALGORITHM_CASES = [
         "Simple",
         id="PISO",
     ),
+]
+
+#: Checked-in VoF cases (read-only) → the advection model their fvSolution is evidence of:
+#: the ``advectionScheme`` key, else isoAdvector-only controls in the alpha solver block.
+_VOF_CASES = "solver/incompressibleVoF"
+_ADVECTION_CASES = [
+    pytest.param(
+        f"{_VOF_CASES}/models/alpha_advection/cases/damBreak_isoAdvector", "isoAdvector", id="key"
+    ),
+    pytest.param(
+        f"{_VOF_CASES}/cases/interIsoFoam_discInConstantFlow", "isoAdvector", id="controls"
+    ),
+    pytest.param(f"{_VOF_CASES}/models/alpha_advection/cases/damBreak_mules", None, id="none"),
 ]
 
 
@@ -173,3 +191,35 @@ def test_loaded_configs_without_a_case_keep_the_current_algorithm(wizard, solver
     apply_configs_to_forms(wizard.state, wizard.controller.get_entries(), families, configs)
 
     assert wizard.state.choice_PressureVelocityAlgorithm == "Simple"
+
+
+@pytest.mark.parametrize(("case", "advection"), _ADVECTION_CASES)
+def test_case_advection_model_reads_the_fv_solution_evidence(case, advection):
+    assert case_advection_model(_TEST_ROOT / case) == advection
+
+
+@pytest.mark.parametrize(
+    ("case", "current", "advection"),
+    [
+        pytest.param(_ADVECTION_CASES[0].values[0], "MULES", "isoAdvector", id="key"),
+        pytest.param(_ADVECTION_CASES[1].values[0], "MULES", "isoAdvector", id="controls"),
+        pytest.param(_ADVECTION_CASES[2].values[0], "isoAdvector", "isoAdvector", id="none"),
+    ],
+)
+def test_loaded_vof_case_moves_the_advection_choice_to_its_evidence(
+    request, case, current, advection
+):
+    vof = resolve_solver("incompressibleVoF")
+    server = build_app(
+        server=get_server(request.node.name), solver_name="incompressibleVoF", plugins=[]
+    )
+    families = build_model_families(vof)
+    server.state.update(select_model_state(families, current))
+    configs = read_case_configs(_TEST_ROOT / case, vof)
+
+    apply_configs_to_forms(
+        server.state, server.controller.get_entries(), families, configs, _TEST_ROOT / case
+    )
+
+    assert server.state.choice_advectionModel == advection
+    assert server.state.sel_MULES is (advection == "MULES")

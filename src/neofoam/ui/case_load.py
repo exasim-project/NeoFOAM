@@ -15,16 +15,26 @@ from pathlib import Path
 from typing import Any
 
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
-from neofoam.io.dictread import read_keys
+from neofoam.io.dictread import Value, read_keys, read_section, read_toplevel
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.steps import ModelFamily, loaded_turbulence_model, select_model_state
 
-__all__ = ["read_case_configs", "apply_configs_to_forms", "case_algorithm", "models_to_select"]
+__all__ = [
+    "read_case_configs",
+    "apply_configs_to_forms",
+    "case_algorithm",
+    "case_advection_model",
+    "models_to_select",
+]
 
 #: ``system/fvSolution`` control block → the block the owning member's form declares,
 #: in the order ``detect_and_create`` looks for them (PISO is a single-outer-loop PIMPLE).
 _CONTROL_BLOCKS = {"PIMPLE": "PIMPLE", "SIMPLE": "SIMPLE", "PISO": "PIMPLE"}
+
+#: Keys only an isoAdvector ``solvers`` "alpha.*" block holds — the evidence the VoF
+#: solver's ``select_from_case`` falls back on when ``advectionScheme`` is absent.
+_ISO_ADVECTOR_CONTROLS = {"reconstructionScheme", "isoFaceTol", "surfCellTol", "nAlphaBounds"}
 
 
 def read_case_configs(
@@ -61,6 +71,24 @@ def case_algorithm(case_dir: Path, entries: list[FormEntry]) -> str | None:
     return next((owner for owner in owners if owner), None)
 
 
+def case_advection_model(case_dir: Path) -> str | None:
+    """The alpha-advection model the case's ``system/fvSolution`` is evidence of.
+
+    The same evidence the VoF solver's ``select_from_case`` runs on: the
+    ``advectionScheme`` key, else isoAdvector-only controls in the alpha solver block.
+    ``None`` without either, so the wizard then keeps its current choice::
+
+        advection = case_advection_model(Path(case_dir))
+    """
+    fv_solution = case_dir / "system" / "fvSolution"
+    named = read_toplevel(fv_solution, "advectionScheme")
+    if isinstance(named, Value):
+        return named.text
+    blocks = read_section(fv_solution, "solvers").items()
+    controls = {key for name, block in blocks if name.startswith("alpha.") for key in block}
+    return "isoAdvector" if controls & _ISO_ADVECTOR_CONTROLS else None
+
+
 def models_to_select(
     filled: Iterable[str], families: list[ModelFamily], algorithm: str | None
 ) -> list[str]:
@@ -95,7 +123,8 @@ def apply_configs_to_forms(
 
     Overwrites whatever the forms currently hold for those configs, so a caller
     that can lose user edits asks first. Pass the ``case_dir`` the configs were read
-    from so a pick-one family follows the case (:func:`case_algorithm`). Must run on
+    from so a pick-one family follows the case (:func:`case_algorithm`,
+    :func:`case_advection_model`). Must run on
     trame's event loop like every other state write::
 
         selected = apply_configs_to_forms(state, entries, families, configs, case_dir)
@@ -109,8 +138,10 @@ def apply_configs_to_forms(
         # A member of a pick-one family (a loaded SIMPLE case) deselects its
         # siblings rather than joining them.
         state.update(select_model_state(families, model))
-    # turbulenceProperties has no owning model; only a family member has a choice to move.
-    turbulence = loaded_turbulence_model(entries, state)
-    if any(c.name == turbulence for family in families for c in family.members):
-        state.update(select_model_state(families, str(turbulence)))
+    # Neither turbulenceProperties nor the advection evidence has an owning model; only
+    # a family member has a choice to move.
+    advection = case_advection_model(case_dir) if case_dir else None
+    for named in (loaded_turbulence_model(entries, state), advection):
+        if any(c.name == named for family in families for c in family.members):
+            state.update(select_model_state(families, str(named)))
     return set(selected)

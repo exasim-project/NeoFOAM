@@ -50,8 +50,8 @@ point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
     Steps, model choices/families and ``selection_key``/``choice_key``; form state
     ↔ ``save_case`` spec; the Geometry step.
 ``case_load``, ``sweep_view``
-    Reopen a case from disk (``case_algorithm``, ``models_to_select``,
-    ``apply_configs_to_forms``); the Parameters step's layout.
+    Reopen a case from disk (``case_algorithm``, ``case_advection_model``,
+    ``models_to_select``, ``apply_configs_to_forms``); the Parameters step's layout.
 ``agent_panel``, ``sweep_panel``
     ``AgentPanel`` (the AI chat drawer) and ``SweepPanel`` (the Parameters step).
 ``app``
