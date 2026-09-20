@@ -222,6 +222,18 @@ def test_fvsolution_add_requires_the_final_variant() -> None:
         Sub.model_validate({"solvers": {"U": {"solver": "PBiCG"}}})
 
 
+def test_fvsolution_add_can_leave_the_final_variant_optional() -> None:
+    """A steady (SIMPLE) slice has no final outer iteration, so no Final solver."""
+    spec = Model("FvSolutionOptionalFinal")
+    Sub = spec.config(fvSolution)
+    Sub.add("U", final_required=False)
+
+    inst = Sub.model_validate({"solvers": {"U": {"solver": "PBiCG"}}})
+
+    assert inst.solvers.U == {"solver": "PBiCG"}
+    assert inst.solvers.UFinal is None
+
+
 def test_fvsolution_passes_through_extra_sections() -> None:
     """PIMPLE / SIMPLE / relaxationFactors etc. pass through via extra='allow'."""
     spec = Model("FvSolutionExtra")

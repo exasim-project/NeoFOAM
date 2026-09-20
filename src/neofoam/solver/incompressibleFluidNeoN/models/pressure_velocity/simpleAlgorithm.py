@@ -249,7 +249,7 @@ def rotate_and_report(
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
 )
-@SimpleNeoNFvSolution.add("U")
+@SimpleNeoNFvSolution.add("U", final_required=False)
 def momentum(
     U: Any,
     phi: Any,
@@ -308,7 +308,7 @@ def momentum(
     interpolation=["flux(HbyA)", "interpolate(rAU)"],
     snGrad="snGrad(p)",
 )
-@SimpleNeoNFvSolution.add("p")
+@SimpleNeoNFvSolution.add("p", final_required=False)
 def continuity(
     U: Any,
     p: Any,

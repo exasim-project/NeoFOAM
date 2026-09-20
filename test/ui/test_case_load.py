@@ -32,6 +32,8 @@ from neofoam.ui.steps import build_model_families, select_model_state  # noqa: E
 #: A checked-in ``simulationType laminar`` case (read-only).
 _LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
 _TEST_ROOT = Path(__file__).resolve().parents[1]
+#: A checked-in steady SIMPLE case (read-only): its fvSolution has no ``*Final`` solvers.
+_STEADY_CASE = _TEST_ROOT / "solver/incompressibleFluidNeoN/cases/pitzDailySteady"
 
 #: Checked-in cases (read-only) → the algorithm their fvSolution control block names.
 _ALGORITHM_CASES = [
@@ -80,6 +82,17 @@ def test_loaded_case_fills_the_forms_with_the_values_on_disk(wizard, solver):
         "nu": 0.01,
     }
     assert _form_data(wizard, "ControlDictConfig")["deltaT"] == 0.005
+
+
+def test_loaded_steady_case_fills_the_simple_fv_solution_form(wizard, solver):
+    # A SIMPLE case has no <field>Final solvers: they belong to PIMPLE's final iteration.
+    configs = read_case_configs(_STEADY_CASE, solver)
+
+    apply_configs_to_forms(
+        wizard.state, wizard.controller.get_entries(), build_model_families(solver), configs
+    )
+
+    assert _form_data(wizard, "Simple_fvSolution")["solvers"]["U"]["solver"] == "PBiCGStab"
 
 
 def test_loaded_case_overrides_the_default_turbulence_properties(wizard, solver):

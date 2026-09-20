@@ -389,7 +389,9 @@ class fvSolution(BaseConfig):
         return out or None
 
     @classmethod
-    def add(cls, *fields: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def add(
+        cls, *fields: str, final_required: bool = True
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Declare solver entries the operation needs.
 
         Each ``field`` adds a typed entry under ``solvers.<field>`` plus its
@@ -399,10 +401,12 @@ class fvSolution(BaseConfig):
         value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a
         richer typed solver-control model is a follow-up. The presence
         check alone catches the most common case-misconfiguration failures.
+        A steady (SIMPLE) slice has no final outer iteration: it passes
+        ``final_required=False`` so a case without ``Final`` entries loads.
         """
         for field_name in fields:
             _register_entry(cls, "solvers", field_name, dict)
-            _register_entry(cls, "solvers", f"{field_name}Final", dict)
+            _register_entry(cls, "solvers", f"{field_name}Final", dict, optional=not final_required)
         _rebuild_sections(cls)
 
         def _decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
