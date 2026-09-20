@@ -38,6 +38,7 @@ Run the tests
 
     pytest test/<area>                # scoped tests while working
     pytest                            # whole suite (testpaths=test) verify before done
+    pytest test/ui -m browser         # opt-in: the wizard forms in headless Chromium
     pre-commit run --files <changed>  # format + lint + mypy on your diff
     pre-commit run -a                 # format + lint + mypy on all files
 

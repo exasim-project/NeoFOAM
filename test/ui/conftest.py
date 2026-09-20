@@ -19,6 +19,20 @@ from neofoam.ui import build_app
 _PERIOD = 0.02
 
 
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Deselect the ``browser`` tests unless the ``-m`` expression names the marker.
+
+    Not ``addopts = -m "not browser"``: a command-line ``-m "not slow"`` replaces that
+    expression, and the default run must never start a browser.
+    """
+    if "browser" in config.getoption("markexpr"):
+        return
+    browser = [item for item in items if item.get_closest_marker("browser")]
+    if browser:
+        items[:] = [item for item in items if item not in browser]
+        config.hook.pytest_deselected(items=browser)
+
+
 @pytest.fixture
 def heartbeat_ticks() -> Callable[[Callable[[], Any]], int]:
     """Count 20 ms heartbeat ticks while a wizard handler runs on the event loop.

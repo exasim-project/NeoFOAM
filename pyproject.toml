@@ -43,6 +43,9 @@ dev = [
     "mypy",
     "pre-commit",
     "types-PyYAML",
+    # test/ui/test_browser_forms.py (opt-in, `-m browser`); the browser itself comes
+    # from `playwright install chromium`.
+    "playwright",
     # build deps needed in env when no-build-isolation is enabled
     "scikit-build-core[pyproject]>=0.11.0",
     "nanobind>=2.9.0",
@@ -180,6 +183,7 @@ testpaths = [
 ]
 markers = [
     "slow: mesh-building tests (blockMesh/snappyHexMesh + checkMesh); deselect with -m 'not slow'",
+    "browser: drives the wizard in headless Chromium; opt-in, select with -m browser",
 ]
 
 [tool.mypy]
