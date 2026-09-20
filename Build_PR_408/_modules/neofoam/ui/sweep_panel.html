@@ -522,8 +522,10 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
@@ -538,6 +540,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -633,8 +636,9 @@
 <span class="sd">- Right-clicking a canvas node opens a context menu: remove the dimension /</span>
 <span class="sd">  disable the rule (required rules are locked).</span>
 
-<span class="sd">Only this module talks to trame; the canvas data model, the export and the</span>
-<span class="sd">DAG rendering live UI-free in :mod:`neofoam.tooling.workflow`.</span>
+<span class="sd">Only this module and its layout (:mod:`neofoam.ui.sweep_view`) talk to trame; the</span>
+<span class="sd">canvas data model, the export and the DAG rendering live UI-free in</span>
+<span class="sd">:mod:`neofoam.tooling.workflow`.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -655,6 +659,7 @@
     <span class="n">rule_nodes</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tooling.workflow.sweep_runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">config_classes_by_name</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui</span><span class="w"> </span><span class="kn">import</span> <span class="n">sweep_view</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">_resolve_target</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_load</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_configs_to_forms</span><span class="p">,</span> <span class="n">read_case_configs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span><span class="p">,</span> <span class="n">build_field_forms</span><span class="p">,</span> <span class="n">build_mesh_forms</span>
@@ -685,51 +690,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_dim_name</span><span class="p">(</span><span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The model dimension name behind a ``dim:&lt;name&gt;`` canvas node id."""</span>
     <span class="k">return</span> <span class="n">node_id</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"dim:"</span><span class="p">)</span> <span class="p">:]</span> <span class="k">if</span> <span class="n">node_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"dim:"</span><span class="p">)</span> <span class="k">else</span> <span class="n">node_id</span>
-
-
-<span class="n">_CSS</span> <span class="o">=</span> <span class="s2">"""</span>
-<span class="s2">.nf-sweep-node { font-size: 11px; }</span>
-<span class="s2">.nf-sweep-node .nf-sweep-header {</span>
-<span class="s2">  padding: 5px 12px; font-weight: 600; font-size: 12px;</span>
-<span class="s2">  border-radius: 8px 8px 0 0; color: white; position: relative; text-align: left;</span>
-<span class="s2">}</span>
-<span class="s2">.nf-sweep-header-dim { background: #00838F; }</span>
-<span class="s2">.nf-sweep-header-rule { background: #1F5FBF; }</span>
-<span class="s2">.nf-sweep-node .port-row { position: relative; padding: 4px 14px; text-align: left; }</span>
-<span class="s2">.nf-sweep-node .port-row.out { text-align: right; }</span>
-<span class="s2">.nf-sweep-node .vue-flow__handle.nf-handle-file { border-radius: 2px; }</span>
-<span class="s2">/* Bounded to the canvas height: unbounded, the (much taller) palette stretches the</span>
-<span class="s2">   canvas card to its own height and the graph shrinks to an island at the top. */</span>
-<span class="s2">.nf-sweep-palette { max-height: 62vh; width: 300px; flex: 0 0 300px; overflow-y: auto; }</span>
-<span class="s2">.nf-sweep-canvas { flex: 1 1 auto; min-width: 0; }</span>
-<span class="s2">/* Phase L: dimension nodes are a compact overview — the form lives in the</span>
-<span class="s2">   Configure tab below the canvas, not inside the node. */</span>
-<span class="s2">.nf-sweep-dim-meta {</span>
-<span class="s2">  padding: 8px 12px; display: flex; align-items: center; gap: 8px;</span>
-<span class="s2">  cursor: pointer;</span>
-<span class="s2">}</span>
-<span class="s2">.nf-sweep-configure { padding: 12px 16px; }</span>
-<span class="s2">/* Phone/tablet: the palette stacks above a fixed-height canvas. */</span>
-<span class="s2">@media (max-width: 959.98px) {</span>
-<span class="s2">  .nf-sweep-stage { flex-direction: column; }</span>
-<span class="s2">  .nf-sweep-palette { max-height: 32vh; width: auto; flex: 0 0 auto; }</span>
-<span class="s2">  .nf-sweep-out-dir { flex: 0 0 100%; }</span>
-<span class="s2">}</span>
-<span class="s2">"""</span>
-
-
-<span class="c1">#: Both ends of a valid connection carry the same payload once the ``in:`` /</span>
-<span class="c1">#: ``out:`` prefixes are stripped and wildcards are normalized — the JS mirror</span>
-<span class="c1">#: of ``neofoam.tooling.workflow.sweep._normalize_pattern``.</span>
-<span class="n">_IS_VALID_CONNECTION</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"(c) =&gt; {"</span>
-    <span class="s2">" if (!c.sourceHandle || !c.targetHandle || c.source === c.target)"</span>
-    <span class="s2">"   return false;"</span>
-    <span class="s2">" const norm = (s) =&gt;"</span>
-    <span class="s2">"   s.replace(/^(in|out):/, '').replace(/</span><span class="se">\\</span><span class="s2">{[^}]+</span><span class="se">\\</span><span class="s2">}/g, '{*}');"</span>
-    <span class="s2">" return norm(c.sourceHandle) === norm(c.targetHandle);"</span>
-    <span class="s2">" }"</span>
-<span class="p">)</span>
 
 
 <div class="viewcode-block" id="SweepPanel">
@@ -767,8 +727,12 @@
         <span class="c1"># The sweep definition (dimensions/variants/enabled rules/dirty) — pure,</span>
         <span class="c1"># trame-free; the panel renders it into state + canvas nodes (M1).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">SweepModel</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seed_state</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_register_controllers</span><span class="p">()</span>
 
-        <span class="n">state</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">state</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_seed_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Every ``sweep_*`` state variable at its initial value."""</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span><span class="o">.</span><span class="n">state</span>
         <span class="n">state</span><span class="o">.</span><span class="n">sweep_dim_pick</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">state</span><span class="o">.</span><span class="n">sweep_config_palette</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"owner"</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">}</span>
@@ -854,6 +818,9 @@
         <span class="n">state</span><span class="o">.</span><span class="n">sweep_gen_replace</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">state</span><span class="o">.</span><span class="n">sweep_gen_error</span> <span class="o">=</span> <span class="s2">""</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_controllers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The ``ctrl.sweep_*`` seams, the JS triggers and the state watchers."""</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_server</span>
         <span class="n">ctrl</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">controller</span>
         <span class="n">ctrl</span><span class="o">.</span><span class="n">sweep_add_dimension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_dimension</span>
         <span class="n">ctrl</span><span class="o">.</span><span class="n">sweep_add_cad_dimension</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_cad_dimension</span>
@@ -1884,617 +1851,10 @@
 <span class="sd">            json_forms: The app's ``JsonForms`` widget class (the bundled</span>
 <span class="sd">                ``&lt;json-forms&gt;`` component), reused inside the dimension nodes.</span>
 <span class="sd">        """</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">trame.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">client</span><span class="p">,</span> <span class="n">html</span>  <span class="c1"># type: ignore  # untyped deps  # noqa: PLC0415</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">trame.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">vuetify3</span> <span class="k">as</span> <span class="n">v3</span>  <span class="c1"># noqa: PLC0415</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">trame_flow.widgets.flow</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># type: ignore  # noqa: PLC0415</span>
-            <span class="n">Background</span><span class="p">,</span>
-            <span class="n">Controls</span><span class="p">,</span>
-            <span class="n">CustomNode</span><span class="p">,</span>
-            <span class="n">Handle</span><span class="p">,</span>
-            <span class="n">MiniMap</span><span class="p">,</span>
-            <span class="n">NodeEditor</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">client</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">_CSS</span><span class="p">)</span>
-
-        <span class="c1"># Toolbar: export target + status.</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-4"</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">():</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VRow</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-out-dir"</span><span class="p">):</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-                            <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_out_dir"</span><span class="p">,),</span>
-                            <span class="n">label</span><span class="o">=</span><span class="s2">"Sweep directory (default: &lt;target&gt;-sweep)"</span><span class="p">,</span>
-                            <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="n">prepend_inner_icon</span><span class="o">=</span><span class="s2">"mdi-folder-arrow-down-outline"</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">):</span>
-                        <span class="c1"># V1: Export disabled while any variant is invalid;</span>
-                        <span class="c1"># V3: a dot badge marks unexported canvas changes.</span>
-                        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VBadge</span><span class="p">(</span>
-                            <span class="n">dot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="n">color</span><span class="o">=</span><span class="s2">"warning"</span><span class="p">,</span>
-                            <span class="n">model_value</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_dirty"</span><span class="p">,),</span>
-                        <span class="p">):</span>
-                            <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                                <span class="s2">"Export sweep"</span><span class="p">,</span>
-                                <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">export</span><span class="p">,</span>
-                                <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
-                                <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-export-variant"</span><span class="p">,</span>
-                                <span class="c1"># No target → the default out dir would be a</span>
-                                <span class="c1"># relative "-sweep" in the launch directory.</span>
-                                <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"!sweep_valid || !target_dir.trim()"</span><span class="p">,),</span>
-                            <span class="p">)</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">):</span>
-                        <span class="c1"># V4: reopen a previously exported sweep from the dir.</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                            <span class="s2">"Load"</span><span class="p">,</span>
-                            <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">load_exported</span><span class="p">,</span>
-                            <span class="n">variant</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
-                            <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-folder-open-outline"</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">):</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                            <span class="s2">"Rewire"</span><span class="p">,</span>
-                            <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rewire</span><span class="p">,</span>
-                            <span class="n">variant</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
-                            <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-vector-polyline"</span><span class="p">,</span>
-                        <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">):</span>
-                        <span class="c1"># V2: factorized case count; warning-colored past the cap.</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VChip</span><span class="p">(</span>
-                            <span class="s2">"{{ sweep_count_label }}"</span><span class="p">,</span>
-                            <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_count_warn ? 'warning' : 'secondary'"</span><span class="p">,),</span>
-                            <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                        <span class="p">)</span>
-                <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-                    <span class="s2">"Add configs from the palette as sweep dimensions (the canvas"</span>
-                    <span class="s2">" shows the pipeline), then configure each dimension's variants"</span>
-                    <span class="s2">" in the Configure tab below. Pick the pipeline rules and Export:"</span>
-                    <span class="s2">" the cross product of all variants becomes one Snakemake case"</span>
-                    <span class="s2">" each, cloned from the saved base case."</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"text-body-2 text-medium-emphasis mt-3"</span><span class="p">,</span>
-                <span class="p">)</span>
-
-        <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-            <span class="s2">"Save the case first — the sweep clones the saved case."</span><span class="p">,</span>
-            <span class="nb">type</span><span class="o">=</span><span class="s2">"info"</span><span class="p">,</span>
-            <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-3"</span><span class="p">,</span>
-            <span class="n">v_show</span><span class="o">=</span><span class="s2">"!scaffolded.length"</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-            <span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_error"</span><span class="p">,),</span>
-            <span class="nb">type</span><span class="o">=</span><span class="s2">"error"</span><span class="p">,</span>
-            <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-3"</span><span class="p">,</span>
-            <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_error"</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-            <span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_status"</span><span class="p">,),</span>
-            <span class="nb">type</span><span class="o">=</span><span class="s2">"success"</span><span class="p">,</span>
-            <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-3"</span><span class="p">,</span>
-            <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_status &amp;&amp; !sweep_error"</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Palette + canvas.</span>
-        <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex mb-4 nf-sweep-stage"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"gap: 12px; align-items: stretch;"</span>
-        <span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-palette"</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_palette</span><span class="p">()</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-canvas"</span><span class="p">):</span>
-                <span class="k">with</span> <span class="n">NodeEditor</span><span class="p">(</span>
-                    <span class="n">style</span><span class="o">=</span><span class="s2">"height: 62vh; width: 100%;"</span><span class="p">,</span>
-                    <span class="n">connection_mode</span><span class="o">=</span><span class="s2">"strict"</span><span class="p">,</span>
-                    <span class="n">is_valid_connection</span><span class="o">=</span><span class="p">(</span><span class="n">_IS_VALID_CONNECTION</span><span class="p">,),</span>
-                    <span class="c1"># Right-click on a node opens the delete/disable menu (the</span>
-                    <span class="c1"># raw JS suppresses the browser's own context menu).</span>
-                    <span class="n">node_context_menu</span><span class="o">=</span><span class="p">(</span>
-                        <span class="s2">"$event.event.preventDefault();"</span>
-                        <span class="s2">" trigger('nf_sweep_node_menu', [$event.node.id,"</span>
-                        <span class="s2">" $event.event.clientX, $event.event.clientY])"</span>
-                    <span class="p">),</span>
-                    <span class="c1"># Clicking a dimension node configures it in the tab below.</span>
-                    <span class="n">node_click</span><span class="o">=</span><span class="p">(</span>
-                        <span class="s2">"$event.node &amp;&amp; $event.node.type === 'dim' &amp;&amp;"</span>
-                        <span class="s2">" trigger('nf_sweep_select_cfg', [$event.node.id])"</span>
-                    <span class="p">),</span>
-                <span class="p">)</span> <span class="k">as</span> <span class="n">editor</span><span class="p">:</span>
-                    <span class="n">Background</span><span class="p">(</span><span class="n">gap</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pattern_color</span><span class="o">=</span><span class="s2">"#81818a"</span><span class="p">)</span>
-                    <span class="n">Controls</span><span class="p">()</span>
-                    <span class="n">MiniMap</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_dim_node_template</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">v3</span><span class="p">,</span> <span class="n">Handle</span><span class="p">,</span> <span class="n">CustomNode</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_rule_node_template</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">Handle</span><span class="p">,</span> <span class="n">CustomNode</span><span class="p">)</span>
-        <span class="c1"># The node context menu, anchored at the right-click position.</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VMenu</span><span class="p">(</span>
-            <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_menu_show"</span><span class="p">,),</span>
-            <span class="n">target</span><span class="o">=</span><span class="p">(</span><span class="s2">"[sweep_menu_x, sweep_menu_y]"</span><span class="p">,),</span>
-        <span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VList</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">):</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VListItem</span><span class="p">(</span>
-                    <span class="n">title</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_menu_title"</span><span class="p">,),</span>
-                    <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-delete-outline"</span><span class="p">,</span>
-                    <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_menu_locked"</span><span class="p">,),</span>
-                    <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">menu_action</span><span class="p">,</span>
-                <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dim_picker_dialog</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_generator_dialog</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_confirm_dialog</span><span class="p">(</span><span class="n">v3</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_load_confirm_dialog</span><span class="p">(</span><span class="n">v3</span><span class="p">)</span>
-        <span class="c1"># The full rule pipeline is wider than VueFlow's default minZoom of 0.5</span>
-        <span class="c1"># allows fitting; without this, fit_view clips the canvas edges (the</span>
-        <span class="c1"># first nodes end up under the nav drawer). min_zoom is not an exposed</span>
-        <span class="c1"># widget attribute — bind the VueFlow prop directly (snakeflow's DAG</span>
-        <span class="c1"># view uses the same escape hatch).</span>
-        <span class="n">editor</span><span class="o">.</span><span class="n">_attributes</span><span class="p">[</span><span class="s2">"min_zoom"</span><span class="p">]</span> <span class="o">=</span> <span class="s1">':min-zoom="0.15"'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_editor</span> <span class="o">=</span> <span class="n">editor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_editor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dag_view</span> <span class="o">=</span> <span class="n">sweep_view</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_forms</span><span class="p">)</span>
         <span class="n">seed_nodes</span> <span class="o">=</span> <span class="n">rule_nodes</span><span class="p">([],</span> <span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">enabled</span><span class="p">)</span>
-        <span class="n">editor</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"nodes"</span><span class="p">:</span> <span class="n">seed_nodes</span><span class="p">,</span> <span class="s2">"edges"</span><span class="p">:</span> <span class="n">autowire</span><span class="p">(</span><span class="n">seed_nodes</span><span class="p">)}</span>
-
-        <span class="c1"># Parameters table + Snakemake DAG, as tabs of one card. The tab bodies</span>
-        <span class="c1"># use v_show (not a window/lazy container) so the DAG editor stays</span>
-        <span class="c1"># mounted and keeps its graph while the table tab is active.</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VTabs</span><span class="p">(</span>
-                <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_tab"</span><span class="p">,),</span>
-                <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
-            <span class="p">):</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VTab</span><span class="p">(</span><span class="s2">"Configure"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"configure"</span><span class="p">,</span> <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-tune-variant"</span><span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VTab</span><span class="p">(</span><span class="s2">"Parameters"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"table"</span><span class="p">,</span> <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-table"</span><span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VTab</span><span class="p">(</span><span class="s2">"Snakemake graph"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"dag"</span><span class="p">,</span> <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-graph-outline"</span><span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VDivider</span><span class="p">()</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_tab === 'configure'"</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_configure_tab</span><span class="p">(</span><span class="n">json_forms</span><span class="p">,</span> <span class="n">html</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_tab === 'table'"</span><span class="p">):</span>
-                <span class="c1"># All combinations, one row per case (no pagination).</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VDataTable</span><span class="p">(</span>
-                    <span class="n">headers</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_headers"</span><span class="p">,),</span>
-                    <span class="n">items</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_rows"</span><span class="p">,),</span>
-                    <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                    <span class="n">items_per_page</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-                    <span class="n">hide_default_footer</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">fixed_header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">style</span><span class="o">=</span><span class="s2">"max-height: 44vh; overflow-y: auto;"</span><span class="p">,</span>
-                    <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_rows.length"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">(</span>
-                    <span class="s2">"Add a dimension and name variants to populate the case table."</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"text-medium-emphasis"</span><span class="p">,</span>
-                    <span class="n">v_show</span><span class="o">=</span><span class="s2">"!sweep_rows.length"</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_tab === 'dag'"</span><span class="p">):</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardTitle</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"text-subtitle-1 d-flex align-center"</span><span class="p">):</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VBtnToggle</span><span class="p">(</span>
-                        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_dag_mode"</span><span class="p">,),</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">classes</span><span class="o">=</span><span class="s2">"mx-2"</span><span class="p">,</span>
-                        <span class="c1"># Switching mode regenerates the graph, so it is a second</span>
-                        <span class="c1"># snakemake run in disguise.</span>
-                        <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_dag_busy"</span><span class="p">,),</span>
-                    <span class="p">):</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"DAG"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"dag"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">)</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Rule graph"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"rulegraph"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="s2">"Generate"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refresh_dag</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                        <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-graph-outline"</span><span class="p">,</span>
-                        <span class="n">loading</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_dag_busy"</span><span class="p">,),</span>
-                        <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_dag_busy"</span><span class="p">,),</span>
-                    <span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-                    <span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_dag_error"</span><span class="p">,),</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">"warning"</span><span class="p">,</span>
-                    <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"ma-2"</span><span class="p">,</span>
-                    <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_dag_error"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="c1"># V3: the graph reflects the last export, not the live canvas.</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-                    <span class="s2">"Canvas changed since the last export — regenerate to update the graph."</span><span class="p">,</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">"info"</span><span class="p">,</span>
-                    <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"ma-2"</span><span class="p">,</span>
-                    <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_dirty &amp;&amp; sweep_exported.length"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">with</span> <span class="n">NodeEditor</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s2">"height: 44vh; width: 100%;"</span><span class="p">)</span> <span class="k">as</span> <span class="n">dag_view</span><span class="p">:</span>
-                    <span class="n">Background</span><span class="p">(</span><span class="n">gap</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pattern_color</span><span class="o">=</span><span class="s2">"#81818a"</span><span class="p">)</span>
-                    <span class="n">Controls</span><span class="p">()</span>
-        <span class="c1"># A wide sweep DAG needs a zoom below VueFlow's default min of 0.5 for</span>
-        <span class="c1"># fitView to frame it.</span>
-        <span class="n">dag_view</span><span class="o">.</span><span class="n">_attributes</span><span class="p">[</span><span class="s2">"min_zoom"</span><span class="p">]</span> <span class="o">=</span> <span class="s1">':min-zoom="0.05"'</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dag_view</span> <span class="o">=</span> <span class="n">dag_view</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_configure_tab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_forms</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">html</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The Configure tab: pick a dimension, edit its variants' form here.</span>
-
-<span class="sd">        This is where the config forms live (Phase L) — full-width below the</span>
-<span class="sd">        canvas instead of cramped inside a node. The dimension selector chips</span>
-<span class="sd">        mirror the canvas; the form binds to the active dimension's selected</span>
-<span class="sd">        variant and edits flow back through the ``nf_sweep_edit`` trigger.</span>
-<span class="sd">        """</span>
-        <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-configure"</span><span class="p">):</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">(</span>
-                <span class="s2">"Add a dimension from the palette, then configure its variants here."</span><span class="p">,</span>
-                <span class="n">classes</span><span class="o">=</span><span class="s2">"text-medium-emphasis"</span><span class="p">,</span>
-                <span class="n">v_show</span><span class="o">=</span><span class="s2">"!sweep_cfg_chips.length"</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_cfg_chips.length"</span><span class="p">):</span>
-                <span class="c1"># Dimension selector — one chip per dimension on the canvas.</span>
-                <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex flex-wrap align-center mb-3"</span><span class="p">,</span>
-                    <span class="n">style</span><span class="o">=</span><span class="s2">"gap: 6px;"</span><span class="p">,</span>
-                <span class="p">):</span>
-                    <span class="n">html</span><span class="o">.</span><span class="n">Span</span><span class="p">(</span><span class="s2">"Configuring"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"text-caption text-medium-emphasis mr-1"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VChip</span><span class="p">(</span>
-                        <span class="s2">"{{ c.title }} · {{ c.count }}"</span><span class="p">,</span>
-                        <span class="n">v_for</span><span class="o">=</span><span class="s2">"c in sweep_cfg_chips"</span><span class="p">,</span>
-                        <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="s2">"c.value"</span><span class="p">,),</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"teal"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="p">(</span><span class="s2">"c.value === sweep_cfg_dim ? 'flat' : 'outlined'"</span><span class="p">,),</span>
-                        <span class="n">click</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">select_cfg</span><span class="p">,</span> <span class="s2">"[c.value]"</span><span class="p">),</span>
-                    <span class="p">)</span>
-                <span class="c1"># Variant management (moved off the node).</span>
-                <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex align-center flex-wrap mb-2"</span><span class="p">,</span>
-                    <span class="n">style</span><span class="o">=</span><span class="s2">"gap: 6px; max-width: 720px;"</span><span class="p">,</span>
-                <span class="p">):</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSelect</span><span class="p">(</span>
-                        <span class="n">model_value</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_cfg_selected"</span><span class="p">,),</span>
-                        <span class="n">items</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_cfg_variants"</span><span class="p">,),</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">"variant"</span><span class="p">,</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                        <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">style</span><span class="o">=</span><span class="s2">"max-width: 220px;"</span><span class="p">,</span>
-                        <span class="n">update_modelValue</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_variant_select</span><span class="p">,</span> <span class="s2">"[$event]"</span><span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="n">icon</span><span class="o">=</span><span class="s2">"mdi-plus"</span><span class="p">,</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_variant_add</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="n">icon</span><span class="o">=</span><span class="s2">"mdi-delete"</span><span class="p">,</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_variant_delete</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="s2">"Generate series"</span><span class="p">,</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                        <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-format-list-numbered"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_open_generator</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex align-center mb-4"</span><span class="p">,</span>
-                    <span class="n">style</span><span class="o">=</span><span class="s2">"gap: 6px; max-width: 720px;"</span><span class="p">,</span>
-                <span class="p">):</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-                        <span class="n">model_value</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_cfg_rename"</span><span class="p">,),</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">"rename variant"</span><span class="p">,</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                        <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">style</span><span class="o">=</span><span class="s2">"max-width: 220px;"</span><span class="p">,</span>
-                        <span class="n">update_modelValue</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_rename_buffer</span><span class="p">,</span> <span class="s2">"[$event]"</span><span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="n">icon</span><span class="o">=</span><span class="s2">"mdi-check"</span><span class="p">,</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg_variant_rename</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="c1"># V1: the selected variant's validation error, if any.</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-                    <span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_cfg_error"</span><span class="p">,),</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">"error"</span><span class="p">,</span>
-                    <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-3"</span><span class="p">,</span>
-                    <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_cfg_error"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="c1"># The config's form, full width, bound to the selected variant.</span>
-                <span class="c1"># The change handler mirrors the edit client-side (no echo) and</span>
-                <span class="c1"># notifies Python via the shared trigger.</span>
-                <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nodrag nowheel"</span><span class="p">,</span> <span class="n">v_if</span><span class="o">=</span><span class="s2">"sweep_cfg_dim"</span><span class="p">):</span>
-                    <span class="n">json_forms</span><span class="p">(</span>
-                        <span class="n">schema</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_cfg_schema"</span><span class="p">,),</span>
-                        <span class="n">data</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_cfg_data"</span><span class="p">,),</span>
-                        <span class="n">change</span><span class="o">=</span><span class="s2">"sweep_cfg_data = $event.data;"</span>
-                        <span class="s2">" trigger('nf_sweep_edit', ['dim:' + sweep_cfg_dim,"</span>
-                        <span class="s2">" $event.data])"</span><span class="p">,</span>
-                    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_confirm_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""V2: confirm exporting a large factorized sweep (over the cap)."""</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VDialog</span><span class="p">(</span><span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_confirm_show"</span><span class="p">,),</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">460</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">():</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardTitle</span><span class="p">(</span><span class="s2">"Large sweep"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"text-subtitle-1"</span><span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">(</span><span class="s2">"{{ sweep_count_label }} — that is a lot of runs. Export anyway?"</span><span class="p">)</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardActions</span><span class="p">():</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">click</span><span class="o">=</span><span class="s2">"sweep_confirm_show = false"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="s2">"Export anyway"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">confirm_export</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"warning"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_confirm_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""V4: confirm that a load replaces the forms with the sweep's base case."""</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VDialog</span><span class="p">(</span><span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_load_confirm_show"</span><span class="p">,),</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">460</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">():</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardTitle</span><span class="p">(</span><span class="s2">"Reopen sweep"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"text-subtitle-1"</span><span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">(</span>
-                    <span class="s2">"Loading replaces the wizard forms with this sweep's base case"</span>
-                    <span class="s2">" ({{ sweep_load_base }}) — unsaved edits are lost. Continue?"</span>
-                <span class="p">)</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardActions</span><span class="p">():</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">click</span><span class="o">=</span><span class="s2">"sweep_load_confirm_show = false"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="s2">"Load anyway"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">confirm_load</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"warning"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_dim_picker_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The "add dimension: pick the parameters to vary" dialog."""</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VDialog</span><span class="p">(</span><span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_pick_show"</span><span class="p">,),</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">560</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">():</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardTitle</span><span class="p">(</span><span class="s2">"Add dimension: {{ sweep_pick_title }}"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"text-subtitle-1"</span><span class="p">)</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">():</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSelect</span><span class="p">(</span>
-                        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_pick_selected"</span><span class="p">,),</span>
-                        <span class="n">items</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_pick_options"</span><span class="p">,),</span>
-                        <span class="n">item_title</span><span class="o">=</span><span class="s2">"title"</span><span class="p">,</span>
-                        <span class="n">item_value</span><span class="o">=</span><span class="s2">"value"</span><span class="p">,</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">"Parameters to vary"</span><span class="p">,</span>
-                        <span class="n">multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">chips</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">closable_chips</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
-                        <span class="s2">"The node shows only the picked parameters; everything"</span>
-                        <span class="s2">" else stays inherited from the base case. Leave empty"</span>
-                        <span class="s2">" to edit the whole form."</span><span class="p">,</span>
-                        <span class="n">classes</span><span class="o">=</span><span class="s2">"text-body-2 text-medium-emphasis mt-3"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardActions</span><span class="p">():</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">click</span><span class="o">=</span><span class="s2">"sweep_pick_show = false"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="s2">"Add"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">confirm_dim</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_generator_dialog</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The variant-series generator dialog (list / linear / log spacing)."""</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VDialog</span><span class="p">(</span><span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_show"</span><span class="p">,),</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">560</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">():</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VCardTitle</span><span class="p">(</span>
-                    <span class="s2">"Generate variants: {{ sweep_gen_title }}"</span><span class="p">,</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"text-subtitle-1"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">():</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSelect</span><span class="p">(</span>
-                        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_param"</span><span class="p">,),</span>
-                        <span class="n">items</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_params"</span><span class="p">,),</span>
-                        <span class="n">item_title</span><span class="o">=</span><span class="s2">"title"</span><span class="p">,</span>
-                        <span class="n">item_value</span><span class="o">=</span><span class="s2">"value"</span><span class="p">,</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">"Parameter"</span><span class="p">,</span>
-                        <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-3"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VBtnToggle</span><span class="p">(</span>
-                        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_mode"</span><span class="p">,),</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                        <span class="n">mandatory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-3"</span><span class="p">,</span>
-                    <span class="p">):</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Values"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"list"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">)</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Linear"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">)</span>
-                        <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Log"</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s2">"log"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-                        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_values"</span><span class="p">,),</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">"Values (comma or space separated, e.g. 1e-5 2e-5 4e-5)"</span><span class="p">,</span>
-                        <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_gen_mode === 'list'"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VRow</span><span class="p">(</span><span class="n">dense</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_gen_mode !== 'list'"</span><span class="p">):</span>
-                        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-                            <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-                                <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_min"</span><span class="p">,),</span>
-                                <span class="n">label</span><span class="o">=</span><span class="s2">"min"</span><span class="p">,</span>
-                                <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="p">)</span>
-                        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-                            <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-                                <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_max"</span><span class="p">,),</span>
-                                <span class="n">label</span><span class="o">=</span><span class="s2">"max"</span><span class="p">,</span>
-                                <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="p">)</span>
-                        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-                            <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-                                <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_count"</span><span class="p">,),</span>
-                                <span class="n">label</span><span class="o">=</span><span class="s2">"count"</span><span class="p">,</span>
-                                <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VCheckboxBtn</span><span class="p">(</span>
-                        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_replace"</span><span class="p">,),</span>
-                        <span class="n">label</span><span class="o">=</span><span class="s2">"Replace existing variants"</span><span class="p">,</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VAlert</span><span class="p">(</span>
-                        <span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_gen_error"</span><span class="p">,),</span>
-                        <span class="nb">type</span><span class="o">=</span><span class="s2">"error"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                        <span class="n">v_show</span><span class="o">=</span><span class="s2">"sweep_gen_error"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardActions</span><span class="p">():</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">click</span><span class="o">=</span><span class="s2">"sweep_gen_show = false"</span><span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
-                        <span class="s2">"Generate"</span><span class="p">,</span>
-                        <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_variants</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
-                        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_palette_section</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">on_canvas</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">click</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">subtitle</span><span class="p">:</span> <span class="n">Any</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""One palette group: add/remove toggle rows over an on-canvas array."""</span>
-        <span class="c1"># A row owned by a gated model follows its `sel_&lt;model&gt;` switch, like the form</span>
-        <span class="c1"># panels; the lookup names each state var so Vue tracks the selection.</span>
-        <span class="n">entries</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_dims</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_dims</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-        <span class="n">owners</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">})</span>
-        <span class="n">selected</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">owner</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">selection_key</span><span class="p">(</span><span class="n">owner</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">owner</span> <span class="ow">in</span> <span class="n">owners</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VListItem</span><span class="p">(</span>
-            <span class="n">v_for</span><span class="o">=</span><span class="sa">f</span><span class="s2">"item in </span><span class="si">{</span><span class="n">items</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-            <span class="n">v_show</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!item.owner || (</span><span class="se">{{</span><span class="si">{</span><span class="n">selected</span><span class="si">}</span><span class="se">}}</span><span class="s2">)[item.owner]"</span><span class="p">,</span>
-            <span class="n">key</span><span class="o">=</span><span class="s2">"item.value"</span><span class="p">,</span>
-            <span class="n">click</span><span class="o">=</span><span class="p">(</span><span class="n">click</span><span class="p">,</span> <span class="s2">"[item.value]"</span><span class="p">),</span>
-            <span class="n">title</span><span class="o">=</span><span class="p">(</span><span class="s2">"item.title"</span><span class="p">,),</span>
-            <span class="n">subtitle</span><span class="o">=</span><span class="n">subtitle</span><span class="p">,</span>
-        <span class="p">):</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">Template</span><span class="p">(</span><span class="n">v_slot_append</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VIcon</span><span class="p">(</span>
-                    <span class="n">icon</span><span class="o">=</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">on_canvas</span><span class="si">}</span><span class="s2">.includes(item.value)"</span>
-                        <span class="s2">" ? 'mdi-minus-circle-outline'"</span>
-                        <span class="s2">" : 'mdi-plus-circle-outline'"</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">on_canvas</span><span class="si">}</span><span class="s2">.includes(item.value) ? 'error' : 'primary'"</span><span class="p">,),</span>
-                    <span class="n">size</span><span class="o">=</span><span class="s2">"small"</span><span class="p">,</span>
-                <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_palette</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The config + rule palette (left of the canvas)."""</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">trame.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">vuetify3</span> <span class="k">as</span> <span class="n">v3</span>  <span class="c1"># noqa: PLC0415</span>
-
-        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VList</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span> <span class="n">nav</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VListSubheader</span><span class="p">(</span><span class="s2">"Config dimensions"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_palette_section</span><span class="p">(</span>
-                <span class="n">v3</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="s2">"sweep_config_palette"</span><span class="p">,</span>
-                <span class="n">on_canvas</span><span class="o">=</span><span class="s2">"sweep_dims_on_canvas"</span><span class="p">,</span>
-                <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_palette_config</span><span class="p">,</span>
-                <span class="n">subtitle</span><span class="o">=</span><span class="p">(</span><span class="s2">"item.owner ? 'model: ' + item.owner : ''"</span><span class="p">,),</span>
-            <span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VDivider</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"my-2"</span><span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VListSubheader</span><span class="p">(</span><span class="s2">"Fields / boundary conditions"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_palette_section</span><span class="p">(</span>
-                <span class="n">v3</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="s2">"sweep_field_palette"</span><span class="p">,</span>
-                <span class="n">on_canvas</span><span class="o">=</span><span class="s2">"sweep_field_on_canvas"</span><span class="p">,</span>
-                <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_palette_field</span><span class="p">,</span>
-                <span class="n">subtitle</span><span class="o">=</span><span class="p">(</span><span class="s2">"item.owner ? 'model: ' + item.owner : 'per-case'"</span><span class="p">,),</span>
-            <span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VDivider</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"my-2"</span><span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VListSubheader</span><span class="p">(</span><span class="s2">"Mesh dimension"</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_palette_section</span><span class="p">(</span>
-                <span class="n">v3</span><span class="p">,</span>
-                <span class="n">items</span><span class="o">=</span><span class="s2">"sweep_mesh_palette"</span><span class="p">,</span>
-                <span class="n">on_canvas</span><span class="o">=</span><span class="s2">"sweep_mesh_on_canvas"</span><span class="p">,</span>
-                <span class="n">click</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_palette_mesh</span><span class="p">,</span>
-                <span class="n">subtitle</span><span class="o">=</span><span class="s2">"re-meshes per variant"</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VDivider</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"my-2"</span><span class="p">)</span>
-            <span class="n">v3</span><span class="o">.</span><span class="n">VListSubheader</span><span class="p">(</span><span class="s2">"Pipeline rules"</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VListItem</span><span class="p">(</span>
-                <span class="n">v_for</span><span class="o">=</span><span class="s2">"r in sweep_rule_palette"</span><span class="p">,</span>
-                <span class="n">key</span><span class="o">=</span><span class="s2">"r.name"</span><span class="p">,</span>
-                <span class="n">title</span><span class="o">=</span><span class="p">(</span><span class="s2">"r.title"</span><span class="p">,),</span>
-                <span class="n">subtitle</span><span class="o">=</span><span class="p">(</span><span class="s2">"r.required ? 'required' : ''"</span><span class="p">,),</span>
-            <span class="p">):</span>
-                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">Template</span><span class="p">(</span><span class="n">v_slot_prepend</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VCheckboxBtn</span><span class="p">(</span>
-                        <span class="n">model_value</span><span class="o">=</span><span class="p">(</span><span class="s2">"r.enabled"</span><span class="p">,),</span>
-                        <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"r.required"</span><span class="p">,),</span>
-                        <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span>
-                        <span class="n">update_modelValue</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">toggle_rule</span><span class="p">,</span> <span class="s2">"[r.name, $event]"</span><span class="p">),</span>
-                    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_dim_node_template</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">v3</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">custom_node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A dimension node: a compact overview chip (Phase L).</span>
-
-<span class="sd">        The config's form no longer lives in the node — it is edited in the</span>
-<span class="sd">        Configure tab below the canvas. The node shows only the config title,</span>
-<span class="sd">        its variant count and the ``cfg:`` source handle; clicking it selects</span>
-<span class="sd">        the dimension for the Configure tab.</span>
-<span class="sd">        """</span>
-        <span class="k">with</span> <span class="n">custom_node</span><span class="p">(</span><span class="s2">"dim"</span><span class="p">),</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-node"</span><span class="p">):</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="s2">"{{ props.data.label }}"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-header nf-sweep-header-dim"</span><span class="p">):</span>
-                <span class="n">handle</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"source"</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="p">(</span><span class="s2">"'cfg:' + props.data.dim"</span><span class="p">,))</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-dim-meta"</span><span class="p">):</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VChip</span><span class="p">(</span>
-                    <span class="s2">"{{ Object.keys(props.data.entries).length }} variant(s)"</span><span class="p">,</span>
-                    <span class="n">size</span><span class="o">=</span><span class="s2">"x-small"</span><span class="p">,</span>
-                    <span class="n">color</span><span class="o">=</span><span class="s2">"teal"</span><span class="p">,</span>
-                    <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-                <span class="c1"># V1: a red badge when the selected/any variant is invalid.</span>
-                <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Span</span><span class="p">(</span><span class="n">v_show</span><span class="o">=</span><span class="s2">"props.data.error"</span><span class="p">):</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VIcon</span><span class="p">(</span>
-                        <span class="s2">"mdi-alert-circle"</span><span class="p">,</span>
-                        <span class="n">size</span><span class="o">=</span><span class="s2">"x-small"</span><span class="p">,</span>
-                        <span class="n">color</span><span class="o">=</span><span class="s2">"error"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">v3</span><span class="o">.</span><span class="n">VTooltip</span><span class="p">(</span>
-                        <span class="n">text</span><span class="o">=</span><span class="p">(</span><span class="s2">"props.data.error"</span><span class="p">,),</span>
-                        <span class="n">activator</span><span class="o">=</span><span class="s2">"parent"</span><span class="p">,</span>
-                        <span class="n">location</span><span class="o">=</span><span class="s2">"top"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VIcon</span><span class="p">(</span>
-                    <span class="s2">"mdi-pencil-outline"</span><span class="p">,</span>
-                    <span class="n">size</span><span class="o">=</span><span class="s2">"x-small"</span><span class="p">,</span>
-                    <span class="n">color</span><span class="o">=</span><span class="s2">"grey"</span><span class="p">,</span>
-                    <span class="n">v_show</span><span class="o">=</span><span class="s2">"!props.data.error"</span><span class="p">,</span>
-                <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_rule_node_template</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">html</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">custom_node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A fixed pipeline node: config ports per dimension + typed file ports."""</span>
-        <span class="k">with</span> <span class="n">custom_node</span><span class="p">(</span><span class="s2">"rule"</span><span class="p">),</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-node"</span><span class="p">):</span>
-            <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="s2">"{{ props.data.label }}"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-header nf-sweep-header-rule"</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_for</span><span class="o">=</span><span class="s2">"dim in props.data.cfg_dims"</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="s2">"dim"</span><span class="p">,),</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"port-row"</span><span class="p">):</span>
-                <span class="n">handle</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"target"</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="p">(</span><span class="s2">"'cfg:' + dim"</span><span class="p">,))</span>
-                <span class="n">html</span><span class="o">.</span><span class="n">Span</span><span class="p">(</span><span class="s2">"{{ dim }}"</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_for</span><span class="o">=</span><span class="s2">"f in props.data.inputs"</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,),</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"port-row"</span><span class="p">):</span>
-                <span class="n">handle</span><span class="p">(</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">"target"</span><span class="p">,</span>
-                    <span class="n">position</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span>
-                    <span class="nb">id</span><span class="o">=</span><span class="p">(</span><span class="s2">"'in:' + f"</span><span class="p">,),</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-handle-file"</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">html</span><span class="o">.</span><span class="n">Span</span><span class="p">(</span><span class="s2">"{{ f.split('/').pop() }}"</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_for</span><span class="o">=</span><span class="s2">"f in props.data.outputs"</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">(</span><span class="s2">"f"</span><span class="p">,),</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"port-row out"</span><span class="p">):</span>
-                <span class="n">html</span><span class="o">.</span><span class="n">Span</span><span class="p">(</span><span class="s2">"{{ f.split('/').pop() }}"</span><span class="p">)</span>
-                <span class="n">handle</span><span class="p">(</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">"source"</span><span class="p">,</span>
-                    <span class="n">position</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span>
-                    <span class="nb">id</span><span class="o">=</span><span class="p">(</span><span class="s2">"'out:' + f"</span><span class="p">,),</span>
-                    <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-handle-file"</span><span class="p">,</span>
-                <span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_editor</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"nodes"</span><span class="p">:</span> <span class="n">seed_nodes</span><span class="p">,</span> <span class="s2">"edges"</span><span class="p">:</span> <span class="n">autowire</span><span class="p">(</span><span class="n">seed_nodes</span><span class="p">)}</span></div>
+</div>
 
 </pre></div>
         </article>

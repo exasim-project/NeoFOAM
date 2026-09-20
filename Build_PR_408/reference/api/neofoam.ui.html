@@ -523,8 +523,10 @@
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" checked="" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
@@ -539,6 +541,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -629,11 +632,17 @@ it lazily.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.ui.app.html#module-neofoam.ui.app" title="neofoam.ui.app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">app</span></code></a></p></td>
 <td><p>Trame case wizard: sidebar step nav + JSONForms panels + model-aware save.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.ui.case_load.html#module-neofoam.ui.case_load" title="neofoam.ui.case_load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">case_load</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.ui.boundary_forms.html#module-neofoam.ui.boundary_forms" title="neofoam.ui.boundary_forms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">boundary_forms</span></code></a></p></td>
+<td><p>Seed and pin a field's boundary conditions from the scanned patches (headless, pure).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.ui.case_load.html#module-neofoam.ui.case_load" title="neofoam.ui.case_load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">case_load</span></code></a></p></td>
 <td><p>Reopen an existing case: read it off disk and push it into the wizard forms.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="neofoam.ui.case_spec.html#module-neofoam.ui.case_spec" title="neofoam.ui.case_spec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">case_spec</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.ui.case_spec.html#module-neofoam.ui.case_spec" title="neofoam.ui.case_spec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">case_spec</span></code></a></p></td>
 <td><p>Aggregate live form state into a <code class="docutils literal notranslate"><span class="pre">save_case</span></code> spec dict (headless, pure).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.ui.form_schema.html#module-neofoam.ui.form_schema" title="neofoam.ui.form_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">form_schema</span></code></a></p></td>
+<td><p>Rewrite a pydantic JSON Schema so JSONForms renders it cleanly (headless, pure).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.ui.forms.html#module-neofoam.ui.forms" title="neofoam.ui.forms"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forms</span></code></a></p></td>
 <td><p>Build the JSONForms form descriptors for a solver (headless, pure).</p></td>
@@ -667,6 +676,9 @@ it lazily.</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.ui.sweep_panel.html#module-neofoam.ui.sweep_panel" title="neofoam.ui.sweep_panel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sweep_panel</span></code></a></p></td>
 <td><p>The Parameters step: a trame-flow canvas that sweeps configs over variants.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.ui.sweep_view.html#module-neofoam.ui.sweep_view" title="neofoam.ui.sweep_view"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sweep_view</span></code></a></p></td>
+<td><p>The trame layout of the Parameters step: toolbar, palette, canvas, dialogs and tabs.</p></td>
 </tr>
 </tbody>
 </table>

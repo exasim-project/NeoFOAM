@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.viscosity" href="neofoam.viscosity.html"><link rel="prev" title="neofoam.ui.sweep_model" href="neofoam.ui.sweep_model.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.ui.sweep_view" href="neofoam.ui.sweep_view.html"><link rel="prev" title="neofoam.ui.sweep_model" href="neofoam.ui.sweep_model.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.ui.sweep_panel.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -523,8 +523,10 @@
 <li class="toctree-l3 current has-children"><a class="reference internal" href="neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" checked="" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
@@ -539,6 +541,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -637,8 +640,9 @@ and the <strong>Snakemake graph</strong> of the exported workflow (<code class="
 <li><p>Right-clicking a canvas node opens a context menu: remove the dimension /
 disable the rule (required rules are locked).</p></li>
 </ul>
-<p>Only this module talks to trame; the canvas data model, the export and the
-DAG rendering live UI-free in <a class="reference internal" href="neofoam.tooling.workflow.html#module-neofoam.tooling.workflow" title="neofoam.tooling.workflow"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.tooling.workflow</span></code></a>.</p>
+<p>Only this module and its layout (<a class="reference internal" href="neofoam.ui.sweep_view.html#module-neofoam.ui.sweep_view" title="neofoam.ui.sweep_view"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.ui.sweep_view</span></code></a>) talk to trame; the
+canvas data model, the export and the DAG rendering live UI-free in
+<a class="reference internal" href="neofoam.tooling.workflow.html#module-neofoam.tooling.workflow" title="neofoam.tooling.workflow"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.tooling.workflow</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.ui.sweep_panel.SweepPanel">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.ui.sweep_panel.</span></span><span class="sig-name descname"><span class="pre">SweepPanel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.ui.forms.html#neofoam.ui.forms.FormEntry" title="neofoam.ui.forms.FormEntry"><span class="pre">FormEntry</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_panel.html#SweepPanel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_panel.SweepPanel" title="Link to this definition">¶</a></dt>
@@ -814,12 +818,12 @@ stops to ask; <code class="docutils literal notranslate"><span class="pre">force
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="neofoam.viscosity.html">
+          <a class="next-page" href="neofoam.ui.sweep_view.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam.viscosity</div>
+                <div class="title">neofoam.ui.sweep_view</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

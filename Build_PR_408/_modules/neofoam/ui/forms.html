@@ -522,8 +522,10 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
@@ -538,6 +540,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -628,55 +631,23 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">INPUT_KEYS</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">is_scheme_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SOLVER_COMPANION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.pydantic_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">slice_schema</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">tools</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.form_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">alternatives_uischema</span><span class="p">,</span> <span class="n">humanize</span><span class="p">,</span> <span class="n">jsonforms_schema</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">"ADDER_TRANSLATIONS"</span><span class="p">,</span>
     <span class="s2">"FormEntry"</span><span class="p">,</span>
-    <span class="s2">"RENDERER_KEYWORDS"</span><span class="p">,</span>
     <span class="s2">"build_forms"</span><span class="p">,</span>
     <span class="s2">"build_field_forms"</span><span class="p">,</span>
     <span class="s2">"build_mesh_forms"</span><span class="p">,</span>
     <span class="s2">"exclusive_model_families"</span><span class="p">,</span>
-    <span class="s2">"humanize"</span><span class="p">,</span>
-    <span class="s2">"inline_refs"</span><span class="p">,</span>
     <span class="s2">"js_identifier"</span><span class="p">,</span>
     <span class="s2">"jsonforms_schema"</span><span class="p">,</span>
-    <span class="s2">"alternatives_uischema"</span><span class="p">,</span>
-    <span class="s2">"allowed_bc_types"</span><span class="p">,</span>
-    <span class="s2">"seed_boundary_field"</span><span class="p">,</span>
-    <span class="s2">"patch_bc_schema"</span><span class="p">,</span>
     <span class="s2">"schema_key"</span><span class="p">,</span>
     <span class="s2">"uischema_key"</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="c1"># Schema keywords the bundled JSONForms renderers (jsonforms_module/*.mjs) match by</span>
-<span class="c1"># name; a rename on one side only falls back to the stock renderer without an error.</span>
-<span class="c1"># Each: value shape · emitting function · renderer/layout.</span>
-<span class="n">_NF_COMPACT</span> <span class="o">=</span> <span class="s2">"nfCompact"</span>  <span class="c1"># True · _tag_adders · NfCompactSection/rows</span>
-<span class="n">_NF_SOLVERS</span> <span class="o">=</span> <span class="s2">"nfSolvers"</span>  <span class="c1"># True · _pin_solver_controls · NfCompactSection/solvers</span>
-<span class="n">_NF_SOLVER</span> <span class="o">=</span> <span class="s2">"nfSolver"</span>  <span class="c1"># {solver: companion key} · _pin_solver_controls · NfCompactSection/grid</span>
-<span class="n">_NF_GRID</span> <span class="o">=</span> <span class="s2">"nfGrid"</span>  <span class="c1"># True · _tag_scalar_grid · NfGridLayout</span>
-<span class="n">_NF_DICT</span> <span class="o">=</span> <span class="s2">"nfDict"</span>  <span class="c1"># True · _dictionary_cards · NfCompactSection/grid</span>
-<span class="n">_NF_DICTS</span> <span class="o">=</span> <span class="s2">"nfDicts"</span>  <span class="c1"># True · _dictionary_cards · NfCompactSection/solvers</span>
-<span class="n">_NF_PATCHES</span> <span class="o">=</span> <span class="s2">"nfPatches"</span>  <span class="c1"># True · _patch_adder · NfCompactSection/rows</span>
-<span class="n">RENDERER_KEYWORDS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">_NF_COMPACT</span><span class="p">,</span>
-    <span class="n">_NF_SOLVERS</span><span class="p">,</span>
-    <span class="n">_NF_SOLVER</span><span class="p">,</span>
-    <span class="n">_NF_GRID</span><span class="p">,</span>
-    <span class="n">_NF_DICT</span><span class="p">,</span>
-    <span class="n">_NF_DICTS</span><span class="p">,</span>
-    <span class="n">_NF_PATCHES</span><span class="p">,</span>
-<span class="p">)</span>
-
 <span class="n">_BC_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,)</span>
-
-<span class="c1"># The ``FoamFile`` header (version / format / class / object) a config may mirror is</span>
-<span class="c1"># boilerplate for the writer: it stays in the form data but gets no form controls.</span>
-<span class="n">_FILE_HEADER</span> <span class="o">=</span> <span class="s2">"FoamFile"</span>
 
 <span class="c1"># Mesh / preprocessing dict configs belong to the upstream meshing stage (the</span>
 <span class="c1"># geometry→mesh workflow), not the physics case wizard. They also aren't writable via</span>
@@ -805,13 +776,6 @@
     <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">}</span>
 
 
-<span class="c1"># camelCase / snake_case boundary for human labels: "writeControl" → "Write control".</span>
-<span class="c1"># "NeoN" is a name, not two words: no break inside it, but one after it ("NeoN Control").</span>
-<span class="n">_CAMEL_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?&lt;=[a-z0-9])(?=[A-Z])(?!(?&lt;=Neo)N(?![a-z]))|(?&lt;=NeoN)(?=[A-Z])"</span><span class="p">)</span>
-<span class="c1"># Sphinx roles in pydantic docstrings: ":class:`~a.b.C`" → "C".</span>
-<span class="n">_SPHINX_ROLE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">":[a-zA-Z:]+:`~?([^`]+)`"</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="js_identifier">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.js_identifier">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">js_identifier</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -820,519 +784,6 @@
 <span class="sd">    so a field like ``alpha.water`` would otherwise read as ``alpha`` . ``water…``.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\W"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="humanize">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.humanize">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">humanize</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A property key as a human label: ``deltaT`` → "Delta T", ``nu`` → "Nu"."""</span>
-    <span class="n">words</span> <span class="o">=</span> <span class="n">_CAMEL_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">words</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span></div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_openfoam_block</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""True when ``node`` models a raw OpenFOAM sub-dictionary rather than an API model.</span>
-
-<span class="sd">    ``fv_configs._rebuild_sections`` synthesises one pydantic model per</span>
-<span class="sd">    ``fvSchemes``/``fvSolution`` section (``create_model("_" + section, …)``), and</span>
-<span class="sd">    ``_GravityHeader`` mirrors a ``FoamFile`` header the same way. The leading</span>
-<span class="sd">    underscore in the class name — which pydantic copies into ``title`` — is the only</span>
-<span class="sd">    trace of that distinction left in the JSON schema, and it is what tells the two</span>
-<span class="sd">    kinds of key apart: a *block*'s property keys are the OpenFOAM entries themselves,</span>
-<span class="sd">    written by the case author (``p_rghFinal``, ``div(phi,U)``, ``alpha.water``), while</span>
-<span class="sd">    every other model is hand-written and its field names are an API surface</span>
-<span class="sd">    (``writeControl``, ``momentumPredictor``) that reads naturally as prose.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_label_title</span><span class="p">(</span>
-    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">in_block</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">class_names</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Title one property: verbatim for OpenFOAM keys, :func:`humanize`d for prose.</span>
-
-<span class="sd">    ``in_block`` says the *owning* object is an OpenFOAM block, so ``key`` is a case</span>
-<span class="sd">    entry; a node that is itself a block gets its key too (otherwise the synthesised</span>
-<span class="sd">    ``_ddtSchemes`` class name leaks into the heading). An OpenFOAM key has no prose</span>
-<span class="sd">    form — humanising it destroys information a user cannot recover (``p_rghFinal`` →</span>
-<span class="sd">    "P Rghfinal"), and the key is what the written case file contains, so it is shown</span>
-<span class="sd">    exactly as typed. Otherwise a pydantic auto-title (``"Writecontrol"``) is replaced</span>
-<span class="sd">    by :func:`humanize`, and a hand-written title is kept. A nested model's title is its</span>
-<span class="sd">    class name (``class_names``), inherited through the ``$ref`` — two ``PhaseTransport``</span>
-<span class="sd">    cards tell the user nothing — so it counts as auto as well.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">node</span>
-    <span class="k">if</span> <span class="n">in_block</span> <span class="ow">or</span> <span class="n">_is_openfoam_block</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">node</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span>
-    <span class="n">auto</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="ow">or</span> <span class="n">title</span> <span class="ow">in</span> <span class="n">class_names</span>
-        <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">title</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">node</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">humanize</span><span class="p">(</span><span class="n">key</span><span class="p">)}</span> <span class="k">if</span> <span class="n">auto</span> <span class="k">else</span> <span class="n">node</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_clean_description</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""First paragraph of a docstring description, Sphinx markup stripped."""</span>
-    <span class="n">first</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">first</span> <span class="o">=</span> <span class="n">_SPHINX_ROLE_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">first</span><span class="p">)</span>
-    <span class="n">first</span> <span class="o">=</span> <span class="n">first</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"``"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">first</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_const_type_of</span><span class="p">(</span><span class="n">arm</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">defs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The ``type`` discriminator ``const`` of a union arm (resolving ``$ref``)."""</span>
-    <span class="n">node</span> <span class="o">=</span> <span class="n">arm</span>
-    <span class="n">ref</span> <span class="o">=</span> <span class="n">arm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$ref"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">ref</span><span class="p">:</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="n">defs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">{})</span>
-    <span class="n">const</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"const"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">const</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">const</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_hidden_discriminator</span><span class="p">(</span><span class="n">const</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""A ``type`` discriminator that stays in the data but renders no control.</span>
-
-<span class="sd">    The union's arm selector already names the type, so a second "Type" dropdown with</span>
-<span class="sd">    that one value only doubles the form's height. JSONForms generates a control per</span>
-<span class="sd">    property it can derive a JSON type for; a bare ``const`` gives it none, so the</span>
-<span class="sd">    property is skipped. ``default`` is what puts the value into the data JSONForms</span>
-<span class="sd">    creates when the user switches arm, and ``const`` still validates it.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"const"</span><span class="p">:</span> <span class="n">const</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">:</span> <span class="n">const</span><span class="p">}</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_string_field</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""A single-``string`` field carrying over ``node``'s title/description/default.</span>
-
-<span class="sd">    A ``list`` default (a bare uniform vector such as ``[0, 0, 0]``) is rendered as</span>
-<span class="sd">    the OpenFOAM ``(0 0 0)`` token so the collapsed text field shows a sane value.</span>
-<span class="sd">    """</span>
-    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">}</span>
-    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"default"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"("</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">default</span><span class="p">)</span> <span class="o">+</span> <span class="s2">")"</span>
-    <span class="k">return</span> <span class="n">out</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_dimensions_field</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Render the fixed 7-element OpenFOAM dimension vector as one bracketed text field.</span>
-
-<span class="sd">    JSONForms renders an ``array`` of integers as a growable list with a spinner and</span>
-<span class="sd">    a delete button per element — nonsense for a fixed units vector. The field model</span>
-<span class="sd">    round-trips the bracket token (``[0 1 -1 0 0 0 0]``), so a single string input is</span>
-<span class="sd">    both cleaner and correct.</span>
-<span class="sd">    """</span>
-    <span class="n">default</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"default"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="n">default</span> <span class="o">=</span> <span class="s2">"["</span> <span class="o">+</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">default</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"]"</span>
-    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span>
-        <span class="s2">"title"</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"Dimensions"</span><span class="p">),</span>
-        <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"OpenFOAM unit exponents [kg m s K mol A cd]"</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">default</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
-    <span class="k">return</span> <span class="n">out</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_value_union</span><span class="p">(</span><span class="n">arms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A ``FieldValue``-style union: a bare ``string`` arm plus a numeric/array arm.</span>
-
-<span class="sd">    These (``internalField``, a BC ``value`` / ``inletValue``) accept an OpenFOAM</span>
-<span class="sd">    uniform literal, so they collapse to one text field. The BC *type* union is not</span>
-<span class="sd">    matched — its arms are all ``$ref`` objects, none a bare ``string``/number.</span>
-<span class="sd">    """</span>
-    <span class="n">has_str</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"string"</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arms</span><span class="p">)</span>
-    <span class="n">has_num</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
-        <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"number"</span><span class="p">,</span> <span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"array"</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arms</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">has_str</span> <span class="ow">and</span> <span class="n">has_num</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_accepts_new_keys</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Whether the "add a key" row of an ``additionalProperties: true`` object is useful.</span>
-
-<span class="sd">    JSONForms appends a "Property Name [+]" row to every such object. It earns its</span>
-<span class="sd">    place on a collection: an OpenFOAM section whose entries all share one shape</span>
-<span class="sd">    (``divSchemes`` gains a ``div(phi,k)``, ``solvers`` a solver block), or an object</span>
-<span class="sd">    declaring no keys at all (a solver block, ``fvOptions``), which is edited through</span>
-<span class="sd">    that row alone. A card of differently-shaped entries (``PIMPLE``, a phase's</span>
-<span class="sd">    transport, a whole ``fvSolution``) is fixed; there the keyword is dropped, which</span>
-<span class="sd">    hides the row and — absent meaning "allowed" — still validates the same data.</span>
-<span class="sd">    """</span>
-    <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">prop</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"default"</span><span class="p">)}</span>
-        <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-    <span class="p">]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">shapes</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">return</span> <span class="n">_is_openfoam_block</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">shape</span> <span class="o">==</span> <span class="n">shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">)</span>
-
-
-<span class="c1"># What each kind of "add a key" row adds, keyed by the ``i18n`` prefix put on its schema</span>
-<span class="c1"># node. JSONForms would label all of them "Property Name".</span>
-<span class="n">_ADDER_LABELS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"nf.patch"</span><span class="p">:</span> <span class="s2">"Patch name, e.g. inlet"</span><span class="p">,</span>
-    <span class="s2">"nf.entry"</span><span class="p">:</span> <span class="s2">"Entry, e.g. div(phi,k)"</span><span class="p">,</span>
-    <span class="s2">"nf.solver"</span><span class="p">:</span> <span class="s2">"Field, e.g. p"</span><span class="p">,</span>
-    <span class="s2">"nf.option"</span><span class="p">:</span> <span class="s2">"Option, e.g. maxIter"</span><span class="p">,</span>
-    <span class="s2">"nf.zone"</span><span class="p">:</span> <span class="s2">"Zone name, e.g. MRF1"</span><span class="p">,</span>
-    <span class="s2">"nf.source"</span><span class="p">:</span> <span class="s2">"Source name, e.g. momentumSource"</span><span class="p">,</span>
-    <span class="s2">"nf.keyword"</span><span class="p">:</span> <span class="s2">"Keyword, e.g. cellZone"</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="n">ADDER_TRANSLATIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.propertyNameLabel"</span><span class="p">:</span> <span class="n">label</span> <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_ADDER_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-<span class="p">}</span>
-<span class="sd">"""JSONForms translations for the "add a key" rows (the ``&lt;json-forms&gt;`` ``translations``)."""</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_open_dict</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""An object declaring no keys at all (a solver block): edited through its adder alone."""</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-        <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span>
-        <span class="ow">and</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">)</span>
-    <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_tag_adders</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Mark an OpenFOAM section's "add a key" rows with what they add (mutates ``node``).</span>
-
-<span class="sd">    A section of scheme unions additionally gets ``nfCompact``: the bundled renderer</span>
-<span class="sd">    then draws it as one row per entry instead of JSONForms' stacked full-width selects.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_openfoam_block</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
-        <span class="k">return</span>
-    <span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">_is_open_dict</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
-            <span class="n">shape</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.option"</span>
-    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">shapes</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="s2">"oneOf"</span> <span class="ow">in</span> <span class="n">shape</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">):</span>
-        <span class="n">node</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.entry"</span>
-        <span class="n">node</span><span class="p">[</span><span class="n">_NF_COMPACT</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">node</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.solver"</span>
-
-
-<span class="n">_PRECONDITIONERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"DIC"</span><span class="p">,</span> <span class="s2">"FDIC"</span><span class="p">,</span> <span class="s2">"DILU"</span><span class="p">,</span> <span class="s2">"diagonal"</span><span class="p">,</span> <span class="s2">"GAMG"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">]</span>
-<span class="n">_SMOOTHERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"symGaussSeidel"</span><span class="p">,</span> <span class="s2">"GaussSeidel"</span><span class="p">,</span> <span class="s2">"DICGaussSeidel"</span><span class="p">,</span> <span class="s2">"DIC"</span><span class="p">,</span> <span class="s2">"DILU"</span><span class="p">]</span>
-
-
-<span class="c1"># The keys every linear-solver block has. Choices are ``examples``, never an ``enum``: a</span>
-<span class="c1"># loaded case may name a solver OpenFOAM does not know (``Ginkgo``), and a</span>
-<span class="c1"># GAMG-preconditioned PCG nests a dictionary under ``preconditioner``.</span>
-<span class="n">_SOLVER_CONTROLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"solver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">SOLVER_COMPANION</span><span class="p">)},</span>
-    <span class="s2">"preconditioner"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"string"</span><span class="p">,</span> <span class="s2">"object"</span><span class="p">],</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="n">_PRECONDITIONERS</span><span class="p">},</span>
-    <span class="s2">"smoother"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="n">_SMOOTHERS</span><span class="p">},</span>
-    <span class="s2">"tolerance"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
-    <span class="s2">"relTol"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
-<span class="p">}</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_companion_rules</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""One ``if solver … then required`` rule per companion key, so an empty one shows red."""</span>
-    <span class="n">rules</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">companion</span> <span class="ow">in</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">SOLVER_COMPANION</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-        <span class="n">solvers</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">SOLVER_COMPANION</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">companion</span><span class="p">]</span>
-        <span class="n">selected</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"solver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"enum"</span><span class="p">:</span> <span class="n">solvers</span><span class="p">}},</span> <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"solver"</span><span class="p">]}</span>
-        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"if"</span><span class="p">:</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">"then"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="n">companion</span><span class="p">]}})</span>
-    <span class="k">return</span> <span class="n">rules</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_pin_solver_controls</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Draw the ``solvers`` section's blocks as grids of their standard keys (mutates ``node``).</span>
-
-<span class="sd">    The config keeps a block schemaless (any key, written back as read); only the form</span>
-<span class="sd">    declares the keys, so the bundled renderer can offer dropdowns and number fields.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"_solvers"</span><span class="p">:</span>
-        <span class="k">return</span>
-    <span class="n">node</span><span class="p">[</span><span class="n">_NF_SOLVERS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="n">block</span><span class="p">[</span><span class="n">_NF_SOLVER</span><span class="p">]</span> <span class="o">=</span> <span class="n">SOLVER_COMPANION</span>
-        <span class="n">block</span><span class="p">[</span><span class="s2">"allOf"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_companion_rules</span><span class="p">()</span>
-        <span class="n">block</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">key</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">control</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">control</span> <span class="ow">in</span> <span class="n">_SOLVER_CONTROLS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
-
-
-<span class="n">_SCALAR_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"number"</span><span class="p">,</span> <span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"boolean"</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_scalar</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A property drawn as one small control: a number, a checkbox or a fixed choice."""</span>
-    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_SCALAR_TYPES</span> <span class="ow">or</span> <span class="s2">"enum"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_tag_scalar_grid</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Flag an object of two or more scalars only with ``nfGrid`` (mutates ``node``).</span>
-
-<span class="sd">    The bundled layout renderer then sets its controls side by side in a wrapping grid</span>
-<span class="sd">    instead of one full-width control per line (``PIMPLE``, a model's coefficients).</span>
-<span class="sd">    """</span>
-    <span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_scalar</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">):</span>
-        <span class="n">node</span><span class="p">[</span><span class="n">_NF_GRID</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-
-
-<span class="c1"># A config that is one open dictionary of named sub-dictionaries → what a name is there.</span>
-<span class="n">_DICTIONARY_CONFIGS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"MRFPropertiesConfig"</span><span class="p">:</span> <span class="s2">"nf.zone"</span><span class="p">,</span> <span class="s2">"FvOptionsConfig"</span><span class="p">:</span> <span class="s2">"nf.source"</span><span class="p">}</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_dictionary_cards</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""A :data:`_DICTIONARY_CONFIGS` schema as one card per sub-dictionary, each a keyword grid.</span>
-
-<span class="sd">    Such a config declares no property, so JSONForms' generated layout is empty and the</span>
-<span class="sd">    panel would show nothing; the bundled section renderer draws ``nfDicts``/``nfDict``.</span>
-<span class="sd">    """</span>
-    <span class="n">prefix</span> <span class="o">=</span> <span class="n">_DICTIONARY_CONFIGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">schema</span>
-    <span class="n">card</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">_NF_DICT</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="s2">"nf.keyword"</span><span class="p">}</span>
-    <span class="c1"># The panel already names the file; the class name would head the section a second time.</span>
-    <span class="n">untitled</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"title"</span><span class="p">}</span>
-    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">untitled</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="n">card</span><span class="p">,</span> <span class="n">_NF_DICTS</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="n">prefix</span><span class="p">}</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_patch_adder</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""A ``boundaryField`` schema drawn as one row per patch, its "add a key" row adding a patch.</span>
-
-<span class="sd">    ``nfPatches`` picks the bundled row renderer, which binds a patch through the map's</span>
-<span class="sd">    data, so a name holding ``.`` (``wall.left``) works. The row is labelled as a</span>
-<span class="sd">    patch-name box, and the BC union is typed ``object``: a new key is seeded from the</span>
-<span class="sd">    ``type``, and with none it would be the string ``""``. Its ``default`` is the BC a</span>
-<span class="sd">    scan seeds on a wall, so a hand-added patch shows and saves a real type from the start.</span>
-<span class="sd">    """</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
-    <span class="n">boundary_field</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">props</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">],</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="s2">"nf.patch"</span><span class="p">,</span> <span class="n">_NF_PATCHES</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-    <span class="n">union</span> <span class="o">=</span> <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span>
-    <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="o">**</span><span class="n">union</span><span class="p">,</span>
-        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
-        <span class="s2">"default"</span><span class="p">:</span> <span class="n">_role_bc_seed</span><span class="p">(</span><span class="s2">"wall"</span><span class="p">,</span> <span class="n">_arm_titles</span><span class="p">(</span><span class="n">union</span><span class="p">)),</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">schema</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">props</span><span class="p">,</span> <span class="s2">"boundaryField"</span><span class="p">:</span> <span class="n">boundary_field</span><span class="p">}}</span>
-
-
-<div class="viewcode-block" id="inline_refs">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.inline_refs">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">inline_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Resolve every ``#/$defs/...`` ``$ref`` into a self-contained subtree.</span>
-
-<span class="sd">    JSONForms' combinator renderers hand each ``oneOf``/``anyOf`` arm to AJV</span>
-<span class="sd">    *standalone* (``ajv.compile(subschema)``) to find the fitting arm. An arm</span>
-<span class="sd">    that is (or contains) a ``$ref`` cannot be compiled that way — AJV throws,</span>
-<span class="sd">    the result is never cached, and the schema is recompiled on every reactive</span>
-<span class="sd">    re-evaluation. For the big scheme configs (deeply nested discriminated</span>
-<span class="sd">    unions) that compile-throw loop hard-freezes the page. Inlining makes every</span>
-<span class="sd">    subschema self-contained, so AJV compiles each arm once and caches it.</span>
-
-<span class="sd">    Sibling keys of a ``$ref`` (e.g. the arm ``title``) override the resolved</span>
-<span class="sd">    definition. A union arm that recurses into a definition being resolved is</span>
-<span class="sd">    dropped, which bounds a self-referential union at one level: inside</span>
-<span class="sd">    ``cellLimited`` the inner gradient scheme offers the non-recursive arms only</span>
-<span class="sd">    (OpenFOAM cases do not nest a limiter in a limiter). Other cyclic refs, and</span>
-<span class="sd">    unknown ones, are left in place; ``discriminator`` keys are dropped</span>
-<span class="sd">    (JSONForms ignores them, and their ``mapping`` would dangle once the defs are</span>
-<span class="sd">    gone). ``$defs`` is removed when nothing refers to it anymore.</span>
-<span class="sd">    """</span>
-    <span class="n">defs</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{})</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">recurses</span><span class="p">(</span><span class="n">arm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">stack</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="n">arm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$ref"</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ref</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">stack</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">stack</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">resolve</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">stack</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">recurses</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">stack</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">node</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$ref"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ref</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#/$defs/"</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">defs</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">stack</span><span class="p">:</span>
-                <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>  <span class="c1"># unknown or cyclic: keep the $ref</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">defs</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">stack</span> <span class="o">|</span> <span class="p">{</span><span class="n">name</span><span class="p">})</span>
-            <span class="n">siblings</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"$ref"</span><span class="p">}</span>
-            <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">stack</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">siblings</span><span class="o">.</span><span class="n">items</span><span class="p">()}}</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">k</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">stack</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="s2">"discriminator"</span><span class="p">)</span>
-        <span class="p">}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">has_ref</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">has_ref</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">node</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">return</span> <span class="s2">"$ref"</span> <span class="ow">in</span> <span class="n">node</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">has_ref</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-        <span class="k">return</span> <span class="kc">False</span>
-
-    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolve</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">())</span>
-    <span class="k">if</span> <span class="n">has_ref</span><span class="p">(</span><span class="n">out</span><span class="p">):</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">"$defs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">defs</span>  <span class="c1"># a cyclic ref survived — keep its definitions</span>
-    <span class="k">return</span> <span class="n">out</span></div>
-
-
-
-<div class="viewcode-block" id="jsonforms_schema">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.jsonforms_schema">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">jsonforms_schema</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Make a pydantic JSON Schema render cleanly in JSONForms (generic, no per-config).</span>
-
-<span class="sd">    The schema is first made self-contained via :func:`inline_refs` (JSONForms'</span>
-<span class="sd">    combinator renderers cannot handle ``$ref`` arms — see there). Then the</span>
-<span class="sd">    schema-driven rewrites, applied recursively (schema, ``$defs``,</span>
-<span class="sd">    ``properties``, ``items``, ``additionalProperties`` and union arms):</span>
-
-<span class="sd">    * **Unwrap ``Optional[X]``** — ``anyOf``/``oneOf`` with exactly one non-``null`` arm</span>
-<span class="sd">      collapses to that arm (JSONForms otherwise renders the ``null`` arm as a second,</span>
-<span class="sd">      empty ``"ANYOF"`` block — e.g. turbulence ``RAS``/``LES``).</span>
-<span class="sd">    * **Collapse value unions** — a ``FieldValue`` union (uniform literal string +</span>
-<span class="sd">      scalar/vector) becomes one ``string`` field instead of JSONForms'</span>
-<span class="sd">      ``ANYOF-0``/``ANYOF-1``/``NONUNIFORM`` combinator tabs.</span>
-<span class="sd">    * **Bracket the dimension vector** — a ``dimensions`` integer array becomes one</span>
-<span class="sd">      bracketed ``string`` field, not a growable spinner list.</span>
-<span class="sd">    * **Title properties** — a pydantic auto-title becomes a human label, except inside</span>
-<span class="sd">      an OpenFOAM block (:func:`_is_openfoam_block`), whose keys are shown verbatim.</span>
-<span class="sd">    * **Titled discriminated ``oneOf``** — a union whose arms carry a ``const`` ``type``</span>
-<span class="sd">      discriminator (BC / scheme types) becomes a ``oneOf`` whose arms are titled by</span>
-<span class="sd">      their ``const`` value, so JSONForms shows a clean "pick a type" dropdown</span>
-<span class="sd">      (``fixedValue``/``noSlip``/…) instead of stacking every arm. The arm's own</span>
-<span class="sd">      ``type`` property is kept in the data but not rendered (:func:`_hidden_discriminator`).</span>
-<span class="sd">    * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.</span>
-<span class="sd">    * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.</span>
-<span class="sd">    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.</span>
-<span class="sd">    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.</span>
-<span class="sd">    * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.</span>
-<span class="sd">    * **Open configs as cards** — see :func:`_dictionary_cards`.</span>
-<span class="sd">    """</span>
-    <span class="n">class_names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{}))</span>
-    <span class="n">schema</span> <span class="o">=</span> <span class="n">inline_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
-    <span class="n">defs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{})</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">node</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_clean_description</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s2">"description"</span><span class="p">])</span>
-
-        <span class="k">for</span> <span class="n">comb</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"anyOf"</span><span class="p">,</span> <span class="s2">"oneOf"</span><span class="p">):</span>
-            <span class="n">arms</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">comb</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arms</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="k">continue</span>
-            <span class="n">non_null</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arms</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"null"</span><span class="p">)]</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_null</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_null</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">arms</span><span class="p">):</span>
-                <span class="n">merged</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">non_null</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">comb</span><span class="p">:</span>
-                        <span class="n">merged</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">transform</span><span class="p">(</span><span class="n">merged</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">_is_value_union</span><span class="p">(</span><span class="n">non_null</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">_string_field</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">consts</span> <span class="o">=</span> <span class="p">[</span><span class="n">_const_type_of</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">defs</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">non_null</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)]</span>
-            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">consts</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">node</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">comb</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="n">node</span><span class="p">[</span><span class="s2">"oneOf"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="p">({</span><span class="o">**</span><span class="n">a</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">c</span><span class="p">}</span> <span class="k">if</span> <span class="n">c</span> <span class="k">else</span> <span class="n">transform</span><span class="p">(</span><span class="n">a</span><span class="p">))</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">non_null</span><span class="p">,</span> <span class="n">consts</span><span class="p">)</span>
-                <span class="p">]</span>
-                <span class="k">break</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">in_block</span> <span class="o">=</span> <span class="n">_is_openfoam_block</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">k</span><span class="p">:</span> <span class="p">(</span>
-                    <span class="n">_dimensions_field</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"dimensions"</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"array"</span>
-                    <span class="k">else</span> <span class="n">_label_title</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">transform</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">in_block</span><span class="o">=</span><span class="n">in_block</span><span class="p">,</span> <span class="n">class_names</span><span class="o">=</span><span class="n">class_names</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">_FILE_HEADER</span>
-            <span class="p">}</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"$defs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">transform</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"$defs"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"items"</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"items"</span><span class="p">]</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s2">"items"</span><span class="p">])</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">),</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">])</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"oneOf"</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"oneOf"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">a</span> <span class="k">if</span> <span class="p">(</span><span class="s2">"$ref"</span> <span class="ow">in</span> <span class="n">a</span> <span class="ow">and</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">a</span><span class="p">)</span> <span class="k">else</span> <span class="n">transform</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"oneOf"</span><span class="p">]</span>
-            <span class="p">]</span>
-        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_accepts_new_keys</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
-            <span class="k">del</span> <span class="n">node</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span>
-        <span class="n">_tag_adders</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="n">_pin_solver_controls</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="n">_tag_scalar_grid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="c1"># A def that *is* a discriminated arm: title it by its const type.</span>
-        <span class="n">const</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"const"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">const</span> <span class="ow">and</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="o">=</span> <span class="n">const</span>
-        <span class="k">if</span> <span class="n">const</span><span class="p">:</span>
-            <span class="n">node</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_hidden_discriminator</span><span class="p">(</span><span class="n">const</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">node</span>
-
-    <span class="k">return</span> <span class="n">_dictionary_cards</span><span class="p">(</span><span class="n">transform</span><span class="p">(</span><span class="n">schema</span><span class="p">))</span></div>
-
-
-
-<div class="viewcode-block" id="alternatives_uischema">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.alternatives_uischema">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">alternatives_uischema</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A UISchema hiding each alternative sub-block until its selector names it.</span>
-
-<span class="sd">    ``turbulenceProperties`` is a choice, not a set: ``simulationType`` is an enum whose</span>
-<span class="sd">    values name the sibling sub-dictionaries (``RAS``/``LES``), and the config's</span>
-<span class="sd">    validator rejects any block the type does not name. JSONForms' generated layout has</span>
-<span class="sd">    no notion of that, so it stacks *every* block — a ``laminar`` case renders a full</span>
-<span class="sd">    RAS **and** LES block, each red for its required-but-empty model field.</span>
-
-<span class="sd">    When a schema shows that shape — an enum property whose values name two or more</span>
-<span class="sd">    sibling object properties — this returns the layout JSONForms would have generated</span>
-<span class="sd">    (a ``VerticalLayout`` of one ``Control`` per property), with a SHOW ``rule`` on each</span>
-<span class="sd">    named block so only the selected one renders. Any other schema returns ``None``,</span>
-<span class="sd">    i.e. keep the auto-layout.</span>
-<span class="sd">    """</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">props</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">for</span> <span class="n">selector</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">props</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"enum"</span><span class="p">),</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">v</span>
-            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">"enum"</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">props</span><span class="p">[</span><span class="n">v</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"object"</span>
-        <span class="p">]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="n">elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
-            <span class="n">element</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"Control"</span><span class="p">,</span> <span class="s2">"scope"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"#/properties/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
-                <span class="n">element</span><span class="p">[</span><span class="s2">"rule"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">"effect"</span><span class="p">:</span> <span class="s2">"SHOW"</span><span class="p">,</span>
-                    <span class="s2">"condition"</span><span class="p">:</span> <span class="p">{</span>
-                        <span class="s2">"scope"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"#/properties/</span><span class="si">{</span><span class="n">selector</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                        <span class="s2">"schema"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"const"</span><span class="p">:</span> <span class="n">name</span><span class="p">},</span>
-                    <span class="p">},</span>
-                <span class="p">}</span>
-            <span class="n">elements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"VerticalLayout"</span><span class="p">,</span> <span class="s2">"elements"</span><span class="p">:</span> <span class="n">elements</span><span class="p">}</span>
-    <span class="k">return</span> <span class="kc">None</span></div>
 
 
 
@@ -1408,7 +859,7 @@
                     <span class="n">config_name</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">cls_name</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">,</span>
                     <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2"> — boundary conditions"</span><span class="p">,</span>
-                    <span class="n">schema</span><span class="o">=</span><span class="n">_patch_adder</span><span class="p">(</span><span class="n">jsonforms_schema</span><span class="p">(</span><span class="n">slice_schema</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">json_schema</span><span class="p">,</span> <span class="n">_BC_KEYS</span><span class="p">))),</span>
+                    <span class="n">schema</span><span class="o">=</span><span class="n">jsonforms_schema</span><span class="p">(</span><span class="n">slice_schema</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">json_schema</span><span class="p">,</span> <span class="n">_BC_KEYS</span><span class="p">)),</span>
                     <span class="n">defaults</span><span class="o">=</span><span class="n">_slice_defaults</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span> <span class="n">_BC_KEYS</span><span class="p">),</span>
                     <span class="n">state_key</span><span class="o">=</span><span class="n">js_identifier</span><span class="p">(</span><span class="sa">f</span><span class="s2">"form_</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">__bc"</span><span class="p">),</span>
                     <span class="n">kind</span><span class="o">=</span><span class="s2">"field_bc"</span><span class="p">,</span>
@@ -1507,7 +958,7 @@
                 <span class="n">config_name</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="n">cls_name</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">,</span>
                 <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2"> — field"</span><span class="p">,</span>
-                <span class="n">schema</span><span class="o">=</span><span class="n">_patch_adder</span><span class="p">(</span><span class="n">jsonforms_schema</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">json_schema</span><span class="p">)),</span>
+                <span class="n">schema</span><span class="o">=</span><span class="n">jsonforms_schema</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">json_schema</span><span class="p">),</span>
                 <span class="n">defaults</span><span class="o">=</span><span class="n">dto</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span>
                 <span class="n">state_key</span><span class="o">=</span><span class="n">js_identifier</span><span class="p">(</span><span class="sa">f</span><span class="s2">"form_</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">),</span>
                 <span class="n">kind</span><span class="o">=</span><span class="s2">"dict"</span><span class="p">,</span>
@@ -1517,137 +968,6 @@
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">entries</span></div>
-
-
-
-<span class="c1"># Patch role → preferred BC type, most-preferred first. Clamped to the field's</span>
-<span class="c1"># ``allowed_bc_types`` (a scalar field has no ``noSlip``), then to the first allowed</span>
-<span class="c1"># non-fallback arm. Payload-free types are preferred so the scaffold stays valid;</span>
-<span class="c1"># value-carrying arms (``fixedValue``) surface a ``value`` field for the user to fill.</span>
-<span class="c1"># Role ``empty`` seeds a ``symmetry`` BC: the snappy mesh realises an empty (2-D)</span>
-<span class="c1"># patch as a generalized ``symmetry`` patch (see ``ui.geometry._PATCH_TYPE``), and the</span>
-<span class="c1"># BC type must match the mesh patch type.</span>
-<span class="n">_ROLE_BC_PREFS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"empty"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"symmetry"</span><span class="p">,</span> <span class="s2">"symmetryPlane"</span><span class="p">,</span> <span class="s2">"empty"</span><span class="p">),</span>
-    <span class="s2">"symmetry"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"symmetry"</span><span class="p">,</span> <span class="s2">"symmetryPlane"</span><span class="p">),</span>
-    <span class="s2">"wall"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"noSlip"</span><span class="p">,</span> <span class="s2">"zeroGradient"</span><span class="p">,</span> <span class="s2">"fixedValue"</span><span class="p">),</span>
-    <span class="s2">"inlet"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"fixedValue"</span><span class="p">,</span> <span class="s2">"zeroGradient"</span><span class="p">),</span>
-    <span class="s2">"outlet"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"zeroGradient"</span><span class="p">,</span> <span class="s2">"inletOutlet"</span><span class="p">,</span> <span class="s2">"fixedValue"</span><span class="p">),</span>
-<span class="p">}</span>
-
-
-<div class="viewcode-block" id="allowed_bc_types">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.allowed_bc_types">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">allowed_bc_types</span><span class="p">(</span><span class="n">bc_entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The BC ``type`` names a ``field_bc`` form allows (its ``boundaryField`` arms).</span>
-
-<span class="sd">    Reads the titled ``oneOf`` arms produced by :func:`jsonforms_schema`; the untitled</span>
-<span class="sd">    open-set fallback (``GenericBC``) has no ``title`` and is skipped.</span>
-<span class="sd">    """</span>
-    <span class="n">ap</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">bc_entry</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">_arm_titles</span><span class="p">(</span><span class="n">ap</span><span class="p">)</span></div>
-
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_arm_titles</span><span class="p">(</span><span class="n">union</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The titles of a union's titled arms, in order."""</span>
-    <span class="n">arms</span> <span class="o">=</span> <span class="n">union</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"oneOf"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">union</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"anyOf"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">arm</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="n">arms</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
-    <span class="p">]</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_bc_type_for_role</span><span class="p">(</span><span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The best allowed BC type for a patch ``role`` (see :data:`_ROLE_BC_PREFS`)."""</span>
-    <span class="k">for</span> <span class="n">pref</span> <span class="ow">in</span> <span class="n">_ROLE_BC_PREFS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="p">()):</span>
-        <span class="k">if</span> <span class="n">pref</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pref</span>
-    <span class="k">return</span> <span class="n">allowed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">allowed</span> <span class="k">else</span> <span class="s2">"zeroGradient"</span>
-
-
-<span class="c1"># BC types with vector-only arms — their presence marks the field as a vector, so the</span>
-<span class="c1"># seeded zero literal is ``uniform (0 0 0)`` rather than ``uniform 0``.</span>
-<span class="n">_VECTOR_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"noSlip"</span><span class="p">,</span> <span class="s2">"pressureInletOutletVelocity"</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_bc_seed</span><span class="p">(</span><span class="n">type_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">is_vector</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""A minimal *valid* BC payload for ``type_name``.</span>
-
-<span class="sd">    ``fixedValue`` / ``inletOutlet`` require a ``value`` — seeding just ``{type}`` would</span>
-<span class="sd">    fail their schema arm, so JSONForms' ``oneOf`` scorer falls back to the open</span>
-<span class="sd">    ``GenericBC`` arm and renders a raw type box. Seeding a zero literal keeps the arm</span>
-<span class="sd">    match (and the case valid) until the user sets the real value.</span>
-<span class="sd">    """</span>
-    <span class="n">zero</span> <span class="o">=</span> <span class="s2">"uniform (0 0 0)"</span> <span class="k">if</span> <span class="n">is_vector</span> <span class="k">else</span> <span class="s2">"uniform 0"</span>
-    <span class="k">if</span> <span class="n">type_name</span> <span class="o">==</span> <span class="s2">"fixedValue"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">type_name</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">zero</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">type_name</span> <span class="o">==</span> <span class="s2">"inletOutlet"</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">type_name</span><span class="p">,</span> <span class="s2">"inletValue"</span><span class="p">:</span> <span class="n">zero</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">zero</span><span class="p">}</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">type_name</span><span class="p">}</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_role_bc_seed</span><span class="p">(</span><span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The BC payload a patch of ``role`` starts with, given the field's ``allowed`` types."""</span>
-    <span class="n">is_vector</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">marker</span> <span class="ow">in</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">marker</span> <span class="ow">in</span> <span class="n">_VECTOR_MARKERS</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_bc_seed</span><span class="p">(</span><span class="n">_bc_type_for_role</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">allowed</span><span class="p">),</span> <span class="n">is_vector</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="seed_boundary_field">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.seed_boundary_field">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">seed_boundary_field</span><span class="p">(</span>
-    <span class="n">bc_entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">,</span> <span class="n">patches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">current</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Merge discovered patches into a ``field_bc`` form's live data.</span>
-
-<span class="sd">    Each scanned patch (``{"name", "role", ...}``) that isn't already present gets a</span>
-<span class="sd">    ``{type: &lt;role default&gt;}`` entry, so the boundary-conditions step shows the real</span>
-<span class="sd">    patch names with a sensible BC pre-selected instead of a blank property map.</span>
-<span class="sd">    Existing (user- or AI-filled) patch entries are preserved.</span>
-<span class="sd">    """</span>
-    <span class="n">allowed</span> <span class="o">=</span> <span class="n">allowed_bc_types</span><span class="p">(</span><span class="n">bc_entry</span><span class="p">)</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">current</span> <span class="ow">or</span> <span class="p">{})</span>
-    <span class="n">bf</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
-    <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="n">patches</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">patch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bf</span><span class="p">:</span>
-            <span class="n">bf</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_role_bc_seed</span><span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"role"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span> <span class="n">allowed</span><span class="p">)</span>
-    <span class="n">data</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">]</span> <span class="o">=</span> <span class="n">bf</span>
-    <span class="k">return</span> <span class="n">data</span></div>
-
-
-
-<div class="viewcode-block" id="patch_bc_schema">
-<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.patch_bc_schema">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">patch_bc_schema</span><span class="p">(</span><span class="n">bc_entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Rebuild a ``field_bc`` schema with one concrete ``boundaryField`` property per patch.</span>
-
-<span class="sd">    The default schema types ``boundaryField`` as an open ``additionalProperties`` map,</span>
-<span class="sd">    which JSONForms renders as a bare "property name" editor with a generic type picker.</span>
-<span class="sd">    Once the patch names are known (from the geometry scan) we pin them as titled object</span>
-<span class="sd">    properties as well, so each scanned patch is a fixed row with a clean BC-type dropdown.</span>
-<span class="sd">    The map stays open: a patch the scan cannot see is still added by hand. Returns</span>
-<span class="sd">    ``bc_entry.schema`` unchanged when there are no names or no BC arms.</span>
-<span class="sd">    """</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">bc_entry</span><span class="o">.</span><span class="n">schema</span>
-    <span class="n">bf</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,</span> <span class="p">{})</span>
-    <span class="n">value_schema</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value_schema</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">base</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">value_schema</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
-    <span class="n">new_bf</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="o">**</span><span class="n">bf</span><span class="p">,</span>
-        <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
-        <span class="s2">"title"</span><span class="p">:</span> <span class="n">bf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"Boundary field"</span><span class="p">),</span>
-        <span class="s2">"properties"</span><span class="p">:</span> <span class="n">props</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="p">{</span>
-        <span class="o">**</span><span class="n">base</span><span class="p">,</span>
-        <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{}),</span> <span class="s2">"boundaryField"</span><span class="p">:</span> <span class="n">new_bf</span><span class="p">},</span>
-    <span class="p">}</span></div>
 
 </pre></div>
         </article>
