@@ -6,8 +6,12 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 from collections import Counter
 from pathlib import Path
+
+import pytest
 
 from neofoam.ui import jsonforms_module
 from neofoam.ui.forms import RENDERER_KEYWORDS
@@ -72,3 +76,27 @@ def test_renderer_keywords_match_the_js_sources_and_the_bundle():
 
     assert in_sources - _JS_INTERNAL == set(RENDERER_KEYWORDS)
     assert set(RENDERER_KEYWORDS) <= in_bundle
+
+
+_MODULE_DIR = jsonforms_module.STATIC_DIR.parent
+_BUNX = shutil.which("bunx") or shutil.which("bunx", path=str(Path.home() / ".bun" / "bin"))
+
+
+@pytest.mark.skipif(
+    _BUNX is None or not (_MODULE_DIR / "node_modules").is_dir(),
+    reason="needs bun and an installed node_modules/ (bun install)",
+)
+def test_committed_bundle_equals_a_rebuild(tmp_path):
+    # `--configLoader native` keeps Vite from writing node_modules/.vite-temp, so the
+    # build leaves the repo untouched; static/ is exempt from the end-of-file fixer so
+    # the committed files are the build output byte for byte.
+    subprocess.run(
+        [_BUNX, "vite", "build", "--configLoader", "native", "--outDir", str(tmp_path)],
+        cwd=_MODULE_DIR,
+        check=True,
+        capture_output=True,
+    )
+
+    for built in ("neofoam_jsonforms.umd.js", "neofoam_jsonforms.css"):
+        committed = (jsonforms_module.STATIC_DIR / built).read_bytes()
+        assert (tmp_path / built).read_bytes() == committed, f"{built} is stale: bunx vite build"
