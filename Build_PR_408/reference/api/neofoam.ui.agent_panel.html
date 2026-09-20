@@ -528,6 +528,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
 </ul>
@@ -621,12 +622,54 @@ same case), pushes the produced values into the form state objects, auto-selects
 models it filled, auto-saves the AI-produced configs to the target dir, and
 replies with a summary (<strong>Filled / Selected models / Wrote to</strong>). <code class="docutils literal notranslate"><span class="pre">await</span> <span class="pre">agent.run</span></code>
 (never <code class="docutils literal notranslate"><span class="pre">run_sync</span></code>) since trame owns the loop; a missing <code class="docutils literal notranslate"><span class="pre">ANTHROPIC_API_KEY</span></code> degrades
-to a chat message. The chat <em>widgets</em> are rendered by <code class="docutils literal notranslate"><span class="pre">app.py</span></code>; this module owns the
-logic so it stays unit-testable without trame or a browser.</p>
+to a chat message. <a class="reference internal" href="#neofoam.ui.agent_panel.AgentPanel.render" title="neofoam.ui.agent_panel.AgentPanel.render"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AgentPanel.render()</span></code></a> draws the chat with the widget modules
+it is handed, so the logic stays unit-testable without trame or a browser.</p>
 <p>The agent also carries a <code class="docutils literal notranslate"><span class="pre">load_case</span></code> tool, so “open the case at &lt;path&gt;” reads an
 existing OpenFOAM case straight off disk into the forms — deterministically, via
 <a class="reference internal" href="neofoam.ui.case_load.html#neofoam.ui.case_load.read_case_configs" title="neofoam.ui.case_load.read_case_configs"><code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.ui.case_load.read_case_configs()</span></code></a>, never through the model’s own
 transcription of the dictionaries.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.ui.agent_panel.AgentPanel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.ui.agent_panel.</span></span><span class="sig-name descname"><span class="pre">AgentPanel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">server:</span> <span class="pre">~typing.Any,</span> <span class="pre">entries:</span> <span class="pre">list[~neofoam.ui.forms.FormEntry],</span> <span class="pre">solver:</span> <span class="pre">~typing.Any,</span> <span class="pre">*,</span> <span class="pre">agent_factory:</span> <span class="pre">~typing.Callable[[...],</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">build_case_agent&gt;,</span> <span class="pre">geometry_agent_factory:</span> <span class="pre">~typing.Callable[[...],</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">build_geometry_agent&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/ui/agent_panel.html#AgentPanel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.agent_panel.AgentPanel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Chat state, the <code class="docutils literal notranslate"><span class="pre">send_message</span></code> controller and the assistant drawer.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.agent_panel.AgentPanel.load_case">
+<span class="sig-name descname"><span class="pre">load_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/agent_panel.html#AgentPanel.load_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.agent_panel.AgentPanel.load_case" title="Link to this definition">¶</a></dt>
+<dd><p>Load an existing OpenFOAM case from disk into the wizard.</p>
+<p>Call this whenever the user names a case directory to open, continue from or
+start out from. Every config file present in the case is read and applied to
+the wizard forms directly, so do NOT transcribe the values into your own
+output — leave those fields null unless the user asked you to change them.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>case_dir: Path to the case directory (the one holding <code class="docutils literal notranslate"><span class="pre">system/</span></code>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.agent_panel.AgentPanel.register_chat_handler">
+<span class="sig-name descname"><span class="pre">register_chat_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/agent_panel.html#AgentPanel.register_chat_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.agent_panel.AgentPanel.register_chat_handler" title="Link to this definition">¶</a></dt>
+<dd><p>Route the chat prompt to <code class="docutils literal notranslate"><span class="pre">handler</span></code> while <code class="docutils literal notranslate"><span class="pre">step_id</span></code> is the active step.</p>
+<p>A step plugin (e.g. the CAD step) registers here so that typing in the shared
+AI assistant drives <em>its</em> agent instead of the physics fill; the handler runs
+for <code class="docutils literal notranslate"><span class="pre">prompt</span></code> and returns an optional assistant summary string.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.agent_panel.AgentPanel.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/agent_panel.html#AgentPanel.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.agent_panel.AgentPanel.render" title="Link to this definition">¶</a></dt>
+<dd><p>Right-hand foldable AI chat drawer (multi-turn, fills the forms).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.agent_panel.AgentPanel.send_message">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">send_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/agent_panel.html#AgentPanel.send_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.agent_panel.AgentPanel.send_message" title="Link to this definition">¶</a></dt>
+<dd><p>Run one chat turn: the active step’s handler if it has one, else the case fill.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.ui.agent_panel.build_agent_panel">
 <span class="sig-prename descclassname"><span class="pre">neofoam.ui.agent_panel.</span></span><span class="sig-name descname"><span class="pre">build_agent_panel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">server:</span> <span class="pre">~typing.Any,</span> <span class="pre">entries:</span> <span class="pre">list[~neofoam.ui.forms.FormEntry],</span> <span class="pre">solver:</span> <span class="pre">~typing.Any,</span> <span class="pre">*,</span> <span class="pre">agent_factory:</span> <span class="pre">~typing.Callable[[...],</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">build_case_agent&gt;,</span> <span class="pre">geometry_agent_factory:</span> <span class="pre">~typing.Callable[[...],</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">build_geometry_agent&gt;</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/agent_panel.html#build_agent_panel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.agent_panel.build_agent_panel" title="Link to this definition">¶</a></dt>
@@ -695,6 +738,13 @@ patch roles / refinement, keeping the physics fill unchanged.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.ui.agent_panel</a><ul>
+<li><a class="reference internal" href="#neofoam.ui.agent_panel.AgentPanel"><code class="docutils literal notranslate"><span class="pre">AgentPanel</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.ui.agent_panel.AgentPanel.load_case"><code class="docutils literal notranslate"><span class="pre">AgentPanel.load_case()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.agent_panel.AgentPanel.register_chat_handler"><code class="docutils literal notranslate"><span class="pre">AgentPanel.register_chat_handler()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.agent_panel.AgentPanel.render"><code class="docutils literal notranslate"><span class="pre">AgentPanel.render()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.agent_panel.AgentPanel.send_message"><code class="docutils literal notranslate"><span class="pre">AgentPanel.send_message()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.ui.agent_panel.build_agent_panel"><code class="docutils literal notranslate"><span class="pre">build_agent_panel()</span></code></a></li>
 </ul>
 </li>
