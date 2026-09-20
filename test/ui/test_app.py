@@ -570,3 +570,42 @@ def test_forms_receive_the_adder_translations():
 
     assert ':translations="form_translations"' in server.state["trame__template_main"]
     assert server.state["form_translations"] == ADDER_TRANSLATIONS
+
+
+@pytest.mark.parametrize("location", ["left", "right"])
+def test_drawers_are_overlays_below_the_desktop_breakpoint(location):
+    # A permanent 300 px step drawer (plus the 400 px AI drawer) leaves a phone no
+    # room for the forms: below Vuetify's md breakpoint both become temporary overlays.
+    server = build_app(server=get_server(f"neofoam_ui_test_overlay_{location}"), plugins=[])
+
+    template = server.state["trame__template_main"]
+    drawer = template.split(f'location="{location}"')[1].split(">")[0]
+    assert ':temporary="$vuetify.display.smAndDown"' in drawer
+    assert ':permanent="!$vuetify.display.smAndDown"' in drawer
+
+
+def test_drawers_start_closed_on_a_phone():
+    # The overlays read their own open flags, so the desktop's open-by-default
+    # drawers never cover a phone screen on load.
+    server = build_app(server=get_server("neofoam_ui_test_mobile_closed"), plugins=[])
+
+    template = server.state["trame__template_main"]
+    assert server.state.main_drawer_mobile is False
+    assert server.state.ai_panel_mobile is False
+    assert ':modelValue="$vuetify.display.smAndDown ? main_drawer_mobile : main_drawer"' in template
+    assert ':modelValue="$vuetify.display.smAndDown ? ai_panel_mobile : ai_panel"' in template
+
+
+def test_picking_a_step_closes_the_phone_drawer():
+    server = build_app(server=get_server("neofoam_ui_test_step_closes_drawer"), plugins=[])
+
+    template = server.state["trame__template_main"]
+    assert "@click=\"current_step = 'bcs'; main_drawer_mobile = false\"" in template
+
+
+def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone():
+    server = build_app(server=get_server("neofoam_ui_test_toolbar_row"), plugins=[])
+
+    template = server.state["trame__template_main"]
+    extension = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')[1]
+    assert 'v-model="target_dir"' in extension.split("</template>")[0]

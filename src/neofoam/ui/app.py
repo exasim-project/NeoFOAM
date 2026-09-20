@@ -132,7 +132,35 @@ _CSS = """
 .v-expansion-panel--active > .v-expansion-panel-title { color: rgb(31, 95, 191); }
 .nf-step-title { letter-spacing: -0.3px; }
 .v-navigation-drawer .v-list-item-title { font-weight: 500; }
+/* Phone/tablet (below Vuetify's md breakpoint, where both drawers are overlays). */
+@media (max-width: 959.98px) {
+  .v-navigation-drawer { max-width: calc(100vw - 56px); }
+  .v-main .v-expansion-panel-text__wrapper { padding: 8px 8px 16px; }
+  .v-main .v-btn:not(.v-btn--icon), .v-app-bar .v-btn:not(.v-btn--icon) { min-height: 40px; }
+}
+@media (max-width: 599.98px) {
+  .v-app-bar .v-toolbar-title { display: none; }
+}
 """
+
+# Below Vuetify's md breakpoint (960 px) both drawers are closed-by-default overlays
+# with their own open flags, so a phone never inherits the desktop's open drawers.
+_MOBILE = "$vuetify.display.smAndDown"
+
+
+def _responsive_open(desktop_flag: str, mobile_flag: str) -> dict[str, Any]:
+    """Drawer props: permanent + ``desktop_flag`` on desktop, overlay + ``mobile_flag`` below."""
+    return {
+        "permanent": (f"!{_MOBILE}",),
+        "temporary": (_MOBILE,),
+        "model_value": (f"{_MOBILE} ? {mobile_flag} : {desktop_flag}",),
+        "update_modelValue": f"{_MOBILE} ? ({mobile_flag} = $event) : ({desktop_flag} = $event)",
+    }
+
+
+def _toggle(desktop_flag: str, mobile_flag: str) -> str:
+    """JS toggling whichever open flag the current display width uses."""
+    return f"{_MOBILE} ? ({mobile_flag} = !{mobile_flag}) : ({desktop_flag} = !{desktop_flag})"
 
 
 def _case_dir_for(stl_dir: str) -> str:
@@ -266,6 +294,8 @@ def build_app(
 
     state.current_step = steps[0].id
     state.ai_panel = True  # right AI drawer open by default (foldable)
+    state.ai_panel_mobile = False
+    state.main_drawer_mobile = False
     state.target_dir = ""
     state.save_report = None
     state.scaffolded = []
@@ -716,12 +746,18 @@ def build_app(
     def _ai_drawer() -> None:
         """Right-hand foldable AI chat drawer (multi-turn, fills the forms)."""
         with v3.VNavigationDrawer(
-            v_model=("ai_panel", True),
             location="right",
             width=400,
+            **_responsive_open("ai_panel", "ai_panel_mobile"),
         ):
             with html.Div(classes="d-flex flex-column", style="height: 100%;"):
-                v3.VToolbar(title="AI assistant", density="compact", flat=True)
+                with v3.VToolbar(title="AI assistant", density="compact", flat=True):
+                    # The overlay leaves only a sliver of scrim to tap on a phone.
+                    v3.VBtn(
+                        icon="mdi-close",
+                        click="ai_panel_mobile = false",
+                        v_if=_MOBILE,
+                    )
                 # Scrolling transcript.
                 with html.Div(classes="flex-grow-1 pa-3", style="overflow-y: auto;"):
                     # Empty-state hint + suggested prompts.
@@ -779,6 +815,12 @@ def build_app(
         layout.title.set_text("NeoFOAM case wizard")
         client.Style(_CSS)
 
+        # The layout's own v-model would fight the display-dependent model below.
+        layout.drawer.v_model = None
+        for prop, value in _responsive_open("main_drawer", "main_drawer_mobile").items():
+            setattr(layout.drawer, prop, value)
+        layout.icon.click = _toggle("main_drawer", "main_drawer_mobile")
+
         with layout.drawer:
             with v3.VList(nav=True, density="comfortable", color="primary"):
                 v3.VListSubheader(solver_name)
@@ -793,7 +835,7 @@ def build_app(
                         ),
                         rounded="lg",
                         active=(f"current_step === '{step.id}'",),
-                        click=f"current_step = '{step.id}'",
+                        click=f"current_step = '{step.id}'; main_drawer_mobile = false",
                     )
 
         with layout.toolbar:
@@ -804,6 +846,7 @@ def build_app(
                 hide_details=True,
                 prepend_inner_icon="mdi-folder-arrow-down-outline",
                 style="max-width: 340px",
+                v_if=f"!{_MOBILE}",
             )
             v3.VBtn(
                 "Save case",
@@ -818,14 +861,23 @@ def build_app(
             # Fold / unfold the AI assistant drawer.
             v3.VBtn(
                 icon="mdi-robot-happy-outline",
-                click="ai_panel = !ai_panel",
+                click=_toggle("ai_panel", "ai_panel_mobile"),
                 variant="text",
             )
+            # A phone toolbar has no room for the path: it gets a second row.
+            with v3.Template(v_if=_MOBILE, v_slot_extension=True):
+                v3.VTextField(
+                    v_model=("target_dir",),
+                    label="Target directory",
+                    hide_details=True,
+                    prepend_inner_icon="mdi-folder-arrow-down-outline",
+                    classes="mx-3",
+                )
 
         with layout.root:
             _ai_drawer()
 
-        with layout.content, v3.VContainer(fluid=True, classes="pa-6"):
+        with layout.content, v3.VContainer(fluid=True, classes="pa-4 pa-md-6"):
             # One uniform loop: every step renders its header, its bespoke panel
             # (models / geometry / review) and its schema-generated form panels.
             for step in steps:

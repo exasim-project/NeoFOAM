@@ -1170,3 +1170,9 @@ def test_palette_scrolls_instead_of_stretching_the_canvas():
     # The palette is far taller than the canvas; unbounded, it stretches the canvas
     # card to its own height and leaves the graph a small island at the top.
     assert ".nf-sweep-palette { max-height: 62vh;" in _CSS
+
+
+def test_palette_stacks_above_the_canvas_on_a_phone():
+    # Side by side, the 300 px palette leaves a 400 px phone no canvas at all.
+    phone = _CSS.split("@media (max-width: 959.98px)")[1]
+    assert ".nf-sweep-stage { flex-direction: column; }" in phone

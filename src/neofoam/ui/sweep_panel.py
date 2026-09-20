@@ -100,6 +100,12 @@ _CSS = """
   cursor: pointer;
 }
 .nf-sweep-configure { padding: 12px 16px; }
+/* Phone/tablet: the palette stacks above a fixed-height canvas. */
+@media (max-width: 959.98px) {
+  .nf-sweep-stage { flex-direction: column; }
+  .nf-sweep-palette { max-height: 32vh; width: auto; flex: 0 0 auto; }
+  .nf-sweep-out-dir { flex: 0 0 100%; }
+}
 """
 
 
@@ -1220,7 +1226,7 @@ class SweepPanel:
         with v3.VCard(variant="outlined", classes="mb-4"):
             with v3.VCardText():
                 with v3.VRow(align="center", dense=True):
-                    with v3.VCol():
+                    with v3.VCol(classes="nf-sweep-out-dir"):
                         v3.VTextField(
                             v_model=("sweep_out_dir",),
                             label="Sweep directory (default: <target>-sweep)",
@@ -1299,7 +1305,9 @@ class SweepPanel:
         )
 
         # Palette + canvas.
-        with html.Div(classes="d-flex mb-4", style="gap: 12px; align-items: stretch;"):
+        with html.Div(
+            classes="d-flex mb-4 nf-sweep-stage", style="gap: 12px; align-items: stretch;"
+        ):
             with v3.VCard(variant="outlined", classes="nf-sweep-palette"):
                 self._palette()
             with v3.VCard(variant="outlined", classes="nf-sweep-canvas"):
