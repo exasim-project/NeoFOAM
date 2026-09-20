@@ -80,7 +80,7 @@ Never delete or weaken an existing test to get green — surface the conflict in
 
 ## CLI
 
-The `neofoam` command (`solver`, `preprocess`, `agent`, `mcp`, `telemetry`):
+The `neofoam` command (`solver`, `preprocess`, `agent`, `mcp`, `telemetry`, `ui`):
 see **[doc/reference/cli.rst](doc/reference/cli.rst)**.
 
 ## Conventions
@@ -94,3 +94,6 @@ Detailed guides — read the relevant one before writing code or test
 
 The module map lives in the docs reference:
 **[`doc/reference/project-layout.rst`](doc/reference/project-layout.rst)**
+
+The case-wizard UI (`src/neofoam/ui/`) — module map, renderer contract, shared state:
+**[`doc/reference/ui-architecture.rst`](doc/reference/ui-architecture.rst)**
