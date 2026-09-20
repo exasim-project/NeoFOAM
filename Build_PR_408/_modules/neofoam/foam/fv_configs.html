@@ -1018,7 +1018,9 @@
 <div class="viewcode-block" id="fvSolution.add">
 <a class="viewcode-back" href="../../../reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSolution.add">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">fields</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">final_required</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Declare solver entries the operation needs.</span>
 
 <span class="sd">        Each ``field`` adds a typed entry under ``solvers.&lt;field&gt;`` plus its</span>
@@ -1028,10 +1030,12 @@
 <span class="sd">        value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a</span>
 <span class="sd">        richer typed solver-control model is a follow-up. The presence</span>
 <span class="sd">        check alone catches the most common case-misconfiguration failures.</span>
+<span class="sd">        A steady (SIMPLE) slice has no final outer iteration: it passes</span>
+<span class="sd">        ``final_required=False`` so a case without ``Final`` entries loads.</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
             <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">Final"</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">Final"</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="ow">not</span> <span class="n">final_required</span><span class="p">)</span>
         <span class="n">_rebuild_sections</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
