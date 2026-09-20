@@ -9,8 +9,8 @@ same case), pushes the produced values into the form state objects, auto-selects
 models it filled, auto-saves the AI-produced configs to the target dir, and
 replies with a summary (**Filled / Selected models / Wrote to**). ``await agent.run``
 (never ``run_sync``) since trame owns the loop; a missing ``ANTHROPIC_API_KEY`` degrades
-to a chat message. The chat *widgets* are rendered by ``app.py``; this module owns the
-logic so it stays unit-testable without trame or a browser.
+to a chat message. :func:`render_agent_drawer` draws the chat with the widget modules
+it is handed, so the logic stays unit-testable without trame or a browser.
 
 The agent also carries a ``load_case`` tool, so "open the case at <path>" reads an
 existing OpenFOAM case straight off disk into the forms — deterministically, via
@@ -26,6 +26,7 @@ from typing import Any, Callable
 
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
 from neofoam.io import write_configs
+from neofoam.ui._responsive import _MOBILE, _responsive_open
 from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.geometry_agent import (
@@ -35,7 +36,7 @@ from neofoam.ui.geometry_agent import (
 )
 from neofoam.ui.steps import build_model_families
 
-__all__ = ["build_agent_panel", "SUGGESTED_PROMPTS"]
+__all__ = ["build_agent_panel", "render_agent_drawer", "SUGGESTED_PROMPTS"]
 
 #: Default case-fill model. Overridable per session via ``NEOFOAM_CASE_MODEL`` —
 #: a stronger model (e.g. Sonnet) produces far fewer OpenFOAM-invalid-but-schema-
@@ -235,3 +236,72 @@ def build_agent_panel(
 
     ctrl.send_message = send_message
     return send_message
+
+
+def render_agent_drawer(ctrl: Any, v3: Any, html: Any) -> None:
+    """Right-hand foldable AI chat drawer (multi-turn, fills the forms)."""
+    with v3.VNavigationDrawer(
+        location="right",
+        width=400,
+        **_responsive_open("ai_panel", "ai_panel_mobile"),
+    ):
+        with html.Div(classes="d-flex flex-column", style="height: 100%;"):
+            with v3.VToolbar(title="AI assistant", density="compact", flat=True):
+                # The overlay leaves only a sliver of scrim to tap on a phone.
+                v3.VBtn(
+                    icon="mdi-close",
+                    click="ai_panel_mobile = false",
+                    v_if=_MOBILE,
+                )
+            # Scrolling transcript.
+            with html.Div(classes="flex-grow-1 pa-3", style="overflow-y: auto;"):
+                # Empty-state hint + suggested prompts.
+                with html.Div(v_show="!chat_log.length"):
+                    v3.VCardText(
+                        "Describe your case and I'll fill the forms. Try:",
+                        classes="text-medium-emphasis px-0",
+                    )
+                    with v3.VChip(
+                        v_for="(p, i) in suggested_prompts",
+                        key="i",
+                        click=(ctrl.send_message, "[p]"),
+                        disabled=("ai_busy",),
+                        size="small",
+                        variant="tonal",
+                        color="secondary",
+                        classes="mb-2",
+                        style="height: auto; white-space: normal;",
+                    ):
+                        html.Span("{{ p }}", classes="py-1")
+                # Messages.
+                with v3.VSheet(
+                    v_for="(m, i) in chat_log",
+                    key="i",
+                    rounded="lg",
+                    classes="pa-3 mb-2",
+                    color=("m.role === 'user' ? 'primary' : 'surface-variant'",),
+                ):
+                    html.Div(
+                        "{{ m.content }}",
+                        style="white-space: pre-wrap; font-size: 0.9rem;",
+                    )
+                v3.VProgressLinear(indeterminate=True, v_show="ai_busy", color="secondary")
+            # Composer pinned to the bottom.
+            with html.Div(classes="pa-3"):
+                v3.VTextField(
+                    v_model=("chat_input",),
+                    placeholder="Message the assistant…",
+                    hide_details=True,
+                    keydown_enter=(ctrl.send_message, "[]"),
+                    disabled=("ai_busy",),
+                )
+                v3.VBtn(
+                    "Send",
+                    click=(ctrl.send_message, "[]"),
+                    loading=("ai_busy",),
+                    disabled=("!chat_input || ai_busy",),
+                    color="secondary",
+                    prepend_icon="mdi-send",
+                    block=True,
+                    classes="mt-2",
+                )
