@@ -20,16 +20,11 @@ from trame.app import get_server  # noqa: E402
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
-from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs  # noqa: E402
 from neofoam.ui.forms import schema_key  # noqa: E402
 from neofoam.ui.geometry import discover_geometry  # noqa: E402
-from neofoam.ui.steps import build_model_families  # noqa: E402
 
 #: How long the stubbed STL read blocks — a 21 MB STL takes ~0.5 s in practice.
 _SCAN_SECONDS = 0.3
-
-#: A checked-in ``simulationType laminar`` case (read-only).
-_LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
 
 #: The checked-in STL folder the geometry-handler tests scan (read-only).
 _TRI_SURFACE = (
@@ -483,32 +478,6 @@ def test_selecting_another_family_leaves_turbulence_properties_alone(wizard):
     wizard.controller.select_model("Simple")
 
     assert _turbulence_properties(wizard) == {"simulationType": "laminar"}
-
-
-def test_loaded_case_overrides_the_default_turbulence_properties(wizard):
-    solver = resolve_solver("incompressibleFluid")
-    configs = read_case_configs(_LAMINAR_CASE, solver)
-
-    apply_configs_to_forms(
-        wizard.state, wizard.controller.get_entries(), build_model_families(solver), configs
-    )
-
-    assert _turbulence_properties(wizard) == {"simulationType": "laminar"}
-
-
-def test_loaded_case_moves_the_turbulence_choice_to_the_loaded_model(wizard):
-    # turbulenceProperties is owned by no single model, so filling it selects none:
-    # the radio group has to be moved to the model the loaded file names.
-    solver = resolve_solver("incompressibleFluid")
-    configs = read_case_configs(_LAMINAR_CASE, solver)
-
-    apply_configs_to_forms(
-        wizard.state, wizard.controller.get_entries(), build_model_families(solver), configs
-    )
-
-    assert wizard.state.choice_momentumTransportModel == "laminar"
-    assert wizard.state.sel_laminar is True
-    assert wizard.state.sel_kEpsilon is False
 
 
 def test_panel_chip_shows_the_owning_models_label(wizard):

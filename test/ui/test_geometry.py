@@ -104,6 +104,20 @@ def test_discover_geometry_classifies_tube_bank():
     assert spec.length_scale == pytest.approx(0.02)
 
 
+def test_discover_geometry_without_an_axis_planar_patch_spans_all_patches(tmp_path):
+    # The background box comes from the axis-planar patches; a geometry of oblique
+    # surfaces only has none, so the box falls back to the union of every patch.
+    _write_binary_stl(tmp_path / "ramp.stl", [((0.0, 0.0, 0.0), (1.0, 1.0, 0.5), (0.0, 2.0, 1.0))])
+    _write_binary_stl(
+        tmp_path / "wedge.stl", [((2.0, 0.0, 0.0), (3.0, 1.0, 1.0), (2.0, -1.0, 2.0))]
+    )
+
+    spec = discover_geometry(tmp_path)
+
+    assert spec.bbox_min == pytest.approx((0.0, -1.0, 0.0))
+    assert spec.bbox_max == pytest.approx((3.0, 2.0, 2.0))
+
+
 def test_write_mesh_configs_roundtrip(tmp_path):
     spec = discover_geometry(_TUBE_BANK)
     written = write_mesh_configs(tmp_path, spec, MeshSettings(cells=(120, 33, 4)))
