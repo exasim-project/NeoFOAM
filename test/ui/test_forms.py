@@ -659,3 +659,13 @@ def test_neon_panel_titles_keep_neon_whole():
 
     assert "controlDict · NeoN Control" in titles
     assert not [t for t in titles if "Neo N" in t]
+
+
+def test_transport_properties_form_requires_nu_for_a_newtonian_fluid():
+    # JSONForms validates the form with AJV, so the rule has to survive the transform
+    # for the missing `nu` to be flagged in the form and not only on save.
+    entry = next(
+        e for e in build_forms(_solver()) if e.config_name == "transport_properties_config"
+    )
+    assert entry.schema["if"] == {"properties": {"transportModel": {"const": "Newtonian"}}}
+    assert entry.schema["then"] == {"required": ["nu"]}

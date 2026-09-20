@@ -37,3 +37,21 @@ def test_transport_properties_match_manifest(case: Case) -> None:
 def test_newtonian_without_nu_fails_validation() -> None:
     with pytest.raises(ValidationError, match="Newtonian.*requires 'nu'"):
         TransportPropertiesConfig.load(case_dir=NEWTONIAN_WITHOUT_NU)
+
+
+@pytest.mark.parametrize(
+    ("data", "missing"),
+    [
+        ({"transportModel": "Newtonian"}, ["'nu' is a required property"]),
+        ({}, ["'nu' is a required property"]),  # transportModel defaults to Newtonian
+        ({"transportModel": "Newtonian", "nu": 1e-05}, []),
+        ({"transportModel": "CrossPowerLaw"}, []),
+    ],
+)
+def test_json_schema_requires_nu_only_for_newtonian(
+    data: dict[str, object], missing: list[str]
+) -> None:
+    """The published schema carries the validator's rule, so a form flags it before save."""
+    jsonschema = pytest.importorskip("jsonschema")  # transitive via the `mcp` extra
+    validator = jsonschema.Draft202012Validator(TransportPropertiesConfig.model_json_schema())
+    assert [error.message for error in validator.iter_errors(data)] == missing

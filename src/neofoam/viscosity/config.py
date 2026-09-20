@@ -15,7 +15,7 @@ tests that load it run the OpenFOAM IO path directly.
 
 from typing import Optional
 
-from pydantic import model_validator
+from pydantic import ConfigDict, model_validator
 
 from neofoam.io import OF, BaseConfig, IOStrategy
 
@@ -29,6 +29,15 @@ class TransportPropertiesConfig(BaseConfig):
     A dimensioned ``nu`` entry (``nu [ 0 2 -1 0 0 0 0 ] 1e-05``) is reduced to a
     ``float`` by the IO read path before pydantic sees it.
     """
+
+    # The same rule as ``_newtonian_needs_nu``, for consumers that only see the
+    # schema: a JSONForms form flags the missing ``nu`` before the save does.
+    model_config = ConfigDict(
+        json_schema_extra={
+            "if": {"properties": {"transportModel": {"const": "Newtonian"}}},
+            "then": {"required": ["nu"]},
+        }
+    )
 
     transportModel: str = "Newtonian"
     nu: Optional[float] = None
