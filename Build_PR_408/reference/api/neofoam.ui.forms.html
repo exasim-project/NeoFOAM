@@ -808,6 +808,13 @@ gone). <code class="docutils literal notranslate"><span class="pre">$defs</span>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neofoam.ui.forms.js_identifier">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.forms.</span></span><span class="sig-name descname"><span class="pre">js_identifier</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/forms.html#js_identifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.forms.js_identifier" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">name</span></code> as a JS identifier: trame state vars are evaluated as Vue expressions,</p>
+<p>so a field like <code class="docutils literal notranslate"><span class="pre">alpha.water</span></code> would otherwise read as <code class="docutils literal notranslate"><span class="pre">alpha</span></code> . <code class="docutils literal notranslate"><span class="pre">water…</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neofoam.ui.forms.jsonforms_schema">
 <span class="sig-prename descclassname"><span class="pre">neofoam.ui.forms.</span></span><span class="sig-name descname"><span class="pre">jsonforms_schema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/forms.html#jsonforms_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.forms.jsonforms_schema" title="Link to this definition">¶</a></dt>
 <dd><p>Make a pydantic JSON Schema render cleanly in JSONForms (generic, no per-config).</p>
@@ -853,6 +860,14 @@ The map stays open: a patch the scan cannot see is still added by hand. Returns
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neofoam.ui.forms.schema_key">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.forms.</span></span><span class="sig-name descname"><span class="pre">schema_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.ui.forms.FormEntry" title="neofoam.ui.forms.FormEntry"><span class="pre">FormEntry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/forms.html#schema_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.forms.schema_key" title="Link to this definition">¶</a></dt>
+<dd><p>The wizard state var holding <code class="docutils literal notranslate"><span class="pre">entry</span></code>’s schema, safe as a JS identifier.</p>
+<p>Use it (never a hand-built name) wherever the schema is read or patched, e.g.
+<code class="docutils literal notranslate"><span class="pre">state[schema_key(entry)]</span></code>; step plugins get it as <code class="docutils literal notranslate"><span class="pre">ctx.schema_key</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neofoam.ui.forms.seed_boundary_field">
 <span class="sig-prename descclassname"><span class="pre">neofoam.ui.forms.</span></span><span class="sig-name descname"><span class="pre">seed_boundary_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bc_entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.ui.forms.FormEntry" title="neofoam.ui.forms.FormEntry"><span class="pre">FormEntry</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">patches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/forms.html#seed_boundary_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.forms.seed_boundary_field" title="Link to this definition">¶</a></dt>
 <dd><p>Merge discovered patches into a <code class="docutils literal notranslate"><span class="pre">field_bc</span></code> form’s live data.</p>
@@ -860,6 +875,13 @@ The map stays open: a patch the scan cannot see is still added by hand. Returns
 <code class="docutils literal notranslate"><span class="pre">{type:</span> <span class="pre">&lt;role</span> <span class="pre">default&gt;}</span></code> entry, so the boundary-conditions step shows the real
 patch names with a sensible BC pre-selected instead of a blank property map.
 Existing (user- or AI-filled) patch entries are preserved.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.ui.forms.uischema_key">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.forms.</span></span><span class="sig-name descname"><span class="pre">uischema_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.ui.forms.FormEntry" title="neofoam.ui.forms.FormEntry"><span class="pre">FormEntry</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/forms.html#uischema_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.forms.uischema_key" title="Link to this definition">¶</a></dt>
+<dd><p>The wizard state var holding <code class="docutils literal notranslate"><span class="pre">entry</span></code>’s UISchema, safe as a JS identifier.</p>
+<p>The companion of <a class="reference internal" href="#neofoam.ui.forms.schema_key" title="neofoam.ui.forms.schema_key"><code class="xref py py-func docutils literal notranslate"><span class="pre">schema_key()</span></code></a>, e.g. <code class="docutils literal notranslate"><span class="pre">state[uischema_key(entry)]</span></code>.</p>
 </dd></dl>
 
 </section>
@@ -944,9 +966,12 @@ Existing (user- or AI-filled) patch entries are preserved.</p>
 <li><a class="reference internal" href="#neofoam.ui.forms.exclusive_model_families"><code class="docutils literal notranslate"><span class="pre">exclusive_model_families()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.forms.humanize"><code class="docutils literal notranslate"><span class="pre">humanize()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.forms.inline_refs"><code class="docutils literal notranslate"><span class="pre">inline_refs()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.forms.js_identifier"><code class="docutils literal notranslate"><span class="pre">js_identifier()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.forms.jsonforms_schema"><code class="docutils literal notranslate"><span class="pre">jsonforms_schema()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.forms.patch_bc_schema"><code class="docutils literal notranslate"><span class="pre">patch_bc_schema()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.forms.schema_key"><code class="docutils literal notranslate"><span class="pre">schema_key()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.forms.seed_boundary_field"><code class="docutils literal notranslate"><span class="pre">seed_boundary_field()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.forms.uischema_key"><code class="docutils literal notranslate"><span class="pre">uischema_key()</span></code></a></li>
 </ul>
 </li>
 </ul>

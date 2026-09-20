@@ -634,18 +634,42 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"ADDER_TRANSLATIONS"</span><span class="p">,</span>
     <span class="s2">"FormEntry"</span><span class="p">,</span>
+    <span class="s2">"RENDERER_KEYWORDS"</span><span class="p">,</span>
     <span class="s2">"build_forms"</span><span class="p">,</span>
     <span class="s2">"build_field_forms"</span><span class="p">,</span>
     <span class="s2">"build_mesh_forms"</span><span class="p">,</span>
     <span class="s2">"exclusive_model_families"</span><span class="p">,</span>
     <span class="s2">"humanize"</span><span class="p">,</span>
     <span class="s2">"inline_refs"</span><span class="p">,</span>
+    <span class="s2">"js_identifier"</span><span class="p">,</span>
     <span class="s2">"jsonforms_schema"</span><span class="p">,</span>
     <span class="s2">"alternatives_uischema"</span><span class="p">,</span>
     <span class="s2">"allowed_bc_types"</span><span class="p">,</span>
     <span class="s2">"seed_boundary_field"</span><span class="p">,</span>
     <span class="s2">"patch_bc_schema"</span><span class="p">,</span>
+    <span class="s2">"schema_key"</span><span class="p">,</span>
+    <span class="s2">"uischema_key"</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="c1"># Schema keywords the bundled JSONForms renderers (jsonforms_module/*.mjs) match by</span>
+<span class="c1"># name; a rename on one side only falls back to the stock renderer without an error.</span>
+<span class="c1"># Each: value shape · emitting function · renderer/layout.</span>
+<span class="n">_NF_COMPACT</span> <span class="o">=</span> <span class="s2">"nfCompact"</span>  <span class="c1"># True · _tag_adders · NfCompactSection/rows</span>
+<span class="n">_NF_SOLVERS</span> <span class="o">=</span> <span class="s2">"nfSolvers"</span>  <span class="c1"># True · _pin_solver_controls · NfCompactSection/solvers</span>
+<span class="n">_NF_SOLVER</span> <span class="o">=</span> <span class="s2">"nfSolver"</span>  <span class="c1"># {solver: companion key} · _pin_solver_controls · NfCompactSection/grid</span>
+<span class="n">_NF_GRID</span> <span class="o">=</span> <span class="s2">"nfGrid"</span>  <span class="c1"># True · _tag_scalar_grid · NfGridLayout</span>
+<span class="n">_NF_DICT</span> <span class="o">=</span> <span class="s2">"nfDict"</span>  <span class="c1"># True · _dictionary_cards · NfCompactSection/grid</span>
+<span class="n">_NF_DICTS</span> <span class="o">=</span> <span class="s2">"nfDicts"</span>  <span class="c1"># True · _dictionary_cards · NfCompactSection/solvers</span>
+<span class="n">_NF_PATCHES</span> <span class="o">=</span> <span class="s2">"nfPatches"</span>  <span class="c1"># True · _patch_adder · NfCompactSection/rows</span>
+<span class="n">RENDERER_KEYWORDS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">_NF_COMPACT</span><span class="p">,</span>
+    <span class="n">_NF_SOLVERS</span><span class="p">,</span>
+    <span class="n">_NF_SOLVER</span><span class="p">,</span>
+    <span class="n">_NF_GRID</span><span class="p">,</span>
+    <span class="n">_NF_DICT</span><span class="p">,</span>
+    <span class="n">_NF_DICTS</span><span class="p">,</span>
+    <span class="n">_NF_PATCHES</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">_BC_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,)</span>
 
@@ -696,6 +720,29 @@
 <span class="w">    </span><span class="sd">"""The config class (used by field-half merge in ``case_spec``)."""</span>
     <span class="n">uischema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">"""Optional JSONForms UISchema (``None`` ⇒ auto-layout from the schema)."""</span></div>
+
+
+
+<div class="viewcode-block" id="schema_key">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.schema_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_key</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The wizard state var holding ``entry``'s schema, safe as a JS identifier.</span>
+
+<span class="sd">    Use it (never a hand-built name) wherever the schema is read or patched, e.g.</span>
+<span class="sd">    ``state[schema_key(entry)]``; step plugins get it as ``ctx.schema_key``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">js_identifier</span><span class="p">(</span><span class="s2">"schema_"</span> <span class="o">+</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="uischema_key">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.uischema_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">uischema_key</span><span class="p">(</span><span class="n">entry</span><span class="p">:</span> <span class="n">FormEntry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The wizard state var holding ``entry``'s UISchema, safe as a JS identifier.</span>
+
+<span class="sd">    The companion of :func:`schema_key`, e.g. ``state[uischema_key(entry)]``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">js_identifier</span><span class="p">(</span><span class="s2">"uischema_"</span> <span class="o">+</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
 
 
@@ -764,12 +811,15 @@
 <span class="n">_SPHINX_ROLE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">":[a-zA-Z:]+:`~?([^`]+)`"</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="js_identifier">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.js_identifier">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">js_identifier</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""``name`` as a JS identifier: trame state vars are evaluated as Vue expressions,</span>
 
 <span class="sd">    so a field like ``alpha.water`` would otherwise read as ``alpha`` . ``water…``.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\W"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\W"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="humanize">
@@ -971,7 +1021,7 @@
         <span class="k">return</span>
     <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="s2">"oneOf"</span> <span class="ow">in</span> <span class="n">shape</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">):</span>
         <span class="n">node</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.entry"</span>
-        <span class="n">node</span><span class="p">[</span><span class="s2">"nfCompact"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">node</span><span class="p">[</span><span class="n">_NF_COMPACT</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">node</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.solver"</span>
 
@@ -1010,9 +1060,9 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"_solvers"</span><span class="p">:</span>
         <span class="k">return</span>
-    <span class="n">node</span><span class="p">[</span><span class="s2">"nfSolvers"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">node</span><span class="p">[</span><span class="n">_NF_SOLVERS</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="n">block</span><span class="p">[</span><span class="s2">"nfSolver"</span><span class="p">]</span> <span class="o">=</span> <span class="n">SOLVER_COMPANION</span>
+        <span class="n">block</span><span class="p">[</span><span class="n">_NF_SOLVER</span><span class="p">]</span> <span class="o">=</span> <span class="n">SOLVER_COMPANION</span>
         <span class="n">block</span><span class="p">[</span><span class="s2">"allOf"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_companion_rules</span><span class="p">()</span>
         <span class="n">block</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">key</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">control</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">control</span> <span class="ow">in</span> <span class="n">_SOLVER_CONTROLS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -1035,7 +1085,7 @@
 <span class="sd">    """</span>
     <span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_scalar</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">):</span>
-        <span class="n">node</span><span class="p">[</span><span class="s2">"nfGrid"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">node</span><span class="p">[</span><span class="n">_NF_GRID</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
 
 <span class="c1"># A config that is one open dictionary of named sub-dictionaries → what a name is there.</span>
@@ -1051,10 +1101,10 @@
     <span class="n">prefix</span> <span class="o">=</span> <span class="n">_DICTIONARY_CONFIGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">schema</span>
-    <span class="n">card</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"nfDict"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="s2">"nf.keyword"</span><span class="p">}</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">_NF_DICT</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="s2">"nf.keyword"</span><span class="p">}</span>
     <span class="c1"># The panel already names the file; the class name would head the section a second time.</span>
     <span class="n">untitled</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"title"</span><span class="p">}</span>
-    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">untitled</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="n">card</span><span class="p">,</span> <span class="s2">"nfDicts"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="n">prefix</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">untitled</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="n">card</span><span class="p">,</span> <span class="n">_NF_DICTS</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="n">prefix</span><span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_patch_adder</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -1067,7 +1117,7 @@
 <span class="sd">    scan seeds on a wall, so a hand-added patch shows and saves a real type from the start.</span>
 <span class="sd">    """</span>
     <span class="n">props</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
-    <span class="n">boundary_field</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">],</span> <span class="n">i18n</span><span class="o">=</span><span class="s2">"nf.patch"</span><span class="p">,</span> <span class="n">nfPatches</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">boundary_field</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">props</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">],</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="s2">"nf.patch"</span><span class="p">,</span> <span class="n">_NF_PATCHES</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
     <span class="n">union</span> <span class="o">=</span> <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span>
     <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="o">**</span><span class="n">union</span><span class="p">,</span>

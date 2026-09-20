@@ -876,8 +876,10 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeometrySpec</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Read the STLs at ``case_dir`` (an STL folder or a case dir) into patches.</span>
 
-<span class="sd">    The union of all STL bounding boxes is the background domain. A patch that</span>
-<span class="sd">    lies on one or more domain faces (a planar, axis-aligned surface) becomes a</span>
+<span class="sd">    The bounding box of the axis-planar patches is the background domain (the</span>
+<span class="sd">    union of all patches when there are none): a curved surface must not enlarge</span>
+<span class="sd">    the box, or its tessellation overshoot moves the faces off their patches. A</span>
+<span class="sd">    patch that lies on one or more domain faces (a planar, axis-aligned surface) becomes a</span>
 <span class="sd">    background-box patch owning those faces; any other patch (interior geometry,</span>
 <span class="sd">    e.g. a tube bank) becomes a snappy refinement surface. Patch roles are a</span>
 <span class="sd">    filename/face heuristic — editable downstream in the wizard.</span>
@@ -888,8 +890,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no STL files under </span><span class="si">{</span><span class="n">tri_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">per_patch</span> <span class="o">=</span> <span class="p">[(</span><span class="n">p</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">read_stl_vertices</span><span class="p">(</span><span class="n">p</span><span class="p">))</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">stl_paths</span><span class="p">]</span>
-    <span class="n">all_verts</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">verts</span> <span class="ow">in</span> <span class="n">per_patch</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">]</span>
-    <span class="n">dmin</span><span class="p">,</span> <span class="n">dmax</span> <span class="o">=</span> <span class="n">_bbox</span><span class="p">(</span><span class="n">all_verts</span><span class="p">)</span>
+    <span class="n">dmin</span><span class="p">,</span> <span class="n">dmax</span> <span class="o">=</span> <span class="n">_bbox</span><span class="p">(</span><span class="n">_domain_vertices</span><span class="p">([</span><span class="n">verts</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">verts</span> <span class="ow">in</span> <span class="n">per_patch</span><span class="p">]))</span>
 
     <span class="n">extents</span> <span class="o">=</span> <span class="p">[</span><span class="n">dmax</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">dmin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)]</span>
     <span class="n">positive</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extents</span> <span class="k">if</span> <span class="n">e</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">]</span>
@@ -919,6 +920,19 @@
         <span class="n">patches</span><span class="o">=</span><span class="n">patches</span><span class="p">,</span>
     <span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_axis_planar</span><span class="p">(</span><span class="n">verts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Vec3</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when every triangle lies in one axis-aligned plane."""</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">==</span> <span class="n">b</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">==</span> <span class="n">c</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_triangles</span><span class="p">(</span><span class="n">verts</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_domain_vertices</span><span class="p">(</span><span class="n">patches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Vec3</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Vec3</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Vertices spanning the background box: the axis-planar patches, else all."""</span>
+    <span class="n">planar</span> <span class="o">=</span> <span class="p">[</span><span class="n">verts</span> <span class="k">for</span> <span class="n">verts</span> <span class="ow">in</span> <span class="n">patches</span> <span class="k">if</span> <span class="n">_is_axis_planar</span><span class="p">(</span><span class="n">verts</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">verts</span> <span class="ow">in</span> <span class="n">planar</span> <span class="ow">or</span> <span class="n">patches</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">verts</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_triangles</span><span class="p">(</span><span class="n">verts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Vec3</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Vec3</span><span class="p">,</span> <span class="n">Vec3</span><span class="p">,</span> <span class="n">Vec3</span><span class="p">]]:</span>

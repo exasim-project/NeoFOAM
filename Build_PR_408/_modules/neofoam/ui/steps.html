@@ -618,7 +618,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">tools</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.turbulence</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentumTransportModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span><span class="p">,</span> <span class="n">exclusive_model_families</span><span class="p">,</span> <span class="n">humanize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span><span class="p">,</span> <span class="n">exclusive_model_families</span><span class="p">,</span> <span class="n">humanize</span><span class="p">,</span> <span class="n">js_identifier</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">AT_START</span><span class="p">,</span> <span class="n">StepPlugin</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -628,7 +628,9 @@
     <span class="s2">"build_steps"</span><span class="p">,</span>
     <span class="s2">"build_model_choices"</span><span class="p">,</span>
     <span class="s2">"build_model_families"</span><span class="p">,</span>
+    <span class="s2">"choice_key"</span><span class="p">,</span>
     <span class="s2">"select_model_state"</span><span class="p">,</span>
+    <span class="s2">"selection_key"</span><span class="p">,</span>
     <span class="s2">"turbulence_form_state"</span><span class="p">,</span>
     <span class="s2">"loaded_turbulence_model"</span><span class="p">,</span>
 <span class="p">]</span>
@@ -696,8 +698,8 @@
 <span class="sd">    Membership follows ``FormEntry.step`` (``models``/``schemes``/``bcs``/``initial``);</span>
 <span class="sd">    ``geometry``/``sweep``/``review`` are form-less bespoke panels. Each plugin adds</span>
 <span class="sd">    one extra step, slotted after its ``after`` anchor (an existing step id) or</span>
-<span class="sd">    appended when the anchor is absent; ``plugins`` is assumed pre-ordered</span>
-<span class="sd">    (see :func:`neofoam.ui.plugins.order_steps`). A plugin's form-entry keys follow</span>
+<span class="sd">    appended when the anchor is absent; ``plugins`` keep their discovery order</span>
+<span class="sd">    among those sharing an anchor. A plugin's form-entry keys follow</span>
 <span class="sd">    ``FormEntry.step == plugin.id`` (usually empty — plugins are bespoke panels).</span>
 <span class="sd">    """</span>
     <span class="n">step_ids</span> <span class="o">=</span> <span class="p">{</span><span class="n">sid</span> <span class="k">for</span> <span class="n">sid</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">_STEP_DEFS</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">}</span>
@@ -780,6 +782,31 @@
 
 
 
+<div class="viewcode-block" id="selection_key">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.steps.html#neofoam.ui.steps.selection_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">selection_key</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The wizard state var (``sel_&lt;model&gt;``) holding whether ``model`` is selected.</span>
+
+<span class="sd">    Use it wherever that switch is read, written or bound in a template, so a model</span>
+<span class="sd">    name that is no JS identifier still gives a valid Vue expression, e.g.</span>
+<span class="sd">    ``state[selection_key("kEpsilon")]``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">js_identifier</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sel_</span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="choice_key">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.steps.html#neofoam.ui.steps.choice_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">choice_key</span><span class="p">(</span><span class="n">family</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The wizard state var (``choice_&lt;family&gt;``) holding a family's selected member.</span>
+
+<span class="sd">    The pick-one companion of :func:`selection_key`, e.g.</span>
+<span class="sd">    ``state[choice_key("momentumTransportModel")]``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">js_identifier</span><span class="p">(</span><span class="sa">f</span><span class="s2">"choice_</span><span class="si">{</span><span class="n">family</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="select_model_state">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.steps.html#neofoam.ui.steps.select_model_state">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_model_state</span><span class="p">(</span><span class="n">families</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelFamily</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -791,11 +818,11 @@
 <span class="sd">    model (the Models step's radio group, the AI/``load_case`` fill auto-selecting the</span>
 <span class="sd">    models it filled configs for) applies exactly the same rule.</span>
 <span class="sd">    """</span>
-    <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">"sel_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">selection_key</span><span class="p">(</span><span class="n">name</span><span class="p">):</span> <span class="kc">True</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">families</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">):</span>
-            <span class="n">updates</span><span class="p">[</span><span class="sa">f</span><span class="s2">"choice_</span><span class="si">{</span><span class="n">family</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
-            <span class="n">updates</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="sa">f</span><span class="s2">"sel_</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">})</span>
+            <span class="n">updates</span><span class="p">[</span><span class="n">choice_key</span><span class="p">(</span><span class="n">family</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="n">updates</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">selection_key</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">):</span> <span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">})</span>
     <span class="k">return</span> <span class="n">updates</span></div>
 
 

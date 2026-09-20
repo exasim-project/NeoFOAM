@@ -658,9 +658,17 @@ member offers no choice and is not here — it stays a locked “included” mod
 <p>Membership follows <code class="docutils literal notranslate"><span class="pre">FormEntry.step</span></code> (<code class="docutils literal notranslate"><span class="pre">models</span></code>/<code class="docutils literal notranslate"><span class="pre">schemes</span></code>/<code class="docutils literal notranslate"><span class="pre">bcs</span></code>/<code class="docutils literal notranslate"><span class="pre">initial</span></code>);
 <code class="docutils literal notranslate"><span class="pre">geometry</span></code>/<code class="docutils literal notranslate"><span class="pre">sweep</span></code>/<code class="docutils literal notranslate"><span class="pre">review</span></code> are form-less bespoke panels. Each plugin adds
 one extra step, slotted after its <code class="docutils literal notranslate"><span class="pre">after</span></code> anchor (an existing step id) or
-appended when the anchor is absent; <code class="docutils literal notranslate"><span class="pre">plugins</span></code> is assumed pre-ordered
-(see <code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.ui.plugins.order_steps()</span></code>). A plugin’s form-entry keys follow
+appended when the anchor is absent; <code class="docutils literal notranslate"><span class="pre">plugins</span></code> keep their discovery order
+among those sharing an anchor. A plugin’s form-entry keys follow
 <code class="docutils literal notranslate"><span class="pre">FormEntry.step</span> <span class="pre">==</span> <span class="pre">plugin.id</span></code> (usually empty — plugins are bespoke panels).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.ui.steps.choice_key">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.steps.</span></span><span class="sig-name descname"><span class="pre">choice_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/steps.html#choice_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.steps.choice_key" title="Link to this definition">¶</a></dt>
+<dd><p>The wizard state var (<code class="docutils literal notranslate"><span class="pre">choice_&lt;family&gt;</span></code>) holding a family’s selected member.</p>
+<p>The pick-one companion of <a class="reference internal" href="#neofoam.ui.steps.selection_key" title="neofoam.ui.steps.selection_key"><code class="xref py py-func docutils literal notranslate"><span class="pre">selection_key()</span></code></a>, e.g.
+<code class="docutils literal notranslate"><span class="pre">state[choice_key(&quot;momentumTransportModel&quot;)]</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -684,6 +692,15 @@ siblings off and the family’s <code class="docutils literal notranslate"><span
 can never end up with two members selected. Pure, so every route that selects a
 model (the Models step’s radio group, the AI/<code class="docutils literal notranslate"><span class="pre">load_case</span></code> fill auto-selecting the
 models it filled configs for) applies exactly the same rule.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.ui.steps.selection_key">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.steps.</span></span><span class="sig-name descname"><span class="pre">selection_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/steps.html#selection_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.steps.selection_key" title="Link to this definition">¶</a></dt>
+<dd><p>The wizard state var (<code class="docutils literal notranslate"><span class="pre">sel_&lt;model&gt;</span></code>) holding whether <code class="docutils literal notranslate"><span class="pre">model</span></code> is selected.</p>
+<p>Use it wherever that switch is read, written or bound in a template, so a model
+name that is no JS identifier still gives a valid Vue expression, e.g.
+<code class="docutils literal notranslate"><span class="pre">state[selection_key(&quot;kEpsilon&quot;)]</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -766,8 +783,10 @@ form, so it can be applied to any model selection:</p>
 <li><a class="reference internal" href="#neofoam.ui.steps.build_model_choices"><code class="docutils literal notranslate"><span class="pre">build_model_choices()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.steps.build_model_families"><code class="docutils literal notranslate"><span class="pre">build_model_families()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.steps.build_steps"><code class="docutils literal notranslate"><span class="pre">build_steps()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.steps.choice_key"><code class="docutils literal notranslate"><span class="pre">choice_key()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.steps.loaded_turbulence_model"><code class="docutils literal notranslate"><span class="pre">loaded_turbulence_model()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.steps.select_model_state"><code class="docutils literal notranslate"><span class="pre">select_model_state()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.steps.selection_key"><code class="docutils literal notranslate"><span class="pre">selection_key()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.ui.steps.turbulence_form_state"><code class="docutils literal notranslate"><span class="pre">turbulence_form_state()</span></code></a></li>
 </ul>
 </li>
