@@ -416,7 +416,11 @@ def test_dim_picker_respects_owner_model_gate(wizard):
     assert owned.owner_model in state.sweep_error
 
 
-def test_generate_variants_list_linear_log_and_replace(wizard):
+_TRANSPORT_NODE = "dim:transport_properties_config"
+
+
+def _transport_dimension_on_canvas(wizard) -> None:
+    """Put transportProperties on the canvas, its base variant carrying a ``nu``."""
     state, ctrl = wizard.state, wizard.controller
     entry = next(
         e
@@ -425,16 +429,33 @@ def test_generate_variants_list_linear_log_and_replace(wizard):
     )
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
     ctrl.sweep_toggle_dimension("transport_properties_config")
-    node_id = "dim:transport_properties_config"
 
-    ctrl.sweep_open_generator(node_id)
+
+def _generate_value_list(wizard, values: str) -> None:
+    state, ctrl = wizard.state, wizard.controller
+    ctrl.sweep_open_generator(_TRANSPORT_NODE)
+    state.sweep_gen_mode = "list"
+    state.sweep_gen_values = values
+    ctrl.sweep_generate_variants()
+
+
+def test_open_generator_preselects_the_only_numeric_parameter(wizard):
+    state, ctrl = wizard.state, wizard.controller
+    _transport_dimension_on_canvas(wizard)
+
+    ctrl.sweep_open_generator(_TRANSPORT_NODE)
+
     assert state.sweep_gen_show
     assert state.sweep_gen_param == "nu"  # the only numeric top-level parameter
 
+
+def test_generate_variants_from_a_value_list_appends_named_variants(wizard):
+    state = wizard.state
+    _transport_dimension_on_canvas(wizard)
+
     # Value-list mode appends auto-named variants with full payloads.
-    state.sweep_gen_mode = "list"
-    state.sweep_gen_values = "1e-5, 2e-5 4e-5"
-    ctrl.sweep_generate_variants()
+    _generate_value_list(wizard, "1e-5, 2e-5 4e-5")
+
     assert not state.sweep_gen_show
     (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"base", "nu1e-05", "nu2e-05", "nu4e-05"}
@@ -444,20 +465,32 @@ def test_generate_variants_list_linear_log_and_replace(wizard):
     }
     assert state.sweep_case_count == 4
 
+
+def test_generate_variants_with_replace_drops_the_previous_variants(wizard):
+    state, ctrl = wizard.state, wizard.controller
+    _transport_dimension_on_canvas(wizard)
+    _generate_value_list(wizard, "1e-5, 2e-5 4e-5")
+
     # Linear range with replace drops the previous variants.
-    ctrl.sweep_open_generator(node_id)
+    ctrl.sweep_open_generator(_TRANSPORT_NODE)
     state.sweep_gen_mode = "linear"
     state.sweep_gen_min, state.sweep_gen_max = "1", "3"
     state.sweep_gen_count = "3"
     state.sweep_gen_replace = True
     ctrl.sweep_generate_variants()
+
     (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"nu1", "nu2", "nu3"}
     assert node["data"]["entries"]["nu2"]["nu"] == 2.0
     assert state.sweep_case_count == 3
 
+
+def test_generate_variants_log_range_is_retried_after_a_rejected_one(wizard):
+    state, ctrl = wizard.state, wizard.controller
+    _transport_dimension_on_canvas(wizard)
+
     # Log range; invalid input keeps the dialog open with the error.
-    ctrl.sweep_open_generator(node_id)
+    ctrl.sweep_open_generator(_TRANSPORT_NODE)
     state.sweep_gen_mode = "log"
     state.sweep_gen_min, state.sweep_gen_max = "0", "1"
     state.sweep_gen_count = "3"
@@ -465,9 +498,11 @@ def test_generate_variants_list_linear_log_and_replace(wizard):
     ctrl.sweep_generate_variants()
     assert state.sweep_gen_show
     assert "positive" in state.sweep_gen_error
+
     state.sweep_gen_min = "1e-6"
     state.sweep_gen_max = "1e-4"
     ctrl.sweep_generate_variants()
+
     (node,) = _dim_nodes(wizard)
     assert {"nu1e-06", "nu1e-05", "nu0.0001"} <= set(node["data"]["entries"])
 

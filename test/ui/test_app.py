@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 import time
 from pathlib import Path
 
@@ -114,32 +115,28 @@ def test_save_scaffolds_and_validates(tmp_path, wizard):
     assert wizard.state.current_step == "review"
 
 
-def test_geometry_scan_and_write_mesh(tmp_path, wizard):
-    import shutil  # noqa: PLC0415
-
-    # A case whose constant/triSurface holds the given STLs (copied from tube_bank).
-    src_tri = (
-        Path(__file__).resolve().parents[1]
-        / "tooling"
-        / "workflow"
-        / "cases"
-        / "tube_bank"
-        / "constant"
-        / "triSurface"
-    )
+def _scan_tube_bank(wizard, tmp_path) -> None:
+    """Scan a copy of the tube-bank STLs, pointing the STL field straight at them."""
     dst_tri = tmp_path / "constant" / "triSurface"
-    shutil.copytree(src_tri, dst_tri)
-
-    # Point the STL-folder field straight at the triSurface dir (as in the UI).
+    shutil.copytree(_TRI_SURFACE, dst_tri)
     wizard.state.stl_dir = str(dst_tri)
     wizard.state.target_dir = str(tmp_path)
-
     asyncio.run(wizard.controller.load_geometry())
+
+
+def test_geometry_scan_lists_the_stl_patches(tmp_path, wizard):
+    _scan_tube_bank(wizard, tmp_path)
+
     names = {p["name"] for p in wizard.state.geometry_patches}
     assert names == {"inlet", "outlet", "walls", "frontBack", "tubes"}
     assert wizard.state.geo_bbox is not None
 
+
+def test_write_mesh_writes_the_mesh_dicts_of_a_scanned_geometry(tmp_path, wizard):
+    _scan_tube_bank(wizard, tmp_path)
+
     wizard.controller.write_mesh()
+
     assert (tmp_path / "system" / "blockMeshDict").is_file()
     assert (tmp_path / "system" / "snappyHexMeshDict").is_file()
     assert (tmp_path / "system" / "preprocess.yaml").is_file()

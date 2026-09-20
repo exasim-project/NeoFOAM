@@ -40,19 +40,35 @@ def _model_with_transport(fields=None) -> SweepModel:
     return m
 
 
-def test_add_and_remove_dimension() -> None:
+def test_add_dimension_puts_it_on_the_canvas() -> None:
     m = SweepModel()
     assert not m.has("transport")
+
     m.add_dimension("transport", title="t", schema=_SCHEMA, seed={"nu": 1e-5})
+
     assert m.has("transport")
     assert m.dirty
     assert m.to_dimensions() == {"transport": {"base": {"nu": 1e-5}}}
+
+
+def test_add_dimension_twice_is_refused() -> None:
+    m = _model_with_transport()
+
     with pytest.raises(ValueError, match="already on the canvas"):
         m.add_dimension("transport", title="t", schema=_SCHEMA, seed={})
+
+
+def test_remove_dimension_takes_it_off_the_canvas() -> None:
+    m = _model_with_transport()
+
     m.remove_dimension("transport")
+
     assert not m.has("transport")
+
+
+def test_remove_dimension_that_is_not_on_the_canvas_is_refused() -> None:
     with pytest.raises(ValueError, match="not on the canvas"):
-        m.remove_dimension("transport")
+        SweepModel().remove_dimension("transport")
 
 
 class _Block(BaseModel):
@@ -236,15 +252,25 @@ def test_generate_series_replace_false_appends() -> None:
     assert {"nu2", "nu3"} <= entries
 
 
-def test_series_values_modes_and_errors() -> None:
+def test_series_values_list_mode_parses_the_typed_values() -> None:
     assert series_values("list", "1 2 3", "", "", "") == [1.0, 2.0, 3.0]
+
+
+def test_series_values_linear_mode_spaces_the_range_evenly() -> None:
     assert series_values("linear", "", "1", "3", "3") == [1.0, 2.0, 3.0]
-    with pytest.raises(ValueError, match="positive"):
-        series_values("log", "", "0", "10", "3")
-    with pytest.raises(ValueError, match="at least 2"):
-        series_values("linear", "", "1", "3", "1")
-    with pytest.raises(ValueError, match="not a number"):
-        series_values("list", "abc", "", "", "")
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        pytest.param(("log", "", "0", "10", "3"), "positive", id="log-from-zero"),
+        pytest.param(("linear", "", "1", "3", "1"), "at least 2", id="single-point-range"),
+        pytest.param(("list", "abc", "", "", ""), "not a number", id="text-in-list"),
+    ],
+)
+def test_series_values_rejects_unusable_input(args, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        series_values(*args)
 
 
 def test_series_values_log_and_remaining_errors() -> None:

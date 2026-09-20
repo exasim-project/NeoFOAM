@@ -48,30 +48,45 @@ def test_allowed_bc_types_lists_titled_arms(solver):
     assert "noSlip" in u and "noSlip" not in p  # vector-only arm
 
 
-def test_seed_boundary_field_roles_values_and_preservation(solver):
-    from neofoam.ui.boundary_forms import seed_boundary_field  # noqa: PLC0415
+_SCANNED_PATCHES = [
+    {"name": "inlet", "role": "inlet"},
+    {"name": "outlet", "role": "outlet"},
+    {"name": "walls", "role": "wall"},
+    {"name": "frontBack", "role": "empty"},
+]
 
+
+def test_seed_boundary_field_picks_the_bc_type_by_patch_role(solver):
     entries = {e.key: e for e in build_forms(solver)}
-    patches = [
-        {"name": "inlet", "role": "inlet"},
-        {"name": "outlet", "role": "outlet"},
-        {"name": "walls", "role": "wall"},
-        {"name": "frontBack", "role": "empty"},
-    ]
-    u = seed_boundary_field(entries["field_bc:UFieldConfig"], patches, {})["boundaryField"]
+
+    u = seed_boundary_field(entries["field_bc:UFieldConfig"], _SCANNED_PATCHES, {})["boundaryField"]
+
     # Role → BC type, clamped to the field's allowed arms. Role `empty` seeds a
     # symmetry BC — the snappy mesh realises empty patches as symmetry patches.
     assert u["frontBack"] == {"type": "symmetry"}
     assert u["walls"] == {"type": "noSlip"}
     assert u["outlet"] == {"type": "zeroGradient"}
+
+
+def test_seed_boundary_field_seeds_a_zero_value_of_the_fields_rank(solver):
+    entries = {e.key: e for e in build_forms(solver)}
+
+    u = seed_boundary_field(entries["field_bc:UFieldConfig"], _SCANNED_PATCHES, {})["boundaryField"]
+    p = seed_boundary_field(entries["field_bc:pFieldConfig"], _SCANNED_PATCHES, {})["boundaryField"]
+
     # Value-carrying types are seeded with a valid zero payload (matching the arm).
     assert u["inlet"] == {"type": "fixedValue", "value": "uniform (0 0 0)"}
     # A scalar field gets the scalar zero literal.
-    p = seed_boundary_field(entries["field_bc:pFieldConfig"], patches, {})["boundaryField"]
     assert p["inlet"] == {"type": "fixedValue", "value": "uniform 0"}
-    # Existing entries are preserved (not overwritten).
+
+
+def test_seed_boundary_field_keeps_an_existing_patch_entry(solver):
+    entries = {e.key: e for e in build_forms(solver)}
     keep = {"boundaryField": {"inlet": {"type": "fixedValue", "value": "uniform (1 0 0)"}}}
-    out = seed_boundary_field(entries["field_bc:UFieldConfig"], patches, keep)
+
+    out = seed_boundary_field(entries["field_bc:UFieldConfig"], _SCANNED_PATCHES, keep)
+
+    # Existing entries are preserved (not overwritten).
     assert out["boundaryField"]["inlet"]["value"] == "uniform (1 0 0)"
 
 
