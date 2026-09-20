@@ -638,6 +638,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_case_agent</span><span class="p">,</span> <span class="n">case_spec_to_configs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SOLVER_COMPANION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_configs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._responsive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MOBILE</span><span class="p">,</span> <span class="n">_responsive_open</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_load</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_configs_to_forms</span><span class="p">,</span> <span class="n">read_case_configs</span>
@@ -683,6 +684,21 @@
     <span class="n">lines</span> <span class="o">+=</span> <span class="n">saved</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Review the forms; click **Save case** when ready."</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_drop_stale_companions</span><span class="p">(</span><span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drop the companion key a filled block's solver does not take (in place).</span>
+
+<span class="sd">    The form does this for an edit of ``solver`` alone; a fill that changes more keys</span>
+<span class="sd">    at once looks like a loaded case there, which is shown as it is.</span>
+<span class="sd">    """</span>
+    <span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">block</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()]</span>
+    <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">blocks</span><span class="p">):</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">SOLVER_COMPANION</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"solver"</span><span class="p">))</span>
+        <span class="c1"># A solver the map does not know (``Ginkgo``) drops nothing, as in the form.</span>
+        <span class="n">stale</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">SOLVER_COMPANION</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">-</span> <span class="p">{</span><span class="n">keep</span><span class="p">}</span> <span class="k">if</span> <span class="n">keep</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stale</span><span class="p">:</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="AgentPanel">
@@ -829,7 +845,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">all_messages</span><span class="p">()</span>
             <span class="c1"># A tool-loaded case is the baseline; the agent's own output refines</span>
             <span class="c1"># it, so the agent's configs are applied last and win per entry.</span>
-            <span class="n">configs</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configs"</span><span class="p">,</span> <span class="p">[]),</span> <span class="o">*</span><span class="n">case_spec_to_configs</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)]</span>
+            <span class="n">filled</span> <span class="o">=</span> <span class="n">case_spec_to_configs</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+            <span class="n">_drop_stale_companions</span><span class="p">(</span><span class="n">filled</span><span class="p">)</span>
+            <span class="n">configs</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configs"</span><span class="p">,</span> <span class="p">[]),</span> <span class="o">*</span><span class="n">filled</span><span class="p">]</span>
 
             <span class="n">loaded_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dir"</span><span class="p">)</span>
             <span class="n">filled_models</span> <span class="o">=</span> <span class="n">apply_configs_to_forms</span><span class="p">(</span>
