@@ -3,8 +3,8 @@
 
 """AI chat: a multi-turn assistant that fills the wizard forms (headless logic).
 
-Mirrors the marimo wizard's ``mo.ui.chat`` behaviour: each user message runs the
-pydantic-ai case agent with the running ``message_history`` (so follow-ups refine the
+Each user message runs the pydantic-ai case agent with the running
+``message_history`` (so follow-ups refine the
 same case), pushes the produced values into the form state objects, auto-selects the
 models it filled, auto-saves the AI-produced configs to the target dir, and
 replies with a summary (**Filled / Selected models / Wrote to**). ``await agent.run``

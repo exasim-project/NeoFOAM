@@ -5,7 +5,7 @@
 
 Exercises the field input/BC split, the save-time merge, and the small
 categorisation helpers — all against the real ``incompressibleFluid`` config
-classes (no LLM, no marimo). BC-value → OpenFOAM-literal mapping now lives in the
+classes (no LLM, no UI). BC-value → OpenFOAM-literal mapping now lives in the
 ``FieldValue`` type (see ``test/fields/test_value_types.py``), not here.
 """
 

@@ -40,10 +40,6 @@ from neofoam.agent.case_forms import (
     merge_field_config,
     split_field_dump,
 )
-from neofoam.agent.wizard_template import (
-    NOTEBOOK_TEMPLATE,
-    write_wizard_notebook,
-)
 
 __all__ = [
     # generic scaffold
@@ -67,7 +63,4 @@ __all__ = [
     "is_scheme_config",
     "merge_field_config",
     "split_field_dump",
-    # notebook scaffolding
-    "NOTEBOOK_TEMPLATE",
-    "write_wizard_notebook",
 ]

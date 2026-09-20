@@ -8,7 +8,7 @@ Each :class:`FormEntry` carries the JSON Schema + defaults that drive a client-s
 data lives, the owning selectable model (for hide/skip) and the wizard step it belongs
 to. A ``0/<field>`` config is split into two entries — an *input* half
 (``dimensions``/``internalField``) and a *boundary-conditions* half
-(``boundaryField``) — mirroring the marimo wizard, so each renders in its own step.
+(``boundaryField``) — so each renders in its own step.
 """
 
 from __future__ import annotations

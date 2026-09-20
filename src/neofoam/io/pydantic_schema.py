@@ -3,9 +3,9 @@
 
 """Helpers to drive JSON-schema forms from pydantic models.
 
-Pure pydantic + stdlib (no marimo / ``json_schema_widget``). These back the
-case notebooks (``test/agent/hotRoom/case_ui.py`` / ``case_wizard.py``), which
-render each config's ``model_json_schema()`` as an ``@rjsf`` form:
+Pure pydantic + stdlib. These back the schema DTOs (:mod:`neofoam.io.schema`)
+and the case wizard (:mod:`neofoam.ui`), which render each config's
+``model_json_schema()`` as a form:
 
 - :func:`default_values` prefills a form with a config's defaults;
 - :func:`rjsf_uischema` tidies the rjsf rendering of pydantic discriminated
