@@ -622,15 +622,21 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">case_spec_to_configs</span><span class="p">,</span> <span class="n">load_case_from_disk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_keys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">configs_to_form_state</span><span class="p">,</span> <span class="n">models_filled_by</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.steps</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">loaded_turbulence_model</span><span class="p">,</span> <span class="n">select_model_state</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"read_case_configs"</span><span class="p">,</span> <span class="s2">"apply_configs_to_forms"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"read_case_configs"</span><span class="p">,</span> <span class="s2">"apply_configs_to_forms"</span><span class="p">,</span> <span class="s2">"case_algorithm"</span><span class="p">,</span> <span class="s2">"models_to_select"</span><span class="p">]</span>
+
+<span class="c1">#: ``system/fvSolution`` control block → the block the owning member's form declares,</span>
+<span class="c1">#: in the order ``detect_and_create`` looks for them (PISO is a single-outer-loop PIMPLE).</span>
+<span class="n">_CONTROL_BLOCKS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"PIMPLE"</span><span class="p">:</span> <span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="s2">"SIMPLE"</span><span class="p">:</span> <span class="s2">"SIMPLE"</span><span class="p">,</span> <span class="s2">"PISO"</span><span class="p">:</span> <span class="s2">"PIMPLE"</span><span class="p">}</span>
 
 
 <div class="viewcode-block" id="read_case_configs">
@@ -653,6 +659,52 @@
 
 
 
+<div class="viewcode-block" id="case_algorithm">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.case_algorithm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">case_algorithm</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The pressure-velocity model the case's ``system/fvSolution`` control block names.</span>
+
+<span class="sd">    The same evidence the solver's ``detect_and_create`` runs on, so the wizard opens a</span>
+<span class="sd">    case on the algorithm it would run with. ``None`` when the file has no control block</span>
+<span class="sd">    or no selectable model declares it (a solver with a single algorithm)::</span>
+
+<span class="sd">        algorithm = case_algorithm(Path(case_dir), entries)</span>
+<span class="sd">    """</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">read_keys</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"fvSolution"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">declared</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">block</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">_CONTROL_BLOCKS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">owners</span> <span class="o">=</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">declared</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{}))</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">owner</span> <span class="k">for</span> <span class="n">owner</span> <span class="ow">in</span> <span class="n">owners</span> <span class="k">if</span> <span class="n">owner</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="models_to_select">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.models_to_select">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">models_to_select</span><span class="p">(</span>
+    <span class="n">filled</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">families</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelFamily</span><span class="p">],</span> <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The filled models a load switches on, in a fixed order.</span>
+
+<span class="sd">    A pick-one family contributes one member at most: ``algorithm`` when it is one of</span>
+<span class="sd">    its members, else its only filled member. Several filled members are no evidence —</span>
+<span class="sd">    a PIMPLE case's fvSchemes validate as the Simple slice too — so the family then</span>
+<span class="sd">    keeps the wizard's current choice::</span>
+
+<span class="sd">        models_to_select({"Pimple", "Simple", "boussinesq"}, families, "Pimple")</span>
+<span class="sd">    """</span>
+    <span class="n">member_names</span> <span class="o">=</span> <span class="p">[{</span><span class="n">choice</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">}</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">families</span><span class="p">]</span>
+    <span class="n">chosen</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">filled</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">for</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">member_names</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">member_names</span><span class="p">:</span>
+        <span class="n">rivals</span> <span class="o">=</span> <span class="n">names</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">filled</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">algorithm</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">chosen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">algorithm</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">rivals</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">chosen</span> <span class="o">|=</span> <span class="n">rivals</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chosen</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="apply_configs_to_forms">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.apply_configs_to_forms">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_configs_to_forms</span><span class="p">(</span>
@@ -660,28 +712,31 @@
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">],</span>
     <span class="n">families</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelFamily</span><span class="p">],</span>
     <span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Push ``configs`` into the live form state; returns the models they filled.</span>
+<span class="w">    </span><span class="sd">"""Push ``configs`` into the live form state; returns the models it selected.</span>
 
 <span class="sd">    Overwrites whatever the forms currently hold for those configs, so a caller</span>
-<span class="sd">    that can lose user edits asks first. Must run on trame's event loop like</span>
-<span class="sd">    every other state write::</span>
+<span class="sd">    that can lose user edits asks first. Pass the ``case_dir`` the configs were read</span>
+<span class="sd">    from so a pick-one family follows the case (:func:`case_algorithm`). Must run on</span>
+<span class="sd">    trame's event loop like every other state write::</span>
 
-<span class="sd">        filled = apply_configs_to_forms(state, entries, families, configs)</span>
+<span class="sd">        selected = apply_configs_to_forms(state, entries, families, configs, case_dir)</span>
 <span class="sd">    """</span>
     <span class="n">by_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">}</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">configs_to_form_state</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">state</span><span class="p">[</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">state_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
-    <span class="n">filled_models</span> <span class="o">=</span> <span class="n">models_filled_by</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">filled_models</span><span class="p">:</span>
-        <span class="c1"># A filled member of a pick-one family (a loaded SIMPLE case) deselects</span>
-        <span class="c1"># its siblings rather than joining them.</span>
+    <span class="n">algorithm</span> <span class="o">=</span> <span class="n">case_algorithm</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span> <span class="k">if</span> <span class="n">case_dir</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">selected</span> <span class="o">=</span> <span class="n">models_to_select</span><span class="p">(</span><span class="n">models_filled_by</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">),</span> <span class="n">families</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
+        <span class="c1"># A member of a pick-one family (a loaded SIMPLE case) deselects its</span>
+        <span class="c1"># siblings rather than joining them.</span>
         <span class="n">state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">select_model_state</span><span class="p">(</span><span class="n">families</span><span class="p">,</span> <span class="n">model</span><span class="p">))</span>
     <span class="c1"># turbulenceProperties has no owning model; only a family member has a choice to move.</span>
     <span class="n">turbulence</span> <span class="o">=</span> <span class="n">loaded_turbulence_model</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">turbulence</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">families</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">):</span>
         <span class="n">state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">select_model_state</span><span class="p">(</span><span class="n">families</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">turbulence</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="n">filled_models</span></div>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

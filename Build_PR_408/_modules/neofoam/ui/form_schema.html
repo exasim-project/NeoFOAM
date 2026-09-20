@@ -822,19 +822,23 @@
 
 
 <span class="c1"># What each kind of "add a key" row adds, keyed by the ``i18n`` prefix put on its schema</span>
-<span class="c1"># node. JSONForms would label all of them "Property Name".</span>
+<span class="c1"># node: the name field's label (JSONForms would say "Property Name" for all of them) and</span>
+<span class="c1"># the button's text, in the order of `_ADDER_SUFFIXES`.</span>
+<span class="n">_ADDER_SUFFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"propertyNameLabel"</span><span class="p">,</span> <span class="s2">"addLabel"</span><span class="p">)</span>
 <span class="n">_ADDER_LABELS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"nf.patch"</span><span class="p">:</span> <span class="s2">"Patch name, e.g. inlet"</span><span class="p">,</span>
-    <span class="s2">"nf.entry"</span><span class="p">:</span> <span class="s2">"Entry, e.g. div(phi,k)"</span><span class="p">,</span>
-    <span class="s2">"nf.solver"</span><span class="p">:</span> <span class="s2">"Field, e.g. p"</span><span class="p">,</span>
-    <span class="s2">"nf.option"</span><span class="p">:</span> <span class="s2">"Option, e.g. maxIter"</span><span class="p">,</span>
-    <span class="s2">"nf.zone"</span><span class="p">:</span> <span class="s2">"Zone name, e.g. MRF1"</span><span class="p">,</span>
-    <span class="s2">"nf.source"</span><span class="p">:</span> <span class="s2">"Source name, e.g. momentumSource"</span><span class="p">,</span>
-    <span class="s2">"nf.keyword"</span><span class="p">:</span> <span class="s2">"Keyword, e.g. cellZone"</span><span class="p">,</span>
+    <span class="s2">"nf.patch"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Patch name, e.g. inlet"</span><span class="p">,</span> <span class="s2">"Add patch"</span><span class="p">),</span>
+    <span class="s2">"nf.entry"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Entry, e.g. div(phi,k)"</span><span class="p">,</span> <span class="s2">"Add entry"</span><span class="p">),</span>
+    <span class="s2">"nf.solver"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Field, e.g. p"</span><span class="p">,</span> <span class="s2">"Add solver"</span><span class="p">),</span>
+    <span class="s2">"nf.option"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Option, e.g. maxIter"</span><span class="p">,</span> <span class="s2">"Add option"</span><span class="p">),</span>
+    <span class="s2">"nf.zone"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Zone name, e.g. MRF1"</span><span class="p">,</span> <span class="s2">"Add zone"</span><span class="p">),</span>
+    <span class="s2">"nf.source"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Source name, e.g. momentumSource"</span><span class="p">,</span> <span class="s2">"Add source"</span><span class="p">),</span>
+    <span class="s2">"nf.keyword"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Keyword, e.g. cellZone"</span><span class="p">,</span> <span class="s2">"Add keyword"</span><span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">ADDER_TRANSLATIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.propertyNameLabel"</span><span class="p">:</span> <span class="n">label</span> <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_ADDER_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">text</span>
+    <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">texts</span> <span class="ow">in</span> <span class="n">_ADDER_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">_ADDER_SUFFIXES</span><span class="p">,</span> <span class="n">texts</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="p">}</span>
 <span class="sd">"""JSONForms translations for the "add a key" rows (the ``&lt;json-forms&gt;`` ``translations``)."""</span>
 
