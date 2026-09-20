@@ -68,7 +68,8 @@ def read_section(path: Path, section: str) -> dict[str, dict[str, Leaf]]:
     A missing file or a missing ``section`` yields ``{}`` (a genuine absence other
     checks own). A present sub-entry whose leaf cannot be rendered keeps every
     sibling leaf and every other sub-entry — the leaf alone becomes
-    :class:`Unreadable`.
+    :class:`Unreadable`. A nested block is skipped, except OpenFOAM's
+    name-or-dictionary entry, which reads as the name it holds.
     """
     out: dict[str, dict[str, Leaf]] = {}
     if not path.is_file():
@@ -91,11 +92,14 @@ def read_section(path: Path, section: str) -> dict[str, dict[str, Leaf]]:
         leaves: dict[str, Leaf] = {}
         for k in sub.toc():
             leaf_key = str(k)
-            if sub.isDict(leaf_key):
+            # OpenFOAM's name-or-dictionary entry (``preconditioner { preconditioner
+            # GAMG; … }``) reads as its inner name; any other nested block is skipped.
+            holder = sub.subDict(leaf_key) if sub.isDict(leaf_key) else sub
+            if not holder.found(leaf_key):
                 continue
             # _leaf invokes the thunk eagerly right here, before ``leaf_key``
             # advances, so no late-binding capture guard is needed.
-            leaves[leaf_key] = _leaf(lambda: sub.get[str](leaf_key))
+            leaves[leaf_key] = _leaf(lambda: holder.get[str](leaf_key))
         out[name] = leaves
     return out
 

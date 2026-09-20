@@ -14,10 +14,10 @@ from neofoam.framework.validation.checks import (
     check_boussinesq_gravity,
     check_constraint_patches,
     check_div_scheme,
-    check_gamg_smoother,
     check_laminar_wall_functions,
     check_pimple_final,
     check_required_files,
+    check_solver_companion,
 )
 from neofoam.mcp.registry import resolve_solver
 from neofoam.tools import snappy_hex_mesh
@@ -87,7 +87,7 @@ def test_gamg_check_errors_when_solver_leaf_unreadable(
         "read_section",
         lambda path, section: {"p": {"solver": checks_mod.Unreadable(reason="not a name")}},
     )
-    findings = check_gamg_smoother(_ctx(tmp_path))
+    findings = check_solver_companion(_ctx(tmp_path))
     assert findings and findings[0].level == "error"
     assert "could not be read" in findings[0].message
 
@@ -301,9 +301,27 @@ def test_laminar_errors_when_turbulence_unreadable(
 
 def test_gamg_check_flags_a_gamg_solver_without_a_smoother() -> None:
     pytest.importorskip("pybFoam")
-    findings = check_gamg_smoother(_ctx(CASES / "gamg_no_smoother"))
+    findings = check_solver_companion(_ctx(CASES / "gamg_no_smoother"))
     assert [f.level for f in findings] == ["error"]
     assert "is GAMG but has no smoother" in findings[0].message
+
+
+@pytest.mark.parametrize(
+    ("case", "messages"),
+    [
+        ("pcg_no_preconditioner", ["solver 'p' is PCG but has no preconditioner"]),
+        ("smooth_no_smoother", ["solver 'U' is smoothSolver but has no smoother"]),
+        # A solver OpenFOAM does not ship (a plugin) takes keys this check cannot know.
+        ("unknown_solver", []),
+        ("nested_preconditioner", []),
+    ],
+)
+def test_solver_companion_check_flags_a_missing_companion_key(
+    case: str, messages: list[str]
+) -> None:
+    findings = check_solver_companion(_ctx(CASES / case))
+    assert [f.message for f in findings] == messages
+    assert all(f.level == "error" for f in findings)
 
 
 def test_div_check_warns_on_an_unbounded_scheme() -> None:

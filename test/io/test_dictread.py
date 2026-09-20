@@ -68,6 +68,14 @@ def test_read_section_skips_scalar_top_level_entries() -> None:
     assert read_section(CASES / "fvSchemes", "divSchemes") == {}
 
 
+def test_read_section_reads_a_name_or_dictionary_leaf_as_its_name() -> None:
+    # OpenFOAM accepts `preconditioner DIC;` or `preconditioner { preconditioner GAMG; … }`
+    # and takes the inner same-named entry of the second as the name.
+    pytest.importorskip("pybFoam")
+    section = read_section(CASES / "nested_preconditioner", "solvers")
+    assert section["p"]["preconditioner"] == Value(text="GAMG")
+
+
 def test_read_section_skips_nested_dict_leaves() -> None:
     # A sub-entry may itself contain a nested block; that leaf is skipped, not read as
     # text and not Unreadable, while its scalar siblings survive.

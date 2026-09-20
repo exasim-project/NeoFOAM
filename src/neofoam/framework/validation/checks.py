@@ -36,12 +36,13 @@ from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
 __all__ = [
+    "SOLVER_COMPANION",
     "mesh_patch_types",
     "is_boussinesq",
     "turbulence_type",
     "check_required_files",
     "check_constraint_patches",
-    "check_gamg_smoother",
+    "check_solver_companion",
     "check_pimple_final",
     "check_boussinesq_gravity",
     "check_laminar_wall_functions",
@@ -296,8 +297,22 @@ def check_constraint_patches(ctx: CaseContext) -> list[Finding]:
     return findings
 
 
-def check_gamg_smoother(ctx: CaseContext) -> list[Finding]:
-    """A GAMG solver needs a smoother; an unreadable solver type is an error."""
+# The key OpenFOAM looks up next to ``solver`` in a linear-solver block, and aborts
+# without: a Krylov solver takes a preconditioner, a smoothing one a smoother. These
+# are the OpenFOAM solvers the NeoN backend maps too; a solver not listed (a plugin
+# such as ``Ginkgo``) is not checked.
+SOLVER_COMPANION = {
+    "PCG": "preconditioner",
+    "PBiCGStab": "preconditioner",
+    "PBiCG": "preconditioner",
+    "smoothSolver": "smoother",
+    "GAMG": "smoother",
+}
+_COMPANION_EXAMPLE = {"preconditioner": "DIC", "smoother": "GaussSeidel"}
+
+
+def check_solver_companion(ctx: CaseContext) -> list[Finding]:
+    """A linear solver needs its preconditioner or smoother; an unreadable type is an error."""
     findings: list[Finding] = []
     solvers = read_section(ctx.case / "system" / "fvSolution", "solvers")
     for name, entry in solvers.items():
@@ -310,12 +325,13 @@ def check_gamg_smoother(ctx: CaseContext) -> list[Finding]:
         if err is not None:
             findings.append(err)
             continue
-        if solver_text == "GAMG" and "smoother" not in entry:
+        companion = SOLVER_COMPANION.get(solver_text or "")
+        if companion is not None and companion not in entry:
             findings.append(
                 _error(
                     "system/fvSolution",
-                    f"solver '{name}' is GAMG but has no smoother",
-                    fix=f"add a smoother to '{name}' (e.g. GaussSeidel)",
+                    f"solver '{name}' is {solver_text} but has no {companion}",
+                    fix=f"add a {companion} to '{name}' (e.g. {_COMPANION_EXAMPLE[companion]})",
                 )
             )
     return findings
@@ -454,7 +470,7 @@ def default_registry() -> CheckRegistry:
     reg = CheckRegistry()
     reg.add("required-files", check_required_files)
     reg.add("constraint-patches", check_constraint_patches)
-    reg.add("gamg-smoother", check_gamg_smoother)
+    reg.add("solver-companion", check_solver_companion)
     reg.add("pimple-final", check_pimple_final)
     reg.add("boussinesq-gravity", check_boussinesq_gravity)
     reg.add("laminar-wall-functions", check_laminar_wall_functions)
