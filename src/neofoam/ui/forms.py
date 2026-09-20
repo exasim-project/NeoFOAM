@@ -26,6 +26,7 @@ from neofoam.mcp import tools
 __all__ = [
     "ADDER_TRANSLATIONS",
     "FormEntry",
+    "RENDERER_KEYWORDS",
     "build_forms",
     "build_field_forms",
     "build_mesh_forms",
@@ -41,6 +42,26 @@ __all__ = [
     "schema_key",
     "uischema_key",
 ]
+
+# Schema keywords the bundled JSONForms renderers (jsonforms_module/*.mjs) match by
+# name; a rename on one side only falls back to the stock renderer without an error.
+# Each: value shape · emitting function · renderer/layout.
+_NF_COMPACT = "nfCompact"  # True · _tag_adders · NfCompactSection/rows
+_NF_SOLVERS = "nfSolvers"  # True · _pin_solver_controls · NfCompactSection/solvers
+_NF_SOLVER = "nfSolver"  # {solver: companion key} · _pin_solver_controls · NfCompactSection/grid
+_NF_GRID = "nfGrid"  # True · _tag_scalar_grid · NfGridLayout
+_NF_DICT = "nfDict"  # True · _dictionary_cards · NfCompactSection/grid
+_NF_DICTS = "nfDicts"  # True · _dictionary_cards · NfCompactSection/solvers
+_NF_PATCHES = "nfPatches"  # True · _patch_adder · NfCompactSection/rows
+RENDERER_KEYWORDS = (
+    _NF_COMPACT,
+    _NF_SOLVERS,
+    _NF_SOLVER,
+    _NF_GRID,
+    _NF_DICT,
+    _NF_DICTS,
+    _NF_PATCHES,
+)
 
 _BC_KEYS = ("boundaryField",)
 
@@ -374,7 +395,7 @@ def _tag_adders(node: dict[str, Any]) -> None:
         return
     if all("oneOf" in shape for shape in shapes):
         node["i18n"] = "nf.entry"
-        node["nfCompact"] = True
+        node[_NF_COMPACT] = True
     else:
         node["i18n"] = "nf.solver"
 
@@ -413,9 +434,9 @@ def _pin_solver_controls(node: dict[str, Any]) -> None:
     """
     if node.get("title") != "_solvers":
         return
-    node["nfSolvers"] = True
+    node[_NF_SOLVERS] = True
     for block in node.get("properties", {}).values():
-        block["nfSolver"] = SOLVER_COMPANION
+        block[_NF_SOLVER] = SOLVER_COMPANION
         block["allOf"] = _companion_rules()
         block["properties"] = {
             key: {**control, "title": key} for key, control in _SOLVER_CONTROLS.items()
@@ -438,7 +459,7 @@ def _tag_scalar_grid(node: dict[str, Any]) -> None:
     """
     shapes = list(node.get("properties", {}).values())
     if len(shapes) >= 2 and all(_is_scalar(shape) for shape in shapes):
-        node["nfGrid"] = True
+        node[_NF_GRID] = True
 
 
 # A config that is one open dictionary of named sub-dictionaries → what a name is there.
@@ -454,10 +475,10 @@ def _dictionary_cards(schema: dict[str, Any]) -> dict[str, Any]:
     prefix = _DICTIONARY_CONFIGS.get(schema.get("title", ""))
     if prefix is None:
         return schema
-    card = {"type": "object", "additionalProperties": True, "nfDict": True, "i18n": "nf.keyword"}
+    card = {"type": "object", "additionalProperties": True, _NF_DICT: True, "i18n": "nf.keyword"}
     # The panel already names the file; the class name would head the section a second time.
     untitled = {key: value for key, value in schema.items() if key != "title"}
-    return {**untitled, "additionalProperties": card, "nfDicts": True, "i18n": prefix}
+    return {**untitled, "additionalProperties": card, _NF_DICTS: True, "i18n": prefix}
 
 
 def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
@@ -470,7 +491,7 @@ def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
     scan seeds on a wall, so a hand-added patch shows and saves a real type from the start.
     """
     props = schema["properties"]
-    boundary_field = dict(props["boundaryField"], i18n="nf.patch", nfPatches=True)
+    boundary_field = {**props["boundaryField"], "i18n": "nf.patch", _NF_PATCHES: True}
     union = boundary_field["additionalProperties"]
     boundary_field["additionalProperties"] = {
         **union,

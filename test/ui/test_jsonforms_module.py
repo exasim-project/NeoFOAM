@@ -10,6 +10,10 @@ from collections import Counter
 from pathlib import Path
 
 from neofoam.ui import jsonforms_module
+from neofoam.ui.forms import RENDERER_KEYWORDS
+
+# `nf*` names the JS sets and reads itself (uischema options), never sent by Python.
+_JS_INTERNAL = {"nfInline", "nfRowKey"}
 
 
 def _resolve(rel: str) -> Path:
@@ -55,3 +59,16 @@ def test_umd_bundle_has_no_colliding_module_names():
     assert len(names) > 100, f"module-factory pattern no longer matches ({len(names)} hits)"
     duplicates = {name for name, count in Counter(names).items() if count > 1}
     assert not duplicates, f"colliding minified module names: {sorted(duplicates)}"
+
+
+def test_renderer_keywords_match_the_js_sources_and_the_bundle():
+    # A keyword renamed on one side only falls back to the stock renderer without any
+    # error (for `nfPatches` that corrupts dotted patch names); the bundle check trips
+    # on a stale build without needing bun.
+    sources = "\n".join(p.read_text() for p in jsonforms_module.STATIC_DIR.parent.glob("*.mjs"))
+    in_sources = set(re.findall(r"\bnf[A-Z]\w*", sources))
+    bundle = (jsonforms_module.STATIC_DIR / "neofoam_jsonforms.umd.js").read_text()
+    in_bundle = set(re.findall(r"\bnf[A-Z]\w*", bundle))
+
+    assert in_sources - _JS_INTERNAL == set(RENDERER_KEYWORDS)
+    assert set(RENDERER_KEYWORDS) <= in_bundle
