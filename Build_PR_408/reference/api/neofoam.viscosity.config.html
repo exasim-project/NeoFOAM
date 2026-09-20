@@ -618,8 +618,8 @@
 <p>Reads the OpenFOAM transport dictionary into a validated pydantic model via the
 OpenFOAM IO strategy. <code class="docutils literal notranslate"><span class="pre">transportModel</span></code> selects the viscosity model
 (Newtonian, CrossPowerLaw, BirdCarreau, …); <code class="docutils literal notranslate"><span class="pre">nu</span></code> is the kinematic viscosity
-for Newtonian flow (optional, since non-Newtonian models carry their
-coefficients in their own sub-dictionaries instead).</p>
+for Newtonian flow — required there, optional otherwise, since non-Newtonian
+models carry their coefficients in their own sub-dictionaries instead.</p>
 <p>This is the only viscosity module that imports <code class="docutils literal notranslate"><span class="pre">neofoam.io</span></code> (hence pybFoam);
 tests that load it run the OpenFOAM IO path directly.</p>
 <dl class="py class">
@@ -633,6 +633,12 @@ tests that load it run the OpenFOAM IO path directly.</p>
 <dt class="sig sig-object py" id="neofoam.viscosity.config.TransportPropertiesConfig.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.viscosity.config.TransportPropertiesConfig.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.viscosity.config.TransportPropertiesConfig.newtonian_nu">
+<span class="sig-name descname"><span class="pre">newtonian_nu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/neofoam/viscosity/config.html#TransportPropertiesConfig.newtonian_nu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.viscosity.config.TransportPropertiesConfig.newtonian_nu" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">nu</span></code> for the Newtonian model, which cannot run without it.</p>
 </dd></dl>
 
 </dd></dl>
@@ -697,6 +703,7 @@ tests that load it run the OpenFOAM IO path directly.</p>
 <li><a class="reference internal" href="#">neofoam.viscosity.config</a><ul>
 <li><a class="reference internal" href="#neofoam.viscosity.config.TransportPropertiesConfig"><code class="docutils literal notranslate"><span class="pre">TransportPropertiesConfig</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.viscosity.config.TransportPropertiesConfig.model_config"><code class="docutils literal notranslate"><span class="pre">TransportPropertiesConfig.model_config</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.viscosity.config.TransportPropertiesConfig.newtonian_nu"><code class="docutils literal notranslate"><span class="pre">TransportPropertiesConfig.newtonian_nu()</span></code></a></li>
 </ul>
 </li>
 </ul>

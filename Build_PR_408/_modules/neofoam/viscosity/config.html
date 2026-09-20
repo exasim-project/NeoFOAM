@@ -614,14 +614,16 @@
 <span class="sd">Reads the OpenFOAM transport dictionary into a validated pydantic model via the</span>
 <span class="sd">OpenFOAM IO strategy. ``transportModel`` selects the viscosity model</span>
 <span class="sd">(Newtonian, CrossPowerLaw, BirdCarreau, …); ``nu`` is the kinematic viscosity</span>
-<span class="sd">for Newtonian flow (optional, since non-Newtonian models carry their</span>
-<span class="sd">coefficients in their own sub-dictionaries instead).</span>
+<span class="sd">for Newtonian flow — required there, optional otherwise, since non-Newtonian</span>
+<span class="sd">models carry their coefficients in their own sub-dictionaries instead.</span>
 
 <span class="sd">This is the only viscosity module that imports ``neofoam.io`` (hence pybFoam);</span>
 <span class="sd">tests that load it run the OpenFOAM IO path directly.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
@@ -639,7 +641,24 @@
 <span class="sd">    """</span>
 
     <span class="n">transportModel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Newtonian"</span>
-    <span class="n">nu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">nu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_newtonian_needs_nu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"TransportPropertiesConfig"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transportModel</span> <span class="o">==</span> <span class="s2">"Newtonian"</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">newtonian_nu</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="TransportPropertiesConfig.newtonian_nu">
+<a class="viewcode-back" href="../../../reference/api/neofoam.viscosity.config.html#neofoam.viscosity.config.TransportPropertiesConfig.newtonian_nu">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">newtonian_nu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return ``nu`` for the Newtonian model, which cannot run without it."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"transportModel Newtonian requires 'nu' in constant/transportProperties"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span></div>
+</div>
 
 </pre></div>
         </article>
