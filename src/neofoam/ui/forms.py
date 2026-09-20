@@ -23,6 +23,7 @@ from neofoam.io.pydantic_schema import slice_schema
 from neofoam.mcp import tools
 
 __all__ = [
+    "ADDER_TRANSLATIONS",
     "FormEntry",
     "build_forms",
     "build_field_forms",
@@ -309,6 +310,75 @@ def _accepts_new_keys(node: dict[str, Any]) -> bool:
     return _is_openfoam_block(node) and all(shape == shapes[0] for shape in shapes)
 
 
+# What each kind of "add a key" row adds, keyed by the ``i18n`` prefix put on its schema
+# node. JSONForms would label all of them "Property Name".
+_ADDER_LABELS = {
+    "nf.patch": "Patch name, e.g. inlet",
+    "nf.entry": "Entry, e.g. div(phi,k)",
+    "nf.solver": "Field, e.g. p",
+    "nf.option": "Option, e.g. tolerance",
+}
+
+# JSONForms addresses form data by dotted path (``boundaryField.inlet.type``), so a key
+# holding one of these characters would be read and written at the wrong place.
+_ADDER_NAME_INVALID = (
+    "A name containing . [ or ] cannot be added here: the form library reads them as"
+    " path separators."
+)
+
+ADDER_TRANSLATIONS: dict[str, str] = {
+    f"{prefix}.{key}": text
+    for prefix, label in _ADDER_LABELS.items()
+    for key, text in (("propertyNameLabel", label), ("propertyNameInvalid", _ADDER_NAME_INVALID))
+}
+"""JSONForms translations for the "add a key" rows (the ``<json-forms>`` ``translations``)."""
+
+
+def _is_open_dict(node: Any) -> bool:
+    """An object declaring no keys at all (a solver block): edited through its adder alone."""
+    return (
+        isinstance(node, dict)
+        and node.get("additionalProperties") is True
+        and not node.get("properties")
+    )
+
+
+def _tag_adders(node: dict[str, Any]) -> None:
+    """Mark an OpenFOAM section's "add a key" rows with what they add (mutates ``node``).
+
+    A section of scheme unions additionally gets ``nfCompact``: the bundled renderer
+    then draws it as one row per entry instead of JSONForms' stacked full-width selects.
+    """
+    if not _is_openfoam_block(node):
+        return
+    shapes = list(node.get("properties", {}).values())
+    for shape in shapes:
+        if _is_open_dict(shape):
+            shape["i18n"] = "nf.option"
+    if node.get("additionalProperties") is not True or not shapes:
+        return
+    if all("oneOf" in shape for shape in shapes):
+        node["i18n"] = "nf.entry"
+        node["nfCompact"] = True
+    else:
+        node["i18n"] = "nf.solver"
+
+
+def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
+    """A sliced ``boundaryField`` schema whose "add a key" row adds a patch.
+
+    The row is labelled as a patch-name box, and the BC union is typed ``object``:
+    JSONForms seeds a new key from the ``type``, and with none it seeds the string ``""``.
+    """
+    props = schema["properties"]
+    boundary_field = dict(props["boundaryField"], i18n="nf.patch")
+    boundary_field["additionalProperties"] = {
+        **boundary_field["additionalProperties"],
+        "type": "object",
+    }
+    return {**schema, "properties": {**props, "boundaryField": boundary_field}}
+
+
 def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     """Resolve every ``#/$defs/...`` ``$ref`` into a self-contained subtree.
 
@@ -390,6 +460,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
       ``type`` property is kept in the data but not rendered (:func:`_hidden_discriminator`).
     * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.
     * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.
+    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.
     """
     class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)
@@ -446,6 +517,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
             ]
         if node.get("additionalProperties") is True and not _accepts_new_keys(node):
             del node["additionalProperties"]
+        _tag_adders(node)
         # A def that *is* a discriminated arm: title it by its const type.
         const = node.get("properties", {}).get("type", {}).get("const")
         if const and "title" in node:
@@ -572,7 +644,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     config_name=info.name,
                     cls_name=info.cls_name,
                     title=f"{fname} — boundary conditions",
-                    schema=jsonforms_schema(slice_schema(dto.json_schema, _BC_KEYS)),
+                    schema=_patch_adder(jsonforms_schema(slice_schema(dto.json_schema, _BC_KEYS))),
                     defaults=_slice_defaults(dto.defaults, _BC_KEYS),
                     state_key=js_identifier(f"form_{info.name}__bc"),
                     kind="field_bc",

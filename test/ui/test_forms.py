@@ -179,6 +179,76 @@ def test_open_dicts_without_known_keys_keep_the_add_a_key_row():
     assert entries["dict:FvOptionsConfig"].schema["additionalProperties"] is True
 
 
+def _keyword_sites(node, keyword, path=""):
+    """``{json-pointer: value}`` for every schema node carrying ``keyword``."""
+    found = {}
+    if isinstance(node, dict):
+        if keyword in node:
+            found[path] = node[keyword]
+        for key, value in node.items():
+            found.update(_keyword_sites(value, keyword, f"{path}/{key}"))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            found.update(_keyword_sites(value, keyword, f"{path}/{index}"))
+    return found
+
+
+def test_add_a_key_rows_are_labelled_for_what_they_add():
+    # JSONForms labels every such row "Property Name"; its `i18n` schema keyword picks
+    # the translation prefix, so each kind of collection says what is typed there.
+    entries = {e.key: e for e in build_forms(_solver())}
+    assert _keyword_sites(entries["field_bc:UFieldConfig"].schema, "i18n") == {
+        "/properties/boundaryField": "nf.patch"
+    }
+    schemes = _keyword_sites(entries["dict:Simple_fvSchemes"].schema, "i18n")
+    assert schemes["/properties/divSchemes"] == "nf.entry"
+    assert set(schemes.values()) == {"nf.entry"}
+    assert _keyword_sites(entries["dict:Simple_fvSolution"].schema, "i18n") == {
+        "/properties/solvers": "nf.solver",
+        "/properties/solvers/properties/U": "nf.option",
+        "/properties/solvers/properties/UFinal": "nf.option",
+        "/properties/solvers/properties/p": "nf.option",
+        "/properties/solvers/properties/pFinal": "nf.option",
+    }
+
+
+def test_hand_added_patch_starts_as_a_bc_object():
+    # JSONForms seeds a hand-added key from its schema's `type`; the BC union declares
+    # none, so the new patch became the string "" and rendered as a broken text box.
+    entries = {e.key: e for e in build_forms(_solver())}
+    boundary_field = entries["field_bc:UFieldConfig"].schema["properties"]["boundaryField"]
+    assert boundary_field["additionalProperties"]["type"] == "object"
+
+
+def test_adder_translations_cover_every_emitted_prefix():
+    from neofoam.ui.forms import ADDER_TRANSLATIONS  # noqa: PLC0415
+
+    assert ADDER_TRANSLATIONS["nf.patch.propertyNameLabel"] == "Patch name, e.g. inlet"
+    assert ADDER_TRANSLATIONS["nf.entry.propertyNameLabel"] == "Entry, e.g. div(phi,k)"
+    assert ADDER_TRANSLATIONS["nf.option.propertyNameLabel"] == "Option, e.g. tolerance"
+    for name in list_solver_names():
+        for entry in build_forms(resolve_solver(name)):
+            for prefix in _keyword_sites(entry.schema, "i18n").values():
+                assert f"{prefix}.propertyNameLabel" in ADDER_TRANSLATIONS
+                # The row refuses `.`/`[`/`]`; the message has to say why.
+                assert "path separators" in ADDER_TRANSLATIONS[f"{prefix}.propertyNameInvalid"]
+
+
+@pytest.mark.parametrize("solver_name", list_solver_names())
+def test_only_scheme_sections_render_as_compact_rows(solver_name):
+    # `nfCompact` switches a section to the one-row-per-entry renderer. It belongs on
+    # the fvSchemes sections (every entry a scheme union) and nowhere else — BC maps,
+    # fvSolution and the model dicts keep the stock JSONForms rendering.
+    for entry in build_forms(resolve_solver(solver_name)):
+        compact = _keyword_sites(entry.schema, "nfCompact")
+        if not entry.cls_name.endswith("fvSchemes"):
+            assert compact == {}, entry.key
+            continue
+        sections = {f"/properties/{name}" for name in entry.schema["properties"]}
+        assert set(compact) == sections, entry.key
+        assert set(compact.values()) == {True}
+
+
 def test_nested_model_is_titled_by_its_key_not_its_class_name():
     # A `water: PhaseTransport` property inherits the *class* name as its title via
     # the $ref, so both phase cards read "PhaseTransport"; the key is what tells

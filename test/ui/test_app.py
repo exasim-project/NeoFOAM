@@ -518,3 +518,14 @@ def test_boundary_conditions_step_explains_its_empty_state():
     template = server.state["trame__template_main"]
     assert "run Scan in the Geometry step to seed them" in template
     assert 'v-show="!geometry_patches.length"' in template
+    # The adder row is labelled "Patch name" itself, so the hint need not name the box.
+    assert "Property Name" not in template
+
+
+def test_forms_receive_the_adder_translations():
+    from neofoam.ui.forms import ADDER_TRANSLATIONS  # noqa: PLC0415
+
+    server = build_app(server=get_server("neofoam_ui_test_translations"), plugins=[])
+
+    assert ':translations="form_translations"' in server.state["trame__template_main"]
+    assert server.state["form_translations"] == ADDER_TRANSLATIONS

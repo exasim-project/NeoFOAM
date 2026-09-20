@@ -30,6 +30,7 @@ from neofoam.ui import jsonforms_module
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui.agent_panel import build_agent_panel
 from neofoam.ui.forms import (
+    ADDER_TRANSLATIONS,
     FormEntry,
     build_forms,
     js_identifier,
@@ -239,7 +240,7 @@ def build_app(
 
         def __init__(self, **kwargs: Any) -> None:
             super().__init__("json-forms", **kwargs)
-            self._attr_names += ["schema", "uischema", "data"]
+            self._attr_names += ["schema", "uischema", "data", "translations"]
             self._event_names += ["change"]
 
     solver = resolve_solver(solver_name)
@@ -287,6 +288,7 @@ def build_app(
         state[f"choice_{family.name}"] = family.members[0].name
         for c in family.members:
             state[f"sel_{c.name}"] = c is family.members[0]
+    state.form_translations = ADDER_TRANSLATIONS
     for entry in entries:
         state[_schema_key(entry)] = entry.schema
         state[entry.state_key] = dict(entry.defaults)
@@ -508,6 +510,7 @@ def build_app(
                 JsonForms(
                     schema=(_schema_key(entry),),
                     data=(entry.state_key,),
+                    translations=("form_translations",),
                     change=f"{entry.state_key} = $event.data",
                     **form_kwargs,
                 )
@@ -833,8 +836,7 @@ def build_app(
                     elif step.id == "bcs":
                         v3.VAlert(
                             "No patches scanned yet — run Scan in the Geometry step to seed"
-                            " them, or add one by hand: type the patch name into a field's"
-                            ' "Property Name" box and press +.',
+                            " them, or add one by hand below.",
                             type="info",
                             variant="tonal",
                             classes="mb-4",
