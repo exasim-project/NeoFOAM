@@ -41,6 +41,27 @@ the linked reference pages for the full API.
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
 
+``turbulence/``
+    The momentum-transport plugin family: the bundled models (``models/``) and
+    ``select_turbulence_model``, which builds the native-NeoN or the pybFoam
+    fallback handle.
+
+``viscosity/``
+    The ``viscosityModel`` plugin family (native ``newtonian``), with a fallback to
+    pybFoam's ``singlePhaseTransportModel``.
+
+``tools/``
+    Solver-agnostic preprocessing tools (``blockMesh``, ``snappyHexMesh``,
+    ``checkMesh``), their registry, and the ``system/preprocess.yaml`` runner behind
+    ``neofoam preprocess``.
+
+``telemetry/``
+    Opt-in OpenTelemetry performance tracing (``telemetry`` extra) and the trace
+    reports behind ``neofoam telemetry``.
+
+``cli/``
+    The Typer app behind the ``neofoam`` command — see :doc:`cli`.
+
 ``agent/``
     LLM case scaffolding: the pydantic-ai case-fill agent, forms, and the
     packaged marimo wizard template.
