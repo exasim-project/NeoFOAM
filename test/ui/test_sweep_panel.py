@@ -22,7 +22,7 @@ from trame.app import get_server  # noqa: E402
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
-from neofoam.ui.sweep_panel import _CSS  # noqa: E402
+from neofoam.ui.sweep_view import _CSS  # noqa: E402
 
 #: How long the stubbed snakemake run blocks — the real one takes ~1 s upwards.
 _DAG_SECONDS = 0.3
