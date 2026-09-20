@@ -10,7 +10,7 @@ to trame's client globals, so it binds to trame's single Vue app / Vuetify plugi
 instance (see ``vite.config.mjs`` / ``entry.mjs``).
 
 The built assets under ``static/`` are checked in; regenerate with
-``bun install && bunx vite build`` in this directory.
+``bun install --frozen-lockfile && bunx vite build`` in this directory.
 """
 
 from __future__ import annotations

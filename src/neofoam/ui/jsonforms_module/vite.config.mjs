@@ -8,7 +8,7 @@
 // 3.11.2 UMD does NOT include — it maps to `Vuetify.VStepperVertical` (undefined)
 // and only matters if a vertical-stepper uischema renders (ours don't).
 //
-// Regenerate: `bun install && bunx vite build` (outputs static/).
+// Regenerate: `bun install --frozen-lockfile && bunx vite build` (outputs static/).
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'

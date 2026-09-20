@@ -8,7 +8,7 @@ launches the NeoFOAM ``incompressibleFluid`` solver (meshing happens in-process 
 ``system/preprocess.yaml``), and ``./Allclean`` restores it to a clean state. ``Allrun``
 reuses the repo's ``scripts/Allrun`` template when available (source checkout), falling
 back to an embedded copy so an installed package still works; ``Allclean`` is authored
-here (the repo's ``scripts/Allclean`` is empty).
+here (the repo has no ``scripts/Allclean``).
 """
 
 from __future__ import annotations
