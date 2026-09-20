@@ -308,7 +308,7 @@ def ui(
     the AI chat on the right), then Save to write a runnable case (with
     ``Allrun``/``Allclean``) and validate it. Needs the ``ui`` extra::
 
-        pip install 'neofoam[ui]'
+        pip install 'neofoam\\[ui]'
         neofoam ui --port 8080
     """
     # Imported at call time so the CLI works without the optional 'ui' extra.
