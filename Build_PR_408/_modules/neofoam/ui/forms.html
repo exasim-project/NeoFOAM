@@ -627,6 +627,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">INPUT_KEYS</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">is_scheme_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SOLVER_COMPANION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.pydantic_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">slice_schema</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">tools</span>
 
@@ -934,19 +935,13 @@
     <span class="s2">"nf.entry"</span><span class="p">:</span> <span class="s2">"Entry, e.g. div(phi,k)"</span><span class="p">,</span>
     <span class="s2">"nf.solver"</span><span class="p">:</span> <span class="s2">"Field, e.g. p"</span><span class="p">,</span>
     <span class="s2">"nf.option"</span><span class="p">:</span> <span class="s2">"Option, e.g. maxIter"</span><span class="p">,</span>
+    <span class="s2">"nf.zone"</span><span class="p">:</span> <span class="s2">"Zone name, e.g. MRF1"</span><span class="p">,</span>
+    <span class="s2">"nf.source"</span><span class="p">:</span> <span class="s2">"Source name, e.g. momentumSource"</span><span class="p">,</span>
+    <span class="s2">"nf.keyword"</span><span class="p">:</span> <span class="s2">"Keyword, e.g. cellZone"</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="c1"># JSONForms addresses form data by dotted path (``boundaryField.inlet.type``), so a key</span>
-<span class="c1"># holding one of these characters would be read and written at the wrong place.</span>
-<span class="n">_ADDER_NAME_INVALID</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"A name containing . [ or ] cannot be added here: the form library reads them as"</span>
-    <span class="s2">" path separators."</span>
-<span class="p">)</span>
-
 <span class="n">ADDER_TRANSLATIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">text</span>
-    <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_ADDER_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"propertyNameLabel"</span><span class="p">,</span> <span class="n">label</span><span class="p">),</span> <span class="p">(</span><span class="s2">"propertyNameInvalid"</span><span class="p">,</span> <span class="n">_ADDER_NAME_INVALID</span><span class="p">))</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.propertyNameLabel"</span><span class="p">:</span> <span class="n">label</span> <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">_ADDER_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
 <span class="p">}</span>
 <span class="sd">"""JSONForms translations for the "add a key" rows (the ``&lt;json-forms&gt;`` ``translations``)."""</span>
 
@@ -981,16 +976,6 @@
         <span class="n">node</span><span class="p">[</span><span class="s2">"i18n"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nf.solver"</span>
 
 
-<span class="c1"># Which key sits next to ``solver`` in a linear-solver block: a Krylov solver takes a</span>
-<span class="c1"># preconditioner, a smoothing one a smoother. These are the OpenFOAM solvers the NeoN</span>
-<span class="c1"># backend maps too, so every suggestion runs on both.</span>
-<span class="n">_SOLVER_COMPANION</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"PCG"</span><span class="p">:</span> <span class="s2">"preconditioner"</span><span class="p">,</span>
-    <span class="s2">"PBiCGStab"</span><span class="p">:</span> <span class="s2">"preconditioner"</span><span class="p">,</span>
-    <span class="s2">"PBiCG"</span><span class="p">:</span> <span class="s2">"preconditioner"</span><span class="p">,</span>
-    <span class="s2">"smoothSolver"</span><span class="p">:</span> <span class="s2">"smoother"</span><span class="p">,</span>
-    <span class="s2">"GAMG"</span><span class="p">:</span> <span class="s2">"smoother"</span><span class="p">,</span>
-<span class="p">}</span>
 <span class="n">_PRECONDITIONERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"DIC"</span><span class="p">,</span> <span class="s2">"FDIC"</span><span class="p">,</span> <span class="s2">"DILU"</span><span class="p">,</span> <span class="s2">"diagonal"</span><span class="p">,</span> <span class="s2">"GAMG"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">]</span>
 <span class="n">_SMOOTHERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"symGaussSeidel"</span><span class="p">,</span> <span class="s2">"GaussSeidel"</span><span class="p">,</span> <span class="s2">"DICGaussSeidel"</span><span class="p">,</span> <span class="s2">"DIC"</span><span class="p">,</span> <span class="s2">"DILU"</span><span class="p">]</span>
 
@@ -999,12 +984,22 @@
 <span class="c1"># loaded case may name a solver OpenFOAM does not know (``Ginkgo``), and a</span>
 <span class="c1"># GAMG-preconditioned PCG nests a dictionary under ``preconditioner``.</span>
 <span class="n">_SOLVER_CONTROLS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"solver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">_SOLVER_COMPANION</span><span class="p">)},</span>
+    <span class="s2">"solver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">SOLVER_COMPANION</span><span class="p">)},</span>
     <span class="s2">"preconditioner"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"string"</span><span class="p">,</span> <span class="s2">"object"</span><span class="p">],</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="n">_PRECONDITIONERS</span><span class="p">},</span>
     <span class="s2">"smoother"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span><span class="p">,</span> <span class="s2">"examples"</span><span class="p">:</span> <span class="n">_SMOOTHERS</span><span class="p">},</span>
     <span class="s2">"tolerance"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
     <span class="s2">"relTol"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"number"</span><span class="p">},</span>
 <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_companion_rules</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""One ``if solver … then required`` rule per companion key, so an empty one shows red."""</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">companion</span> <span class="ow">in</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">SOLVER_COMPANION</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="n">solvers</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">SOLVER_COMPANION</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">companion</span><span class="p">]</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"solver"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"enum"</span><span class="p">:</span> <span class="n">solvers</span><span class="p">}},</span> <span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"solver"</span><span class="p">]}</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"if"</span><span class="p">:</span> <span class="n">selected</span><span class="p">,</span> <span class="s2">"then"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="n">companion</span><span class="p">]}})</span>
+    <span class="k">return</span> <span class="n">rules</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_pin_solver_controls</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1017,7 +1012,8 @@
         <span class="k">return</span>
     <span class="n">node</span><span class="p">[</span><span class="s2">"nfSolvers"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="n">block</span><span class="p">[</span><span class="s2">"nfSolver"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_SOLVER_COMPANION</span>
+        <span class="n">block</span><span class="p">[</span><span class="s2">"nfSolver"</span><span class="p">]</span> <span class="o">=</span> <span class="n">SOLVER_COMPANION</span>
+        <span class="n">block</span><span class="p">[</span><span class="s2">"allOf"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_companion_rules</span><span class="p">()</span>
         <span class="n">block</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">key</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">control</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">key</span><span class="p">}</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">control</span> <span class="ow">in</span> <span class="n">_SOLVER_CONTROLS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
@@ -1042,19 +1038,41 @@
         <span class="n">node</span><span class="p">[</span><span class="s2">"nfGrid"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
 
+<span class="c1"># A config that is one open dictionary of named sub-dictionaries → what a name is there.</span>
+<span class="n">_DICTIONARY_CONFIGS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"MRFPropertiesConfig"</span><span class="p">:</span> <span class="s2">"nf.zone"</span><span class="p">,</span> <span class="s2">"FvOptionsConfig"</span><span class="p">:</span> <span class="s2">"nf.source"</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dictionary_cards</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""A :data:`_DICTIONARY_CONFIGS` schema as one card per sub-dictionary, each a keyword grid.</span>
+
+<span class="sd">    Such a config declares no property, so JSONForms' generated layout is empty and the</span>
+<span class="sd">    panel would show nothing; the bundled section renderer draws ``nfDicts``/``nfDict``.</span>
+<span class="sd">    """</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">_DICTIONARY_CONFIGS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">schema</span>
+    <span class="n">card</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"nfDict"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="s2">"nf.keyword"</span><span class="p">}</span>
+    <span class="c1"># The panel already names the file; the class name would head the section a second time.</span>
+    <span class="n">untitled</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="s2">"title"</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">untitled</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="n">card</span><span class="p">,</span> <span class="s2">"nfDicts"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"i18n"</span><span class="p">:</span> <span class="n">prefix</span><span class="p">}</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_patch_adder</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""A ``boundaryField`` schema drawn as one row per patch, its "add a key" row adding a patch.</span>
 
 <span class="sd">    ``nfPatches`` picks the bundled row renderer, which binds a patch through the map's</span>
 <span class="sd">    data, so a name holding ``.`` (``wall.left``) works. The row is labelled as a</span>
 <span class="sd">    patch-name box, and the BC union is typed ``object``: a new key is seeded from the</span>
-<span class="sd">    ``type``, and with none it would be the string ``""``.</span>
+<span class="sd">    ``type``, and with none it would be the string ``""``. Its ``default`` is the BC a</span>
+<span class="sd">    scan seeds on a wall, so a hand-added patch shows and saves a real type from the start.</span>
 <span class="sd">    """</span>
     <span class="n">props</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
     <span class="n">boundary_field</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">],</span> <span class="n">i18n</span><span class="o">=</span><span class="s2">"nf.patch"</span><span class="p">,</span> <span class="n">nfPatches</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">union</span> <span class="o">=</span> <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span>
     <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="o">**</span><span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">union</span><span class="p">,</span>
         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+        <span class="s2">"default"</span><span class="p">:</span> <span class="n">_role_bc_seed</span><span class="p">(</span><span class="s2">"wall"</span><span class="p">,</span> <span class="n">_arm_titles</span><span class="p">(</span><span class="n">union</span><span class="p">)),</span>
     <span class="p">}</span>
     <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">schema</span><span class="p">,</span> <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">props</span><span class="p">,</span> <span class="s2">"boundaryField"</span><span class="p">:</span> <span class="n">boundary_field</span><span class="p">}}</span>
 
@@ -1148,6 +1166,7 @@
 <span class="sd">    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.</span>
 <span class="sd">    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.</span>
 <span class="sd">    * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.</span>
+<span class="sd">    * **Open configs as cards** — see :func:`_dictionary_cards`.</span>
 <span class="sd">    """</span>
     <span class="n">class_names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{}))</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">inline_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
@@ -1215,8 +1234,7 @@
             <span class="n">node</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_hidden_discriminator</span><span class="p">(</span><span class="n">const</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">node</span>
 
-    <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">result</span></div>
+    <span class="k">return</span> <span class="n">_dictionary_cards</span><span class="p">(</span><span class="n">transform</span><span class="p">(</span><span class="n">schema</span><span class="p">))</span></div>
 
 
 
@@ -1480,13 +1498,16 @@
         <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,</span> <span class="p">{})</span>
         <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"additionalProperties"</span><span class="p">,</span> <span class="p">{})</span>
     <span class="p">)</span>
-    <span class="n">arms</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"oneOf"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ap</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"anyOf"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
-    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="n">arms</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">),</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arm</span><span class="p">[</span><span class="s2">"title"</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">out</span></div>
+    <span class="k">return</span> <span class="n">_arm_titles</span><span class="p">(</span><span class="n">ap</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_arm_titles</span><span class="p">(</span><span class="n">union</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The titles of a union's titled arms, in order."""</span>
+    <span class="n">arms</span> <span class="o">=</span> <span class="n">union</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"oneOf"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">union</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"anyOf"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">arm</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="n">arms</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arm</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_bc_type_for_role</span><span class="p">(</span><span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1518,6 +1539,12 @@
     <span class="k">return</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">type_name</span><span class="p">}</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_role_bc_seed</span><span class="p">(</span><span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The BC payload a patch of ``role`` starts with, given the field's ``allowed`` types."""</span>
+    <span class="n">is_vector</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">marker</span> <span class="ow">in</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">marker</span> <span class="ow">in</span> <span class="n">_VECTOR_MARKERS</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_bc_seed</span><span class="p">(</span><span class="n">_bc_type_for_role</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">allowed</span><span class="p">),</span> <span class="n">is_vector</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="seed_boundary_field">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.forms.html#neofoam.ui.forms.seed_boundary_field">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">seed_boundary_field</span><span class="p">(</span>
@@ -1531,14 +1558,12 @@
 <span class="sd">    Existing (user- or AI-filled) patch entries are preserved.</span>
 <span class="sd">    """</span>
     <span class="n">allowed</span> <span class="o">=</span> <span class="n">allowed_bc_types</span><span class="p">(</span><span class="n">bc_entry</span><span class="p">)</span>
-    <span class="n">is_vector</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">m</span> <span class="ow">in</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_VECTOR_MARKERS</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">current</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="n">bf</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span>
     <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="n">patches</span><span class="p">:</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">patch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bf</span><span class="p">:</span>
-            <span class="n">bc_type</span> <span class="o">=</span> <span class="n">_bc_type_for_role</span><span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"role"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span> <span class="n">allowed</span><span class="p">)</span>
-            <span class="n">bf</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_bc_seed</span><span class="p">(</span><span class="n">bc_type</span><span class="p">,</span> <span class="n">is_vector</span><span class="p">)</span>
+            <span class="n">bf</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_role_bc_seed</span><span class="p">(</span><span class="n">patch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"role"</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span> <span class="n">allowed</span><span class="p">)</span>
     <span class="n">data</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">]</span> <span class="o">=</span> <span class="n">bf</span>
     <span class="k">return</span> <span class="n">data</span></div>
 

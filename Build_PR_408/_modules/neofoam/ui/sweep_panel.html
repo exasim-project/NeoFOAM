@@ -708,6 +708,12 @@
 <span class="s2">  cursor: pointer;</span>
 <span class="s2">}</span>
 <span class="s2">.nf-sweep-configure { padding: 12px 16px; }</span>
+<span class="s2">/* Phone/tablet: the palette stacks above a fixed-height canvas. */</span>
+<span class="s2">@media (max-width: 959.98px) {</span>
+<span class="s2">  .nf-sweep-stage { flex-direction: column; }</span>
+<span class="s2">  .nf-sweep-palette { max-height: 32vh; width: auto; flex: 0 0 auto; }</span>
+<span class="s2">  .nf-sweep-out-dir { flex: 0 0 100%; }</span>
+<span class="s2">}</span>
 <span class="s2">"""</span>
 
 
@@ -1895,7 +1901,7 @@
         <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-4"</span><span class="p">):</span>
             <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">():</span>
                 <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VRow</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">():</span>
+                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCol</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-out-dir"</span><span class="p">):</span>
                         <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
                             <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"sweep_out_dir"</span><span class="p">,),</span>
                             <span class="n">label</span><span class="o">=</span><span class="s2">"Sweep directory (default: &lt;target&gt;-sweep)"</span><span class="p">,</span>
@@ -1974,7 +1980,9 @@
         <span class="p">)</span>
 
         <span class="c1"># Palette + canvas.</span>
-        <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex mb-4"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"gap: 12px; align-items: stretch;"</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
+            <span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex mb-4 nf-sweep-stage"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"gap: 12px; align-items: stretch;"</span>
+        <span class="p">):</span>
             <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-palette"</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_palette</span><span class="p">()</span>
             <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">(</span><span class="n">variant</span><span class="o">=</span><span class="s2">"outlined"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"nf-sweep-canvas"</span><span class="p">):</span>

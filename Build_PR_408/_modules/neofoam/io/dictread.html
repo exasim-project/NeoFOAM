@@ -684,7 +684,8 @@
 <span class="sd">    A missing file or a missing ``section`` yields ``{}`` (a genuine absence other</span>
 <span class="sd">    checks own). A present sub-entry whose leaf cannot be rendered keeps every</span>
 <span class="sd">    sibling leaf and every other sub-entry — the leaf alone becomes</span>
-<span class="sd">    :class:`Unreadable`.</span>
+<span class="sd">    :class:`Unreadable`. A nested block is skipped, except OpenFOAM's</span>
+<span class="sd">    name-or-dictionary entry, which reads as the name it holds.</span>
 <span class="sd">    """</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Leaf</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -707,11 +708,14 @@
         <span class="n">leaves</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Leaf</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sub</span><span class="o">.</span><span class="n">toc</span><span class="p">():</span>
             <span class="n">leaf_key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">):</span>
+            <span class="c1"># OpenFOAM's name-or-dictionary entry (``preconditioner { preconditioner</span>
+            <span class="c1"># GAMG; … }``) reads as its inner name; any other nested block is skipped.</span>
+            <span class="n">holder</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">)</span> <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">)</span> <span class="k">else</span> <span class="n">sub</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">holder</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">):</span>
                 <span class="k">continue</span>
             <span class="c1"># _leaf invokes the thunk eagerly right here, before ``leaf_key``</span>
             <span class="c1"># advances, so no late-binding capture guard is needed.</span>
-            <span class="n">leaves</span><span class="p">[</span><span class="n">leaf_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_leaf</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">sub</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">str</span><span class="p">](</span><span class="n">leaf_key</span><span class="p">))</span>
+            <span class="n">leaves</span><span class="p">[</span><span class="n">leaf_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_leaf</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">holder</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">str</span><span class="p">](</span><span class="n">leaf_key</span><span class="p">))</span>
         <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">leaves</span>
     <span class="k">return</span> <span class="n">out</span></div>
 

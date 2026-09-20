@@ -740,7 +740,35 @@
 <span class="s2">.v-expansion-panel--active &gt; .v-expansion-panel-title { color: rgb(31, 95, 191); }</span>
 <span class="s2">.nf-step-title { letter-spacing: -0.3px; }</span>
 <span class="s2">.v-navigation-drawer .v-list-item-title { font-weight: 500; }</span>
+<span class="s2">/* Phone/tablet (below Vuetify's md breakpoint, where both drawers are overlays). */</span>
+<span class="s2">@media (max-width: 959.98px) {</span>
+<span class="s2">  .v-navigation-drawer { max-width: calc(100vw - 56px); }</span>
+<span class="s2">  .v-main .v-expansion-panel-text__wrapper { padding: 8px 8px 16px; }</span>
+<span class="s2">  .v-main .v-btn:not(.v-btn--icon), .v-app-bar .v-btn:not(.v-btn--icon) { min-height: 40px; }</span>
+<span class="s2">}</span>
+<span class="s2">@media (max-width: 599.98px) {</span>
+<span class="s2">  .v-app-bar .v-toolbar-title { display: none; }</span>
+<span class="s2">}</span>
 <span class="s2">"""</span>
+
+<span class="c1"># Below Vuetify's md breakpoint (960 px) both drawers are closed-by-default overlays</span>
+<span class="c1"># with their own open flags, so a phone never inherits the desktop's open drawers.</span>
+<span class="n">_MOBILE</span> <span class="o">=</span> <span class="s2">"$vuetify.display.smAndDown"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_responsive_open</span><span class="p">(</span><span class="n">desktop_flag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mobile_flag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Drawer props: permanent + ``desktop_flag`` on desktop, overlay + ``mobile_flag`` below."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"permanent"</span><span class="p">:</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">,),</span>
+        <span class="s2">"temporary"</span><span class="p">:</span> <span class="p">(</span><span class="n">_MOBILE</span><span class="p">,),</span>
+        <span class="s2">"model_value"</span><span class="p">:</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2"> ? </span><span class="si">{</span><span class="n">mobile_flag</span><span class="si">}</span><span class="s2"> : </span><span class="si">{</span><span class="n">desktop_flag</span><span class="si">}</span><span class="s2">"</span><span class="p">,),</span>
+        <span class="s2">"update_modelValue"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2"> ? (</span><span class="si">{</span><span class="n">mobile_flag</span><span class="si">}</span><span class="s2"> = $event) : (</span><span class="si">{</span><span class="n">desktop_flag</span><span class="si">}</span><span class="s2"> = $event)"</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_toggle</span><span class="p">(</span><span class="n">desktop_flag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mobile_flag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""JS toggling whichever open flag the current display width uses."""</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2"> ? (</span><span class="si">{</span><span class="n">mobile_flag</span><span class="si">}</span><span class="s2"> = !</span><span class="si">{</span><span class="n">mobile_flag</span><span class="si">}</span><span class="s2">) : (</span><span class="si">{</span><span class="n">desktop_flag</span><span class="si">}</span><span class="s2"> = !</span><span class="si">{</span><span class="n">desktop_flag</span><span class="si">}</span><span class="s2">)"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_case_dir_for</span><span class="p">(</span><span class="n">stl_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -876,6 +904,8 @@
 
     <span class="n">state</span><span class="o">.</span><span class="n">current_step</span> <span class="o">=</span> <span class="n">steps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
     <span class="n">state</span><span class="o">.</span><span class="n">ai_panel</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># right AI drawer open by default (foldable)</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">ai_panel_mobile</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">main_drawer_mobile</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">state</span><span class="o">.</span><span class="n">target_dir</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">state</span><span class="o">.</span><span class="n">save_report</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state</span><span class="o">.</span><span class="n">scaffolded</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1031,7 +1061,8 @@
                 <span class="k">continue</span>
             <span class="n">seeded</span> <span class="o">=</span> <span class="n">seed_boundary_field</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">patch_rows</span><span class="p">,</span> <span class="n">state</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">state_key</span><span class="p">])</span>
             <span class="n">state</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">state_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">seeded</span>
-            <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seeded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="c1"># Only the scanned patches: one added by hand stays deletable.</span>
+            <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">patch_rows</span><span class="p">]</span>
             <span class="n">state</span><span class="p">[</span><span class="n">_schema_key</span><span class="p">(</span><span class="n">entry</span><span class="p">)]</span> <span class="o">=</span> <span class="n">patch_bc_schema</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">names</span><span class="p">)</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">patches</span><span class="p">)</span>
         <span class="n">state</span><span class="o">.</span><span class="n">geometry_severity</span> <span class="o">=</span> <span class="s2">"info"</span>
@@ -1326,12 +1357,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_ai_drawer</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Right-hand foldable AI chat drawer (multi-turn, fills the forms)."""</span>
         <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VNavigationDrawer</span><span class="p">(</span>
-            <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"ai_panel"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
             <span class="n">location</span><span class="o">=</span><span class="s2">"right"</span><span class="p">,</span>
             <span class="n">width</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">_responsive_open</span><span class="p">(</span><span class="s2">"ai_panel"</span><span class="p">,</span> <span class="s2">"ai_panel_mobile"</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"d-flex flex-column"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"height: 100%;"</span><span class="p">):</span>
-                <span class="n">v3</span><span class="o">.</span><span class="n">VToolbar</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"AI assistant"</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VToolbar</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">"AI assistant"</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                    <span class="c1"># The overlay leaves only a sliver of scrim to tap on a phone.</span>
+                    <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
+                        <span class="n">icon</span><span class="o">=</span><span class="s2">"mdi-close"</span><span class="p">,</span>
+                        <span class="n">click</span><span class="o">=</span><span class="s2">"ai_panel_mobile = false"</span><span class="p">,</span>
+                        <span class="n">v_if</span><span class="o">=</span><span class="n">_MOBILE</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="c1"># Scrolling transcript.</span>
                 <span class="k">with</span> <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"flex-grow-1 pa-3"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"overflow-y: auto;"</span><span class="p">):</span>
                     <span class="c1"># Empty-state hint + suggested prompts.</span>
@@ -1389,6 +1426,12 @@
         <span class="n">layout</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="s2">"NeoFOAM case wizard"</span><span class="p">)</span>
         <span class="n">client</span><span class="o">.</span><span class="n">Style</span><span class="p">(</span><span class="n">_CSS</span><span class="p">)</span>
 
+        <span class="c1"># The layout's own v-model would fight the display-dependent model below.</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">drawer</span><span class="o">.</span><span class="n">v_model</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">prop</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">_responsive_open</span><span class="p">(</span><span class="s2">"main_drawer"</span><span class="p">,</span> <span class="s2">"main_drawer_mobile"</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">drawer</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">layout</span><span class="o">.</span><span class="n">icon</span><span class="o">.</span><span class="n">click</span> <span class="o">=</span> <span class="n">_toggle</span><span class="p">(</span><span class="s2">"main_drawer"</span><span class="p">,</span> <span class="s2">"main_drawer_mobile"</span><span class="p">)</span>
+
         <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">drawer</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VList</span><span class="p">(</span><span class="n">nav</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="s2">"comfortable"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">):</span>
                 <span class="n">v3</span><span class="o">.</span><span class="n">VListSubheader</span><span class="p">(</span><span class="n">solver_name</span><span class="p">)</span>
@@ -1403,7 +1446,7 @@
                         <span class="p">),</span>
                         <span class="n">rounded</span><span class="o">=</span><span class="s2">"lg"</span><span class="p">,</span>
                         <span class="n">active</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">"current_step === '</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">'"</span><span class="p">,),</span>
-                        <span class="n">click</span><span class="o">=</span><span class="sa">f</span><span class="s2">"current_step = '</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">'"</span><span class="p">,</span>
+                        <span class="n">click</span><span class="o">=</span><span class="sa">f</span><span class="s2">"current_step = '</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">'; main_drawer_mobile = false"</span><span class="p">,</span>
                     <span class="p">)</span>
 
         <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">toolbar</span><span class="p">:</span>
@@ -1414,6 +1457,7 @@
                 <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">prepend_inner_icon</span><span class="o">=</span><span class="s2">"mdi-folder-arrow-down-outline"</span><span class="p">,</span>
                 <span class="n">style</span><span class="o">=</span><span class="s2">"max-width: 340px"</span><span class="p">,</span>
+                <span class="n">v_if</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
                 <span class="s2">"Save case"</span><span class="p">,</span>
@@ -1428,14 +1472,23 @@
             <span class="c1"># Fold / unfold the AI assistant drawer.</span>
             <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
                 <span class="n">icon</span><span class="o">=</span><span class="s2">"mdi-robot-happy-outline"</span><span class="p">,</span>
-                <span class="n">click</span><span class="o">=</span><span class="s2">"ai_panel = !ai_panel"</span><span class="p">,</span>
+                <span class="n">click</span><span class="o">=</span><span class="n">_toggle</span><span class="p">(</span><span class="s2">"ai_panel"</span><span class="p">,</span> <span class="s2">"ai_panel_mobile"</span><span class="p">),</span>
                 <span class="n">variant</span><span class="o">=</span><span class="s2">"text"</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="c1"># A phone toolbar has no room for the path: it gets a second row.</span>
+            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">Template</span><span class="p">(</span><span class="n">v_if</span><span class="o">=</span><span class="n">_MOBILE</span><span class="p">,</span> <span class="n">v_slot_extension</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
+                    <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"target_dir"</span><span class="p">,),</span>
+                    <span class="n">label</span><span class="o">=</span><span class="s2">"Target directory"</span><span class="p">,</span>
+                    <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">prepend_inner_icon</span><span class="o">=</span><span class="s2">"mdi-folder-arrow-down-outline"</span><span class="p">,</span>
+                    <span class="n">classes</span><span class="o">=</span><span class="s2">"mx-3"</span><span class="p">,</span>
+                <span class="p">)</span>
 
         <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
             <span class="n">_ai_drawer</span><span class="p">()</span>
 
-        <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">v3</span><span class="o">.</span><span class="n">VContainer</span><span class="p">(</span><span class="n">fluid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"pa-6"</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">v3</span><span class="o">.</span><span class="n">VContainer</span><span class="p">(</span><span class="n">fluid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"pa-4 pa-md-6"</span><span class="p">):</span>
             <span class="c1"># One uniform loop: every step renders its header, its bespoke panel</span>
             <span class="c1"># (models / geometry / review) and its schema-generated form panels.</span>
             <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">:</span>
