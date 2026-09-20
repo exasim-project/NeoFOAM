@@ -406,7 +406,8 @@ def test_export_sweep_with_real_config_classes(tmp_path: Path) -> None:
     transport = tools.config_schema(solver, "transport_properties_config")
     classes = config_classes_by_name(solver)
 
-    base = dict(transport.defaults)
+    # The defaults leave ``nu`` unset, which a Newtonian fluid must not.
+    base = {**transport.defaults, "nu": 1e-5}
     variant = {**base, "nu": 2e-5}
     export = export_sweep(
         tmp_path / "sweep",
@@ -439,7 +440,7 @@ def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:
         base_case=tmp_path / "base",
         dimensions={
             "mesh": mesh,
-            "transport_properties_config": {"nu1": {"transportModel": "Newtonian"}},
+            "transport_properties_config": {"nu1": {"transportModel": "Newtonian", "nu": 1e-5}},
         },
         classes=classes,
     )

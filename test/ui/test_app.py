@@ -85,7 +85,7 @@ def test_save_case_round_trip(tmp_path):
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:
         server.state[entry.state_key] = (
-            dict(defaults) if entry.config_name == "transport_properties_config" else {}
+            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
 
     server.state.target_dir = str(tmp_path)
@@ -106,7 +106,7 @@ def test_save_scaffolds_and_validates(tmp_path):
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:
         server.state[entry.state_key] = (
-            dict(defaults) if entry.config_name == "transport_properties_config" else {}
+            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
     server.state.target_dir = str(tmp_path)
     server.controller.save_case()
@@ -175,7 +175,7 @@ def _seed_transport_defaults(server) -> None:
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in server.controller.get_entries():
         server.state[entry.state_key] = (
-            dict(defaults) if entry.config_name == "transport_properties_config" else {}
+            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
 
 
@@ -333,7 +333,7 @@ def test_revalidate_reruns_without_resaving(tmp_path):
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:
         server.state[entry.state_key] = (
-            dict(defaults) if entry.config_name == "transport_properties_config" else {}
+            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
     server.state.target_dir = str(tmp_path)
     server.controller.save_case()

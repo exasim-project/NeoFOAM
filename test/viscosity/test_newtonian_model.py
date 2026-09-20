@@ -13,12 +13,16 @@ come from the case's ``expected.yaml`` — never a fabricated constructor argume
 
 from pathlib import Path
 
+import pytest
+
 from neofoam.framework.model import ModelRuntime
 from neofoam.viscosity.config import TransportPropertiesConfig
+from neofoam.viscosity.models.newtonian import newtonian
 from viscosity.conftest import build_as_solver, case_for
 
 #: Point the Newtonian model at the case the solver would feed it.
 NEWTONIAN = case_for("Newtonian")
+NEWTONIAN_WITHOUT_NU = Path(__file__).resolve().parent / "invalid_cases" / "newtonianWithoutNu"
 
 
 # --- model is built as a runtime; nu is a build-time constant (no step op) ---
@@ -28,6 +32,14 @@ def test_model_is_a_runtime() -> None:
 
 def test_contributes_no_step_operation() -> None:
     assert list(build_as_solver(NEWTONIAN).operations) == []
+
+
+def test_build_without_nu_raises() -> None:
+    # The solver instantiates models unvalidated, so the build itself must refuse
+    # a missing ``nu`` instead of running with zero viscosity.
+    runtime = newtonian.instantiate(NEWTONIAN_WITHOUT_NU)
+    with pytest.raises(ValueError, match="Newtonian.*requires 'nu'"):
+        runtime.run_build()
 
 
 # --- config: the model's own config loads, validates, and round-trips ---

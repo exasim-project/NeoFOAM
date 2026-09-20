@@ -34,7 +34,10 @@ def build(config: TransportPropertiesConfig) -> list[Any]:
     solver runs this through ``ModelRuntime.run_build()`` and merges the step.
     """
 
+    # Instantiation loads the config unvalidated, so a missing ``nu`` is refused here.
+    nu = config.newtonian_nu()
+
     def create_nu(_ctx: dict[str, Any]) -> Any:
-        return dimensioned_viscosity("nu", config.nu if config.nu is not None else 0.0)
+        return dimensioned_viscosity("nu", nu)
 
     return [field("nu", create_nu)]

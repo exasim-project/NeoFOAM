@@ -34,6 +34,7 @@ def test_aggregate_validates_and_round_trips(tmp_path):
     solver = _solver()
     entries = build_forms(solver)
     state = _state_from_defaults(entries, only={"transport_properties_config"})
+    state["dict:TransportPropertiesConfig"]["nu"] = 1e-05  # the defaults leave it unset
 
     # "Pimple" is the wizard's default pick of the pressure-velocity family — one
     # member of a pick-one family is always selected (see build_app).

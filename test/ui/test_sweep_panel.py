@@ -38,7 +38,7 @@ def _seed_defaults(server) -> None:
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in server.controller.get_entries():
         server.state[entry.state_key] = (
-            dict(defaults) if entry.config_name == "transport_properties_config" else {}
+            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
 
 
@@ -1049,7 +1049,7 @@ def test_load_exported_asks_before_it_replaces_the_forms(tmp_path):
     ctrl.sweep_confirm_load()
 
     assert not state.sweep_load_confirm_show
-    assert state[entry.state_key] == {"transportModel": "Newtonian"}
+    assert state[entry.state_key] == {"transportModel": "Newtonian", "nu": 1e-05}  # the saved base
     assert state.sweep_dims_on_canvas == ["transport_properties_config"]
 
 
