@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -234,7 +234,6 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -620,9 +619,9 @@
           <section id="module-neofoam.io.pydantic_schema">
 <span id="neofoam-io-pydantic-schema"></span><h1>neofoam.io.pydantic_schema<a class="headerlink" href="#module-neofoam.io.pydantic_schema" title="Link to this heading">¶</a></h1>
 <p>Helpers to drive JSON-schema forms from pydantic models.</p>
-<p>Pure pydantic + stdlib (no marimo / <code class="docutils literal notranslate"><span class="pre">json_schema_widget</span></code>). These back the
-case notebooks (<code class="docutils literal notranslate"><span class="pre">test/agent/hotRoom/case_ui.py</span></code> / <code class="docutils literal notranslate"><span class="pre">case_wizard.py</span></code>), which
-render each config’s <code class="docutils literal notranslate"><span class="pre">model_json_schema()</span></code> as an <code class="docutils literal notranslate"><span class="pre">&#64;rjsf</span></code> form:</p>
+<p>Pure pydantic + stdlib. These back the schema DTOs (<a class="reference internal" href="neofoam.io.schema.html#module-neofoam.io.schema" title="neofoam.io.schema"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.io.schema</span></code></a>)
+and the case wizard (<a class="reference internal" href="neofoam.ui.html#module-neofoam.ui" title="neofoam.ui"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.ui</span></code></a>), which render each config’s
+<code class="docutils literal notranslate"><span class="pre">model_json_schema()</span></code> as a form:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#neofoam.io.pydantic_schema.default_values" title="neofoam.io.pydantic_schema.default_values"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_values()</span></code></a> prefills a form with a config’s defaults;</p></li>
 <li><p><a class="reference internal" href="#neofoam.io.pydantic_schema.rjsf_uischema" title="neofoam.io.pydantic_schema.rjsf_uischema"><code class="xref py py-func docutils literal notranslate"><span class="pre">rjsf_uischema()</span></code></a> tidies the rjsf rendering of pydantic discriminated

@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Install NeoFOAM" href="../how-to/install.html"><link rel="prev" title="Typed configs: YAML, JSON, and OpenFOAM dictionaries" href="../auto_tutorials/example_04_configure_with_io.html">
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/tutorials/scaffold-a-case-wizard.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/tutorials/case-wizard.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>Scaffold a case wizard notebook - NeoFOAM documentation</title>
+        <title>Set up a case with the case wizard - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -234,7 +234,6 @@
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -599,7 +598,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/tutorials/scaffold-a-case-wizard.rst.txt" title="View this page">
+  <a class="muted-link" href="../_sources/tutorials/case-wizard.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -617,104 +616,116 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="scaffold-a-case-wizard-notebook">
-<h1>Scaffold a case wizard notebook<a class="headerlink" href="#scaffold-a-case-wizard-notebook" title="Link to this heading">¶</a></h1>
-<p>NeoFOAM ships an interactive <strong>case wizard</strong>: a <a class="reference external" href="https://marimo.io">marimo</a>
-notebook that renders the <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> configuration as web forms and
-(optionally) lets an AI agent fill a whole case from a natural-language
-description. The <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">agent</span> <span class="pre">wizard</span></code> command scaffolds the notebook into a
-directory of your choice so you can fill, save, and run a case without hand-editing
-OpenFOAM dictionaries.</p>
-<figure class="align-default" id="id1">
-<a class="reference internal image-reference" href="../_images/case_wizard_models.png"><img alt="The case wizard Models tab, pre-filled for a lid-driven cavity" src="../_images/case_wizard_models.png" style="width: 100%;" />
-</a>
-<figcaption>
-<p><span class="caption-text">The wizard lays a case out as a guided journey:
-<strong>Models → Schemes → BCs → Initial values</strong>.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
-</figcaption>
-</figure>
+          <section id="set-up-a-case-with-the-case-wizard">
+<h1>Set up a case with the case wizard<a class="headerlink" href="#set-up-a-case-with-the-case-wizard" title="Link to this heading">¶</a></h1>
+<p>NeoFOAM ships an interactive <strong>case wizard</strong>: a web app that renders a solver’s
+configuration as forms, generated from the same pydantic configs the solver reads,
+and (optionally) lets an AI assistant fill a whole case from a natural-language
+description. <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">ui</span></code> starts it, so you can fill, save, validate and run a
+case without hand-editing OpenFOAM dictionaries.</p>
+<p>The wizard lays a case out as a guided journey, one step per entry of the left
+drawer: <strong>Models → Geometry &amp; mesh → Boundary conditions → Initial values →
+Numerics → Parameters → Review &amp; run</strong>.</p>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
 <ul>
-<li><p>NeoFOAM installed (see <a class="reference internal" href="../how-to/install.html"><span class="doc">Install NeoFOAM</span></a>).</p></li>
-<li><p>The notebook extras:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">marimo</span> <span class="n">json</span><span class="o">-</span><span class="n">schema</span><span class="o">-</span><span class="n">widget</span>
+<li><p>NeoFOAM installed (see <a class="reference internal" href="../how-to/install.html"><span class="doc">Install NeoFOAM</span></a>) with the <code class="docutils literal notranslate"><span class="pre">ui</span></code> extra, which is
+part of <code class="docutils literal notranslate"><span class="pre">all</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="s2">".[ui]"</span>
 </pre></div>
 </div>
 </li>
-<li><p><em>Optional</em> — to use the AI chat, export an Anthropic key:</p>
+<li><p><em>Optional</em> — to use the AI assistant, export an Anthropic key:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="n">sk</span><span class="o">-...</span>
 </pre></div>
 </div>
-<p>Without a key the chat is disabled and the manual form-filling wizard still
-works.</p>
+<p>Without a key the assistant only answers that it is unavailable; filling the
+forms by hand still works.</p>
 </li>
 </ul>
 </section>
-<section id="step-1-scaffold-the-notebook">
-<h2>Step 1 — scaffold the notebook<a class="headerlink" href="#step-1-scaffold-the-notebook" title="Link to this heading">¶</a></h2>
-<p>Create a case directory and write the wizard into it:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>neofoam<span class="w"> </span>agent<span class="w"> </span>wizard<span class="w"> </span>my_cavity
+<section id="step-1-start-the-wizard">
+<h2>Step 1 — start the wizard<a class="headerlink" href="#step-1-start-the-wizard" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>neofoam<span class="w"> </span>ui
 </pre></div>
 </div>
-<p>This writes <code class="docutils literal notranslate"><span class="pre">my_cavity/case_wizard.py</span></code>. The notebook is self-contained — it
-imports its helpers from <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> and operates on the directory it lives
-in — so it is ready to run as-is. Use <code class="docutils literal notranslate"><span class="pre">--name</span></code> to change the file name or
-<code class="docutils literal notranslate"><span class="pre">--force</span></code> to overwrite an existing one.</p>
+<p>This serves the wizard on <code class="docutils literal notranslate"><span class="pre">http://localhost:8080/</span></code> and opens a browser tab.
+<code class="docutils literal notranslate"><span class="pre">--solver</span></code> picks the solver whose configs are edited (<code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>,
+the default, <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> or <code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code>); <code class="docutils literal notranslate"><span class="pre">--port</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--host</span></code> change the address and <code class="docutils literal notranslate"><span class="pre">--no-browser</span></code> keeps the browser closed — see
+<a class="reference internal" href="../reference/cli.html"><span class="doc">The neofoam command line</span></a>.</p>
+<p>Type the case directory into the toolbar’s <strong>Target directory</strong> field. It must be
+an absolute path (e.g. <code class="docutils literal notranslate"><span class="pre">/home/me/cases/my_cavity</span></code>), so the wizard never writes
+into the directory it was launched from.</p>
 </section>
-<section id="step-2-open-the-wizard">
-<h2>Step 2 — open the wizard<a class="headerlink" href="#step-2-open-the-wizard" title="Link to this heading">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>marimo<span class="w"> </span>edit<span class="w"> </span>my_cavity/case_wizard.py
-</pre></div>
-</div>
-<p>A browser tab opens with the wizard. It has four tabs:</p>
+<section id="step-2-walk-through-the-steps">
+<h2>Step 2 — walk through the steps<a class="headerlink" href="#step-2-walk-through-the-steps" title="Link to this heading">¶</a></h2>
+<p>Each step shows its forms as expandable panels; an edit is taken over as you type,
+there is no per-form submit.</p>
 <ul class="simple">
-<li><p><strong>Models</strong> — <code class="docutils literal notranslate"><span class="pre">controlDict</span></code>, transport and turbulence properties.</p></li>
-<li><p><strong>Schemes</strong> — <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> / <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> (what they need depends on the
-models chosen).</p></li>
-<li><p><strong>BCs</strong> — each field’s <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code>.</p></li>
-<li><p><strong>Initial values</strong> — each field’s <code class="docutils literal notranslate"><span class="pre">internalField</span></code>.</p></li>
+<li><p><strong>Models</strong> — pick one member of each model family (for <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>:
+the pressure-velocity algorithm, <code class="docutils literal notranslate"><span class="pre">Pimple</span></code> or <code class="docutils literal notranslate"><span class="pre">Simple</span></code>, and the momentum
+transport model, e.g. <code class="docutils literal notranslate"><span class="pre">laminar</span></code> or <code class="docutils literal notranslate"><span class="pre">kEpsilon</span></code>) and switch on optional models
+such as <em>Buoyancy (Boussinesq)</em>. Below the selection sit the model dictionaries:
+<code class="docutils literal notranslate"><span class="pre">controlDict</span></code>, <code class="docutils literal notranslate"><span class="pre">transportProperties</span></code>, <code class="docutils literal notranslate"><span class="pre">turbulenceProperties</span></code>, … A form owned
+by a model is only shown while that model is selected.</p></li>
+<li><p><strong>Geometry &amp; mesh</strong> — enter a folder of boundary STLs (or a case directory with
+<code class="docutils literal notranslate"><span class="pre">constant/triSurface/*.stl</span></code>) and click <strong>Scan</strong>. Give each patch found a role
+(<code class="docutils literal notranslate"><span class="pre">inlet</span></code>, <code class="docutils literal notranslate"><span class="pre">outlet</span></code>, <code class="docutils literal notranslate"><span class="pre">wall</span></code>, <code class="docutils literal notranslate"><span class="pre">symmetry</span></code>, <code class="docutils literal notranslate"><span class="pre">empty</span></code>) and a snappy surface
+its refinement levels, then click <strong>Write mesh</strong> to author <code class="docutils literal notranslate"><span class="pre">blockMeshDict</span></code>,
+<code class="docutils literal notranslate"><span class="pre">snappyHexMeshDict</span></code> and <code class="docutils literal notranslate"><span class="pre">preprocess.yaml</span></code>. The scan sets an empty <strong>Target
+directory</strong> to the scanned case and seeds the next step with the patches, each
+with a boundary condition matching its role.</p></li>
+<li><p><strong>Boundary conditions</strong> — each field’s <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code>, one row per patch.</p></li>
+<li><p><strong>Initial values</strong> — each field’s <code class="docutils literal notranslate"><span class="pre">dimensions</span></code> and <code class="docutils literal notranslate"><span class="pre">internalField</span></code>.</p></li>
+<li><p><strong>Numerics</strong> — <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> and <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> of the selected models; the
+defaults are a runnable starting point.</p></li>
+<li><p><strong>Parameters</strong> — optional: sweep any config over named variants and export a
+Snakemake workflow. It clones the saved case, so save first.</p></li>
+<li><p><strong>Review &amp; run</strong> — see step 4.</p></li>
 </ul>
 </section>
-<section id="step-3-fill-the-case">
-<h2>Step 3 — fill the case<a class="headerlink" href="#step-3-fill-the-case" title="Link to this heading">¶</a></h2>
-<p>Either fill the forms by hand (expand a section, edit, click that form’s
-<strong>Submit</strong>), or describe the case to the AI chat at the top, e.g.:</p>
+<section id="step-3-let-the-assistant-fill-the-case-optional">
+<h2>Step 3 — let the assistant fill the case (optional)<a class="headerlink" href="#step-3-let-the-assistant-fill-the-case-optional" title="Link to this heading">¶</a></h2>
+<p>The toolbar toggles the <strong>AI assistant</strong> drawer. Describe the case, or click one
+of the suggested prompts, e.g.:</p>
 <blockquote>
-<div><p><em>Lid-driven cavity, laminar; top patch movingWall at (1 0 0), the other
-patches fixedWalls.</em></p>
+<div><p><em>Lid-driven cavity, laminar; top patch movingWall, other patches fixedWalls.</em></p>
 </div></blockquote>
-<p>The agent fills the tabs and writes the case to disk. The screenshot below shows
-the resulting velocity boundary conditions:</p>
-<figure class="align-default" id="id2">
-<a class="reference internal image-reference" href="../_images/case_wizard_bcs.png"><img alt="The case wizard BCs tab with the cavity velocity boundary conditions" src="../_images/case_wizard_bcs.png" style="width: 100%;" />
-</a>
-<figcaption>
-<p><span class="caption-text"><code class="docutils literal notranslate"><span class="pre">U</span></code> boundary conditions: <code class="docutils literal notranslate"><span class="pre">movingWall</span></code> fixed at <code class="docutils literal notranslate"><span class="pre">uniform</span> <span class="pre">(1</span> <span class="pre">0</span> <span class="pre">0)</span></code>,
-<code class="docutils literal notranslate"><span class="pre">fixedWalls</span></code> no-slip.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
-</figcaption>
-</figure>
-<p>Click <strong>Save case</strong> after any manual edits to (re)write the merged OpenFOAM
-dictionaries into the directory.</p>
+<p>The assistant fills the forms, selects the models it filled, writes the configs
+into the target directory (if one is set) and replies with a summary. Follow-up
+messages refine the same case. If patches are scanned, the same prompt also
+assigns their roles.
+The model is <code class="docutils literal notranslate"><span class="pre">claude-haiku-4-5</span></code> unless <code class="docutils literal notranslate"><span class="pre">NEOFOAM_CASE_MODEL</span></code> names another.</p>
+<p>To continue from an existing case, ask the assistant to open it:</p>
+<blockquote>
+<div><p><em>Load the case at /home/me/cases/cavity, then raise endTime to 10.</em></p>
+</div></blockquote>
+<p>Every config file of the case is read from disk into the forms; the assistant only
+changes what you asked for.</p>
 </section>
-<section id="step-4-add-a-mesh-and-run">
-<h2>Step 4 — add a mesh and run<a class="headerlink" href="#step-4-add-a-mesh-and-run" title="Link to this heading">¶</a></h2>
-<p>The wizard writes the configuration and field files but not the mesh. Add a
-<code class="docutils literal notranslate"><span class="pre">system/blockMeshDict</span></code> and generate the mesh (with the bundled pybFoam
-<code class="docutils literal notranslate"><span class="pre">blockMesh</span></code> or your OpenFOAM install), then run the solver from the case
-directory:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>my_cavity
-<span class="c1"># ... create system/blockMeshDict and run blockMesh ...</span>
-neofoam<span class="w"> </span>solver<span class="w"> </span>incompressiblefluid
+<section id="step-4-save-review-and-run">
+<h2>Step 4 — save, review and run<a class="headerlink" href="#step-4-save-review-and-run" title="Link to this heading">¶</a></h2>
+<p>Click <strong>Save case</strong> in the toolbar. The wizard switches to <strong>Review &amp; run</strong>,
+validates the forms against the solver’s configs, writes the OpenFOAM dictionaries
+and field files into the target directory, adds <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> and <code class="docutils literal notranslate"><span class="pre">Allclean</span></code> and
+checks the written case. Each finding names its file and, where known, a fix;
+<strong>Re-validate</strong> repeats the check after an edit on disk. Once the case is valid,
+run it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/me/cases/my_cavity
+./Allrun
 </pre></div>
 </div>
-<p>The dictionaries the wizard writes carry a proper <code class="docutils literal notranslate"><span class="pre">FoamFile</span></code> header, so the
-case is readable by OpenFOAM without copying a template.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Allrun</span></code> starts <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">incompressiblefluid</span></code>, which builds the mesh
+from <code class="docutils literal notranslate"><span class="pre">system/preprocess.yaml</span></code> before the time loop. The dictionaries the wizard
+writes carry a proper <code class="docutils literal notranslate"><span class="pre">FoamFile</span></code> header, so the case is readable by OpenFOAM
+without copying a template.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Prefer to drive the same pipeline from Python or an LLM without the notebook?
+<p>Prefer to drive the same pipeline from Python or an LLM without the web app?
 See <a class="reference internal" href="../auto_how-to/example_collect_and_save_configs.html"><span class="doc">Collect and save all of a solver’s configs</span></a> and the
-<code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">agent</span> <span class="pre">fill</span></code> command, which fill a target case from a source case.</p>
+<code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">agent</span> <span class="pre">fill</span></code> command, which fill a target case from a source case.
+How the wizard is built is described in <a class="reference internal" href="../reference/ui-architecture.html"><span class="doc">Case-wizard UI architecture</span></a>.</p>
 </div>
 </section>
 </section>
@@ -774,12 +785,12 @@ See <a class="reference internal" href="../auto_how-to/example_collect_and_save_
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Scaffold a case wizard notebook</a><ul>
+<li><a class="reference internal" href="#">Set up a case with the case wizard</a><ul>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li><a class="reference internal" href="#step-1-scaffold-the-notebook">Step 1 — scaffold the notebook</a></li>
-<li><a class="reference internal" href="#step-2-open-the-wizard">Step 2 — open the wizard</a></li>
-<li><a class="reference internal" href="#step-3-fill-the-case">Step 3 — fill the case</a></li>
-<li><a class="reference internal" href="#step-4-add-a-mesh-and-run">Step 4 — add a mesh and run</a></li>
+<li><a class="reference internal" href="#step-1-start-the-wizard">Step 1 — start the wizard</a></li>
+<li><a class="reference internal" href="#step-2-walk-through-the-steps">Step 2 — walk through the steps</a></li>
+<li><a class="reference internal" href="#step-3-let-the-assistant-fill-the-case-optional">Step 3 — let the assistant fill the case (optional)</a></li>
+<li><a class="reference internal" href="#step-4-save-review-and-run">Step 4 — save, review and run</a></li>
 </ul>
 </li>
 </ul>
