@@ -80,6 +80,7 @@ def test_renderer_keywords_match_the_js_sources_and_the_bundle():
 
 _MODULE_DIR = jsonforms_module.STATIC_DIR.parent
 _BUNX = shutil.which("bunx") or shutil.which("bunx", path=str(Path.home() / ".bun" / "bin"))
+_BUN = shutil.which("bun") or shutil.which("bun", path=str(Path.home() / ".bun" / "bin"))
 
 
 @pytest.mark.skipif(
@@ -100,3 +101,12 @@ def test_committed_bundle_equals_a_rebuild(tmp_path):
     for built in ("neofoam_jsonforms.umd.js", "neofoam_jsonforms.css"):
         committed = (jsonforms_module.STATIC_DIR / built).read_bytes()
         assert (tmp_path / built).read_bytes() == committed, f"{built} is stale: bunx vite build"
+
+
+@pytest.mark.skipif(_BUN is None, reason="needs bun")
+def test_renderer_rules_pass_their_bun_unit_tests():
+    # sectionSchema.mjs imports no UI library, so bun's built-in runner needs no
+    # node_modules/ and writes nothing.
+    result = subprocess.run([_BUN, "test"], cwd=_MODULE_DIR, capture_output=True, text=True)
+
+    assert result.returncode == 0, result.stdout + result.stderr

@@ -21,10 +21,14 @@
 // goes through the same JSONForms bindings and `createDefaultValue` as the stock ones.
 //
 // The same section renderer draws fvSolution's `solvers` (`nfSolvers`) as one card per
-// linear solver, and a block (`nfSolver`, see form_schema.py `_pin_solver_controls`) as a grid:
+// linear solver, and a block (`nfSolver`, see form_schema.py `_pin_solver_controls`) as cells:
 // `solver`, its preconditioner/smoother, `tolerance`, `relTol`, then the case's extra
 // options, "+ add option" at the foot. Each block is its own JSONForms instance, so its
 // paths start at the block: a solver named `alpha.water` never enters a dotted path.
+//
+// What these renderers decide from schema and data alone (an entry's schema, the pinned
+// keys, the companion key to drop, how a number reads and parses) lives in
+// sectionSchema.mjs, which imports no UI library and is unit-tested with `bun test`.
 //
 // A `boundaryField` map (`nfPatches`, see form_schema.py `_patch_adder`) is drawn as rows too, one
 // per patch. In every variant an entry whose key holds `.`, `[` or `]` (`wall.left`,
@@ -32,7 +36,7 @@
 // section's data; all other entries keep the cheap path binding.
 //
 // A config of free-form sub-dictionaries (`nfDicts`, see form_schema.py `_dictionary_cards`:
-// MRFProperties, fvOptions) reuses the cards, each entry (`nfDict`) a grid of its keywords.
+// MRFProperties, fvOptions) reuses the cards, each entry (`nfDict`) the cells of its keywords.
 //
 // An object of scalars only (`nfGrid`, see form_schema.py `_tag_scalar_grid`) keeps JSONForms'
 // generated layout and controls; its layout renderer just sets them in a wrapping grid.
@@ -65,6 +69,17 @@ import {
 import { VBtn, VCard, VCardText, VCardTitle, VSelect, VTextField } from 'vuetify/components'
 import '@jsonforms/vue-vuetify/lib/jsonforms-vue-vuetify.css'
 import './compact.css'
+import {
+  PATH_UNSAFE,
+  entryKeys,
+  entryShape,
+  formatNumber,
+  parseNumberInput,
+  pinnedKeys,
+  rowsSchema as sectionRowsSchema,
+  variantOf,
+  withoutStaleCompanions,
+} from './sectionSchema.mjs'
 
 // Inside a compact row or grid the error text shows only when there is one.
 const INLINE_FIELD = { on: { hideDetails: 'auto' }, off: {} }
@@ -90,16 +105,6 @@ const inlineChild = (control, schema, key) =>
     cells: control.cells,
   })
 
-// A tolerance reads `1e-6` as in a case file, not `0.000001`; the data stays a number.
-const formatNumber = (value) => {
-  const size = Math.abs(value)
-  if (typeof value !== 'number' || size === 0 || (size >= 1e-4 && size < 1e6)) return String(value)
-  return value.toExponential().replace('e+', 'e')
-}
-
-// What a number looks like while it is still being typed: `-`, `.`, `1e`, `1e-`.
-const PARTIAL_NUMBER = /^[-+]?\d*\.?\d*(e[-+]?)?$/i
-
 const NfNumberControl = defineComponent({
   name: 'nf-number-control',
   props: { ...rendererProps() },
@@ -116,9 +121,7 @@ const NfNumberControl = defineComponent({
     },
     // Text that can never become a number (`abc`, `0,5`) is not stored, so say so.
     inputError() {
-      const t = (this.editing ?? '').trim()
-      const fits = this.acceptsText || Number.isFinite(Number(t)) || PARTIAL_NUMBER.test(t)
-      return fits ? null : `'${t}' is not a number (write 0.5 or 1e-5)`
+      return parseNumberInput(this.editing, this.acceptsText)?.error ?? null
     },
     // An untyped option (`nSweeps 2`, `cacheAgglomeration on`) holds either.
     acceptsText() {
@@ -128,12 +131,8 @@ const NfNumberControl = defineComponent({
   methods: {
     onInput(txt) {
       this.editing = txt
-      const t = (txt ?? '').trim()
-      const n = Number(t)
-      if (t !== '' && Number.isFinite(n)) this.handleChange(this.control.path, n)
-      else if (this.acceptsText) this.handleChange(this.control.path, t)
-      else if (t === '') this.handleChange(this.control.path, undefined)
-      // Partial input ("1e-", "-") keeps the last valid value until it parses.
+      const parsed = parseNumberInput(txt, this.acceptsText)
+      if (parsed && 'value' in parsed) this.handleChange(this.control.path, parsed.value)
     },
   },
   render() {
@@ -211,26 +210,9 @@ const NfInlineOneOf = defineComponent({
   },
 })
 
-const JSON_TYPES = ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string']
-const OPEN_DICT = { type: 'object', additionalProperties: true }
-const isDict = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
-
-// How a keyed section is drawn, by the schema keyword that flags it.
-const VARIANTS = {
-  nfCompact: { name: 'rows', add: 'Add entry' },
-  nfPatches: { name: 'rows', add: 'Add patch' },
-  nfSolvers: { name: 'solvers', add: 'Add solver' },
-  nfSolver: { name: 'grid', add: 'Add option' },
-  nfDicts: { name: 'solvers', add: 'Add entry' },
-  nfDict: { name: 'grid', add: 'Add keyword' },
-}
-const variantOf = (schema) => VARIANTS[Object.keys(VARIANTS).find((flag) => schema[flag])]
-
 // A solver block is a form of its own, rooted at the block.
 const BLOCK_UISCHEMA = { type: 'Control', scope: '#' }
 const blockAjv = createAjv()
-// JSONForms and lodash read these as separators, so such a key cannot be part of a data path.
-const PATH_UNSAFE = /[.[\]]/
 
 // A section of like entries as a dense card: one row per entry, "+ add entry" at the foot.
 const NfCompactSection = defineComponent({
@@ -238,79 +220,35 @@ const NfCompactSection = defineComponent({
   props: { ...rendererProps() },
   setup(props) {
     const { control, handleChange } = useJsonFormsControl(props)
-    const declared = computed(() => control.value.schema.properties ?? {})
-    // The shape a new entry takes: that of its declared siblings, else the map's own.
-    const like = computed(() => {
-      const open = control.value.schema.additionalProperties
-      return Object.values(declared.value)[0] ?? (isDict(open) ? open : undefined)
-    })
+    const like = computed(() => entryShape(control.value.schema))
     // Kept per entry: a fresh schema or uischema object would restart an entry's own form
     // on every edit.
     const added = {}
     const ownUischemas = {}
-    // An entry only present in the data (a loaded case, or one added here) is drawn
-    // like its declared siblings when it has their object shape, else as a raw value.
-    // A declared string-or-dictionary (`preconditioner`) is drawn as what the data holds,
-    // and as a name while it is empty.
-    const rowsSchema = computed(() => {
-      const properties = { ...declared.value }
-      const data = control.value.data ?? {}
-      for (const key of Object.keys({ ...properties, ...data })) {
-        const value = data[key]
-        if (!(key in properties)) {
-          // A scheme or BC union has no `type` of its own, yet every arm is a dictionary.
-          const dicts = like.value?.type === 'object' || Array.isArray(like.value?.oneOf)
-          const shape = dicts ? like.value : OPEN_DICT
-          properties[key] = added[key + ':' + isDict(value)] ??= {
-            ...(isDict(value) ? shape : { type: JSON_TYPES }),
-            title: key,
-          }
-        } else if (Array.isArray(properties[key].type)) {
-          const types = properties[key].type.filter((type) => type !== 'object')
-          const type = types.length > 1 ? types : types[0]
-          properties[key] = { ...properties[key], ...(isDict(value) ? OPEN_DICT : { type }) }
-        }
-      }
-      // A solver block's companion key reads as required: the solver does not run without.
-      const companion = control.value.schema.nfSolver?.[control.value.data?.solver]
-      const required = [...(control.value.schema.required ?? []), ...(companion ? [companion] : [])]
-      return { ...control.value.schema, properties, required }
-    })
-    // Picking a solver of the other family drops the companion key it does not take; the
-    // one it takes then shows empty. Only an edit of `solver` alone counts (not a loaded
-    // case), and a solver the map does not know (`Ginkgo`) drops nothing.
+    const rowsSchema = computed(() =>
+      sectionRowsSchema(control.value.schema, control.value.data, added),
+    )
     watch(
       () => control.value.data,
       (now, before) => {
-        const companions = control.value.schema.nfSolver
-        const keep = companions?.[now?.solver]
-        if (!keep || !isDict(before) || now.solver === before.solver) return
-        if (JSON.stringify({ ...now, solver: 0 }) !== JSON.stringify({ ...before, solver: 0 })) return
-        const kept = { ...now }
-        for (const key of Object.values(companions)) if (key !== keep) delete kept[key]
-        if (Object.keys(kept).length !== Object.keys(now).length)
-          handleChange(control.value.path, kept)
+        const kept = withoutStaleCompanions(now, before, control.value.schema.nfSolver)
+        if (kept) handleChange(control.value.path, kept)
       },
     )
     const newName = ref(null) // null: adder closed
     const t = useTranslator()
     const i18n = { translate: (...args) => t.value(...args) }
-    return { control, handleChange, declared, like, rowsSchema, newName, t, i18n, ownUischemas }
+    return { control, handleChange, like, rowsSchema, newName, t, i18n, ownUischemas }
   },
   computed: {
     variant() {
       return variantOf(this.control.schema)
     },
-    // A grid always shows `solver`, the key that solver takes, `tolerance` and `relTol`.
     pinned() {
-      const c = this.control
-      if (!c.schema.nfSolver) return Object.keys(this.declared)
-      return ['solver', c.schema.nfSolver[c.data?.solver], 'tolerance', 'relTol'].filter(Boolean)
+      return pinnedKeys(this.control.schema, this.control.data)
     },
     keys() {
-      if (this.variant.name !== 'grid') return Object.keys(this.rowsSchema.properties)
-      const extras = Object.keys(this.control.data ?? {}).filter((k) => !this.pinned.includes(k))
-      return [...this.pinned, ...extras]
+      return entryKeys(this.variant.layout, this.rowsSchema, this.pinned, this.control.data)
     },
     i18nPrefix() {
       const c = this.control
@@ -387,7 +325,7 @@ const NfCompactSection = defineComponent({
         onClick: () => this.remove(key),
       })
     },
-    rows(key) {
+    rowEntry(key) {
       const required = (this.control.schema.required ?? []).includes(key)
       return h('div', { class: 'nf-compact-row', key }, [
         h('span', { class: 'nf-compact-key' }, key + (required ? '*' : '')),
@@ -397,17 +335,17 @@ const NfCompactSection = defineComponent({
         ]),
       ])
     },
-    solvers(key) {
-      return h('div', { class: 'nf-solver', key }, [
+    cardEntry(key) {
+      return h('div', { class: 'nf-card-entry', key }, [
         this.ownForm(key, BLOCK_UISCHEMA),
         this.trash(key),
       ])
     },
-    grid(key) {
+    cellEntry(key) {
       const { examples: suggestion, type } = this.rowsSchema.properties[key]
       // A number takes one column, a name two, a nested dictionary the whole row.
-      const size = { 'nf-grid-number': type === 'number', 'nf-grid-dict': type === 'object' }
-      return h('div', { class: ['nf-grid-cell', size], key }, [
+      const size = { 'nf-cell-number': type === 'number', 'nf-cell-dict': type === 'object' }
+      return h('div', { class: ['nf-cell', size], key }, [
         this.child(key, { ...INLINE_OPTIONS, suggestion }),
         this.trash(key),
       ])
@@ -460,10 +398,13 @@ const NfCompactSection = defineComponent({
   render() {
     const c = this.control
     if (!c.visible) return null
+    const { layout } = this.variant
+    // Not `this[layout]`: `cells` is also a JSONForms prop of every renderer.
+    const entry = { rows: this.rowEntry, cards: this.cardEntry, cells: this.cellEntry }[layout]
     return h(VCard, { class: 'nf-compact mb-2', flat: true, border: true }, () => [
       c.label ? h(VCardTitle, { class: 'text-subtitle-1' }, () => c.label) : null,
-      h(VCardText, { class: { 'pt-0': c.label, 'pb-1': this.variant.name === 'grid' } }, () => [
-        h('div', { class: 'nf-' + this.variant.name }, this.keys.map(this[this.variant.name])),
+      h(VCardText, { class: { 'pt-0': c.label, 'pb-1': layout === 'cells' } }, () => [
+        h('div', { class: 'nf-' + layout }, this.keys.map(entry)),
         this.adder(),
       ]),
     ])
