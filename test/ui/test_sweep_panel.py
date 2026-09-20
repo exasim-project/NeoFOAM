@@ -625,7 +625,9 @@ def test_add_cad_dimension_puts_node_on_canvas_and_configures_it():
     assert "already on the canvas" in state.sweep_error
 
 
-def test_export_with_cad_dimension_writes_cad_configs(tmp_path):
+def test_export_with_cad_dimension_is_refused(tmp_path):
+    # Core cannot export a cad axis (the CAD plugin owns that): it refuses loudly
+    # instead of silently dropping the axis.
     server = build_app(server=get_server("neofoam_ui_test_sweep_cad_export"))
     state, ctrl = server.state, server.controller
     _seed_defaults(server)
@@ -636,16 +638,9 @@ def test_export_with_cad_dimension_writes_cad_configs(tmp_path):
     ctrl.sweep_add_cad_dimension("geometry/design.FCStd", {"tube_d": 8.0})
     ctrl.sweep_export()
 
-    assert state.sweep_error == ""
-    out = Path(state.sweep_out_dir)
-    cad_cfg = out / "configs" / "cad" / "base.json"
-    assert cad_cfg.is_file()
-    assert json.loads(cad_cfg.read_text()) == {"tube_d": 8.0}
-    snake = (out / "Snakefile").read_text()
-    assert 'CAD_MODEL = "geometry/design.FCStd"' in snake
-    assert any(
-        "cad_geometry.smk" in line for line in snake.splitlines() if line.startswith("include:")
-    )
+    assert "CAD plugin" in state.sweep_error
+    assert state.sweep_exported == []
+    assert not (tmp_path / "base-sweep").exists()
 
 
 def test_export_requires_saved_case(tmp_path):
@@ -744,41 +739,6 @@ def test_load_exported_rebuilds_canvas(tmp_path):
     # A freshly loaded sweep matches disk — not dirty.
     assert not s2.sweep_dirty
     assert "Loaded 1 dimension" in s2.sweep_status
-
-
-def test_load_exported_restores_cad_axis(tmp_path):
-    # V4 + CAD: a round-tripped CAD sweep reappears on the canvas (the axis is
-    # otherwise silently dropped since it has no solver-config entry).
-    server = build_app(server=get_server("neofoam_ui_test_sweep_cad_rt_export"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
-    state.target_dir = str(tmp_path / "base")
-    ctrl.save_case()
-
-    ctrl.sweep_toggle_dimension("transport_properties_config")
-    ctrl.sweep_add_cad_dimension("geometry/design.FCStd", {"R_mm": 8.0})
-    dim = "dim:cad"
-    ctrl.sweep_rename_buffer(dim, "R8")
-    ctrl.sweep_variant_rename(dim)
-    ctrl.sweep_variant_add(dim)
-    ctrl.sweep_rename_buffer(dim, "R10")
-    ctrl.sweep_variant_rename(dim)
-    ctrl.sweep_variant_edit(dim, {"R_mm": 10.0})
-    ctrl.sweep_export()
-    assert state.sweep_error == ""
-    out_dir = state.sweep_out_dir
-
-    # Fresh server: load the exported cad sweep from the directory field.
-    server2 = build_app(server=get_server("neofoam_ui_test_sweep_cad_rt_load"))
-    s2, c2 = server2.state, server2.controller
-    s2.sweep_out_dir = out_dir
-    c2.sweep_load()
-    c2.sweep_confirm_load()  # the base-case restore is confirmed
-
-    assert "cad" in s2.sweep_dims_on_canvas
-    cad_node = next(n for n in _dim_nodes(server2) if n["id"] == "dim:cad")
-    assert set(cad_node["data"]["entries"]) == {"R8", "R10"}
-    assert cad_node["data"]["entries"]["R10"] == {"R_mm": 10.0}
 
 
 def test_load_exported_reports_missing_directory():

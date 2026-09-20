@@ -344,7 +344,9 @@ class SweepPanel:
         """Rebuild the whole canvas (dimension + pipeline nodes) from the model."""
         states = self._model.sorted_dims()
         dim_nodes = [self._dim_node_dict(s, i) for i, s in enumerate(states)]
-        rules = rule_nodes([s.name for s in states], enabled=self._model.enabled)
+        # A CAD axis feeds the mesh chain; it is not a per-case setup config port.
+        config_dims = [s.name for s in states if s.kind != "cad"]
+        rules = rule_nodes(config_dims, enabled=self._model.enabled)
         nodes = [*dim_nodes, *rules]
         self._editor.graph = {"nodes": nodes, "edges": autowire(nodes)}
         self._server.state.sweep_dims_on_canvas = sorted(s.name for s in states)

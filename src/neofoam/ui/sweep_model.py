@@ -246,8 +246,8 @@ class SweepModel:
     def cad_dimensions(self) -> dict[str, dict[str, Any]]:
         """The CAD axes as ``{name: {"model": path, "variants": {name: params}}}``.
 
-        The shape :func:`neofoam.tooling.workflow.sweep.export_sweep` consumes as its
-        ``cad`` kwarg; empty when no CAD dimension is on the canvas.
+        The shape the external CAD plugin exports; core ``export_sweep`` has no CAD
+        support. Empty when no CAD dimension is on the canvas.
         """
         return {
             name: {"model": d.model_path, "variants": dict(d.entries)}
