@@ -410,6 +410,7 @@ def _configure_tab(panel: SweepPanel, json_forms: type, html: Any, v3: Any) -> N
                 json_forms(
                     schema=("sweep_cfg_schema",),
                     data=("sweep_cfg_data",),
+                    translations=("form_translations",),
                     change="sweep_cfg_data = $event.data;"
                     " trigger('nf_sweep_edit', ['dim:' + sweep_cfg_dim,"
                     " $event.data])",

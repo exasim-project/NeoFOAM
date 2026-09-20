@@ -11,16 +11,16 @@ export const PATH_UNSAFE = /[.[\]]/
 
 // How a keyed section is drawn, by the schema keyword that flags it.
 export const LAYOUTS = ['rows', 'cards', 'cells']
-export const VARIANTS = {
-  nfCompact: { layout: 'rows', add: 'Add entry' },
-  nfPatches: { layout: 'rows', add: 'Add patch' },
-  nfSolvers: { layout: 'cards', add: 'Add solver' },
-  nfSolver: { layout: 'cells', add: 'Add option' },
-  nfDicts: { layout: 'cards', add: 'Add entry' },
-  nfDict: { layout: 'cells', add: 'Add keyword' },
+export const LAYOUT_BY_KEYWORD = {
+  nfCompact: 'rows',
+  nfPatches: 'rows',
+  nfSolvers: 'cards',
+  nfSolver: 'cells',
+  nfDicts: 'cards',
+  nfDict: 'cells',
 }
-export const variantOf = (schema) =>
-  VARIANTS[Object.keys(VARIANTS).find((flag) => schema[flag])]
+export const layoutOf = (schema) =>
+  LAYOUT_BY_KEYWORD[Object.keys(LAYOUT_BY_KEYWORD).find((flag) => schema[flag])]
 
 // The shape a new entry takes: that of its declared siblings, else the map's own.
 export const entryShape = (schema) => {

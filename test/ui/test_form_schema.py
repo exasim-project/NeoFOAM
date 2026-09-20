@@ -192,6 +192,24 @@ def test_every_add_a_key_row_of_the_wizard_is_labelled(solver_name):
         assert open_sites <= set(_keyword_sites(entry.schema, "i18n")), entry.key
 
 
+@pytest.mark.parametrize(
+    ("prefix", "text"),
+    [
+        ("nf.patch", "Add patch"),
+        ("nf.entry", "Add entry"),
+        ("nf.solver", "Add solver"),
+        ("nf.option", "Add option"),
+        ("nf.zone", "Add zone"),
+        ("nf.source", "Add source"),
+        ("nf.keyword", "Add keyword"),
+    ],
+)
+def test_adder_button_names_what_it_adds(prefix, text):
+    from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
+
+    assert ADDER_TRANSLATIONS[f"{prefix}.addLabel"] == text
+
+
 def test_adder_translations_cover_every_emitted_prefix():
     from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
 
@@ -202,6 +220,7 @@ def test_adder_translations_cover_every_emitted_prefix():
         for entry in build_forms(resolve_solver(name)):
             for prefix in _keyword_sites(entry.schema, "i18n").values():
                 assert f"{prefix}.propertyNameLabel" in ADDER_TRANSLATIONS
+                assert f"{prefix}.addLabel" in ADDER_TRANSLATIONS
 
 
 @pytest.mark.parametrize("solver_name", list_solver_names())

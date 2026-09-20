@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from neofoam.ui import jsonforms_module
-from neofoam.ui.form_schema import RENDERER_KEYWORDS
+from neofoam.ui.form_schema import ADDER_TRANSLATIONS, RENDERER_KEYWORDS
 
 # `nf*` names the JS sets and reads itself (uischema options), never sent by Python.
 _JS_INTERNAL = {"nfInline", "nfRowKey"}
@@ -76,6 +76,18 @@ def test_renderer_keywords_match_the_js_sources_and_the_bundle():
 
     assert in_sources - _JS_INTERNAL == set(RENDERER_KEYWORDS)
     assert set(RENDERER_KEYWORDS) <= in_bundle
+
+
+def test_adder_translations_match_the_ids_the_js_sources_ask_for():
+    # The renderer asks for `<i18n prefix>.<suffix>`; an id Python does not produce
+    # silently shows the JS fallback ("Add entry" on every adder), and one the JS never
+    # asks for is dead text.
+    sources = "\n".join(p.read_text() for p in jsonforms_module.STATIC_DIR.parent.glob("*.mjs"))
+    asked = set(re.findall(r"i18nPrefix \+ '\.(\w+)'", sources))
+    prefixes = {translation_id.rpartition(".")[0] for translation_id in ADDER_TRANSLATIONS}
+
+    assert asked == {"propertyNameLabel", "addLabel"}
+    assert set(ADDER_TRANSLATIONS) == {f"{p}.{suffix}" for p in prefixes for suffix in asked}
 
 
 _MODULE_DIR = jsonforms_module.STATIC_DIR.parent

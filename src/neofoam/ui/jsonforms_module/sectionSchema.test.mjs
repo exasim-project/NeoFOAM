@@ -4,13 +4,13 @@ import { expect, test } from 'bun:test'
 import {
   LAYOUTS,
   PATH_UNSAFE,
-  VARIANTS,
+  LAYOUT_BY_KEYWORD,
   entryKeys,
   formatNumber,
   parseNumberInput,
   pinnedKeys,
   rowsSchema,
-  variantOf,
+  layoutOf,
   withoutStaleCompanions,
 } from './sectionSchema.mjs'
 
@@ -173,9 +173,9 @@ test('the companion of the chosen solver reads as required', () => {
 })
 
 test('every section keyword names a layout the renderer draws', () => {
-  for (const { layout } of Object.values(VARIANTS)) expect(LAYOUTS).toContain(layout)
-  expect(variantOf({ nfSolvers: true }).layout).toBe('cards')
-  expect(variantOf({ type: 'object' })).toBeUndefined()
+  for (const layout of Object.values(LAYOUT_BY_KEYWORD)) expect(LAYOUTS).toContain(layout)
+  expect(layoutOf({ nfSolvers: true })).toBe('cards')
+  expect(layoutOf({ type: 'object' })).toBeUndefined()
 })
 
 test.each(['wall.left', 'div(phi,alpha.water)', 'a[0]'])('%p cannot be part of a data path', (key) => {

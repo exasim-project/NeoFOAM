@@ -207,19 +207,23 @@ def _accepts_new_keys(node: dict[str, Any]) -> bool:
 
 
 # What each kind of "add a key" row adds, keyed by the ``i18n`` prefix put on its schema
-# node. JSONForms would label all of them "Property Name".
+# node: the name field's label (JSONForms would say "Property Name" for all of them) and
+# the button's text, in the order of `_ADDER_SUFFIXES`.
+_ADDER_SUFFIXES = ("propertyNameLabel", "addLabel")
 _ADDER_LABELS = {
-    "nf.patch": "Patch name, e.g. inlet",
-    "nf.entry": "Entry, e.g. div(phi,k)",
-    "nf.solver": "Field, e.g. p",
-    "nf.option": "Option, e.g. maxIter",
-    "nf.zone": "Zone name, e.g. MRF1",
-    "nf.source": "Source name, e.g. momentumSource",
-    "nf.keyword": "Keyword, e.g. cellZone",
+    "nf.patch": ("Patch name, e.g. inlet", "Add patch"),
+    "nf.entry": ("Entry, e.g. div(phi,k)", "Add entry"),
+    "nf.solver": ("Field, e.g. p", "Add solver"),
+    "nf.option": ("Option, e.g. maxIter", "Add option"),
+    "nf.zone": ("Zone name, e.g. MRF1", "Add zone"),
+    "nf.source": ("Source name, e.g. momentumSource", "Add source"),
+    "nf.keyword": ("Keyword, e.g. cellZone", "Add keyword"),
 }
 
 ADDER_TRANSLATIONS: dict[str, str] = {
-    f"{prefix}.propertyNameLabel": label for prefix, label in _ADDER_LABELS.items()
+    f"{prefix}.{suffix}": text
+    for prefix, texts in _ADDER_LABELS.items()
+    for suffix, text in zip(_ADDER_SUFFIXES, texts, strict=True)
 }
 """JSONForms translations for the "add a key" rows (the ``<json-forms>`` ``translations``)."""
 

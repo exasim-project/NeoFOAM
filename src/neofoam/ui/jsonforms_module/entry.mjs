@@ -13,7 +13,8 @@
 // render a plain text field instead and parse any finite JS number (incl. "1e-5").
 //
 // `translations` (id -> text, built in form_schema.py) feeds JSONForms' i18n: a schema node's
-// `i18n` prefix picks e.g. "nf.patch.propertyNameLabel" for its "add a key" row.
+// `i18n` prefix picks e.g. "nf.patch.propertyNameLabel" and "nf.patch.addLabel" for the
+// name field and the button of its "add a key" row.
 //
 // A schema node flagged `nfCompact` (the fvSchemes sections, see form_schema.py `_tag_adders`)
 // renders as one row per entry — key left, variant + nested selects inline — instead
@@ -77,7 +78,7 @@ import {
   parseNumberInput,
   pinnedKeys,
   rowsSchema as sectionRowsSchema,
-  variantOf,
+  layoutOf,
   withoutStaleCompanions,
 } from './sectionSchema.mjs'
 
@@ -241,14 +242,14 @@ const NfCompactSection = defineComponent({
     return { control, handleChange, like, rowsSchema, newName, t, i18n, ownUischemas }
   },
   computed: {
-    variant() {
-      return variantOf(this.control.schema)
+    layout() {
+      return layoutOf(this.control.schema)
     },
     pinned() {
       return pinnedKeys(this.control.schema, this.control.data)
     },
     keys() {
-      return entryKeys(this.variant.layout, this.rowsSchema, this.pinned, this.control.data)
+      return entryKeys(this.layout, this.rowsSchema, this.pinned, this.control.data)
     },
     i18nPrefix() {
       const c = this.control
@@ -257,9 +258,7 @@ const NfCompactSection = defineComponent({
     nameError() {
       const name = this.newName
       if (!name) return null
-      if (this.keys.includes(name))
-        return this.t(this.i18nPrefix + '.propertyAlreadyDefined', `'${name}' already defined`)
-      return null
+      return this.keys.includes(name) ? `'${name}' already defined` : null
     },
   },
   methods: {
@@ -363,7 +362,7 @@ const NfCompactSection = defineComponent({
             disabled: !this.control.enabled,
             onClick: () => (this.newName = ''),
           },
-          () => this.variant.add,
+          () => this.t(this.i18nPrefix + '.addLabel', 'Add entry'),
         )
       return h('div', { class: 'nf-compact-adder' }, [
         h(VTextField, {
@@ -398,7 +397,7 @@ const NfCompactSection = defineComponent({
   render() {
     const c = this.control
     if (!c.visible) return null
-    const { layout } = this.variant
+    const layout = this.layout
     // Not `this[layout]`: `cells` is also a JSONForms prop of every renderer.
     const entry = { rows: this.rowEntry, cards: this.cardEntry, cells: this.cellEntry }[layout]
     return h(VCard, { class: 'nf-compact mb-2', flat: true, border: true }, () => [
@@ -450,7 +449,7 @@ const renderers = [
   ...vuetifyRenderers,
   { tester: rankWith(30, isNumberControl), renderer: NfNumberControl },
   {
-    tester: rankWith(40, and(isObjectControl, schemaMatches((s) => variantOf(s) !== undefined))),
+    tester: rankWith(40, and(isObjectControl, schemaMatches((s) => layoutOf(s) !== undefined))),
     renderer: NfCompactSection,
   },
   {
@@ -496,7 +495,7 @@ const NeoFoamJsonForms = defineComponent({
       h(JsonForms, {
         schema: schema.value,
         // A schema that is itself a section has no property for a generated layout to show.
-        uischema: props.uischema || (variantOf(props.schema) ? BLOCK_UISCHEMA : undefined),
+        uischema: props.uischema || (layoutOf(props.schema) ? BLOCK_UISCHEMA : undefined),
         data: props.data,
         renderers,
         i18n: i18n.value,
