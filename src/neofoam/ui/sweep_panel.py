@@ -89,7 +89,9 @@ _CSS = """
 .nf-sweep-node .port-row { position: relative; padding: 4px 14px; text-align: left; }
 .nf-sweep-node .port-row.out { text-align: right; }
 .nf-sweep-node .vue-flow__handle.nf-handle-file { border-radius: 2px; }
-.nf-sweep-palette { width: 300px; flex: 0 0 300px; overflow-y: auto; }
+/* Bounded to the canvas height: unbounded, the (much taller) palette stretches the
+   canvas card to its own height and the graph shrinks to an island at the top. */
+.nf-sweep-palette { max-height: 62vh; width: 300px; flex: 0 0 300px; overflow-y: auto; }
 .nf-sweep-canvas { flex: 1 1 auto; min-width: 0; }
 /* Phase L: dimension nodes are a compact overview — the form lives in the
    Configure tab below the canvas, not inside the node. */
@@ -251,7 +253,7 @@ class SweepPanel:
         ctrl.sweep_refresh_dag = self.refresh_dag
         ctrl.sweep_rewire = self.rewire
         ctrl.sweep_get_nodes = lambda: list(self._editor.nodes) if self._editor else []
-        ctrl.sweep_get_dag_nodes = lambda: (list(self._dag_view.nodes) if self._dag_view else [])
+        ctrl.sweep_get_dag_nodes = lambda: list(self._dag_view.nodes) if self._dag_view else []
         # The variant ops are node-template event handlers; registering them on
         # the controller too gives headless drivers (tests, scripted examples)
         # the same seam the browser uses.
@@ -1677,8 +1679,14 @@ class SweepPanel:
         self, v3: Any, *, items: str, on_canvas: str, click: Any, subtitle: Any
     ) -> None:
         """One palette group: add/remove toggle rows over an on-canvas array."""
+        # A row owned by a gated model follows its `sel_<model>` switch, like the form
+        # panels; the lookup names each state var so Vue tracks the selection.
+        entries = (*self._dims.values(), *self._field_dims.values())
+        owners = sorted({e.owner_model for e in entries if e.owner_model is not None})
+        selected = ", ".join(f"'{owner}': sel_{owner}" for owner in owners)
         with v3.VListItem(
             v_for=f"item in {items}",
+            v_show=f"!item.owner || ({{{selected}}})[item.owner]",
             key="item.value",
             click=(click, "[item.value]"),
             title=("item.title",),

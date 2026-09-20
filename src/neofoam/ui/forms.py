@@ -39,6 +39,10 @@ __all__ = [
 
 _BC_KEYS = ("boundaryField",)
 
+# The ``FoamFile`` header (version / format / class / object) a config may mirror is
+# boilerplate for the writer: it stays in the form data but gets no form controls.
+_FILE_HEADER = "FoamFile"
+
 # Mesh / preprocessing dict configs belong to the upstream meshing stage (the
 # geometry→mesh workflow), not the physics case wizard. They also aren't writable via
 # write_configs' merged path (preprocess.yaml uses YAMLStrategy). Exclude them.
@@ -138,9 +142,18 @@ def _slice_defaults(defaults: dict[str, Any], keep: tuple[str, ...]) -> dict[str
 
 
 # camelCase / snake_case boundary for human labels: "writeControl" → "Write control".
-_CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+# "NeoN" is a name, not two words: no break inside it, but one after it ("NeoN Control").
+_CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])(?!(?<=Neo)N(?![a-z]))|(?<=NeoN)(?=[A-Z])")
 # Sphinx roles in pydantic docstrings: ":class:`~a.b.C`" → "C".
 _SPHINX_ROLE_RE = re.compile(r":[a-zA-Z:]+:`~?([^`]+)`")
+
+
+def js_identifier(name: str) -> str:
+    """``name`` as a JS identifier: trame state vars are evaluated as Vue expressions,
+
+    so a field like ``alpha.water`` would otherwise read as ``alpha`` . ``water…``.
+    """
+    return re.sub(r"\W", "_", name)
 
 
 def humanize(key: str) -> str:
@@ -165,7 +178,9 @@ def _is_openfoam_block(node: Any) -> bool:
     return isinstance(node, dict) and str(node.get("title", "")).startswith("_")
 
 
-def _label_title(key: str, node: Any, *, in_block: bool) -> Any:
+def _label_title(
+    key: str, node: Any, *, in_block: bool, class_names: frozenset[str] = frozenset()
+) -> Any:
     """Title one property: verbatim for OpenFOAM keys, :func:`humanize`d for prose.
 
     ``in_block`` says the *owning* object is an OpenFOAM block, so ``key`` is a case
@@ -174,15 +189,19 @@ def _label_title(key: str, node: Any, *, in_block: bool) -> Any:
     form — humanising it destroys information a user cannot recover (``p_rghFinal`` →
     "P Rghfinal"), and the key is what the written case file contains, so it is shown
     exactly as typed. Otherwise a pydantic auto-title (``"Writecontrol"``) is replaced
-    by :func:`humanize`, and a hand-written title is kept.
+    by :func:`humanize`, and a hand-written title is kept. A nested model's title is its
+    class name (``class_names``), inherited through the ``$ref`` — two ``PhaseTransport``
+    cards tell the user nothing — so it counts as auto as well.
     """
     if not isinstance(node, dict):
         return node
     if in_block or _is_openfoam_block(node):
         return {**node, "title": key}
     title = node.get("title")
-    auto = title is None or (
-        isinstance(title, str) and title.replace(" ", "").lower() == key.lower()
+    auto = (
+        title is None
+        or title in class_names
+        or (isinstance(title, str) and title.replace(" ", "").lower() == key.lower())
     )
     return {**node, "title": humanize(key)} if auto else node
 
@@ -203,6 +222,18 @@ def _const_type_of(arm: dict[str, Any], defs: dict[str, Any]) -> str | None:
         node = defs.get(ref.rsplit("/", 1)[-1], {})
     const = node.get("properties", {}).get("type", {}).get("const")
     return const if isinstance(const, str) else None
+
+
+def _hidden_discriminator(const: str) -> dict[str, Any]:
+    """A ``type`` discriminator that stays in the data but renders no control.
+
+    The union's arm selector already names the type, so a second "Type" dropdown with
+    that one value only doubles the form's height. JSONForms generates a control per
+    property it can derive a JSON type for; a bare ``const`` gives it none, so the
+    property is skipped. ``default`` is what puts the value into the data JSONForms
+    creates when the user switches arm, and ``const`` still validates it.
+    """
+    return {"const": const, "default": const}
 
 
 def _string_field(node: dict[str, Any]) -> dict[str, Any]:
@@ -258,6 +289,26 @@ def _is_value_union(arms: list[Any]) -> bool:
     return has_str and has_num
 
 
+def _accepts_new_keys(node: dict[str, Any]) -> bool:
+    """Whether the "add a key" row of an ``additionalProperties: true`` object is useful.
+
+    JSONForms appends a "Property Name [+]" row to every such object. It earns its
+    place on a collection: an OpenFOAM section whose entries all share one shape
+    (``divSchemes`` gains a ``div(phi,k)``, ``solvers`` a solver block), or an object
+    declaring no keys at all (a solver block, ``fvOptions``), which is edited through
+    that row alone. A card of differently-shaped entries (``PIMPLE``, a phase's
+    transport, a whole ``fvSolution``) is fixed; there the keyword is dropped, which
+    hides the row and — absent meaning "allowed" — still validates the same data.
+    """
+    shapes = [
+        {k: v for k, v in prop.items() if k not in ("title", "default")}
+        for prop in node.get("properties", {}).values()
+    ]
+    if not shapes:
+        return True
+    return _is_openfoam_block(node) and all(shape == shapes[0] for shape in shapes)
+
+
 def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     """Resolve every ``#/$defs/...`` ``$ref`` into a self-contained subtree.
 
@@ -270,16 +321,23 @@ def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
     subschema self-contained, so AJV compiles each arm once and caches it.
 
     Sibling keys of a ``$ref`` (e.g. the arm ``title``) override the resolved
-    definition. Cyclic or unknown refs are left in place; ``discriminator``
-    keys are dropped (JSONForms ignores them, and their ``mapping`` would
-    dangle once the defs are gone). ``$defs`` is removed when nothing refers
-    to it anymore.
+    definition. A union arm that recurses into a definition being resolved is
+    dropped, which bounds a self-referential union at one level: inside
+    ``cellLimited`` the inner gradient scheme offers the non-recursive arms only
+    (OpenFOAM cases do not nest a limiter in a limiter). Other cyclic refs, and
+    unknown ones, are left in place; ``discriminator`` keys are dropped
+    (JSONForms ignores them, and their ``mapping`` would dangle once the defs are
+    gone). ``$defs`` is removed when nothing refers to it anymore.
     """
     defs = schema.get("$defs", {})
 
+    def recurses(arm: Any, stack: frozenset[str]) -> bool:
+        ref = arm.get("$ref") if isinstance(arm, dict) else None
+        return isinstance(ref, str) and ref.rsplit("/", 1)[-1] in stack
+
     def resolve(node: Any, stack: frozenset[str]) -> Any:
         if isinstance(node, list):
-            return [resolve(item, stack) for item in node]
+            return [resolve(item, stack) for item in node if not recurses(item, stack)]
         if not isinstance(node, dict):
             return node
         ref = node.get("$ref")
@@ -328,8 +386,12 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     * **Titled discriminated ``oneOf``** — a union whose arms carry a ``const`` ``type``
       discriminator (BC / scheme types) becomes a ``oneOf`` whose arms are titled by
       their ``const`` value, so JSONForms shows a clean "pick a type" dropdown
-      (``fixedValue``/``noSlip``/…) instead of stacking every arm.
+      (``fixedValue``/``noSlip``/…) instead of stacking every arm. The arm's own
+      ``type`` property is kept in the data but not rendered (:func:`_hidden_discriminator`).
+    * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.
+    * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.
     """
+    class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)
     defs: dict[str, Any] = schema.get("$defs", {})
 
@@ -367,9 +429,10 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
                 k: (
                     _dimensions_field(v)
                     if k == "dimensions" and isinstance(v, dict) and v.get("type") == "array"
-                    else _label_title(k, transform(v), in_block=in_block)
+                    else _label_title(k, transform(v), in_block=in_block, class_names=class_names)
                 )
                 for k, v in node["properties"].items()
+                if k != _FILE_HEADER
             }
         if isinstance(node.get("$defs"), dict):
             node["$defs"] = {k: transform(v) for k, v in node["$defs"].items()}
@@ -381,10 +444,14 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
             node["oneOf"] = [
                 a if ("$ref" in a and "title" in a) else transform(a) for a in node["oneOf"]
             ]
+        if node.get("additionalProperties") is True and not _accepts_new_keys(node):
+            del node["additionalProperties"]
         # A def that *is* a discriminated arm: title it by its const type.
         const = node.get("properties", {}).get("type", {}).get("const")
         if const and "title" in node:
             node["title"] = const
+        if const:
+            node["properties"]["type"] = _hidden_discriminator(const)
         return node
 
     result: dict[str, Any] = transform(schema)
@@ -492,7 +559,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     title=f"{fname} — initial value",
                     schema=jsonforms_schema(slice_schema(dto.json_schema, INPUT_KEYS)),
                     defaults=_slice_defaults(dto.defaults, INPUT_KEYS),
-                    state_key=f"form_{info.name}__in",
+                    state_key=js_identifier(f"form_{info.name}__in"),
                     kind="field_in",
                     step="initial",
                     owner_model=owner_model,
@@ -507,7 +574,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     title=f"{fname} — boundary conditions",
                     schema=jsonforms_schema(slice_schema(dto.json_schema, _BC_KEYS)),
                     defaults=_slice_defaults(dto.defaults, _BC_KEYS),
-                    state_key=f"form_{info.name}__bc",
+                    state_key=js_identifier(f"form_{info.name}__bc"),
                     kind="field_bc",
                     step="bcs",
                     owner_model=owner_model,
@@ -525,7 +592,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     title=_dict_title(info.cls_name, info.file),
                     schema=schema,
                     defaults=dto.defaults,
-                    state_key=f"form_{info.name}",
+                    state_key=js_identifier(f"form_{info.name}"),
                     kind="dict",
                     step=step,
                     owner_model=owner_model,
@@ -562,7 +629,7 @@ def build_mesh_forms(solver: Any) -> list[FormEntry]:
                 title=_dict_title(info.cls_name, info.file),
                 schema=jsonforms_schema(dto.json_schema),
                 defaults=dto.defaults,
-                state_key=f"form_{info.name}",
+                state_key=js_identifier(f"form_{info.name}"),
                 kind="dict",
                 step="mesh",
                 owner_model=None,
@@ -600,7 +667,7 @@ def build_field_forms(solver: Any) -> list[FormEntry]:
                 title=f"{fname} — field",
                 schema=jsonforms_schema(dto.json_schema),
                 defaults=dto.defaults,
-                state_key=f"form_{info.name}",
+                state_key=js_identifier(f"form_{info.name}"),
                 kind="dict",
                 step="fields",
                 owner_model=owner.get(info.cls_name),

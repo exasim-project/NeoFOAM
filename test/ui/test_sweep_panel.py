@@ -22,6 +22,7 @@ from trame.app import get_server  # noqa: E402
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
+from neofoam.ui.sweep_panel import _CSS  # noqa: E402
 
 #: How long the stubbed snakemake run blocks — the real one takes ~1 s upwards.
 _DAG_SECONDS = 0.3
@@ -1151,3 +1152,21 @@ def test_refresh_dag_reports_a_snakemake_that_never_finishes(tmp_path, monkeypat
 
     assert "did not finish within" in server.state.sweep_dag_error
     assert server.state.sweep_dag_busy is False
+
+
+def test_palette_rows_of_unselected_models_are_hidden():
+    # The palette state lists every sweepable config; a row owned by a gated model is
+    # shown only while that model's `sel_<model>` is on — the same gate as the form
+    # panels, evaluated client-side so it follows the selection live.
+    server = build_app(server=get_server("neofoam_ui_test_sweep_palette_gate"))
+
+    template = server.state["trame__template_main"]
+    assert 'v-show="!item.owner || ({' in template
+    assert "'Simple': sel_Simple" in template
+    assert "'boussinesq': sel_boussinesq" in template
+
+
+def test_palette_scrolls_instead_of_stretching_the_canvas():
+    # The palette is far taller than the canvas; unbounded, it stretches the canvas
+    # card to its own height and leaves the graph a small island at the top.
+    assert ".nf-sweep-palette { max-height: 62vh;" in _CSS

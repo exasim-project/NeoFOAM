@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 from neofoam.mcp import tools
+from neofoam.turbulence import momentumTransportModel
 from neofoam.ui.forms import FormEntry, exclusive_model_families, humanize
 from neofoam.ui.plugins import AT_START, StepPlugin
 
@@ -20,6 +21,8 @@ __all__ = [
     "build_model_choices",
     "build_model_families",
     "select_model_state",
+    "turbulence_form_state",
+    "loaded_turbulence_model",
 ]
 
 # Fixed order. `models` opens with the model-selection panel (rendered by app.py)
@@ -166,3 +169,48 @@ def select_model_state(families: list[ModelFamily], name: str) -> dict[str, Any]
             updates[f"choice_{family.name}"] = name
             updates.update({f"sel_{c.name}": c.name == name for c in family.members})
     return updates
+
+
+def turbulence_form_state(entries: list[FormEntry], name: str) -> dict[str, Any]:
+    """The wizard-state update that makes ``turbulenceProperties`` select model ``name``.
+
+    ``turbulenceProperties`` is shared by every momentum-transport model, so no single
+    member owns (or gates) its form — the choice has to be written *into* it:
+    ``simulationType`` is the family ``name`` was registered as, and a ``RAS``/``LES``
+    model is named in the sub-dictionary of that family, next to that block's schema
+    defaults (an unset boolean renders as an indeterminate checkbox). Empty when ``name``
+    is not a momentum-transport model or the solver has no ``turbulenceProperties``
+    form, so it can be applied to any model selection::
+
+        state.update(turbulence_form_state(entries, "kOmegaSST"))
+    """
+    family = momentumTransportModel.family_of(name)
+    entry = next((e for e in entries if e.cls_name == "TurbulencePropertiesConfig"), None)
+    if family is None or entry is None:
+        return {}
+    data: dict[str, Any] = {"simulationType": family}
+    if family != "laminar":
+        block = entry.schema["properties"][family]["properties"]
+        defaults = {key: node["default"] for key, node in block.items() if "default" in node}
+        data[family] = {f"{family}Model": name, **defaults}
+    return {entry.state_key: data}
+
+
+def loaded_turbulence_model(entries: list[FormEntry], state: Any) -> str | None:
+    """The momentum-transport model the ``turbulenceProperties`` form names, if any.
+
+    The inverse of :func:`turbulence_form_state`, for a form filled from a case on
+    disk: no model owns that config, so loading it selects none and the choice has to
+    be read back out of the data::
+
+        model = loaded_turbulence_model(entries, state)
+    """
+    entry = next((e for e in entries if e.cls_name == "TurbulencePropertiesConfig"), None)
+    if entry is None:
+        return None
+    data = state[entry.state_key] or {}  # a form nothing has filled yet
+    family = data.get("simulationType")
+    if family == "laminar":
+        return "laminar"
+    model: str | None = (data.get(family) or {}).get(f"{family}Model")
+    return model

@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from neofoam.agent.case_fill import build_case_output_model
 from neofoam.agent.case_forms import INPUT_KEYS
 from neofoam.mcp import tools
@@ -138,6 +140,60 @@ def test_section_headings_drop_the_synthesized_class_name():
                 assert not title.startswith("_"), f"{name}/{entry.key}{path}: {title}"
 
 
+def test_sections_of_like_entries_keep_the_add_a_key_row():
+    # JSONForms offers an "add a key" row for `additionalProperties`. A section is a
+    # collection — divSchemes gains a div(phi,k), solvers a new solver block — so the
+    # row stays there, single-entry sections included.
+    entries = {e.key: e for e in build_forms(_solver())}
+    schemes = entries["dict:Pimple_fvSchemes"].schema["properties"]
+    assert schemes["divSchemes"]["additionalProperties"] is True
+    assert schemes["ddtSchemes"]["additionalProperties"] is True
+    solvers = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]
+    assert solvers["additionalProperties"] is True
+
+
+def test_fixed_shape_cards_offer_no_add_a_key_row():
+    # `additionalProperties: true` on a card of differently-shaped entries can only
+    # add an untyped value — noise. Dropping the keyword hides the row and still
+    # validates the same data (absent means "allowed").
+    entries = {e.key: e for e in build_forms(_solver())}
+    solution = entries["dict:Pimple_fvSolution"].schema
+    assert "additionalProperties" not in solution
+    assert "additionalProperties" not in solution["properties"]["PIMPLE"]
+    assert "additionalProperties" not in entries["dict:Pimple_fvSchemes"].schema
+    vof = {e.key: e for e in build_forms(resolve_solver("incompressibleVoF"))}
+    water = vof["dict:TransportPropertiesConfig"].schema["properties"]["water"]
+    assert "additionalProperties" not in water
+
+
+def test_open_dicts_without_known_keys_keep_the_add_a_key_row():
+    # A solver block (and MRFProperties / fvOptions) declares no keys at all: every
+    # entry is an additional property, so the row is the only way to edit it.
+    entries = {e.key: e for e in build_forms(_solver())}
+    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
+    assert block["additionalProperties"] is True
+    assert entries["dict:FvOptionsConfig"].schema["additionalProperties"] is True
+
+
+def test_nested_model_is_titled_by_its_key_not_its_class_name():
+    # A `water: PhaseTransport` property inherits the *class* name as its title via
+    # the $ref, so both phase cards read "PhaseTransport"; the key is what tells
+    # them apart.
+    vof = {e.key: e for e in build_forms(resolve_solver("incompressibleVoF"))}
+    transport = vof["dict:TransportPropertiesConfig"].schema["properties"]
+    assert [transport[k]["title"] for k in ("water", "air")] == ["Water", "Air"]
+
+
+@pytest.mark.parametrize("solver_name", ["incompressibleFluid", "incompressibleVoF"])
+def test_foamfile_header_stays_in_the_data_but_is_not_rendered(solver_name):
+    # version / format / class / object are boilerplate the writer needs and the
+    # user never edits.
+    entries = {e.key: e for e in build_forms(resolve_solver(solver_name))}
+    gravity = entries["dict:GravityConfig"]
+    assert "FoamFile" not in gravity.schema["properties"]
+    assert gravity.defaults["FoamFile"]["object"] == "g"
+
+
 def test_prose_property_keys_are_still_humanized():
     # Hand-written config models keep their human labels — only OpenFOAM blocks
     # are shown verbatim.
@@ -156,11 +212,57 @@ def test_inline_refs_makes_every_schema_self_contained():
     # (nested discriminated unions) hard-froze the page that way.
     import json  # noqa: PLC0415
 
-    for e in build_forms(_solver()):
-        text = json.dumps(e.schema)
-        assert "$ref" not in text, f"{e.key} still contains a $ref"
-        assert "$defs" not in e.schema, f"{e.key} still carries $defs"
-        assert "discriminator" not in text, f"{e.key} keeps a dangling discriminator"
+    for name in list_solver_names():
+        for e in build_forms(resolve_solver(name)):
+            text = json.dumps(e.schema)
+            assert "$ref" not in text, f"{name}/{e.key} still contains a $ref"
+            assert "$defs" not in e.schema, f"{name}/{e.key} still carries $defs"
+            assert "discriminator" not in text, f"{name}/{e.key} keeps a dangling discriminator"
+
+
+def test_inline_refs_bounds_a_self_referential_union():
+    # cellLimited nests a GradScheme, which includes cellLimited again. The cycle
+    # cannot be inlined, so the inner scheme offers the non-recursive arms only.
+    entries = {e.key: e for e in build_forms(_solver())}
+    grad = entries["dict:Pimple_fvSchemes"].schema["properties"]["gradSchemes"]["properties"]
+    arms = {a["title"]: a for a in grad["grad(U)"]["oneOf"]}
+    assert set(arms) == {"Gauss", "pointCellsLeastSquares", "cellLimited"}
+    inner = arms["cellLimited"]["properties"]["inner_scheme"]["oneOf"]
+    assert [a["title"] for a in inner] == ["Gauss", "pointCellsLeastSquares"]
+
+
+def _discriminators(node):
+    """Every ``type`` property schema that pins a ``const``, however deeply nested."""
+    if isinstance(node, dict):
+        prop = node.get("properties", {}).get("type")
+        if isinstance(prop, dict) and "const" in prop:
+            yield prop
+        for value in node.values():
+            yield from _discriminators(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _discriminators(value)
+
+
+def test_union_arm_discriminator_is_kept_in_the_data_but_not_rendered():
+    # The arm selector already names the type; a second "Type" dropdown holding that one
+    # value under every (nested) scheme made the Numerics step 7000-12000 px tall.
+    # JSONForms generates a control only for a property it can derive a JSON type for
+    # (`type`/`enum`/`properties`/`items`), and fills a newly selected arm's data from
+    # `default` — so exactly `const` + `default` hides the control and keeps the value.
+    for name in list_solver_names():
+        for entry in build_forms(resolve_solver(name)):
+            for prop in _discriminators(entry.schema):
+                assert prop == {"const": prop["const"], "default": prop["const"]}, (
+                    f"{name}/{entry.key}: {prop}"
+                )
+    div = {e.key: e for e in build_forms(_solver())}["dict:Pimple_fvSchemes"].schema
+    arms = div["properties"]["divSchemes"]["properties"]["div(phi,U)"]["oneOf"]
+    assert [(a["title"], list(a["properties"])) for a in arms] == [
+        ("none", ["type"]),
+        ("Gauss", ["type", "interpolation"]),
+        ("bounded", ["type", "interpolation"]),
+    ]
 
 
 def test_inline_refs_merges_siblings_and_keeps_cycles():
@@ -395,3 +497,37 @@ def test_build_field_forms_are_whole_field_dict_entries():
     # T / p_rgh fields are owned by the optional Boussinesq model (gated).
     assert fields["t_field_config"].owner_model == "boussinesq"
     assert fields["u_field_config"].owner_model is None
+
+
+def test_state_var_names_are_js_identifiers():
+    # trame evaluates state var names as Vue expressions: `form_alpha.water…` reads as
+    # a member access on an undefined `form_alpha` and the panel renders empty.
+    from neofoam.ui.app import _schema_key, _uischema_key  # noqa: PLC0415
+
+    for name in list_solver_names():
+        for entry in build_forms(resolve_solver(name)):
+            for var in (entry.state_key, _schema_key(entry), _uischema_key(entry)):
+                assert var.isidentifier(), f"{name}: {var!r}"
+
+
+@pytest.mark.parametrize(
+    ("key", "label"),
+    [
+        ("deltaT", "Delta T"),
+        ("writeControl", "Write Control"),
+        # "NeoN" is a name, not two camelCase words.
+        ("PressureVelocityAlgorithmNeoN", "Pressure Velocity Algorithm NeoN"),
+        ("NeoNControl", "NeoN Control"),
+    ],
+)
+def test_humanize_splits_words_but_keeps_neon_whole(key, label):
+    from neofoam.ui.forms import humanize  # noqa: PLC0415
+
+    assert humanize(key) == label
+
+
+def test_neon_panel_titles_keep_neon_whole():
+    titles = [e.title for e in build_forms(resolve_solver("incompressibleFluidNeoN"))]
+
+    assert "controlDict · NeoN Control" in titles
+    assert not [t for t in titles if "Neo N" in t]

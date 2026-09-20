@@ -32,6 +32,7 @@ from neofoam.ui.agent_panel import build_agent_panel
 from neofoam.ui.forms import (
     FormEntry,
     build_forms,
+    js_identifier,
     patch_bc_schema,
     seed_boundary_field,
 )
@@ -52,6 +53,7 @@ from neofoam.ui.steps import (
     build_model_families,
     build_steps,
     select_model_state,
+    turbulence_form_state,
 )
 from neofoam.ui.sweep_panel import SweepPanel
 
@@ -206,12 +208,12 @@ def _spec_from_state(state: Any) -> GeometrySpec:
 
 def _schema_key(entry: FormEntry) -> str:
     """A JS-identifier-safe state var name holding this entry's static schema."""
-    return "schema_" + entry.key.replace(":", "_")
+    return js_identifier("schema_" + entry.key)
 
 
 def _uischema_key(entry: FormEntry) -> str:
     """A JS-identifier-safe state var name holding this entry's static UISchema."""
-    return "uischema_" + entry.key.replace(":", "_")
+    return js_identifier("uischema_" + entry.key)
 
 
 def build_app(
@@ -254,6 +256,7 @@ def build_app(
     optional = [c for c in choices if not c.required]
     gated = [*optional, *(c for f in families for c in f.members)]
     by_key = {e.key: e for e in entries}
+    label_of = {c.name: c.label for c in choices}
 
     server = get_server() if server is None else server
     state, ctrl = server.state, server.controller
@@ -289,6 +292,11 @@ def build_app(
         state[entry.state_key] = dict(entry.defaults)
         if entry.uischema is not None:
             state[_uischema_key(entry)] = entry.uischema
+    # turbulenceProperties follows the turbulence choice rather than starting empty;
+    # a solver with no such family (VoF reads the file itself) starts laminar.
+    state.update(turbulence_form_state(entries, "laminar"))
+    for family in families:
+        state.update(turbulence_form_state(entries, family.members[0].name))
 
     # ------------------------------------------------------------------ #
     # Controller                                                         #
@@ -317,6 +325,7 @@ def build_app(
     def select_model(name: str) -> None:
         """Select model ``name`` (deselecting its siblings when it is one alternative)."""
         state.update(select_model_state(families, name))
+        state.update(turbulence_form_state(entries, name))
 
     def save_case() -> None:
         selected = {c.name for c in gated if state[f"sel_{c.name}"]}
@@ -489,7 +498,7 @@ def build_app(
                 html.Span(entry.title)
                 if entry.owner_model is not None:
                     v3.VChip(
-                        entry.owner_model,
+                        label_of[entry.owner_model],
                         size="x-small",
                         color="secondary",
                         variant="tonal",
@@ -507,19 +516,20 @@ def build_app(
         """Always-on models (locked) + one pick-one control per family + toggles."""
         with v3.VCard(variant="outlined", classes="mb-6"):
             with v3.VCardText():
-                html.Div(
-                    "Included models",
-                    classes="text-overline text-medium-emphasis",
-                )
-                with html.Div(classes="d-flex flex-wrap ga-2 mb-4"):
-                    for c in required:
-                        v3.VChip(
-                            c.label,
-                            prepend_icon="mdi-lock",
-                            variant="tonal",
-                            color="primary",
-                            size="small",
-                        )
+                if required:
+                    html.Div(
+                        "Included models",
+                        classes="text-overline text-medium-emphasis",
+                    )
+                    with html.Div(classes="d-flex flex-wrap ga-2 mb-4"):
+                        for c in required:
+                            v3.VChip(
+                                c.label,
+                                prepend_icon="mdi-lock",
+                                variant="tonal",
+                                color="primary",
+                                size="small",
+                            )
                 # One member at a time: the radio group is the only way to select one,
                 # so picking a member deselects its siblings server-side.
                 for family in families:
@@ -820,6 +830,16 @@ def build_app(
                         _model_selector()
                     elif step.id == "geometry":
                         _geometry_panel()
+                    elif step.id == "bcs":
+                        v3.VAlert(
+                            "No patches scanned yet — run Scan in the Geometry step to seed"
+                            " them, or add one by hand: type the patch name into a field's"
+                            ' "Property Name" box and press +.',
+                            type="info",
+                            variant="tonal",
+                            classes="mb-4",
+                            v_show="!geometry_patches.length",
+                        )
                     elif step.id == "sweep":
                         sweep_panel.render(JsonForms)
                     elif step.id == "review":

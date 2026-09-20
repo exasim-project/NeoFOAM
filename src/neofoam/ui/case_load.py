@@ -16,7 +16,7 @@ from typing import Any
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
-from neofoam.ui.steps import ModelFamily, select_model_state
+from neofoam.ui.steps import ModelFamily, loaded_turbulence_model, select_model_state
 
 __all__ = ["read_case_configs", "apply_configs_to_forms"]
 
@@ -60,4 +60,8 @@ def apply_configs_to_forms(
         # A filled member of a pick-one family (a loaded SIMPLE case) deselects
         # its siblings rather than joining them.
         state.update(select_model_state(families, model))
+    # turbulenceProperties has no owning model; only a family member has a choice to move.
+    turbulence = loaded_turbulence_model(entries, state)
+    if any(c.name == turbulence for family in families for c in family.members):
+        state.update(select_model_state(families, str(turbulence)))
     return filled_models

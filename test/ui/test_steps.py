@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from neofoam.mcp.registry import resolve_solver
 from neofoam.ui.forms import build_forms
 from neofoam.ui.steps import (
@@ -86,3 +88,11 @@ def test_select_model_state_leaves_a_toggle_alone():
     families = build_model_families(_solver())
     # An optional model belongs to no pick-one family — nothing else moves.
     assert select_model_state(families, "boussinesq") == {"sel_boussinesq": True}
+
+
+@pytest.mark.parametrize("solver_name", ["incompressibleFluid", "incompressibleFluidNeoN"])
+def test_time_step_models_carry_a_display_label(solver_name):
+    choices = {c.name: c for c in build_model_choices(resolve_solver(solver_name))}
+
+    assert choices["courant"].label == "Adaptive time step (Courant)"
+    assert choices["maxDeltaT"].label == "Time step limit (maxDeltaT)"

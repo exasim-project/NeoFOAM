@@ -21,10 +21,15 @@ from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.app import _schema_key  # noqa: E402
+from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs  # noqa: E402
 from neofoam.ui.geometry import discover_geometry  # noqa: E402
+from neofoam.ui.steps import build_model_families  # noqa: E402
 
 #: How long the stubbed STL read blocks — a 21 MB STL takes ~0.5 s in practice.
 _SCAN_SECONDS = 0.3
+
+#: A checked-in ``simulationType laminar`` case (read-only).
+_LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
 
 #: The checked-in STL folder the geometry-handler tests scan (read-only).
 _TRI_SURFACE = (
@@ -371,3 +376,145 @@ def test_save_case_writes_only_the_chosen_algorithm(tmp_path):
     simple = (tmp_path / "simple" / "system" / "fvSolution").read_text()
     assert "SIMPLE" in simple
     assert "PIMPLE" not in simple
+
+
+def _turbulence_properties(server) -> dict:
+    entries = {e.cls_name: e for e in server.controller.get_entries()}
+    return server.state[entries["TurbulencePropertiesConfig"].state_key]
+
+
+@pytest.mark.parametrize(
+    ("solver_name", "expected"),
+    [
+        (
+            "incompressibleFluid",
+            {
+                "simulationType": "RAS",
+                "RAS": {"RASModel": "kEpsilon", "turbulence": True, "printCoeffs": False},
+            },
+        ),
+        (
+            "incompressibleFluidNeoN",
+            {
+                "simulationType": "RAS",
+                "RAS": {"RASModel": "kEpsilon", "turbulence": True, "printCoeffs": False},
+            },
+        ),
+        # No momentum-transport family to choose from: the two-phase backend reads the
+        # file itself, and laminar is the only state needing no further input.
+        ("incompressibleVoF", {"simulationType": "laminar"}),
+    ],
+)
+def test_turbulence_properties_start_on_the_selected_model(solver_name, expected):
+    server = build_app(
+        solver_name=solver_name,
+        server=get_server(f"neofoam_ui_test_turbulence_default_{solver_name}"),
+        plugins=[],
+    )
+
+    assert _turbulence_properties(server) == expected
+
+
+@pytest.mark.parametrize(
+    ("model", "expected"),
+    [
+        ("laminar", {"simulationType": "laminar"}),
+        (
+            "kOmegaSST",
+            {
+                "simulationType": "RAS",
+                "RAS": {"RASModel": "kOmegaSST", "turbulence": True, "printCoeffs": False},
+            },
+        ),
+    ],
+)
+def test_selecting_a_turbulence_model_rewrites_turbulence_properties(model, expected):
+    server = build_app(server=get_server(f"neofoam_ui_test_turbulence_{model}"), plugins=[])
+
+    server.controller.select_model(model)
+
+    assert _turbulence_properties(server) == expected
+
+
+def test_selecting_another_family_leaves_turbulence_properties_alone():
+    server = build_app(server=get_server("neofoam_ui_test_turbulence_untouched"), plugins=[])
+    server.controller.select_model("laminar")
+
+    server.controller.select_model("Simple")
+
+    assert _turbulence_properties(server) == {"simulationType": "laminar"}
+
+
+def test_loaded_case_overrides_the_default_turbulence_properties():
+    solver = resolve_solver("incompressibleFluid")
+    server = build_app(server=get_server("neofoam_ui_test_turbulence_loaded"), plugins=[])
+    configs = read_case_configs(_LAMINAR_CASE, solver)
+
+    apply_configs_to_forms(
+        server.state, server.controller.get_entries(), build_model_families(solver), configs
+    )
+
+    assert _turbulence_properties(server) == {"simulationType": "laminar"}
+
+
+def test_loaded_case_moves_the_turbulence_choice_to_the_loaded_model():
+    # turbulenceProperties is owned by no single model, so filling it selects none:
+    # the radio group has to be moved to the model the loaded file names.
+    solver = resolve_solver("incompressibleFluid")
+    server = build_app(server=get_server("neofoam_ui_test_turbulence_loaded_choice"), plugins=[])
+    configs = read_case_configs(_LAMINAR_CASE, solver)
+
+    apply_configs_to_forms(
+        server.state, server.controller.get_entries(), build_model_families(solver), configs
+    )
+
+    assert server.state.choice_momentumTransportModel == "laminar"
+    assert server.state.sel_laminar is True
+    assert server.state.sel_kEpsilon is False
+
+
+def test_panel_chip_shows_the_owning_models_label():
+    server = build_app(server=get_server("neofoam_ui_test_chip_label"), plugins=[])
+
+    template = server.state["trame__template_main"]
+    assert "Adaptive time step (Courant)\n</VChip>" in template
+    assert "\ncourant\n</VChip>" not in template
+
+
+def test_save_case_writes_the_selected_turbulence_model(tmp_path):
+    server = build_app(server=get_server("neofoam_ui_test_turbulence_save"), plugins=[])
+    _seed_transport_defaults(server)
+    server.controller.select_model("kOmegaSST")
+    server.state.target_dir = str(tmp_path)
+
+    server.controller.save_case()
+
+    written = (tmp_path / "constant" / "turbulenceProperties").read_text()
+    assert "kOmegaSST" in written
+
+
+@pytest.mark.parametrize(
+    ("solver_name", "shown"),
+    [
+        ("incompressibleFluid", True),  # Newtonian is always on
+        ("incompressibleFluidNeoN", False),  # every required model is a family choice
+    ],
+)
+def test_included_models_heading_needs_an_always_on_model(solver_name, shown):
+    server = build_app(
+        solver_name=solver_name,
+        server=get_server(f"neofoam_ui_test_included_{solver_name}"),
+        plugins=[],
+    )
+
+    assert ("Included models" in server.state["trame__template_main"]) is shown
+
+
+def test_boundary_conditions_step_explains_its_empty_state():
+    # Before a scan each field panel is a bare "Property Name [+]" row; the step says
+    # where patches come from and that the row adds one by hand, until a scan ran.
+    server = build_app(server=get_server("neofoam_ui_test_bcs_hint"), plugins=[])
+
+    template = server.state["trame__template_main"]
+    assert "run Scan in the Geometry step to seed them" in template
+    assert 'v-show="!geometry_patches.length"' in template
