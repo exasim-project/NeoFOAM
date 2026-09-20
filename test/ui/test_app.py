@@ -298,7 +298,8 @@ def test_scan_keeps_the_event_loop_running(monkeypatch, heartbeat_ticks):
     server = build_app(server=get_server("neofoam_ui_test_scan_loop"), plugins=[])
     server.state.stl_dir = str(_TRI_SURFACE)
     monkeypatch.setattr(
-        "neofoam.ui.app.discover_geometry", _slow_scan(discover_geometry(_TRI_SURFACE), [])
+        "neofoam.ui.geometry_panel.discover_geometry",
+        _slow_scan(discover_geometry(_TRI_SURFACE), []),
     )
 
     ticks = heartbeat_ticks(server.controller.load_geometry)
@@ -314,7 +315,7 @@ def test_scan_is_busy_while_it_runs(monkeypatch):
     spec = discover_geometry(_TRI_SURFACE)
     busy_while_scanning: list[bool] = []
     monkeypatch.setattr(
-        "neofoam.ui.app.discover_geometry",
+        "neofoam.ui.geometry_panel.discover_geometry",
         lambda *_a, **_kw: (busy_while_scanning.append(server.state.geometry_busy), spec)[1],
     )
 
@@ -331,7 +332,8 @@ def test_scan_started_while_one_runs_is_dropped(monkeypatch):
     server.state.stl_dir = str(_TRI_SURFACE)
     scanned: list[str] = []
     monkeypatch.setattr(
-        "neofoam.ui.app.discover_geometry", _slow_scan(discover_geometry(_TRI_SURFACE), scanned)
+        "neofoam.ui.geometry_panel.discover_geometry",
+        _slow_scan(discover_geometry(_TRI_SURFACE), scanned),
     )
 
     async def drive() -> None:

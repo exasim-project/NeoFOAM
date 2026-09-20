@@ -77,9 +77,8 @@ def build_agent_panel(
     state.chat_log = []  # [{"role": "user"|"assistant", "content": str}]
     state.ai_busy = False
     state.suggested_prompts = list(SUGGESTED_PROMPTS)
-    # Seeded here, not in app.py: the panel is usable standalone, and this runs
-    # after app.py's state block anyway. The geometry step's scan overwrites it.
-    state.geometry_patches = []
+    # Owned by the geometry panel; defaulted here so the chat is usable standalone.
+    state.setdefault("geometry_patches", [])
 
     families = build_model_families(solver)
     agent_cache: dict[str, Any] = {}
