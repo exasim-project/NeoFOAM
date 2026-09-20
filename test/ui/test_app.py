@@ -156,6 +156,26 @@ def test_geometry_scan_and_write_mesh(tmp_path):
     assert server.state.mesh_written
 
 
+def test_scan_pins_only_the_scanned_patches(tmp_path):
+    import shutil  # noqa: PLC0415
+
+    # A pinned patch has no delete button. One added by hand before a re-scan is not
+    # part of the geometry, so it has to stay deletable.
+    tube_bank = Path(__file__).resolve().parents[1] / "tooling" / "workflow" / "cases" / "tube_bank"
+    dst_tri = tmp_path / "constant" / "triSurface"
+    shutil.copytree(tube_bank / "constant" / "triSurface", dst_tri)
+    server = build_app(server=get_server("neofoam_ui_test_scan_pins"), plugins=[])
+    entry = next(e for e in server.controller.get_entries() if e.key == "field_bc:UFieldConfig")
+    server.state[entry.state_key] = {"boundaryField": {"byHand": {"type": "noSlip"}}}
+    server.state.stl_dir = str(dst_tri)
+
+    asyncio.run(server.controller.load_geometry())
+
+    boundary_field = server.state[_schema_key(entry)]["properties"]["boundaryField"]
+    assert set(boundary_field["properties"]) == {"inlet", "outlet", "walls", "frontBack", "tubes"}
+    assert "byHand" in server.state[entry.state_key]["boundaryField"]
+
+
 def test_incomplete_save_is_reported_not_raised(tmp_path):
     # The pristine app pre-seeds partial defaults (e.g. controlDict lacks endTime);
     # saving must surface the error in Review, not crash the controller.

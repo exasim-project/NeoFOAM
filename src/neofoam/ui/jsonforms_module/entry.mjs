@@ -31,6 +31,9 @@
 // `div(phi,alpha.water)`) is such a form of its own as well, written back through the
 // section's data; all other entries keep the cheap path binding.
 //
+// A config of free-form sub-dictionaries (`nfDicts`, see forms.py `_dictionary_cards`:
+// MRFProperties, fvOptions) reuses the cards, each entry (`nfDict`) a grid of its keywords.
+//
 // An object of scalars only (`nfGrid`, see forms.py `_tag_scalar_grid`) keeps JSONForms'
 // generated layout and controls; its layout renderer just sets them in a wrapping grid.
 
@@ -87,6 +90,13 @@ const inlineChild = (control, schema, key) =>
     cells: control.cells,
   })
 
+// A tolerance reads `1e-6` as in a case file, not `0.000001`; the data stays a number.
+const formatNumber = (value) => {
+  const size = Math.abs(value)
+  if (typeof value !== 'number' || size === 0 || (size >= 1e-4 && size < 1e6)) return String(value)
+  return value.toExponential().replace('e+', 'e')
+}
+
 const NfNumberControl = defineComponent({
   name: 'nf-number-control',
   props: { ...rendererProps() },
@@ -99,7 +109,7 @@ const NfNumberControl = defineComponent({
     display() {
       if (this.editing !== null) return this.editing
       const v = this.control.data
-      return v === undefined || v === null ? '' : String(v)
+      return v === undefined || v === null ? '' : formatNumber(v)
     },
   },
   methods: {
@@ -201,6 +211,8 @@ const VARIANTS = {
   nfPatches: { name: 'rows', add: 'Add patch' },
   nfSolvers: { name: 'solvers', add: 'Add solver' },
   nfSolver: { name: 'grid', add: 'Add option' },
+  nfDicts: { name: 'solvers', add: 'Add entry' },
+  nfDict: { name: 'grid', add: 'Add keyword' },
 }
 const variantOf = (schema) => VARIANTS[Object.keys(VARIANTS).find((flag) => schema[flag])]
 
@@ -282,7 +294,7 @@ const NfCompactSection = defineComponent({
     // A grid always shows `solver`, the key that solver takes, `tolerance` and `relTol`.
     pinned() {
       const c = this.control
-      if (this.variant.name !== 'grid') return Object.keys(this.declared)
+      if (!c.schema.nfSolver) return Object.keys(this.declared)
       return ['solver', c.schema.nfSolver[c.data?.solver], 'tolerance', 'relTol'].filter(Boolean)
     },
     keys() {
@@ -305,7 +317,8 @@ const NfCompactSection = defineComponent({
   methods: {
     add() {
       if (!this.newName || this.nameError) return
-      const value = createDefaultValue(this.like, this.control.rootSchema)
+      // A keyword of a free-form dictionary starts as a text value.
+      const value = createDefaultValue(this.like ?? { type: 'string' }, this.control.rootSchema)
       this.handleChange(this.control.path, { ...this.control.data, [this.newName]: value })
       this.newName = null
     },
@@ -428,8 +441,8 @@ const NfCompactSection = defineComponent({
     const c = this.control
     if (!c.visible) return null
     return h(VCard, { class: 'nf-compact mb-2', flat: true, border: true }, () => [
-      h(VCardTitle, { class: 'text-subtitle-1' }, () => c.label),
-      h(VCardText, { class: this.variant.name === 'grid' ? 'pt-0 pb-1' : 'pt-0' }, () => [
+      c.label ? h(VCardTitle, { class: 'text-subtitle-1' }, () => c.label) : null,
+      h(VCardText, { class: { 'pt-0': c.label, 'pb-1': this.variant.name === 'grid' } }, () => [
         h('div', { class: 'nf-' + this.variant.name }, this.keys.map(this[this.variant.name])),
         this.adder(),
       ]),
@@ -486,6 +499,16 @@ const renderers = [
   { tester: rankWith(40, and(isLayout, (_, schema) => schema.nfGrid === true)), renderer: NfGridLayout },
 ]
 
+// JSONForms stars a label from the static `required` list alone. While the schema's own
+// `if` holds for the data, the keys its `then` requires join that list, so the label
+// follows (`Nu*`); what validates stays the same.
+const formAjv = createAjv()
+const conditionalRequired = (schema, data) => {
+  const { if: condition, then: { required, ...then } = {} } = schema
+  if (!condition || !required || !formAjv.validate(condition, data)) return null
+  return { ...schema, required: [...(schema.required ?? []), ...required], then }
+}
+
 const NeoFoamJsonForms = defineComponent({
   name: 'json-forms',
   props: {
@@ -499,10 +522,20 @@ const NeoFoamJsonForms = defineComponent({
     const i18n = computed(() => ({
       translate: (id, defaultMessage) => props.translations[id] ?? defaultMessage,
     }))
+    // Kept until the schema or the outcome of its `if` changes: a fresh schema object
+    // would restart the form on every edit.
+    let kept = {}
+    const schema = computed(() => {
+      const starred = conditionalRequired(props.schema, props.data)
+      if (kept.source !== props.schema || kept.on !== !!starred)
+        kept = { source: props.schema, on: !!starred, schema: starred ?? props.schema }
+      return kept.schema
+    })
     return () =>
       h(JsonForms, {
-        schema: props.schema,
-        uischema: props.uischema || undefined,
+        schema: schema.value,
+        // A schema that is itself a section has no property for a generated layout to show.
+        uischema: props.uischema || (variantOf(props.schema) ? BLOCK_UISCHEMA : undefined),
         data: props.data,
         renderers,
         i18n: i18n.value,

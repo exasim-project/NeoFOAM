@@ -16,6 +16,7 @@ from neofoam.ui.forms import (
     build_forms,
     build_mesh_forms,
     exclusive_model_families,
+    seed_boundary_field,
 )
 
 
@@ -177,7 +178,9 @@ def test_open_dicts_without_known_keys_keep_the_add_a_key_row():
     entries = {e.key: e for e in build_forms(_solver())}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     assert block["additionalProperties"] is True
-    assert entries["dict:FvOptionsConfig"].schema["additionalProperties"] is True
+    # fvOptions takes sub-dictionaries only, each open in turn.
+    source = entries["dict:FvOptionsConfig"].schema["additionalProperties"]
+    assert (source["type"], source["additionalProperties"]) == ("object", True)
 
 
 def _keyword_sites(node, keyword, path=""):
@@ -213,12 +216,69 @@ def test_add_a_key_rows_are_labelled_for_what_they_add():
     }
 
 
+@pytest.mark.parametrize(
+    ("entry_key", "prefix", "label"),
+    [
+        ("dict:MRFPropertiesConfig", "nf.zone", "Zone name, e.g. MRF1"),
+        ("dict:FvOptionsConfig", "nf.source", "Source name, e.g. momentumSource"),
+    ],
+)
+def test_open_config_renders_as_named_cards_of_keywords(entry_key, prefix, label):
+    # A config of free-form sub-dictionaries declares no property, so JSONForms'
+    # generated layout is empty and the panel showed nothing. The bundled section
+    # renderer draws it instead: one card per sub-dictionary (`nfDicts`), each a grid
+    # of its keywords (`nfDict`), both adders labelled.
+    from neofoam.ui.forms import ADDER_TRANSLATIONS  # noqa: PLC0415
+
+    entry = {e.key: e for e in build_forms(_solver())}[entry_key]
+    assert _keyword_sites(entry.schema, "i18n") == {
+        "": prefix,
+        "/additionalProperties": "nf.keyword",
+    }
+    assert _keyword_sites(entry.schema, "nfDicts") == {"": True}
+    assert _keyword_sites(entry.schema, "nfDict") == {"/additionalProperties": True}
+    assert ADDER_TRANSLATIONS[f"{prefix}.propertyNameLabel"] == label
+    assert ADDER_TRANSLATIONS["nf.keyword.propertyNameLabel"] == "Keyword, e.g. cellZone"
+
+
+@pytest.mark.parametrize("solver_name", list_solver_names())
+def test_every_add_a_key_row_of_the_wizard_is_labelled(solver_name):
+    # An object that takes new keys and carries no `i18n` prefix would fall back to
+    # JSONForms' "Property Name".
+    for entry in build_forms(resolve_solver(solver_name)):
+        open_sites = {
+            path
+            for path, value in _keyword_sites(entry.schema, "additionalProperties").items()
+            if value is not False
+        }
+        assert open_sites <= set(_keyword_sites(entry.schema, "i18n")), entry.key
+
+
 def test_hand_added_patch_starts_as_a_bc_object():
     # JSONForms seeds a hand-added key from its schema's `type`; the BC union declares
     # none, so the new patch became the string "" and rendered as a broken text box.
     entries = {e.key: e for e in build_forms(_solver())}
     boundary_field = entries["field_bc:UFieldConfig"].schema["properties"]["boundaryField"]
     assert boundary_field["additionalProperties"]["type"] == "object"
+
+
+@pytest.mark.parametrize(
+    ("entry_key", "seed"),
+    [
+        ("field_bc:UFieldConfig", {"type": "noSlip"}),
+        ("field_bc:pFieldConfig", {"type": "zeroGradient"}),
+        ("field_bc:alphatFieldConfig", {"type": "fixedValue", "value": "uniform 0"}),
+    ],
+)
+def test_hand_added_patch_starts_as_the_wall_bc_a_scan_would_seed(entry_key, seed):
+    # JSONForms seeds a hand-added key from the schema `default`. Without one the patch
+    # was `{}`: the row showed the GenericBC fallback, and the save turned it into the
+    # union's first all-default arm without saying so.
+    entries = {e.key: e for e in build_forms(_solver())}
+    boundary_field = entries[entry_key].schema["properties"]["boundaryField"]
+    assert boundary_field["additionalProperties"]["default"] == seed
+    scanned = seed_boundary_field(entries[entry_key], [{"name": "walls", "role": "wall"}], {})
+    assert scanned["boundaryField"]["walls"] == seed
 
 
 def test_adder_translations_cover_every_emitted_prefix():
@@ -231,8 +291,6 @@ def test_adder_translations_cover_every_emitted_prefix():
         for entry in build_forms(resolve_solver(name)):
             for prefix in _keyword_sites(entry.schema, "i18n").values():
                 assert f"{prefix}.propertyNameLabel" in ADDER_TRANSLATIONS
-                # The row refuses `.`/`[`/`]`; the message has to say why.
-                assert "path separators" in ADDER_TRANSLATIONS[f"{prefix}.propertyNameInvalid"]
 
 
 @pytest.mark.parametrize("solver_name", list_solver_names())
@@ -340,6 +398,24 @@ def test_solver_choices_are_suggestions_not_a_closed_enum(data):
     entries = {e.key: e for e in build_forms(_solver())}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     jsonschema.Draft202012Validator(block).validate(data)
+
+
+@pytest.mark.parametrize(
+    ("data", "missing"),
+    [
+        ({"solver": "GAMG", "tolerance": 1e-6, "relTol": 0.05}, "smoother"),
+        ({"solver": "smoothSolver", "preconditioner": "DIC"}, "smoother"),
+        ({"solver": "PBiCGStab", "smoother": "DILU"}, "preconditioner"),
+    ],
+)
+def test_solver_block_requires_the_companion_key_of_its_solver(data, missing):
+    # OpenFOAM aborts on a Krylov solver without `preconditioner` or a smoothing one
+    # without `smoother`, so the card shows the empty companion as a required field.
+    jsonschema = pytest.importorskip("jsonschema")
+    entries = {e.key: e for e in build_forms(_solver())}
+    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
+    errors = [error.message for error in jsonschema.Draft202012Validator(block).iter_errors(data)]
+    assert errors == [f"'{missing}' is a required property"]
 
 
 def test_nested_model_is_titled_by_its_key_not_its_class_name():

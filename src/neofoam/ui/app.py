@@ -451,7 +451,8 @@ def build_app(
                 continue
             seeded = seed_boundary_field(entry, patch_rows, state[entry.state_key])
             state[entry.state_key] = seeded
-            names = list(seeded.get("boundaryField", {}).keys())
+            # Only the scanned patches: one added by hand stays deletable.
+            names = [row["name"] for row in patch_rows]
             state[_schema_key(entry)] = patch_bc_schema(entry, names)
         n = len(spec.patches)
         state.geometry_severity = "info"

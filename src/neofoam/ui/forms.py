@@ -19,6 +19,7 @@ from typing import Any
 
 from neofoam.agent.case_forms import INPUT_KEYS, field_name, is_scheme_config
 from neofoam.framework.solver.configurations import configurations
+from neofoam.framework.validation import SOLVER_COMPANION
 from neofoam.io.pydantic_schema import slice_schema
 from neofoam.mcp import tools
 
@@ -317,19 +318,13 @@ _ADDER_LABELS = {
     "nf.entry": "Entry, e.g. div(phi,k)",
     "nf.solver": "Field, e.g. p",
     "nf.option": "Option, e.g. maxIter",
+    "nf.zone": "Zone name, e.g. MRF1",
+    "nf.source": "Source name, e.g. momentumSource",
+    "nf.keyword": "Keyword, e.g. cellZone",
 }
 
-# JSONForms addresses form data by dotted path (``boundaryField.inlet.type``), so a key
-# holding one of these characters would be read and written at the wrong place.
-_ADDER_NAME_INVALID = (
-    "A name containing . [ or ] cannot be added here: the form library reads them as"
-    " path separators."
-)
-
 ADDER_TRANSLATIONS: dict[str, str] = {
-    f"{prefix}.{key}": text
-    for prefix, label in _ADDER_LABELS.items()
-    for key, text in (("propertyNameLabel", label), ("propertyNameInvalid", _ADDER_NAME_INVALID))
+    f"{prefix}.propertyNameLabel": label for prefix, label in _ADDER_LABELS.items()
 }
 """JSONForms translations for the "add a key" rows (the ``<json-forms>`` ``translations``)."""
 
@@ -364,16 +359,6 @@ def _tag_adders(node: dict[str, Any]) -> None:
         node["i18n"] = "nf.solver"
 
 
-# Which key sits next to ``solver`` in a linear-solver block: a Krylov solver takes a
-# preconditioner, a smoothing one a smoother. These are the OpenFOAM solvers the NeoN
-# backend maps too, so every suggestion runs on both.
-_SOLVER_COMPANION = {
-    "PCG": "preconditioner",
-    "PBiCGStab": "preconditioner",
-    "PBiCG": "preconditioner",
-    "smoothSolver": "smoother",
-    "GAMG": "smoother",
-}
 _PRECONDITIONERS = ["DIC", "FDIC", "DILU", "diagonal", "GAMG", "none"]
 _SMOOTHERS = ["symGaussSeidel", "GaussSeidel", "DICGaussSeidel", "DIC", "DILU"]
 
@@ -382,12 +367,22 @@ _SMOOTHERS = ["symGaussSeidel", "GaussSeidel", "DICGaussSeidel", "DIC", "DILU"]
 # loaded case may name a solver OpenFOAM does not know (``Ginkgo``), and a
 # GAMG-preconditioned PCG nests a dictionary under ``preconditioner``.
 _SOLVER_CONTROLS: dict[str, dict[str, Any]] = {
-    "solver": {"type": "string", "examples": list(_SOLVER_COMPANION)},
+    "solver": {"type": "string", "examples": list(SOLVER_COMPANION)},
     "preconditioner": {"type": ["string", "object"], "examples": _PRECONDITIONERS},
     "smoother": {"type": "string", "examples": _SMOOTHERS},
     "tolerance": {"type": "number"},
     "relTol": {"type": "number"},
 }
+
+
+def _companion_rules() -> list[dict[str, Any]]:
+    """One ``if solver … then required`` rule per companion key, so an empty one shows red."""
+    rules = []
+    for companion in dict.fromkeys(SOLVER_COMPANION.values()):
+        solvers = [name for name, key in SOLVER_COMPANION.items() if key == companion]
+        selected = {"properties": {"solver": {"enum": solvers}}, "required": ["solver"]}
+        rules.append({"if": selected, "then": {"required": [companion]}})
+    return rules
 
 
 def _pin_solver_controls(node: dict[str, Any]) -> None:
@@ -400,7 +395,8 @@ def _pin_solver_controls(node: dict[str, Any]) -> None:
         return
     node["nfSolvers"] = True
     for block in node.get("properties", {}).values():
-        block["nfSolver"] = _SOLVER_COMPANION
+        block["nfSolver"] = SOLVER_COMPANION
+        block["allOf"] = _companion_rules()
         block["properties"] = {
             key: {**control, "title": key} for key, control in _SOLVER_CONTROLS.items()
         }
@@ -425,19 +421,41 @@ def _tag_scalar_grid(node: dict[str, Any]) -> None:
         node["nfGrid"] = True
 
 
+# A config that is one open dictionary of named sub-dictionaries → what a name is there.
+_DICTIONARY_CONFIGS = {"MRFPropertiesConfig": "nf.zone", "FvOptionsConfig": "nf.source"}
+
+
+def _dictionary_cards(schema: dict[str, Any]) -> dict[str, Any]:
+    """A :data:`_DICTIONARY_CONFIGS` schema as one card per sub-dictionary, each a keyword grid.
+
+    Such a config declares no property, so JSONForms' generated layout is empty and the
+    panel would show nothing; the bundled section renderer draws ``nfDicts``/``nfDict``.
+    """
+    prefix = _DICTIONARY_CONFIGS.get(schema.get("title", ""))
+    if prefix is None:
+        return schema
+    card = {"type": "object", "additionalProperties": True, "nfDict": True, "i18n": "nf.keyword"}
+    # The panel already names the file; the class name would head the section a second time.
+    untitled = {key: value for key, value in schema.items() if key != "title"}
+    return {**untitled, "additionalProperties": card, "nfDicts": True, "i18n": prefix}
+
+
 def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
     """A ``boundaryField`` schema drawn as one row per patch, its "add a key" row adding a patch.
 
     ``nfPatches`` picks the bundled row renderer, which binds a patch through the map's
     data, so a name holding ``.`` (``wall.left``) works. The row is labelled as a
     patch-name box, and the BC union is typed ``object``: a new key is seeded from the
-    ``type``, and with none it would be the string ``""``.
+    ``type``, and with none it would be the string ``""``. Its ``default`` is the BC a
+    scan seeds on a wall, so a hand-added patch shows and saves a real type from the start.
     """
     props = schema["properties"]
     boundary_field = dict(props["boundaryField"], i18n="nf.patch", nfPatches=True)
+    union = boundary_field["additionalProperties"]
     boundary_field["additionalProperties"] = {
-        **boundary_field["additionalProperties"],
+        **union,
         "type": "object",
+        "default": _role_bc_seed("wall", _arm_titles(union)),
     }
     return {**schema, "properties": {**props, "boundaryField": boundary_field}}
 
@@ -526,6 +544,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.
     * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.
     * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.
+    * **Open configs as cards** — see :func:`_dictionary_cards`.
     """
     class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)
@@ -593,8 +612,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
             node["properties"]["type"] = _hidden_discriminator(const)
         return node
 
-    result: dict[str, Any] = transform(schema)
-    return result
+    return _dictionary_cards(transform(schema))
 
 
 def alternatives_uischema(schema: dict[str, Any]) -> dict[str, Any] | None:
@@ -843,12 +861,15 @@ def allowed_bc_types(bc_entry: FormEntry) -> list[str]:
         .get("boundaryField", {})
         .get("additionalProperties", {})
     )
-    arms = ap.get("oneOf") or ap.get("anyOf") or []
-    out: list[str] = []
-    for arm in arms:
-        if isinstance(arm, dict) and isinstance(arm.get("title"), str):
-            out.append(arm["title"])
-    return out
+    return _arm_titles(ap)
+
+
+def _arm_titles(union: dict[str, Any]) -> list[str]:
+    """The titles of a union's titled arms, in order."""
+    arms = union.get("oneOf") or union.get("anyOf") or []
+    return [
+        arm["title"] for arm in arms if isinstance(arm, dict) and isinstance(arm.get("title"), str)
+    ]
 
 
 def _bc_type_for_role(role: str, allowed: list[str]) -> str:
@@ -880,6 +901,12 @@ def _bc_seed(type_name: str, is_vector: bool) -> dict[str, Any]:
     return {"type": type_name}
 
 
+def _role_bc_seed(role: str, allowed: list[str]) -> dict[str, Any]:
+    """The BC payload a patch of ``role`` starts with, given the field's ``allowed`` types."""
+    is_vector = any(marker in allowed for marker in _VECTOR_MARKERS)
+    return _bc_seed(_bc_type_for_role(role, allowed), is_vector)
+
+
 def seed_boundary_field(
     bc_entry: FormEntry, patches: list[dict[str, Any]], current: dict[str, Any]
 ) -> dict[str, Any]:
@@ -891,14 +918,12 @@ def seed_boundary_field(
     Existing (user- or AI-filled) patch entries are preserved.
     """
     allowed = allowed_bc_types(bc_entry)
-    is_vector = any(m in allowed for m in _VECTOR_MARKERS)
     data = dict(current or {})
     bf = dict(data.get("boundaryField") or {})
     for patch in patches:
         name = patch.get("name")
         if name and name not in bf:
-            bc_type = _bc_type_for_role(patch.get("role", ""), allowed)
-            bf[name] = _bc_seed(bc_type, is_vector)
+            bf[name] = _role_bc_seed(patch.get("role", ""), allowed)
     data["boundaryField"] = bf
     return data
 
