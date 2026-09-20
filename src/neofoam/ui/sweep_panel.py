@@ -49,7 +49,7 @@ from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
 from neofoam.ui.forms import FormEntry, build_field_forms, build_mesh_forms
-from neofoam.ui.steps import build_model_families
+from neofoam.ui.steps import build_model_families, selection_key
 from neofoam.ui.sweep_model import DimensionState, SweepModel, series_values
 
 #: Above this many cases the count chip turns warning-colored and Export asks
@@ -539,7 +539,7 @@ class SweepPanel:
     def _owner_model_blocked(self, entry: FormEntry) -> bool:
         """True (after notifying) when the entry's optional model is not selected."""
         owner = entry.owner_model
-        if owner is None or self._server.state[f"sel_{owner}"]:
+        if owner is None or self._server.state[selection_key(owner)]:
             return False
         self._notify(
             error=f"'{entry.title}' belongs to the unselected model"
@@ -1690,7 +1690,7 @@ class SweepPanel:
         # panels; the lookup names each state var so Vue tracks the selection.
         entries = (*self._dims.values(), *self._field_dims.values())
         owners = sorted({e.owner_model for e in entries if e.owner_model is not None})
-        selected = ", ".join(f"'{owner}': sel_{owner}" for owner in owners)
+        selected = ", ".join(f"'{owner}': {selection_key(owner)}" for owner in owners)
         with v3.VListItem(
             v_for=f"item in {items}",
             v_show=f"!item.owner || ({{{selected}}})[item.owner]",

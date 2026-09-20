@@ -13,7 +13,9 @@ from neofoam.ui.steps import (
     build_model_choices,
     build_model_families,
     build_steps,
+    choice_key,
     select_model_state,
+    selection_key,
 )
 
 
@@ -96,3 +98,18 @@ def test_time_step_models_carry_a_display_label(solver_name):
 
     assert choices["courant"].label == "Adaptive time step (Courant)"
     assert choices["maxDeltaT"].label == "Time step limit (maxDeltaT)"
+
+
+@pytest.mark.parametrize(
+    ("make_key", "name", "expected"),
+    [
+        # Identifier names keep today's state names (a de-facto API for tests/examples).
+        (selection_key, "kEpsilon", "sel_kEpsilon"),
+        (choice_key, "momentumTransportModel", "choice_momentumTransportModel"),
+        # A `-` or `.` would otherwise break the Vue expression the key is used in.
+        (selection_key, "k-omega.SST", "sel_k_omega_SST"),
+        (choice_key, "my-family", "choice_my_family"),
+    ],
+)
+def test_model_state_keys_are_js_identifiers(make_key, name, expected):
+    assert make_key(name) == expected

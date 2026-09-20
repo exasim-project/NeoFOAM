@@ -33,9 +33,10 @@ from neofoam.ui.forms import (
     ADDER_TRANSLATIONS,
     FormEntry,
     build_forms,
-    js_identifier,
     patch_bc_schema,
+    schema_key,
     seed_boundary_field,
+    uischema_key,
 )
 from neofoam.ui.geometry import (
     GeometrySpec,
@@ -53,7 +54,9 @@ from neofoam.ui.steps import (
     build_model_choices,
     build_model_families,
     build_steps,
+    choice_key,
     select_model_state,
+    selection_key,
     turbulence_form_state,
 )
 from neofoam.ui.sweep_panel import SweepPanel
@@ -237,16 +240,6 @@ def _spec_from_state(state: Any) -> GeometrySpec:
     )
 
 
-def _schema_key(entry: FormEntry) -> str:
-    """A JS-identifier-safe state var name holding this entry's static schema."""
-    return js_identifier("schema_" + entry.key)
-
-
-def _uischema_key(entry: FormEntry) -> str:
-    """A JS-identifier-safe state var name holding this entry's static UISchema."""
-    return js_identifier("uischema_" + entry.key)
-
-
 def build_app(
     server: Any = None,
     *,
@@ -313,19 +306,19 @@ def build_app(
     state.geo_cell_size = 0.0
     state.mesh_written = []
     for c in optional:
-        state[f"sel_{c.name}"] = False
+        state[selection_key(c.name)] = False
     # Each family starts on its first registered member — exactly one runs per case, so
     # "none selected" is not a valid state to save from.
     for family in families:
-        state[f"choice_{family.name}"] = family.members[0].name
+        state[choice_key(family.name)] = family.members[0].name
         for c in family.members:
-            state[f"sel_{c.name}"] = c is family.members[0]
+            state[selection_key(c.name)] = c is family.members[0]
     state.form_translations = ADDER_TRANSLATIONS
     for entry in entries:
-        state[_schema_key(entry)] = entry.schema
+        state[schema_key(entry)] = entry.schema
         state[entry.state_key] = dict(entry.defaults)
         if entry.uischema is not None:
-            state[_uischema_key(entry)] = entry.uischema
+            state[uischema_key(entry)] = entry.uischema
     # turbulenceProperties follows the turbulence choice rather than starting empty;
     # a solver with no such family (VoF reads the file itself) starts laminar.
     state.update(turbulence_form_state(entries, "laminar"))
@@ -362,7 +355,7 @@ def build_app(
         state.update(turbulence_form_state(entries, name))
 
     def save_case() -> None:
-        selected = {c.name for c in gated if state[f"sel_{c.name}"]}
+        selected = {c.name for c in gated if state[selection_key(c.name)]}
         form_state = {e.key: dict(state[e.state_key]) for e in entries}
         state.current_step = "review"
         try:
@@ -453,7 +446,7 @@ def build_app(
             state[entry.state_key] = seeded
             # Only the scanned patches: one added by hand stays deletable.
             names = [row["name"] for row in patch_rows]
-            state[_schema_key(entry)] = patch_bc_schema(entry, names)
+            state[schema_key(entry)] = patch_bc_schema(entry, names)
         n = len(spec.patches)
         state.geometry_severity = "info"
         state.geometry_status = f"Found {n} patch(es) in {stl_dir}."
@@ -501,7 +494,7 @@ def build_app(
         html=html,
         client=client,
         sweep=sweep_panel,
-        schema_key=_schema_key,
+        schema_key=schema_key,
     )
     for plugin in step_plugins:
         plugin.register(ctx)
@@ -524,10 +517,10 @@ def build_app(
         # (omit v-show entirely — a bare `v-show` with no expression won't compile).
         panel_kwargs = {}
         if entry.owner_model is not None:
-            panel_kwargs["v_show"] = f"sel_{entry.owner_model}"
+            panel_kwargs["v_show"] = selection_key(entry.owner_model)
         form_kwargs = {}
         if entry.uischema is not None:
-            form_kwargs["uischema"] = (_uischema_key(entry),)
+            form_kwargs["uischema"] = (uischema_key(entry),)
         with v3.VExpansionPanel(elevation=0, **panel_kwargs):
             with v3.VExpansionPanelTitle():
                 html.Span(entry.title)
@@ -541,7 +534,7 @@ def build_app(
                     )
             with v3.VExpansionPanelText():
                 JsonForms(
-                    schema=(_schema_key(entry),),
+                    schema=(schema_key(entry),),
                     data=(entry.state_key,),
                     translations=("form_translations",),
                     change=f"{entry.state_key} = $event.data",
@@ -574,7 +567,7 @@ def build_app(
                         classes="text-overline text-medium-emphasis",
                     )
                     with v3.VRadioGroup(
-                        model_value=(f"choice_{family.name}",),
+                        model_value=(choice_key(family.name),),
                         update_modelValue=(ctrl.select_model, "[$event]"),
                         inline=True,
                         hide_details=True,
@@ -587,7 +580,7 @@ def build_app(
                     classes="text-overline text-medium-emphasis",
                 )
                 for c in optional:
-                    v3.VSwitch(v_model=(f"sel_{c.name}",), label=c.label, inset=True)
+                    v3.VSwitch(v_model=(selection_key(c.name),), label=c.label, inset=True)
 
     def _geometry_panel() -> None:
         """STL patches → blockMesh / snappy / preprocess dicts."""

@@ -10,7 +10,7 @@ from typing import Any, Sequence
 
 from neofoam.mcp import tools
 from neofoam.turbulence import momentumTransportModel
-from neofoam.ui.forms import FormEntry, exclusive_model_families, humanize
+from neofoam.ui.forms import FormEntry, exclusive_model_families, humanize, js_identifier
 from neofoam.ui.plugins import AT_START, StepPlugin
 
 __all__ = [
@@ -20,7 +20,9 @@ __all__ = [
     "build_steps",
     "build_model_choices",
     "build_model_families",
+    "choice_key",
     "select_model_state",
+    "selection_key",
     "turbulence_form_state",
     "loaded_turbulence_model",
 ]
@@ -154,6 +156,25 @@ def build_model_families(solver: Any) -> list[ModelFamily]:
     ]
 
 
+def selection_key(model: str) -> str:
+    """The wizard state var (``sel_<model>``) holding whether ``model`` is selected.
+
+    Use it wherever that switch is read, written or bound in a template, so a model
+    name that is no JS identifier still gives a valid Vue expression, e.g.
+    ``state[selection_key("kEpsilon")]``.
+    """
+    return js_identifier(f"sel_{model}")
+
+
+def choice_key(family: str) -> str:
+    """The wizard state var (``choice_<family>``) holding a family's selected member.
+
+    The pick-one companion of :func:`selection_key`, e.g.
+    ``state[choice_key("momentumTransportModel")]``.
+    """
+    return js_identifier(f"choice_{family}")
+
+
 def select_model_state(families: list[ModelFamily], name: str) -> dict[str, Any]:
     """The wizard-state updates that select model ``name``.
 
@@ -163,11 +184,11 @@ def select_model_state(families: list[ModelFamily], name: str) -> dict[str, Any]
     model (the Models step's radio group, the AI/``load_case`` fill auto-selecting the
     models it filled configs for) applies exactly the same rule.
     """
-    updates: dict[str, Any] = {f"sel_{name}": True}
+    updates: dict[str, Any] = {selection_key(name): True}
     for family in families:
         if any(c.name == name for c in family.members):
-            updates[f"choice_{family.name}"] = name
-            updates.update({f"sel_{c.name}": c.name == name for c in family.members})
+            updates[choice_key(family.name)] = name
+            updates.update({selection_key(c.name): c.name == name for c in family.members})
     return updates
 
 

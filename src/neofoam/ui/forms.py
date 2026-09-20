@@ -32,11 +32,14 @@ __all__ = [
     "exclusive_model_families",
     "humanize",
     "inline_refs",
+    "js_identifier",
     "jsonforms_schema",
     "alternatives_uischema",
     "allowed_bc_types",
     "seed_boundary_field",
     "patch_bc_schema",
+    "schema_key",
+    "uischema_key",
 ]
 
 _BC_KEYS = ("boundaryField",)
@@ -86,6 +89,23 @@ class FormEntry:
     """The config class (used by field-half merge in ``case_spec``)."""
     uischema: dict[str, Any] | None = None
     """Optional JSONForms UISchema (``None`` ⇒ auto-layout from the schema)."""
+
+
+def schema_key(entry: FormEntry) -> str:
+    """The wizard state var holding ``entry``'s schema, safe as a JS identifier.
+
+    Use it (never a hand-built name) wherever the schema is read or patched, e.g.
+    ``state[schema_key(entry)]``; step plugins get it as ``ctx.schema_key``.
+    """
+    return js_identifier("schema_" + entry.key)
+
+
+def uischema_key(entry: FormEntry) -> str:
+    """The wizard state var holding ``entry``'s UISchema, safe as a JS identifier.
+
+    The companion of :func:`schema_key`, e.g. ``state[uischema_key(entry)]``.
+    """
+    return js_identifier("uischema_" + entry.key)
 
 
 def exclusive_model_families(solver: Any) -> dict[str, list[str]]:

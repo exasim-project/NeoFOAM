@@ -16,7 +16,9 @@ from neofoam.ui.forms import (
     build_forms,
     build_mesh_forms,
     exclusive_model_families,
+    schema_key,
     seed_boundary_field,
+    uischema_key,
 )
 
 
@@ -771,11 +773,9 @@ def test_build_field_forms_are_whole_field_dict_entries():
 def test_state_var_names_are_js_identifiers():
     # trame evaluates state var names as Vue expressions: `form_alpha.water…` reads as
     # a member access on an undefined `form_alpha` and the panel renders empty.
-    from neofoam.ui.app import _schema_key, _uischema_key  # noqa: PLC0415
-
     for name in list_solver_names():
         for entry in build_forms(resolve_solver(name)):
-            for var in (entry.state_key, _schema_key(entry), _uischema_key(entry)):
+            for var in (entry.state_key, schema_key(entry), uischema_key(entry)):
                 assert var.isidentifier(), f"{name}: {var!r}"
 
 

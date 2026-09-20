@@ -20,8 +20,8 @@ from trame.app import get_server  # noqa: E402
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
-from neofoam.ui.app import _schema_key  # noqa: E402
 from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs  # noqa: E402
+from neofoam.ui.forms import schema_key  # noqa: E402
 from neofoam.ui.geometry import discover_geometry  # noqa: E402
 from neofoam.ui.steps import build_model_families  # noqa: E402
 
@@ -64,7 +64,7 @@ def test_build_app_constructs():
     ]
     for entry in entries:
         assert server.state[entry.state_key] is not None
-        assert server.state[_schema_key(entry)] == entry.schema
+        assert server.state[schema_key(entry)] == entry.schema
 
 
 def test_nav_does_not_reset_form_state():
@@ -171,7 +171,7 @@ def test_scan_pins_only_the_scanned_patches(tmp_path):
 
     asyncio.run(server.controller.load_geometry())
 
-    boundary_field = server.state[_schema_key(entry)]["properties"]["boundaryField"]
+    boundary_field = server.state[schema_key(entry)]["properties"]["boundaryField"]
     assert set(boundary_field["properties"]) == {"inlet", "outlet", "walls", "frontBack", "tubes"}
     assert "byHand" in server.state[entry.state_key]["boundaryField"]
 
