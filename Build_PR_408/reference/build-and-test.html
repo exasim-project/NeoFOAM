@@ -227,6 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="project-layout.html">Project layout</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -636,7 +637,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <p>Quote the extras (<code class="docutils literal notranslate"><span class="pre">&quot;.[all]&quot;</span></code>) — on macOS the default <code class="docutils literal notranslate"><span class="pre">zsh</span></code> treats the
 square brackets as a glob pattern. Instead of <code class="docutils literal notranslate"><span class="pre">all</span></code> you can pick just the
 optional features you need: <code class="docutils literal notranslate"><span class="pre">dev</span></code>, <code class="docutils literal notranslate"><span class="pre">docs</span></code>, <code class="docutils literal notranslate"><span class="pre">agent</span></code>, <code class="docutils literal notranslate"><span class="pre">mcp</span></code>,
-<code class="docutils literal notranslate"><span class="pre">telemetry</span></code> — e.g. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[dev,mcp]&quot;</span> <span class="pre">-v</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">telemetry</span></code>, <code class="docutils literal notranslate"><span class="pre">ui</span></code> — e.g. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[dev,mcp]&quot;</span> <span class="pre">-v</span></code>.</p>
 <p>The editable install uses scikit-build’s <code class="docutils literal notranslate"><span class="pre">redirect</span></code> mode: edits to
 <code class="docutils literal notranslate"><span class="pre">src/neofoam/*.py</span></code> take effect on the next Python start without
 reinstalling. Automatic rebuilds are off (<code class="docutils literal notranslate"><span class="pre">editable.rebuild</span> <span class="pre">=</span> <span class="pre">false</span></code>), so
@@ -647,10 +648,14 @@ C++/binding changes still need a re-run of <code class="docutils literal notrans
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>test/&lt;area&gt;<span class="w">                </span><span class="c1"># scoped tests while working</span>
 pytest<span class="w">                            </span><span class="c1"># whole suite (testpaths=test) verify before done</span>
 pytest<span class="w"> </span>test/ui<span class="w"> </span>-m<span class="w"> </span>browser<span class="w">         </span><span class="c1"># opt-in: the wizard forms in headless Chromium</span>
+bun<span class="w"> </span><span class="nb">test</span><span class="w">                          </span><span class="c1"># in src/neofoam/ui/jsonforms_module: the JS renderer rules</span>
 pre-commit<span class="w"> </span>run<span class="w"> </span>--files<span class="w"> </span>&lt;changed&gt;<span class="w">  </span><span class="c1"># format + lint + mypy on your diff</span>
 pre-commit<span class="w"> </span>run<span class="w"> </span>-a<span class="w">                 </span><span class="c1"># format + lint + mypy on all files</span>
 </pre></div>
 </div>
+<p>The browser tests need <code class="docutils literal notranslate"><span class="pre">playwright</span> <span class="pre">install</span> <span class="pre">chromium</span></code> once. After editing the
+wizard’s JS sources, rebuild the checked-in bundle (<code class="docutils literal notranslate"><span class="pre">bunx</span> <span class="pre">vite</span> <span class="pre">build</span></code>) and commit
+it with the change — see <a class="reference internal" href="ui-architecture.html"><span class="doc">Case-wizard UI architecture</span></a>.</p>
 </section>
 <section id="poe-tasks">
 <h2>Poe tasks<a class="headerlink" href="#poe-tasks" title="Link to this heading">¶</a></h2>

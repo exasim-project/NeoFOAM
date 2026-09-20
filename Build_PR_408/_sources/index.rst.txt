@@ -58,6 +58,7 @@ what you're trying to do:
    reference/project-layout
    reference/build-and-test
    reference/cli
+   reference/ui-architecture
    reference/index
 
 .. toctree::

@@ -45,6 +45,27 @@ the linked reference pages for the full API.
     LLM case scaffolding: the pydantic-ai case-fill agent, forms, and the
     packaged marimo wizard template.
 
+``mcp/``
+    The frontend-neutral tool layer: case-free ``f(solver, ...)`` functions returning
+    pydantic DTOs (``tools.py``, ``dto.py``), the solver registry, and the FastMCP
+    server behind ``neofoam mcp serve``. The case wizard calls the same functions.
+
+``ui/``
+    The case-wizard web UI behind ``neofoam ui`` (trame + JSONForms) — see
+    :doc:`ui-architecture`.
+
+    - ``app.py`` — the orchestrator: state seeding, controllers, layout.
+    - ``forms.py``, ``form_schema.py``, ``boundary_forms.py`` — the form registry and
+      the pydantic JSON Schema → JSONForms transform.
+    - ``steps.py``, ``case_spec.py``, ``case_load.py``, ``review.py``, ``scaffold.py``
+      — steps and model selection, form state ↔ case spec, reopening a case,
+      findings, ``Allrun``/``Allclean``.
+    - ``geometry*.py``, ``agent_panel.py``, ``sweep_*.py`` — the Geometry step, the AI
+      chat drawer and the Parameters (sweep) step.
+    - ``plugins/`` — the step-plugin interface (``neofoam.ui.steps`` entry points).
+    - ``jsonforms_module/`` — the JS renderers and their checked-in bundle; see the
+      ``README.md`` there.
+
 ``core/``
     ``PluginSystem`` — discriminated registries for constraints, time-integration
     regimes, and model families.

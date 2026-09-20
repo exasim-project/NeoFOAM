@@ -227,6 +227,7 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -655,6 +656,26 @@ PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">agent/</span></code></dt><dd><p>LLM case scaffolding: the pydantic-ai case-fill agent, forms, and the
 packaged marimo wizard template.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">mcp/</span></code></dt><dd><p>The frontend-neutral tool layer: case-free <code class="docutils literal notranslate"><span class="pre">f(solver,</span> <span class="pre">...)</span></code> functions returning
+pydantic DTOs (<code class="docutils literal notranslate"><span class="pre">tools.py</span></code>, <code class="docutils literal notranslate"><span class="pre">dto.py</span></code>), the solver registry, and the FastMCP
+server behind <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">mcp</span> <span class="pre">serve</span></code>. The case wizard calls the same functions.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ui/</span></code></dt><dd><p>The case-wizard web UI behind <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">ui</span></code> (trame + JSONForms) — see
+<a class="reference internal" href="ui-architecture.html"><span class="doc">Case-wizard UI architecture</span></a>.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">app.py</span></code> — the orchestrator: state seeding, controllers, layout.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">forms.py</span></code>, <code class="docutils literal notranslate"><span class="pre">form_schema.py</span></code>, <code class="docutils literal notranslate"><span class="pre">boundary_forms.py</span></code> — the form registry and
+the pydantic JSON Schema → JSONForms transform.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">steps.py</span></code>, <code class="docutils literal notranslate"><span class="pre">case_spec.py</span></code>, <code class="docutils literal notranslate"><span class="pre">case_load.py</span></code>, <code class="docutils literal notranslate"><span class="pre">review.py</span></code>, <code class="docutils literal notranslate"><span class="pre">scaffold.py</span></code>
+— steps and model selection, form state ↔ case spec, reopening a case,
+findings, <code class="docutils literal notranslate"><span class="pre">Allrun</span></code>/<code class="docutils literal notranslate"><span class="pre">Allclean</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">geometry*.py</span></code>, <code class="docutils literal notranslate"><span class="pre">agent_panel.py</span></code>, <code class="docutils literal notranslate"><span class="pre">sweep_*.py</span></code> — the Geometry step, the AI
+chat drawer and the Parameters (sweep) step.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plugins/</span></code> — the step-plugin interface (<code class="docutils literal notranslate"><span class="pre">neofoam.ui.steps</span></code> entry points).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">jsonforms_module/</span></code> — the JS renderers and their checked-in bundle; see the
+<code class="docutils literal notranslate"><span class="pre">README.md</span></code> there.</p></li>
+</ul>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">core/</span></code></dt><dd><p><code class="docutils literal notranslate"><span class="pre">PluginSystem</span></code> — discriminated registries for constraints, time-integration
 regimes, and model families.</p>

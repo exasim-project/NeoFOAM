@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="neofoam" href="index.html"><link rel="prev" title="Building and testing NeoFOAM" href="build-and-test.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Case-wizard UI architecture" href="ui-architecture.html"><link rel="prev" title="Building and testing NeoFOAM" href="build-and-test.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/cli.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -227,6 +227,7 @@
 <li class="toctree-l1"><a class="reference internal" href="project-layout.html">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -672,6 +673,17 @@ neofoam<span class="w"> </span>mcp<span class="w"> </span>serve<span class="w"> 
 </pre></div>
 </div>
 </section>
+<section id="case-wizard-neofoam-ui">
+<h2>Case wizard — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">ui</span></code><a class="headerlink" href="#case-wizard-neofoam-ui" title="Link to this heading">¶</a></h2>
+<p>Launch the case-wizard web UI (needs the <code class="docutils literal notranslate"><span class="pre">ui</span></code> extra) — see
+<a class="reference internal" href="ui-architecture.html"><span class="doc">Case-wizard UI architecture</span></a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>neofoam<span class="w"> </span>ui<span class="w">                              </span><span class="c1"># serve http://localhost:8080/ and open a browser</span>
+neofoam<span class="w"> </span>ui<span class="w"> </span>--solver<span class="w"> </span>incompressibleVoF<span class="w">   </span><span class="c1"># edit another solver's configs</span>
+neofoam<span class="w"> </span>ui<span class="w"> </span>--port<span class="w"> </span><span class="m">8081</span><span class="w"> </span>--no-browser<span class="w">     </span><span class="c1"># another port, no browser</span>
+neofoam<span class="w"> </span>ui<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w">               </span><span class="c1"># bind every interface (phone on the LAN)</span>
+</pre></div>
+</div>
+</section>
 <section id="telemetry-neofoam-telemetry">
 <h2>Telemetry — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">telemetry</span></code><a class="headerlink" href="#telemetry-neofoam-telemetry" title="Link to this heading">¶</a></h2>
 <p>Visualize solver telemetry traces (needs the <code class="docutils literal notranslate"><span class="pre">telemetry</span></code> extra):</p>
@@ -687,12 +699,12 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="index.html">
+          <a class="next-page" href="ui-architecture.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam</div>
+                <div class="title">Case-wizard UI architecture</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -742,6 +754,7 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
 <li><a class="reference internal" href="#executor-selection-and-gpu-initialization">Executor selection and GPU initialization</a></li>
 <li><a class="reference internal" href="#preprocessing-neofoam-preprocess">Preprocessing — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">preprocess</span></code></a></li>
 <li><a class="reference internal" href="#mcp-server-neofoam-mcp">MCP server — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">mcp</span></code></a></li>
+<li><a class="reference internal" href="#case-wizard-neofoam-ui">Case wizard — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">ui</span></code></a></li>
 <li><a class="reference internal" href="#telemetry-neofoam-telemetry">Telemetry — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">telemetry</span></code></a></li>
 </ul>
 </li>
