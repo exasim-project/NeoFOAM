@@ -835,6 +835,7 @@ their <code class="docutils literal notranslate"><span class="pre">const</span><
 <li><p><strong>Useful “add a key” rows only</strong> — see <code class="xref py py-func docutils literal notranslate"><span class="pre">_accepts_new_keys()</span></code>.</p></li>
 <li><p><strong>Labelled “add a key” rows, compact scheme sections</strong> — see <code class="xref py py-func docutils literal notranslate"><span class="pre">_tag_adders()</span></code>.</p></li>
 <li><p><strong>Linear-solver blocks as grids</strong> — see <code class="xref py py-func docutils literal notranslate"><span class="pre">_pin_solver_controls()</span></code>.</p></li>
+<li><p><strong>All-scalar objects as grids</strong> — see <code class="xref py py-func docutils literal notranslate"><span class="pre">_tag_scalar_grid()</span></code>.</p></li>
 </ul>
 </dd></dl>
 
@@ -845,8 +846,9 @@ their <code class="docutils literal notranslate"><span class="pre">const</span><
 <p>The default schema types <code class="docutils literal notranslate"><span class="pre">boundaryField</span></code> as an open <code class="docutils literal notranslate"><span class="pre">additionalProperties</span></code> map,
 which JSONForms renders as a bare “property name” editor with a generic type picker.
 Once the patch names are known (from the geometry scan) we pin them as titled object
-properties instead, so each patch renders as its own section with a clean BC-type
-dropdown. Returns <code class="docutils literal notranslate"><span class="pre">bc_entry.schema</span></code> unchanged when there are no names or no BC arms.</p>
+properties as well, so each scanned patch is a fixed row with a clean BC-type dropdown.
+The map stays open: a patch the scan cannot see is still added by hand. Returns
+<code class="docutils literal notranslate"><span class="pre">bc_entry.schema</span></code> unchanged when there are no names or no BC arms.</p>
 </dd></dl>
 
 <dl class="py function">

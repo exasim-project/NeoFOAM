@@ -623,7 +623,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">model_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
@@ -639,6 +639,15 @@
 <span class="sd">    A dimensioned ``nu`` entry (``nu [ 0 2 -1 0 0 0 0 ] 1e-05``) is reduced to a</span>
 <span class="sd">    ``float`` by the IO read path before pydantic sees it.</span>
 <span class="sd">    """</span>
+
+    <span class="c1"># The same rule as ``_newtonian_needs_nu``, for consumers that only see the</span>
+    <span class="c1"># schema: a JSONForms form flags the missing ``nu`` before the save does.</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
+        <span class="n">json_schema_extra</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"if"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"transportModel"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"const"</span><span class="p">:</span> <span class="s2">"Newtonian"</span><span class="p">}}},</span>
+            <span class="s2">"then"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"nu"</span><span class="p">]},</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
 
     <span class="n">transportModel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Newtonian"</span>
     <span class="n">nu</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>

@@ -1023,14 +1023,35 @@
         <span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_patch_adder</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""A sliced ``boundaryField`` schema whose "add a key" row adds a patch.</span>
+<span class="n">_SCALAR_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"number"</span><span class="p">,</span> <span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"boolean"</span><span class="p">)</span>
 
-<span class="sd">    The row is labelled as a patch-name box, and the BC union is typed ``object``:</span>
-<span class="sd">    JSONForms seeds a new key from the ``type``, and with none it seeds the string ``""``.</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_scalar</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A property drawn as one small control: a number, a checkbox or a fixed choice."""</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_SCALAR_TYPES</span> <span class="ow">or</span> <span class="s2">"enum"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tag_scalar_grid</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Flag an object of two or more scalars only with ``nfGrid`` (mutates ``node``).</span>
+
+<span class="sd">    The bundled layout renderer then sets its controls side by side in a wrapping grid</span>
+<span class="sd">    instead of one full-width control per line (``PIMPLE``, a model's coefficients).</span>
+<span class="sd">    """</span>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_scalar</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">):</span>
+        <span class="n">node</span><span class="p">[</span><span class="s2">"nfGrid"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_patch_adder</span><span class="p">(</span><span class="n">schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""A ``boundaryField`` schema drawn as one row per patch, its "add a key" row adding a patch.</span>
+
+<span class="sd">    ``nfPatches`` picks the bundled row renderer, which binds a patch through the map's</span>
+<span class="sd">    data, so a name holding ``.`` (``wall.left``) works. The row is labelled as a</span>
+<span class="sd">    patch-name box, and the BC union is typed ``object``: a new key is seeded from the</span>
+<span class="sd">    ``type``, and with none it would be the string ``""``.</span>
 <span class="sd">    """</span>
     <span class="n">props</span> <span class="o">=</span> <span class="n">schema</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">]</span>
-    <span class="n">boundary_field</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">],</span> <span class="n">i18n</span><span class="o">=</span><span class="s2">"nf.patch"</span><span class="p">)</span>
+    <span class="n">boundary_field</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s2">"boundaryField"</span><span class="p">],</span> <span class="n">i18n</span><span class="o">=</span><span class="s2">"nf.patch"</span><span class="p">,</span> <span class="n">nfPatches</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="o">**</span><span class="n">boundary_field</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">],</span>
         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
@@ -1126,6 +1147,7 @@
 <span class="sd">    * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.</span>
 <span class="sd">    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.</span>
 <span class="sd">    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.</span>
+<span class="sd">    * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.</span>
 <span class="sd">    """</span>
     <span class="n">class_names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{}))</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">inline_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
@@ -1184,6 +1206,7 @@
             <span class="k">del</span> <span class="n">node</span><span class="p">[</span><span class="s2">"additionalProperties"</span><span class="p">]</span>
         <span class="n">_tag_adders</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="n">_pin_solver_controls</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">_tag_scalar_grid</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="c1"># A def that *is* a discriminated arm: title it by its const type.</span>
         <span class="n">const</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"const"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">const</span> <span class="ow">and</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
@@ -1415,7 +1438,7 @@
                 <span class="n">config_name</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="n">cls_name</span><span class="o">=</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">,</span>
                 <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2"> — field"</span><span class="p">,</span>
-                <span class="n">schema</span><span class="o">=</span><span class="n">jsonforms_schema</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">json_schema</span><span class="p">),</span>
+                <span class="n">schema</span><span class="o">=</span><span class="n">_patch_adder</span><span class="p">(</span><span class="n">jsonforms_schema</span><span class="p">(</span><span class="n">dto</span><span class="o">.</span><span class="n">json_schema</span><span class="p">)),</span>
                 <span class="n">defaults</span><span class="o">=</span><span class="n">dto</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span>
                 <span class="n">state_key</span><span class="o">=</span><span class="n">js_identifier</span><span class="p">(</span><span class="sa">f</span><span class="s2">"form_</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">),</span>
                 <span class="n">kind</span><span class="o">=</span><span class="s2">"dict"</span><span class="p">,</span>
@@ -1529,8 +1552,9 @@
 <span class="sd">    The default schema types ``boundaryField`` as an open ``additionalProperties`` map,</span>
 <span class="sd">    which JSONForms renders as a bare "property name" editor with a generic type picker.</span>
 <span class="sd">    Once the patch names are known (from the geometry scan) we pin them as titled object</span>
-<span class="sd">    properties instead, so each patch renders as its own section with a clean BC-type</span>
-<span class="sd">    dropdown. Returns ``bc_entry.schema`` unchanged when there are no names or no BC arms.</span>
+<span class="sd">    properties as well, so each scanned patch is a fixed row with a clean BC-type dropdown.</span>
+<span class="sd">    The map stays open: a patch the scan cannot see is still added by hand. Returns</span>
+<span class="sd">    ``bc_entry.schema`` unchanged when there are no names or no BC arms.</span>
 <span class="sd">    """</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">bc_entry</span><span class="o">.</span><span class="n">schema</span>
     <span class="n">bf</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,</span> <span class="p">{})</span>
@@ -1539,6 +1563,7 @@
         <span class="k">return</span> <span class="n">base</span>
     <span class="n">props</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span><span class="o">**</span><span class="n">value_schema</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">:</span> <span class="n">name</span><span class="p">}</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
     <span class="n">new_bf</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">bf</span><span class="p">,</span>
         <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
         <span class="s2">"title"</span><span class="p">:</span> <span class="n">bf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"Boundary field"</span><span class="p">),</span>
         <span class="s2">"properties"</span><span class="p">:</span> <span class="n">props</span><span class="p">,</span>

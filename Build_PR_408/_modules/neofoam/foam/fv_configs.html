@@ -634,7 +634,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">create_model</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">TypeAdapter</span><span class="p">,</span> <span class="n">create_model</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldInfo</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam.schemes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -666,6 +666,9 @@
     <span class="s2">"snGrad"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"snGradSchemes"</span><span class="p">,</span> <span class="n">SnGradScheme</span><span class="p">),</span>
     <span class="s2">"interpolation"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"interpolationSchemes"</span><span class="p">,</span> <span class="n">InterpolationScheme</span><span class="p">),</span>
 <span class="p">}</span>
+
+<span class="c1">#: Section name → value type, for the entries of a section no operation declared.</span>
+<span class="n">_SCHEME_TYPE_BY_SECTION</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_SCHEMES_SECTIONS</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sanitize_name</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -742,6 +745,27 @@
 <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_tokenize_extras_validator</span><span class="p">(</span><span class="n">scheme_type</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Before-validator that turns a structured undeclared entry into its OpenFOAM token."""</span>
+    <span class="n">adapter</span><span class="p">:</span> <span class="n">TypeAdapter</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">scheme_type</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_tokenize_extras</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># An undeclared key bypasses the typed fields, so a form-shaped scheme</span>
+        <span class="c1"># (``{"type": "Gauss", ...}``) would otherwise be written as a sub-dict.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">declared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">|</span> <span class="p">{</span><span class="n">info</span><span class="o">.</span><span class="n">alias</span> <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">adapter</span><span class="o">.</span><span class="n">validate_python</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">openfoam_str</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">declared</span>
+            <span class="k">else</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)(</span><span class="nb">classmethod</span><span class="p">(</span><span class="n">_tokenize_extras</span><span class="p">))</span>  <span class="c1"># type: ignore[arg-type]</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_sections</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""(Re)synthesise every section submodel and re-attach to ``cls``.</span>
 
@@ -761,12 +785,17 @@
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">field_defs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">alias</span><span class="o">=</span><span class="n">alias</span><span class="p">))</span>
+        <span class="n">validators</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"_expand_default"</span><span class="p">:</span> <span class="n">_EXPAND_DEFAULT_VALIDATOR</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">section_name</span> <span class="ow">in</span> <span class="n">_SCHEME_TYPE_BY_SECTION</span><span class="p">:</span>
+            <span class="n">validators</span><span class="p">[</span><span class="s2">"_tokenize_extras"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_tokenize_extras_validator</span><span class="p">(</span>
+                <span class="n">_SCHEME_TYPE_BY_SECTION</span><span class="p">[</span><span class="n">section_name</span><span class="p">]</span>
+            <span class="p">)</span>
         <span class="n">fresh</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"_</span><span class="si">{</span><span class="n">section_name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">__config__</span><span class="o">=</span><span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">,</span> <span class="n">populate_by_name</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="c1"># Attach the ``default``-expansion before-validator to the synthesized</span>
             <span class="c1"># section model so a tutorial that leans on ``default`` round-trips.</span>
-            <span class="n">__validators__</span><span class="o">=</span><span class="p">{</span><span class="s2">"_expand_default"</span><span class="p">:</span> <span class="n">_EXPAND_DEFAULT_VALIDATOR</span><span class="p">},</span>
+            <span class="n">__validators__</span><span class="o">=</span><span class="n">validators</span><span class="p">,</span>
             <span class="o">**</span><span class="n">field_defs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="n">section_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">FieldInfo</span><span class="p">(</span>  <span class="c1"># type: ignore[attr-defined]</span>

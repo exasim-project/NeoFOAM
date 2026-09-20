@@ -660,8 +660,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam.algorithm_configs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DynamicMeshControls</span><span class="p">,</span>
     <span class="n">PimpleAlgorithmConfig</span><span class="p">,</span>
-    <span class="n">PisoAlgorithmConfig</span><span class="p">,</span>
-    <span class="n">PisoDynamicMeshControls</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
@@ -697,14 +695,13 @@
 <span class="c1"># these stay optional and only serialise when the case author sets them.</span>
 <span class="n">PimpleFvSolution</span><span class="o">.</span><span class="n">add_controls</span><span class="p">(</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="n">pRefCell</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">pRefValue</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
-<span class="c1"># Both block spellings (``PIMPLE``, and ``PISO`` for a pisoFoam case) are</span>
-<span class="c1"># declared so ``configurations(solver)`` and the MCP export the full key set.</span>
+<span class="c1"># Only the ``PIMPLE`` spelling is declared: a declared config is also written,</span>
+<span class="c1"># and ``control_factory`` ignores a ``PISO`` block once a ``PIMPLE`` one exists.</span>
 <span class="c1"># Loading is unaffected: this spec is used as its own runtime and never</span>
-<span class="c1"># auto-loads its configs — ``control_factory`` drives instantiation.</span>
+<span class="c1"># auto-loads its configs — ``control_factory`` still reads a pisoFoam case's</span>
+<span class="c1"># ``PISO`` block through the undeclared Piso classes.</span>
 <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">PimpleAlgorithmConfig</span><span class="p">)</span>
 <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">DynamicMeshControls</span><span class="p">)</span>
-<span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">PisoAlgorithmConfig</span><span class="p">)</span>
-<span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">PisoDynamicMeshControls</span><span class="p">)</span>
 
 <span class="c1"># 0/&lt;name&gt; field declarations PIMPLE owns. The framework auto-synthesises</span>
 <span class="c1"># the matching read_field InitStep (see</span>
