@@ -19,8 +19,6 @@ pytest.importorskip("trame_flow")
 
 from trame.app import get_server  # noqa: E402
 
-from neofoam.mcp import tools  # noqa: E402
-from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.sweep_view import _CSS  # noqa: E402
 
@@ -32,19 +30,8 @@ def _dim_nodes(server):
     return [n for n in server.controller.sweep_get_nodes() if n["type"] == "dim"]
 
 
-def _seed_defaults(server) -> None:
-    """The minimal valid form state used by the save round-trip app tests."""
-    solver = resolve_solver("incompressibleFluid")
-    defaults = tools.config_schema(solver, "transport_properties_config").defaults
-    for entry in server.controller.get_entries():
-        server.state[entry.state_key] = (
-            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
-        )
-
-
-def test_sweep_state_and_canvas_seeded():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_seed"))
-    state = server.state
+def test_sweep_state_and_canvas_seeded(wizard):
+    state = wizard.state
     assert state.sweep_case_count == 0
     assert state.sweep_exported == []
     # Choices are dict-kind configs only (no field_in/field_bc halves).
@@ -52,10 +39,10 @@ def test_sweep_state_and_canvas_seeded():
     assert "transport_properties_config" in values
     assert "control_dict_config" in values
     assert not any(v.startswith("field") for v in values)
-    entries = {e.config_name: e for e in server.controller.get_entries() if e.kind == "dict"}
+    entries = {e.config_name: e for e in wizard.controller.get_entries() if e.kind == "dict"}
     assert values == set(entries)
     # The default rule-library pipeline is on the canvas, pre-wired.
-    nodes = server.controller.sweep_get_nodes()
+    nodes = wizard.controller.sweep_get_nodes()
     assert [n["data"]["rule"] for n in nodes if n["type"] == "rule"] == [
         "setup_mesh",
         "blockMesh",
@@ -65,12 +52,11 @@ def test_sweep_state_and_canvas_seeded():
         "solve",
         "all",
     ]
-    assert _dim_nodes(server) == []
+    assert _dim_nodes(wizard) == []
 
 
-def test_add_dimension_seeds_from_live_form_state():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_add"))
-    state, ctrl = server.state, server.controller
+def test_add_dimension_seeds_from_live_form_state(wizard):
+    state, ctrl = wizard.state, wizard.controller
     entry = next(
         e
         for e in ctrl.get_entries()
@@ -81,7 +67,7 @@ def test_add_dimension_seeds_from_live_form_state():
     state.sweep_dim_pick = "transport_properties_config"
     ctrl.sweep_add_dimension()
 
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert node["id"] == "dim:transport_properties_config"
     assert node["data"]["entries"] == {"base": {"transportModel": "Newtonian", "nu": 3e-5}}
     assert node["data"]["schema"] == entry.schema
@@ -92,13 +78,12 @@ def test_add_dimension_seeds_from_live_form_state():
 
     # Duplicate add is refused.
     ctrl.sweep_add_dimension()
-    assert len(_dim_nodes(server)) == 1
+    assert len(_dim_nodes(wizard)) == 1
     assert "already on the canvas" in state.sweep_error
 
 
-def test_add_dimension_requires_selected_owner_model():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_owner"))
-    state, ctrl = server.state, server.controller
+def test_add_dimension_requires_selected_owner_model(wizard):
+    state, ctrl = wizard.state, wizard.controller
     # An owned config whose model is NOT selected — the members of a pick-one family
     # start selected, so "owned" alone no longer implies "hidden".
     owned = next(
@@ -113,24 +98,23 @@ def test_add_dimension_requires_selected_owner_model():
         pytest.skip("solver has no unselected-model-owned dict configs")
     state.sweep_dim_pick = owned.config_name
     ctrl.sweep_add_dimension()
-    assert _dim_nodes(server) == []
+    assert _dim_nodes(wizard) == []
     assert owned.owner_model in state.sweep_error
 
     state[f"sel_{owned.owner_model}"] = True
     ctrl.sweep_add_dimension()
-    assert len(_dim_nodes(server)) == 1
+    assert len(_dim_nodes(wizard)) == 1
 
 
-def test_variant_add_rename_delete():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_variants"))
-    state, ctrl = server.state, server.controller
+def test_variant_add_rename_delete(wizard):
+    state, ctrl = wizard.state, wizard.controller
     state.sweep_dim_pick = "transport_properties_config"
     ctrl.sweep_add_dimension()
     node_id = "dim:transport_properties_config"
 
     # Add clones the selected variant.
     ctrl.sweep_variant_add(node_id)
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"base", "variant-1"}
     assert node["data"]["selected"] == "variant-1"
     assert state.sweep_case_count == 2
@@ -146,7 +130,7 @@ def test_variant_add_rename_delete():
     assert "Invalid variant name" in state.sweep_error
     ctrl.sweep_rename_buffer(node_id, "nu2e-05")
     ctrl.sweep_variant_rename(node_id)
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"base", "nu2e-05"}
     # The mirror follows the rename.
     assert state.sweep_cfg_selected == "nu2e-05"
@@ -154,12 +138,12 @@ def test_variant_add_rename_delete():
 
     # Field edits land on the selected variant (the trigger's Python side).
     ctrl.sweep_variant_edit(node_id, {"transportModel": "Newtonian", "nu": 9e-5})
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert node["data"]["entries"]["nu2e-05"]["nu"] == 9e-5
 
     # Delete keeps at least one variant.
     ctrl.sweep_variant_delete(node_id)
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"base"}
     # The mirror never points at the deleted variant — it falls back to a
     # surviving one.
@@ -171,11 +155,10 @@ def test_variant_add_rename_delete():
     assert "at least one variant" in state.sweep_error
 
 
-def test_configure_tab_mirrors_active_dimension():
+def test_configure_tab_mirrors_active_dimension(wizard):
     # Phase L: the forms live in the Configure tab; adding a dimension makes it
     # the active one and mirrors its live node data into the sweep_cfg_* state.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_cfg_mirror"))
-    state, ctrl = server.state, server.controller
+    state, ctrl = wizard.state, wizard.controller
     assert state.sweep_tab == "configure"
 
     entry = next(
@@ -196,9 +179,8 @@ def test_configure_tab_mirrors_active_dimension():
     assert "nu" in state.sweep_cfg_schema.get("properties", {})
 
 
-def test_configure_tab_variant_ops_and_selection():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_cfg_ops"))
-    state, ctrl = server.state, server.controller
+def test_configure_tab_variant_ops_and_selection(wizard):
+    state, ctrl = wizard.state, wizard.controller
     entry = next(
         e
         for e in ctrl.get_entries()
@@ -234,9 +216,8 @@ def test_configure_tab_variant_ops_and_selection():
     assert state.sweep_cfg_variants == ["nu2e-05"]
 
 
-def test_configure_tab_switches_between_and_drops_dimensions():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_cfg_switch"))
-    state, ctrl = server.state, server.controller
+def test_configure_tab_switches_between_and_drops_dimensions(wizard):
+    state, ctrl = wizard.state, wizard.controller
     ctrl.sweep_toggle_dimension("transport_properties_config")
     ctrl.sweep_toggle_dimension("control_dict_config")
     assert {c["value"] for c in state.sweep_cfg_chips} == {
@@ -260,11 +241,10 @@ def test_configure_tab_switches_between_and_drops_dimensions():
     assert state.sweep_cfg_data == {}
 
 
-def test_live_validation_badges_and_blocks_export():
+def test_live_validation_badges_and_blocks_export(wizard):
     # V1: an invalid variant badges its node, fills the table's validation
     # column, and blocks Export.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_v1"))
-    state, ctrl = server.state, server.controller
+    state, ctrl = wizard.state, wizard.controller
     entry = next(
         e
         for e in ctrl.get_entries()
@@ -279,7 +259,7 @@ def test_live_validation_badges_and_blocks_export():
     # An out-of-range nu fails validation.
     ctrl.sweep_variant_edit(node_id, {"transportModel": "Newtonian", "nu": "abc"})
     assert not state.sweep_valid
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert node["data"]["error"]  # badge message set
     assert state.sweep_rows[0]["validation"] != "✓"
     # Export refuses while invalid.
@@ -291,13 +271,12 @@ def test_live_validation_badges_and_blocks_export():
     # Fixing it clears the gate.
     ctrl.sweep_variant_edit(node_id, {"transportModel": "Newtonian", "nu": 1e-5})
     assert state.sweep_valid
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert node["data"]["error"] == ""
 
 
-def test_configure_tab_surfaces_selected_variant_error():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_v1_cfg"))
-    state, ctrl = server.state, server.controller
+def test_configure_tab_surfaces_selected_variant_error(wizard):
+    state, ctrl = wizard.state, wizard.controller
     ctrl.sweep_toggle_dimension("transport_properties_config")
     node_id = "dim:transport_properties_config"
     ctrl.sweep_variant_edit(node_id, {"transportModel": "Newtonian", "nu": "abc"})
@@ -306,14 +285,15 @@ def test_configure_tab_surfaces_selected_variant_error():
     assert state.sweep_cfg_error
 
 
-def test_case_count_factorization_and_threshold_guard(tmp_path, monkeypatch):
+def test_case_count_factorization_and_threshold_guard(
+    tmp_path, monkeypatch, wizard, seed_transport_defaults
+):
     # V2: the chip label factorizes; over the cap Export asks to confirm.
     import neofoam.ui.sweep_panel as sp  # noqa: PLC0415
 
     monkeypatch.setattr(sp, "_CASE_WARN_THRESHOLD", 3)
-    server = build_app(server=get_server("neofoam_ui_test_sweep_v2"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
 
@@ -340,11 +320,10 @@ def test_case_count_factorization_and_threshold_guard(tmp_path, monkeypatch):
     assert state.sweep_count_label.endswith("case(s)")
 
 
-def test_staleness_flag_set_on_edit_cleared_on_export(tmp_path):
+def test_staleness_flag_set_on_edit_cleared_on_export(tmp_path, wizard, seed_transport_defaults):
     # V3: any canvas change marks the sweep dirty; export clears it.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_v3"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     assert not state.sweep_dirty
@@ -361,26 +340,24 @@ def test_staleness_flag_set_on_edit_cleared_on_export(tmp_path):
     assert state.sweep_dirty
 
 
-def test_palette_toggle_dimension_adds_and_removes():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_palette"))
-    state, ctrl = server.state, server.controller
+def test_palette_toggle_dimension_adds_and_removes(wizard):
+    state, ctrl = wizard.state, wizard.controller
     # The palette lists the same dict-kind configs as the (kept) choices list.
     palette = {p["value"] for p in state.sweep_config_palette}
     assert palette == {c["value"] for c in state.sweep_dim_choices}
 
     ctrl.sweep_toggle_dimension("transport_properties_config")
-    assert len(_dim_nodes(server)) == 1
+    assert len(_dim_nodes(wizard)) == 1
     assert state.sweep_dims_on_canvas == ["transport_properties_config"]
 
     ctrl.sweep_toggle_dimension("transport_properties_config")
-    assert _dim_nodes(server) == []
+    assert _dim_nodes(wizard) == []
     assert state.sweep_dims_on_canvas == []
     assert "Removed dimension" in state.sweep_status
 
 
-def test_dim_picker_slices_display_schema_but_keeps_full_payloads():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_picker"))
-    state, ctrl = server.state, server.controller
+def test_dim_picker_slices_display_schema_but_keeps_full_payloads(wizard):
+    state, ctrl = wizard.state, wizard.controller
     entry = next(
         e
         for e in ctrl.get_entries()
@@ -395,7 +372,7 @@ def test_dim_picker_slices_display_schema_but_keeps_full_payloads():
     state.sweep_pick_selected = ["nu"]
     ctrl.sweep_confirm_dim()
     assert not state.sweep_pick_show
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     # The node renders only the picked parameter …
     assert list(node["data"]["schema"]["properties"]) == ["nu"]
     assert node["data"]["fields"] == ["nu"]
@@ -407,7 +384,7 @@ def test_dim_picker_slices_display_schema_but_keeps_full_payloads():
 
     # A sliced form edit merges — the unrendered keys survive.
     ctrl.sweep_variant_edit("dim:transport_properties_config", {"nu": 5e-5})
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert node["data"]["entries"]["base"] == {
         "transportModel": "Newtonian",
         "nu": 5e-5,
@@ -417,14 +394,13 @@ def test_dim_picker_slices_display_schema_but_keeps_full_payloads():
     ctrl.sweep_remove_dimension("transport_properties_config")
     ctrl.sweep_open_dim_picker("transport_properties_config")
     ctrl.sweep_confirm_dim()
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert "transportModel" in node["data"]["schema"]["properties"]
     assert node["data"]["fields"] == []
 
 
-def test_dim_picker_respects_owner_model_gate():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_picker_owner"))
-    state, ctrl = server.state, server.controller
+def test_dim_picker_respects_owner_model_gate(wizard):
+    state, ctrl = wizard.state, wizard.controller
     owned = next(
         (
             e
@@ -440,9 +416,8 @@ def test_dim_picker_respects_owner_model_gate():
     assert owned.owner_model in state.sweep_error
 
 
-def test_generate_variants_list_linear_log_and_replace():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_gen"))
-    state, ctrl = server.state, server.controller
+def test_generate_variants_list_linear_log_and_replace(wizard):
+    state, ctrl = wizard.state, wizard.controller
     entry = next(
         e
         for e in ctrl.get_entries()
@@ -461,7 +436,7 @@ def test_generate_variants_list_linear_log_and_replace():
     state.sweep_gen_values = "1e-5, 2e-5 4e-5"
     ctrl.sweep_generate_variants()
     assert not state.sweep_gen_show
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"base", "nu1e-05", "nu2e-05", "nu4e-05"}
     assert node["data"]["entries"]["nu2e-05"] == {
         "transportModel": "Newtonian",
@@ -476,7 +451,7 @@ def test_generate_variants_list_linear_log_and_replace():
     state.sweep_gen_count = "3"
     state.sweep_gen_replace = True
     ctrl.sweep_generate_variants()
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert set(node["data"]["entries"]) == {"nu1", "nu2", "nu3"}
     assert node["data"]["entries"]["nu2"]["nu"] == 2.0
     assert state.sweep_case_count == 3
@@ -493,13 +468,12 @@ def test_generate_variants_list_linear_log_and_replace():
     state.sweep_gen_min = "1e-6"
     state.sweep_gen_max = "1e-4"
     ctrl.sweep_generate_variants()
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert {"nu1e-06", "nu1e-05", "nu0.0001"} <= set(node["data"]["entries"])
 
 
-def test_toggle_rule_rederives_pipeline_and_reverts_invalid():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_rules"))
-    state, ctrl = server.state, server.controller
+def test_toggle_rule_rederives_pipeline_and_reverts_invalid(wizard):
+    state, ctrl = wizard.state, wizard.controller
 
     def rule_names():
         return [n["data"]["rule"] for n in ctrl.sweep_get_nodes() if n["type"] == "rule"]
@@ -531,9 +505,8 @@ def test_toggle_rule_rederives_pipeline_and_reverts_invalid():
     assert required == {"all", "setup", "solve", "setup_mesh"}
 
 
-def test_parameters_table_lists_combinations_with_varied_values():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_table"))
-    state, ctrl = server.state, server.controller
+def test_parameters_table_lists_combinations_with_varied_values(wizard):
+    state, ctrl = wizard.state, wizard.controller
     assert state.sweep_rows == []
 
     entry = next(
@@ -575,9 +548,8 @@ def test_parameters_table_lists_combinations_with_varied_values():
     assert state.sweep_case_count == 2
 
 
-def test_node_context_menu_removes_dim_and_disables_rule():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_menu"))
-    state, ctrl = server.state, server.controller
+def test_node_context_menu_removes_dim_and_disables_rule(wizard):
+    state, ctrl = wizard.state, wizard.controller
     ctrl.sweep_toggle_dimension("transport_properties_config")
 
     # Right-click a dimension node → "Remove dimension", action removes it.
@@ -587,7 +559,7 @@ def test_node_context_menu_removes_dim_and_disables_rule():
     assert not state.sweep_menu_locked
     ctrl.sweep_menu_action()
     assert not state.sweep_menu_show
-    assert _dim_nodes(server) == []
+    assert _dim_nodes(wizard) == []
 
     # Right-click an optional rule → "Disable rule", action disables it.
     ctrl.sweep_node_menu("rule:checkMesh", 0, 0)
@@ -604,12 +576,11 @@ def test_node_context_menu_removes_dim_and_disables_rule():
     assert "solve" in rules
 
 
-def test_add_cad_dimension_puts_node_on_canvas_and_configures_it():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_cad"))
-    state, ctrl = server.state, server.controller
+def test_add_cad_dimension_puts_node_on_canvas_and_configures_it(wizard):
+    state, ctrl = wizard.state, wizard.controller
     ctrl.sweep_add_cad_dimension("design.FCStd", {"tube_d": 8.0})
 
-    (node,) = _dim_nodes(server)
+    (node,) = _dim_nodes(wizard)
     assert node["id"] == "dim:cad"
     assert node["data"]["entries"] == {"base": {"tube_d": 8.0}}
     # The freshly added CAD axis becomes the active Configure dimension.
@@ -621,16 +592,15 @@ def test_add_cad_dimension_puts_node_on_canvas_and_configures_it():
 
     # A second CAD dimension is refused (one reserved axis).
     ctrl.sweep_add_cad_dimension("design.FCStd", {"tube_d": 8.0})
-    assert len(_dim_nodes(server)) == 1
+    assert len(_dim_nodes(wizard)) == 1
     assert "already on the canvas" in state.sweep_error
 
 
-def test_export_with_cad_dimension_is_refused(tmp_path):
+def test_export_with_cad_dimension_is_refused(tmp_path, wizard, seed_transport_defaults):
     # Core cannot export a cad axis (the CAD plugin owns that): it refuses loudly
     # instead of silently dropping the axis.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_cad_export"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
 
@@ -643,9 +613,8 @@ def test_export_with_cad_dimension_is_refused(tmp_path):
     assert not (tmp_path / "base-sweep").exists()
 
 
-def test_export_requires_saved_case(tmp_path):
-    server = build_app(server=get_server("neofoam_ui_test_sweep_nosave"))
-    state, ctrl = server.state, server.controller
+def test_export_requires_saved_case(tmp_path, wizard):
+    state, ctrl = wizard.state, wizard.controller
     state.sweep_dim_pick = "transport_properties_config"
     ctrl.sweep_add_dimension()
     state.target_dir = str(tmp_path / "base")
@@ -654,12 +623,13 @@ def test_export_requires_saved_case(tmp_path):
     assert not (tmp_path / "base-sweep").exists()
 
 
-def test_export_with_a_blank_target_writes_nothing(tmp_path, monkeypatch):
+def test_export_with_a_blank_target_writes_nothing(
+    tmp_path, monkeypatch, wizard, seed_transport_defaults
+):
     # The default output dir is f"{target_dir}-sweep": blank target → a relative
     # "-sweep" directory in whatever directory the server was launched from.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_blank_target"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     ctrl.sweep_toggle_dimension("transport_properties_config")
@@ -673,10 +643,9 @@ def test_export_with_a_blank_target_writes_nothing(tmp_path, monkeypatch):
     assert not (tmp_path / "-sweep").exists()
 
 
-def test_export_writes_sweep_dir(tmp_path):
-    server = build_app(server=get_server("neofoam_ui_test_sweep_export"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+def test_export_writes_sweep_dir(tmp_path, wizard, seed_transport_defaults):
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     assert state.scaffolded
@@ -702,11 +671,11 @@ def test_export_writes_sweep_dir(tmp_path):
     assert "snakemake" in state.sweep_status
 
 
-def test_load_exported_rebuilds_canvas(tmp_path):
+def test_load_exported_rebuilds_canvas(tmp_path, seed_transport_defaults):
     # V4: export a sweep, then load it back onto a fresh canvas.
     server = build_app(server=get_server("neofoam_ui_test_sweep_export_rt"))
     state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    seed_transport_defaults(server)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
 
@@ -741,20 +710,18 @@ def test_load_exported_rebuilds_canvas(tmp_path):
     assert "Loaded 1 dimension" in s2.sweep_status
 
 
-def test_load_exported_reports_missing_directory():
-    server = build_app(server=get_server("neofoam_ui_test_sweep_load_miss"))
-    state, ctrl = server.state, server.controller
+def test_load_exported_reports_missing_directory(wizard):
+    state, ctrl = wizard.state, wizard.controller
     state.sweep_out_dir = "/nonexistent/sweep-dir"
     ctrl.sweep_load()
     assert "Could not load sweep" in state.sweep_error
-    assert _dim_nodes(server) == []
+    assert _dim_nodes(wizard) == []
 
 
-def test_mesh_source_palette_toggles_keyed_mesh_dimension():
+def test_mesh_source_palette_toggles_keyed_mesh_dimension(wizard):
     # blockMesh/snappy are offered as mesh sources (not physics-config dimensions)
     # and toggle the single reserved keyed ``mesh`` dimension on the canvas.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_mesh_palette"))
-    state, ctrl = server.state, server.controller
+    state, ctrl = wizard.state, wizard.controller
 
     values = {item["value"] for item in state.sweep_mesh_palette}
     assert {"block_mesh_dict_config", "snappy_hex_mesh_dict_config"} <= values
@@ -764,7 +731,7 @@ def test_mesh_source_palette_toggles_keyed_mesh_dimension():
 
     ctrl.sweep_add_mesh_source("block_mesh_dict_config")
     assert state.sweep_mesh_on_canvas == ["block_mesh_dict_config"]
-    (mesh_node,) = [n for n in _dim_nodes(server) if n["data"]["dim"] == "mesh"]
+    (mesh_node,) = [n for n in _dim_nodes(wizard) if n["data"]["dim"] == "mesh"]
     assert mesh_node["id"] == "dim:mesh"
     # A second source joins the same mesh dimension (config-name-keyed payload).
     ctrl.sweep_add_mesh_source("snappy_hex_mesh_dict_config")
@@ -772,17 +739,17 @@ def test_mesh_source_palette_toggles_keyed_mesh_dimension():
         "block_mesh_dict_config",
         "snappy_hex_mesh_dict_config",
     ]
-    assert len([n for n in _dim_nodes(server) if n["data"]["dim"] == "mesh"]) == 1
+    assert len([n for n in _dim_nodes(wizard) if n["data"]["dim"] == "mesh"]) == 1
 
     # Toggling one off keeps the dimension; toggling the last off removes it.
     ctrl.sweep_remove_mesh_source("block_mesh_dict_config")
     assert state.sweep_mesh_on_canvas == ["snappy_hex_mesh_dict_config"]
     ctrl.sweep_remove_mesh_source("snappy_hex_mesh_dict_config")
     assert state.sweep_mesh_on_canvas == []
-    assert not any(n["data"]["dim"] == "mesh" for n in _dim_nodes(server))
+    assert not any(n["data"]["dim"] == "mesh" for n in _dim_nodes(wizard))
 
 
-def test_mesh_dimension_exports_config_name_keyed(tmp_path):
+def test_mesh_dimension_exports_config_name_keyed(tmp_path, seed_transport_defaults):
     # A swept mesh dimension exports as the reserved keyed ``mesh`` axis whose
     # variant payloads are config-name-keyed (the shape the runner applies in the
     # meshes/{variant} mini-case).
@@ -790,7 +757,7 @@ def test_mesh_dimension_exports_config_name_keyed(tmp_path):
 
     server = build_app(server=get_server("neofoam_ui_test_sweep_mesh_export"))
     state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    seed_transport_defaults(server)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
 
@@ -813,25 +780,26 @@ def test_mesh_dimension_exports_config_name_keyed(tmp_path):
     assert server2.state.sweep_mesh_on_canvas == ["block_mesh_dict_config"]
 
 
-def test_field_source_adds_per_case_dimension_and_exports(tmp_path):
+def test_field_source_adds_per_case_dimension_and_exports(
+    tmp_path, wizard, seed_transport_defaults
+):
     # A whole 0/<field> config (here 0/U) is sweepable as a regular per-case
     # dimension — e.g. to vary the inlet velocity.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_field"))
-    state, ctrl = server.state, server.controller
+    state, ctrl = wizard.state, wizard.controller
 
     values = {item["value"] for item in state.sweep_field_palette}
     assert "u_field_config" in values
     # Field configs are NOT in the physics-config palette (kept as split halves).
     assert "u_field_config" not in {i["value"] for i in state.sweep_config_palette}
 
-    _seed_defaults(server)
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
 
     ctrl.sweep_add_field_source("u_field_config")
     assert state.sweep_field_on_canvas == ["u_field_config"]
     # It is a normal (case) dimension, not the keyed mesh axis.
-    (node,) = [n for n in _dim_nodes(server) if n["data"]["dim"] == "u_field_config"]
+    (node,) = [n for n in _dim_nodes(wizard) if n["data"]["dim"] == "u_field_config"]
     assert node["id"] == "dim:u_field_config"
 
     # Two inlet-speed variants → the config-payload boundaryField.inlet.value.
@@ -862,10 +830,10 @@ def test_field_source_adds_per_case_dimension_and_exports(tmp_path):
     assert params["u_field_config"]["u2"]["boundaryField"]["inlet"]["value"] == "uniform (2 0 0)"
 
 
-def _export_transport_sweep(server, tmp_path) -> str:
+def _export_transport_sweep(server, tmp_path, seed_transport_defaults) -> str:
     """Save + export a single-dimension sweep; return its output directory."""
     state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    seed_transport_defaults(server)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     ctrl.sweep_toggle_dimension("transport_properties_config")
@@ -873,7 +841,7 @@ def _export_transport_sweep(server, tmp_path) -> str:
     return str(state.sweep_out_dir)
 
 
-def test_load_exported_skips_unsupported_dimension(tmp_path):
+def test_load_exported_skips_unsupported_dimension(tmp_path, seed_transport_defaults):
     # A dimension with no matching config on this solver (an unknown config name)
     # is reported and skipped; the supported dimension still loads.
     from neofoam.tooling.workflow.paramspace import (  # noqa: PLC0415
@@ -882,7 +850,7 @@ def test_load_exported_skips_unsupported_dimension(tmp_path):
     )
 
     server = build_app(server=get_server("neofoam_ui_test_sweep_skip_export"))
-    out_dir = _export_transport_sweep(server, tmp_path)
+    out_dir = _export_transport_sweep(server, tmp_path, seed_transport_defaults)
 
     params_path = Path(out_dir) / "params.yaml"
     params = read_params_yaml(params_path)
@@ -900,13 +868,13 @@ def test_load_exported_skips_unsupported_dimension(tmp_path):
     assert s2.sweep_cfg_dim == "transport_properties_config"
 
 
-def test_load_exported_all_unsupported_clears_tab(tmp_path):
+def test_load_exported_all_unsupported_clears_tab(tmp_path, seed_transport_defaults):
     # An all-unsupported load leaves an empty canvas and a cleared Configure
     # mirror without crashing.
     from neofoam.tooling.workflow.paramspace import write_params_yaml  # noqa: PLC0415
 
     server = build_app(server=get_server("neofoam_ui_test_sweep_allunsup_export"))
-    out_dir = _export_transport_sweep(server, tmp_path)
+    out_dir = _export_transport_sweep(server, tmp_path, seed_transport_defaults)
 
     write_params_yaml(
         Path(out_dir) / "params.yaml", {"nonexistent_config": {"coarse": {"cells": 1}}}
@@ -932,20 +900,19 @@ def _transport_entry(server):
     )
 
 
-def test_load_exported_restores_the_base_case(tmp_path):
+def test_load_exported_restores_the_base_case(tmp_path, seed_transport_defaults, wizard):
     # Loading reopens the whole study: without the base case the loaded axes would
     # sit on top of whatever the wizard happens to hold, and Export would clone that.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_base_rt"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
-    entry = _transport_entry(server)
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 7e-6}
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     ctrl.sweep_toggle_dimension("transport_properties_config")
     ctrl.sweep_export()
     out_dir = str(state.sweep_out_dir)
-    exported_variants = dict(_dim_nodes(server)[0]["data"]["entries"])
+    exported_variants = dict(_dim_nodes(wizard)[0]["data"]["entries"])
     # Clear the panel: no dimension, no target case, an empty transport form.
     ctrl.sweep_toggle_dimension("transport_properties_config")
     state.target_dir = ""
@@ -956,20 +923,21 @@ def test_load_exported_restores_the_base_case(tmp_path):
     ctrl.sweep_confirm_load()  # the base-case restore is confirmed
 
     assert state.sweep_dims_on_canvas == ["transport_properties_config"]
-    assert _dim_nodes(server)[0]["data"]["entries"] == exported_variants
+    assert _dim_nodes(wizard)[0]["data"]["entries"] == exported_variants
     assert state.target_dir == str((tmp_path / "base").resolve())
     assert state[entry.state_key] == {"transportModel": "Newtonian", "nu": 7e-6}
 
 
-def test_load_exported_refuses_a_sweep_from_another_solver(tmp_path):
+def test_load_exported_refuses_a_sweep_from_another_solver(
+    tmp_path, seed_transport_defaults, wizard
+):
     # The wizard is built around one solver's configs (solver_name is a
     # construction-time argument), so a foreign sweep cannot be reopened here — and
     # its dimensions must not be reported as merely unsupported ones.
     from neofoam.tooling.workflow.sweep._io import SWEEP_META_FILE  # noqa: PLC0415
 
-    server = build_app(server=get_server("neofoam_ui_test_sweep_other_solver"))
-    state, ctrl = server.state, server.controller
-    out_dir = _export_transport_sweep(server, tmp_path)
+    state, ctrl = wizard.state, wizard.controller
+    out_dir = _export_transport_sweep(wizard, tmp_path, seed_transport_defaults)
     meta_path = Path(out_dir) / SWEEP_META_FILE
     meta = json.loads(meta_path.read_text())
     meta["solver_name"] = "incompressibleVoF"
@@ -988,14 +956,13 @@ def test_load_exported_refuses_a_sweep_from_another_solver(tmp_path):
     assert not state.sweep_load_confirm_show
 
 
-def test_load_exported_asks_before_it_replaces_the_forms(tmp_path):
+def test_load_exported_asks_before_it_replaces_the_forms(tmp_path, wizard, seed_transport_defaults):
     # The base-case restore overwrites every form, so a stray Load click must not
     # silently discard the edits the user is looking at.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_load_confirm"))
-    state, ctrl = server.state, server.controller
-    out_dir = _export_transport_sweep(server, tmp_path)
+    state, ctrl = wizard.state, wizard.controller
+    out_dir = _export_transport_sweep(wizard, tmp_path, seed_transport_defaults)
     ctrl.sweep_toggle_dimension("transport_properties_config")  # clear the canvas
-    entry = _transport_entry(server)
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 4e-4}  # unsaved edit
 
     state.sweep_out_dir = out_dir
@@ -1014,10 +981,9 @@ def test_load_exported_asks_before_it_replaces_the_forms(tmp_path):
 
 
 @pytest.mark.skipif(shutil.which("snakemake") is None, reason="snakemake not installed")
-def test_refresh_dag_renders_snakemake_graph(tmp_path):
-    server = build_app(server=get_server("neofoam_ui_test_sweep_dag"))
-    state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+def test_refresh_dag_renders_snakemake_graph(tmp_path, wizard, seed_transport_defaults):
+    state, ctrl = wizard.state, wizard.controller
+    seed_transport_defaults(wizard)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     assert state.scaffolded
@@ -1032,10 +998,10 @@ def test_refresh_dag_renders_snakemake_graph(tmp_path):
     assert {"all", "setup", "solve", "setup_mesh", "blockMesh"} <= labels
 
 
-def _dag_ready(server, tmp_path) -> None:
+def _dag_ready(server, tmp_path, seed_transport_defaults) -> None:
     """A saved case with one sweep dimension — everything refresh_dag needs."""
     state, ctrl = server.state, server.controller
-    _seed_defaults(server)
+    seed_transport_defaults(server)
     state.target_dir = str(tmp_path / "base")
     ctrl.save_case()
     ctrl.sweep_toggle_dimension("transport_properties_config")
@@ -1052,75 +1018,76 @@ def _slow_dag(runs: list[str], seconds: float = _DAG_SECONDS):
     return dag_graph
 
 
-def test_refresh_dag_keeps_the_event_loop_running(tmp_path, monkeypatch, heartbeat_ticks):
+def test_refresh_dag_keeps_the_event_loop_running(
+    tmp_path, monkeypatch, heartbeat_ticks, wizard, seed_transport_defaults
+):
     # snakemake --dag takes ~1 s (more at a few hundred cases) and ran straight on
     # trame's single event loop, freezing every other callback for its duration.
-    server = build_app(server=get_server("neofoam_ui_test_dag_loop"))
-    _dag_ready(server, tmp_path)
+    _dag_ready(wizard, tmp_path, seed_transport_defaults)
     monkeypatch.setattr("neofoam.ui.sweep_panel.dag_graph", _slow_dag([]))
 
-    ticks = heartbeat_ticks(server.controller.sweep_refresh_dag)
+    ticks = heartbeat_ticks(wizard.controller.sweep_refresh_dag)
 
     assert ticks >= 5  # ~15 over a 0.3 s run; 0 while the loop is blocked
-    assert server.state.sweep_dag_error == ""
+    assert wizard.state.sweep_dag_error == ""
 
 
-def test_refresh_dag_is_busy_while_it_runs(tmp_path, monkeypatch):
+def test_refresh_dag_is_busy_while_it_runs(tmp_path, monkeypatch, wizard, seed_transport_defaults):
     # Without a busy flag the Generate button looks idle through the whole freeze.
-    server = build_app(server=get_server("neofoam_ui_test_dag_busy"))
-    _dag_ready(server, tmp_path)
+    _dag_ready(wizard, tmp_path, seed_transport_defaults)
     busy_while_running: list[bool] = []
     monkeypatch.setattr(
         "neofoam.ui.sweep_panel.dag_graph",
-        lambda *_a, **_kw: (busy_while_running.append(server.state.sweep_dag_busy), ([], []))[1],
+        lambda *_a, **_kw: (busy_while_running.append(wizard.state.sweep_dag_busy), ([], []))[1],
     )
 
-    asyncio.run(server.controller.sweep_refresh_dag())
+    asyncio.run(wizard.controller.sweep_refresh_dag())
 
     assert busy_while_running == [True]
-    assert server.state.sweep_dag_busy is False
+    assert wizard.state.sweep_dag_busy is False
 
 
-def test_refresh_dag_started_while_one_runs_is_dropped(tmp_path, monkeypatch):
+def test_refresh_dag_started_while_one_runs_is_dropped(
+    tmp_path, monkeypatch, wizard, seed_transport_defaults
+):
     # Clicks queued during the freeze all land once it ends, and each one re-exports
     # the sweep and shells out to snakemake again.
-    server = build_app(server=get_server("neofoam_ui_test_dag_reentry"))
-    _dag_ready(server, tmp_path)
+    _dag_ready(wizard, tmp_path, seed_transport_defaults)
     runs: list[str] = []
     monkeypatch.setattr("neofoam.ui.sweep_panel.dag_graph", _slow_dag(runs))
 
     async def drive() -> None:
-        first = asyncio.create_task(server.controller.sweep_refresh_dag())
+        first = asyncio.create_task(wizard.controller.sweep_refresh_dag())
         await asyncio.sleep(_DAG_SECONDS / 3)  # the first run is in flight
-        await server.controller.sweep_refresh_dag()  # a click queued during it
+        await wizard.controller.sweep_refresh_dag()  # a click queued during it
         await first
 
     asyncio.run(drive())
 
     assert runs == ["dag"]
-    assert server.state.sweep_dag_busy is False
+    assert wizard.state.sweep_dag_busy is False
 
 
-def test_refresh_dag_reports_a_snakemake_that_never_finishes(tmp_path, monkeypatch):
+def test_refresh_dag_reports_a_snakemake_that_never_finishes(
+    tmp_path, monkeypatch, wizard, seed_transport_defaults
+):
     # The snakemake call was unbounded, so a hung run left the graph pending forever.
-    server = build_app(server=get_server("neofoam_ui_test_dag_timeout"))
-    _dag_ready(server, tmp_path)
+    _dag_ready(wizard, tmp_path, seed_transport_defaults)
     monkeypatch.setattr("neofoam.ui.sweep_panel._DAG_TIMEOUT_S", 0.05)
     monkeypatch.setattr("neofoam.ui.sweep_panel.dag_graph", _slow_dag([]))
 
-    asyncio.run(server.controller.sweep_refresh_dag())
+    asyncio.run(wizard.controller.sweep_refresh_dag())
 
-    assert "did not finish within" in server.state.sweep_dag_error
-    assert server.state.sweep_dag_busy is False
+    assert "did not finish within" in wizard.state.sweep_dag_error
+    assert wizard.state.sweep_dag_busy is False
 
 
-def test_palette_rows_of_unselected_models_are_hidden():
+def test_palette_rows_of_unselected_models_are_hidden(wizard):
     # The palette state lists every sweepable config; a row owned by a gated model is
     # shown only while that model's `sel_<model>` is on — the same gate as the form
     # panels, evaluated client-side so it follows the selection live.
-    server = build_app(server=get_server("neofoam_ui_test_sweep_palette_gate"))
 
-    template = server.state["trame__template_main"]
+    template = wizard.state["trame__template_main"]
     assert 'v-show="!item.owner || ({' in template
     assert "'Simple': sel_Simple" in template
     assert "'boussinesq': sel_boussinesq" in template

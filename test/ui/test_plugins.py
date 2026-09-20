@@ -40,11 +40,6 @@ class _Plugin:
         self.rendered += 1
 
 
-def _solver_entries():
-    solver = resolve_solver("incompressibleFluid")
-    return solver, build_forms(solver)
-
-
 def test_discover_returns_injected_plugins_unchanged():
     plugins = [_Plugin("b", after="a"), _Plugin("a")]
     # Ordering is build_steps' job; discovery preserves the injected order.
@@ -100,31 +95,31 @@ def test_build_steps_appends_plugin_with_unknown_anchor():
     assert steps[-1].id == "x"
 
 
-def test_build_steps_resolves_plugin_chain_regardless_of_input_order():
+def test_build_steps_resolves_plugin_chain_regardless_of_input_order(solver):
     # `b` is anchored on plugin `a`, `a` on the built-in `models`. Even when `b`
     # is discovered before `a`, the fixed-point weave must land `models, a, b`.
-    solver, entries = _solver_entries()
+    entries = build_forms(solver)
     a = _Plugin("a", after="models")
     b = _Plugin("b", after="a")
     ids = [s.id for s in build_steps(solver, entries, [b, a])]
     assert ids[:3] == ["models", "a", "b"]
 
 
-def test_build_steps_appends_plugin_with_no_anchor_at_end():
-    solver, entries = _solver_entries()
+def test_build_steps_appends_plugin_with_no_anchor_at_end(solver):
+    entries = build_forms(solver)
     steps = build_steps(solver, entries, [_Plugin("tail", after=None)])
     assert steps[-1].id == "tail"
 
 
-def test_build_steps_at_start_places_step_first():
-    solver, entries = _solver_entries()
+def test_build_steps_at_start_places_step_first(solver):
+    entries = build_forms(solver)
     ids = [s.id for s in build_steps(solver, entries, [_Plugin("cad", after=AT_START)])]
     assert ids[0] == "cad"
     assert ids[1] == "models"  # built-ins follow, in order
 
 
-def test_build_steps_at_start_keeps_input_order_and_allows_anchoring():
-    solver, entries = _solver_entries()
+def test_build_steps_at_start_keeps_input_order_and_allows_anchoring(solver):
+    entries = build_forms(solver)
     # Two AT_START steps keep discovery order; a third anchors on the first.
     ids = [
         s.id
@@ -141,8 +136,8 @@ def test_build_steps_at_start_keeps_input_order_and_allows_anchoring():
     assert ids[:4] == ["cad", "post-cad", "scan", "models"]
 
 
-def test_build_steps_two_plugins_on_same_anchor_keep_input_order():
-    solver, entries = _solver_entries()
+def test_build_steps_two_plugins_on_same_anchor_keep_input_order(solver):
+    entries = build_forms(solver)
     ids = [
         s.id
         for s in build_steps(

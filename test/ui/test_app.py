@@ -43,15 +43,14 @@ _TRI_SURFACE = (
 )
 
 
-def test_build_app_constructs():
-    # plugins=[] pins the built-in baseline regardless of any installed
+def test_build_app_constructs(wizard):
+    # The `wizard` fixture's plugins=[] pins the built-in baseline regardless of any installed
     # `neofoam.ui.steps` entry points (e.g. the optional FoamCAD step).
-    server = build_app(server=get_server("neofoam_ui_test_construct"), plugins=[])
-    assert callable(server.controller.save_case)
-    assert server.state.current_step == "models"
-    assert server.state.target_dir == ""
-    entries = server.controller.get_entries()
-    steps = server.controller.get_steps()
+    assert callable(wizard.controller.save_case)
+    assert wizard.state.current_step == "models"
+    assert wizard.state.target_dir == ""
+    entries = wizard.controller.get_entries()
+    steps = wizard.controller.get_steps()
     assert len(entries) > 0
     assert [s.id for s in steps] == [
         "models",
@@ -63,67 +62,64 @@ def test_build_app_constructs():
         "review",
     ]
     for entry in entries:
-        assert server.state[entry.state_key] is not None
-        assert server.state[schema_key(entry)] == entry.schema
+        assert wizard.state[entry.state_key] is not None
+        assert wizard.state[schema_key(entry)] == entry.schema
 
 
-def test_nav_does_not_reset_form_state():
-    server = build_app(server=get_server("neofoam_ui_test_nav"), plugins=[])
-    entries = server.controller.get_entries()
+def test_nav_does_not_reset_form_state(wizard):
+    entries = wizard.controller.get_entries()
     before = {e.state_key for e in entries}
 
-    server.state.current_step = "bcs"  # navigate
-    after = {e.state_key for e in server.controller.get_entries()}
+    wizard.state.current_step = "bcs"  # navigate
+    after = {e.state_key for e in wizard.controller.get_entries()}
     assert before == after  # same entries/state keys — nothing rebuilt
 
 
-def test_save_case_round_trip(tmp_path):
+def test_save_case_round_trip(tmp_path, wizard):
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_save"), plugins=[])
-    entries = server.controller.get_entries()
+    entries = wizard.controller.get_entries()
 
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:
-        server.state[entry.state_key] = (
+        wizard.state[entry.state_key] = (
             {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
 
-    server.state.target_dir = str(tmp_path)
-    server.controller.save_case()
+    wizard.state.target_dir = str(tmp_path)
+    wizard.controller.save_case()
 
     assert (tmp_path / "constant" / "transportProperties").is_file()
-    assert server.state.save_report is not None
-    assert any("transportProperties" in w for w in server.state.save_report["written"])
+    assert wizard.state.save_report is not None
+    assert any("transportProperties" in w for w in wizard.state.save_report["written"])
 
 
-def test_save_scaffolds_and_validates(tmp_path):
+def test_save_scaffolds_and_validates(tmp_path, wizard):
     import os  # noqa: PLC0415
 
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_scaffold"), plugins=[])
-    entries = server.controller.get_entries()
+    entries = wizard.controller.get_entries()
 
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:
-        server.state[entry.state_key] = (
+        wizard.state[entry.state_key] = (
             {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
-    server.state.target_dir = str(tmp_path)
-    server.controller.save_case()
+    wizard.state.target_dir = str(tmp_path)
+    wizard.controller.save_case()
 
     # Runnable-case scaffold written + executable.
     allrun, allclean = tmp_path / "Allrun", tmp_path / "Allclean"
     assert allrun.is_file() and os.access(allrun, os.X_OK)
     assert allclean.is_file() and os.access(allclean, os.X_OK)
-    assert server.state.scaffolded
+    assert wizard.state.scaffolded
 
     # Validation ran and the wizard advanced to Review.
-    assert server.state.validation_ok is not None
-    assert isinstance(server.state.findings, list)
-    assert server.state.current_step == "review"
+    assert wizard.state.validation_ok is not None
+    assert isinstance(wizard.state.findings, list)
+    assert wizard.state.current_step == "review"
 
 
-def test_geometry_scan_and_write_mesh(tmp_path):
+def test_geometry_scan_and_write_mesh(tmp_path, wizard):
     import shutil  # noqa: PLC0415
 
     # A case whose constant/triSurface holds the given STLs (copied from tube_bank).
@@ -139,24 +135,23 @@ def test_geometry_scan_and_write_mesh(tmp_path):
     dst_tri = tmp_path / "constant" / "triSurface"
     shutil.copytree(src_tri, dst_tri)
 
-    server = build_app(server=get_server("neofoam_ui_test_geometry"), plugins=[])
     # Point the STL-folder field straight at the triSurface dir (as in the UI).
-    server.state.stl_dir = str(dst_tri)
-    server.state.target_dir = str(tmp_path)
+    wizard.state.stl_dir = str(dst_tri)
+    wizard.state.target_dir = str(tmp_path)
 
-    asyncio.run(server.controller.load_geometry())
-    names = {p["name"] for p in server.state.geometry_patches}
+    asyncio.run(wizard.controller.load_geometry())
+    names = {p["name"] for p in wizard.state.geometry_patches}
     assert names == {"inlet", "outlet", "walls", "frontBack", "tubes"}
-    assert server.state.geo_bbox is not None
+    assert wizard.state.geo_bbox is not None
 
-    server.controller.write_mesh()
+    wizard.controller.write_mesh()
     assert (tmp_path / "system" / "blockMeshDict").is_file()
     assert (tmp_path / "system" / "snappyHexMeshDict").is_file()
     assert (tmp_path / "system" / "preprocess.yaml").is_file()
-    assert server.state.mesh_written
+    assert wizard.state.mesh_written
 
 
-def test_scan_pins_only_the_scanned_patches(tmp_path):
+def test_scan_pins_only_the_scanned_patches(tmp_path, wizard):
     import shutil  # noqa: PLC0415
 
     # A pinned patch has no delete button. One added by hand before a re-scan is not
@@ -164,93 +159,85 @@ def test_scan_pins_only_the_scanned_patches(tmp_path):
     tube_bank = Path(__file__).resolve().parents[1] / "tooling" / "workflow" / "cases" / "tube_bank"
     dst_tri = tmp_path / "constant" / "triSurface"
     shutil.copytree(tube_bank / "constant" / "triSurface", dst_tri)
-    server = build_app(server=get_server("neofoam_ui_test_scan_pins"), plugins=[])
-    entry = next(e for e in server.controller.get_entries() if e.key == "field_bc:UFieldConfig")
-    server.state[entry.state_key] = {"boundaryField": {"byHand": {"type": "noSlip"}}}
-    server.state.stl_dir = str(dst_tri)
+    entry = next(e for e in wizard.controller.get_entries() if e.key == "field_bc:UFieldConfig")
+    wizard.state[entry.state_key] = {"boundaryField": {"byHand": {"type": "noSlip"}}}
+    wizard.state.stl_dir = str(dst_tri)
 
-    asyncio.run(server.controller.load_geometry())
+    asyncio.run(wizard.controller.load_geometry())
 
-    boundary_field = server.state[schema_key(entry)]["properties"]["boundaryField"]
+    boundary_field = wizard.state[schema_key(entry)]["properties"]["boundaryField"]
     assert set(boundary_field["properties"]) == {"inlet", "outlet", "walls", "frontBack", "tubes"}
-    assert "byHand" in server.state[entry.state_key]["boundaryField"]
+    assert "byHand" in wizard.state[entry.state_key]["boundaryField"]
 
 
-def test_incomplete_save_is_reported_not_raised(tmp_path):
+def test_incomplete_save_is_reported_not_raised(tmp_path, wizard):
     # The pristine app pre-seeds partial defaults (e.g. controlDict lacks endTime);
     # saving must surface the error in Review, not crash the controller.
-    server = build_app(server=get_server("neofoam_ui_test_badsave"), plugins=[])
-    server.state.target_dir = str(tmp_path)
-    server.controller.save_case()  # must not raise
+    wizard.state.target_dir = str(tmp_path)
+    wizard.controller.save_case()  # must not raise
 
-    assert server.state.current_step == "review"
-    assert "error" in server.state.save_report
-    assert server.state.validation_ok is False
-    assert any(f["level"] == "error" for f in server.state.findings)
-
-
-def _seed_transport_defaults(server) -> None:
-    """The minimal valid form state (only transportProperties filled)."""
-    solver = resolve_solver("incompressibleFluid")
-    defaults = tools.config_schema(solver, "transport_properties_config").defaults
-    for entry in server.controller.get_entries():
-        server.state[entry.state_key] = (
-            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
-        )
+    assert wizard.state.current_step == "review"
+    assert "error" in wizard.state.save_report
+    assert wizard.state.validation_ok is False
+    assert any(f["level"] == "error" for f in wizard.state.findings)
 
 
-def test_save_case_with_a_blank_target_writes_nothing(tmp_path, monkeypatch):
+def test_save_case_with_a_blank_target_writes_nothing(
+    tmp_path,
+    monkeypatch,
+    seed_transport_defaults,
+    wizard,
+):
     # A blank target field used to resolve to the server's launch directory, so a
     # filled wizard wrote a whole case into the user's checkout.
-    server = build_app(server=get_server("neofoam_ui_test_blank_target"), plugins=[])
-    _seed_transport_defaults(server)
+    seed_transport_defaults(wizard)
     monkeypatch.chdir(tmp_path)
 
-    server.state.target_dir = ""
-    server.controller.save_case()
+    wizard.state.target_dir = ""
+    wizard.controller.save_case()
 
     assert list(tmp_path.iterdir()) == []
-    assert "error" in server.state.save_report
-    assert server.state.validation_ok is False
-    assert any("target directory" in f["message"] for f in server.state.findings)
+    assert "error" in wizard.state.save_report
+    assert wizard.state.validation_ok is False
+    assert any("target directory" in f["message"] for f in wizard.state.findings)
 
 
 def test_revalidate_with_a_blank_target_reports_instead_of_validating_the_launch_dir(
-    tmp_path, monkeypatch
+    tmp_path,
+    monkeypatch,
+    wizard,
 ):
     # Path("").is_dir() is True, so an unguarded revalidate reported findings about
     # whatever directory the server was started from.
-    server = build_app(server=get_server("neofoam_ui_test_blank_reval"), plugins=[])
     monkeypatch.chdir(tmp_path)
 
-    server.state.target_dir = ""
-    server.controller.revalidate()
+    wizard.state.target_dir = ""
+    wizard.controller.revalidate()
 
-    assert server.state.validation_ok is False
-    assert [f["message"] for f in server.state.findings] == [
+    assert wizard.state.validation_ok is False
+    assert [f["message"] for f in wizard.state.findings] == [
         "No target directory — type an absolute path first."
     ]
 
 
-def test_save_case_reports_a_scaffold_failure(tmp_path):
+def test_save_case_reports_a_scaffold_failure(tmp_path, seed_transport_defaults, wizard):
     # A case root the scaffold cannot write into (here: an `Allrun` directory in the
     # way, standing in for a read-only root). The configs are written, but the wizard
     # must not land on Review still telling the user to click Save.
     (tmp_path / "Allrun").mkdir()
-    server = build_app(server=get_server("neofoam_ui_test_scaffold_fail"), plugins=[])
-    _seed_transport_defaults(server)
-    server.state.target_dir = str(tmp_path)
+    seed_transport_defaults(wizard)
+    wizard.state.target_dir = str(tmp_path)
 
-    server.controller.save_case()  # must not raise
+    wizard.controller.save_case()  # must not raise
 
-    assert server.state.current_step == "review"
-    assert server.state.validation_ok is False  # not None → Review shows the failure
-    assert server.state.scaffolded == []
-    assert "error" in server.state.save_report
-    assert server.state.findings
+    assert wizard.state.current_step == "review"
+    assert wizard.state.validation_ok is False  # not None → Review shows the failure
+    assert wizard.state.scaffolded == []
+    assert "error" in wizard.state.save_report
+    assert wizard.state.findings
 
 
-def test_failed_scan_clears_the_mesh_written_alert(tmp_path):
+def test_failed_scan_clears_the_mesh_written_alert(tmp_path, wizard):
     import shutil  # noqa: PLC0415
 
     src_tri = (
@@ -264,21 +251,20 @@ def test_failed_scan_clears_the_mesh_written_alert(tmp_path):
     )
     shutil.copytree(src_tri, tmp_path / "constant" / "triSurface")
 
-    server = build_app(server=get_server("neofoam_ui_test_scan_fail"), plugins=[])
-    server.state.stl_dir = str(tmp_path / "constant" / "triSurface")
-    server.state.target_dir = str(tmp_path)
-    asyncio.run(server.controller.load_geometry())
-    server.controller.write_mesh()
-    assert server.state.mesh_written  # the green "Wrote: …" alert is up
+    wizard.state.stl_dir = str(tmp_path / "constant" / "triSurface")
+    wizard.state.target_dir = str(tmp_path)
+    asyncio.run(wizard.controller.load_geometry())
+    wizard.controller.write_mesh()
+    assert wizard.state.mesh_written  # the green "Wrote: …" alert is up
 
-    server.state.stl_dir = str(tmp_path / "does_not_exist")
-    asyncio.run(server.controller.load_geometry())
+    wizard.state.stl_dir = str(tmp_path / "does_not_exist")
+    asyncio.run(wizard.controller.load_geometry())
 
     # The failure must not sit above a stale success alert, and must not read as info.
-    assert server.state.geometry_patches == []
-    assert server.state.mesh_written == []
-    assert server.state.geometry_severity == "error"
-    assert "Could not read geometry" in server.state.geometry_status
+    assert wizard.state.geometry_patches == []
+    assert wizard.state.mesh_written == []
+    assert wizard.state.geometry_severity == "error"
+    assert "Could not read geometry" in wizard.state.geometry_status
 
 
 def _slow_scan(spec, scanned: list[str], seconds: float = _SCAN_SECONDS):
@@ -292,44 +278,41 @@ def _slow_scan(spec, scanned: list[str], seconds: float = _SCAN_SECONDS):
     return scan
 
 
-def test_scan_keeps_the_event_loop_running(monkeypatch, heartbeat_ticks):
+def test_scan_keeps_the_event_loop_running(monkeypatch, heartbeat_ticks, wizard):
     # trame is single-threaded, so an STL read on the loop freezes the whole UI —
     # every other client callback, including the heartbeat, stops for its duration.
-    server = build_app(server=get_server("neofoam_ui_test_scan_loop"), plugins=[])
-    server.state.stl_dir = str(_TRI_SURFACE)
+    wizard.state.stl_dir = str(_TRI_SURFACE)
     monkeypatch.setattr(
         "neofoam.ui.geometry_panel.discover_geometry",
         _slow_scan(discover_geometry(_TRI_SURFACE), []),
     )
 
-    ticks = heartbeat_ticks(server.controller.load_geometry)
+    ticks = heartbeat_ticks(wizard.controller.load_geometry)
 
     assert ticks >= 5  # ~15 over a 0.3 s scan; 0 while the loop is blocked
-    assert server.state.geometry_patches  # and the scan still landed
+    assert wizard.state.geometry_patches  # and the scan still landed
 
 
-def test_scan_is_busy_while_it_runs(monkeypatch):
+def test_scan_is_busy_while_it_runs(monkeypatch, wizard):
     # Without a busy flag the Scan button looks idle through the whole freeze.
-    server = build_app(server=get_server("neofoam_ui_test_scan_busy"), plugins=[])
-    server.state.stl_dir = str(_TRI_SURFACE)
+    wizard.state.stl_dir = str(_TRI_SURFACE)
     spec = discover_geometry(_TRI_SURFACE)
     busy_while_scanning: list[bool] = []
     monkeypatch.setattr(
         "neofoam.ui.geometry_panel.discover_geometry",
-        lambda *_a, **_kw: (busy_while_scanning.append(server.state.geometry_busy), spec)[1],
+        lambda *_a, **_kw: (busy_while_scanning.append(wizard.state.geometry_busy), spec)[1],
     )
 
-    asyncio.run(server.controller.load_geometry())
+    asyncio.run(wizard.controller.load_geometry())
 
     assert busy_while_scanning == [True]
-    assert server.state.geometry_busy is False
+    assert wizard.state.geometry_busy is False
 
 
-def test_scan_started_while_one_runs_is_dropped(monkeypatch):
+def test_scan_started_while_one_runs_is_dropped(monkeypatch, wizard):
     # Clicks queued during the freeze all land once it ends; a second scan would
     # re-seed the boundary-condition forms underneath the first one's results.
-    server = build_app(server=get_server("neofoam_ui_test_scan_reentry"), plugins=[])
-    server.state.stl_dir = str(_TRI_SURFACE)
+    wizard.state.stl_dir = str(_TRI_SURFACE)
     scanned: list[str] = []
     monkeypatch.setattr(
         "neofoam.ui.geometry_panel.discover_geometry",
@@ -337,38 +320,36 @@ def test_scan_started_while_one_runs_is_dropped(monkeypatch):
     )
 
     async def drive() -> None:
-        first = asyncio.create_task(server.controller.load_geometry())
+        first = asyncio.create_task(wizard.controller.load_geometry())
         await asyncio.sleep(_SCAN_SECONDS / 3)  # the first scan is in flight
-        await server.controller.load_geometry()  # a click queued during it
+        await wizard.controller.load_geometry()  # a click queued during it
         await first
 
     asyncio.run(drive())
 
     assert scanned == [str(_TRI_SURFACE)]
-    assert server.state.geometry_busy is False
+    assert wizard.state.geometry_busy is False
 
 
-def test_revalidate_reruns_without_resaving(tmp_path):
+def test_revalidate_reruns_without_resaving(tmp_path, wizard):
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_reval"), plugins=[])
-    entries = server.controller.get_entries()
+    entries = wizard.controller.get_entries()
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:
-        server.state[entry.state_key] = (
+        wizard.state[entry.state_key] = (
             {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
         )
-    server.state.target_dir = str(tmp_path)
-    server.controller.save_case()
+    wizard.state.target_dir = str(tmp_path)
+    wizard.controller.save_case()
 
     allrun_mtime = (tmp_path / "Allrun").stat().st_mtime
-    server.controller.revalidate()  # must not raise, must not re-scaffold
+    wizard.controller.revalidate()  # must not raise, must not re-scaffold
     assert (tmp_path / "Allrun").stat().st_mtime == allrun_mtime
-    assert server.state.validation_ok is not None
+    assert wizard.state.validation_ok is not None
 
 
-def test_pick_one_family_starts_on_one_member_and_switching_deselects_the_other():
-    server = build_app(server=get_server("neofoam_ui_test_family"), plugins=[])
-    state, ctrl = server.state, server.controller
+def test_pick_one_family_starts_on_one_member_and_switching_deselects_the_other(wizard):
+    state, ctrl = wizard.state, wizard.controller
 
     # Pimple and Simple want contradictory ddtSchemes — exactly one is ever selected.
     assert state.choice_PressureVelocityAlgorithm == "Pimple"
@@ -382,45 +363,44 @@ def test_pick_one_family_starts_on_one_member_and_switching_deselects_the_other(
     assert state.sel_Simple is True
 
 
-def test_save_case_writes_only_the_chosen_algorithm(tmp_path):
-    server = build_app(server=get_server("neofoam_ui_test_family_save"), plugins=[])
-    _seed_transport_defaults(server)
+def test_save_case_writes_only_the_chosen_algorithm(tmp_path, wizard, seed_transport_defaults):
+    seed_transport_defaults(wizard)
 
-    server.state.target_dir = str(tmp_path / "pimple")
-    server.controller.save_case()
+    wizard.state.target_dir = str(tmp_path / "pimple")
+    wizard.controller.save_case()
     pimple = (tmp_path / "pimple" / "system" / "fvSolution").read_text()
     assert "PIMPLE" in pimple
     assert "SIMPLE" not in pimple  # the unselected algorithm's block is not written
 
-    server.controller.select_model("Simple")
-    server.state.target_dir = str(tmp_path / "simple")
-    server.controller.save_case()
+    wizard.controller.select_model("Simple")
+    wizard.state.target_dir = str(tmp_path / "simple")
+    wizard.controller.save_case()
     simple = (tmp_path / "simple" / "system" / "fvSolution").read_text()
     assert "SIMPLE" in simple
     assert "PIMPLE" not in simple
 
 
-def test_save_case_writes_no_piso_block_beside_pimple(tmp_path):
+def test_save_case_writes_no_piso_block_beside_pimple(tmp_path, seed_transport_defaults, wizard):
     # A PISO block is only read when no PIMPLE block exists, so writing both left
     # the user a block (and two wizard panels) whose edits never took effect.
-    server = build_app(server=get_server("neofoam_ui_test_no_piso"), plugins=[])
-    _seed_transport_defaults(server)
+    seed_transport_defaults(wizard)
 
-    server.state.target_dir = str(tmp_path)
-    server.controller.save_case()
+    wizard.state.target_dir = str(tmp_path)
+    wizard.controller.save_case()
 
     fv_solution = (tmp_path / "system" / "fvSolution").read_text()
     assert "PIMPLE" in fv_solution
     assert "PISO" not in fv_solution
 
 
-def test_save_case_writes_a_hand_added_scheme_entry_as_openfoam_tokens(tmp_path):
+def test_save_case_writes_a_hand_added_scheme_entry_as_openfoam_tokens(
+    tmp_path, wizard, seed_transport_defaults
+):
     # The Numerics step's "+ add entry" puts a key the schema does not declare into a
     # scheme section, as the same structured object its declared siblings hold.
-    server = build_app(server=get_server("neofoam_ui_test_added_scheme"), plugins=[])
-    schemes = server.state.form_pimple_fv_schemes
-    _seed_transport_defaults(server)
-    server.state.form_pimple_fv_schemes = {
+    schemes = wizard.state.form_pimple_fv_schemes
+    seed_transport_defaults(wizard)
+    wizard.state.form_pimple_fv_schemes = {
         **schemes,
         "divSchemes": {
             **schemes["divSchemes"],
@@ -432,8 +412,8 @@ def test_save_case_writes_a_hand_added_scheme_entry_as_openfoam_tokens(tmp_path)
         },
     }
 
-    server.state.target_dir = str(tmp_path)
-    server.controller.save_case()
+    wizard.state.target_dir = str(tmp_path)
+    wizard.controller.save_case()
 
     written = (tmp_path / "system" / "fvSchemes").read_text().splitlines()
     entries = [" ".join(line.split()) for line in written]
@@ -491,66 +471,58 @@ def test_turbulence_properties_start_on_the_selected_model(solver_name, expected
         ),
     ],
 )
-def test_selecting_a_turbulence_model_rewrites_turbulence_properties(model, expected):
-    server = build_app(server=get_server(f"neofoam_ui_test_turbulence_{model}"), plugins=[])
+def test_selecting_a_turbulence_model_rewrites_turbulence_properties(model, expected, wizard):
+    wizard.controller.select_model(model)
 
-    server.controller.select_model(model)
-
-    assert _turbulence_properties(server) == expected
+    assert _turbulence_properties(wizard) == expected
 
 
-def test_selecting_another_family_leaves_turbulence_properties_alone():
-    server = build_app(server=get_server("neofoam_ui_test_turbulence_untouched"), plugins=[])
-    server.controller.select_model("laminar")
+def test_selecting_another_family_leaves_turbulence_properties_alone(wizard):
+    wizard.controller.select_model("laminar")
 
-    server.controller.select_model("Simple")
+    wizard.controller.select_model("Simple")
 
-    assert _turbulence_properties(server) == {"simulationType": "laminar"}
+    assert _turbulence_properties(wizard) == {"simulationType": "laminar"}
 
 
-def test_loaded_case_overrides_the_default_turbulence_properties():
+def test_loaded_case_overrides_the_default_turbulence_properties(wizard):
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_turbulence_loaded"), plugins=[])
     configs = read_case_configs(_LAMINAR_CASE, solver)
 
     apply_configs_to_forms(
-        server.state, server.controller.get_entries(), build_model_families(solver), configs
+        wizard.state, wizard.controller.get_entries(), build_model_families(solver), configs
     )
 
-    assert _turbulence_properties(server) == {"simulationType": "laminar"}
+    assert _turbulence_properties(wizard) == {"simulationType": "laminar"}
 
 
-def test_loaded_case_moves_the_turbulence_choice_to_the_loaded_model():
+def test_loaded_case_moves_the_turbulence_choice_to_the_loaded_model(wizard):
     # turbulenceProperties is owned by no single model, so filling it selects none:
     # the radio group has to be moved to the model the loaded file names.
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_turbulence_loaded_choice"), plugins=[])
     configs = read_case_configs(_LAMINAR_CASE, solver)
 
     apply_configs_to_forms(
-        server.state, server.controller.get_entries(), build_model_families(solver), configs
+        wizard.state, wizard.controller.get_entries(), build_model_families(solver), configs
     )
 
-    assert server.state.choice_momentumTransportModel == "laminar"
-    assert server.state.sel_laminar is True
-    assert server.state.sel_kEpsilon is False
+    assert wizard.state.choice_momentumTransportModel == "laminar"
+    assert wizard.state.sel_laminar is True
+    assert wizard.state.sel_kEpsilon is False
 
 
-def test_panel_chip_shows_the_owning_models_label():
-    server = build_app(server=get_server("neofoam_ui_test_chip_label"), plugins=[])
-
-    template = server.state["trame__template_main"]
+def test_panel_chip_shows_the_owning_models_label(wizard):
+    template = wizard.state["trame__template_main"]
     assert "Adaptive time step (Courant)\n</VChip>" in template
     assert "\ncourant\n</VChip>" not in template
 
 
-def test_save_case_writes_the_selected_turbulence_model(tmp_path):
-    server = build_app(server=get_server("neofoam_ui_test_turbulence_save"), plugins=[])
-    _seed_transport_defaults(server)
-    server.controller.select_model("kOmegaSST")
-    server.state.target_dir = str(tmp_path)
+def test_save_case_writes_the_selected_turbulence_model(tmp_path, wizard, seed_transport_defaults):
+    seed_transport_defaults(wizard)
+    wizard.controller.select_model("kOmegaSST")
+    wizard.state.target_dir = str(tmp_path)
 
-    server.controller.save_case()
+    wizard.controller.save_case()
 
     written = (tmp_path / "constant" / "turbulenceProperties").read_text()
     assert "kOmegaSST" in written
@@ -573,61 +545,52 @@ def test_included_models_heading_needs_an_always_on_model(solver_name, shown):
     assert ("Included models" in server.state["trame__template_main"]) is shown
 
 
-def test_boundary_conditions_step_explains_its_empty_state():
+def test_boundary_conditions_step_explains_its_empty_state(wizard):
     # Before a scan each field panel is a bare "Property Name [+]" row; the step says
     # where patches come from and that the row adds one by hand, until a scan ran.
-    server = build_app(server=get_server("neofoam_ui_test_bcs_hint"), plugins=[])
 
-    template = server.state["trame__template_main"]
+    template = wizard.state["trame__template_main"]
     assert "run Scan in the Geometry step to seed them" in template
     assert 'v-show="!geometry_patches.length"' in template
     # The adder row is labelled "Patch name" itself, so the hint need not name the box.
     assert "Property Name" not in template
 
 
-def test_forms_receive_the_adder_translations():
+def test_forms_receive_the_adder_translations(wizard):
     from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
 
-    server = build_app(server=get_server("neofoam_ui_test_translations"), plugins=[])
-
-    assert ':translations="form_translations"' in server.state["trame__template_main"]
-    assert server.state["form_translations"] == ADDER_TRANSLATIONS
+    assert ':translations="form_translations"' in wizard.state["trame__template_main"]
+    assert wizard.state["form_translations"] == ADDER_TRANSLATIONS
 
 
 @pytest.mark.parametrize("location", ["left", "right"])
-def test_drawers_are_overlays_below_the_desktop_breakpoint(location):
+def test_drawers_are_overlays_below_the_desktop_breakpoint(location, wizard):
     # A permanent 300 px step drawer (plus the 400 px AI drawer) leaves a phone no
     # room for the forms: below Vuetify's md breakpoint both become temporary overlays.
-    server = build_app(server=get_server(f"neofoam_ui_test_overlay_{location}"), plugins=[])
 
-    template = server.state["trame__template_main"]
+    template = wizard.state["trame__template_main"]
     drawer = template.split(f'location="{location}"')[1].split(">")[0]
     assert ':temporary="$vuetify.display.smAndDown"' in drawer
     assert ':permanent="!$vuetify.display.smAndDown"' in drawer
 
 
-def test_drawers_start_closed_on_a_phone():
+def test_drawers_start_closed_on_a_phone(wizard):
     # The overlays read their own open flags, so the desktop's open-by-default
     # drawers never cover a phone screen on load.
-    server = build_app(server=get_server("neofoam_ui_test_mobile_closed"), plugins=[])
 
-    template = server.state["trame__template_main"]
-    assert server.state.main_drawer_mobile is False
-    assert server.state.ai_panel_mobile is False
+    template = wizard.state["trame__template_main"]
+    assert wizard.state.main_drawer_mobile is False
+    assert wizard.state.ai_panel_mobile is False
     assert ':modelValue="$vuetify.display.smAndDown ? main_drawer_mobile : main_drawer"' in template
     assert ':modelValue="$vuetify.display.smAndDown ? ai_panel_mobile : ai_panel"' in template
 
 
-def test_picking_a_step_closes_the_phone_drawer():
-    server = build_app(server=get_server("neofoam_ui_test_step_closes_drawer"), plugins=[])
-
-    template = server.state["trame__template_main"]
+def test_picking_a_step_closes_the_phone_drawer(wizard):
+    template = wizard.state["trame__template_main"]
     assert "@click=\"current_step = 'bcs'; main_drawer_mobile = false\"" in template
 
 
-def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone():
-    server = build_app(server=get_server("neofoam_ui_test_toolbar_row"), plugins=[])
-
-    template = server.state["trame__template_main"]
+def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone(wizard):
+    template = wizard.state["trame__template_main"]
     extension = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')[1]
     assert 'v-model="target_dir"' in extension.split("</template>")[0]

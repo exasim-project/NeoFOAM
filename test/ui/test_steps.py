@@ -19,12 +19,7 @@ from neofoam.ui.steps import (
 )
 
 
-def _solver():
-    return resolve_solver("incompressibleFluid")
-
-
-def test_steps_fixed_order_and_membership():
-    solver = _solver()
+def test_steps_fixed_order_and_membership(solver):
     entries = build_forms(solver)
     steps = build_steps(solver, entries)
 
@@ -56,8 +51,8 @@ def test_steps_fixed_order_and_membership():
     assert all(k.startswith("dict:") for k in by_id["schemes"].entry_keys)
 
 
-def test_model_choices_required_flags():
-    choices = build_model_choices(_solver())
+def test_model_choices_required_flags(solver):
+    choices = build_model_choices(solver)
     by_name = {c.name: c for c in choices}
     assert by_name["Pimple"].required is True
     assert by_name["Newtonian"].required is True
@@ -65,8 +60,8 @@ def test_model_choices_required_flags():
     assert by_name["courant"].required is False
 
 
-def test_model_families_are_the_pick_one_choices():
-    families = {f.name: f for f in build_model_families(_solver())}
+def test_model_families_are_the_pick_one_choices(solver):
+    families = {f.name: f for f in build_model_families(solver)}
     assert set(families) == {"PressureVelocityAlgorithm", "momentumTransportModel"}
     algorithm = families["PressureVelocityAlgorithm"]
     assert algorithm.label == "Pressure Velocity Algorithm"
@@ -74,8 +69,8 @@ def test_model_families_are_the_pick_one_choices():
     assert all(c.required for c in algorithm.members)
 
 
-def test_select_model_state_turns_the_siblings_off():
-    families = build_model_families(_solver())
+def test_select_model_state_turns_the_siblings_off(solver):
+    families = build_model_families(solver)
 
     updates = select_model_state(families, "Simple")
 
@@ -86,8 +81,8 @@ def test_select_model_state_turns_the_siblings_off():
     }
 
 
-def test_select_model_state_leaves_a_toggle_alone():
-    families = build_model_families(_solver())
+def test_select_model_state_leaves_a_toggle_alone(solver):
+    families = build_model_families(solver)
     # An optional model belongs to no pick-one family — nothing else moves.
     assert select_model_state(families, "boussinesq") == {"sel_boussinesq": True}
 

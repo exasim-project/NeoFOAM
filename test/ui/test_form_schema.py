@@ -12,10 +12,6 @@ from neofoam.mcp.registry import list_solver_names, resolve_solver
 from neofoam.ui.forms import build_field_forms, build_forms, build_mesh_forms
 
 
-def _solver():
-    return resolve_solver("incompressibleFluid")
-
-
 def _titles(node, path=""):
     """Every ``(json-pointer, title)`` in a schema, however deeply nested."""
     if isinstance(node, dict):
@@ -29,11 +25,10 @@ def _titles(node, path=""):
             yield from _titles(value, f"{path}/{index}")
 
 
-def test_jsonforms_transform_unwraps_optional_and_titles_unions():
+def test_jsonforms_transform_unwraps_optional_and_titles_unions(solver):
     from neofoam.io.pydantic_schema import slice_schema  # noqa: PLC0415
     from neofoam.ui.form_schema import jsonforms_schema  # noqa: PLC0415
 
-    solver = _solver()
     # Optional[X] (anyOf[X, null]) collapses to X — turbulence RAS/LES.
     turb = jsonforms_schema(tools.config_schema(solver, "turbulence_properties_config").json_schema)
     assert "anyOf" not in turb["properties"]["RAS"]
@@ -47,12 +42,12 @@ def test_jsonforms_transform_unwraps_optional_and_titles_unions():
     assert {"fixedValue", "noSlip", "zeroGradient"} <= titles
 
 
-def test_openfoam_dict_keys_are_titled_verbatim():
+def test_openfoam_dict_keys_are_titled_verbatim(solver):
     # Keys of a synthesized fvSchemes/fvSolution section are OpenFOAM entries the
     # case author wrote, not an API surface: humanizing them destroys information a
     # user cannot recover (p_rghFinal read as "P Rghfinal") and no longer names
     # anything in the written case file.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     # The buoyant pressure solvers sit on the Boussinesq model's own slice.
     solvers = {
         **entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"],
@@ -72,10 +67,10 @@ def test_openfoam_dict_keys_are_titled_verbatim():
     assert alpha["alpha.water"]["title"] == "alpha.water"
 
 
-def test_section_headings_drop_the_synthesized_class_name():
+def test_section_headings_drop_the_synthesized_class_name(solver):
     # fv_configs._rebuild_sections names each section model "_<section>"; that
     # leading underscore must not reach the panel ("_ddtSchemes", "_PIMPLE").
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     schemes = entries["dict:Pimple_fvSchemes"].schema["properties"]
     assert schemes["ddtSchemes"]["title"] == "ddtSchemes"
     solution = entries["dict:Pimple_fvSolution"].schema["properties"]
@@ -88,11 +83,11 @@ def test_section_headings_drop_the_synthesized_class_name():
                 assert not title.startswith("_"), f"{name}/{entry.key}{path}: {title}"
 
 
-def test_sections_of_like_entries_keep_the_add_a_key_row():
+def test_sections_of_like_entries_keep_the_add_a_key_row(solver):
     # JSONForms offers an "add a key" row for `additionalProperties`. A section is a
     # collection — divSchemes gains a div(phi,k), solvers a new solver block — so the
     # row stays there, single-entry sections included.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     schemes = entries["dict:Pimple_fvSchemes"].schema["properties"]
     assert schemes["divSchemes"]["additionalProperties"] is True
     assert schemes["ddtSchemes"]["additionalProperties"] is True
@@ -100,11 +95,11 @@ def test_sections_of_like_entries_keep_the_add_a_key_row():
     assert solvers["additionalProperties"] is True
 
 
-def test_fixed_shape_cards_offer_no_add_a_key_row():
+def test_fixed_shape_cards_offer_no_add_a_key_row(solver):
     # `additionalProperties: true` on a card of differently-shaped entries can only
     # add an untyped value — noise. Dropping the keyword hides the row and still
     # validates the same data (absent means "allowed").
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     solution = entries["dict:Pimple_fvSolution"].schema
     assert "additionalProperties" not in solution
     assert "additionalProperties" not in solution["properties"]["PIMPLE"]
@@ -114,11 +109,11 @@ def test_fixed_shape_cards_offer_no_add_a_key_row():
     assert "additionalProperties" not in water
 
 
-def test_open_dicts_without_known_keys_keep_the_add_a_key_row():
+def test_open_dicts_without_known_keys_keep_the_add_a_key_row(solver):
     # A solver block (and MRFProperties / fvOptions) is an open dict in the config: the
     # form pins the standard solver controls, every other option is an additional
     # property, so the row is the only way to add one.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     assert block["additionalProperties"] is True
     # fvOptions takes sub-dictionaries only, each open in turn.
@@ -140,10 +135,10 @@ def _keyword_sites(node, keyword, path=""):
     return found
 
 
-def test_add_a_key_rows_are_labelled_for_what_they_add():
+def test_add_a_key_rows_are_labelled_for_what_they_add(solver):
     # JSONForms labels every such row "Property Name"; its `i18n` schema keyword picks
     # the translation prefix, so each kind of collection says what is typed there.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     assert _keyword_sites(entries["field_bc:UFieldConfig"].schema, "i18n") == {
         "/properties/boundaryField": "nf.patch"
     }
@@ -166,14 +161,14 @@ def test_add_a_key_rows_are_labelled_for_what_they_add():
         ("dict:FvOptionsConfig", "nf.source", "Source name, e.g. momentumSource"),
     ],
 )
-def test_open_config_renders_as_named_cards_of_keywords(entry_key, prefix, label):
+def test_open_config_renders_as_named_cards_of_keywords(entry_key, prefix, label, solver):
     # A config of free-form sub-dictionaries declares no property, so JSONForms'
     # generated layout is empty and the panel showed nothing. The bundled section
     # renderer draws it instead: one card per sub-dictionary (`nfDicts`), each a grid
     # of its keywords (`nfDict`), both adders labelled.
     from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
 
-    entry = {e.key: e for e in build_forms(_solver())}[entry_key]
+    entry = {e.key: e for e in build_forms(solver)}[entry_key]
     assert _keyword_sites(entry.schema, "i18n") == {
         "": prefix,
         "/additionalProperties": "nf.keyword",
@@ -290,10 +285,10 @@ def test_solver_blocks_pin_the_standard_controls(section, block):
     assert block["additionalProperties"] is True
 
 
-def test_solver_block_names_the_companion_key_of_every_suggested_solver():
+def test_solver_block_names_the_companion_key_of_every_suggested_solver(solver):
     # A Krylov solver takes a preconditioner, a smoothing one a smoother: the block's
     # `nfSolver` map tells the renderer which of the two sits next to `solver`.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     assert block["nfSolver"]["PCG"] == "preconditioner"
     assert block["nfSolver"]["GAMG"] == block["nfSolver"]["smoothSolver"] == "smoother"
@@ -309,9 +304,9 @@ def test_solver_block_names_the_companion_key_of_every_suggested_solver():
         {"solver": "PCG", "preconditioner": {"preconditioner": "GAMG", "nVcycles": 2}},
     ],
 )
-def test_solver_choices_are_suggestions_not_a_closed_enum(data):
+def test_solver_choices_are_suggestions_not_a_closed_enum(data, solver):
     jsonschema = pytest.importorskip("jsonschema")
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     jsonschema.Draft202012Validator(block).validate(data)
 
@@ -324,11 +319,11 @@ def test_solver_choices_are_suggestions_not_a_closed_enum(data):
         ({"solver": "PBiCGStab", "smoother": "DILU"}, "preconditioner"),
     ],
 )
-def test_solver_block_requires_the_companion_key_of_its_solver(data, missing):
+def test_solver_block_requires_the_companion_key_of_its_solver(data, missing, solver):
     # OpenFOAM aborts on a Krylov solver without `preconditioner` or a smoothing one
     # without `smoother`, so the card shows the empty companion as a required field.
     jsonschema = pytest.importorskip("jsonschema")
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     errors = [error.message for error in jsonschema.Draft202012Validator(block).iter_errors(data)]
     assert errors == [f"'{missing}' is a required property"]
@@ -353,10 +348,10 @@ def test_foamfile_header_stays_in_the_data_but_is_not_rendered(solver_name):
     assert gravity.defaults["FoamFile"]["object"] == "g"
 
 
-def test_prose_property_keys_are_still_humanized():
+def test_prose_property_keys_are_still_humanized(solver):
     # Hand-written config models keep their human labels — only OpenFOAM blocks
     # are shown verbatim.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     control = entries["dict:ControlDictConfig"].schema["properties"]
     assert control["writeControl"]["title"] == "Write Control"
     assert control["deltaT"]["title"] == "Delta T"
@@ -379,10 +374,10 @@ def test_inline_refs_makes_every_schema_self_contained():
             assert "discriminator" not in text, f"{name}/{e.key} keeps a dangling discriminator"
 
 
-def test_inline_refs_bounds_a_self_referential_union():
+def test_inline_refs_bounds_a_self_referential_union(solver):
     # cellLimited nests a GradScheme, which includes cellLimited again. The cycle
     # cannot be inlined, so the inner scheme offers the non-recursive arms only.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     grad = entries["dict:Pimple_fvSchemes"].schema["properties"]["gradSchemes"]["properties"]
     arms = {a["title"]: a for a in grad["grad(U)"]["oneOf"]}
     assert set(arms) == {"Gauss", "pointCellsLeastSquares", "cellLimited"}
@@ -403,7 +398,7 @@ def _discriminators(node):
             yield from _discriminators(value)
 
 
-def test_union_arm_discriminator_is_kept_in_the_data_but_not_rendered():
+def test_union_arm_discriminator_is_kept_in_the_data_but_not_rendered(solver):
     # The arm selector already names the type; a second "Type" dropdown holding that one
     # value under every (nested) scheme made the Numerics step 7000-12000 px tall.
     # JSONForms generates a control only for a property it can derive a JSON type for
@@ -415,7 +410,7 @@ def test_union_arm_discriminator_is_kept_in_the_data_but_not_rendered():
                 assert prop == {"const": prop["const"], "default": prop["const"]}, (
                     f"{name}/{entry.key}: {prop}"
                 )
-    div = {e.key: e for e in build_forms(_solver())}["dict:Pimple_fvSchemes"].schema
+    div = {e.key: e for e in build_forms(solver)}["dict:Pimple_fvSchemes"].schema
     arms = div["properties"]["divSchemes"]["properties"]["div(phi,U)"]["oneOf"]
     assert [(a["title"], list(a["properties"])) for a in arms] == [
         ("none", ["type"]),
@@ -445,10 +440,10 @@ def test_inline_refs_merges_siblings_and_keeps_cycles():
     assert "Loop" in out["$defs"]
 
 
-def test_field_in_dimensions_and_internalfield_collapse_to_text():
+def test_field_in_dimensions_and_internalfield_collapse_to_text(solver):
     # The fixed 7-element dimension vector and the FieldValue union both render as a
     # single string field, not a growable integer list / ANYOF combinator tabs.
-    entries = {e.key: e for e in build_forms(_solver())}
+    entries = {e.key: e for e in build_forms(solver)}
     props = entries["field_in:UFieldConfig"].schema["properties"]
 
     dims = props["dimensions"]
@@ -461,13 +456,13 @@ def test_field_in_dimensions_and_internalfield_collapse_to_text():
     assert internal["default"] == "uniform (0 0 0)"
 
 
-def test_bc_value_arm_collapses_to_text_but_type_union_stays():
+def test_bc_value_arm_collapses_to_text_but_type_union_stays(solver):
     from neofoam.io.pydantic_schema import slice_schema  # noqa: PLC0415
     from neofoam.ui.form_schema import jsonforms_schema  # noqa: PLC0415
 
     bc = jsonforms_schema(
         slice_schema(
-            tools.config_schema(_solver(), "u_field_config").json_schema,
+            tools.config_schema(solver, "u_field_config").json_schema,
             ["boundaryField"],
         )
     )
@@ -495,8 +490,8 @@ def test_boundary_field_maps_render_as_patch_rows(solver_name):
         assert _keyword_sites(entry.schema, "nfPatches") == {"/properties/boundaryField": True}
 
 
-def test_turbulence_properties_uischema_gates_ras_and_les_on_simulation_type():
-    entries = {e.config_name: e for e in build_forms(_solver())}
+def test_turbulence_properties_uischema_gates_ras_and_les_on_simulation_type(solver):
+    entries = {e.config_name: e for e in build_forms(solver)}
     uischema = entries["turbulence_properties_config"].uischema
     assert uischema is not None
     rules = {
@@ -515,7 +510,7 @@ def test_turbulence_properties_uischema_gates_ras_and_les_on_simulation_type():
             },
         }
     # No other form needs a hand-written layout (JSONForms auto-generates it).
-    assert [e.config_name for e in build_forms(_solver()) if e.uischema is not None] == [
+    assert [e.config_name for e in build_forms(solver) if e.uischema is not None] == [
         "turbulence_properties_config"
     ]
 
@@ -536,11 +531,9 @@ def test_humanize_splits_words_but_keeps_neon_whole(key, label):
     assert humanize(key) == label
 
 
-def test_transport_properties_form_requires_nu_for_a_newtonian_fluid():
+def test_transport_properties_form_requires_nu_for_a_newtonian_fluid(solver):
     # JSONForms validates the form with AJV, so the rule has to survive the transform
     # for the missing `nu` to be flagged in the form and not only on save.
-    entry = next(
-        e for e in build_forms(_solver()) if e.config_name == "transport_properties_config"
-    )
+    entry = next(e for e in build_forms(solver) if e.config_name == "transport_properties_config")
     assert entry.schema["if"] == {"properties": {"transportModel": {"const": "Newtonian"}}}
     assert entry.schema["then"] == {"required": ["nu"]}

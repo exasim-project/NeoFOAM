@@ -11,6 +11,10 @@ from typing import Any, Callable
 
 import pytest
 
+from neofoam.mcp import tools
+from neofoam.mcp.registry import resolve_solver
+from neofoam.ui import build_app
+
 #: Nominal heartbeat period — the 20 ms tick the freeze was measured with.
 _PERIOD = 0.02
 
@@ -51,3 +55,37 @@ def heartbeat_ticks() -> Callable[[Callable[[], Any]], int]:
         return asyncio.run(drive())
 
     return measure
+
+
+@pytest.fixture
+def solver() -> Any:
+    """The ``incompressibleFluid`` solver most wizard tests build their forms from."""
+    return resolve_solver("incompressibleFluid")
+
+
+@pytest.fixture
+def wizard(request: pytest.FixtureRequest) -> Any:
+    """A default wizard server without step plugins, named after the requesting test.
+
+    trame keeps one server (and its state) per name for the whole process, so a
+    copy-pasted name silently shares state between two tests; the node name is
+    unique by construction, parametrized ids included.
+    """
+    get_server = pytest.importorskip("trame.app").get_server
+    return build_app(server=get_server(request.node.name), plugins=[])
+
+
+@pytest.fixture
+def seed_transport_defaults(solver: Any) -> Callable[[Any], None]:
+    """Fill a wizard server with the minimal valid form state (only transportProperties)."""
+    defaults = tools.config_schema(solver, "transport_properties_config").defaults
+
+    def seed(server: Any) -> None:
+        for entry in server.controller.get_entries():
+            server.state[entry.state_key] = (
+                {**defaults, "nu": 1e-05}
+                if entry.config_name == "transport_properties_config"
+                else {}
+            )
+
+    return seed

@@ -18,11 +18,6 @@ from neofoam.ui.forms import (
     uischema_key,
 )
 
-
-def _solver():
-    return resolve_solver("incompressibleFluid")
-
-
 _MESH_FILES = {"blockMeshDict", "snappyHexMeshDict", "preprocess.yaml"}
 
 
@@ -35,8 +30,7 @@ def _dict_and_field_names(solver):
     return dicts, fields
 
 
-def test_dict_configs_get_one_entry_field_configs_get_two():
-    solver = _solver()
+def test_dict_configs_get_one_entry_field_configs_get_two(solver):
     entries = build_forms(solver)
     dicts, fields = _dict_and_field_names(solver)
 
@@ -49,8 +43,7 @@ def test_dict_configs_get_one_entry_field_configs_get_two():
         assert kinds == ["field_bc", "field_in"], f"{cfg} missing a half"
 
 
-def test_field_halves_have_sliced_schemas():
-    solver = _solver()
+def test_field_halves_have_sliced_schemas(solver):
     entries = build_forms(solver)
     for e in entries:
         if e.kind == "field_in":
@@ -59,10 +52,9 @@ def test_field_halves_have_sliced_schemas():
             assert set(e.schema.get("properties", {})) <= {"boundaryField"}
 
 
-def test_dict_entry_schema_is_jsonforms_transformed_config_schema():
+def test_dict_entry_schema_is_jsonforms_transformed_config_schema(solver):
     from neofoam.ui.form_schema import jsonforms_schema  # noqa: PLC0415
 
-    solver = _solver()
     for e in build_forms(solver):
         if e.kind != "dict":
             continue
@@ -72,8 +64,8 @@ def test_dict_entry_schema_is_jsonforms_transformed_config_schema():
         assert e.defaults == schema.defaults
 
 
-def test_step_assignment():
-    entries = build_forms(_solver())
+def test_step_assignment(solver):
+    entries = build_forms(solver)
     for e in entries:
         if e.kind == "field_in":
             assert e.step == "initial"
@@ -87,8 +79,8 @@ def test_step_assignment():
     assert "pimple_fv_solution" in schemes
 
 
-def test_owner_model_only_for_optional_configs():
-    entries = build_forms(_solver())
+def test_owner_model_only_for_optional_configs(solver):
+    entries = build_forms(solver)
     owners = {e.config_name: e.owner_model for e in entries}
     # Boussinesq (optional) configs are owned; core/required configs are not.
     assert owners["boussinesq_config"] == "boussinesq"
@@ -97,8 +89,8 @@ def test_owner_model_only_for_optional_configs():
     assert owners["transport_properties_config"] is None  # Newtonian is required
 
 
-def test_exclusive_model_families_are_the_multi_member_required_ones():
-    families = exclusive_model_families(_solver())
+def test_exclusive_model_families_are_the_multi_member_required_ones(solver):
+    families = exclusive_model_families(solver)
     # Pick ONE: the pressure-velocity algorithm and the turbulence model.
     assert families["PressureVelocityAlgorithm"] == ["Pimple", "Simple"]
     assert families["momentumTransportModel"][:2] == ["kEpsilon", "kOmegaSST"]
@@ -107,8 +99,8 @@ def test_exclusive_model_families_are_the_multi_member_required_ones():
     assert set(families) == {"PressureVelocityAlgorithm", "momentumTransportModel"}
 
 
-def test_family_members_own_their_own_dicts_but_not_the_shared_configs():
-    owners = {(e.config_name, e.kind): e.owner_model for e in build_forms(_solver())}
+def test_family_members_own_their_own_dicts_but_not_the_shared_configs(solver):
+    owners = {(e.config_name, e.kind): e.owner_model for e in build_forms(solver)}
     # Each alternative gates its own dictionaries — Pimple and Simple must never show
     # (or write) their contradictory fvSchemes/fvSolution slices at the same time.
     assert owners[("pimple_fv_schemes", "dict")] == "Pimple"
@@ -123,21 +115,19 @@ def test_family_members_own_their_own_dicts_but_not_the_shared_configs():
     assert owners[("transport_properties_config", "dict")] is None
 
 
-def test_config_names_are_valid_save_case_fields():
-    solver = _solver()
+def test_config_names_are_valid_save_case_fields(solver):
     valid = set(build_case_output_model(solver=solver).model_fields)
     for e in build_forms(solver):
         assert e.config_name in valid
 
 
-def test_state_keys_unique():
-    entries = build_forms(_solver())
+def test_state_keys_unique(solver):
+    entries = build_forms(solver)
     keys = [e.state_key for e in entries]
     assert len(keys) == len(set(keys))
 
 
-def test_build_mesh_forms_surfaces_sweepable_mesh_dicts_only():
-    solver = _solver()
+def test_build_mesh_forms_surfaces_sweepable_mesh_dicts_only(solver):
     mesh = {e.config_name: e for e in build_mesh_forms(solver)}
     # blockMesh + snappy are surfaced (for the Parameters step's mesh dimension);
     # preprocess.yaml (a YAML config, not a per-config sweep target) is not.
@@ -152,8 +142,7 @@ def test_build_mesh_forms_surfaces_sweepable_mesh_dicts_only():
     assert wizard.isdisjoint(mesh)
 
 
-def test_build_field_forms_are_whole_field_dict_entries():
-    solver = _solver()
+def test_build_field_forms_are_whole_field_dict_entries(solver):
     fields = {e.config_name: e for e in build_field_forms(solver)}
     # One whole-field entry per 0/<field> config.
     assert "u_field_config" in fields

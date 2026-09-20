@@ -8,17 +8,12 @@ from __future__ import annotations
 from neofoam.agent.case_fill import build_case_output_model
 from neofoam.framework.solver.configurations import configurations
 from neofoam.mcp import tools
-from neofoam.mcp.registry import resolve_solver
 from neofoam.ui.case_spec import (
     configs_to_form_state,
     models_filled_by,
     state_to_case_spec,
 )
 from neofoam.ui.forms import build_forms
-
-
-def _solver():
-    return resolve_solver("incompressibleFluid")
 
 
 def _state_from_defaults(entries, only=None):
@@ -29,8 +24,7 @@ def _state_from_defaults(entries, only=None):
     }
 
 
-def test_aggregate_validates_and_round_trips(tmp_path):
-    solver = _solver()
+def test_aggregate_validates_and_round_trips(tmp_path, solver):
     entries = build_forms(solver)
     state = _state_from_defaults(entries, only={"transport_properties_config"})
     state["dict:TransportPropertiesConfig"]["nu"] = 1e-05  # the defaults leave it unset
@@ -51,8 +45,7 @@ def test_aggregate_validates_and_round_trips(tmp_path):
     assert any("transportProperties" in w for w in result.written)
 
 
-def test_unselected_optional_model_is_skipped():
-    solver = _solver()
+def test_unselected_optional_model_is_skipped(solver):
     entries = build_forms(solver)
     # Fill Boussinesq's data, but do NOT select the model.
     state = _state_from_defaults(entries, only={"boussinesq_config", "gravity_config"})
@@ -65,8 +58,7 @@ def test_unselected_optional_model_is_skipped():
     assert "boussinesq_config" in spec_on
 
 
-def test_empty_forms_keep_only_default_complete_dicts():
-    solver = _solver()
+def test_empty_forms_keep_only_default_complete_dicts(solver):
     entries = build_forms(solver)
     spec = state_to_case_spec(entries, _state_from_defaults(entries, only=set()), {"Pimple"})
     # Empty forms whose config REQUIRES input (controlDict: endTime/deltaT) are
@@ -79,8 +71,7 @@ def test_empty_forms_keep_only_default_complete_dicts():
     assert not any(k.endswith("_field_config") for k in spec)
 
 
-def test_field_merges_from_one_half():
-    solver = _solver()
+def test_field_merges_from_one_half(solver):
     entries = build_forms(solver)
     # Provide only the input half of U; BC half empty → merge falls back to defaults.
     state = {e.key: {} for e in entries}
@@ -93,8 +84,7 @@ def test_field_merges_from_one_half():
     assert isinstance(spec["u_field_config"], dict)
 
 
-def test_configs_to_form_state_maps_dict_and_field_halves():
-    solver = _solver()
+def test_configs_to_form_state_maps_dict_and_field_halves(solver):
     entries = build_forms(solver)
     cfgs = configurations(solver)
     transport = cfgs["TransportPropertiesConfig"].model_construct()
@@ -106,8 +96,7 @@ def test_configs_to_form_state_maps_dict_and_field_halves():
     assert "field_bc:UFieldConfig" in fs
 
 
-def test_configs_to_form_state_round_trips_through_aggregation():
-    solver = _solver()
+def test_configs_to_form_state_round_trips_through_aggregation(solver):
     entries = build_forms(solver)
     cfgs = configurations(solver)
     transport = cfgs["TransportPropertiesConfig"].model_construct()
@@ -119,8 +108,7 @@ def test_configs_to_form_state_round_trips_through_aggregation():
     assert "transport_properties_config" in spec
 
 
-def test_models_filled_by_returns_optional_owner():
-    solver = _solver()
+def test_models_filled_by_returns_optional_owner(solver):
     entries = build_forms(solver)
     cfgs = configurations(solver)
     boussinesq = cfgs["BoussinesqConfig"].model_construct()

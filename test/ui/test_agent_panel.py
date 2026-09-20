@@ -19,7 +19,6 @@ from trame.app import get_server  # noqa: E402
 
 from neofoam.agent.case_fill import build_case_output_model, case_spec_to_configs  # noqa: E402
 from neofoam.framework.solver.configurations import configurations  # noqa: E402
-from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui.agent_panel import _summary, build_agent_panel  # noqa: E402
 from neofoam.ui.forms import build_forms  # noqa: E402
 
@@ -36,10 +35,6 @@ def _server() -> Any:
     srv = get_server(f"neofoam_ui_agent_{_COUNTER['n']}")
     srv.state.target_dir = ""  # no auto-save in tests
     return srv
-
-
-def _solver() -> Any:
-    return resolve_solver("incompressibleFluid")
 
 
 def _prebuilt_case_spec(solver: Any) -> Any:
@@ -68,8 +63,7 @@ class _StubAgent:
         return SimpleNamespace(output=self._output, all_messages=lambda: ["MSG"])
 
 
-def test_send_message_fills_forms_autoselects_and_logs():
-    solver = _solver()
+def test_send_message_fills_forms_autoselects_and_logs(solver):
     server = _server()
     entries = build_forms(solver)
     prebuilt = _prebuilt_case_spec(solver)
@@ -95,8 +89,7 @@ def test_send_message_fills_forms_autoselects_and_logs():
     assert server.state.chat_input == ""
 
 
-def test_multi_turn_threads_message_history():
-    solver = _solver()
+def test_multi_turn_threads_message_history(solver):
     server = _server()
     entries = build_forms(solver)
     stub = _StubAgent(_prebuilt_case_spec(solver))
@@ -116,8 +109,7 @@ def test_multi_turn_threads_message_history():
     ]
 
 
-def test_empty_message_is_ignored():
-    solver = _solver()
+def test_empty_message_is_ignored(solver):
     server = _server()
     send = build_agent_panel(
         server,
@@ -129,8 +121,7 @@ def test_empty_message_is_ignored():
     assert server.state.chat_log == []
 
 
-def test_degrades_when_agent_unavailable():
-    solver = _solver()
+def test_degrades_when_agent_unavailable(solver):
     server = _server()
 
     def _raise(**_kw: Any) -> Any:
@@ -156,11 +147,10 @@ class _StubGeoAgent:
         return SimpleNamespace(output=self._output)
 
 
-def test_send_message_also_fills_geometry_roles():
+def test_send_message_also_fills_geometry_roles(solver):
     from neofoam.ui.geometry import PatchRole  # noqa: PLC0415
     from neofoam.ui.geometry_agent import GeometryAssignments, RoleAssignment  # noqa: PLC0415
 
-    solver = _solver()
     server = _server()
     entries = build_forms(solver)
     assignments = GeometryAssignments(
@@ -191,8 +181,7 @@ def test_send_message_also_fills_geometry_roles():
     assert any("Mesh roles set" in m["content"] for m in server.state.chat_log)
 
 
-def test_geometry_fill_skipped_when_no_patches():
-    solver = _solver()
+def test_geometry_fill_skipped_when_no_patches(solver):
     server = _server()
     # geometry_patches defaults to [] → the geometry agent is never built/run.
     stub_geo = _StubGeoAgent(None)
@@ -208,8 +197,7 @@ def test_geometry_fill_skipped_when_no_patches():
     assert stub_geo.calls == []
 
 
-def test_chat_handler_owns_prompt_for_its_step():
-    solver = _solver()
+def test_chat_handler_owns_prompt_for_its_step(solver):
     server = _server()
     calls: list[str] = []
 
@@ -238,8 +226,7 @@ def test_chat_handler_owns_prompt_for_its_step():
     assert server.state.ai_busy is False
 
 
-def test_busy_true_during_run():
-    solver = _solver()
+def test_busy_true_during_run(solver):
     server = _server()
     seen = {}
     stub = _StubAgent(
@@ -276,10 +263,9 @@ class _BlockingAgent:
         return SimpleNamespace(output=self._output, all_messages=lambda: ["MSG"])
 
 
-def test_message_sent_while_busy_is_dropped():
+def test_message_sent_while_busy_is_dropped(solver):
     # Two overlapping turns both start from an empty message_history and both
     # rewrite it in place, so the second silently discards the first turn.
-    solver = _solver()
     server = _server()
     stub = _BlockingAgent(_prebuilt_case_spec(solver))
     send = build_agent_panel(server, build_forms(solver), solver, agent_factory=lambda **_kw: stub)
@@ -322,8 +308,7 @@ def _loading_factory(output: Any, case_dir: Any) -> tuple[Any, list[str]]:
     return factory, replies
 
 
-def test_load_case_tool_reads_the_case_into_the_forms():
-    solver = _solver()
+def test_load_case_tool_reads_the_case_into_the_forms(solver):
     server = _server()
     entries = build_forms(solver)
     factory, replies = _loading_factory(_empty_case_spec(solver), SOURCE_CASE)
@@ -337,8 +322,7 @@ def test_load_case_tool_reads_the_case_into_the_forms():
     assert "**Loaded**" in server.state.chat_log[-1]["content"]
 
 
-def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path):
-    solver = _solver()
+def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path, solver):
     server = _server()
     server.state.target_dir = str(tmp_path)
     entries = build_forms(solver)
@@ -352,8 +336,7 @@ def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path):
     assert "transportProperties" in server.state.chat_log[-1]["content"]
 
 
-def test_agent_output_overrides_the_loaded_case():
-    solver = _solver()
+def test_agent_output_overrides_the_loaded_case(solver):
     server = _server()
     entries = build_forms(solver)
     case_spec_cls = build_case_output_model(solver=solver)
@@ -371,8 +354,7 @@ def test_agent_output_overrides_the_loaded_case():
     assert server.state[_tp_key(entries)] == {"transportModel": "CrossPowerLaw"}
 
 
-def test_load_case_tool_reports_a_missing_directory(tmp_path):
-    solver = _solver()
+def test_load_case_tool_reports_a_missing_directory(tmp_path, solver):
     server = _server()
     entries = build_forms(solver)
     missing = tmp_path / "nope"
@@ -386,8 +368,7 @@ def test_load_case_tool_reports_a_missing_directory(tmp_path):
     assert server.state.ai_busy is False
 
 
-def test_loaded_case_is_not_reapplied_on_the_next_turn():
-    solver = _solver()
+def test_loaded_case_is_not_reapplied_on_the_next_turn(solver):
     server = _server()
     entries = build_forms(solver)
     tools: list[Any] = []
@@ -408,8 +389,7 @@ def test_loaded_case_is_not_reapplied_on_the_next_turn():
     assert server.state[_tp_key(entries)] == {"transportModel": "edited by hand"}
 
 
-def test_summary_is_pure_string_building(tmp_path, monkeypatch):
-    solver = _solver()
+def test_summary_is_pure_string_building(tmp_path, monkeypatch, solver):
     configs = case_spec_to_configs(_prebuilt_case_spec(solver))
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr("neofoam.ui.agent_panel.write_configs", _must_not_write)
@@ -426,8 +406,7 @@ def test_summary_is_pure_string_building(tmp_path, monkeypatch):
     assert list(tmp_path.iterdir()) == []
 
 
-def test_agent_output_is_auto_saved_before_the_reply(tmp_path):
-    solver = _solver()
+def test_agent_output_is_auto_saved_before_the_reply(tmp_path, solver):
     server = _server()
     server.state.target_dir = str(tmp_path)
     refined = build_case_output_model(solver=solver).model_construct(
