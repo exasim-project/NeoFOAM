@@ -406,14 +406,35 @@ def _pin_solver_controls(node: dict[str, Any]) -> None:
         }
 
 
-def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
-    """A sliced ``boundaryField`` schema whose "add a key" row adds a patch.
+_SCALAR_TYPES = ("number", "integer", "boolean")
 
-    The row is labelled as a patch-name box, and the BC union is typed ``object``:
-    JSONForms seeds a new key from the ``type``, and with none it seeds the string ``""``.
+
+def _is_scalar(node: Any) -> bool:
+    """A property drawn as one small control: a number, a checkbox or a fixed choice."""
+    return isinstance(node, dict) and (node.get("type") in _SCALAR_TYPES or "enum" in node)
+
+
+def _tag_scalar_grid(node: dict[str, Any]) -> None:
+    """Flag an object of two or more scalars only with ``nfGrid`` (mutates ``node``).
+
+    The bundled layout renderer then sets its controls side by side in a wrapping grid
+    instead of one full-width control per line (``PIMPLE``, a model's coefficients).
+    """
+    shapes = list(node.get("properties", {}).values())
+    if len(shapes) >= 2 and all(_is_scalar(shape) for shape in shapes):
+        node["nfGrid"] = True
+
+
+def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
+    """A ``boundaryField`` schema drawn as one row per patch, its "add a key" row adding a patch.
+
+    ``nfPatches`` picks the bundled row renderer, which binds a patch through the map's
+    data, so a name holding ``.`` (``wall.left``) works. The row is labelled as a
+    patch-name box, and the BC union is typed ``object``: a new key is seeded from the
+    ``type``, and with none it would be the string ``""``.
     """
     props = schema["properties"]
-    boundary_field = dict(props["boundaryField"], i18n="nf.patch")
+    boundary_field = dict(props["boundaryField"], i18n="nf.patch", nfPatches=True)
     boundary_field["additionalProperties"] = {
         **boundary_field["additionalProperties"],
         "type": "object",
@@ -504,6 +525,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.
     * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.
     * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.
+    * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.
     """
     class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)
@@ -562,6 +584,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
             del node["additionalProperties"]
         _tag_adders(node)
         _pin_solver_controls(node)
+        _tag_scalar_grid(node)
         # A def that *is* a discriminated arm: title it by its const type.
         const = node.get("properties", {}).get("type", {}).get("const")
         if const and "title" in node:
@@ -781,7 +804,7 @@ def build_field_forms(solver: Any) -> list[FormEntry]:
                 config_name=info.name,
                 cls_name=info.cls_name,
                 title=f"{fname} — field",
-                schema=jsonforms_schema(dto.json_schema),
+                schema=_patch_adder(jsonforms_schema(dto.json_schema)),
                 defaults=dto.defaults,
                 state_key=js_identifier(f"form_{info.name}"),
                 kind="dict",
@@ -886,8 +909,9 @@ def patch_bc_schema(bc_entry: FormEntry, names: list[str]) -> dict[str, Any]:
     The default schema types ``boundaryField`` as an open ``additionalProperties`` map,
     which JSONForms renders as a bare "property name" editor with a generic type picker.
     Once the patch names are known (from the geometry scan) we pin them as titled object
-    properties instead, so each patch renders as its own section with a clean BC-type
-    dropdown. Returns ``bc_entry.schema`` unchanged when there are no names or no BC arms.
+    properties as well, so each scanned patch is a fixed row with a clean BC-type dropdown.
+    The map stays open: a patch the scan cannot see is still added by hand. Returns
+    ``bc_entry.schema`` unchanged when there are no names or no BC arms.
     """
     base = bc_entry.schema
     bf = base.get("properties", {}).get("boundaryField", {})
@@ -896,6 +920,7 @@ def patch_bc_schema(bc_entry: FormEntry, names: list[str]) -> dict[str, Any]:
         return base
     props = {name: {**value_schema, "title": name} for name in names}
     new_bf = {
+        **bf,
         "type": "object",
         "title": bf.get("title", "Boundary field"),
         "properties": props,

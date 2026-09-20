@@ -38,6 +38,10 @@
 .nf-compact-controls .v-input.nf-number {
   width: 6rem;
 }
+/* free text, e.g. a BC's `uniform (0 0 0)` */
+.nf-compact-controls .v-text-field:not(.v-select, .v-combobox, .nf-number) {
+  width: 14rem;
+}
 .nf-compact-adder .v-input {
   flex: 0 1 20rem;
 }
@@ -66,4 +70,19 @@
 }
 .nf-grid-dict {
   grid-column: 1 / -1;
+}
+/* An object of scalars only (entry.mjs NfGridLayout): three across at the wizard's width. */
+.nf-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr));
+  gap: 12px 16px;
+  align-items: start;
+  padding-top: 6px;
+  padding-bottom: 8px;
+}
+/* an emptied field shows its label inline: "N Non Orthogonal Correctors" wraps, never cuts */
+.nf-form-grid .v-field-label:not(.v-field-label--floating) {
+  font-size: 0.875rem;
+  line-height: 1.1;
+  white-space: normal;
 }

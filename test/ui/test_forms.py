@@ -250,6 +250,45 @@ def test_only_scheme_sections_render_as_compact_rows(solver_name):
         assert set(compact.values()) == {True}
 
 
+_SCALAR_GRIDS = {
+    "incompressibleFluid": {
+        "dict:Pimple_fvSolution": ["/properties/PIMPLE"],
+        "dict:PimpleAlgorithmConfig": [""],
+        "dict:DynamicMeshControls": [""],
+        "dict:Simple_fvSolution": ["/properties/SIMPLE"],
+        "dict:SimpleAlgorithmConfig": [""],
+        "dict:KEpsilonCoeffs": [""],
+        "dict:KOmegaSSTCoeffs": [""],
+        "dict:SpalartAllmarasCoeffs": [""],
+        "dict:BoussinesqConfig": [""],
+    },
+    "incompressibleFluidNeoN": {
+        "dict:PimpleNeoN_fvSolution": ["/properties/PIMPLE"],
+        "dict:SimpleNeoN_fvSolution": ["/properties/SIMPLE"],
+        "dict:KEpsilonCoeffs": [""],
+        "dict:KOmegaSSTCoeffs": [""],
+        "dict:SpalartAllmarasCoeffs": [""],
+    },
+    "incompressibleVoF": {
+        "dict:Pimple_fvSolution": ["/properties/PIMPLE"],
+        "dict:VofPimpleAlgorithmConfig": [""],
+        "dict:DynamicMeshControls": [""],
+    },
+}
+
+
+@pytest.mark.parametrize("solver_name", list_solver_names())
+def test_objects_of_scalars_only_render_as_a_grid(solver_name):
+    # `nfGrid` lays an object's controls side by side. It goes on every object of two or
+    # more properties that are all a number, a checkbox or an enum (the algorithm
+    # controls, a model's coefficients) — a text field, a nested dictionary or a single
+    # property keeps the stock one-per-line layout (controlDict, transportProperties).
+    solver = resolve_solver(solver_name)
+    entries = [*build_forms(solver), *build_mesh_forms(solver), *build_field_forms(solver)]
+    grids = {e.key: sorted(_keyword_sites(e.schema, "nfGrid")) for e in entries}
+    assert {key: sites for key, sites in grids.items() if sites} == _SCALAR_GRIDS[solver_name]
+
+
 def _solver_blocks():
     """Every ``(id, block schema)`` under a ``solvers`` section, across all solvers."""
     for name in list_solver_names():
@@ -504,6 +543,32 @@ def test_patch_bc_schema_pins_named_patch_sections():
     assert "$defs" not in schema  # arms are inlined — nothing left to resolve
     # No names → schema returned unchanged.
     assert patch_bc_schema(entry, []) is entry.schema
+
+
+@pytest.mark.parametrize("solver_name", list_solver_names())
+def test_boundary_field_maps_render_as_patch_rows(solver_name):
+    # `nfPatches` hands a `boundaryField` map to the bundled row renderer, which binds
+    # each patch through the map's data: a patch named `wall.left` never enters a dotted
+    # JSONForms path. Both the wizard's BC half and the Parameters whole-field form.
+    solver = resolve_solver(solver_name)
+    entries = [e for e in build_forms(solver) if e.kind == "field_bc"]
+    for entry in [*entries, *build_field_forms(solver)]:
+        assert _keyword_sites(entry.schema, "nfPatches") == {"/properties/boundaryField": True}
+
+
+def test_patch_bc_schema_keeps_the_patch_adder():
+    # A geometry scan only knows the STL patches; one the mesh adds otherwise (a
+    # blockMesh face, a baffle) is still added by hand afterwards.
+    from neofoam.ui.forms import patch_bc_schema  # noqa: PLC0415
+
+    entries = {e.key: e for e in build_forms(_solver())}
+    entry = entries["field_bc:UFieldConfig"]
+    before = entry.schema["properties"]["boundaryField"]
+    after = patch_bc_schema(entry, ["inlet", "wall.left"])["properties"]["boundaryField"]
+    assert after["additionalProperties"] == before["additionalProperties"]
+    assert after["i18n"] == "nf.patch"
+    assert after["nfPatches"] is True
+    assert set(after["properties"]) == {"inlet", "wall.left"}
 
 
 def test_step_assignment():
