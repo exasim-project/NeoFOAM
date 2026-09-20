@@ -171,8 +171,9 @@ def test_fixed_shape_cards_offer_no_add_a_key_row():
 
 
 def test_open_dicts_without_known_keys_keep_the_add_a_key_row():
-    # A solver block (and MRFProperties / fvOptions) declares no keys at all: every
-    # entry is an additional property, so the row is the only way to edit it.
+    # A solver block (and MRFProperties / fvOptions) is an open dict in the config: the
+    # form pins the standard solver controls, every other option is an additional
+    # property, so the row is the only way to add one.
     entries = {e.key: e for e in build_forms(_solver())}
     block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
     assert block["additionalProperties"] is True
@@ -225,7 +226,7 @@ def test_adder_translations_cover_every_emitted_prefix():
 
     assert ADDER_TRANSLATIONS["nf.patch.propertyNameLabel"] == "Patch name, e.g. inlet"
     assert ADDER_TRANSLATIONS["nf.entry.propertyNameLabel"] == "Entry, e.g. div(phi,k)"
-    assert ADDER_TRANSLATIONS["nf.option.propertyNameLabel"] == "Option, e.g. tolerance"
+    assert ADDER_TRANSLATIONS["nf.option.propertyNameLabel"] == "Option, e.g. maxIter"
     for name in list_solver_names():
         for entry in build_forms(resolve_solver(name)):
             for prefix in _keyword_sites(entry.schema, "i18n").values():
@@ -237,8 +238,8 @@ def test_adder_translations_cover_every_emitted_prefix():
 @pytest.mark.parametrize("solver_name", list_solver_names())
 def test_only_scheme_sections_render_as_compact_rows(solver_name):
     # `nfCompact` switches a section to the one-row-per-entry renderer. It belongs on
-    # the fvSchemes sections (every entry a scheme union) and nowhere else — BC maps,
-    # fvSolution and the model dicts keep the stock JSONForms rendering.
+    # the fvSchemes sections (every entry a scheme union) and nowhere else — BC maps and
+    # the model dicts keep the stock rendering, fvSolution solvers have their own flags.
     for entry in build_forms(resolve_solver(solver_name)):
         compact = _keyword_sites(entry.schema, "nfCompact")
         if not entry.cls_name.endswith("fvSchemes"):
@@ -247,6 +248,59 @@ def test_only_scheme_sections_render_as_compact_rows(solver_name):
         sections = {f"/properties/{name}" for name in entry.schema["properties"]}
         assert set(compact) == sections, entry.key
         assert set(compact.values()) == {True}
+
+
+def _solver_blocks():
+    """Every ``(id, block schema)`` under a ``solvers`` section, across all solvers."""
+    for name in list_solver_names():
+        for entry in build_forms(resolve_solver(name)):
+            section = entry.schema.get("properties", {}).get("solvers")
+            if entry.cls_name.endswith("fvSolution") and section:
+                for field, block in section["properties"].items():
+                    yield pytest.param(section, block, id=f"{name}-{entry.cls_name}-{field}")
+
+
+@pytest.mark.parametrize(("section", "block"), list(_solver_blocks()))
+def test_solver_blocks_pin_the_standard_controls(section, block):
+    # The config leaves a linear-solver block schemaless; the form pins the keys every
+    # block has so they render as a grid of dropdowns / number fields (`nfSolvers` on the
+    # section, `nfSolver` on the block), titled verbatim like every OpenFOAM key.
+    assert section["nfSolvers"] is True
+    props = block["properties"]
+    assert list(props) == ["solver", "preconditioner", "smoother", "tolerance", "relTol"]
+    assert [props[key]["title"] for key in props] == list(props)
+    assert props["tolerance"]["type"] == props["relTol"]["type"] == "number"
+    assert {"PCG", "PBiCGStab", "smoothSolver", "GAMG"} <= set(props["solver"]["examples"])
+    assert {"DIC", "DILU"} <= set(props["preconditioner"]["examples"])
+    assert {"symGaussSeidel", "GaussSeidel"} <= set(props["smoother"]["examples"])
+    # Extra options (minIter, nSweeps, GAMG's agglomerator, …) are still added by hand.
+    assert block["additionalProperties"] is True
+
+
+def test_solver_block_names_the_companion_key_of_every_suggested_solver():
+    # A Krylov solver takes a preconditioner, a smoothing one a smoother: the block's
+    # `nfSolver` map tells the renderer which of the two sits next to `solver`.
+    entries = {e.key: e for e in build_forms(_solver())}
+    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
+    assert block["nfSolver"]["PCG"] == "preconditioner"
+    assert block["nfSolver"]["GAMG"] == block["nfSolver"]["smoothSolver"] == "smoother"
+    assert set(block["nfSolver"]) == set(block["properties"]["solver"]["examples"])
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        # NeoN/Ginkgo names are not OpenFOAM's; a loaded case must not turn red.
+        {"solver": "Ginkgo", "type": "solver::Bicgstab", "tolerance": 1e-6, "relTol": 0},
+        # OpenFOAM's GAMG-preconditioned PCG nests a dictionary under `preconditioner`.
+        {"solver": "PCG", "preconditioner": {"preconditioner": "GAMG", "nVcycles": 2}},
+    ],
+)
+def test_solver_choices_are_suggestions_not_a_closed_enum(data):
+    jsonschema = pytest.importorskip("jsonschema")
+    entries = {e.key: e for e in build_forms(_solver())}
+    block = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]["p"]
+    jsonschema.Draft202012Validator(block).validate(data)
 
 
 def test_nested_model_is_titled_by_its_key_not_its_class_name():

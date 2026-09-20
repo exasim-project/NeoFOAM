@@ -1,10 +1,11 @@
-/* Compact fvSchemes sections (entry.mjs NfCompactSection / NfInlineOneOf). */
+/* Compact fvSchemes / fvSolution sections (entry.mjs NfCompactSection / NfInlineOneOf). */
 .nf-compact-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 12px;
-  padding: 4px 0;
+  /* the top leaves room for an inline select's floating label */
+  padding: 10px 0 4px;
   border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 .nf-compact-key {
@@ -39,4 +40,30 @@
 }
 .nf-compact-adder .v-input {
   flex: 0 1 20rem;
+}
+/* fvSolution solver cards: six columns at the wizard's width, fewer when narrow. */
+.nf-solver,
+.nf-grid-cell {
+  display: flex;
+  align-items: flex-start;
+}
+.nf-solver > :first-child,
+.nf-grid-cell > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.nf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 8px 12px;
+  padding-top: 6px;
+}
+.nf-grid-cell {
+  grid-column: span 2;
+}
+.nf-grid-number {
+  grid-column: span 1;
+}
+.nf-grid-dict {
+  grid-column: 1 / -1;
 }

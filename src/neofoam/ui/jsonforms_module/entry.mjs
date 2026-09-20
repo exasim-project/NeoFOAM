@@ -19,6 +19,12 @@
 // renders as one row per entry — key left, variant + nested selects inline — instead
 // of JSONForms' stacked full-width selects. Both renderers below only lay out: data
 // goes through the same JSONForms bindings and `createDefaultValue` as the stock ones.
+//
+// The same section renderer draws fvSolution's `solvers` (`nfSolvers`) as one card per
+// linear solver, and a block (`nfSolver`, see forms.py `_pin_solver_controls`) as a grid:
+// `solver`, its preconditioner/smoother, `tolerance`, `relTol`, then the case's extra
+// options, "+ add option" at the foot. Each block is its own JSONForms instance, so its
+// paths start at the block: a solver named `alpha.water` never enters a dotted path.
 
 import { computed, defineComponent, h, ref } from 'vue'
 import {
@@ -32,6 +38,7 @@ import {
 import { vuetifyRenderers } from '@jsonforms/vue-vuetify'
 import {
   and,
+  createAjv,
   createCombinatorRenderInfos,
   createDefaultValue,
   encode,
@@ -50,7 +57,11 @@ import './compact.css'
 const INLINE_FIELD = { on: { hideDetails: 'auto' }, off: {} }
 const INLINE_OPTIONS = {
   nfInline: true,
-  vuetify: { 'v-text-field': INLINE_FIELD.on, 'v-select': INLINE_FIELD.on },
+  vuetify: {
+    'v-text-field': INLINE_FIELD.on,
+    'v-select': INLINE_FIELD.on,
+    'v-combobox': INLINE_FIELD.on,
+  },
 }
 
 // One control of `schema` (the property `key`), laid out inline.
@@ -84,12 +95,12 @@ const NfNumberControl = defineComponent({
     onInput(txt) {
       this.editing = txt
       const t = (txt ?? '').trim()
-      if (t === '') {
-        this.handleChange(this.control.path, undefined)
-        return
-      }
       const n = Number(t)
-      if (Number.isFinite(n)) this.handleChange(this.control.path, n)
+      if (t !== '' && Number.isFinite(n)) this.handleChange(this.control.path, n)
+      // An untyped option (`nSweeps 2`, `cacheAgglomeration on`) holds either.
+      else if ([this.control.schema.type].flat().includes('string'))
+        this.handleChange(this.control.path, t)
+      else if (t === '') this.handleChange(this.control.path, undefined)
       // Partial input ("1e-", "-") keeps the last valid value until it parses.
     },
   },
@@ -170,6 +181,20 @@ const NfInlineOneOf = defineComponent({
 })
 
 const JSON_TYPES = ['array', 'boolean', 'integer', 'null', 'number', 'object', 'string']
+const OPEN_DICT = { type: 'object', additionalProperties: true }
+const isDict = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
+
+// How a keyed section is drawn, by the schema keyword that flags it.
+const VARIANTS = {
+  nfCompact: { name: 'rows', add: 'Add entry' },
+  nfSolvers: { name: 'solvers', add: 'Add solver' },
+  nfSolver: { name: 'grid', add: 'Add option' },
+}
+const variantOf = (schema) => VARIANTS[Object.keys(VARIANTS).find((flag) => schema[flag])]
+
+// A solver block is a form of its own, rooted at the block.
+const BLOCK_UISCHEMA = { type: 'Control', scope: '#' }
+const blockAjv = createAjv()
 
 // A section of like entries as a dense card: one row per entry, "+ add entry" at the foot.
 const NfCompactSection = defineComponent({
@@ -180,20 +205,44 @@ const NfCompactSection = defineComponent({
     const declared = computed(() => control.value.schema.properties ?? {})
     // An entry only present in the data (a loaded case, or one added here) is drawn
     // like its declared siblings when it has their object shape, else as a raw value.
+    // A declared string-or-dictionary (`preconditioner`) is drawn as what the data holds.
     const rowsSchema = computed(() => {
       const like = Object.values(declared.value)[0]
       const properties = { ...declared.value }
       for (const [key, value] of Object.entries(control.value.data ?? {})) {
-        if (key in properties) continue
-        const isObject = value !== null && typeof value === 'object' && !Array.isArray(value)
-        properties[key] = { ...(isObject ? like : { type: JSON_TYPES }), title: key }
+        if (!(key in properties)) {
+          const shape = like?.type === 'object' ? like : OPEN_DICT
+          properties[key] = { ...(isDict(value) ? shape : { type: JSON_TYPES }), title: key }
+        } else if (Array.isArray(properties[key].type)) {
+          const types = properties[key].type.filter((type) => type !== 'object')
+          const type = types.length > 1 ? types : types[0]
+          properties[key] = { ...properties[key], ...(isDict(value) ? OPEN_DICT : { type }) }
+        }
       }
       return { ...control.value.schema, properties }
     })
     const newName = ref(null) // null: adder closed
-    return { control, handleChange, declared, rowsSchema, newName, t: useTranslator() }
+    const t = useTranslator()
+    const i18n = { translate: (...args) => t.value(...args) }
+    // Kept per name: a fresh schema object would restart the block's form on every edit.
+    const addedBlocks = {}
+    return { control, handleChange, declared, rowsSchema, newName, t, i18n, addedBlocks }
   },
   computed: {
+    variant() {
+      return variantOf(this.control.schema)
+    },
+    // A grid always shows `solver`, the key that solver takes, `tolerance` and `relTol`.
+    pinned() {
+      const c = this.control
+      if (this.variant.name !== 'grid') return Object.keys(this.declared)
+      return ['solver', c.schema.nfSolver[c.data?.solver], 'tolerance', 'relTol'].filter(Boolean)
+    },
+    keys() {
+      if (this.variant.name !== 'grid') return Object.keys(this.rowsSchema.properties)
+      const extras = Object.keys(this.control.data ?? {}).filter((k) => !this.pinned.includes(k))
+      return [...this.pinned, ...extras]
+    },
     i18nPrefix() {
       const c = this.control
       return getI18nKeyPrefix(c.schema, c.uischema, c.path + '.additionalProperties')
@@ -201,9 +250,10 @@ const NfCompactSection = defineComponent({
     nameError() {
       const name = this.newName
       if (!name) return null
-      if (name in this.rowsSchema.properties)
+      if (this.keys.includes(name))
         return this.t(this.i18nPrefix + '.propertyAlreadyDefined', `'${name}' already defined`)
-      if (/[.[\]]/.test(name))
+      // A solver block is addressed through its section's data, never by a dotted path.
+      if (this.variant.name !== 'solvers' && /[.[\]]/.test(name))
         return this.t(this.i18nPrefix + '.propertyNameInvalid', `'${name}' is invalid`)
       return null
     },
@@ -221,35 +271,70 @@ const NfCompactSection = defineComponent({
       delete data[key]
       this.handleChange(this.control.path, data)
     },
-    row(key) {
+    setBlock(key, block) {
       const c = this.control
-      const required = (c.schema.required ?? []).includes(key)
+      // Every form reports its data once on mount; only an edit is written back.
+      if (JSON.stringify(block) === JSON.stringify(c.data?.[key])) return
+      this.handleChange(c.path, { ...c.data, [key]: block })
+    },
+    child(key, options) {
+      const c = this.control
+      return h(DispatchRenderer, {
+        schema: this.rowsSchema,
+        uischema: { type: 'Control', scope: '#/properties/' + encode(key), options },
+        path: c.path,
+        enabled: c.enabled,
+        renderers: c.renderers,
+        cells: c.cells,
+      })
+    },
+    trash(key) {
+      if (this.pinned.includes(key)) return null
+      return h(VBtn, {
+        icon: 'mdi-delete',
+        variant: 'text',
+        size: 'small',
+        'aria-label': 'Delete ' + key,
+        disabled: !this.control.enabled,
+        onClick: () => this.remove(key),
+      })
+    },
+    rows(key) {
+      const required = (this.control.schema.required ?? []).includes(key)
       return h('div', { class: 'nf-compact-row', key }, [
         h('span', { class: 'nf-compact-key' }, key + (required ? '*' : '')),
         h('div', { class: 'nf-compact-controls' }, [
-          h(DispatchRenderer, {
-            schema: this.rowsSchema,
-            uischema: {
-              type: 'Control',
-              scope: '#/properties/' + encode(key),
-              options: { ...INLINE_OPTIONS, nfRowKey: key },
-            },
-            path: c.path,
-            enabled: c.enabled,
-            renderers: c.renderers,
-            cells: c.cells,
-          }),
-          key in this.declared
-            ? null
-            : h(VBtn, {
-                icon: 'mdi-delete',
-                variant: 'text',
-                size: 'small',
-                'aria-label': 'Delete ' + key,
-                disabled: !c.enabled,
-                onClick: () => this.remove(key),
-              }),
+          this.child(key, { ...INLINE_OPTIONS, nfRowKey: key }),
+          this.trash(key),
         ]),
+      ])
+    },
+    solvers(key) {
+      const c = this.control
+      const like = Object.values(this.declared)[0]
+      const schema = this.declared[key] ?? (this.addedBlocks[key] ??= { ...like, title: key })
+      return h('div', { class: 'nf-solver', key }, [
+        h(JsonForms, {
+          schema,
+          uischema: BLOCK_UISCHEMA,
+          data: c.data?.[key],
+          renderers: c.renderers,
+          cells: c.cells,
+          readonly: !c.enabled,
+          ajv: blockAjv,
+          i18n: this.i18n,
+          onChange: (event) => this.setBlock(key, event.data),
+        }),
+        this.trash(key),
+      ])
+    },
+    grid(key) {
+      const { examples: suggestion, type } = this.rowsSchema.properties[key]
+      // A number takes one column, a name two, a nested dictionary the whole row.
+      const size = { 'nf-grid-number': type === 'number', 'nf-grid-dict': type === 'object' }
+      return h('div', { class: ['nf-grid-cell', size], key }, [
+        this.child(key, { ...INLINE_OPTIONS, suggestion }),
+        this.trash(key),
       ])
     },
     adder() {
@@ -264,7 +349,7 @@ const NfCompactSection = defineComponent({
             disabled: !this.control.enabled,
             onClick: () => (this.newName = ''),
           },
-          () => 'Add entry',
+          () => this.variant.add,
         )
       return h('div', { class: 'nf-compact-adder' }, [
         h(VTextField, {
@@ -297,8 +382,8 @@ const NfCompactSection = defineComponent({
     if (!c.visible) return null
     return h(VCard, { class: 'nf-compact mb-2', flat: true, border: true }, () => [
       h(VCardTitle, { class: 'text-subtitle-1' }, () => c.label),
-      h(VCardText, { class: 'pt-0' }, () => [
-        ...Object.keys(this.rowsSchema.properties).map(this.row),
+      h(VCardText, { class: this.variant.name === 'grid' ? 'pt-0 pb-1' : 'pt-0' }, () => [
+        h('div', { class: 'nf-' + this.variant.name }, this.keys.map(this[this.variant.name])),
         this.adder(),
       ]),
     ])
@@ -310,7 +395,7 @@ const renderers = [
   ...vuetifyRenderers,
   { tester: rankWith(30, isNumberControl), renderer: NfNumberControl },
   {
-    tester: rankWith(40, and(isObjectControl, schemaMatches((s) => s.nfCompact === true))),
+    tester: rankWith(40, and(isObjectControl, schemaMatches((s) => variantOf(s) !== undefined))),
     renderer: NfCompactSection,
   },
   {

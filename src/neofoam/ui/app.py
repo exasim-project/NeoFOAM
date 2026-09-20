@@ -114,6 +114,8 @@ _VUETIFY_CONFIG = {
     "defaults": {
         "VTextField": {"density": "compact", "variant": "outlined", "color": "primary"},
         "VSelect": {"density": "compact", "variant": "outlined", "color": "primary"},
+        "VCombobox": {"density": "compact", "variant": "outlined", "color": "primary"},
+        "VNumberInput": {"density": "compact", "variant": "outlined", "color": "primary"},
         "VSwitch": {"density": "compact", "color": "primary", "hideDetails": True},
         "VBtn": {"rounded": "lg"},
         "VCard": {"rounded": "lg"},

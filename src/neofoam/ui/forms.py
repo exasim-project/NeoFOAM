@@ -316,7 +316,7 @@ _ADDER_LABELS = {
     "nf.patch": "Patch name, e.g. inlet",
     "nf.entry": "Entry, e.g. div(phi,k)",
     "nf.solver": "Field, e.g. p",
-    "nf.option": "Option, e.g. tolerance",
+    "nf.option": "Option, e.g. maxIter",
 }
 
 # JSONForms addresses form data by dotted path (``boundaryField.inlet.type``), so a key
@@ -362,6 +362,48 @@ def _tag_adders(node: dict[str, Any]) -> None:
         node["nfCompact"] = True
     else:
         node["i18n"] = "nf.solver"
+
+
+# Which key sits next to ``solver`` in a linear-solver block: a Krylov solver takes a
+# preconditioner, a smoothing one a smoother. These are the OpenFOAM solvers the NeoN
+# backend maps too, so every suggestion runs on both.
+_SOLVER_COMPANION = {
+    "PCG": "preconditioner",
+    "PBiCGStab": "preconditioner",
+    "PBiCG": "preconditioner",
+    "smoothSolver": "smoother",
+    "GAMG": "smoother",
+}
+_PRECONDITIONERS = ["DIC", "FDIC", "DILU", "diagonal", "GAMG", "none"]
+_SMOOTHERS = ["symGaussSeidel", "GaussSeidel", "DICGaussSeidel", "DIC", "DILU"]
+
+
+# The keys every linear-solver block has. Choices are ``examples``, never an ``enum``: a
+# loaded case may name a solver OpenFOAM does not know (``Ginkgo``), and a
+# GAMG-preconditioned PCG nests a dictionary under ``preconditioner``.
+_SOLVER_CONTROLS: dict[str, dict[str, Any]] = {
+    "solver": {"type": "string", "examples": list(_SOLVER_COMPANION)},
+    "preconditioner": {"type": ["string", "object"], "examples": _PRECONDITIONERS},
+    "smoother": {"type": "string", "examples": _SMOOTHERS},
+    "tolerance": {"type": "number"},
+    "relTol": {"type": "number"},
+}
+
+
+def _pin_solver_controls(node: dict[str, Any]) -> None:
+    """Draw the ``solvers`` section's blocks as grids of their standard keys (mutates ``node``).
+
+    The config keeps a block schemaless (any key, written back as read); only the form
+    declares the keys, so the bundled renderer can offer dropdowns and number fields.
+    """
+    if node.get("title") != "_solvers":
+        return
+    node["nfSolvers"] = True
+    for block in node.get("properties", {}).values():
+        block["nfSolver"] = _SOLVER_COMPANION
+        block["properties"] = {
+            key: {**control, "title": key} for key, control in _SOLVER_CONTROLS.items()
+        }
 
 
 def _patch_adder(schema: dict[str, Any]) -> dict[str, Any]:
@@ -461,6 +503,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.
     * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.
     * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.
+    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.
     """
     class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)
@@ -518,6 +561,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
         if node.get("additionalProperties") is True and not _accepts_new_keys(node):
             del node["additionalProperties"]
         _tag_adders(node)
+        _pin_solver_controls(node)
         # A def that *is* a discriminated arm: title it by its const type.
         const = node.get("properties", {}).get("type", {}).get("const")
         if const and "title" in node:
