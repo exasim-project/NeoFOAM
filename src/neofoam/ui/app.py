@@ -29,13 +29,8 @@ from neofoam.ui import jsonforms_module
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open, _toggle
 from neofoam.ui.agent_panel import AgentPanel
-from neofoam.ui.forms import (
-    ADDER_TRANSLATIONS,
-    FormEntry,
-    build_forms,
-    schema_key,
-    uischema_key,
-)
+from neofoam.ui.form_schema import ADDER_TRANSLATIONS
+from neofoam.ui.forms import FormEntry, build_forms, schema_key, uischema_key
 from neofoam.ui.geometry_panel import GeometryPanel
 from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
 from neofoam.ui.review import FindingRow, findings_to_rows, save_error_rows

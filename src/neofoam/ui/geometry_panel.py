@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import Any
 
 from neofoam.ui._paths import _resolve_target
-from neofoam.ui.forms import FormEntry, patch_bc_schema, schema_key, seed_boundary_field
+from neofoam.ui.boundary_forms import patch_bc_schema, seed_boundary_field
+from neofoam.ui.forms import FormEntry, schema_key
 from neofoam.ui.geometry import (
     GeometrySpec,
     MeshSettings,

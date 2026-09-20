@@ -586,7 +586,7 @@ def test_boundary_conditions_step_explains_its_empty_state():
 
 
 def test_forms_receive_the_adder_translations():
-    from neofoam.ui.forms import ADDER_TRANSLATIONS  # noqa: PLC0415
+    from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
 
     server = build_app(server=get_server("neofoam_ui_test_translations"), plugins=[])
 

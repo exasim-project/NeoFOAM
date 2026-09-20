@@ -10,7 +10,8 @@ from typing import Any, Sequence
 
 from neofoam.mcp import tools
 from neofoam.turbulence import momentumTransportModel
-from neofoam.ui.forms import FormEntry, exclusive_model_families, humanize, js_identifier
+from neofoam.ui.form_schema import humanize
+from neofoam.ui.forms import FormEntry, exclusive_model_families, js_identifier
 from neofoam.ui.plugins import AT_START, StepPlugin
 
 __all__ = [

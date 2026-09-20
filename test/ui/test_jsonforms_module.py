@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from neofoam.ui import jsonforms_module
-from neofoam.ui.forms import RENDERER_KEYWORDS
+from neofoam.ui.form_schema import RENDERER_KEYWORDS
 
 # `nf*` names the JS sets and reads itself (uischema options), never sent by Python.
 _JS_INTERNAL = {"nfInline", "nfRowKey"}

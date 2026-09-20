@@ -173,7 +173,7 @@ class GravityConfig(BaseConfig):
 
     # ``dimensions`` keeps its bracket token unconditionally: the form deliberately
     # renders a fixed units vector as one text field, not a growable spinner list
-    # (``ui.forms._dimensions_field``), exactly as the synthesised ``0/<field>`` schemas
+    # (``ui.form_schema._dimensions_field``), exactly as the synthesised ``0/<field>`` schemas
     # do (``fields.schema``). ``value`` is a real vector the form edits component-wise,
     # so its paren token is opt-in via context={"format": "openfoam"} — dumped plain it
     # contradicted the array the schema advertises and JSONForms rendered the string

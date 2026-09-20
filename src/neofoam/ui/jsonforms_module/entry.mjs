@@ -12,29 +12,29 @@
 // decimal — "0.001" becomes "0.0". A CFD case needs deltaT=1e-3 and nu=1e-5, so we
 // render a plain text field instead and parse any finite JS number (incl. "1e-5").
 //
-// `translations` (id -> text, built in forms.py) feeds JSONForms' i18n: a schema node's
+// `translations` (id -> text, built in form_schema.py) feeds JSONForms' i18n: a schema node's
 // `i18n` prefix picks e.g. "nf.patch.propertyNameLabel" for its "add a key" row.
 //
-// A schema node flagged `nfCompact` (the fvSchemes sections, see forms.py `_tag_adders`)
+// A schema node flagged `nfCompact` (the fvSchemes sections, see form_schema.py `_tag_adders`)
 // renders as one row per entry — key left, variant + nested selects inline — instead
 // of JSONForms' stacked full-width selects. Both renderers below only lay out: data
 // goes through the same JSONForms bindings and `createDefaultValue` as the stock ones.
 //
 // The same section renderer draws fvSolution's `solvers` (`nfSolvers`) as one card per
-// linear solver, and a block (`nfSolver`, see forms.py `_pin_solver_controls`) as a grid:
+// linear solver, and a block (`nfSolver`, see form_schema.py `_pin_solver_controls`) as a grid:
 // `solver`, its preconditioner/smoother, `tolerance`, `relTol`, then the case's extra
 // options, "+ add option" at the foot. Each block is its own JSONForms instance, so its
 // paths start at the block: a solver named `alpha.water` never enters a dotted path.
 //
-// A `boundaryField` map (`nfPatches`, see forms.py `_patch_adder`) is drawn as rows too, one
+// A `boundaryField` map (`nfPatches`, see boundary_forms.py `_patch_adder`) is drawn as rows too, one
 // per patch. In every variant an entry whose key holds `.`, `[` or `]` (`wall.left`,
 // `div(phi,alpha.water)`) is such a form of its own as well, written back through the
 // section's data; all other entries keep the cheap path binding.
 //
-// A config of free-form sub-dictionaries (`nfDicts`, see forms.py `_dictionary_cards`:
+// A config of free-form sub-dictionaries (`nfDicts`, see form_schema.py `_dictionary_cards`:
 // MRFProperties, fvOptions) reuses the cards, each entry (`nfDict`) a grid of its keywords.
 //
-// An object of scalars only (`nfGrid`, see forms.py `_tag_scalar_grid`) keeps JSONForms'
+// An object of scalars only (`nfGrid`, see form_schema.py `_tag_scalar_grid`) keeps JSONForms'
 // generated layout and controls; its layout renderer just sets them in a wrapping grid.
 
 import { computed, defineComponent, h, nextTick, ref, watch } from 'vue'
