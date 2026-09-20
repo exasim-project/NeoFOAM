@@ -70,7 +70,7 @@ Case wizard — ``neofoam ui``
 ----------------------------
 
 Launch the case-wizard web UI (needs the ``ui`` extra) — see
-:doc:`ui-architecture`:
+:doc:`/tutorials/case-wizard` and :doc:`ui-architecture`:
 
 .. code-block:: bash
 

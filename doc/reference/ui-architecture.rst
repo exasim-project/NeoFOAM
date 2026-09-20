@@ -5,8 +5,8 @@ The case wizard (``src/neofoam/ui/``) is a `trame <https://kitware.github.io/tra
 web app: pick a solver's models, fill one JSON-schema form per config (or let the AI
 chat fill them), then save a runnable, validated case. No form is written by hand —
 each is generated from a pydantic config and drawn in the browser by
-`JSONForms <https://jsonforms.io>`_. It is unrelated to the marimo notebook of
-:doc:`/tutorials/scaffold-a-case-wizard`.
+`JSONForms <https://jsonforms.io>`_. For a user's walk-through see
+:doc:`/tutorials/case-wizard`.
 
 Start the wizard
 ----------------

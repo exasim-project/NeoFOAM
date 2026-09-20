@@ -63,8 +63,8 @@ the linked reference pages for the full API.
     The Typer app behind the ``neofoam`` command — see :doc:`cli`.
 
 ``agent/``
-    LLM case scaffolding: the pydantic-ai case-fill agent, forms, and the
-    packaged marimo wizard template.
+    LLM case scaffolding: the pydantic-ai case-fill agent and the form wiring
+    shared with the case wizard.
 
 ``mcp/``
     The frontend-neutral tool layer: case-free ``f(solver, ...)`` functions returning
