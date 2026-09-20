@@ -245,8 +245,10 @@ def discover_geometry(
 ) -> GeometrySpec:
     """Read the STLs at ``case_dir`` (an STL folder or a case dir) into patches.
 
-    The union of all STL bounding boxes is the background domain. A patch that
-    lies on one or more domain faces (a planar, axis-aligned surface) becomes a
+    The bounding box of the axis-planar patches is the background domain (the
+    union of all patches when there are none): a curved surface must not enlarge
+    the box, or its tessellation overshoot moves the faces off their patches. A
+    patch that lies on one or more domain faces (a planar, axis-aligned surface) becomes a
     background-box patch owning those faces; any other patch (interior geometry,
     e.g. a tube bank) becomes a snappy refinement surface. Patch roles are a
     filename/face heuristic — editable downstream in the wizard.
@@ -257,8 +259,7 @@ def discover_geometry(
         raise ValueError(f"no STL files under {tri_dir}")
 
     per_patch = [(p.stem, p.name, read_stl_vertices(p)) for p in stl_paths]
-    all_verts = [v for _, _, verts in per_patch for v in verts]
-    dmin, dmax = _bbox(all_verts)
+    dmin, dmax = _bbox(_domain_vertices([verts for _, _, verts in per_patch]))
 
     extents = [dmax[i] - dmin[i] for i in range(3)]
     positive = [e for e in extents if e > 0.0]
@@ -287,6 +288,19 @@ def discover_geometry(
         length_scale=length_scale,
         patches=patches,
     )
+
+
+def _is_axis_planar(verts: list[Vec3]) -> bool:
+    """True when every triangle lies in one axis-aligned plane."""
+    return all(
+        any(a[axis] == b[axis] == c[axis] for axis in range(3)) for a, b, c in _triangles(verts)
+    )
+
+
+def _domain_vertices(patches: list[list[Vec3]]) -> list[Vec3]:
+    """Vertices spanning the background box: the axis-planar patches, else all."""
+    planar = [verts for verts in patches if _is_axis_planar(verts)]
+    return [v for verts in planar or patches for v in verts]
 
 
 def _triangles(verts: list[Vec3]) -> list[tuple[Vec3, Vec3, Vec3]]:
