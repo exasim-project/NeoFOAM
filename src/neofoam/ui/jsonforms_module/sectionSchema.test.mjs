@@ -59,8 +59,9 @@ test('a loaded block that differs in several keys keeps both companions', () => 
   expect(withoutStaleCompanions(loaded, PCG, COMPANIONS)).toBeNull()
 })
 
-// Pinned, not endorsed: a fill that changes `solver` and one more key is
-// indistinguishable from a load, so the stale `preconditioner` stays.
+// Here a fill that changes `solver` and one more key is indistinguishable from a load,
+// so the agent panel drops the stale `preconditioner` itself before it fills the form
+// (`_drop_stale_companions`, agent_panel.py).
 test('a fill that changes the solver and one other key is read as a load', () => {
   const filled = { ...PCG, solver: 'GAMG', relTol: 0.01 }
 

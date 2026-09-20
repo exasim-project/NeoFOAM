@@ -29,6 +29,9 @@ SOURCE_CASE = (
     Path(__file__).resolve().parents[1] / "solver" / "incompressibleFluid" / "val_pitzDaily"
 )
 
+#: A case whose ``p`` block holds a ``preconditioner`` beside ``solver GAMG`` (read-only).
+STALE_COMPANION_CASE = Path(__file__).resolve().parent / "cases" / "stale_companion"
+
 
 def _server() -> Any:
     _COUNTER["n"] += 1
@@ -352,6 +355,40 @@ def test_agent_output_overrides_the_loaded_case(solver):
 
     # Same entry filled twice → the agent's refinement is applied last and wins.
     assert server.state[_tp_key(entries)] == {"transportModel": "CrossPowerLaw"}
+
+
+def _p_block(server: Any, entries: list[Any]) -> dict[str, Any]:
+    key = next(e.state_key for e in entries if e.config_name == "pimple_fv_solution")
+    return server.state[key]["solvers"]["p"]
+
+
+def test_agent_fill_drops_the_companion_its_solver_does_not_take(solver):
+    server = _server()
+    entries = build_forms(solver)
+    defaults = next(e.defaults for e in entries if e.config_name == "pimple_fv_solution")
+    block = {**defaults["solvers"]["p"], "solver": "GAMG", "relTol": 0.01}
+    filled = build_case_output_model(solver=solver).model_validate(
+        {"pimple_fv_solution": {**defaults, "solvers": {**defaults["solvers"], "p": block}}}
+    )
+
+    send = build_agent_panel(
+        server, entries, solver, agent_factory=lambda **_kw: _StubAgent(filled)
+    )
+    asyncio.run(send("solve p with GAMG, relTol 0.01"))
+
+    assert _p_block(server, entries) == {"solver": "GAMG", "tolerance": 1e-06, "relTol": 0.01}
+
+
+def test_loaded_case_keeps_a_companion_its_solver_does_not_take(solver):
+    server = _server()
+    entries = build_forms(solver)
+    factory, _ = _loading_factory(_empty_case_spec(solver), STALE_COMPANION_CASE)
+
+    send = build_agent_panel(server, entries, solver, agent_factory=factory)
+    asyncio.run(send(f"open the case at {STALE_COMPANION_CASE}"))
+
+    # A file the user wrote is shown as it is, never silently rewritten.
+    assert _p_block(server, entries)["preconditioner"] == "DIC"
 
 
 def test_load_case_tool_reports_a_missing_directory(tmp_path, solver):

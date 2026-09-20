@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
+from neofoam.framework.validation import SOLVER_COMPANION
 from neofoam.io import write_configs
 from neofoam.ui._responsive import _MOBILE, _responsive_open
 from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
@@ -70,6 +71,21 @@ def _summary(
     lines += saved
     lines.append("Review the forms; click **Save case** when ready.")
     return "\n\n".join(lines)
+
+
+def _drop_stale_companions(configs: list[Any]) -> None:
+    """Drop the companion key a filled block's solver does not take (in place).
+
+    The form does this for an edit of ``solver`` alone; a fill that changes more keys
+    at once looks like a loaded case there, which is shown as it is.
+    """
+    blocks = [block for config in configs for _, block in getattr(config, "solvers", None) or ()]
+    for block in filter(None, blocks):
+        keep = SOLVER_COMPANION.get(block.get("solver"))
+        # A solver the map does not know (``Ginkgo``) drops nothing, as in the form.
+        stale = set(SOLVER_COMPANION.values()) - {keep} if keep else set()
+        for key in stale:
+            block.pop(key, None)
 
 
 class AgentPanel:
@@ -205,7 +221,9 @@ class AgentPanel:
             self._history[:] = result.all_messages()
             # A tool-loaded case is the baseline; the agent's own output refines
             # it, so the agent's configs are applied last and win per entry.
-            configs = [*self._loaded.get("configs", []), *case_spec_to_configs(result.output)]
+            filled = case_spec_to_configs(result.output)
+            _drop_stale_companions(filled)
+            configs = [*self._loaded.get("configs", []), *filled]
 
             loaded_dir = self._loaded.get("dir")
             filled_models = apply_configs_to_forms(
