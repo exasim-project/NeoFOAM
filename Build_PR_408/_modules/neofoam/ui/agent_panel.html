@@ -640,6 +640,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_case_agent</span><span class="p">,</span> <span class="n">case_spec_to_configs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SOLVER_COMPANION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_configs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._markdown</span><span class="w"> </span><span class="kn">import</span> <span class="n">_chat_html</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">_resolve_target</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._responsive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MOBILE</span><span class="p">,</span> <span class="n">_responsive_open</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_load</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_configs_to_forms</span><span class="p">,</span> <span class="n">read_case_configs</span>
@@ -749,6 +750,8 @@
         <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
         <span class="n">state</span><span class="o">.</span><span class="n">chat_input</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="n">state</span><span class="o">.</span><span class="n">chat_log</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># [{"role": "user"|"assistant", "content": str}]</span>
+        <span class="c1"># Per message: an assistant's markdown as escaped HTML; "" for a user's (plain text).</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">chat_html</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">state</span><span class="o">.</span><span class="n">ai_busy</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">state</span><span class="o">.</span><span class="n">suggested_prompts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">SUGGESTED_PROMPTS</span><span class="p">)</span>
         <span class="c1"># Owned by the geometry panel; defaulted here so the chat is usable standalone.</span>
@@ -771,6 +774,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_say</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">chat_log</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">chat_log</span><span class="p">,</span> <span class="p">{</span><span class="s2">"role"</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="n">content</span><span class="p">}]</span>
+        <span class="n">rendered</span> <span class="o">=</span> <span class="n">_chat_html</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="k">if</span> <span class="n">role</span> <span class="o">==</span> <span class="s2">"assistant"</span> <span class="k">else</span> <span class="s2">""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">chat_html</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">chat_html</span><span class="p">,</span> <span class="n">rendered</span><span class="p">]</span>
 
 <div class="viewcode-block" id="AgentPanel.load_case">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.load_case">[docs]</a>
@@ -990,12 +995,19 @@
                         <span class="n">classes</span><span class="o">=</span><span class="s2">"pa-3 mb-2"</span><span class="p">,</span>
                         <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="s2">"m.role === 'user' ? 'primary' : 'surface-variant'"</span><span class="p">,),</span>
                     <span class="p">):</span>
+                        <span class="c1"># A loaded case's path has no space to break at.</span>
                         <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
                             <span class="s2">"{{ m.content }}"</span><span class="p">,</span>
-                            <span class="c1"># A loaded case's path has no space to break at.</span>
+                            <span class="n">v_if</span><span class="o">=</span><span class="s2">"m.role === 'user'"</span><span class="p">,</span>
                             <span class="n">style</span><span class="o">=</span><span class="p">(</span>
                                 <span class="s2">"white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem;"</span>
                             <span class="p">),</span>
+                        <span class="p">)</span>
+                        <span class="c1"># Escaped by _chat_html: a reply or a path is never raw HTML.</span>
+                        <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
+                            <span class="n">v_if</span><span class="o">=</span><span class="s2">"m.role !== 'user'"</span><span class="p">,</span>
+                            <span class="n">v_html</span><span class="o">=</span><span class="s2">"chat_html[i]"</span><span class="p">,</span>
+                            <span class="n">style</span><span class="o">=</span><span class="s2">"overflow-wrap: anywhere; font-size: 0.9rem;"</span><span class="p">,</span>
                         <span class="p">)</span>
                     <span class="n">v3</span><span class="o">.</span><span class="n">VProgressLinear</span><span class="p">(</span><span class="n">indeterminate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">v_show</span><span class="o">=</span><span class="s2">"ai_busy"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"secondary"</span><span class="p">)</span>
                 <span class="c1"># Composer pinned to the bottom.</span>
