@@ -71,12 +71,12 @@ def case_algorithm(case_dir: Path, entries: list[FormEntry]) -> str | None:
     return next((owner for owner in owners if owner), None)
 
 
-def case_advection_model(case_dir: Path) -> str | None:
-    """The alpha-advection model the case's ``system/fvSolution`` is evidence of.
+def case_advection_model(case_dir: Path) -> str:
+    """The alpha-advection model the VoF solver would run the case with.
 
     The same evidence the VoF solver's ``select_from_case`` runs on: the
     ``advectionScheme`` key, else isoAdvector-only controls in the alpha solver block.
-    ``None`` without either, so the wizard then keeps its current choice::
+    Without either — or without the file — it is ``MULES``, the solver's fallback::
 
         advection = case_advection_model(Path(case_dir))
     """
@@ -86,7 +86,7 @@ def case_advection_model(case_dir: Path) -> str | None:
         return named.text
     blocks = read_section(fv_solution, "solvers").items()
     controls = {key for name, block in blocks if name.startswith("alpha.") for key in block}
-    return "isoAdvector" if controls & _ISO_ADVECTOR_CONTROLS else None
+    return "isoAdvector" if controls & _ISO_ADVECTOR_CONTROLS else "MULES"
 
 
 def models_to_select(

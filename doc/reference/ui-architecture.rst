@@ -239,6 +239,12 @@ report — the loaded configs, the selected models, a file that is present but d
 validate, fields that exist as ``0.orig/`` only (they are read from ``0/``), or why
 nothing was loaded — goes to ``chat_log`` and the AI drawer is opened to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
 
+A pick-one family follows the case the way the solver would run it:
+``case_algorithm`` reads the ``system/fvSolution`` control block, and for
+``incompressibleVoF`` ``case_advection_model`` mirrors the solver's
+``select_from_case`` — the ``advectionScheme`` key, else isoAdvector controls in the
+alpha solver block, else ``MULES``, so a case without evidence selects ``MULES``.
+
 
 ``ctrl.save_case`` (``app._save_case``) switches to the Review step, then:
 ``case_spec.state_to_case_spec`` merges the two halves of each field config and skips

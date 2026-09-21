@@ -55,7 +55,8 @@ _ALGORITHM_CASES = [
 ]
 
 #: Checked-in VoF cases (read-only) → the advection model their fvSolution is evidence of:
-#: the ``advectionScheme`` key, else isoAdvector-only controls in the alpha solver block.
+#: the ``advectionScheme`` key, else isoAdvector-only controls in the alpha solver block,
+#: else MULES — the solver's own fallback.
 _VOF_CASES = "solver/incompressibleVoF"
 _ADVECTION_CASES = [
     pytest.param(
@@ -64,7 +65,7 @@ _ADVECTION_CASES = [
     pytest.param(
         f"{_VOF_CASES}/cases/interIsoFoam_discInConstantFlow", "isoAdvector", id="controls"
     ),
-    pytest.param(f"{_VOF_CASES}/models/alpha_advection/cases/damBreak_mules", None, id="none"),
+    pytest.param(f"{_VOF_CASES}/models/alpha_advection/cases/damBreak_mules", "MULES", id="none"),
 ]
 
 
@@ -198,12 +199,16 @@ def test_case_advection_model_reads_the_fv_solution_evidence(case, advection):
     assert case_advection_model(_TEST_ROOT / case) == advection
 
 
+def test_case_advection_model_is_mules_without_an_fv_solution(tmp_path):
+    assert case_advection_model(tmp_path) == "MULES"
+
+
 @pytest.mark.parametrize(
     ("case", "current", "advection"),
     [
         pytest.param(_ADVECTION_CASES[0].values[0], "MULES", "isoAdvector", id="key"),
         pytest.param(_ADVECTION_CASES[1].values[0], "MULES", "isoAdvector", id="controls"),
-        pytest.param(_ADVECTION_CASES[2].values[0], "isoAdvector", "isoAdvector", id="none"),
+        pytest.param(_ADVECTION_CASES[2].values[0], "isoAdvector", "MULES", id="none"),
     ],
 )
 def test_loaded_vof_case_moves_the_advection_choice_to_its_evidence(
