@@ -689,18 +689,8 @@ conditions</em> form first).</p></li>
 own, and an arm holding a <code class="docutils literal notranslate"><span class="pre">$ref</span></code> throws on every re-evaluation.</p></li>
 <li><p>Each node is rewritten — unions first (<code class="docutils literal notranslate"><span class="pre">Optional[X]</span></code> → <code class="docutils literal notranslate"><span class="pre">X</span></code>, value unions → one
 text field, discriminated unions → titled <code class="docutils literal notranslate"><span class="pre">oneOf</span></code>), then its children, then
-<code class="docutils literal notranslate"><span class="pre">_NODE_PASSES</span></code> in order: <code class="docutils literal notranslate"><span class="pre">_drop_useless_adder</span></code>, <code class="docutils literal notranslate"><span class="pre">_tag_adders</span></code>,
-<code class="docutils literal notranslate"><span class="pre">_pin_solver_controls</span></code>, <code class="docutils literal notranslate"><span class="pre">_patch_adder</span></code>, <code class="docutils literal notranslate"><span class="pre">_tag_scalar_grid</span></code>,
-<code class="docutils literal notranslate"><span class="pre">_hide_discriminator</span></code>. Two ordering constraints; the other passes commute:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">_drop_useless_adder</span></code> before <code class="docutils literal notranslate"><span class="pre">_tag_adders</span></code>: a label goes on a row that is
-still there (<code class="docutils literal notranslate"><span class="pre">_tag_adders</span></code> reads <code class="docutils literal notranslate"><span class="pre">additionalProperties</span></code>); a fixed card such
-as <code class="docutils literal notranslate"><span class="pre">PIMPLE</span></code> gets none.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_tag_adders</span></code> before <code class="docutils literal notranslate"><span class="pre">_pin_solver_controls</span></code>: a solver block is recognised as
-an open dict (<code class="docutils literal notranslate"><span class="pre">nf.option</span></code>) by having no <code class="docutils literal notranslate"><span class="pre">properties</span></code>, which pinning then
-gives it.</p></li>
-</ul>
-</li>
+the per-node passes. Their order and its two constraints are kept beside the list
+itself, <code class="docutils literal notranslate"><span class="pre">_NODE_PASSES</span></code> in <code class="docutils literal notranslate"><span class="pre">form_schema.py</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">_dictionary_cards</span></code> runs last, on the whole schema (<code class="docutils literal notranslate"><span class="pre">MRFProperties</span></code>,
 <code class="docutils literal notranslate"><span class="pre">fvOptions</span></code>).</p></li>
 <li><p>The result becomes a <code class="docutils literal notranslate"><span class="pre">FormEntry</span></code>; <code class="docutils literal notranslate"><span class="pre">_seed_state</span></code> copies its schema, UISchema and

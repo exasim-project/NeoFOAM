@@ -679,7 +679,9 @@ keeps the wizard’s current choice:</p>
 <dd><p>The configs an existing case carries on disk — deterministic, no LLM.</p>
 <p>Use this instead of asking the model to transcribe a case. Files that are
 absent are simply missing from the result; pass <code class="docutils literal notranslate"><span class="pre">warnings</span></code> to also collect
-the ones that are present but do not validate. Pair it with
+the ones that are present but do not validate. A dictionary OpenFOAM cannot parse
+raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> (found in a child process, as such an error ends the process
+it occurs in). Pair it with
 <a class="reference internal" href="#neofoam.ui.case_load.apply_configs_to_forms" title="neofoam.ui.case_load.apply_configs_to_forms"><code class="xref py py-func docutils literal notranslate"><span class="pre">apply_configs_to_forms()</span></code></a> to put the result in front of the user:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">configs</span> <span class="o">=</span> <span class="n">read_case_configs</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">),</span> <span class="n">solver</span><span class="p">)</span>
 </pre></div>

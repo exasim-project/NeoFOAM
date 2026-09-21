@@ -635,14 +635,14 @@
 
 <span class="c1"># Schema keywords the bundled JSONForms renderers (jsonforms_module/*.mjs) match by</span>
 <span class="c1"># name; a rename on one side only falls back to the stock renderer without an error.</span>
-<span class="c1"># Each: value shape · emitting function · renderer/layout.</span>
-<span class="n">_NF_COMPACT</span> <span class="o">=</span> <span class="s2">"nfCompact"</span>  <span class="c1"># True · _tag_adders · NfCompactSection/rows</span>
-<span class="n">_NF_SOLVERS</span> <span class="o">=</span> <span class="s2">"nfSolvers"</span>  <span class="c1"># True · _pin_solver_controls · NfCompactSection/solvers</span>
-<span class="n">_NF_SOLVER</span> <span class="o">=</span> <span class="s2">"nfSolver"</span>  <span class="c1"># {solver: companion key} · _pin_solver_controls · NfCompactSection/grid</span>
-<span class="n">_NF_GRID</span> <span class="o">=</span> <span class="s2">"nfGrid"</span>  <span class="c1"># True · _tag_scalar_grid · NfGridLayout</span>
-<span class="n">_NF_DICT</span> <span class="o">=</span> <span class="s2">"nfDict"</span>  <span class="c1"># True · _dictionary_cards · NfCompactSection/grid</span>
-<span class="n">_NF_DICTS</span> <span class="o">=</span> <span class="s2">"nfDicts"</span>  <span class="c1"># True · _dictionary_cards · NfCompactSection/solvers</span>
-<span class="n">_NF_PATCHES</span> <span class="o">=</span> <span class="s2">"nfPatches"</span>  <span class="c1"># True · _patch_adder · NfCompactSection/rows</span>
+<span class="c1"># Value shape, emitter and layout of each: doc/reference/ui-architecture.rst.</span>
+<span class="n">_NF_COMPACT</span> <span class="o">=</span> <span class="s2">"nfCompact"</span>
+<span class="n">_NF_SOLVERS</span> <span class="o">=</span> <span class="s2">"nfSolvers"</span>
+<span class="n">_NF_SOLVER</span> <span class="o">=</span> <span class="s2">"nfSolver"</span>
+<span class="n">_NF_GRID</span> <span class="o">=</span> <span class="s2">"nfGrid"</span>
+<span class="n">_NF_DICT</span> <span class="o">=</span> <span class="s2">"nfDict"</span>
+<span class="n">_NF_DICTS</span> <span class="o">=</span> <span class="s2">"nfDicts"</span>
+<span class="n">_NF_PATCHES</span> <span class="o">=</span> <span class="s2">"nfPatches"</span>
 <span class="n">RENDERER_KEYWORDS</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">_NF_COMPACT</span><span class="p">,</span>
     <span class="n">_NF_SOLVERS</span><span class="p">,</span>
@@ -1204,12 +1204,9 @@
 <span class="sd">      (``fixedValue``/``noSlip``/…) instead of stacking every arm. The arm's own</span>
 <span class="sd">      ``type`` property is kept in the data but not rendered (:func:`_hidden_discriminator`).</span>
 <span class="sd">    * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.</span>
-<span class="sd">    * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.</span>
-<span class="sd">    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.</span>
-<span class="sd">    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.</span>
-<span class="sd">    * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.</span>
-<span class="sd">    * **Patch rows for ``boundaryField``** — see :func:`_patch_adder`.</span>
-<span class="sd">    * **Open configs as cards** — see :func:`_dictionary_cards` (whole schema, last).</span>
+<span class="sd">    * **Renderer keywords** — the ``_NODE_PASSES`` on every node, then</span>
+<span class="sd">      ``_dictionary_cards`` on the whole schema, tag what the bundled renderers draw</span>
+<span class="sd">      (table: ``doc/reference/ui-architecture.rst``).</span>
 <span class="sd">    """</span>
     <span class="n">class_names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$defs"</span><span class="p">,</span> <span class="p">{}))</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">inline_refs</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>

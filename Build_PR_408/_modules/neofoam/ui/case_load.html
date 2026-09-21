@@ -622,11 +622,15 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">case_spec_to_configs</span><span class="p">,</span> <span class="n">load_case_from_disk</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">read_keys</span><span class="p">,</span> <span class="n">read_section</span><span class="p">,</span> <span class="n">read_toplevel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">configs_to_form_state</span><span class="p">,</span> <span class="n">models_filled_by</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span>
@@ -649,6 +653,35 @@
 <span class="n">_ISO_ADVECTOR_CONTROLS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"reconstructionScheme"</span><span class="p">,</span> <span class="s2">"isoFaceTol"</span><span class="p">,</span> <span class="s2">"surfCellTol"</span><span class="p">,</span> <span class="s2">"nAlphaBounds"</span><span class="p">}</span>
 
 
+<span class="c1">#: Parses each dictionary named on its command line, the way every config load does.</span>
+<span class="n">_PARSE_PROBE</span> <span class="o">=</span> <span class="s2">"import sys, pybFoam</span><span class="se">\n</span><span class="s2">for path in sys.argv[1:]:</span><span class="se">\n</span><span class="s2">    pybFoam.dictionary.read(path)"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dictionary_files</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The OpenFOAM dictionaries of ``case_dir`` that loading ``solver``'s configs parses."""</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">))</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">io</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="n">io</span> <span class="ow">in</span> <span class="n">metadata</span> <span class="k">if</span> <span class="n">io</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">reader</span><span class="p">,</span> <span class="n">OpenFOAMStrategy</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_parsable</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` with OpenFOAM's complaint when a dictionary does not parse."""</span>
+    <span class="c1"># A parse error (stray brace, missing #include) is a FatalIOError: OpenFOAM exits</span>
+    <span class="c1"># the process instead of raising, which would take the wizard server down with it.</span>
+    <span class="c1"># So the files are parsed in a child first (~0.1 s); the parent reads what survived.</span>
+    <span class="n">probe</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-c"</span><span class="p">,</span> <span class="n">_PARSE_PROBE</span><span class="p">,</span> <span class="o">*</span><span class="n">_dictionary_files</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="p">)],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">probe</span><span class="o">.</span><span class="n">returncode</span><span class="p">:</span>
+        <span class="n">banner</span> <span class="o">=</span> <span class="p">(</span><span class="n">probe</span><span class="o">.</span><span class="n">stdout</span> <span class="o">+</span> <span class="n">probe</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"FOAM FATAL"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="n">banner</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"    From "</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">reason</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">where</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">" file: "</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">where</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'.'</span><span class="p">)</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="read_case_configs">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.read_case_configs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">read_case_configs</span><span class="p">(</span>
@@ -660,11 +693,14 @@
 
 <span class="sd">    Use this instead of asking the model to transcribe a case. Files that are</span>
 <span class="sd">    absent are simply missing from the result; pass ``warnings`` to also collect</span>
-<span class="sd">    the ones that are present but do not validate. Pair it with</span>
+<span class="sd">    the ones that are present but do not validate. A dictionary OpenFOAM cannot parse</span>
+<span class="sd">    raises ``ValueError`` (found in a child process, as such an error ends the process</span>
+<span class="sd">    it occurs in). Pair it with</span>
 <span class="sd">    :func:`apply_configs_to_forms` to put the result in front of the user::</span>
 
 <span class="sd">        configs = read_case_configs(Path(case_dir), solver)</span>
 <span class="sd">    """</span>
+    <span class="n">_require_parsable</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">case_spec_to_configs</span><span class="p">(</span><span class="n">load_case_from_disk</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="n">warnings</span><span class="p">))</span></div>
 
 
