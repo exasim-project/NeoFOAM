@@ -29,6 +29,10 @@ SOURCE_CASE = (
     Path(__file__).resolve().parents[1] / "solver" / "incompressibleFluid" / "val_pitzDaily"
 )
 
+#: A checked-in case that carries its fields in ``0/`` (read-only); ``SOURCE_CASE`` has
+#: them in ``0.orig/`` only.
+ZERO_DIR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
+
 #: A case whose ``p`` block holds a ``preconditioner`` beside ``solver GAMG`` (read-only).
 STALE_COMPANION_CASE = Path(__file__).resolve().parent / "cases" / "stale_companion"
 
@@ -443,6 +447,43 @@ def test_load_target_case_fills_the_forms_without_an_agent(solver):
 
     assert server.state[_tp_key(entries)] == {"transportModel": "Newtonian", "nu": 1e-05}
     assert f"**Loaded** `{SOURCE_CASE}`" in server.state.chat_log[-1]["content"]
+
+
+def test_load_target_case_fills_the_field_forms_from_the_zero_directory(solver):
+    server = _server()
+    entries = build_forms(solver)
+    build_agent_panel(server, entries, solver)
+    server.state.target_dir = str(ZERO_DIR_CASE)
+
+    server.controller.load_target_case()
+
+    forms = {e.key: server.state[e.state_key] for e in entries if e.cls_name == "pFieldConfig"}
+    assert forms == {
+        "field_in:pFieldConfig": {"dimensions": "[0 2 -2 0 0 0 0]", "internalField": "uniform 0"},
+        "field_bc:pFieldConfig": {
+            "boundaryField": {
+                "movingWall": {"type": "zeroGradient"},
+                "fixedWalls": {"type": "zeroGradient"},
+                "frontAndBack": {"type": "empty"},
+            }
+        },
+    }
+    assert "0.orig" not in server.state.chat_log[-1]["content"]
+
+
+def test_load_target_case_reports_fields_kept_in_zero_orig_only(solver):
+    server = _server()
+    entries = build_forms(solver)
+    build_agent_panel(server, entries, solver)
+    server.state.target_dir = str(SOURCE_CASE)
+
+    server.controller.load_target_case()
+
+    forms = [server.state[e.state_key] for e in entries if e.cls_name == "pFieldConfig"]
+    assert forms == [None, None]  # not read (never seeded here)
+    assert "No `0/` directory: the fields in `0.orig/` were not loaded." in (
+        server.state.chat_log[-1]["content"].split("\n\n")
+    )
 
 
 def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver):

@@ -81,6 +81,13 @@ def _invalid_note(warnings: list[dict[str, str]]) -> str:
     return f"Present but invalid: {files}."
 
 
+def _unread_fields_note(case_dir: Path) -> list[str]:
+    """One line for a case with its fields in ``0.orig/`` only: they are read from ``0/``."""
+    if (case_dir / "0").is_dir() or not (case_dir / "0.orig").is_dir():
+        return []
+    return ["No `0/` directory: the fields in `0.orig/` were not loaded."]
+
+
 def _drop_stale_companions(configs: list[Any]) -> None:
     """Drop the companion key a filled block's solver does not take (in place).
 
@@ -169,7 +176,8 @@ class AgentPanel:
             return f"Could not read {path}: {exc}"
         self._loaded["dir"] = str(path)
         self._loaded["configs"] = configs
-        self._loaded["invalid"] = [_invalid_note(warnings)] if warnings else []
+        invalid = [_invalid_note(warnings)] if warnings else []
+        self._loaded["invalid"] = invalid + _unread_fields_note(path)
 
         names = sorted(type(c).__name__ for c in configs)
         reply = f"Loaded {len(names)} configs from {path}: {', '.join(names)}."

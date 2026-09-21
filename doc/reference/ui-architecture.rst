@@ -236,8 +236,8 @@ The toolbar's "Load case" calls ``ctrl.load_target_case``
 (``case_load.read_case_configs``) on ``target_dir``, applied at once with
 ``case_load.apply_configs_to_forms``. No agent is built, so it needs no API key. The
 report — the loaded configs, the selected models, a file that is present but does not
-validate, or why nothing was loaded — goes to ``chat_log`` and the AI drawer is opened
-to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
+validate, fields that exist as ``0.orig/`` only (they are read from ``0/``), or why
+nothing was loaded — goes to ``chat_log`` and the AI drawer is opened to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
 
 
 ``ctrl.save_case`` (``app._save_case``) switches to the Review step, then:
