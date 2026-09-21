@@ -24,10 +24,20 @@ is per-subclass and per-section.
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar, Optional
+from typing import Annotated, Any, Callable, ClassVar, Optional
 
-from pydantic import ConfigDict, Field, TypeAdapter, create_model, model_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidatorFunctionWrapHandler,
+    WithJsonSchema,
+    WrapValidator,
+    create_model,
+    model_validator,
+)
 from pydantic.fields import FieldInfo
+from typing_extensions import TypedDict
 
 from neofoam.foam.schemes import (
     Corrected,
@@ -276,6 +286,41 @@ def _canonical_solver(alias: str) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Linear-solver block
+# ---------------------------------------------------------------------------
+
+
+class _SolverControls(TypedDict, total=False):
+    """One ``solvers.<field>`` block: the standard numeric controls, typed.
+
+    A dict, not a model: every other key (``solver``, ``smoother``, ``nSweeps``, the
+    isoAdvector controls, a nested ``preconditioner``) stays in it as read.
+    """
+
+    __pydantic_config__ = ConfigDict(extra="allow")  # type: ignore[misc]
+
+    tolerance: float
+    relTol: float
+    maxIter: int
+    minIter: int
+
+
+def _in_file_order(block: Any, handler: ValidatorFunctionWrapHandler) -> dict[str, Any]:
+    """The validated block in the key order it came in: it is written back in dump order."""
+    typed = handler(block)
+    return {key: typed[key] for key in block}
+
+
+# Published as the open dictionary it is on disk: the wizard's form pins a block's keys
+# itself and recognises a block by its declaring none (``form_schema``).
+SolverControls = Annotated[
+    _SolverControls,
+    WrapValidator(_in_file_order),
+    WithJsonSchema({"type": "object", "additionalProperties": True}),
+]
+
+
+# ---------------------------------------------------------------------------
 # Base classes
 # ---------------------------------------------------------------------------
 
@@ -397,16 +442,17 @@ class fvSolution(BaseConfig):
         Each ``field`` adds a typed entry under ``solvers.<field>`` plus its
         ``solvers.<field>Final`` companion: on the final (in PISO mode:
         every) outer iteration ``fvMatrix::solve`` selects the ``Final``
-        solver settings, so OpenFOAM requires both dictionaries. Today the
-        value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a
-        richer typed solver-control model is a follow-up. The presence
-        check alone catches the most common case-misconfiguration failures.
+        solver settings, so OpenFOAM requires both dictionaries. The value
+        is a :data:`SolverControls` dict: its numeric controls load as
+        numbers, every other key as read.
         A steady (SIMPLE) slice has no final outer iteration: it passes
         ``final_required=False`` so a case without ``Final`` entries loads.
         """
         for field_name in fields:
-            _register_entry(cls, "solvers", field_name, dict)
-            _register_entry(cls, "solvers", f"{field_name}Final", dict, optional=not final_required)
+            _register_entry(cls, "solvers", field_name, SolverControls)
+            _register_entry(
+                cls, "solvers", f"{field_name}Final", SolverControls, optional=not final_required
+            )
         _rebuild_sections(cls)
 
         def _decorator(fn: Callable[..., Any]) -> Callable[..., Any]:

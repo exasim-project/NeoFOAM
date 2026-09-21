@@ -58,10 +58,6 @@ _OUTSTANDING = {
     # the schema agree, the schema is merely ambiguous (`anyOf` would model it).
     ("loaded", "incompressibleFluidNeoN", "U — boundary conditions", "boundaryField", "oneOf"),
     ("loaded", "incompressibleFluidNeoN", "p — boundary conditions", "boundaryField", "oneOf"),
-    # A solver block is schemaless in the config, so its leaves load as the text on
-    # disk (`tolerance "1e-13"`) while the form pins them as numbers. Surfaced once the
-    # steady case's fvSolution loaded at all; a typed solver-control model closes it.
-    ("loaded", "incompressibleFluidNeoN", "fvSolution · SimpleNeoN", "solvers", "type"),
 }
 
 

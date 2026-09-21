@@ -234,6 +234,49 @@ def test_fvsolution_add_can_leave_the_final_variant_optional() -> None:
     assert inst.solvers.UFinal is None
 
 
+#: A solver block as the OpenFOAM reader hands it over: every leaf is text.
+_BLOCK_AS_READ = {
+    "solver": "smoothSolver",
+    "smoother": "symGaussSeidel",
+    "tolerance": "1e-13",
+    "relTol": "0.1",
+    "maxIter": "50",
+    "nSweeps": "2",
+}
+
+
+def _solver_block(block: dict[str, object]) -> dict[str, object]:
+    spec = Model(f"FvSolutionTyped{len(block)}")
+    Sub = spec.config(fvSolution)
+    Sub.add("U", final_required=False)
+    return Sub.model_validate({"solvers": {"U": block}}).solvers.U
+
+
+def test_fvsolution_solver_block_loads_its_standard_controls_as_numbers() -> None:
+    """``tolerance``/``relTol``/``maxIter`` are typed; any other key stays as read."""
+    block = _solver_block(_BLOCK_AS_READ)
+
+    assert block == {
+        "solver": "smoothSolver",
+        "smoother": "symGaussSeidel",
+        "tolerance": 1e-13,
+        "relTol": 0.1,
+        "maxIter": 50,
+        "nSweeps": "2",
+    }
+    assert [type(block[key]) for key in ("tolerance", "relTol", "maxIter")] == [float, float, int]
+
+
+def test_fvsolution_solver_block_keeps_the_key_order_of_the_file() -> None:
+    """The block is written back in dump order, so typing must not reorder it."""
+    assert list(_solver_block(_BLOCK_AS_READ)) == list(_BLOCK_AS_READ)
+
+
+def test_fvsolution_solver_block_rejects_a_tolerance_that_is_no_number() -> None:
+    with pytest.raises(ValidationError):
+        _solver_block({"solver": "PCG", "tolerance": "tight"})
+
+
 def test_fvsolution_passes_through_extra_sections() -> None:
     """PIMPLE / SIMPLE / relaxationFactors etc. pass through via extra='allow'."""
     spec = Model("FvSolutionExtra")

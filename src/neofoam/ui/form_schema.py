@@ -287,8 +287,9 @@ def _companion_rules() -> list[dict[str, Any]]:
 def _pin_solver_controls(node: dict[str, Any]) -> None:
     """Draw the ``solvers`` section's blocks as grids of their standard keys (mutates ``node``).
 
-    The config keeps a block schemaless (any key, written back as read); only the form
-    declares the keys, so the bundled renderer can offer dropdowns and number fields.
+    The config publishes a block as an open dictionary (any key, written back as read);
+    only the form declares the keys, so the bundled renderer can offer dropdowns and
+    number fields.
     """
     if node.get("title") != "_solvers":
         return
