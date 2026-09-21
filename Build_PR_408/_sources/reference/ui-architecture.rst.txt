@@ -215,7 +215,9 @@ computed names with their helper, which makes them valid JS identifiers.
        ``geometry_status`` / ``_severity`` / ``_busy``, ``mesh_written``
      - ``geometry_panel``
      - ``geometry_patches`` only: ``agent_panel`` assigns roles, ``app`` shows the
-       "no patches" hint
+       "no patches" hint — unless a ``field_bc`` form already holds patches, as
+       after "Load case" (a template condition on the ``form_*`` data, no key of
+       its own)
    * - ``validation_ok``, ``findings``, ``save_report``, ``scaffolded``
      - ``app``
      - ``sweep_panel`` reads ``scaffolded`` before an export
@@ -239,6 +241,12 @@ The toolbar's "Load case" calls ``ctrl.load_target_case``
 report — the loaded configs, the selected models, a file that is present but does not
 validate, fields that exist as ``0.orig/`` only (they are read from ``0/``), or why
 nothing was loaded — goes to ``chat_log`` and the AI drawer is opened to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
+
+Several configs slice one file, so ``load_case_from_disk`` takes a slice for absent —
+and stays silent — when the file spells out none of the required keys that only this
+slice declares (``div(phi,T)`` of the Boussinesq ``fvSchemes``). A slice with some of
+them is reported as ``missing <key>, <key>``. A regex or grouped key (``"(U|nuTilda)"``)
+is not such a spelling, so pitzDaily reports ``missing solvers.U, solvers.UFinal``.
 
 An assistant message is drawn as markdown: ``_markdown._chat_html`` escapes the text
 first and then turns the subset the wizard emits (bold, italics, inline code, ``-``

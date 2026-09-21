@@ -854,7 +854,9 @@ in it (<code class="docutils literal notranslate"><span class="pre">ctrl.load_ta
 <code class="docutils literal notranslate"><span class="pre">geometry_status</span></code> / <code class="docutils literal notranslate"><span class="pre">_severity</span></code> / <code class="docutils literal notranslate"><span class="pre">_busy</span></code>, <code class="docutils literal notranslate"><span class="pre">mesh_written</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">geometry_panel</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">geometry_patches</span></code> only: <code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> assigns roles, <code class="docutils literal notranslate"><span class="pre">app</span></code> shows the
-“no patches” hint</p></td>
+“no patches” hint — unless a <code class="docutils literal notranslate"><span class="pre">field_bc</span></code> form already holds patches, as
+after “Load case” (a template condition on the <code class="docutils literal notranslate"><span class="pre">form_*</span></code> data, no key of
+its own)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">validation_ok</span></code>, <code class="docutils literal notranslate"><span class="pre">findings</span></code>, <code class="docutils literal notranslate"><span class="pre">save_report</span></code>, <code class="docutils literal notranslate"><span class="pre">scaffolded</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">app</span></code></p></td>
@@ -885,6 +887,11 @@ in it (<code class="docutils literal notranslate"><span class="pre">ctrl.load_ta
 report — the loaded configs, the selected models, a file that is present but does not
 validate, fields that exist as <code class="docutils literal notranslate"><span class="pre">0.orig/</span></code> only (they are read from <code class="docutils literal notranslate"><span class="pre">0/</span></code>), or why
 nothing was loaded — goes to <code class="docutils literal notranslate"><span class="pre">chat_log</span></code> and the AI drawer is opened to show it. It is dropped while <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>: a chat turn applies its own load.</p>
+<p>Several configs slice one file, so <code class="docutils literal notranslate"><span class="pre">load_case_from_disk</span></code> takes a slice for absent —
+and stays silent — when the file spells out none of the required keys that only this
+slice declares (<code class="docutils literal notranslate"><span class="pre">div(phi,T)</span></code> of the Boussinesq <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code>). A slice with some of
+them is reported as <code class="docutils literal notranslate"><span class="pre">missing</span> <span class="pre">&lt;key&gt;,</span> <span class="pre">&lt;key&gt;</span></code>. A regex or grouped key (<code class="docutils literal notranslate"><span class="pre">&quot;(U|nuTilda)&quot;</span></code>)
+is not such a spelling, so pitzDaily reports <code class="docutils literal notranslate"><span class="pre">missing</span> <span class="pre">solvers.U,</span> <span class="pre">solvers.UFinal</span></code>.</p>
 <p>An assistant message is drawn as markdown: <code class="docutils literal notranslate"><span class="pre">_markdown._chat_html</span></code> escapes the text
 first and then turns the subset the wizard emits (bold, italics, inline code, <code class="docutils literal notranslate"><span class="pre">-</span></code>
 lists, line breaks) into tags, kept per message in <code class="docutils literal notranslate"><span class="pre">chat_html</span></code> and bound with

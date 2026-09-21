@@ -741,12 +741,16 @@
 <span class="w">    </span><span class="sd">"""The case-free config schema of ``solver`` as a :class:`Configurations`.</span>
 
 <span class="sd">    Walks the solver's own declared configs and every member of every bound</span>
-<span class="sd">    model family (``solver.model_specs``), deduped by identity. Runs no</span>
-<span class="sd">    detection and needs no case directory.</span>
+<span class="sd">    model family (``solver.model_specs``), deduped by identity and by name: the</span>
+<span class="sd">    members of a pick-one family each declare the same ``0/U``, and only the</span>
+<span class="sd">    first is kept. Runs no detection and needs no case directory.</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_config_classes</span>  <span class="c1"># noqa: PLC0415  # cycle: io-&gt;configs</span>
 
-    <span class="n">classes</span> <span class="o">=</span> <span class="n">collect_config_classes</span><span class="p">([</span><span class="n">solver</span><span class="p">,</span> <span class="o">*</span><span class="n">solver</span><span class="o">.</span><span class="n">model_specs</span><span class="p">])</span>
+    <span class="n">by_name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">collect_config_classes</span><span class="p">([</span><span class="n">solver</span><span class="p">,</span> <span class="o">*</span><span class="n">solver</span><span class="o">.</span><span class="n">model_specs</span><span class="p">]):</span>
+        <span class="n">by_name</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">by_name</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">Configurations</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="s2">"list[type[BaseConfig]]"</span><span class="p">,</span> <span class="n">classes</span><span class="p">))</span></div>
 
 

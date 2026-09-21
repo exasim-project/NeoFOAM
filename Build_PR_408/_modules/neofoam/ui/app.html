@@ -1142,6 +1142,16 @@
         <span class="n">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"mx-3"</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_no_patches_in_forms</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The JS test that no boundary-conditions form holds a patch (a load fills them unscanned)."""</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"Object.keys(</span><span class="si">{</span><span class="n">entry</span><span class="o">.</span><span class="n">state_key</span><span class="si">}</span><span class="s2">.boundaryField || </span><span class="se">{{}}</span><span class="s2">).length"</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"field_bc"</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"!(</span><span class="si">{</span><span class="s1">' || '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_step_panel</span><span class="p">(</span>
     <span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">Step</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">:</span> <span class="n">GeometryPanel</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1157,6 +1167,7 @@
             <span class="nb">type</span><span class="o">=</span><span class="s2">"info"</span><span class="p">,</span>
             <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
             <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-4"</span><span class="p">,</span>
+            <span class="n">v_if</span><span class="o">=</span><span class="n">_no_patches_in_forms</span><span class="p">(</span><span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">),</span>
             <span class="n">v_show</span><span class="o">=</span><span class="s2">"!geometry_patches.length"</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"sweep"</span><span class="p">:</span>

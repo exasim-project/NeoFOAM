@@ -820,18 +820,9 @@
     <span class="n">owner</span> <span class="o">=</span> <span class="n">_owner_by_cls_name</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-
     <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">tools</span><span class="o">.</span><span class="n">list_configs</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">file</span> <span class="ow">and</span> <span class="n">info</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_MESH_FILES</span><span class="p">:</span>
             <span class="k">continue</span>  <span class="c1"># meshing/preprocessing config — out of scope for the wizard</span>
-        <span class="c1"># Mutually exclusive model families (incompressibleFluid binds both Pimple</span>
-        <span class="c1"># and Simple) each declare the same field config. The classes are distinct</span>
-        <span class="c1"># objects but schema-identical and bound to the same 0/&lt;field&gt; file, so the</span>
-        <span class="c1"># wizard shows one form per config instead of two that overwrite each other.</span>
-        <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">dto</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">config_schema</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="n">cfgs</span><span class="p">[</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">]</span>
         <span class="n">owner_model</span> <span class="o">=</span> <span class="n">owner</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">)</span>

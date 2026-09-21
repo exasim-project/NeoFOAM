@@ -57,7 +57,9 @@ what they hold) and the models the case uses are selected. The fields — initia
 values and boundary conditions with their patches — are read from ``0/`` only; a
 case that keeps them in ``0.orig/`` loads without fields, and the report says so.
 The **AI assistant** drawer opens with the result — what was loaded, and any file
-that is present but does not validate. This needs no API key.
+that is present but does not validate or lacks keys of a model it otherwise sets
+up (``missing solvers.U`` when the case groups it as ``"(U|nuTilda)"``). This needs
+no API key.
 
 .. figure:: ../_static/case_wizard_load_case.png
    :align: center
