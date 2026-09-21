@@ -28,8 +28,10 @@ _ALLRUN_FALLBACK = """\
 #
 # OpenFOAM-convention Allrun for a NeoFOAM incompressibleFluid case.
 #
-# The single solver command does everything: meshing (blockMesh / snappyHexMesh,
-# driven in-process by system/preprocess.yaml) followed by the PIMPLE solve.
+# Copied into the case directory and run from there (``./Allrun``), like an
+# OpenFOAM tutorial. The single solver command does everything: meshing
+# (blockMesh / snappyHexMesh, driven in-process by system/preprocess.yaml)
+# followed by the PIMPLE solve — so this script "just" runs the solver.
 #
 # Usage (from the case directory):
 #   ./Allrun [extra solver args…]

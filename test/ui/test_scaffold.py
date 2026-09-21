@@ -6,14 +6,15 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
-from neofoam.ui.scaffold import (
-    ALLCLEAN_TEXT,
-    allrun_template_path,
-    scaffold_runnable_case,
-)
+from neofoam.ui import scaffold
+from neofoam.ui.scaffold import ALLCLEAN_TEXT, scaffold_runnable_case
+
+# Located from the test tree: CI installs a wheel, so the package is not in the checkout.
+_REPO_ALLRUN = Path(__file__).resolve().parents[2] / "scripts" / "Allrun"
 
 
 def test_scaffold_writes_executable_scripts(tmp_path):
@@ -53,7 +54,7 @@ def test_scaffold_allrun_runs_the_named_solver(tmp_path, solver_name, command):
 def test_scaffold_default_allrun_is_the_template(tmp_path):
     scaffold_runnable_case(tmp_path)
 
-    assert (tmp_path / "Allrun").read_text() == allrun_template_path().read_text()
+    assert (tmp_path / "Allrun").read_text() == _REPO_ALLRUN.read_text()
 
 
 def test_scaffold_is_idempotent(tmp_path):
@@ -63,7 +64,5 @@ def test_scaffold_is_idempotent(tmp_path):
     assert (tmp_path / "Allrun").read_text() == first
 
 
-def test_allrun_template_resolves_in_source_checkout():
-    template = allrun_template_path()
-    assert template.name == "Allrun"
-    assert template.is_file()  # repo scripts/Allrun exists
+def test_embedded_allrun_matches_the_repo_template():
+    assert scaffold._ALLRUN_FALLBACK == _REPO_ALLRUN.read_text()
