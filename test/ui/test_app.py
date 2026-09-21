@@ -27,6 +27,11 @@ from neofoam.ui.geometry import discover_geometry  # noqa: E402
 #: How long the stubbed STL read blocks — a 21 MB STL takes ~0.5 s in practice.
 _SCAN_SECONDS = 0.3
 
+#: A real on-disk case the Load case button opens (read-only).
+_PITZ_DAILY = (
+    Path(__file__).resolve().parents[1] / "solver" / "incompressibleFluid" / "val_pitzDaily"
+)
+
 #: The checked-in STL folder the geometry-handler tests scan (read-only).
 _TRI_SURFACE = (
     Path(__file__).resolve().parents[1]
@@ -574,3 +579,29 @@ def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone(wizard):
     template = wizard.state["trame__template_main"]
     extension = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')[1]
     assert 'v-model="target_dir"' in extension.split("</template>")[0]
+
+
+def test_load_case_button_sits_beside_the_target_directory_on_both_toolbar_rows(wizard):
+    template = wizard.state["trame__template_main"]
+    desktop, phone = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')
+    for row in (desktop, phone.split("</template>")[0]):
+        field, _, after = row.partition('v-model="target_dir"')
+        assert "Load case" in after.split("Save case")[0]
+
+
+def test_load_case_button_needs_a_target_directory(wizard):
+    template = wizard.state["trame__template_main"]
+    button = template.split("Load case")[0].rsplit("<", 1)[1]
+    assert ':disabled="!target_dir.trim() || ai_busy"' in button
+
+
+def test_load_case_button_loads_the_target_case_without_an_api_key(monkeypatch, wizard):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    wizard.state.target_dir = str(_PITZ_DAILY)
+
+    wizard.controller.load_target_case()
+
+    transport = next(
+        e for e in wizard.controller.get_entries() if e.config_name == "transport_properties_config"
+    )
+    assert wizard.state[transport.state_key] == {"transportModel": "Newtonian", "nu": 1e-05}

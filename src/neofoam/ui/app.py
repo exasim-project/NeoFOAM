@@ -476,8 +476,21 @@ def _step_nav(ctx: StepContext, wizard: _Wizard, layout: Any) -> None:
                 )
 
 
+def _load_button(ctx: StepContext, **props: Any) -> None:
+    """ "Load case": the target directory's case into the forms (``agent_panel``)."""
+    ctx.v3.VBtn(
+        "Load case",
+        click=ctx.server.controller.load_target_case,
+        color="primary",
+        variant="tonal",
+        prepend_icon="mdi-folder-open-outline",
+        disabled=("!target_dir.trim() || ai_busy",),
+        **props,
+    )
+
+
 def _toolbar(ctx: StepContext) -> None:
-    """Target directory, Save and the AI-drawer toggle (the path wraps on a phone)."""
+    """Target directory, Load, Save and the AI-drawer toggle (the path wraps on a phone)."""
     v3 = ctx.v3
     v3.VSpacer()
     v3.VTextField(
@@ -488,6 +501,7 @@ def _toolbar(ctx: StepContext) -> None:
         style="max-width: 340px",
         v_if=f"!{_MOBILE}",
     )
+    _load_button(ctx, classes="ml-3", v_if=f"!{_MOBILE}")
     v3.VBtn(
         "Save case",
         click=ctx.server.controller.save_case,
@@ -511,8 +525,9 @@ def _toolbar(ctx: StepContext) -> None:
             label="Target directory",
             hide_details=True,
             prepend_inner_icon="mdi-folder-arrow-down-outline",
-            classes="mx-3",
+            classes="ml-3",
         )
+        _load_button(ctx, classes="mx-3")
 
 
 def _step_panel(

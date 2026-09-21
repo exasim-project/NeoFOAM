@@ -15,7 +15,8 @@ it is handed, so the logic stays unit-testable without trame or a browser.
 The agent also carries a ``load_case`` tool, so "open the case at <path>" reads an
 existing OpenFOAM case straight off disk into the forms — deterministically, via
 :func:`neofoam.ui.case_load.read_case_configs`, never through the model's own
-transcription of the dictionaries.
+transcription of the dictionaries. The toolbar's "Load case" button runs the same
+read without the agent (:meth:`AgentPanel.load_target_case`) and reports in the chat.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from typing import Any, Callable
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
 from neofoam.framework.validation import SOLVER_COMPANION
 from neofoam.io import write_configs
+from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open
 from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
 from neofoam.ui.forms import FormEntry
@@ -71,6 +73,12 @@ def _summary(
     lines += saved
     lines.append("Review the forms; click **Save case** when ready.")
     return "\n\n".join(lines)
+
+
+def _invalid_note(warnings: list[dict[str, str]]) -> str:
+    """One sentence naming the files that are present but do not validate."""
+    files = ", ".join(f"{w['file']} ({w['reason']})" for w in warnings)
+    return f"Present but invalid: {files}."
 
 
 def _drop_stale_companions(configs: list[Any]) -> None:
@@ -126,6 +134,7 @@ class AgentPanel:
         state.setdefault("geometry_patches", [])
         self._ctrl.register_chat_handler = self.register_chat_handler
         self._ctrl.send_message = self.send_message
+        self._ctrl.load_target_case = self.load_target_case
 
     def register_chat_handler(self, step_id: str, handler: Callable[[str], Any]) -> None:
         """Route the chat prompt to ``handler`` while ``step_id`` is the active step.
@@ -160,12 +169,39 @@ class AgentPanel:
             return f"Could not read {path}: {exc}"
         self._loaded["dir"] = str(path)
         self._loaded["configs"] = configs
+        self._loaded["invalid"] = [_invalid_note(warnings)] if warnings else []
 
         names = sorted(type(c).__name__ for c in configs)
-        reply = f"Loaded {len(names)} configs from {path}: {', '.join(names) or 'none'}."
-        if warnings:
-            reply += " Present but invalid: " + ", ".join(w["config"] for w in warnings) + "."
-        return reply
+        reply = f"Loaded {len(names)} configs from {path}: {', '.join(names)}."
+        if not names:
+            reply = f"No case files found in {path}."
+        return " ".join([reply, *self._loaded["invalid"]])
+
+    def load_target_case(self) -> None:
+        """The toolbar's "Load case": the target directory into the forms, without the agent.
+
+        The same read as the ``load_case`` tool, applied at once; the report goes to the
+        chat, which is unfolded to show it. Needs no API key.
+        """
+        state = self._state
+        # A running chat turn applies its own load when it ends.
+        if state.ai_busy:
+            return
+        self._loaded.clear()
+        try:
+            reply = self.load_case(str(_resolve_target(state.target_dir, "target directory")))
+        except ValueError as exc:
+            reply = str(exc)
+        configs = self._loaded.get("configs")
+        if configs:
+            loaded_dir = self._loaded["dir"]
+            models = apply_configs_to_forms(
+                state, self._entries, self._families, configs, Path(loaded_dir)
+            )
+            reply = _summary(configs, models, loaded_dir, self._loaded["invalid"])
+        self._loaded.clear()
+        self._say("assistant", reply)
+        state.ai_panel = state.ai_panel_mobile = True
 
     async def send_message(self, text: str | None = None) -> None:
         """Run one chat turn: the active step's handler if it has one, else the case fill."""
@@ -320,7 +356,10 @@ class AgentPanel:
                     ):
                         html.Div(
                             "{{ m.content }}",
-                            style="white-space: pre-wrap; font-size: 0.9rem;",
+                            # A loaded case's path has no space to break at.
+                            style=(
+                                "white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem;"
+                            ),
                         )
                     v3.VProgressLinear(indeterminate=True, v_show="ai_busy", color="secondary")
                 # Composer pinned to the bottom.

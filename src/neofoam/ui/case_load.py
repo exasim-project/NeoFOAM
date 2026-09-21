@@ -4,8 +4,8 @@
 """Reopen an existing case: read it off disk and push it into the wizard forms.
 
 Two halves of the one path every "open this case" route shares — the AI
-assistant's ``load_case`` tool and the sweep panel's base-case restore — so both
-read the same configs and select the same models.
+assistant's ``load_case`` tool, the toolbar's "Load case" button and the sweep
+panel's base-case restore — so all read the same configs and select the same models.
 """
 
 from __future__ import annotations

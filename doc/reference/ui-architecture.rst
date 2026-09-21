@@ -194,14 +194,15 @@ computed names with their helper, which makes them valid JS identifiers.
    * - ``target_dir``
      - ``app`` (toolbar)
      - ``geometry_panel`` fills it after a scan when empty; ``sweep_panel`` sets it on
-       restoring a base case; ``agent_panel`` auto-saves into it
+       restoring a base case; ``agent_panel`` auto-saves into it and loads the case
+       in it (``ctrl.load_target_case``)
    * - ``sel_<model>`` (``selection_key``), ``choice_<family>`` (``choice_key``)
      - ``app``
      - written through ``steps.select_model_state`` only (radio group,
        ``case_load``); ``sweep_panel`` and ``sweep_view`` read ``sel_*``
    * - ``form_*`` (``FormEntry.state_key``)
      - ``app``; the browser's ``change`` event
-     - ``case_load.apply_configs_to_forms`` (chat, sweep), ``geometry_panel``
+     - ``case_load.apply_configs_to_forms`` (chat, "Load case", sweep), ``geometry_panel``
        (patch seeding), ``steps.turbulence_form_state``; ``sweep_panel`` reads them
    * - ``schema_*`` / ``uischema_*`` (``schema_key`` / ``uischema_key``)
      - ``app``
@@ -219,16 +220,25 @@ computed names with their helper, which makes them valid JS identifiers.
      - ``sweep_panel`` reads ``scaffolded`` before an export
    * - ``main_drawer`` / ``main_drawer_mobile``, ``ai_panel`` / ``ai_panel_mobile``
      - trame's layout (``main_drawer``), ``app``
-     - ``agent_panel`` binds the ``ai_panel`` pair
+     - ``agent_panel`` binds the ``ai_panel`` pair and opens it for a "Load case" report
    * - ``chat_log``, ``chat_input``, ``ai_busy``, ``suggested_prompts``
      - ``agent_panel``
-     - none
+     - ``app`` reads ``ai_busy`` to disable the toolbar's "Load case"
    * - ``sweep_*``
      - ``sweep_panel``
      - ``sweep_view`` only (which also reads ``target_dir``)
 
-Save, validate, review
-----------------------
+Load, save, validate, review
+----------------------------
+
+The toolbar's "Load case" calls ``ctrl.load_target_case``
+(``AgentPanel.load_target_case``): the read of the assistant's ``load_case`` tool
+(``case_load.read_case_configs``) on ``target_dir``, applied at once with
+``case_load.apply_configs_to_forms``. No agent is built, so it needs no API key. The
+report — the loaded configs, the selected models, a file that is present but does not
+validate, or why nothing was loaded — goes to ``chat_log`` and the AI drawer is opened
+to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
+
 
 ``ctrl.save_case`` (``app._save_case``) switches to the Review step, then:
 ``case_spec.state_to_case_spec`` merges the two halves of each field config and skips

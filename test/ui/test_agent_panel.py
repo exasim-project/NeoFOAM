@@ -32,6 +32,9 @@ SOURCE_CASE = (
 #: A case whose ``p`` block holds a ``preconditioner`` beside ``solver GAMG`` (read-only).
 STALE_COMPANION_CASE = Path(__file__).resolve().parent / "cases" / "stale_companion"
 
+#: A case whose only file, ``transportProperties``, holds a ``nu`` that is no number.
+INVALID_TRANSPORT_CASE = Path(__file__).resolve().parent / "cases" / "invalid_transport"
+
 
 def _server() -> Any:
     _COUNTER["n"] += 1
@@ -424,6 +427,81 @@ def test_loaded_case_is_not_reapplied_on_the_next_turn(solver):
 
     asyncio.run(send("thanks"))
     assert server.state[_tp_key(entries)] == {"transportModel": "edited by hand"}
+
+
+def _must_not_build_an_agent(**kw: Any) -> Any:
+    raise AssertionError("the Load case button must not need the agent (no API key)")
+
+
+def test_load_target_case_fills_the_forms_without_an_agent(solver):
+    server = _server()
+    entries = build_forms(solver)
+    build_agent_panel(server, entries, solver, agent_factory=_must_not_build_an_agent)
+    server.state.target_dir = str(SOURCE_CASE)
+
+    server.controller.load_target_case()
+
+    assert server.state[_tp_key(entries)] == {"transportModel": "Newtonian", "nu": 1e-05}
+    assert f"**Loaded** `{SOURCE_CASE}`" in server.state.chat_log[-1]["content"]
+
+
+def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver):
+    # The report lands in the chat, which is folded by default on a phone.
+    server = _server()
+    build_agent_panel(server, build_forms(solver), solver)
+    server.state.update({"target_dir": str(SOURCE_CASE), "ai_panel": False})
+
+    server.controller.load_target_case()
+
+    assert server.state.ai_panel is True
+    assert server.state.ai_panel_mobile is True
+
+
+@pytest.mark.parametrize(
+    ("target", "reported"),
+    [
+        ("relative/case", "The target directory must be an absolute path, got 'relative/case'."),
+        ("/no/such/neofoam/case", "No case directory at /no/such/neofoam/case."),
+        (
+            str(INVALID_TRANSPORT_CASE),
+            f"No case files found in {INVALID_TRANSPORT_CASE}. Present but invalid:"
+            " constant/transportProperties (could not convert string to float: 'notANumber').",
+        ),
+    ],
+)
+def test_load_target_case_reports_a_directory_it_cannot_load(solver, target, reported):
+    server = _server()
+    entries = build_forms(solver)
+    build_agent_panel(server, entries, solver)
+    server.state.target_dir = target
+
+    server.controller.load_target_case()
+
+    assert server.state.chat_log == [{"role": "assistant", "content": reported}]
+    assert server.state[_tp_key(entries)] is None  # forms untouched (never seeded here)
+
+
+def test_load_target_case_reports_an_empty_directory(tmp_path, solver):
+    server = _server()
+    build_agent_panel(server, build_forms(solver), solver)
+    server.state.target_dir = str(tmp_path)
+
+    server.controller.load_target_case()
+
+    assert server.state.chat_log[-1]["content"] == f"No case files found in {tmp_path}."
+
+
+def test_load_target_case_is_dropped_while_the_assistant_runs(solver):
+    # A chat turn applies its own load when it ends; a second writer would race it.
+    server = _server()
+    entries = build_forms(solver)
+    build_agent_panel(server, entries, solver)
+    server.state.update({"target_dir": str(SOURCE_CASE), "ai_busy": True})
+
+    server.controller.load_target_case()
+
+    assert server.state[_tp_key(entries)] is None
+    assert server.state.chat_log == []
 
 
 def test_summary_is_pure_string_building(tmp_path, monkeypatch, solver):
