@@ -657,11 +657,26 @@ the default, <code class="docutils literal notranslate"><span class="pre">incomp
 <p>Type the case directory into the toolbar’s <strong>Target directory</strong> field. It must be
 an absolute path (e.g. <code class="docutils literal notranslate"><span class="pre">/home/me/cases/my_cavity</span></code>), so the wizard never writes
 into the directory it was launched from.</p>
+<figure class="align-center" id="id1">
+<a class="reference internal image-reference" href="../_images/case_wizard_models.png"><img alt="The case wizard on the Models step, with the step drawer, the toolbar and the AI assistant drawer" src="../_images/case_wizard_models.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-text">The wizard after start: the step drawer on the left, the <strong>Models</strong> step in the
+middle, the toolbar with <strong>Target directory</strong>, <strong>Load case</strong> and <strong>Save case</strong>.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
 <p>To continue from an existing case, type its directory there and click <strong>Load
 case</strong>: every config file of the case is read from disk into the forms (replacing
 what they hold) and the models the case uses are selected. The <strong>AI assistant</strong>
 drawer opens with the result — what was loaded, and any file that is present but
 does not validate. This needs no API key.</p>
+<figure class="align-center" id="id2">
+<a class="reference internal image-reference" href="../_images/case_wizard_load_case.png"><img alt="The wizard after Load case, the AI assistant drawer listing what was loaded" src="../_images/case_wizard_load_case.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-text">After <strong>Load case</strong>: the forms hold the case, the drawer reports what was loaded.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
 </section>
 <section id="step-2-walk-through-the-steps">
 <h2>Step 2 — walk through the steps<a class="headerlink" href="#step-2-walk-through-the-steps" title="Link to this heading">¶</a></h2>
@@ -689,6 +704,20 @@ defaults are a runnable starting point.</p></li>
 Snakemake workflow. It clones the saved case, so save first.</p></li>
 <li><p><strong>Review &amp; run</strong> — see step 4.</p></li>
 </ul>
+<figure class="align-center" id="id3">
+<a class="reference internal image-reference" href="../_images/case_wizard_geometry.png"><img alt="The Geometry and mesh step after a scan, one row per patch with its role and refinement" src="../_images/case_wizard_geometry.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>Geometry &amp; mesh</strong> after <strong>Scan</strong>: one row per patch, with its role and refinement.</span><a class="headerlink" href="#id3" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id4">
+<a class="reference internal image-reference" href="../_images/case_wizard_boundary_conditions.png"><img alt="The Boundary conditions step with the U panel open, one row per scanned patch" src="../_images/case_wizard_boundary_conditions.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>Boundary conditions</strong>: the scanned patches, each seeded from its role.</span><a class="headerlink" href="#id4" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
 </section>
 <section id="step-3-let-the-assistant-fill-the-case-optional">
 <h2>Step 3 — let the assistant fill the case (optional)<a class="headerlink" href="#step-3-let-the-assistant-fill-the-case-optional" title="Link to this heading">¶</a></h2>
@@ -722,6 +751,13 @@ run it:</p>
 ./Allrun
 </pre></div>
 </div>
+<figure class="align-center" id="id5">
+<a class="reference internal image-reference" href="../_images/case_wizard_review.png"><img alt="The Review and run step reporting a valid case and the scaffolded Allrun and Allclean" src="../_images/case_wizard_review.png" style="width: 90%;" />
+</a>
+<figcaption>
+<p><span class="caption-text"><strong>Review &amp; run</strong> after <strong>Save case</strong>: the case is valid and the run scripts are written.</span><a class="headerlink" href="#id5" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
 <p><code class="docutils literal notranslate"><span class="pre">Allrun</span></code> starts <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">incompressiblefluid</span></code>, which builds the mesh
 from <code class="docutils literal notranslate"><span class="pre">system/preprocess.yaml</span></code> before the time loop. The dictionaries the wizard
 writes carry a proper <code class="docutils literal notranslate"><span class="pre">FoamFile</span></code> header, so the case is readable by OpenFOAM
