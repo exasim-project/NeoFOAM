@@ -256,7 +256,7 @@ def _save_case(state: Any, wizard: _Wizard) -> None:
         # Make the saved case runnable, then validate it — inside the try, so a
         # scaffold/validate failure is reported instead of leaving Review saying
         # the case still has to be saved.
-        state.scaffolded = [str(p) for p in scaffold_runnable_case(target)]
+        state.scaffolded = [str(p) for p in scaffold_runnable_case(target, wizard.solver_name)]
         _validate_and_store(state, wizard.solver, target)
     except Exception as exc:  # noqa: BLE001 - a save failure must not crash the UI
         # Incomplete/invalid configs — surface each field instead of crashing.

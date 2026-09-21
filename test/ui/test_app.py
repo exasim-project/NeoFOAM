@@ -115,6 +115,20 @@ def test_save_scaffolds_and_validates(tmp_path, wizard):
     assert wizard.state.current_step == "review"
 
 
+def test_save_case_scaffolds_an_allrun_for_the_wizards_solver(tmp_path, seed_transport_defaults):
+    neon_wizard = build_app(
+        solver_name="incompressibleFluidNeoN",
+        server=get_server("neofoam_ui_test_allrun_solver"),
+        plugins=[],
+    )
+    seed_transport_defaults(neon_wizard)
+    neon_wizard.state.target_dir = str(tmp_path)
+
+    neon_wizard.controller.save_case()
+
+    assert 'exec neofoam solver incompressiblefluidneon "$@"' in (tmp_path / "Allrun").read_text()
+
+
 def _scan_tube_bank(wizard, tmp_path) -> None:
     """Scan a copy of the tube-bank STLs, pointing the STL field straight at them."""
     dst_tri = tmp_path / "constant" / "triSurface"

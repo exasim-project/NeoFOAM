@@ -4,7 +4,7 @@
 """Write OpenFOAM-style ``Allrun`` / ``Allclean`` scripts into a saved case.
 
 After the configs are written, this makes the case directory *runnable*: ``./Allrun``
-launches the NeoFOAM ``incompressibleFluid`` solver (meshing happens in-process from
+launches the case's NeoFOAM solver (meshing happens in-process from
 ``system/preprocess.yaml``), and ``./Allclean`` restores it to a clean state. ``Allrun``
 reuses the repo's ``scripts/Allrun`` template when available (source checkout), falling
 back to an embedded copy so an installed package still works; ``Allclean`` is authored
@@ -56,6 +56,9 @@ cd "${0%/*}" || exit 1
 cleanCase0
 """
 
+#: The solver the ``Allrun`` template is written for.
+_TEMPLATE_SOLVER = "incompressibleFluid"
+
 _EXEC_MODE = stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH  # 0o755
 
 
@@ -64,18 +67,22 @@ def allrun_template_path() -> Path:
     return Path(__file__).resolve().parents[3] / "scripts" / "Allrun"
 
 
-def _allrun_text() -> str:
+def _allrun_text(solver_name: str) -> str:
     template = allrun_template_path()
-    if template.is_file():
-        return template.read_text()
-    return _ALLRUN_FALLBACK
+    text = template.read_text() if template.is_file() else _ALLRUN_FALLBACK
+    # The CLI registers each solver under its lower-cased name (neofoam.cli.app).
+    text = text.replace(f"NeoFOAM {_TEMPLATE_SOLVER} case", f"NeoFOAM {solver_name} case")
+    return text.replace(f"solver {_TEMPLATE_SOLVER.lower()} ", f"solver {solver_name.lower()} ")
 
 
-def scaffold_runnable_case(case_dir: Path | str) -> list[Path]:
-    """Write executable ``Allrun`` + ``Allclean`` into ``case_dir``. Idempotent."""
+def scaffold_runnable_case(case_dir: Path | str, solver_name: str = _TEMPLATE_SOLVER) -> list[Path]:
+    """Write executable ``Allrun`` + ``Allclean`` into ``case_dir``. Idempotent.
+
+    ``Allrun`` runs the ``neofoam solver`` command of ``solver_name``.
+    """
     case = Path(case_dir)
     written: list[Path] = []
-    for name, text in (("Allrun", _allrun_text()), ("Allclean", ALLCLEAN_TEXT)):
+    for name, text in (("Allrun", _allrun_text(solver_name)), ("Allclean", ALLCLEAN_TEXT)):
         path = case / name
         path.write_text(text)
         path.chmod(_EXEC_MODE)

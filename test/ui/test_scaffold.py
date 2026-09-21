@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 from neofoam.ui.scaffold import (
     ALLCLEAN_TEXT,
     allrun_template_path,
@@ -26,6 +28,32 @@ def test_scaffold_writes_executable_scripts(tmp_path):
     assert "neofoam solver incompressiblefluid" in allrun.read_text()
     assert allclean.read_text() == ALLCLEAN_TEXT
     assert "cleanCase0" in allclean.read_text()
+
+
+@pytest.mark.parametrize(
+    ("solver_name", "command"),
+    [
+        ("incompressibleFluid", "incompressiblefluid"),
+        ("incompressibleFluidNeoN", "incompressiblefluidneon"),
+        ("incompressibleVoF", "incompressiblevof"),
+    ],
+)
+def test_scaffold_allrun_runs_the_named_solver(tmp_path, solver_name, command):
+    scaffold_runnable_case(tmp_path, solver_name)
+
+    solver_lines = [
+        line for line in (tmp_path / "Allrun").read_text().splitlines() if "exec" in line
+    ]
+    assert solver_lines == [
+        f'    exec "$NEOFOAM_PYTHON" -m neofoam.cli.app solver {command} "$@"',
+        f'exec neofoam solver {command} "$@"',
+    ]
+
+
+def test_scaffold_default_allrun_is_the_template(tmp_path):
+    scaffold_runnable_case(tmp_path)
+
+    assert (tmp_path / "Allrun").read_text() == allrun_template_path().read_text()
 
 
 def test_scaffold_is_idempotent(tmp_path):
