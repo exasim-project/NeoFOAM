@@ -89,6 +89,17 @@ def wizard(request: pytest.FixtureRequest) -> Any:
     return build_app(server=get_server(request.node.name), plugins=[])
 
 
+@pytest.fixture(scope="session")
+def pristine_wizard() -> Any:
+    """One default wizard shared by the whole run — READ-ONLY.
+
+    For tests that only read the rendered template or the initial state (a build
+    costs ~0.2 s). A test that sets state or calls a controller takes ``wizard``.
+    """
+    get_server = pytest.importorskip("trame.app").get_server
+    return build_app(server=get_server("neofoam_ui_pristine_wizard"), plugins=[])
+
+
 @pytest.fixture
 def seed_transport_defaults(solver: Any) -> Callable[[Any], None]:
     """Fill a wizard server with the minimal valid form state (only transportProperties)."""

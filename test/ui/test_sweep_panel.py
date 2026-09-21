@@ -1086,12 +1086,12 @@ def test_refresh_dag_reports_a_snakemake_that_never_finishes(
     assert wizard.state.sweep_dag_busy is False
 
 
-def test_palette_rows_of_unselected_models_are_hidden(wizard):
+def test_palette_rows_of_unselected_models_are_hidden(pristine_wizard):
     # The palette state lists every sweepable config; a row owned by a gated model is
     # shown only while that model's `sel_<model>` is on — the same gate as the form
     # panels, evaluated client-side so it follows the selection live.
 
-    template = wizard.state["trame__template_main"]
+    template = pristine_wizard.state["trame__template_main"]
     assert 'v-show="!item.owner || ({' in template
     assert "'Simple': sel_Simple" in template
     assert "'boussinesq': sel_boussinesq" in template

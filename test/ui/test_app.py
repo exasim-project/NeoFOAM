@@ -454,8 +454,8 @@ def test_selecting_another_family_leaves_turbulence_properties_alone(wizard):
     assert _turbulence_properties(wizard) == {"simulationType": "laminar"}
 
 
-def test_panel_chip_shows_the_owning_models_label(wizard):
-    template = wizard.state["trame__template_main"]
+def test_panel_chip_shows_the_owning_models_label(pristine_wizard):
+    template = pristine_wizard.state["trame__template_main"]
     assert "Adaptive time step (Courant)\n</VChip>" in template
     assert "\ncourant\n</VChip>" not in template
 
@@ -488,22 +488,22 @@ def test_included_models_heading_needs_an_always_on_model(solver_name, shown):
     assert ("Included models" in server.state["trame__template_main"]) is shown
 
 
-def test_boundary_conditions_step_explains_its_empty_state(wizard):
+def test_boundary_conditions_step_explains_its_empty_state(pristine_wizard):
     # Before a scan each field panel is a bare "Property Name [+]" row; the step says
     # where patches come from and that the row adds one by hand, until a scan ran.
 
-    template = wizard.state["trame__template_main"]
+    template = pristine_wizard.state["trame__template_main"]
     assert "run Scan in the Geometry step to seed them" in template
     assert 'v-show="!geometry_patches.length"' in template
     # The adder row is labelled "Patch name" itself, so the hint need not name the box.
     assert "Property Name" not in template
 
 
-def test_boundary_conditions_hint_yields_to_patches_in_the_forms(wizard):
+def test_boundary_conditions_hint_yields_to_patches_in_the_forms(pristine_wizard):
     # "Load case" fills the forms with the case's patches without a scan, so the hint
     # also asks the forms; the patch count of each is a term of its condition.
 
-    template = wizard.state["trame__template_main"]
+    template = pristine_wizard.state["trame__template_main"]
     alert = template.split('v-show="!geometry_patches.length"')[1].split(">")[0]
     assert alert.split('v-if="')[1].split('"')[0] == (
         "!(Object.keys(form_u_field_config__bc.boundaryField || {}).length"
@@ -514,56 +514,56 @@ def test_boundary_conditions_hint_yields_to_patches_in_the_forms(wizard):
     )
 
 
-def test_forms_receive_the_adder_translations(wizard):
+def test_forms_receive_the_adder_translations(pristine_wizard):
     from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
 
-    assert ':translations="form_translations"' in wizard.state["trame__template_main"]
-    assert wizard.state["form_translations"] == ADDER_TRANSLATIONS
+    assert ':translations="form_translations"' in pristine_wizard.state["trame__template_main"]
+    assert pristine_wizard.state["form_translations"] == ADDER_TRANSLATIONS
 
 
 @pytest.mark.parametrize("location", ["left", "right"])
-def test_drawers_are_overlays_below_the_desktop_breakpoint(location, wizard):
+def test_drawers_are_overlays_below_the_desktop_breakpoint(location, pristine_wizard):
     # A permanent 300 px step drawer (plus the 400 px AI drawer) leaves a phone no
     # room for the forms: below Vuetify's md breakpoint both become temporary overlays.
 
-    template = wizard.state["trame__template_main"]
+    template = pristine_wizard.state["trame__template_main"]
     drawer = template.split(f'location="{location}"')[1].split(">")[0]
     assert ':temporary="$vuetify.display.smAndDown"' in drawer
     assert ':permanent="!$vuetify.display.smAndDown"' in drawer
 
 
-def test_drawers_start_closed_on_a_phone(wizard):
+def test_drawers_start_closed_on_a_phone(pristine_wizard):
     # The overlays read their own open flags, so the desktop's open-by-default
     # drawers never cover a phone screen on load.
 
-    template = wizard.state["trame__template_main"]
-    assert wizard.state.main_drawer_mobile is False
-    assert wizard.state.ai_panel_mobile is False
+    template = pristine_wizard.state["trame__template_main"]
+    assert pristine_wizard.state.main_drawer_mobile is False
+    assert pristine_wizard.state.ai_panel_mobile is False
     assert ':modelValue="$vuetify.display.smAndDown ? main_drawer_mobile : main_drawer"' in template
     assert ':modelValue="$vuetify.display.smAndDown ? ai_panel_mobile : ai_panel"' in template
 
 
-def test_picking_a_step_closes_the_phone_drawer(wizard):
-    template = wizard.state["trame__template_main"]
+def test_picking_a_step_closes_the_phone_drawer(pristine_wizard):
+    template = pristine_wizard.state["trame__template_main"]
     assert "@click=\"current_step = 'bcs'; main_drawer_mobile = false\"" in template
 
 
-def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone(wizard):
-    template = wizard.state["trame__template_main"]
+def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone(pristine_wizard):
+    template = pristine_wizard.state["trame__template_main"]
     extension = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')[1]
     assert 'v-model="target_dir"' in extension.split("</template>")[0]
 
 
-def test_load_case_button_sits_beside_the_target_directory_on_both_toolbar_rows(wizard):
-    template = wizard.state["trame__template_main"]
+def test_load_case_button_sits_beside_the_target_directory_on_both_toolbar_rows(pristine_wizard):
+    template = pristine_wizard.state["trame__template_main"]
     desktop, phone = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')
     for row in (desktop, phone.split("</template>")[0]):
         field, _, after = row.partition('v-model="target_dir"')
         assert "Load case" in after.split("Save case")[0]
 
 
-def test_load_case_button_needs_a_target_directory(wizard):
-    template = wizard.state["trame__template_main"]
+def test_load_case_button_needs_a_target_directory(pristine_wizard):
+    template = pristine_wizard.state["trame__template_main"]
     button = template.split("Load case")[0].rsplit("<", 1)[1]
     assert ':disabled="!target_dir.trim() || ai_busy"' in button
 
@@ -580,8 +580,8 @@ def test_load_case_button_loads_the_target_case_without_an_api_key(monkeypatch, 
     assert wizard.state[transport.state_key] == {"transportModel": "Newtonian", "nu": 1e-05}
 
 
-def test_chat_renders_assistant_messages_as_html_and_user_messages_as_text(wizard):
-    template = wizard.state["trame__template_main"]
+def test_chat_renders_assistant_messages_as_html_and_user_messages_as_text(pristine_wizard):
+    template = pristine_wizard.state["trame__template_main"]
     user, assistant = (bubble for bubble in template.split("<div") if 'v-if="m.role ' in bubble)
     assert "m.role === 'user'" in user
     assert "{{ m.content }}" in user
