@@ -18,8 +18,6 @@ pytest.importorskip("trame_flow")  # build_app renders the sweep canvas
 
 from trame.app import get_server  # noqa: E402
 
-from neofoam.mcp import tools  # noqa: E402
-from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.forms import schema_key  # noqa: E402
 from neofoam.ui.geometry import discover_geometry  # noqa: E402
@@ -76,15 +74,8 @@ def test_nav_does_not_reset_form_state(wizard):
     assert before == after  # same entries/state keys — nothing rebuilt
 
 
-def test_save_case_round_trip(tmp_path, wizard):
-    solver = resolve_solver("incompressibleFluid")
-    entries = wizard.controller.get_entries()
-
-    defaults = tools.config_schema(solver, "transport_properties_config").defaults
-    for entry in entries:
-        wizard.state[entry.state_key] = (
-            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
-        )
+def test_save_case_round_trip(tmp_path, seed_transport_defaults, wizard):
+    seed_transport_defaults(wizard)
 
     wizard.state.target_dir = str(tmp_path)
     wizard.controller.save_case()
@@ -94,17 +85,10 @@ def test_save_case_round_trip(tmp_path, wizard):
     assert any("transportProperties" in w for w in wizard.state.save_report["written"])
 
 
-def test_save_scaffolds_and_validates(tmp_path, wizard):
+def test_save_scaffolds_and_validates(tmp_path, seed_transport_defaults, wizard):
     import os  # noqa: PLC0415
 
-    solver = resolve_solver("incompressibleFluid")
-    entries = wizard.controller.get_entries()
-
-    defaults = tools.config_schema(solver, "transport_properties_config").defaults
-    for entry in entries:
-        wizard.state[entry.state_key] = (
-            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
-        )
+    seed_transport_defaults(wizard)
     wizard.state.target_dir = str(tmp_path)
     wizard.controller.save_case()
 
@@ -134,12 +118,13 @@ def test_save_case_scaffolds_an_allrun_for_the_wizards_solver(tmp_path, seed_tra
     assert 'exec neofoam solver incompressiblefluidneon "$@"' in (tmp_path / "Allrun").read_text()
 
 
-def _scan_tube_bank(wizard, tmp_path) -> None:
+def _scan_tube_bank(wizard, tmp_path, *, set_target: bool = True) -> None:
     """Scan a copy of the tube-bank STLs, pointing the STL field straight at them."""
     dst_tri = tmp_path / "constant" / "triSurface"
     shutil.copytree(_TRI_SURFACE, dst_tri)
     wizard.state.stl_dir = str(dst_tri)
-    wizard.state.target_dir = str(tmp_path)
+    if set_target:
+        wizard.state.target_dir = str(tmp_path)
     asyncio.run(wizard.controller.load_geometry())
 
 
@@ -163,18 +148,12 @@ def test_write_mesh_writes_the_mesh_dicts_of_a_scanned_geometry(tmp_path, wizard
 
 
 def test_scan_pins_only_the_scanned_patches(tmp_path, wizard):
-    import shutil  # noqa: PLC0415
-
     # A pinned patch has no delete button. One added by hand before a re-scan is not
     # part of the geometry, so it has to stay deletable.
-    tube_bank = Path(__file__).resolve().parents[1] / "tooling" / "workflow" / "cases" / "tube_bank"
-    dst_tri = tmp_path / "constant" / "triSurface"
-    shutil.copytree(tube_bank / "constant" / "triSurface", dst_tri)
     entry = next(e for e in wizard.controller.get_entries() if e.key == "field_bc:UFieldConfig")
     wizard.state[entry.state_key] = {"boundaryField": {"byHand": {"type": "noSlip"}}}
-    wizard.state.stl_dir = str(dst_tri)
 
-    asyncio.run(wizard.controller.load_geometry())
+    _scan_tube_bank(wizard, tmp_path, set_target=False)
 
     boundary_field = wizard.state[schema_key(entry)]["properties"]["boundaryField"]
     assert set(boundary_field["properties"]) == {"inlet", "outlet", "walls", "frontBack", "tubes"}
@@ -249,22 +228,7 @@ def test_save_case_reports_a_scaffold_failure(tmp_path, seed_transport_defaults,
 
 
 def test_failed_scan_clears_the_mesh_written_alert(tmp_path, wizard):
-    import shutil  # noqa: PLC0415
-
-    src_tri = (
-        Path(__file__).resolve().parents[1]
-        / "tooling"
-        / "workflow"
-        / "cases"
-        / "tube_bank"
-        / "constant"
-        / "triSurface"
-    )
-    shutil.copytree(src_tri, tmp_path / "constant" / "triSurface")
-
-    wizard.state.stl_dir = str(tmp_path / "constant" / "triSurface")
-    wizard.state.target_dir = str(tmp_path)
-    asyncio.run(wizard.controller.load_geometry())
+    _scan_tube_bank(wizard, tmp_path)
     wizard.controller.write_mesh()
     assert wizard.state.mesh_written  # the green "Wrote: …" alert is up
 
@@ -342,14 +306,8 @@ def test_scan_started_while_one_runs_is_dropped(monkeypatch, wizard):
     assert wizard.state.geometry_busy is False
 
 
-def test_revalidate_reruns_without_resaving(tmp_path, wizard):
-    solver = resolve_solver("incompressibleFluid")
-    entries = wizard.controller.get_entries()
-    defaults = tools.config_schema(solver, "transport_properties_config").defaults
-    for entry in entries:
-        wizard.state[entry.state_key] = (
-            {**defaults, "nu": 1e-05} if entry.config_name == "transport_properties_config" else {}
-        )
+def test_revalidate_reruns_without_resaving(tmp_path, seed_transport_defaults, wizard):
+    seed_transport_defaults(wizard)
     wizard.state.target_dir = str(tmp_path)
     wizard.controller.save_case()
 

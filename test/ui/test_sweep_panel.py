@@ -30,6 +30,30 @@ def _dim_nodes(server):
     return [n for n in server.controller.sweep_get_nodes() if n["type"] == "dim"]
 
 
+def _transport_entry(server):
+    """The dict form entry behind ``constant/transportProperties``."""
+    return next(
+        e
+        for e in server.controller.get_entries()
+        if e.config_name == "transport_properties_config" and e.kind == "dict"
+    )
+
+
+def _gated_dict_entry(server):
+    """A dict entry whose owning model is not selected; skips the test if there is none."""
+    owned = next(
+        (
+            e
+            for e in server.controller.get_entries()
+            if e.kind == "dict" and e.owner_model and not server.state[f"sel_{e.owner_model}"]
+        ),
+        None,
+    )
+    if owned is None:
+        pytest.skip("solver has no unselected-model-owned dict configs")
+    return owned
+
+
 def test_sweep_state_and_canvas_seeded(wizard):
     state = wizard.state
     assert state.sweep_case_count == 0
@@ -57,11 +81,7 @@ def test_sweep_state_and_canvas_seeded(wizard):
 
 def test_add_dimension_seeds_from_live_form_state(wizard):
     state, ctrl = wizard.state, wizard.controller
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 3e-5}
 
     state.sweep_dim_pick = "transport_properties_config"
@@ -86,16 +106,7 @@ def test_add_dimension_requires_selected_owner_model(wizard):
     state, ctrl = wizard.state, wizard.controller
     # An owned config whose model is NOT selected — the members of a pick-one family
     # start selected, so "owned" alone no longer implies "hidden".
-    owned = next(
-        (
-            e
-            for e in ctrl.get_entries()
-            if e.kind == "dict" and e.owner_model and not state[f"sel_{e.owner_model}"]
-        ),
-        None,
-    )
-    if owned is None:
-        pytest.skip("solver has no unselected-model-owned dict configs")
+    owned = _gated_dict_entry(wizard)
     state.sweep_dim_pick = owned.config_name
     ctrl.sweep_add_dimension()
     assert _dim_nodes(wizard) == []
@@ -161,11 +172,7 @@ def test_configure_tab_mirrors_active_dimension(wizard):
     state, ctrl = wizard.state, wizard.controller
     assert state.sweep_tab == "configure"
 
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
     state.sweep_dim_pick = "transport_properties_config"
     ctrl.sweep_add_dimension()
@@ -181,11 +188,7 @@ def test_configure_tab_mirrors_active_dimension(wizard):
 
 def test_configure_tab_variant_ops_and_selection(wizard):
     state, ctrl = wizard.state, wizard.controller
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     # Give base a distinct payload so a re-push is observable.
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
     state.sweep_dim_pick = "transport_properties_config"
@@ -245,11 +248,7 @@ def test_live_validation_badges_and_blocks_export(wizard):
     # V1: an invalid variant badges its node, fills the table's validation
     # column, and blocks Export.
     state, ctrl = wizard.state, wizard.controller
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
     ctrl.sweep_toggle_dimension("transport_properties_config")
     node_id = "dim:transport_properties_config"
@@ -358,11 +357,7 @@ def test_palette_toggle_dimension_adds_and_removes(wizard):
 
 def test_dim_picker_slices_display_schema_but_keeps_full_payloads(wizard):
     state, ctrl = wizard.state, wizard.controller
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
 
     ctrl.sweep_open_dim_picker("transport_properties_config")
@@ -401,16 +396,7 @@ def test_dim_picker_slices_display_schema_but_keeps_full_payloads(wizard):
 
 def test_dim_picker_respects_owner_model_gate(wizard):
     state, ctrl = wizard.state, wizard.controller
-    owned = next(
-        (
-            e
-            for e in ctrl.get_entries()
-            if e.kind == "dict" and e.owner_model and not state[f"sel_{e.owner_model}"]
-        ),
-        None,
-    )
-    if owned is None:
-        pytest.skip("solver has no unselected-model-owned dict configs")
+    owned = _gated_dict_entry(wizard)
     ctrl.sweep_open_dim_picker(owned.config_name)
     assert not state.sweep_pick_show
     assert owned.owner_model in state.sweep_error
@@ -422,11 +408,7 @@ _TRANSPORT_NODE = "dim:transport_properties_config"
 def _transport_dimension_on_canvas(wizard) -> None:
     """Put transportProperties on the canvas, its base variant carrying a ``nu``."""
     state, ctrl = wizard.state, wizard.controller
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
     ctrl.sweep_toggle_dimension("transport_properties_config")
 
@@ -544,11 +526,7 @@ def test_parameters_table_lists_combinations_with_varied_values(wizard):
     state, ctrl = wizard.state, wizard.controller
     assert state.sweep_rows == []
 
-    entry = next(
-        e
-        for e in ctrl.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
+    entry = _transport_entry(wizard)
     state[entry.state_key] = {"transportModel": "Newtonian", "nu": 1e-5}
     ctrl.sweep_toggle_dimension("transport_properties_config")
     node_id = "dim:transport_properties_config"
@@ -924,15 +902,6 @@ def test_load_exported_all_unsupported_clears_tab(tmp_path, seed_transport_defau
     assert s2.sweep_cfg_dim == ""
     assert s2.sweep_dims_on_canvas == []
     assert s2.sweep_cfg_data == {}
-
-
-def _transport_entry(server):
-    """The dict form entry behind ``constant/transportProperties``."""
-    return next(
-        e
-        for e in server.controller.get_entries()
-        if e.config_name == "transport_properties_config" and e.kind == "dict"
-    )
 
 
 def test_load_exported_restores_the_base_case(tmp_path, seed_transport_defaults, wizard):
