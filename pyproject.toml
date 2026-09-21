@@ -48,7 +48,7 @@ dev = [
     "playwright",
     # build deps needed in env when no-build-isolation is enabled
     "scikit-build-core[pyproject]>=0.11.0",
-    "nanobind>=2.9.0",
+    "nanobind>=3.0.1,<3.1",  # as in [build-system]
 ]
 docs = [
     "sphinx>=4.0",
@@ -136,7 +136,9 @@ neofoam = "neofoam.cli.app:app"
 [build-system]
 requires = [
     "scikit-build-core[pyproject]>=0.11.0",
-    "nanobind>=2.9.0",
+    # One ABI (NB_INTERNALS_VERSION) with the libnanobind.so of the installed pybFoam,
+    # which the bindings resolve at run time: keep in step with pybFoam's build.
+    "nanobind>=3.0.1,<3.1",
 ]
 build-backend = "scikit_build_core.build"
 
