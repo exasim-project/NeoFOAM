@@ -22,8 +22,6 @@ from neofoam.framework.solver.configurations import configurations  # noqa: E402
 from neofoam.ui.agent_panel import _summary, build_agent_panel  # noqa: E402
 from neofoam.ui.forms import build_forms  # noqa: E402
 
-_COUNTER = {"n": 0}
-
 #: A real on-disk case for the ``load_case`` tool (the fixture test/agent uses).
 SOURCE_CASE = (
     Path(__file__).resolve().parents[1] / "solver" / "incompressibleFluid" / "val_pitzDaily"
@@ -40,11 +38,18 @@ STALE_COMPANION_CASE = Path(__file__).resolve().parent / "cases" / "stale_compan
 INVALID_TRANSPORT_CASE = Path(__file__).resolve().parent / "cases" / "invalid_transport"
 
 
-def _server() -> Any:
-    _COUNTER["n"] += 1
-    srv = get_server(f"neofoam_ui_agent_{_COUNTER['n']}")
+@pytest.fixture
+def server(request: pytest.FixtureRequest) -> Any:
+    """A bare trame server named after the requesting test (trame keeps one per name)."""
+    srv = get_server(f"neofoam_ui_agent_{request.node.name}")
     srv.state.target_dir = ""  # no auto-save in tests
     return srv
+
+
+@pytest.fixture
+def entries(solver: Any) -> list[Any]:
+    """The form entries the panel under test fills."""
+    return build_forms(solver)
 
 
 def _prebuilt_case_spec(solver: Any) -> Any:
@@ -73,9 +78,7 @@ class _StubAgent:
         return SimpleNamespace(output=self._output, all_messages=lambda: ["MSG"])
 
 
-def test_send_message_fills_forms_autoselects_and_logs(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_send_message_fills_forms_autoselects_and_logs(solver, server, entries):
     prebuilt = _prebuilt_case_spec(solver)
 
     send = build_agent_panel(
@@ -99,9 +102,7 @@ def test_send_message_fills_forms_autoselects_and_logs(solver):
     assert server.state.chat_input == ""
 
 
-def test_multi_turn_threads_message_history(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_multi_turn_threads_message_history(solver, server, entries):
     stub = _StubAgent(_prebuilt_case_spec(solver))
 
     send = build_agent_panel(server, entries, solver, agent_factory=lambda **_kw: stub)
@@ -119,11 +120,10 @@ def test_multi_turn_threads_message_history(solver):
     ]
 
 
-def test_empty_message_is_ignored(solver):
-    server = _server()
+def test_empty_message_is_ignored(solver, server, entries):
     send = build_agent_panel(
         server,
-        build_forms(solver),
+        entries,
         solver,
         agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
     )
@@ -131,13 +131,11 @@ def test_empty_message_is_ignored(solver):
     assert server.state.chat_log == []
 
 
-def test_degrades_when_agent_unavailable(solver):
-    server = _server()
-
+def test_degrades_when_agent_unavailable(solver, server, entries):
     def _raise(**_kw: Any) -> Any:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
 
-    send = build_agent_panel(server, build_forms(solver), solver, agent_factory=_raise)
+    send = build_agent_panel(server, entries, solver, agent_factory=_raise)
     asyncio.run(send("hello"))
 
     assert server.state.chat_log[-1]["role"] == "assistant"
@@ -157,12 +155,10 @@ class _StubGeoAgent:
         return SimpleNamespace(output=self._output)
 
 
-def test_send_message_also_fills_geometry_roles(solver):
+def test_send_message_also_fills_geometry_roles(solver, server, entries):
     from neofoam.ui.geometry import PatchRole  # noqa: PLC0415
     from neofoam.ui.geometry_agent import GeometryAssignments, RoleAssignment  # noqa: PLC0415
 
-    server = _server()
-    entries = build_forms(solver)
     assignments = GeometryAssignments(
         assignments=[RoleAssignment(patch="tubes", role=PatchRole.wall, refinement=(3, 4))]
     )
@@ -191,14 +187,13 @@ def test_send_message_also_fills_geometry_roles(solver):
     assert any("Mesh roles set" in m["content"] for m in server.state.chat_log)
 
 
-def test_geometry_fill_skipped_when_no_patches(solver):
-    server = _server()
+def test_geometry_fill_skipped_when_no_patches(solver, server, entries):
     # geometry_patches defaults to [] → the geometry agent is never built/run.
     stub_geo = _StubGeoAgent(None)
 
     send = build_agent_panel(
         server,
-        build_forms(solver),
+        entries,
         solver,
         agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
         geometry_agent_factory=lambda: stub_geo,
@@ -207,8 +202,7 @@ def test_geometry_fill_skipped_when_no_patches(solver):
     assert stub_geo.calls == []
 
 
-def test_chat_handler_owns_prompt_for_its_step(solver):
-    server = _server()
+def test_chat_handler_owns_prompt_for_its_step(solver, server, entries):
     calls: list[str] = []
 
     async def handler(prompt: str) -> str:
@@ -217,7 +211,7 @@ def test_chat_handler_owns_prompt_for_its_step(solver):
 
     send = build_agent_panel(
         server,
-        build_forms(solver),
+        entries,
         solver,
         agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
     )
@@ -236,8 +230,7 @@ def test_chat_handler_owns_prompt_for_its_step(solver):
     assert server.state.ai_busy is False
 
 
-def test_busy_true_during_run(solver):
-    server = _server()
+def test_busy_true_during_run(solver, server, entries):
     seen = {}
     stub = _StubAgent(
         _prebuilt_case_spec(solver),
@@ -246,7 +239,7 @@ def test_busy_true_during_run(solver):
 
     send = build_agent_panel(
         server,
-        build_forms(solver),
+        entries,
         solver,
         agent_factory=lambda **_kw: stub,
     )
@@ -273,12 +266,11 @@ class _BlockingAgent:
         return SimpleNamespace(output=self._output, all_messages=lambda: ["MSG"])
 
 
-def test_message_sent_while_busy_is_dropped(solver):
+def test_message_sent_while_busy_is_dropped(solver, server, entries):
     # Two overlapping turns both start from an empty message_history and both
     # rewrite it in place, so the second silently discards the first turn.
-    server = _server()
     stub = _BlockingAgent(_prebuilt_case_spec(solver))
-    send = build_agent_panel(server, build_forms(solver), solver, agent_factory=lambda **_kw: stub)
+    send = build_agent_panel(server, entries, solver, agent_factory=lambda **_kw: stub)
 
     async def drive() -> None:
         first = asyncio.create_task(send("first"))
@@ -318,9 +310,7 @@ def _loading_factory(output: Any, case_dir: Any) -> tuple[Any, list[str]]:
     return factory, replies
 
 
-def test_load_case_tool_reads_the_case_into_the_forms(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_load_case_tool_reads_the_case_into_the_forms(solver, server, entries):
     factory, replies = _loading_factory(_empty_case_spec(solver), SOURCE_CASE)
 
     send = build_agent_panel(server, entries, solver, agent_factory=factory)
@@ -332,10 +322,8 @@ def test_load_case_tool_reads_the_case_into_the_forms(solver):
     assert "**Loaded**" in server.state.chat_log[-1]["content"]
 
 
-def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path, solver):
-    server = _server()
+def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path, solver, server, entries):
     server.state.target_dir = str(tmp_path)
-    entries = build_forms(solver)
     factory, _ = _loading_factory(_empty_case_spec(solver), SOURCE_CASE)
 
     send = build_agent_panel(server, entries, solver, agent_factory=factory)
@@ -346,9 +334,7 @@ def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path, solver):
     assert "transportProperties" in server.state.chat_log[-1]["content"]
 
 
-def test_agent_output_overrides_the_loaded_case(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_agent_output_overrides_the_loaded_case(solver, server, entries):
     case_spec_cls = build_case_output_model(solver=solver)
     refined = case_spec_cls.model_construct(
         transport_properties_config=configurations(solver)[
@@ -369,9 +355,7 @@ def _p_block(server: Any, entries: list[Any]) -> dict[str, Any]:
     return server.state[key]["solvers"]["p"]
 
 
-def test_agent_fill_drops_the_companion_its_solver_does_not_take(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_agent_fill_drops_the_companion_its_solver_does_not_take(solver, server, entries):
     defaults = next(e.defaults for e in entries if e.config_name == "pimple_fv_solution")
     block = {**defaults["solvers"]["p"], "solver": "GAMG", "relTol": 0.01}
     filled = build_case_output_model(solver=solver).model_validate(
@@ -386,9 +370,7 @@ def test_agent_fill_drops_the_companion_its_solver_does_not_take(solver):
     assert _p_block(server, entries) == {"solver": "GAMG", "tolerance": 1e-06, "relTol": 0.01}
 
 
-def test_loaded_case_keeps_a_companion_its_solver_does_not_take(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_loaded_case_keeps_a_companion_its_solver_does_not_take(solver, server, entries):
     factory, _ = _loading_factory(_empty_case_spec(solver), STALE_COMPANION_CASE)
 
     send = build_agent_panel(server, entries, solver, agent_factory=factory)
@@ -398,9 +380,7 @@ def test_loaded_case_keeps_a_companion_its_solver_does_not_take(solver):
     assert _p_block(server, entries)["preconditioner"] == "DIC"
 
 
-def test_load_case_tool_reports_a_missing_directory(tmp_path, solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_load_case_tool_reports_a_missing_directory(tmp_path, solver, server, entries):
     missing = tmp_path / "nope"
     factory, replies = _loading_factory(_empty_case_spec(solver), missing)
 
@@ -412,9 +392,7 @@ def test_load_case_tool_reports_a_missing_directory(tmp_path, solver):
     assert server.state.ai_busy is False
 
 
-def test_loaded_case_is_not_reapplied_on_the_next_turn(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_loaded_case_is_not_reapplied_on_the_next_turn(solver, server, entries):
     tools: list[Any] = []
 
     def factory(**kw: Any) -> Any:
@@ -437,9 +415,7 @@ def _must_not_build_an_agent(**kw: Any) -> Any:
     raise AssertionError("the Load case button must not need the agent (no API key)")
 
 
-def test_load_target_case_fills_the_forms_without_an_agent(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_load_target_case_fills_the_forms_without_an_agent(solver, server, entries):
     build_agent_panel(server, entries, solver, agent_factory=_must_not_build_an_agent)
     server.state.target_dir = str(SOURCE_CASE)
 
@@ -449,9 +425,7 @@ def test_load_target_case_fills_the_forms_without_an_agent(solver):
     assert f"**Loaded** `{SOURCE_CASE}`" in server.state.chat_log[-1]["content"]
 
 
-def test_load_target_case_fills_the_field_forms_from_the_zero_directory(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_load_target_case_fills_the_field_forms_from_the_zero_directory(solver, server, entries):
     build_agent_panel(server, entries, solver)
     server.state.target_dir = str(ZERO_DIR_CASE)
 
@@ -471,9 +445,7 @@ def test_load_target_case_fills_the_field_forms_from_the_zero_directory(solver):
     assert "0.orig" not in server.state.chat_log[-1]["content"]
 
 
-def test_load_target_case_reports_fields_kept_in_zero_orig_only(solver):
-    server = _server()
-    entries = build_forms(solver)
+def test_load_target_case_reports_fields_kept_in_zero_orig_only(solver, server, entries):
     build_agent_panel(server, entries, solver)
     server.state.target_dir = str(SOURCE_CASE)
 
@@ -486,10 +458,9 @@ def test_load_target_case_reports_fields_kept_in_zero_orig_only(solver):
     )
 
 
-def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver):
+def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver, server, entries):
     # The report lands in the chat, which is folded by default on a phone.
-    server = _server()
-    build_agent_panel(server, build_forms(solver), solver)
+    build_agent_panel(server, entries, solver)
     server.state.update({"target_dir": str(SOURCE_CASE), "ai_panel": False})
 
     server.controller.load_target_case()
@@ -510,9 +481,9 @@ def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver):
         ),
     ],
 )
-def test_load_target_case_reports_a_directory_it_cannot_load(solver, target, reported):
-    server = _server()
-    entries = build_forms(solver)
+def test_load_target_case_reports_a_directory_it_cannot_load(
+    solver, target, reported, server, entries
+):
     build_agent_panel(server, entries, solver)
     server.state.target_dir = target
 
@@ -522,10 +493,9 @@ def test_load_target_case_reports_a_directory_it_cannot_load(solver, target, rep
     assert server.state[_tp_key(entries)] is None  # forms untouched (never seeded here)
 
 
-def test_assistant_report_is_kept_as_escaped_html_for_the_chat(tmp_path, solver):
+def test_assistant_report_is_kept_as_escaped_html_for_the_chat(tmp_path, solver, server, entries):
     # The bubble binds chat_html with v-html; a path is untrusted text.
-    server = _server()
-    build_agent_panel(server, build_forms(solver), solver)
+    build_agent_panel(server, entries, solver)
     server.state.target_dir = str(tmp_path / "<img src=x onerror=alert(1)>")
 
     server.controller.load_target_case()
@@ -535,12 +505,11 @@ def test_assistant_report_is_kept_as_escaped_html_for_the_chat(tmp_path, solver)
     ]
 
 
-def test_user_message_has_no_html(solver):
+def test_user_message_has_no_html(solver, server, entries):
     async def handler(prompt: str) -> str:
         return "**done**"
 
-    server = _server()
-    build_agent_panel(server, build_forms(solver), solver)
+    build_agent_panel(server, entries, solver)
     server.controller.register_chat_handler("models", handler)
     server.state.current_step = "models"
 
@@ -549,9 +518,8 @@ def test_user_message_has_no_html(solver):
     assert server.state.chat_html == ["", "<strong>done</strong>"]
 
 
-def test_load_target_case_reports_an_empty_directory(tmp_path, solver):
-    server = _server()
-    build_agent_panel(server, build_forms(solver), solver)
+def test_load_target_case_reports_an_empty_directory(tmp_path, solver, server, entries):
+    build_agent_panel(server, entries, solver)
     server.state.target_dir = str(tmp_path)
 
     server.controller.load_target_case()
@@ -559,10 +527,8 @@ def test_load_target_case_reports_an_empty_directory(tmp_path, solver):
     assert server.state.chat_log[-1]["content"] == f"No case files found in {tmp_path}."
 
 
-def test_load_target_case_is_dropped_while_the_assistant_runs(solver):
+def test_load_target_case_is_dropped_while_the_assistant_runs(solver, server, entries):
     # A chat turn applies its own load when it ends; a second writer would race it.
-    server = _server()
-    entries = build_forms(solver)
     build_agent_panel(server, entries, solver)
     server.state.update({"target_dir": str(SOURCE_CASE), "ai_busy": True})
 
@@ -589,8 +555,7 @@ def test_summary_is_pure_string_building(tmp_path, monkeypatch, solver):
     assert list(tmp_path.iterdir()) == []
 
 
-def test_agent_output_is_auto_saved_before_the_reply(tmp_path, solver):
-    server = _server()
+def test_agent_output_is_auto_saved_before_the_reply(tmp_path, solver, server, entries):
     server.state.target_dir = str(tmp_path)
     refined = build_case_output_model(solver=solver).model_construct(
         transport_properties_config=configurations(solver)[
@@ -599,7 +564,7 @@ def test_agent_output_is_auto_saved_before_the_reply(tmp_path, solver):
     )
 
     send = build_agent_panel(
-        server, build_forms(solver), solver, agent_factory=lambda **_kw: _StubAgent(refined)
+        server, entries, solver, agent_factory=lambda **_kw: _StubAgent(refined)
     )
     asyncio.run(send("water, laminar"))
 
