@@ -43,11 +43,26 @@ Type the case directory into the toolbar's **Target directory** field. It must b
 an absolute path (e.g. ``/home/me/cases/my_cavity``), so the wizard never writes
 into the directory it was launched from.
 
+.. figure:: ../_static/case_wizard_models.png
+   :align: center
+   :alt: The case wizard on the Models step, with the step drawer, the toolbar and the AI assistant drawer
+   :width: 90%
+
+   The wizard after start: the step drawer on the left, the **Models** step in the
+   middle, the toolbar with **Target directory**, **Load case** and **Save case**.
+
 To continue from an existing case, type its directory there and click **Load
 case**: every config file of the case is read from disk into the forms (replacing
 what they hold) and the models the case uses are selected. The **AI assistant**
 drawer opens with the result — what was loaded, and any file that is present but
 does not validate. This needs no API key.
+
+.. figure:: ../_static/case_wizard_load_case.png
+   :align: center
+   :alt: The wizard after Load case, the AI assistant drawer listing what was loaded
+   :width: 90%
+
+   After **Load case**: the forms hold the case, the drawer reports what was loaded.
 
 Step 2 — walk through the steps
 -------------------------------
@@ -75,6 +90,20 @@ there is no per-form submit.
 - **Parameters** — optional: sweep any config over named variants and export a
   Snakemake workflow. It clones the saved case, so save first.
 - **Review & run** — see step 4.
+
+.. figure:: ../_static/case_wizard_geometry.png
+   :align: center
+   :alt: The Geometry and mesh step after a scan, one row per patch with its role and refinement
+   :width: 90%
+
+   **Geometry & mesh** after **Scan**: one row per patch, with its role and refinement.
+
+.. figure:: ../_static/case_wizard_boundary_conditions.png
+   :align: center
+   :alt: The Boundary conditions step with the U panel open, one row per scanned patch
+   :width: 90%
+
+   **Boundary conditions**: the scanned patches, each seeded from its role.
 
 Step 3 — let the assistant fill the case (optional)
 ---------------------------------------------------
@@ -112,6 +141,13 @@ run it:
 
     cd /home/me/cases/my_cavity
     ./Allrun
+
+.. figure:: ../_static/case_wizard_review.png
+   :align: center
+   :alt: The Review and run step reporting a valid case and the scaffolded Allrun and Allclean
+   :width: 90%
+
+   **Review & run** after **Save case**: the case is valid and the run scripts are written.
 
 ``Allrun`` starts ``neofoam solver incompressiblefluid``, which builds the mesh
 from ``system/preprocess.yaml`` before the time loop. The dictionaries the wizard
