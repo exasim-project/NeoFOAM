@@ -23,14 +23,14 @@ __all__ = [
 
 # Schema keywords the bundled JSONForms renderers (jsonforms_module/*.mjs) match by
 # name; a rename on one side only falls back to the stock renderer without an error.
-# Each: value shape · emitting function · renderer/layout.
-_NF_COMPACT = "nfCompact"  # True · _tag_adders · NfCompactSection/rows
-_NF_SOLVERS = "nfSolvers"  # True · _pin_solver_controls · NfCompactSection/solvers
-_NF_SOLVER = "nfSolver"  # {solver: companion key} · _pin_solver_controls · NfCompactSection/grid
-_NF_GRID = "nfGrid"  # True · _tag_scalar_grid · NfGridLayout
-_NF_DICT = "nfDict"  # True · _dictionary_cards · NfCompactSection/grid
-_NF_DICTS = "nfDicts"  # True · _dictionary_cards · NfCompactSection/solvers
-_NF_PATCHES = "nfPatches"  # True · _patch_adder · NfCompactSection/rows
+# Value shape, emitter and layout of each: doc/reference/ui-architecture.rst.
+_NF_COMPACT = "nfCompact"
+_NF_SOLVERS = "nfSolvers"
+_NF_SOLVER = "nfSolver"
+_NF_GRID = "nfGrid"
+_NF_DICT = "nfDict"
+_NF_DICTS = "nfDicts"
+_NF_PATCHES = "nfPatches"
 RENDERER_KEYWORDS = (
     _NF_COMPACT,
     _NF_SOLVERS,
@@ -584,12 +584,9 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
       (``fixedValue``/``noSlip``/…) instead of stacking every arm. The arm's own
       ``type`` property is kept in the data but not rendered (:func:`_hidden_discriminator`).
     * **No ``FoamFile`` header** — writer boilerplate; kept in the data, not rendered.
-    * **Useful "add a key" rows only** — see :func:`_accepts_new_keys`.
-    * **Labelled "add a key" rows, compact scheme sections** — see :func:`_tag_adders`.
-    * **Linear-solver blocks as grids** — see :func:`_pin_solver_controls`.
-    * **All-scalar objects as grids** — see :func:`_tag_scalar_grid`.
-    * **Patch rows for ``boundaryField``** — see :func:`_patch_adder`.
-    * **Open configs as cards** — see :func:`_dictionary_cards` (whole schema, last).
+    * **Renderer keywords** — the ``_NODE_PASSES`` on every node, then
+      ``_dictionary_cards`` on the whole schema, tag what the bundled renderers draw
+      (table: ``doc/reference/ui-architecture.rst``).
     """
     class_names = frozenset(schema.get("$defs", {}))
     schema = inline_refs(schema)

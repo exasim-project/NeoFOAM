@@ -77,17 +77,8 @@ How a form is produced
    own, and an arm holding a ``$ref`` throws on every re-evaluation.
 #. Each node is rewritten — unions first (``Optional[X]`` → ``X``, value unions → one
    text field, discriminated unions → titled ``oneOf``), then its children, then
-   ``_NODE_PASSES`` in order: ``_drop_useless_adder``, ``_tag_adders``,
-   ``_pin_solver_controls``, ``_patch_adder``, ``_tag_scalar_grid``,
-   ``_hide_discriminator``. Two ordering constraints; the other passes commute:
-
-   * ``_drop_useless_adder`` before ``_tag_adders``: a label goes on a row that is
-     still there (``_tag_adders`` reads ``additionalProperties``); a fixed card such
-     as ``PIMPLE`` gets none.
-   * ``_tag_adders`` before ``_pin_solver_controls``: a solver block is recognised as
-     an open dict (``nf.option``) by having no ``properties``, which pinning then
-     gives it.
-
+   the per-node passes. Their order and its two constraints are kept beside the list
+   itself, ``_NODE_PASSES`` in ``form_schema.py``.
 #. ``_dictionary_cards`` runs last, on the whole schema (``MRFProperties``,
    ``fvOptions``).
 #. The result becomes a ``FormEntry``; ``_seed_state`` copies its schema, UISchema and
