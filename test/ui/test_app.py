@@ -541,6 +541,21 @@ def test_boundary_conditions_step_explains_its_empty_state(wizard):
     assert "Property Name" not in template
 
 
+def test_boundary_conditions_hint_yields_to_patches_in_the_forms(wizard):
+    # "Load case" fills the forms with the case's patches without a scan, so the hint
+    # also asks the forms; the patch count of each is a term of its condition.
+
+    template = wizard.state["trame__template_main"]
+    alert = template.split('v-show="!geometry_patches.length"')[1].split(">")[0]
+    assert alert.split('v-if="')[1].split('"')[0] == (
+        "!(Object.keys(form_u_field_config__bc.boundaryField || {}).length"
+        " || Object.keys(form_p_field_config__bc.boundaryField || {}).length"
+        " || Object.keys(form_p_rgh_field_config__bc.boundaryField || {}).length"
+        " || Object.keys(form_t_field_config__bc.boundaryField || {}).length"
+        " || Object.keys(form_alphat_field_config__bc.boundaryField || {}).length)"
+    )
+
+
 def test_forms_receive_the_adder_translations(wizard):
     from neofoam.ui.form_schema import ADDER_TRANSLATIONS  # noqa: PLC0415
 

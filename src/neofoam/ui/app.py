@@ -530,6 +530,16 @@ def _toolbar(ctx: StepContext) -> None:
         _load_button(ctx, classes="mx-3")
 
 
+def _no_patches_in_forms(entries: list[FormEntry]) -> str:
+    """The JS test that no boundary-conditions form holds a patch (a load fills them unscanned)."""
+    counts = [
+        f"Object.keys({entry.state_key}.boundaryField || {{}}).length"
+        for entry in entries
+        if entry.kind == "field_bc"
+    ]
+    return f"!({' || '.join(counts)})"
+
+
 def _step_panel(
     ctx: StepContext, wizard: _Wizard, step: Step, geometry_panel: GeometryPanel
 ) -> None:
@@ -545,6 +555,7 @@ def _step_panel(
             type="info",
             variant="tonal",
             classes="mb-4",
+            v_if=_no_patches_in_forms(wizard.entries),
             v_show="!geometry_patches.length",
         )
     elif step.id == "sweep":

@@ -215,7 +215,9 @@ computed names with their helper, which makes them valid JS identifiers.
        ``geometry_status`` / ``_severity`` / ``_busy``, ``mesh_written``
      - ``geometry_panel``
      - ``geometry_patches`` only: ``agent_panel`` assigns roles, ``app`` shows the
-       "no patches" hint
+       "no patches" hint — unless a ``field_bc`` form already holds patches, as
+       after "Load case" (a template condition on the ``form_*`` data, no key of
+       its own)
    * - ``validation_ok``, ``findings``, ``save_report``, ``scaffolded``
      - ``app``
      - ``sweep_panel`` reads ``scaffolded`` before an export
