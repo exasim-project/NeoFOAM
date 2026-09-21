@@ -126,9 +126,11 @@ def _expand_default(cls: type, data: Any) -> Any:
     default_value = data["default"]
     # ``default none`` is OpenFOAM's *sentinel* — "no default; an unlisted operator
     # is an error" — not a value to fill with. Expanding it would fabricate an
-    # invalid ``none`` scheme; leave the required keys missing so the real gap shows.
+    # invalid ``none`` scheme; leave the required keys missing so the real gap shows —
+    # a declared ``default`` too, which the sentinel would fail as a value.
     if isinstance(default_value, str) and default_value.strip() == "none":
-        return data
+        declared = "default" in cls.model_fields  # type: ignore[attr-defined]
+        return {k: v for k, v in data.items() if k != "default"} if declared else data
     out = dict(data)
     for name, field_info in cls.model_fields.items():  # type: ignore[attr-defined]
         alias = field_info.alias or name

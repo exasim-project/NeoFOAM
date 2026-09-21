@@ -91,6 +91,7 @@ def _setup_case(
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_CASE = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "val_pitzDaily"
+K_EPSILON = REPO_ROOT / "test" / "turbulence" / "setup_kEpsilon"
 MOVING_ROW = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "cases" / "movingRow4"
 
 
@@ -178,6 +179,15 @@ def test_load_case_from_disk_takes_a_regex_key_for_no_slice() -> None:
     load_case_from_disk(MOVING_ROW, warnings=warnings)
 
     assert "boussinesq_fvSolution" not in [warning["config"] for warning in warnings]
+
+
+def test_load_case_from_disk_takes_default_none_for_no_boussinesq_slice() -> None:
+    """``ddtSchemes { default none; }`` is no failed value of the slice's ``default`` key."""
+    warnings: list[dict[str, str]] = []
+
+    load_case_from_disk(K_EPSILON, warnings=warnings)
+
+    assert "boussinesq_fvSchemes" not in [warning["config"] for warning in warnings]
 
 
 def test_save_case_writes_files_via_registered_io_strategies(tmp_path: Path) -> None:

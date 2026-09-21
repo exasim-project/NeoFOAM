@@ -436,6 +436,20 @@ def test_default_none_sentinel_is_not_expanded() -> None:
         Sub.model_validate({"divSchemes": {"default": "none", "div(phi,U)": "Gauss upwind"}})
 
 
+def test_default_none_sentinel_leaves_a_required_default_missing() -> None:
+    """A slice that needs the ``default`` itself has none under ``default none``: no bad value."""
+    spec = Model("DefaultNoneRequired")
+    Sub = spec.config(fvSchemes)
+    Sub.add(ddt="default")
+
+    with pytest.raises(ValidationError) as raised:
+        Sub.model_validate({"ddtSchemes": {"default": "none"}})
+
+    assert [(e["type"], e["loc"]) for e in raised.value.errors()] == [
+        ("missing", ("ddtSchemes", "default"))
+    ]
+
+
 def test_without_default_missing_required_entry_still_raises() -> None:
     """No ``default`` ⇒ a genuinely missing required operator still fails.
 
