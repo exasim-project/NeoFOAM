@@ -91,6 +91,7 @@ def _setup_case(
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_CASE = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "val_pitzDaily"
+MOVING_ROW = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "cases" / "movingRow4"
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +154,30 @@ def test_load_case_from_disk_reads_every_present_config(tmp_path: Path) -> None:
     assert spec.turbulence_properties_config.RAS is not None
     assert spec.turbulence_properties_config.RAS.RASModel == "SpalartAllmaras"
     assert (spec.control_dict_config.endTime or 0.0) > 0.0
+
+
+def test_load_case_from_disk_warns_about_a_partly_present_slice() -> None:
+    """``"(U|nuTilda)"`` groups the ``U`` solver, while ``pFinal`` shows a PIMPLE case."""
+    warnings: list[dict[str, str]] = []
+
+    load_case_from_disk(SOURCE_CASE, warnings=warnings)
+
+    assert warnings == [
+        {
+            "file": "system/fvSolution",
+            "config": "Pimple_fvSolution",
+            "reason": "missing solvers.U, solvers.UFinal",
+        }
+    ]
+
+
+def test_load_case_from_disk_takes_a_regex_key_for_no_slice() -> None:
+    """``"p.*"`` answers ``found("p_rgh")``, yet a case without buoyancy has no such slice."""
+    warnings: list[dict[str, str]] = []
+
+    load_case_from_disk(MOVING_ROW, warnings=warnings)
+
+    assert "boussinesq_fvSolution" not in [warning["config"] for warning in warnings]
 
 
 def test_save_case_writes_files_via_registered_io_strategies(tmp_path: Path) -> None:

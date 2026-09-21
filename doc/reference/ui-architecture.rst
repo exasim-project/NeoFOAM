@@ -240,6 +240,12 @@ report — the loaded configs, the selected models, a file that is present but d
 validate, fields that exist as ``0.orig/`` only (they are read from ``0/``), or why
 nothing was loaded — goes to ``chat_log`` and the AI drawer is opened to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
 
+Several configs slice one file, so ``load_case_from_disk`` takes a slice for absent —
+and stays silent — when the file spells out none of the required keys that only this
+slice declares (``div(phi,T)`` of the Boussinesq ``fvSchemes``). A slice with some of
+them is reported as ``missing <key>, <key>``. A regex or grouped key (``"(U|nuTilda)"``)
+is not such a spelling, so pitzDaily reports ``missing solvers.U, solvers.UFinal``.
+
 An assistant message is drawn as markdown: ``_markdown._chat_html`` escapes the text
 first and then turns the subset the wizard emits (bold, italics, inline code, ``-``
 lists, line breaks) into tags, kept per message in ``chat_html`` and bound with

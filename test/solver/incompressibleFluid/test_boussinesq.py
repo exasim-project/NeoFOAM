@@ -76,6 +76,11 @@ def test_pimple_defaults_carry_no_buoyancy_keys(config_name: str) -> None:
     assert [key for key in names if "rhok" in key or "p_rgh" in key] == []
 
 
+def test_pimple_schemes_declare_the_initial_flux() -> None:
+    """``createPhi`` reads ``flux(U)`` in every PIMPLE case, so it is no sign of buoyancy."""
+    assert "flux(U)" in _default_keys("Pimple_fvSchemes")["interpolationSchemes"]
+
+
 def test_boussinesq_schemes_complete_the_buoyant_key_set() -> None:
     assert _default_keys("Pimple_fvSchemes", "boussinesq_fvSchemes") == {
         "ddtSchemes": {"ddt(U)", "default"},

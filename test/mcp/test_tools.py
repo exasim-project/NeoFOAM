@@ -30,6 +30,7 @@ from neofoam.tooling.workflow.patch_set import PatchSet
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_CASE = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "val_pitzDaily"
+CLEAN_CASE = REPO_ROOT / "test" / "setup_pimple"
 TUBE_BANK = Path(__file__).parent / "cases" / "tube_bank"
 
 
@@ -482,8 +483,17 @@ def test_load_case_surfaces_dropped_configs_as_warnings(solver: Any, tmp_path: P
 
 
 def test_load_case_has_no_warnings_for_a_clean_case(solver: Any) -> None:
-    """The well-formed reference case round-trips with an empty warnings list (F5)."""
-    assert tools.load_case(solver, str(SOURCE_CASE)).warnings == []
+    """A case that spells every PIMPLE key out round-trips with an empty warnings list (F5)."""
+    assert tools.load_case(solver, str(CLEAN_CASE)).warnings == []
+
+
+def test_load_case_warns_about_a_slice_with_missing_keys(solver: Any) -> None:
+    """pitzDaily groups ``U`` as ``"(U|nuTilda)"``, which the PIMPLE slice does not read."""
+    warnings = tools.load_case(solver, str(SOURCE_CASE)).warnings
+
+    assert [(w.file, w.config, w.reason) for w in warnings] == [
+        ("system/fvSolution", "Pimple_fvSolution", "missing solvers.U, solvers.UFinal")
+    ]
 
 
 def test_validate_case_reads_constraint_patches_from_manifest_pre_mesh(

@@ -327,6 +327,9 @@ def mesh_update(
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
+    # ``flux(U)`` builds the initial face flux phi (``createPhi``) in every case,
+    # buoyant or not.
+    interpolation="flux(U)",
 )
 @PimpleFvSolution.add("U")
 def momentum(
