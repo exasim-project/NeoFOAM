@@ -191,18 +191,9 @@ def build_forms(solver: Any) -> list[FormEntry]:
     owner = _owner_by_cls_name(solver)
     entries: list[FormEntry] = []
 
-    seen: set[str] = set()
-
     for info in tools.list_configs(solver):
         if info.file and info.file.rsplit("/", 1)[-1] in _MESH_FILES:
             continue  # meshing/preprocessing config — out of scope for the wizard
-        # Mutually exclusive model families (incompressibleFluid binds both Pimple
-        # and Simple) each declare the same field config. The classes are distinct
-        # objects but schema-identical and bound to the same 0/<field> file, so the
-        # wizard shows one form per config instead of two that overwrite each other.
-        if info.name in seen:
-            continue
-        seen.add(info.name)
         dto = tools.config_schema(solver, info.name)
         cls = cfgs[info.cls_name]
         owner_model = owner.get(info.cls_name)
