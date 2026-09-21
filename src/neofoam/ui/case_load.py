@@ -10,11 +10,15 @@ panel's base-case restore — so all read the same configs and select the same m
 
 from __future__ import annotations
 
+import subprocess
+import sys
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
+from neofoam.framework.solver.configurations import configurations
+from neofoam.io import OpenFOAMStrategy
 from neofoam.io.dictread import Value, read_keys, read_section, read_toplevel
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
@@ -37,6 +41,35 @@ _CONTROL_BLOCKS = {"PIMPLE": "PIMPLE", "SIMPLE": "SIMPLE", "PISO": "PIMPLE"}
 _ISO_ADVECTOR_CONTROLS = {"reconstructionScheme", "isoFaceTol", "surfCellTol", "nAlphaBounds"}
 
 
+#: Parses each dictionary named on its command line, the way every config load does.
+_PARSE_PROBE = "import sys, pybFoam\nfor path in sys.argv[1:]:\n    pybFoam.dictionary.read(path)"
+
+
+def _dictionary_files(case_dir: Path, solver: Any) -> list[str]:
+    """The OpenFOAM dictionaries of ``case_dir`` that loading ``solver``'s configs parses."""
+    metadata = (getattr(cls, "io_config", None) for cls in configurations(solver))
+    names = {io.file for io in metadata if io and isinstance(io.reader, OpenFOAMStrategy)}
+    return sorted(str(case_dir / name) for name in names if (case_dir / name).is_file())
+
+
+def _require_parsable(case_dir: Path, solver: Any) -> None:
+    """Raise ``ValueError`` with OpenFOAM's complaint when a dictionary does not parse."""
+    # A parse error (stray brace, missing #include) is a FatalIOError: OpenFOAM exits
+    # the process instead of raising, which would take the wizard server down with it.
+    # So the files are parsed in a child first (~0.1 s); the parent reads what survived.
+    probe = subprocess.run(
+        [sys.executable, "-c", _PARSE_PROBE, *_dictionary_files(case_dir, solver)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if probe.returncode:
+        banner = (probe.stdout + probe.stderr).split("FOAM FATAL", 1)[-1]
+        message = banner.split("\n", 1)[-1].split("    From ", 1)[0]
+        reason, _, where = " ".join(message.split()).partition(" file: ")
+        raise ValueError(f"{reason} ({where.rstrip('.')}).")
+
+
 def read_case_configs(
     case_dir: Path,
     solver: Any,
@@ -46,11 +79,14 @@ def read_case_configs(
 
     Use this instead of asking the model to transcribe a case. Files that are
     absent are simply missing from the result; pass ``warnings`` to also collect
-    the ones that are present but do not validate. Pair it with
+    the ones that are present but do not validate. A dictionary OpenFOAM cannot parse
+    raises ``ValueError`` (found in a child process, as such an error ends the process
+    it occurs in). Pair it with
     :func:`apply_configs_to_forms` to put the result in front of the user::
 
         configs = read_case_configs(Path(case_dir), solver)
     """
+    _require_parsable(case_dir, solver)
     return case_spec_to_configs(load_case_from_disk(case_dir, solver=solver, warnings=warnings))
 
 

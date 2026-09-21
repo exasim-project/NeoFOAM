@@ -52,6 +52,10 @@ def entries(solver: Any) -> list[Any]:
     return build_forms(solver)
 
 
+#: A case whose only file holds a stray ``}``: OpenFOAM exits the process that parses it.
+UNPARSABLE_CASE = Path(__file__).resolve().parent / "cases" / "unparsable_dict"
+
+
 def _prebuilt_case_spec(solver: Any) -> Any:
     cfgs = configurations(solver)
     case_spec_cls = build_case_output_model(solver=solver)
@@ -478,6 +482,11 @@ def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver, serv
             str(INVALID_TRANSPORT_CASE),
             f"No case files found in {INVALID_TRANSPORT_CASE}. Present but invalid:"
             " constant/transportProperties (could not convert string to float: 'notANumber').",
+        ),
+        (
+            str(UNPARSABLE_CASE),
+            f"Could not read {UNPARSABLE_CASE}: Unexpected '}}' while reading dictionary entry"
+            f" ({UNPARSABLE_CASE}/constant/transportProperties at line 14).",
         ),
     ],
 )
