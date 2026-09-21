@@ -828,7 +828,8 @@ computed names with their helper, which makes them valid JS identifiers.</p>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">target_dir</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">app</span></code> (toolbar)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">geometry_panel</span></code> fills it after a scan when empty; <code class="docutils literal notranslate"><span class="pre">sweep_panel</span></code> sets it on
-restoring a base case; <code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> auto-saves into it</p></td>
+restoring a base case; <code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> auto-saves into it and loads the case
+in it (<code class="docutils literal notranslate"><span class="pre">ctrl.load_target_case</span></code>)</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sel_&lt;model&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">selection_key</span></code>), <code class="docutils literal notranslate"><span class="pre">choice_&lt;family&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">choice_key</span></code>)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">app</span></code></p></td>
@@ -837,7 +838,7 @@ restoring a base case; <code class="docutils literal notranslate"><span class="p
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">form_*</span></code> (<code class="docutils literal notranslate"><span class="pre">FormEntry.state_key</span></code>)</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">app</span></code>; the browser’s <code class="docutils literal notranslate"><span class="pre">change</span></code> event</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">case_load.apply_configs_to_forms</span></code> (chat, sweep), <code class="docutils literal notranslate"><span class="pre">geometry_panel</span></code>
+<td><p><code class="docutils literal notranslate"><span class="pre">case_load.apply_configs_to_forms</span></code> (chat, “Load case”, sweep), <code class="docutils literal notranslate"><span class="pre">geometry_panel</span></code>
 (patch seeding), <code class="docutils literal notranslate"><span class="pre">steps.turbulence_form_state</span></code>; <code class="docutils literal notranslate"><span class="pre">sweep_panel</span></code> reads them</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">schema_*</span></code> / <code class="docutils literal notranslate"><span class="pre">uischema_*</span></code> (<code class="docutils literal notranslate"><span class="pre">schema_key</span></code> / <code class="docutils literal notranslate"><span class="pre">uischema_key</span></code>)</p></td>
@@ -860,11 +861,11 @@ restoring a base case; <code class="docutils literal notranslate"><span class="p
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">main_drawer</span></code> / <code class="docutils literal notranslate"><span class="pre">main_drawer_mobile</span></code>, <code class="docutils literal notranslate"><span class="pre">ai_panel</span></code> / <code class="docutils literal notranslate"><span class="pre">ai_panel_mobile</span></code></p></td>
 <td><p>trame’s layout (<code class="docutils literal notranslate"><span class="pre">main_drawer</span></code>), <code class="docutils literal notranslate"><span class="pre">app</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> binds the <code class="docutils literal notranslate"><span class="pre">ai_panel</span></code> pair</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">agent_panel</span></code> binds the <code class="docutils literal notranslate"><span class="pre">ai_panel</span></code> pair and opens it for a “Load case” report</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">chat_log</span></code>, <code class="docutils literal notranslate"><span class="pre">chat_input</span></code>, <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>, <code class="docutils literal notranslate"><span class="pre">suggested_prompts</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">agent_panel</span></code></p></td>
-<td><p>none</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">app</span></code> reads <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code> to disable the toolbar’s “Load case”</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sweep_*</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">sweep_panel</span></code></p></td>
@@ -874,8 +875,15 @@ restoring a base case; <code class="docutils literal notranslate"><span class="p
 </table>
 </div>
 </section>
-<section id="save-validate-review">
-<h2>Save, validate, review<a class="headerlink" href="#save-validate-review" title="Link to this heading">¶</a></h2>
+<section id="load-save-validate-review">
+<h2>Load, save, validate, review<a class="headerlink" href="#load-save-validate-review" title="Link to this heading">¶</a></h2>
+<p>The toolbar’s “Load case” calls <code class="docutils literal notranslate"><span class="pre">ctrl.load_target_case</span></code>
+(<code class="docutils literal notranslate"><span class="pre">AgentPanel.load_target_case</span></code>): the read of the assistant’s <code class="docutils literal notranslate"><span class="pre">load_case</span></code> tool
+(<code class="docutils literal notranslate"><span class="pre">case_load.read_case_configs</span></code>) on <code class="docutils literal notranslate"><span class="pre">target_dir</span></code>, applied at once with
+<code class="docutils literal notranslate"><span class="pre">case_load.apply_configs_to_forms</span></code>. No agent is built, so it needs no API key. The
+report — the loaded configs, the selected models, a file that is present but does not
+validate, or why nothing was loaded — goes to <code class="docutils literal notranslate"><span class="pre">chat_log</span></code> and the AI drawer is opened
+to show it. It is dropped while <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>: a chat turn applies its own load.</p>
 <p><code class="docutils literal notranslate"><span class="pre">ctrl.save_case</span></code> (<code class="docutils literal notranslate"><span class="pre">app._save_case</span></code>) switches to the Review step, then:
 <code class="docutils literal notranslate"><span class="pre">case_spec.state_to_case_spec</span></code> merges the two halves of each field config and skips
 forms of unselected models; <code class="docutils literal notranslate"><span class="pre">neofoam.mcp.tools.save_case</span></code> validates the spec against
@@ -969,7 +977,7 @@ the docstring of <code class="docutils literal notranslate"><span class="pre">sr
 <li><a class="reference internal" href="#how-a-form-is-produced">How a form is produced</a></li>
 <li><a class="reference internal" href="#the-python-js-renderer-contract">The Python ↔ JS renderer contract</a></li>
 <li><a class="reference internal" href="#shared-trame-state">Shared trame state</a></li>
-<li><a class="reference internal" href="#save-validate-review">Save, validate, review</a></li>
+<li><a class="reference internal" href="#load-save-validate-review">Load, save, validate, review</a></li>
 <li><a class="reference internal" href="#test-and-inspect">Test and inspect</a></li>
 <li><a class="reference internal" href="#step-plugins">Step plugins</a></li>
 </ul>

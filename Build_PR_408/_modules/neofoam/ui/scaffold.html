@@ -616,7 +616,7 @@
 <span class="sd">"""Write OpenFOAM-style ``Allrun`` / ``Allclean`` scripts into a saved case.</span>
 
 <span class="sd">After the configs are written, this makes the case directory *runnable*: ``./Allrun``</span>
-<span class="sd">launches the NeoFOAM ``incompressibleFluid`` solver (meshing happens in-process from</span>
+<span class="sd">launches the case's NeoFOAM solver (meshing happens in-process from</span>
 <span class="sd">``system/preprocess.yaml``), and ``./Allclean`` restores it to a clean state. ``Allrun``</span>
 <span class="sd">reuses the repo's ``scripts/Allrun`` template when available (source checkout), falling</span>
 <span class="sd">back to an embedded copy so an installed package still works; ``Allclean`` is authored</span>
@@ -668,6 +668,9 @@
 <span class="s2">cleanCase0</span>
 <span class="s2">"""</span>
 
+<span class="c1">#: The solver the ``Allrun`` template is written for.</span>
+<span class="n">_TEMPLATE_SOLVER</span> <span class="o">=</span> <span class="s2">"incompressibleFluid"</span>
+
 <span class="n">_EXEC_MODE</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRWXU</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IROTH</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXOTH</span>  <span class="c1"># 0o755</span>
 
 
@@ -679,20 +682,24 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_allrun_text</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_allrun_text</span><span class="p">(</span><span class="n">solver_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">template</span> <span class="o">=</span> <span class="n">allrun_template_path</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">template</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">_ALLRUN_FALLBACK</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span> <span class="k">if</span> <span class="n">template</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="n">_ALLRUN_FALLBACK</span>
+    <span class="c1"># The CLI registers each solver under its lower-cased name (neofoam.cli.app).</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NeoFOAM </span><span class="si">{</span><span class="n">_TEMPLATE_SOLVER</span><span class="si">}</span><span class="s2"> case"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"NeoFOAM </span><span class="si">{</span><span class="n">solver_name</span><span class="si">}</span><span class="s2"> case"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">"solver </span><span class="si">{</span><span class="n">_TEMPLATE_SOLVER</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"solver </span><span class="si">{</span><span class="n">solver_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2"> "</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="scaffold_runnable_case">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.scaffold.html#neofoam.ui.scaffold.scaffold_runnable_case">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">scaffold_runnable_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Write executable ``Allrun`` + ``Allclean`` into ``case_dir``. Idempotent."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">scaffold_runnable_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="n">solver_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_TEMPLATE_SOLVER</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Write executable ``Allrun`` + ``Allclean`` into ``case_dir``. Idempotent.</span>
+
+<span class="sd">    ``Allrun`` runs the ``neofoam solver`` command of ``solver_name``.</span>
+<span class="sd">    """</span>
     <span class="n">case</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Allrun"</span><span class="p">,</span> <span class="n">_allrun_text</span><span class="p">()),</span> <span class="p">(</span><span class="s2">"Allclean"</span><span class="p">,</span> <span class="n">ALLCLEAN_TEXT</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"Allrun"</span><span class="p">,</span> <span class="n">_allrun_text</span><span class="p">(</span><span class="n">solver_name</span><span class="p">)),</span> <span class="p">(</span><span class="s2">"Allclean"</span><span class="p">,</span> <span class="n">ALLCLEAN_TEXT</span><span class="p">)):</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">case</span> <span class="o">/</span> <span class="n">name</span>
         <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="n">path</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">_EXEC_MODE</span><span class="p">)</span>

@@ -43,6 +43,12 @@ Type the case directory into the toolbar's **Target directory** field. It must b
 an absolute path (e.g. ``/home/me/cases/my_cavity``), so the wizard never writes
 into the directory it was launched from.
 
+To continue from an existing case, type its directory there and click **Load
+case**: every config file of the case is read from disk into the forms (replacing
+what they hold) and the models the case uses are selected. The **AI assistant**
+drawer opens with the result — what was loaded, and any file that is present but
+does not validate. This needs no API key.
+
 Step 2 — walk through the steps
 -------------------------------
 
@@ -84,7 +90,8 @@ messages refine the same case. If patches are scanned, the same prompt also
 assigns their roles.
 The model is ``claude-haiku-4-5`` unless ``NEOFOAM_CASE_MODEL`` names another.
 
-To continue from an existing case, ask the assistant to open it:
+The assistant can also open an existing case (like **Load case**, from any
+directory) and change it in the same turn:
 
     *Load the case at /home/me/cases/cavity, then raise endTime to 10.*
 

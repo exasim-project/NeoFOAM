@@ -657,6 +657,11 @@ the default, <code class="docutils literal notranslate"><span class="pre">incomp
 <p>Type the case directory into the toolbar’s <strong>Target directory</strong> field. It must be
 an absolute path (e.g. <code class="docutils literal notranslate"><span class="pre">/home/me/cases/my_cavity</span></code>), so the wizard never writes
 into the directory it was launched from.</p>
+<p>To continue from an existing case, type its directory there and click <strong>Load
+case</strong>: every config file of the case is read from disk into the forms (replacing
+what they hold) and the models the case uses are selected. The <strong>AI assistant</strong>
+drawer opens with the result — what was loaded, and any file that is present but
+does not validate. This needs no API key.</p>
 </section>
 <section id="step-2-walk-through-the-steps">
 <h2>Step 2 — walk through the steps<a class="headerlink" href="#step-2-walk-through-the-steps" title="Link to this heading">¶</a></h2>
@@ -697,7 +702,8 @@ into the target directory (if one is set) and replies with a summary. Follow-up
 messages refine the same case. If patches are scanned, the same prompt also
 assigns their roles.
 The model is <code class="docutils literal notranslate"><span class="pre">claude-haiku-4-5</span></code> unless <code class="docutils literal notranslate"><span class="pre">NEOFOAM_CASE_MODEL</span></code> names another.</p>
-<p>To continue from an existing case, ask the assistant to open it:</p>
+<p>The assistant can also open an existing case (like <strong>Load case</strong>, from any
+directory) and change it in the same turn:</p>
 <blockquote>
 <div><p><em>Load the case at /home/me/cases/cavity, then raise endTime to 10.</em></p>
 </div></blockquote>

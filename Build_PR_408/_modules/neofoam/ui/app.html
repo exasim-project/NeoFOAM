@@ -868,7 +868,7 @@
         <span class="c1"># Make the saved case runnable, then validate it — inside the try, so a</span>
         <span class="c1"># scaffold/validate failure is reported instead of leaving Review saying</span>
         <span class="c1"># the case still has to be saved.</span>
-        <span class="n">state</span><span class="o">.</span><span class="n">scaffolded</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">scaffold_runnable_case</span><span class="p">(</span><span class="n">target</span><span class="p">)]</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">scaffolded</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">scaffold_runnable_case</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">solver_name</span><span class="p">)]</span>
         <span class="n">_validate_and_store</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - a save failure must not crash the UI</span>
         <span class="c1"># Incomplete/invalid configs — surface each field instead of crashing.</span>
@@ -1088,8 +1088,21 @@
                 <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="o">**</span><span class="n">props</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""" "Load case": the target directory's case into the forms (``agent_panel``)."""</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
+        <span class="s2">"Load case"</span><span class="p">,</span>
+        <span class="n">click</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">load_target_case</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
+        <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
+        <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-folder-open-outline"</span><span class="p">,</span>
+        <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"!target_dir.trim() || ai_busy"</span><span class="p">,),</span>
+        <span class="o">**</span><span class="n">props</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_toolbar</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Target directory, Save and the AI-drawer toggle (the path wraps on a phone)."""</span>
+<span class="w">    </span><span class="sd">"""Target directory, Load, Save and the AI-drawer toggle (the path wraps on a phone)."""</span>
     <span class="n">v3</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span>
     <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
     <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
@@ -1100,6 +1113,7 @@
         <span class="n">style</span><span class="o">=</span><span class="s2">"max-width: 340px"</span><span class="p">,</span>
         <span class="n">v_if</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"ml-3"</span><span class="p">,</span> <span class="n">v_if</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
         <span class="s2">"Save case"</span><span class="p">,</span>
         <span class="n">click</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">save_case</span><span class="p">,</span>
@@ -1123,8 +1137,9 @@
             <span class="n">label</span><span class="o">=</span><span class="s2">"Target directory"</span><span class="p">,</span>
             <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">prepend_inner_icon</span><span class="o">=</span><span class="s2">"mdi-folder-arrow-down-outline"</span><span class="p">,</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"mx-3"</span><span class="p">,</span>
+            <span class="n">classes</span><span class="o">=</span><span class="s2">"ml-3"</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"mx-3"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_step_panel</span><span class="p">(</span>

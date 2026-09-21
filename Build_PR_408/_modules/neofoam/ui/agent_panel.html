@@ -627,7 +627,8 @@
 <span class="sd">The agent also carries a ``load_case`` tool, so "open the case at &lt;path&gt;" reads an</span>
 <span class="sd">existing OpenFOAM case straight off disk into the forms — deterministically, via</span>
 <span class="sd">:func:`neofoam.ui.case_load.read_case_configs`, never through the model's own</span>
-<span class="sd">transcription of the dictionaries.</span>
+<span class="sd">transcription of the dictionaries. The toolbar's "Load case" button runs the same</span>
+<span class="sd">read without the agent (:meth:`AgentPanel.load_target_case`) and reports in the chat.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -639,6 +640,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_case_agent</span><span class="p">,</span> <span class="n">case_spec_to_configs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">SOLVER_COMPANION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_configs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">_resolve_target</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._responsive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MOBILE</span><span class="p">,</span> <span class="n">_responsive_open</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_load</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_configs_to_forms</span><span class="p">,</span> <span class="n">read_case_configs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span>
@@ -683,6 +685,12 @@
     <span class="n">lines</span> <span class="o">+=</span> <span class="n">saved</span>
     <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Review the forms; click **Save case** when ready."</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_invalid_note</span><span class="p">(</span><span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One sentence naming the files that are present but do not validate."""</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">w</span><span class="p">[</span><span class="s1">'file'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">w</span><span class="p">[</span><span class="s1">'reason'</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Present but invalid: </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s2">."</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_drop_stale_companions</span><span class="p">(</span><span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -740,6 +748,7 @@
         <span class="n">state</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"geometry_patches"</span><span class="p">,</span> <span class="p">[])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctrl</span><span class="o">.</span><span class="n">register_chat_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">register_chat_handler</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctrl</span><span class="o">.</span><span class="n">send_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctrl</span><span class="o">.</span><span class="n">load_target_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_target_case</span>
 
 <div class="viewcode-block" id="AgentPanel.register_chat_handler">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.register_chat_handler">[docs]</a>
@@ -779,12 +788,42 @@
             <span class="k">return</span> <span class="sa">f</span><span class="s2">"Could not read </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">"</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="p">[</span><span class="s2">"dir"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="p">[</span><span class="s2">"configs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">configs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="p">[</span><span class="s2">"invalid"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">_invalid_note</span><span class="p">(</span><span class="n">warnings</span><span class="p">)]</span> <span class="k">if</span> <span class="n">warnings</span> <span class="k">else</span> <span class="p">[]</span>
 
         <span class="n">names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">)</span>
-        <span class="n">reply</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2"> configs from </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">."</span>
-        <span class="k">if</span> <span class="n">warnings</span><span class="p">:</span>
-            <span class="n">reply</span> <span class="o">+=</span> <span class="s2">" Present but invalid: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="s2">"config"</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"."</span>
-        <span class="k">return</span> <span class="n">reply</span></div>
+        <span class="n">reply</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2"> configs from </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"No case files found in </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">."</span>
+        <span class="k">return</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">reply</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="p">[</span><span class="s2">"invalid"</span><span class="p">]])</span></div>
+
+
+<div class="viewcode-block" id="AgentPanel.load_target_case">
+<a class="viewcode-back" href="../../../reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.load_target_case">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_target_case</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The toolbar's "Load case": the target directory into the forms, without the agent.</span>
+
+<span class="sd">        The same read as the ``load_case`` tool, applied at once; the report goes to the</span>
+<span class="sd">        chat, which is unfolded to show it. Needs no API key.</span>
+<span class="sd">        """</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+        <span class="c1"># A running chat turn applies its own load when it ends.</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">ai_busy</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_case</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">_resolve_target</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">target_dir</span><span class="p">,</span> <span class="s2">"target directory"</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="n">configs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"configs"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">configs</span><span class="p">:</span>
+            <span class="n">loaded_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="p">[</span><span class="s2">"dir"</span><span class="p">]</span>
+            <span class="n">models</span> <span class="o">=</span> <span class="n">apply_configs_to_forms</span><span class="p">(</span>
+                <span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entries</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_families</span><span class="p">,</span> <span class="n">configs</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">loaded_dir</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">_summary</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">models</span><span class="p">,</span> <span class="n">loaded_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="p">[</span><span class="s2">"invalid"</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loaded</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_say</span><span class="p">(</span><span class="s2">"assistant"</span><span class="p">,</span> <span class="n">reply</span><span class="p">)</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">ai_panel</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">ai_panel_mobile</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="AgentPanel.send_message">
@@ -945,7 +984,10 @@
                     <span class="p">):</span>
                         <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
                             <span class="s2">"{{ m.content }}"</span><span class="p">,</span>
-                            <span class="n">style</span><span class="o">=</span><span class="s2">"white-space: pre-wrap; font-size: 0.9rem;"</span><span class="p">,</span>
+                            <span class="c1"># A loaded case's path has no space to break at.</span>
+                            <span class="n">style</span><span class="o">=</span><span class="p">(</span>
+                                <span class="s2">"white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem;"</span>
+                            <span class="p">),</span>
                         <span class="p">)</span>
                     <span class="n">v3</span><span class="o">.</span><span class="n">VProgressLinear</span><span class="p">(</span><span class="n">indeterminate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">v_show</span><span class="o">=</span><span class="s2">"ai_busy"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"secondary"</span><span class="p">)</span>
                 <span class="c1"># Composer pinned to the bottom.</span>
