@@ -28,6 +28,7 @@ from typing import Any, Callable
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
 from neofoam.framework.validation import SOLVER_COMPANION
 from neofoam.io import write_configs
+from neofoam.ui._markdown import _chat_html
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open
 from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
@@ -135,6 +136,8 @@ class AgentPanel:
         state = self._state
         state.chat_input = ""
         state.chat_log = []  # [{"role": "user"|"assistant", "content": str}]
+        # Per message: an assistant's markdown as escaped HTML; "" for a user's (plain text).
+        state.chat_html = []
         state.ai_busy = False
         state.suggested_prompts = list(SUGGESTED_PROMPTS)
         # Owned by the geometry panel; defaulted here so the chat is usable standalone.
@@ -154,6 +157,8 @@ class AgentPanel:
 
     def _say(self, role: str, content: str) -> None:
         self._state.chat_log = [*self._state.chat_log, {"role": role, "content": content}]
+        rendered = _chat_html(content) if role == "assistant" else ""
+        self._state.chat_html = [*self._state.chat_html, rendered]
 
     def load_case(self, case_dir: str) -> str:
         """Load an existing OpenFOAM case from disk into the wizard.
@@ -362,12 +367,19 @@ class AgentPanel:
                         classes="pa-3 mb-2",
                         color=("m.role === 'user' ? 'primary' : 'surface-variant'",),
                     ):
+                        # A loaded case's path has no space to break at.
                         html.Div(
                             "{{ m.content }}",
-                            # A loaded case's path has no space to break at.
+                            v_if="m.role === 'user'",
                             style=(
                                 "white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem;"
                             ),
+                        )
+                        # Escaped by _chat_html: a reply or a path is never raw HTML.
+                        html.Div(
+                            v_if="m.role !== 'user'",
+                            v_html="chat_html[i]",
+                            style="overflow-wrap: anywhere; font-size: 0.9rem;",
                         )
                     v3.VProgressLinear(indeterminate=True, v_show="ai_busy", color="secondary")
                 # Composer pinned to the bottom.

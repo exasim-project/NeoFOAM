@@ -605,3 +605,15 @@ def test_load_case_button_loads_the_target_case_without_an_api_key(monkeypatch, 
         e for e in wizard.controller.get_entries() if e.config_name == "transport_properties_config"
     )
     assert wizard.state[transport.state_key] == {"transportModel": "Newtonian", "nu": 1e-05}
+
+
+def test_chat_renders_assistant_messages_as_html_and_user_messages_as_text(wizard):
+    template = wizard.state["trame__template_main"]
+    user, assistant = (bubble for bubble in template.split("<div") if 'v-if="m.role ' in bubble)
+    assert "m.role === 'user'" in user
+    assert "{{ m.content }}" in user
+    assert "white-space: pre-wrap" in user
+    assert 'v-html="chat_html[i]"' in assistant
+    assert "{{" not in assistant
+    for bubble in (user, assistant):
+        assert "overflow-wrap: anywhere" in bubble

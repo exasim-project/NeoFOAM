@@ -522,6 +522,33 @@ def test_load_target_case_reports_a_directory_it_cannot_load(solver, target, rep
     assert server.state[_tp_key(entries)] is None  # forms untouched (never seeded here)
 
 
+def test_assistant_report_is_kept_as_escaped_html_for_the_chat(tmp_path, solver):
+    # The bubble binds chat_html with v-html; a path is untrusted text.
+    server = _server()
+    build_agent_panel(server, build_forms(solver), solver)
+    server.state.target_dir = str(tmp_path / "<img src=x onerror=alert(1)>")
+
+    server.controller.load_target_case()
+
+    assert server.state.chat_html == [
+        f"No case directory at {tmp_path}/&lt;img src=x onerror=alert(1)&gt;."
+    ]
+
+
+def test_user_message_has_no_html(solver):
+    async def handler(prompt: str) -> str:
+        return "**done**"
+
+    server = _server()
+    build_agent_panel(server, build_forms(solver), solver)
+    server.controller.register_chat_handler("models", handler)
+    server.state.current_step = "models"
+
+    asyncio.run(server.controller.send_message("<b>hi</b>"))
+
+    assert server.state.chat_html == ["", "<strong>done</strong>"]
+
+
 def test_load_target_case_reports_an_empty_directory(tmp_path, solver):
     server = _server()
     build_agent_panel(server, build_forms(solver), solver)

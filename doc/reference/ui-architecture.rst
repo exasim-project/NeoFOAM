@@ -33,8 +33,9 @@ Listed bottom-up. **A module imports only from rows above its own**; two referen
 point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
 ``SweepPanel``) and are ``TYPE_CHECKING``-only.
 
-``_paths``, ``_responsive``, ``review``, ``scaffold``, ``geometry``, ``sweep_model``, ``plugins/``, ``jsonforms_module/``
-    Leaves: path-field check; phone/desktop drawer props; findings → alert rows;
+``_paths``, ``_responsive``, ``_markdown``, ``review``, ``scaffold``, ``geometry``, ``sweep_model``, ``plugins/``, ``jsonforms_module/``
+    Leaves: path-field check; phone/desktop drawer props; chat markdown → escaped
+    HTML; findings → alert rows;
     ``Allrun``/``Allclean``; STL scan and mesh dicts; the sweep data model; the
     step-plugin interface; the bundled ``<json-forms>`` client module.
 ``boundary_forms``
@@ -221,7 +222,7 @@ computed names with their helper, which makes them valid JS identifiers.
    * - ``main_drawer`` / ``main_drawer_mobile``, ``ai_panel`` / ``ai_panel_mobile``
      - trame's layout (``main_drawer``), ``app``
      - ``agent_panel`` binds the ``ai_panel`` pair and opens it for a "Load case" report
-   * - ``chat_log``, ``chat_input``, ``ai_busy``, ``suggested_prompts``
+   * - ``chat_log``, ``chat_html``, ``chat_input``, ``ai_busy``, ``suggested_prompts``
      - ``agent_panel``
      - ``app`` reads ``ai_busy`` to disable the toolbar's "Load case"
    * - ``sweep_*``
@@ -238,6 +239,12 @@ The toolbar's "Load case" calls ``ctrl.load_target_case``
 report — the loaded configs, the selected models, a file that is present but does not
 validate, fields that exist as ``0.orig/`` only (they are read from ``0/``), or why
 nothing was loaded — goes to ``chat_log`` and the AI drawer is opened to show it. It is dropped while ``ai_busy``: a chat turn applies its own load.
+
+An assistant message is drawn as markdown: ``_markdown._chat_html`` escapes the text
+first and then turns the subset the wizard emits (bold, italics, inline code, ``-``
+lists, line breaks) into tags, kept per message in ``chat_html`` and bound with
+``v-html``. A reply or a path is untrusted, so no HTML of its own survives; a user's
+message stays plain text.
 
 A pick-one family follows the case the way the solver would run it:
 ``case_algorithm`` reads the ``system/fvSolution`` control block, and for
