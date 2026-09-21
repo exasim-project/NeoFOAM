@@ -882,8 +882,13 @@ in it (<code class="docutils literal notranslate"><span class="pre">ctrl.load_ta
 (<code class="docutils literal notranslate"><span class="pre">case_load.read_case_configs</span></code>) on <code class="docutils literal notranslate"><span class="pre">target_dir</span></code>, applied at once with
 <code class="docutils literal notranslate"><span class="pre">case_load.apply_configs_to_forms</span></code>. No agent is built, so it needs no API key. The
 report — the loaded configs, the selected models, a file that is present but does not
-validate, or why nothing was loaded — goes to <code class="docutils literal notranslate"><span class="pre">chat_log</span></code> and the AI drawer is opened
-to show it. It is dropped while <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>: a chat turn applies its own load.</p>
+validate, fields that exist as <code class="docutils literal notranslate"><span class="pre">0.orig/</span></code> only (they are read from <code class="docutils literal notranslate"><span class="pre">0/</span></code>), or why
+nothing was loaded — goes to <code class="docutils literal notranslate"><span class="pre">chat_log</span></code> and the AI drawer is opened to show it. It is dropped while <code class="docutils literal notranslate"><span class="pre">ai_busy</span></code>: a chat turn applies its own load.</p>
+<p>A pick-one family follows the case the way the solver would run it:
+<code class="docutils literal notranslate"><span class="pre">case_algorithm</span></code> reads the <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> control block, and for
+<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> <code class="docutils literal notranslate"><span class="pre">case_advection_model</span></code> mirrors the solver’s
+<code class="docutils literal notranslate"><span class="pre">select_from_case</span></code> — the <code class="docutils literal notranslate"><span class="pre">advectionScheme</span></code> key, else isoAdvector controls in the
+alpha solver block, else <code class="docutils literal notranslate"><span class="pre">MULES</span></code>, so a case without evidence selects <code class="docutils literal notranslate"><span class="pre">MULES</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">ctrl.save_case</span></code> (<code class="docutils literal notranslate"><span class="pre">app._save_case</span></code>) switches to the Review step, then:
 <code class="docutils literal notranslate"><span class="pre">case_spec.state_to_case_spec</span></code> merges the two halves of each field config and skips
 forms of unselected models; <code class="docutils literal notranslate"><span class="pre">neofoam.mcp.tools.save_case</span></code> validates the spec against

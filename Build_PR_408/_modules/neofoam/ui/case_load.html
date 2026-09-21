@@ -691,12 +691,12 @@
 
 <div class="viewcode-block" id="case_advection_model">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.case_advection_model">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">case_advection_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The alpha-advection model the case's ``system/fvSolution`` is evidence of.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">case_advection_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The alpha-advection model the VoF solver would run the case with.</span>
 
 <span class="sd">    The same evidence the VoF solver's ``select_from_case`` runs on: the</span>
 <span class="sd">    ``advectionScheme`` key, else isoAdvector-only controls in the alpha solver block.</span>
-<span class="sd">    ``None`` without either, so the wizard then keeps its current choice::</span>
+<span class="sd">    Without either — or without the file — it is ``MULES``, the solver's fallback::</span>
 
 <span class="sd">        advection = case_advection_model(Path(case_dir))</span>
 <span class="sd">    """</span>
@@ -706,7 +706,7 @@
         <span class="k">return</span> <span class="n">named</span><span class="o">.</span><span class="n">text</span>
     <span class="n">blocks</span> <span class="o">=</span> <span class="n">read_section</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="n">controls</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">blocks</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"alpha."</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">block</span><span class="p">}</span>
-    <span class="k">return</span> <span class="s2">"isoAdvector"</span> <span class="k">if</span> <span class="n">controls</span> <span class="o">&amp;</span> <span class="n">_ISO_ADVECTOR_CONTROLS</span> <span class="k">else</span> <span class="kc">None</span></div>
+    <span class="k">return</span> <span class="s2">"isoAdvector"</span> <span class="k">if</span> <span class="n">controls</span> <span class="o">&amp;</span> <span class="n">_ISO_ADVECTOR_CONTROLS</span> <span class="k">else</span> <span class="s2">"MULES"</span></div>
 
 
 

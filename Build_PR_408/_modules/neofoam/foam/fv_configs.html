@@ -636,10 +636,20 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">TypeAdapter</span><span class="p">,</span> <span class="n">create_model</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConfigDict</span><span class="p">,</span>
+    <span class="n">Field</span><span class="p">,</span>
+    <span class="n">TypeAdapter</span><span class="p">,</span>
+    <span class="n">ValidatorFunctionWrapHandler</span><span class="p">,</span>
+    <span class="n">WithJsonSchema</span><span class="p">,</span>
+    <span class="n">WrapValidator</span><span class="p">,</span>
+    <span class="n">create_model</span><span class="p">,</span>
+    <span class="n">model_validator</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam.schemes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Corrected</span><span class="p">,</span>
@@ -888,6 +898,41 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Linear-solver block</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_SolverControls</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One ``solvers.&lt;field&gt;`` block: the standard numeric controls, typed.</span>
+
+<span class="sd">    A dict, not a model: every other key (``solver``, ``smoother``, ``nSweeps``, the</span>
+<span class="sd">    isoAdvector controls, a nested ``preconditioner``) stays in it as read.</span>
+<span class="sd">    """</span>
+
+    <span class="n">__pydantic_config__</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span>  <span class="c1"># type: ignore[misc]</span>
+
+    <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">relTol</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">maxIter</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">minIter</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_in_file_order</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">ValidatorFunctionWrapHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The validated block in the key order it came in: it is written back in dump order."""</span>
+    <span class="n">typed</span> <span class="o">=</span> <span class="n">handler</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">typed</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">block</span><span class="p">}</span>
+
+
+<span class="c1"># Published as the open dictionary it is on disk: the wizard's form pins a block's keys</span>
+<span class="c1"># itself and recognises a block by its declaring none (``form_schema``).</span>
+<span class="n">SolverControls</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">_SolverControls</span><span class="p">,</span>
+    <span class="n">WrapValidator</span><span class="p">(</span><span class="n">_in_file_order</span><span class="p">),</span>
+    <span class="n">WithJsonSchema</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span> <span class="s2">"additionalProperties"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}),</span>
+<span class="p">]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Base classes</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
@@ -1025,16 +1070,17 @@
 <span class="sd">        Each ``field`` adds a typed entry under ``solvers.&lt;field&gt;`` plus its</span>
 <span class="sd">        ``solvers.&lt;field&gt;Final`` companion: on the final (in PISO mode:</span>
 <span class="sd">        every) outer iteration ``fvMatrix::solve`` selects the ``Final``</span>
-<span class="sd">        solver settings, so OpenFOAM requires both dictionaries. Today the</span>
-<span class="sd">        value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a</span>
-<span class="sd">        richer typed solver-control model is a follow-up. The presence</span>
-<span class="sd">        check alone catches the most common case-misconfiguration failures.</span>
+<span class="sd">        solver settings, so OpenFOAM requires both dictionaries. The value</span>
+<span class="sd">        is a :data:`SolverControls` dict: its numeric controls load as</span>
+<span class="sd">        numbers, every other key as read.</span>
 <span class="sd">        A steady (SIMPLE) slice has no final outer iteration: it passes</span>
 <span class="sd">        ``final_required=False`` so a case without ``Final`` entries loads.</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
-            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">Final"</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="ow">not</span> <span class="n">final_required</span><span class="p">)</span>
+            <span class="n">_register_entry</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">SolverControls</span><span class="p">)</span>
+            <span class="n">_register_entry</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">Final"</span><span class="p">,</span> <span class="n">SolverControls</span><span class="p">,</span> <span class="n">optional</span><span class="o">=</span><span class="ow">not</span> <span class="n">final_required</span>
+            <span class="p">)</span>
         <span class="n">_rebuild_sections</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_decorator</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>

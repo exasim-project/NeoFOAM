@@ -690,10 +690,9 @@ solves for. Each field name becomes a typed entry under the
 <p>Each <code class="docutils literal notranslate"><span class="pre">field</span></code> adds a typed entry under <code class="docutils literal notranslate"><span class="pre">solvers.&lt;field&gt;</span></code> plus its
 <code class="docutils literal notranslate"><span class="pre">solvers.&lt;field&gt;Final</span></code> companion: on the final (in PISO mode:
 every) outer iteration <code class="docutils literal notranslate"><span class="pre">fvMatrix::solve</span></code> selects the <code class="docutils literal notranslate"><span class="pre">Final</span></code>
-solver settings, so OpenFOAM requires both dictionaries. Today the
-value is parsed as <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">Any]</span></code> (extra-allow sub-section); a
-richer typed solver-control model is a follow-up. The presence
-check alone catches the most common case-misconfiguration failures.
+solver settings, so OpenFOAM requires both dictionaries. The value
+is a <code class="xref py py-data docutils literal notranslate"><span class="pre">SolverControls</span></code> dict: its numeric controls load as
+numbers, every other key as read.
 A steady (SIMPLE) slice has no final outer iteration: it passes
 <code class="docutils literal notranslate"><span class="pre">final_required=False</span></code> so a case without <code class="docutils literal notranslate"><span class="pre">Final</span></code> entries loads.</p>
 </dd></dl>
