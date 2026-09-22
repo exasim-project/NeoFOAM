@@ -918,10 +918,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_autosave</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Write ``configs`` to the target dir; returns the reply lines reporting it."""</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">target_dir</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">target</span> <span class="ow">and</span> <span class="n">configs</span><span class="p">):</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">target_dir</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">raw</span> <span class="ow">and</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">and</span> <span class="n">configs</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">[]</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Resolved like every other writer: a relative field would otherwise</span>
+            <span class="c1"># write the generated configs into the server's launch directory.</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">_resolve_target</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">"target directory"</span><span class="p">)</span>
             <span class="c1"># Not save_case(result.output): a loaded case lives in `configs`, not</span>
             <span class="c1"># in the agent's own output, and must be written out too.</span>
             <span class="n">written</span> <span class="o">=</span> <span class="n">write_configs</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>

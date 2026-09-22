@@ -634,7 +634,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">read_keys</span><span class="p">,</span> <span class="n">read_section</span><span class="p">,</span> <span class="n">read_toplevel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">configs_to_form_state</span><span class="p">,</span> <span class="n">models_filled_by</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.steps</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">loaded_turbulence_model</span><span class="p">,</span> <span class="n">select_model_state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.steps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModelFamily</span><span class="p">,</span>
+    <span class="n">loaded_turbulence_model</span><span class="p">,</span>
+    <span class="n">select_model_state</span><span class="p">,</span>
+    <span class="n">selection_key</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"read_case_configs"</span><span class="p">,</span>
@@ -772,6 +777,32 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_clear_absent</span><span class="p">(</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">],</span>
+    <span class="n">families</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelFamily</span><span class="p">],</span>
+    <span class="n">filled</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Reset the forms and switch off the optional models a loaded case does not fill.</span>
+
+<span class="sd">    The replacement half of a load: without it the previous case's data stays live in</span>
+<span class="sd">    every form the new one leaves out, and its optional models stay selected — so the</span>
+<span class="sd">    next Save writes, say, the Boussinesq configs of the case before into the case just</span>
+<span class="sd">    loaded. A form goes back to the defaults a fresh wizard seeds. A family member is</span>
+<span class="sd">    never deselected: a pick-one family must always have exactly one member on, and</span>
+<span class="sd">    which one is :func:`models_to_select`'s decision.</span>
+<span class="sd">    """</span>
+    <span class="n">family_members</span> <span class="o">=</span> <span class="p">{</span><span class="n">choice</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">families</span> <span class="k">for</span> <span class="n">choice</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">}</span>
+    <span class="n">filled_owners</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">owner_model</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">filled</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">filled</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">state</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">state_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="n">owner</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">owner_model</span>
+        <span class="k">if</span> <span class="n">owner</span> <span class="ow">and</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filled_owners</span> <span class="ow">and</span> <span class="n">owner</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">family_members</span><span class="p">:</span>
+            <span class="n">state</span><span class="p">[</span><span class="n">selection_key</span><span class="p">(</span><span class="n">owner</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">False</span>
+
+
 <div class="viewcode-block" id="apply_configs_to_forms">
 <a class="viewcode-back" href="../../../reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.apply_configs_to_forms">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_configs_to_forms</span><span class="p">(</span>
@@ -786,14 +817,20 @@
 <span class="sd">    Overwrites whatever the forms currently hold for those configs, so a caller</span>
 <span class="sd">    that can lose user edits asks first. Pass the ``case_dir`` the configs were read</span>
 <span class="sd">    from so a pick-one family follows the case (:func:`case_algorithm`,</span>
-<span class="sd">    :func:`case_advection_model`). Must run on</span>
+<span class="sd">    :func:`case_advection_model`) — and because that marks ``configs`` as one case's</span>
+<span class="sd">    whole contents, the load then *replaces* instead of merging (:func:`_clear_absent`).</span>
+<span class="sd">    Without a ``case_dir`` the configs are one incremental fill (the AI's own output)</span>
+<span class="sd">    and the untouched forms stay as they are. Must run on</span>
 <span class="sd">    trame's event loop like every other state write::</span>
 
 <span class="sd">        selected = apply_configs_to_forms(state, entries, families, configs, case_dir)</span>
 <span class="sd">    """</span>
     <span class="n">by_key</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">}</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">configs_to_form_state</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">filled</span> <span class="o">=</span> <span class="n">configs_to_form_state</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">filled</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">state</span><span class="p">[</span><span class="n">by_key</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">state_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="k">if</span> <span class="n">case_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_clear_absent</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">families</span><span class="p">,</span> <span class="n">filled</span><span class="p">)</span>
     <span class="n">algorithm</span> <span class="o">=</span> <span class="n">case_algorithm</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span> <span class="k">if</span> <span class="n">case_dir</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">selected</span> <span class="o">=</span> <span class="n">models_to_select</span><span class="p">(</span><span class="n">models_filled_by</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">configs</span><span class="p">),</span> <span class="n">families</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">:</span>
@@ -803,10 +840,13 @@
     <span class="c1"># Neither turbulenceProperties nor the advection evidence has an owning model; only</span>
     <span class="c1"># a family member has a choice to move.</span>
     <span class="n">advection</span> <span class="o">=</span> <span class="n">case_advection_model</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">case_dir</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">applied</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">named</span> <span class="ow">in</span> <span class="p">(</span><span class="n">loaded_turbulence_model</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">advection</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">named</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">families</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">family</span><span class="o">.</span><span class="n">members</span><span class="p">):</span>
             <span class="n">state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">select_model_state</span><span class="p">(</span><span class="n">families</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">named</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span></div>
+            <span class="c1"># Reported too: the caller's summary names every model the load moved.</span>
+            <span class="n">applied</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">named</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">applied</span></div>
 
 </pre></div>
         </article>

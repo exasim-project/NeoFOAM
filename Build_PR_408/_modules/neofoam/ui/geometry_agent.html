@@ -719,8 +719,8 @@
 <span class="w">    </span><span class="sd">"""Apply the agent's assignments onto the wizard's patch-state dicts (pure).</span>
 
 <span class="sd">    ``patches`` are the ``state.geometry_patches`` rows (``{"name", "role",</span>
-<span class="sd">    "refinement", ...}``). Each assignment updates the matching row's ``role`` (and</span>
-<span class="sd">    ``refinement`` when given and the patch is a snappy surface). Unknown patch</span>
+<span class="sd">    "refinement_str", ...}``). Each assignment updates the matching row's ``role`` (and</span>
+<span class="sd">    ``refinement_str`` when given and the patch is a snappy surface). Unknown patch</span>
 <span class="sd">    names are ignored. A new list is returned (the input is not mutated).</span>
 <span class="sd">    """</span>
     <span class="n">by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">patch</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">assignments</span><span class="o">.</span><span class="n">assignments</span><span class="p">}</span>
@@ -733,7 +733,9 @@
         <span class="n">updated</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
         <span class="n">updated</span><span class="p">[</span><span class="s2">"role"</span><span class="p">]</span> <span class="o">=</span> <span class="n">assignment</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span>
         <span class="k">if</span> <span class="n">assignment</span><span class="o">.</span><span class="n">refinement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"box_faces"</span><span class="p">):</span>
-            <span class="n">updated</span><span class="p">[</span><span class="s2">"refinement"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">assignment</span><span class="o">.</span><span class="n">refinement</span><span class="p">)</span>
+            <span class="c1"># The row key the geometry table and ``_spec_from_state`` read, in</span>
+            <span class="c1"># their ``"min max"`` format — a ``refinement`` key would be ignored.</span>
+            <span class="n">updated</span><span class="p">[</span><span class="s2">"refinement_str"</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">assignment</span><span class="o">.</span><span class="n">refinement</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">assignment</span><span class="o">.</span><span class="n">refinement</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">updated</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
 

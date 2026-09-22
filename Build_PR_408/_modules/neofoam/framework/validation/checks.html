@@ -982,18 +982,40 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">stripped</span><span class="p">]</span> <span class="k">if</span> <span class="n">stripped</span> <span class="k">else</span> <span class="p">[]</span>
 
 
+<span class="c1"># The control blocks whose final outer iteration makes ``fvMatrix::solve`` select the</span>
+<span class="c1"># ``Final`` solver settings. Only a case declaring SIMPLE and neither of these is</span>
+<span class="c1"># exempt: an undeclared algorithm stays checked rather than silently passing.</span>
+<span class="n">_FINAL_ITERATION_BLOCKS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"PIMPLE"</span><span class="p">,</span> <span class="s2">"PISO"</span><span class="p">})</span>
+
+
 <div class="viewcode-block" id="check_pimple_final">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_pimple_final">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_pimple_final</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">CaseContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Finding</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Every solved field needs a ``&lt;field&gt;Final`` entry — grouped keys expanded.</span>
+
+<span class="sd">    Skipped for a steady case — one whose ``system/fvSolution`` declares SIMPLE and</span>
+<span class="sd">    neither PIMPLE nor PISO. ``Final`` settings exist for the final outer iteration and</span>
+<span class="sd">    a steady run has none, so demanding them there false-fails every steady case.</span>
 
 <span class="sd">    Base and Final solver keys are expanded to individual fields, so a grouped base</span>
 <span class="sd">    ``"(U|k|epsilon)"`` is satisfied by per-field ``UFinal``/``kFinal``/``epsilonFinal``</span>
 <span class="sd">    (or a grouped ``"(U|k|epsilon)Final"``) — no literal-string false-fail. In a</span>
 <span class="sd">    Boussinesq case the vestigial ``p`` solver (never solved; p_rgh is) needs no Final.</span>
 <span class="sd">    """</span>
+    <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"fvSolution"</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">read_keys</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">Unreadable</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">_error</span><span class="p">(</span>
+                <span class="s2">"system/fvSolution"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"could not read the control block (</span><span class="si">{</span><span class="n">keys</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+                <span class="n">fix</span><span class="o">=</span><span class="s2">"ensure system/fvSolution parses"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">"SIMPLE"</span> <span class="ow">in</span> <span class="n">keys</span> <span class="ow">and</span> <span class="n">keys</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">_FINAL_ITERATION_BLOCKS</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
     <span class="n">findings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Finding</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">solvers</span> <span class="o">=</span> <span class="n">read_section</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"fvSolution"</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">)</span>
+    <span class="n">solvers</span> <span class="o">=</span> <span class="n">read_section</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">)</span>
     <span class="n">buoyant</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">_boussinesq_or_error</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">case</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">err</span><span class="p">]</span>

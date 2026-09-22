@@ -629,7 +629,10 @@ panel’s base-case restore — so all read the same configs and select the same
 <p>Overwrites whatever the forms currently hold for those configs, so a caller
 that can lose user edits asks first. Pass the <code class="docutils literal notranslate"><span class="pre">case_dir</span></code> the configs were read
 from so a pick-one family follows the case (<a class="reference internal" href="#neofoam.ui.case_load.case_algorithm" title="neofoam.ui.case_load.case_algorithm"><code class="xref py py-func docutils literal notranslate"><span class="pre">case_algorithm()</span></code></a>,
-<a class="reference internal" href="#neofoam.ui.case_load.case_advection_model" title="neofoam.ui.case_load.case_advection_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">case_advection_model()</span></code></a>). Must run on
+<a class="reference internal" href="#neofoam.ui.case_load.case_advection_model" title="neofoam.ui.case_load.case_advection_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">case_advection_model()</span></code></a>) — and because that marks <code class="docutils literal notranslate"><span class="pre">configs</span></code> as one case’s
+whole contents, the load then <em>replaces</em> instead of merging (<code class="xref py py-func docutils literal notranslate"><span class="pre">_clear_absent()</span></code>).
+Without a <code class="docutils literal notranslate"><span class="pre">case_dir</span></code> the configs are one incremental fill (the AI’s own output)
+and the untouched forms stay as they are. Must run on
 trame’s event loop like every other state write:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">selected</span> <span class="o">=</span> <span class="n">apply_configs_to_forms</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">families</span><span class="p">,</span> <span class="n">configs</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
 </pre></div>
