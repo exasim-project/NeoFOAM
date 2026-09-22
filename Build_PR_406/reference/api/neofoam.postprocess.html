@@ -642,8 +642,9 @@ stay here — the loaders behind those doors
 are grouped into <a class="reference internal" href="neofoam.postprocess.nodes.html#module-neofoam.postprocess.nodes" title="neofoam.postprocess.nodes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nodes</span></code></a>,
 <a class="reference internal" href="neofoam.postprocess.sources.html#module-neofoam.postprocess.sources" title="neofoam.postprocess.sources"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sources</span></code></a> and <a class="reference internal" href="neofoam.postprocess.writers.html#module-neofoam.postprocess.writers" title="neofoam.postprocess.writers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">writers</span></code></a>.
 Importing this package registers every node, source and writer shipped with
-NeoFOAM, so a case file can select them by their <code class="docutils literal notranslate"><span class="pre">type</span></code> string. The nodes are
-pure numpy; pybFoam appears in the sources, the CSV writer and the reductions.</p>
+NeoFOAM, so a case file can select them by their <code class="docutils literal notranslate"><span class="pre">type</span></code> string. The nodes do
+their arithmetic with the NeoN kernels, so a field is reduced on the executor it
+lives on; pybFoam appears in the sources, the CSV writer and the reductions.</p>
 <p class="rubric">Modules</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -655,7 +656,7 @@ pure numpy; pybFoam appears in the sources, the CSV writer and the reductions.</
 <td><p>postProcess — the core Model that evaluates a case's tables while it runs.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.postprocess.node.html#module-neofoam.postprocess.node" title="neofoam.postprocess.node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">node</span></code></a></p></td>
-<td><p>The post-processing data contract: DataSet, the Source/Node plugin families and Pipeline.</p></td>
+<td><p>The post-processing data contract: the datasets, the Source/Node families and Pipeline.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.postprocess.nodes.html#module-neofoam.postprocess.nodes" title="neofoam.postprocess.nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nodes</span></code></a></p></td>
 <td><p>The nodes shipped with NeoFOAM: selectors, binners, field functions, aggregators, output.</p></td>

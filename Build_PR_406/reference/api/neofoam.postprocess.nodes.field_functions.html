@@ -639,11 +639,14 @@
 <dt class="sig sig-object py" id="neofoam.postprocess.nodes.field_functions.Area">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.field_functions.</span></span><span class="sig-name descname"><span class="pre">Area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'area'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'area'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/nodes/field_functions.html#Area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.nodes.field_functions.Area" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.Node" title="neofoam.postprocess.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a></p>
-<p>Replace the values by the per-element measure — the face areas.</p>
+<p>Replace the values by the per-element measure — face areas, or cell volumes.</p>
 <p>The way to get a surface’s area out of a table: the values of the sampled
-field are dropped and summing what is left is the area. Needs a geometry
-that has a measure (a patch or a sampled surface, not a point cloud):</p>
+field are dropped and summing what is left is the area. Which measure it is
+belongs to the geometry — the face area on a patch or a sampled surface, the
+cell volume on the cells, so summing it there is the mesh volume — and a
+point cloud, which has neither, is refused by name:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">patch</span><span class="p">(</span><span class="s2">"U"</span><span class="p">,</span> <span class="s2">"movingWall"</span><span class="p">)</span> <span class="o">|</span> <span class="n">Area</span><span class="p">()</span> <span class="o">|</span> <span class="n">Sum</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"wall_area"</span><span class="p">)</span>
+<span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">)</span> <span class="o">|</span> <span class="n">Area</span><span class="p">()</span> <span class="o">|</span> <span class="n">Sum</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"mesh_volume"</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py attribute">
@@ -690,6 +693,13 @@ instead. The dataset is renamed <code class="docutils literal notranslate"><span
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="neofoam.postprocess.nodes.field_functions.pp">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.field_functions.</span></span><span class="sig-name descname"><span class="pre">pp</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;module</span> <span class="pre">'neofoam.neofoam_bindings.postprocess'&gt;</span></span><a class="headerlink" href="#neofoam.postprocess.nodes.field_functions.pp" title="Link to this definition">¶</a></dt>
+<dd><p>The post-processing kernels: element-wise math and reductions that run on the
+executor the values live on, host numpy included.</p>
 </dd></dl>
 
 </section>
@@ -762,6 +772,7 @@ instead. The dataset is renamed <code class="docutils literal notranslate"><span
 <li><a class="reference internal" href="#neofoam.postprocess.nodes.field_functions.Mag.model_config"><code class="docutils literal notranslate"><span class="pre">Mag.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.nodes.field_functions.pp"><code class="docutils literal notranslate"><span class="pre">pp</span></code></a></li>
 </ul>
 </li>
 </ul>

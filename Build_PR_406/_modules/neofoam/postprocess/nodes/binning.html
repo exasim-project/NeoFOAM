@@ -633,12 +633,17 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">field_validator</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Node</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">Node</span>
+
+<span class="c1">#: The post-processing kernels: element-wise math and reductions that run on the</span>
+<span class="c1">#: executor the values live on, host numpy included.</span>
+<span class="n">pp</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">postprocess</span>
 
 
 <div class="viewcode-block" id="Directional">
@@ -664,8 +669,9 @@
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"bins"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_increasing_edges</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">bins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
-        <span class="c1"># np.digitize silently switches to its decreasing convention otherwise,</span>
-        <span class="c1"># and the profile comes out reversed with no warning.</span>
+        <span class="c1"># the kernel follows np.digitize, which silently switches to its</span>
+        <span class="c1"># decreasing convention otherwise, and the profile comes out reversed</span>
+        <span class="c1"># with no warning.</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">upper</span> <span class="o">&lt;=</span> <span class="n">lower</span> <span class="k">for</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="n">bins</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"directional: bins must be strictly increasing, got </span><span class="si">{</span><span class="n">bins</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">bins</span>
@@ -679,12 +685,10 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"directional: direction must have a non-zero length"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">direction</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="n">direction</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-        <span class="n">normal</span> <span class="o">=</span> <span class="n">direction</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>  <span class="c1"># bin edges are distances</span>
-        <span class="n">distance</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">origin</span><span class="p">))</span> <span class="o">@</span> <span class="n">normal</span>
-        <span class="n">groups</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">distance</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">with_groups</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">n_groups</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldDataSets</span><span class="p">:</span>
+        <span class="c1"># the kernel normalises the direction, so the edges are distances.</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">bin_index</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">positions</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">direction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">with_groups</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">n_groups</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

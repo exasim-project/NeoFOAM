@@ -649,11 +649,11 @@ another solver picks it up by adding the same seam to its <code class="docutils 
 <code class="docutils literal notranslate"><span class="pre">write_output</span></code>); until it does, a declaration in one of its cases is ignored
 silently.</p>
 <p>On <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> only the <code class="docutils literal notranslate"><span class="pre">internal</span></code> source works. Its fields
-live on the NeoN executor, and the source reads them through a host copy of the
-field’s internal vector — a few hundred microseconds per million cells on a host
-executor, a few milliseconds off a GPU, and only on the steps a table is actually
-due. The cell geometry comes off the run-time adapter’s mesh, which <em>is</em> an
-fvMesh, so volume and surface integrals need no separate path. The other sources
+live on the NeoN executor and stay there: the nodes reduce them with the NeoN
+kernels, so nothing is copied to the host on the way to a CSV row. The cell
+geometry comes off the run-time adapter’s mesh, which <em>is</em> an fvMesh, and is
+mirrored onto the field’s executor once per run (a static mesh), because a
+kernel call needs every array on one executor. The other sources
 interpolate a <em>pybFoam</em> field onto a sampled surface or set, and NeoN never
 writes its values back into the OpenFOAM registry while the run goes on: a
 <code class="docutils literal notranslate"><span class="pre">patch</span></code>, <code class="docutils literal notranslate"><span class="pre">line</span></code>, <code class="docutils literal notranslate"><span class="pre">plane</span></code> or <code class="docutils literal notranslate"><span class="pre">isoSurface</span></code> table on a NeoN case raises
@@ -661,12 +661,12 @@ writes its values back into the OpenFOAM registry while the run goes on: a
 <span class="pre">['volScalarField',</span> <span class="pre">'volVectorField']</span></code> at the table’s first evaluation. So does
 <code class="docutils literal notranslate"><span class="pre">residuals</span></code>, which reads the fvMesh’s <code class="docutils literal notranslate"><span class="pre">solverPerformanceDict</span></code> — NeoN solves
 through Ginkgo and never fills it.</p>
-<p>Field names follow the solver’s registry, which is not always the name on disk:
-<code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> registers the phase fractions as <code class="docutils literal notranslate"><span class="pre">alpha1</span></code> and <code class="docutils literal notranslate"><span class="pre">alpha2</span></code>
-while the files are <code class="docutils literal notranslate"><span class="pre">alpha.water</span></code> and <code class="docutils literal notranslate"><span class="pre">alpha.air</span></code>. The <code class="docutils literal notranslate"><span class="pre">internal</span></code> source
-accepts either spelling — it falls back to matching the field’s own OpenFOAM
-name — but sources that hand a name straight to OpenFOAM’s registry, such as
-<code class="docutils literal notranslate"><span class="pre">isoSurface</span></code>’s <code class="docutils literal notranslate"><span class="pre">iso_field</span></code>, need the on-disk one.</p>
+<p>Field names are the solver’s registry keys, which are not always the name on
+disk: <code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code> registers the phase fractions as <code class="docutils literal notranslate"><span class="pre">alpha1</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alpha2</span></code> while the files are <code class="docutils literal notranslate"><span class="pre">alpha.water</span></code> and <code class="docutils literal notranslate"><span class="pre">alpha.air</span></code>, so an
+<code class="docutils literal notranslate"><span class="pre">internal</span></code> table on that solver names <code class="docutils literal notranslate"><span class="pre">alpha1</span></code>. Sources that hand a name
+straight to OpenFOAM’s registry, such as <code class="docutils literal notranslate"><span class="pre">isoSurface</span></code>’s <code class="docutils literal notranslate"><span class="pre">iso_field</span></code>, need
+the on-disk one.</p>
 <p>Both front doors build the same objects, so pick whichever fits: the spec file
 for a fixed set of tables, the script when you want <code class="docutils literal notranslate"><span class="pre">|</span></code> composition or your own
 node. A case may use both — the script is executed first, so the nodes it
@@ -1104,12 +1104,16 @@ within the step (the correctors), and a vector solve is split into OpenFOAM’s 
 <section id="adding-a-node">
 <h2>Adding a node<a class="headerlink" href="#adding-a-node" title="Link to this heading">¶</a></h2>
 <p>A node is a <code class="docutils literal notranslate"><span class="pre">&#64;Node.register</span></code> subclass with a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code>
-discriminator and a <code class="docutils literal notranslate"><span class="pre">compute</span></code> method. It sees only numpy — a
-<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.DataSet" title="neofoam.postprocess.node.DataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataSet</span></code></a> of <code class="docutils literal notranslate"><span class="pre">values</span></code> plus a <code class="docutils literal notranslate"><span class="pre">geometry</span></code>
-exposing <code class="docutils literal notranslate"><span class="pre">positions</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> — and returns a <em>new</em> dataset, never
-mutating its input:</p>
+discriminator and a <code class="docutils literal notranslate"><span class="pre">compute</span></code> method. It sees a dataset —
+<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.InternalDataSet" title="neofoam.postprocess.node.InternalDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalDataSet</span></code></a> for the cells,
+<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.PatchDataSet" title="neofoam.postprocess.node.PatchDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">PatchDataSet</span></code></a>,
+<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.SurfaceDataSet" title="neofoam.postprocess.node.SurfaceDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurfaceDataSet</span></code></a> or
+<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.PointDataSet" title="neofoam.postprocess.node.PointDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointDataSet</span></code></a> for the others, each carrying a
+<code class="docutils literal notranslate"><span class="pre">field</span></code>, a <code class="docutils literal notranslate"><span class="pre">mask</span></code>, the <code class="docutils literal notranslate"><span class="pre">groups</span></code> and a <code class="docutils literal notranslate"><span class="pre">geometry</span></code> (<code class="docutils literal notranslate"><span class="pre">positions()</span></code> plus
+that geometry’s measure: <code class="docutils literal notranslate"><span class="pre">volumes()</span></code>, <code class="docutils literal notranslate"><span class="pre">face_area_magnitudes()</span></code>) — and
+returns a <em>new</em> dataset, never mutating its input:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Node</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">InternalDataSet</span><span class="p">,</span> <span class="n">Node</span>
 
 <span class="nd">@Node</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Clip</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
@@ -1118,19 +1122,27 @@ mutating its input:</p>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"clip"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"clip"</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">with_values</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">))</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">InternalDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InternalDataSet</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">with_field</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Registering it in <code class="docutils literal notranslate"><span class="pre">system/postProcess.py</span></code> makes <code class="docutils literal notranslate"><span class="pre">{type:</span> <span class="pre">clip,</span> <span class="pre">threshold:</span> <span class="pre">0.0}</span></code>
 valid in the same case’s spec file. Put it in a package instead and it is
 available to every case that imports it. The terminal node of a table is an
 aggregator: it returns an
-<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a> — the CSV column names and
-the rows to append.</p>
+<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a> — one
+<a class="reference internal" href="api/neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedData" title="neofoam.postprocess.node.AggregatedData"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedData</span></code></a> per row, each a value plus the
+labels (the bin index, say) that name it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">mask</span></code>, <code class="docutils literal notranslate"><span class="pre">groups</span></code> and the geometry’s arrays are host numpy for a
+pybFoam field and NeoN vectors for a NeoN one, and the kernels in
+<code class="docutils literal notranslate"><span class="pre">neofoam.neofoam_bindings.postprocess</span></code> (<code class="docutils literal notranslate"><span class="pre">sum</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span></code>, <code class="docutils literal notranslate"><span class="pre">mag</span></code>,
+<code class="docutils literal notranslate"><span class="pre">component</span></code>, <code class="docutils literal notranslate"><span class="pre">scale</span></code>, the mask builders and <code class="docutils literal notranslate"><span class="pre">bin_index</span></code>) take both — write
+a node against them and it runs on either backend, on the executor the field
+lives on. A node that reads the numbers itself (<code class="docutils literal notranslate"><span class="pre">Rows</span></code>, <code class="docutils literal notranslate"><span class="pre">Print</span></code>) copies them
+to the host, which is why only those two do.</p>
 <p>A new <em>source</em> is the same pattern with <code class="docutils literal notranslate"><span class="pre">&#64;Source.register</span></code> and a <code class="docutils literal notranslate"><span class="pre">resolve(ctx)</span></code>
-returning a <code class="docutils literal notranslate"><span class="pre">DataSet</span></code>. Nodes are pure numpy; pybFoam appears in the sources,
-the CSV writer (which rank owns the files) and the reductions.</p>
+returning one of those datasets. pybFoam appears in the sources, the CSV writer
+(which rank owns the files) and the reductions.</p>
 </section>
 <section id="writers">
 <h2>Writers<a class="headerlink" href="#writers" title="Link to this heading">¶</a></h2>
@@ -1163,7 +1175,7 @@ above, and registering it in <code class="docutils literal notranslate"><span cl
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateAttr</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span><span class="p">,</span> <span class="n">TableWriter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span><span class="p">,</span> <span class="n">TableWriter</span><span class="p">,</span> <span class="n">table_rows</span>
 
 <span class="nd">@TableWriter</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TextWriter</span><span class="p">(</span><span class="n">TableWriter</span><span class="p">):</span>
@@ -1181,12 +1193,16 @@ above, and registering it in <code class="docutils literal notranslate"><span cl
 
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">AggregatedDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                 <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">[</span><span class="n">time</span><span class="p">,</span> <span class="o">*</span><span class="n">row</span><span class="p">])</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">open</span></code> is handed the output path <em>without</em> a suffix — the writer appends the one
 its format owns — and <code class="docutils literal notranslate"><span class="pre">append</span></code> says whether the run continues an earlier one.
+<a class="reference internal" href="api/neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.table_headers" title="neofoam.postprocess.writers.writer.table_headers"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_headers()</span></code></a> and
+<a class="reference internal" href="api/neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.table_rows" title="neofoam.postprocess.writers.writer.table_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_rows()</span></code></a> put an aggregation’s
+columns in file order (what labels a value first, then the value), so every
+format writes the same layout.
 The writer a table holds is a pure declaration; the <code class="docutils literal notranslate"><span class="pre">postProcess</span></code> model
 deep-copies it and opens the copy, so the file state a writer keeps between calls
 belongs to that copy and one declaration can serve every table of a case.</p>

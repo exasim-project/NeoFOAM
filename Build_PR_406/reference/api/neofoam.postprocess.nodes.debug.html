@@ -640,11 +640,13 @@
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.debug.</span></span><span class="sig-name descname"><span class="pre">Print</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'print'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'print'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'postProcess'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/nodes/debug.html#Print"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.nodes.debug.Print" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.Node" title="neofoam.postprocess.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a></p>
 <p>Print a one-line summary of what flows through, then pass it on unchanged.</p>
-<p>A debugging aid to watch a pipeline run; works on a DataSet as well as on an
-aggregation, so it can be inserted anywhere:</p>
+<p>A debugging aid to watch a pipeline run; works on a field dataset as well as
+on an aggregation, so it can be inserted anywhere:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">)</span> <span class="o">|</span> <span class="n">Print</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">"cells"</span><span class="p">)</span> <span class="o">|</span> <span class="n">VolIntegrate</span><span class="p">()</span> <span class="o">|</span> <span class="n">Print</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>Printing a NeoN field copies it off its executor — a debug node is where
+that cost belongs.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.postprocess.nodes.debug.Print.accepts_aggregated">
 <span class="sig-name descname"><span class="pre">accepts_aggregated</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#neofoam.postprocess.nodes.debug.Print.accepts_aggregated" title="Link to this definition">¶</a></dt>
@@ -676,6 +678,13 @@ every other node <code class="xref py py-meth docutils literal notranslate"><spa
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="neofoam.postprocess.nodes.debug.pp">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.debug.</span></span><span class="sig-name descname"><span class="pre">pp</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;module</span> <span class="pre">'neofoam.neofoam_bindings.postprocess'&gt;</span></span><a class="headerlink" href="#neofoam.postprocess.nodes.debug.pp" title="Link to this definition">¶</a></dt>
+<dd><p>The post-processing kernels: element-wise math and reductions that run on the
+executor the values live on, host numpy included.</p>
 </dd></dl>
 
 </section>
@@ -745,6 +754,7 @@ every other node <code class="xref py py-meth docutils literal notranslate"><spa
 <li><a class="reference internal" href="#neofoam.postprocess.nodes.debug.Scale.model_config"><code class="docutils literal notranslate"><span class="pre">Scale.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.nodes.debug.pp"><code class="docutils literal notranslate"><span class="pre">pp</span></code></a></li>
 </ul>
 </li>
 </ul>

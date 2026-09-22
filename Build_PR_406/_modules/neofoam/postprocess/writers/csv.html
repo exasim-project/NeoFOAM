@@ -641,7 +641,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivateAttr</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.writers.writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableWriter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.writers.writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableWriter</span><span class="p">,</span> <span class="n">table_headers</span><span class="p">,</span> <span class="n">table_rows</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_owns_the_output_files</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -699,14 +699,19 @@
 <div class="viewcode-block" id="CsvWriter.write">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.writers.csv.html#neofoam.postprocess.writers.csv.CsvWriter.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">AggregatedDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Append one line per row of ``result``, prefixed by ``time``."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">_owns_the_output_files</span><span class="p">():</span>
+<span class="w">        </span><span class="sd">"""Append one line per row of ``result``, prefixed by ``time``.</span>
+
+<span class="sd">        A result with no rows at all (a residuals step that solved nothing)</span>
+<span class="sd">        leaves the file untouched — the header names the columns of a row, and</span>
+<span class="sd">        those are only known once there is one.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_owns_the_output_files</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="n">table_headers</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table_rows</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
                 <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="n">_as_time_column</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="o">*</span><span class="n">row</span><span class="p">])</span></div>
 
 

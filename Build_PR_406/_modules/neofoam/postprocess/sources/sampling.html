@@ -648,7 +648,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">sampling</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">SamplingGeometry</span><span class="p">,</span> <span class="n">Source</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldDataSets</span><span class="p">,</span>
+    <span class="n">Node</span><span class="p">,</span>
+    <span class="n">Pipeline</span><span class="p">,</span>
+    <span class="n">SamplingGeometry</span><span class="p">,</span>
+    <span class="n">Source</span><span class="p">,</span>
+    <span class="n">SurfaceDataSet</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.sources.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurfaceGeometry</span>
 
 
@@ -662,7 +669,7 @@
 <span class="w">        </span><span class="sd">"""The ``pybFoam.sampling`` config describing the surface."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurfaceDataSet</span><span class="p">:</span>
         <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_foam_config</span><span class="p">()</span>
         <span class="c1"># Rebuilt every time step: an iso-surface follows its field, and a plane</span>
         <span class="c1"># follows a moving mesh.</span>
@@ -670,8 +677,10 @@
         <span class="n">surface</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
         <span class="n">geometry</span> <span class="o">=</span> <span class="n">SurfaceGeometry</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">DataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"area"</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">measure</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">DataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SurfaceDataSet</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"area"</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">face_area_magnitudes</span><span class="p">(),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SurfaceDataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PlaneSurface">
@@ -735,16 +744,14 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sample"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sample"</span>
     <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldDataSets</span><span class="p">:</span>
         <span class="n">geometry</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geometry</span><span class="p">,</span> <span class="n">SamplingGeometry</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"sample needs a sampled surface; the source of </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> "</span>
                 <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">geometry</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) provides none"</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
-            <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="s2">"values"</span><span class="p">:</span> <span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)}</span>
-        <span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="s2">"field"</span><span class="p">:</span> <span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)})</span></div>
 
 
 

@@ -635,26 +635,69 @@
           <section id="module-neofoam.postprocess.sources.geometry">
 <span id="neofoam-postprocess-sources-geometry"></span><h1>neofoam.postprocess.sources.geometry<a class="headerlink" href="#module-neofoam.postprocess.sources.geometry" title="Link to this heading">¶</a></h1>
 <p>Geometry adapters: the cells, a sampled surface, one boundary patch, a set of points.</p>
-<p>Every adapter satisfies the <a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.Geometry" title="neofoam.postprocess.node.Geometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a> protocol
-(<code class="docutils literal notranslate"><span class="pre">positions</span></code> and an optional <code class="docutils literal notranslate"><span class="pre">measure</span></code>), and all but <a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry" title="neofoam.postprocess.sources.geometry.CellGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">CellGeometry</span></code></a>
+<p>Every adapter satisfies the protocol its dataset declares —
+<a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.InternalMesh" title="neofoam.postprocess.node.InternalMesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalMesh</span></code></a>,
+<a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.BoundaryMesh" title="neofoam.postprocess.node.BoundaryMesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">BoundaryMesh</span></code></a>,
+<a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.SurfaceMesh" title="neofoam.postprocess.node.SurfaceMesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurfaceMesh</span></code></a> or
+<a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.SetGeometry" title="neofoam.postprocess.node.SetGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">SetGeometry</span></code></a> — and all but the two cell adapters
 also satisfy <a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.SamplingGeometry" title="neofoam.postprocess.node.SamplingGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingGeometry</span></code></a> — they can
 interpolate a <em>registered field name</em> onto their elements, so a node never
-learns which one it is working on. <a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry" title="neofoam.postprocess.sources.geometry.CellGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">CellGeometry</span></code></a> needs nothing but an
-fvMesh-shaped object; the others build a pybFoam <code class="docutils literal notranslate"><span class="pre">sampledSurface</span></code> or
-<code class="docutils literal notranslate"><span class="pre">sampledSet</span></code>.</p>
+learns which one it is working on. <a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry" title="neofoam.postprocess.sources.geometry.CellGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">CellGeometry</span></code></a> and
+<a class="reference internal" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry" title="neofoam.postprocess.sources.geometry.NeonCellGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeonCellGeometry</span></code></a> need nothing but an fvMesh-shaped object, and differ
+only in where they put the numbers (host, or a NeoN executor); the others build
+a pybFoam <code class="docutils literal notranslate"><span class="pre">sampledSurface</span></code> or <code class="docutils literal notranslate"><span class="pre">sampledSet</span></code>, which are host-only.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.CellGeometry">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.sources.geometry.</span></span><span class="sig-name descname"><span class="pre">CellGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#CellGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.CellGeometry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Cell centres and volumes, duck-typed over a pybFoam-like fvMesh.</p>
-<p>The geometry of <a class="reference internal" href="neofoam.postprocess.sources.fields.html#neofoam.postprocess.sources.fields.InternalField" title="neofoam.postprocess.sources.fields.InternalField"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalField</span></code></a>, and the one
-adapter that touches no pybFoam symbol: it calls <code class="docutils literal notranslate"><span class="pre">C()</span></code> and <code class="docutils literal notranslate"><span class="pre">V()</span></code> on
-whatever mesh it is handed, so a fake mesh is enough to exercise it. It has
-no <code class="docutils literal notranslate"><span class="pre">sample</span></code>, which is what makes
+<p>The geometry of <a class="reference internal" href="neofoam.postprocess.sources.fields.html#neofoam.postprocess.sources.fields.InternalField" title="neofoam.postprocess.sources.fields.InternalField"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalField</span></code></a> for a
+pybFoam field, and the one adapter that touches no pybFoam symbol: it calls
+<code class="docutils literal notranslate"><span class="pre">C()</span></code> and <code class="docutils literal notranslate"><span class="pre">V()</span></code> on whatever mesh it is handed, so a fake mesh is enough
+to exercise it. It has no <code class="docutils literal notranslate"><span class="pre">sample</span></code>, which is what makes
 <code class="docutils literal notranslate"><span class="pre">field(&quot;p&quot;)</span> <span class="pre">|</span> <span class="pre">Sample(field=&quot;U&quot;)</span></code> a named error instead of a crash:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CellGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">)</span><span class="o">.</span><span class="n">measure</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># the mesh volume</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CellGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">)</span><span class="o">.</span><span class="n">volumes</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># the mesh volume</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.CellGeometry.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#CellGeometry.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.CellGeometry.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Cell centres, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.CellGeometry.volumes">
+<span class="sig-name descname"><span class="pre">volumes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#CellGeometry.volumes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.CellGeometry.volumes" title="Link to this definition">¶</a></dt>
+<dd><p>Cell volumes, shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.NeonCellGeometry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.sources.geometry.</span></span><span class="sig-name descname"><span class="pre">NeonCellGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#NeonCellGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Cell centres and volumes as NeoN vectors on one executor.</p>
+<p>The geometry a NeoN volume field is post-processed on: a kernel call needs
+every array on the executor its values live on, so the mesh’s <code class="docutils literal notranslate"><span class="pre">C()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">V()</span></code> — which are host data even on a NeoN run — are copied there once.
+Build it through <a class="reference internal" href="#neofoam.postprocess.sources.geometry.neon_cell_geometry" title="neofoam.postprocess.sources.geometry.neon_cell_geometry"><code class="xref py py-func docutils literal notranslate"><span class="pre">neon_cell_geometry()</span></code></a>, which keeps the copy for the
+rest of the run; construct it directly only to pin a second executor:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">neon_cell_geometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">field</span><span class="o">.</span><span class="n">internal_vector</span><span class="p">()</span><span class="o">.</span><span class="n">exec</span><span class="p">())</span><span class="o">.</span><span class="n">volumes</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.NeonCellGeometry.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#NeonCellGeometry.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Cell centres as a NeoN <code class="docutils literal notranslate"><span class="pre">VectorVector</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.NeonCellGeometry.volumes">
+<span class="sig-name descname"><span class="pre">volumes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#NeonCellGeometry.volumes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry.volumes" title="Link to this definition">¶</a></dt>
+<dd><p>Cell volumes as a NeoN <code class="docutils literal notranslate"><span class="pre">ScalarVector</span></code>.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -671,7 +714,7 @@ pybFoam binds no <code class="docutils literal notranslate"><span class="pre">bo
 mesh and the sampled values are the patch’s own boundary values). The
 surface is built once, at construction, and an unknown patch name — or one
 that samples no face at all — raises there:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PatchGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">"movingWall"</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">measure</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>  <span class="c1"># the patch area</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PatchGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="s2">"movingWall"</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">total_area</span><span class="p">()</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -680,17 +723,29 @@ that samples no face at all — raises there:</p>
 <dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.PointGeometry">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.sources.geometry.</span></span><span class="sig-name descname"><span class="pre">PointGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#PointGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.PointGeometry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The sample points of a pybFoam <code class="docutils literal notranslate"><span class="pre">sampledSet</span></code> — positions, no measure.</p>
+<p>The sample points of a pybFoam <code class="docutils literal notranslate"><span class="pre">sampledSet</span></code> — positions and distances, no measure.</p>
 <p>The geometry of <a class="reference internal" href="neofoam.postprocess.sources.fields.html#neofoam.postprocess.sources.fields.LineField" title="neofoam.postprocess.sources.fields.LineField"><code class="xref py py-class docutils literal notranslate"><span class="pre">LineField</span></code></a>: a probe has
-no area or volume, so <code class="docutils literal notranslate"><span class="pre">measure</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> and the measure-weighted
-aggregators reject it — reduce it with
+no area or volume, so it offers neither and the measure-weighted
+aggregators reject it by name — reduce it with
 <a class="reference internal" href="neofoam.postprocess.nodes.aggregators.html#neofoam.postprocess.nodes.aggregators.Mean" title="neofoam.postprocess.nodes.aggregators.Mean"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mean</span></code></a> or write every point with
 <a class="reference internal" href="neofoam.postprocess.nodes.rows.html#neofoam.postprocess.nodes.rows.Rows" title="neofoam.postprocess.nodes.rows.Rows"><code class="xref py py-class docutils literal notranslate"><span class="pre">Rows</span></code></a>. OpenFOAM drops the points of the
-spec that fall outside the mesh, so <code class="docutils literal notranslate"><span class="pre">positions</span></code> may be shorter than the
+spec that fall outside the mesh, so <a class="reference internal" href="#neofoam.postprocess.sources.geometry.PointGeometry.positions" title="neofoam.postprocess.sources.geometry.PointGeometry.positions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">positions()</span></code></a> may be shorter than the
 spec asked for:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PointGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">to_foam_dict</span><span class="p">(),</span> <span class="s2">"profile"</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">positions</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">PointGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">to_foam_dict</span><span class="p">(),</span> <span class="s2">"profile"</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">positions</span><span class="p">()</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.PointGeometry.distance">
+<span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#PointGeometry.distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.PointGeometry.distance" title="Link to this definition">¶</a></dt>
+<dd><p>Distance along the set, shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.PointGeometry.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#PointGeometry.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.PointGeometry.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Sample points, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.PointGeometry.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#PointGeometry.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.PointGeometry.sample" title="Link to this definition">¶</a></dt>
@@ -704,24 +759,30 @@ spec asked for:</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.sources.geometry.</span></span><span class="sig-name descname"><span class="pre">SurfaceGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#SurfaceGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Face centres and areas of a sampled surface, plus the interpolation onto it.</p>
-<p>What a surface source hands its nodes: <code class="docutils literal notranslate"><span class="pre">positions</span></code> are the face centres,
-<code class="docutils literal notranslate"><span class="pre">measure</span></code> the face areas (so <code class="docutils literal notranslate"><span class="pre">|</span> <span class="pre">Area()</span> <span class="pre">|</span> <span class="pre">Sum()</span></code> is the cut area), and
-<a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.sample" title="neofoam.postprocess.sources.geometry.SurfaceGeometry.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sample()</span></code></a> interpolates a registered field onto those faces. Holding the
-field registry here is what keeps
+<p>What a surface source hands its nodes: <a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.positions" title="neofoam.postprocess.sources.geometry.SurfaceGeometry.positions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">positions()</span></code></a> are the face
+centres, <a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_area_magnitudes" title="neofoam.postprocess.sources.geometry.SurfaceGeometry.face_area_magnitudes"><code class="xref py py-meth docutils literal notranslate"><span class="pre">face_area_magnitudes()</span></code></a> the face areas (so <code class="docutils literal notranslate"><span class="pre">|</span> <span class="pre">Area()</span> <span class="pre">|</span>
+<span class="pre">Sum()</span></code> is the cut area), and <a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.sample" title="neofoam.postprocess.sources.geometry.SurfaceGeometry.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sample()</span></code></a> interpolates a registered field
+onto those faces. Holding the field registry here is what keeps
 <a class="reference internal" href="neofoam.postprocess.sources.sampling.html#neofoam.postprocess.sources.sampling.Sample" title="neofoam.postprocess.sources.sampling.Sample"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sample</span></code></a> free of a live mesh — a
 pipeline is declared once and re-resolved every time step:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SurfaceGeometry</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="s2">"cellPoint"</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="s2">"U"</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="py property">
-<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.SurfaceGeometry.measure">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">measure</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.measure" title="Link to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.SurfaceGeometry.face_area_magnitudes">
+<span class="sig-name descname"><span class="pre">face_area_magnitudes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#SurfaceGeometry.face_area_magnitudes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_area_magnitudes" title="Link to this definition">¶</a></dt>
 <dd><p>Face areas, shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
 </dd></dl>
 
-<dl class="py property">
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.SurfaceGeometry.face_areas">
+<span class="sig-name descname"><span class="pre">face_areas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#SurfaceGeometry.face_areas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_areas" title="Link to this definition">¶</a></dt>
+<dd><p>Face area vectors, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.SurfaceGeometry.positions">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">positions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.positions" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#SurfaceGeometry.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.positions" title="Link to this definition">¶</a></dt>
 <dd><p>Face centres, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
 </dd></dl>
 
@@ -731,6 +792,18 @@ pipeline is declared once and re-resolved every time step:</p>
 <dd><p>Interpolate the registered field <em>name</em> onto the face centres.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.SurfaceGeometry.total_area">
+<span class="sig-name descname"><span class="pre">total_area</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#SurfaceGeometry.total_area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.total_area" title="Link to this definition">¶</a></dt>
+<dd><p>The area of the whole surface.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.postprocess.sources.geometry.neon_cell_geometry">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.sources.geometry.</span></span><span class="sig-name descname"><span class="pre">neon_cell_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry" title="neofoam.postprocess.sources.geometry.NeonCellGeometry"><span class="pre">NeonCellGeometry</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/sources/geometry.html#neon_cell_geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.sources.geometry.neon_cell_geometry" title="Link to this definition">¶</a></dt>
+<dd><p>The cells of <em>mesh</em> on <em>executor</em>, built on first use and kept afterwards.</p>
 </dd></dl>
 
 </section>
@@ -791,18 +864,32 @@ pipeline is declared once and re-resolved every time step:</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.postprocess.sources.geometry</a><ul>
-<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry"><code class="docutils literal notranslate"><span class="pre">CellGeometry</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry"><code class="docutils literal notranslate"><span class="pre">CellGeometry</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry.positions"><code class="docutils literal notranslate"><span class="pre">CellGeometry.positions()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.CellGeometry.volumes"><code class="docutils literal notranslate"><span class="pre">CellGeometry.volumes()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry"><code class="docutils literal notranslate"><span class="pre">NeonCellGeometry</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry.positions"><code class="docutils literal notranslate"><span class="pre">NeonCellGeometry.positions()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.NeonCellGeometry.volumes"><code class="docutils literal notranslate"><span class="pre">NeonCellGeometry.volumes()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.PatchGeometry"><code class="docutils literal notranslate"><span class="pre">PatchGeometry</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.PointGeometry"><code class="docutils literal notranslate"><span class="pre">PointGeometry</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.PointGeometry.distance"><code class="docutils literal notranslate"><span class="pre">PointGeometry.distance()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.PointGeometry.positions"><code class="docutils literal notranslate"><span class="pre">PointGeometry.positions()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.PointGeometry.sample"><code class="docutils literal notranslate"><span class="pre">PointGeometry.sample()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.measure"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.measure</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.positions"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.positions</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_area_magnitudes"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.face_area_magnitudes()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_areas"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.face_areas()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.positions"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.positions()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.sample"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.sample()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.SurfaceGeometry.total_area"><code class="docutils literal notranslate"><span class="pre">SurfaceGeometry.total_area()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.sources.geometry.neon_cell_geometry"><code class="docutils literal notranslate"><span class="pre">neon_cell_geometry()</span></code></a></li>
 </ul>
 </li>
 </ul>

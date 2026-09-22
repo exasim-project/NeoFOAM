@@ -634,7 +634,13 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.postprocess.nodes.aggregators">
 <span id="neofoam-postprocess-nodes-aggregators"></span><h1>neofoam.postprocess.nodes.aggregators<a class="headerlink" href="#module-neofoam.postprocess.nodes.aggregators" title="Link to this heading">¶</a></h1>
-<p>Aggregators — the terminal nodes that reduce a DataSet to CSV rows.</p>
+<p>Aggregators — the terminal nodes that reduce a dataset to table rows.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="neofoam.postprocess.nodes.aggregators.BIN_COLUMN">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.aggregators.</span></span><span class="sig-name descname"><span class="pre">BIN_COLUMN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'bin'</span></span><a class="headerlink" href="#neofoam.postprocess.nodes.aggregators.BIN_COLUMN" title="Link to this definition">¶</a></dt>
+<dd><p>The column a binner’s index fills; the writer puts it before the values.</p>
+</dd></dl>
+
 <dl class="py data">
 <dt class="sig sig-object py" id="neofoam.postprocess.nodes.aggregators.GREAT">
 <span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.aggregators.</span></span><span class="sig-name descname"><span class="pre">GREAT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000000000000000.0</span></span><a class="headerlink" href="#neofoam.postprocess.nodes.aggregators.GREAT" title="Link to this definition">¶</a></dt>
@@ -757,16 +763,25 @@ per component:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.postprocess.nodes.aggregators.group_sum">
-<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.aggregators.</span></span><span class="sig-name descname"><span class="pre">group_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.DataSet" title="neofoam.postprocess.node.DataSet"><span class="pre">DataSet</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/nodes/aggregators.html#group_sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.nodes.aggregators.group_sum" title="Link to this definition">¶</a></dt>
-<dd><p>Per-group, mask- and weight-scaled sum of a DataSet, reduced over all ranks.</p>
-<p>The one kernel every additive aggregator shares (<code class="docutils literal notranslate"><span class="pre">Sum</span></code>, <code class="docutils literal notranslate"><span class="pre">Mean</span></code>,
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.aggregators.</span></span><span class="sig-name descname"><span class="pre">group_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.InternalDataSet" title="neofoam.postprocess.node.InternalDataSet"><span class="pre">InternalDataSet</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.PatchDataSet" title="neofoam.postprocess.node.PatchDataSet"><span class="pre">PatchDataSet</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.SurfaceDataSet" title="neofoam.postprocess.node.SurfaceDataSet"><span class="pre">SurfaceDataSet</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.PointDataSet" title="neofoam.postprocess.node.PointDataSet"><span class="pre">PointDataSet</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/nodes/aggregators.html#group_sum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.nodes.aggregators.group_sum" title="Link to this definition">¶</a></dt>
+<dd><p>Per-group, mask- and weight-scaled sum of a dataset, reduced over all ranks.</p>
+<p>The one kernel call every additive aggregator shares (<code class="docutils literal notranslate"><span class="pre">Sum</span></code>, <code class="docutils literal notranslate"><span class="pre">Mean</span></code>,
 <code class="docutils literal notranslate"><span class="pre">VolIntegrate</span></code>, <code class="docutils literal notranslate"><span class="pre">SurfIntegrate</span></code>); pass <code class="docutils literal notranslate"><span class="pre">weights=None</span></code> for a plain sum
-or the geometry’s measure for an integral. A masked-out element contributes
-zero rather than being dropped, so the result is <code class="docutils literal notranslate"><span class="pre">(n_groups,)</span></code> for a scalar
-field and <code class="docutils literal notranslate"><span class="pre">(n_groups,</span> <span class="pre">3)</span></code> for a vector one whatever the mask says:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">measure</span><span class="p">)</span>
+or the geometry’s measure for an integral. The sum runs where the values
+live — the weights, the mask and the groups have to be on that executor too
+— and comes back as host numpy, <code class="docutils literal notranslate"><span class="pre">(n_groups,)</span></code> for a scalar field and
+<code class="docutils literal notranslate"><span class="pre">(n_groups,</span> <span class="pre">3)</span></code> for a vector one. A masked-out element contributes zero
+rather than being dropped:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">volumes</span><span class="p">())</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="neofoam.postprocess.nodes.aggregators.pp">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.nodes.aggregators.</span></span><span class="sig-name descname"><span class="pre">pp</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;module</span> <span class="pre">'neofoam.neofoam_bindings.postprocess'&gt;</span></span><a class="headerlink" href="#neofoam.postprocess.nodes.aggregators.pp" title="Link to this definition">¶</a></dt>
+<dd><p>The post-processing kernels: element-wise math and reductions that run on the
+executor the values live on, host numpy included.</p>
 </dd></dl>
 
 </section>
@@ -827,6 +842,7 @@ field and <code class="docutils literal notranslate"><span class="pre">(n_groups
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.postprocess.nodes.aggregators</a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.nodes.aggregators.BIN_COLUMN"><code class="docutils literal notranslate"><span class="pre">BIN_COLUMN</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.nodes.aggregators.GREAT"><code class="docutils literal notranslate"><span class="pre">GREAT</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.nodes.aggregators.Max"><code class="docutils literal notranslate"><span class="pre">Max</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.postprocess.nodes.aggregators.Max.model_config"><code class="docutils literal notranslate"><span class="pre">Max.model_config</span></code></a></li>
@@ -853,6 +869,7 @@ field and <code class="docutils literal notranslate"><span class="pre">(n_groups
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.postprocess.nodes.aggregators.group_sum"><code class="docutils literal notranslate"><span class="pre">group_sum()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.nodes.aggregators.pp"><code class="docutils literal notranslate"><span class="pre">pp</span></code></a></li>
 </ul>
 </li>
 </ul>

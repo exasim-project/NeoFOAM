@@ -691,8 +691,12 @@
 
 <span class="sd">        apply_set_fields(mesh, {"alpha.water": 0.0}, resolve_regions(config))</span>
 <span class="sd">    """</span>
-    <span class="n">positions</span> <span class="o">=</span> <span class="n">CellGeometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span><span class="o">.</span><span class="n">positions</span>
-    <span class="n">masks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">selector</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">selector</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">regions</span><span class="p">]</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">CellGeometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span><span class="o">.</span><span class="n">positions</span><span class="p">()</span>
+    <span class="c1"># a selector answers with the kernels' 0/1 labels; indexing wants booleans.</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">selector</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">positions</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">),</span> <span class="n">values</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">selector</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">regions</span>
+    <span class="p">]</span>
 
     <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_field_names</span><span class="p">(</span><span class="n">defaults</span><span class="p">,</span> <span class="n">regions</span><span class="p">):</span>

@@ -634,12 +634,49 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_group_columns</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="n">AggregatedDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""How many of a result's columns label the value rather than being one."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">group_name</span> <span class="ow">or</span> <span class="p">[])</span>
+
+
+<div class="viewcode-block" id="table_headers">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.table_headers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">table_headers</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="n">AggregatedDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The result's column names in file order: what labels a value, then the value.</span>
+
+<span class="sd">    An :class:`~neofoam.postprocess.node.AggregatedDataSet` carries its value</span>
+<span class="sd">    columns first; a NeoFOAM table writes the label before the number it names —</span>
+<span class="sd">    ``time,bin,p_sum``, and ``time,field,solver,metric,iteration,value`` for the</span>
+<span class="sd">    residuals — so every writer takes its columns from here and its rows from</span>
+<span class="sd">    :func:`table_rows`::</span>
+
+<span class="sd">        csv.writer(handle).writerow(["time", *table_headers(result)])</span>
+<span class="sd">    """</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">headers</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">headers</span><span class="p">)</span> <span class="o">-</span> <span class="n">_group_columns</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">headers</span><span class="p">[</span><span class="n">split</span><span class="p">:],</span> <span class="o">*</span><span class="n">headers</span><span class="p">[:</span><span class="n">split</span><span class="p">]]</span></div>
+
+
+
+<div class="viewcode-block" id="table_rows">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.table_rows">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">table_rows</span><span class="p">(</span><span class="n">result</span><span class="p">:</span> <span class="n">AggregatedDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The result's rows, reordered to match :func:`table_headers`."""</span>
+    <span class="n">group_columns</span> <span class="o">=</span> <span class="n">_group_columns</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">grouped_values</span>
+    <span class="k">return</span> <span class="p">[[</span><span class="o">*</span><span class="n">row</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">-</span> <span class="n">group_columns</span> <span class="p">:],</span> <span class="o">*</span><span class="n">row</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">-</span> <span class="n">group_columns</span><span class="p">]]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span></div>
+
 
 
 <div class="viewcode-block" id="TableWriter">
@@ -690,7 +727,11 @@
 <div class="viewcode-block" id="TableWriter.write">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.TableWriter.write">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">AggregatedDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Append one entry per row of ``result``, prefixed by ``time``."""</span>
+<span class="w">        </span><span class="sd">"""Append one entry per row of ``result``, prefixed by ``time``.</span>
+
+<span class="sd">        Take the columns from :func:`table_headers` and the rows from</span>
+<span class="sd">        :func:`table_rows`, so every format writes them in the same order.</span>
+<span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </div>
 

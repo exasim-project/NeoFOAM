@@ -633,23 +633,30 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Node</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldDataSets</span><span class="p">,</span>
+    <span class="n">InternalDataSet</span><span class="p">,</span>
+    <span class="n">Node</span><span class="p">,</span>
+    <span class="n">PatchDataSet</span><span class="p">,</span>
+    <span class="n">SurfaceDataSet</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.nodes._arrays</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_vector</span>
+
+<span class="c1">#: The post-processing kernels: element-wise math and reductions that run on the</span>
+<span class="c1">#: executor the values live on, host numpy included.</span>
+<span class="n">pp</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">postprocess</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_vector_values</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The dataset's values as ``(n, 3)``, or a TypeError naming what is scalar."""</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">function</span><span class="si">}</span><span class="s2"> needs a vector field; </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has scalar values "</span>
-            <span class="sa">f</span><span class="s2">"(shape </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">)"</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">values</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_vector_field</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The dataset's values, or a TypeError naming what is scalar."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_vector</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">function</span><span class="si">}</span><span class="s2"> needs a vector field; </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has scalar values"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">field</span>
 
 
 <div class="viewcode-block" id="Mag">
@@ -667,12 +674,11 @@
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"mag"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mag"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">_vector_values</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"mag"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldDataSets</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
             <span class="n">update</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"mag(</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
-                <span class="s2">"values"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+                <span class="s2">"field"</span><span class="p">:</span> <span class="n">pp</span><span class="o">.</span><span class="n">mag</span><span class="p">(</span><span class="n">_vector_field</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"mag"</span><span class="p">)),</span>
             <span class="p">}</span>
         <span class="p">)</span></div>
 
@@ -694,12 +700,11 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"component"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"component"</span>
     <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="n">_vector_values</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"component"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldDataSets</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
             <span class="n">update</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">"name"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                <span class="s2">"values"</span><span class="p">:</span> <span class="n">values</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">],</span>
+                <span class="s2">"field"</span><span class="p">:</span> <span class="n">pp</span><span class="o">.</span><span class="n">component</span><span class="p">(</span><span class="n">_vector_field</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"component"</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="p">)</span></div>
 
@@ -709,27 +714,35 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.nodes.field_functions.html#neofoam.postprocess.nodes.field_functions.Area">[docs]</a>
 <span class="nd">@Node</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Area</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Replace the values by the per-element measure — the face areas.</span>
+<span class="w">    </span><span class="sd">"""Replace the values by the per-element measure — face areas, or cell volumes.</span>
 
 <span class="sd">    The way to get a surface's area out of a table: the values of the sampled</span>
-<span class="sd">    field are dropped and summing what is left is the area. Needs a geometry</span>
-<span class="sd">    that has a measure (a patch or a sampled surface, not a point cloud)::</span>
+<span class="sd">    field are dropped and summing what is left is the area. Which measure it is</span>
+<span class="sd">    belongs to the geometry — the face area on a patch or a sampled surface, the</span>
+<span class="sd">    cell volume on the cells, so summing it there is the mesh volume — and a</span>
+<span class="sd">    point cloud, which has neither, is refused by name::</span>
 
 <span class="sd">        patch("U", "movingWall") | Area() | Sum(name="wall_area")</span>
+<span class="sd">        field("p") | Area() | Sum(name="mesh_volume")</span>
 <span class="sd">    """</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"area"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"area"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="n">measure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">measure</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">InternalDataSet</span><span class="p">,</span> <span class="n">PatchDataSet</span><span class="p">,</span> <span class="n">SurfaceDataSet</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">measure</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">accessor</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"face_area_magnitudes"</span><span class="p">,</span> <span class="s2">"volumes"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">accessor</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">measure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"area needs face areas; the source of </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"area needs a per-element measure; the source of </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> "</span>
                 <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) provides none"</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
-            <span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"area"</span><span class="p">,</span> <span class="s2">"values"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)}</span>
-        <span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"area"</span><span class="p">,</span> <span class="s2">"field"</span><span class="p">:</span> <span class="n">measure</span><span class="p">()})</span></div>
 
 </pre></div>
         </article>

@@ -629,16 +629,33 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Aggregators — the terminal nodes that reduce a DataSet to CSV rows."""</span>
+<span class="sd">"""Aggregators — the terminal nodes that reduce a dataset to table rows."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess._reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce_max</span><span class="p">,</span> <span class="n">reduce_min</span><span class="p">,</span> <span class="n">reduce_sum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span><span class="p">,</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Node</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AggregatedData</span><span class="p">,</span>
+    <span class="n">AggregatedDataSet</span><span class="p">,</span>
+    <span class="n">FieldDataSets</span><span class="p">,</span>
+    <span class="n">InternalDataSet</span><span class="p">,</span>
+    <span class="n">Node</span><span class="p">,</span>
+    <span class="n">PatchDataSet</span><span class="p">,</span>
+    <span class="n">SurfaceDataSet</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.nodes._arrays</span><span class="w"> </span><span class="kn">import</span> <span class="n">ones_like</span>
+
+<span class="c1">#: The post-processing kernels: element-wise math and reductions that run on the</span>
+<span class="c1">#: executor the values live on, host numpy included.</span>
+<span class="n">pp</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">postprocess</span>
+
+<span class="c1">#: The column a binner's index fills; the writer puts it before the values.</span>
+<span class="n">BIN_COLUMN</span> <span class="o">=</span> <span class="s2">"bin"</span>
 
 <span class="n">GREAT</span> <span class="o">=</span> <span class="mf">1.0e15</span>
 <span class="sd">"""The sentinel an aggregator writes for a group with no active element (``Foam::GREAT``)."""</span>
@@ -648,104 +665,79 @@
 
 <div class="viewcode-block" id="group_sum">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.nodes.aggregators.html#neofoam.postprocess.nodes.aggregators.group_sum">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">group_sum</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"np.ndarray[Any, Any]"</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Per-group, mask- and weight-scaled sum of a DataSet, reduced over all ranks.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Per-group, mask- and weight-scaled sum of a dataset, reduced over all ranks.</span>
 
-<span class="sd">    The one kernel every additive aggregator shares (``Sum``, ``Mean``,</span>
+<span class="sd">    The one kernel call every additive aggregator shares (``Sum``, ``Mean``,</span>
 <span class="sd">    ``VolIntegrate``, ``SurfIntegrate``); pass ``weights=None`` for a plain sum</span>
-<span class="sd">    or the geometry's measure for an integral. A masked-out element contributes</span>
-<span class="sd">    zero rather than being dropped, so the result is ``(n_groups,)`` for a scalar</span>
-<span class="sd">    field and ``(n_groups, 3)`` for a vector one whatever the mask says::</span>
+<span class="sd">    or the geometry's measure for an integral. The sum runs where the values</span>
+<span class="sd">    live — the weights, the mask and the groups have to be on that executor too</span>
+<span class="sd">    — and comes back as host numpy, ``(n_groups,)`` for a scalar field and</span>
+<span class="sd">    ``(n_groups, 3)`` for a vector one. A masked-out element contributes zero</span>
+<span class="sd">    rather than being dropped::</span>
 
-<span class="sd">        group_sum(dataset, weights=dataset.geometry.measure)</span>
+<span class="sd">        group_sum(dataset, weights=dataset.geometry.volumes())</span>
 <span class="sd">    """</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">groups</span> <span class="o">=</span> <span class="n">_group_index</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
-    <span class="n">scale</span> <span class="o">=</span> <span class="n">_scale</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">values</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">values</span><span class="p">[:,</span> <span class="n">c</span><span class="p">]</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="p">],</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">reduce_sum</span><span class="p">(</span><span class="n">local</span><span class="p">)</span></div>
+    <span class="n">_reject_groups_outside_the_bins</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">scaling</span><span class="o">=</span><span class="n">weights</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">reduce_sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_group_index</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">n_elements</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The bin index of every element; all zeros when the pipeline holds no binner."""</span>
-    <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">groups</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_elements</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-    <span class="n">groups</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-    <span class="c1"># A row count that follows the data instead of the binner's spec would differ</span>
-    <span class="c1"># between ranks (R6), so an out-of-range index is an error, not a wider table.</span>
-    <span class="k">if</span> <span class="n">groups</span><span class="o">.</span><span class="n">size</span> <span class="ow">and</span> <span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">groups</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_group_extremum</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">kernel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Per-group ``pp.max``/``pp.min`` over the active elements, as host numpy."""</span>
+    <span class="n">_reject_groups_outside_the_bins</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reject_groups_outside_the_bins</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a bin index the binner never declared, which the kernel would write past.</span>
+
+<span class="sd">    A row count that follows the data instead of the binner's spec would differ</span>
+<span class="sd">    between ranks (R6). Only a host group array is checked: a NeoN one comes</span>
+<span class="sd">    from ``pp.bin_index``, which places every element in a bin it was given, and</span>
+<span class="sd">    reading it back would copy the whole field off its executor every step.</span>
+<span class="sd">    """</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">groups</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="n">groups</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">groups</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">groups</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"postProcess: </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has group indices "</span>
             <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">groups</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">groups</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s2">] outside the </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="si">}</span><span class="s2"> groups "</span>
             <span class="s2">"the binner declared"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">groups</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_scale</span><span class="p">(</span>
-    <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"np.ndarray[Any, Any]"</span><span class="p">],</span> <span class="n">n_elements</span><span class="p">:</span> <span class="nb">int</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The per-element factor: the weights (or one), zeroed where the mask is false."""</span>
-    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_elements</span><span class="p">)</span> <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">scale</span>
-    <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_active_mask</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">n_elements</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The elements an extremum looks at — masked-out ones are skipped, not scaled."""</span>
-    <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_elements</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">mask</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_group_extremum</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">ufunc</span><span class="p">:</span> <span class="s2">"np.ufunc"</span><span class="p">,</span> <span class="n">empty</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Per-group min/max over the active elements; ``empty`` where a group has none."""</span>
-    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">groups</span> <span class="o">=</span> <span class="n">_group_index</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
-    <span class="n">active</span> <span class="o">=</span> <span class="n">_active_mask</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
-    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">,)</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">n_groups</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">empty</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">ufunc</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">groups</span><span class="p">[</span><span class="n">active</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="n">active</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">local</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_measure</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">aggregator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_measure</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">aggregator</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">accessor</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The geometry's per-element measure, or a TypeError naming the source that lacks one."""</span>
-    <span class="n">measure</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"np.ndarray[Any, Any]"</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">measure</span>
+    <span class="n">measure</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="n">accessor</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">measure</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">aggregator</span><span class="si">}</span><span class="s2"> needs </span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2">; the source of </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> "</span>
             <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">geometry</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) provides none"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">measure</span>
+    <span class="k">return</span> <span class="n">measure</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_to_aggregated</span><span class="p">(</span>
-    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">per_group_values</span><span class="p">:</span> <span class="s2">"np.ndarray[Any, Any]"</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">per_group_values</span><span class="p">:</span> <span class="s2">"np.ndarray[Any, Any]"</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Turn a ``(n_groups,)`` / ``(n_groups, 3)`` result into the writer's headers and rows."""</span>
+<span class="w">    </span><span class="sd">"""Turn a ``(n_groups,)`` / ``(n_groups, 3)`` result into one row per group."""</span>
     <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">per_group_values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">n_components</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">if</span> <span class="n">n_components</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_components</span><span class="p">)]</span>
     <span class="n">grouped</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">groups</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">group</span><span class="p">)]</span> <span class="k">if</span> <span class="n">grouped</span> <span class="k">else</span> <span class="p">[])</span> <span class="o">+</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">row</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-    <span class="p">]</span>
-    <span class="k">return</span> <span class="n">AggregatedDataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">([</span><span class="s2">"bin"</span><span class="p">]</span> <span class="k">if</span> <span class="n">grouped</span> <span class="k">else</span> <span class="p">[])</span> <span class="o">+</span> <span class="n">columns</span><span class="p">,</span> <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">AggregatedDataSet</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+        <span class="n">values</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">AggregatedData</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">row</span><span class="p">],</span>
+                <span class="n">group</span><span class="o">=</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">group</span><span class="p">)]</span> <span class="k">if</span> <span class="n">grouped</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">group_name</span><span class="o">=</span><span class="p">[</span><span class="n">BIN_COLUMN</span><span class="p">]</span> <span class="k">if</span> <span class="n">grouped</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Sum">
@@ -765,7 +757,7 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sum"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sum"</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
         <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_sum"</span>
         <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">))</span></div>
 
@@ -787,9 +779,11 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"mean"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"mean"</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
         <span class="n">total</span> <span class="o">=</span> <span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">counts</span> <span class="o">=</span> <span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">with_values</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">))),</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="c1"># the divisor is the same sum over a field of ones: the weight each</span>
+        <span class="c1"># element carries into `total`, reduced over the same mask and bins.</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">with_field</span><span class="p">(</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">)),</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="n">divisor</span> <span class="o">=</span> <span class="n">counts</span> <span class="k">if</span> <span class="n">total</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">counts</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
         <span class="n">populated</span> <span class="o">=</span> <span class="n">divisor</span> <span class="o">&gt;</span> <span class="n">_SMALL</span>
         <span class="c1"># np.where alone still evaluates both branches, so the division itself has</span>
@@ -816,10 +810,9 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"max"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"max"</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
         <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_max"</span>
-        <span class="n">local</span> <span class="o">=</span> <span class="n">_group_extremum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">,</span> <span class="o">-</span><span class="n">GREAT</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">reduce_max</span><span class="p">(</span><span class="n">local</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">reduce_max</span><span class="p">(</span><span class="n">_group_extremum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">max</span><span class="p">)))</span></div>
 
 
 
@@ -839,10 +832,9 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"min"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"min"</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
         <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_min"</span>
-        <span class="n">local</span> <span class="o">=</span> <span class="n">_group_extremum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">,</span> <span class="n">GREAT</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">reduce_min</span><span class="p">(</span><span class="n">local</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">reduce_min</span><span class="p">(</span><span class="n">_group_extremum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">min</span><span class="p">)))</span></div>
 
 
 
@@ -862,8 +854,8 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"volIntegrate"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"volIntegrate"</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
-        <span class="n">measure</span> <span class="o">=</span> <span class="n">_measure</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"volIntegrate"</span><span class="p">,</span> <span class="s2">"cell volumes"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">InternalDataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
+        <span class="n">measure</span> <span class="o">=</span> <span class="n">_measure</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"volIntegrate"</span><span class="p">,</span> <span class="s2">"volumes"</span><span class="p">,</span> <span class="s2">"cell volumes"</span><span class="p">)</span>
         <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_volIntegrate"</span>
         <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">measure</span><span class="p">))</span></div>
 
@@ -884,8 +876,8 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"surfIntegrate"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"surfIntegrate"</span>
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
-        <span class="n">measure</span> <span class="o">=</span> <span class="n">_measure</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"surfIntegrate"</span><span class="p">,</span> <span class="s2">"face areas"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">PatchDataSet</span><span class="p">,</span> <span class="n">SurfaceDataSet</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">AggregatedDataSet</span><span class="p">:</span>
+        <span class="n">measure</span> <span class="o">=</span> <span class="n">_measure</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="s2">"surfIntegrate"</span><span class="p">,</span> <span class="s2">"face_area_magnitudes"</span><span class="p">,</span> <span class="s2">"face areas"</span><span class="p">)</span>
         <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_surfIntegrate"</span>
         <span class="k">return</span> <span class="n">_to_aggregated</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">group_sum</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">measure</span><span class="p">))</span></div>
 

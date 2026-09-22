@@ -631,19 +631,24 @@
 
 <span class="sd">"""Geometry adapters: the cells, a sampled surface, one boundary patch, a set of points.</span>
 
-<span class="sd">Every adapter satisfies the :class:`~neofoam.postprocess.node.Geometry` protocol</span>
-<span class="sd">(``positions`` and an optional ``measure``), and all but :class:`CellGeometry`</span>
+<span class="sd">Every adapter satisfies the protocol its dataset declares —</span>
+<span class="sd">:class:`~neofoam.postprocess.node.InternalMesh`,</span>
+<span class="sd">:class:`~neofoam.postprocess.node.BoundaryMesh`,</span>
+<span class="sd">:class:`~neofoam.postprocess.node.SurfaceMesh` or</span>
+<span class="sd">:class:`~neofoam.postprocess.node.SetGeometry` — and all but the two cell adapters</span>
 <span class="sd">also satisfy :class:`~neofoam.postprocess.node.SamplingGeometry` — they can</span>
 <span class="sd">interpolate a *registered field name* onto their elements, so a node never</span>
-<span class="sd">learns which one it is working on. :class:`CellGeometry` needs nothing but an</span>
-<span class="sd">fvMesh-shaped object; the others build a pybFoam ``sampledSurface`` or</span>
-<span class="sd">``sampledSet``.</span>
+<span class="sd">learns which one it is working on. :class:`CellGeometry` and</span>
+<span class="sd">:class:`NeonCellGeometry` need nothing but an fvMesh-shaped object, and differ</span>
+<span class="sd">only in where they put the numbers (host, or a NeoN executor); the others build</span>
+<span class="sd">a pybFoam ``sampledSurface`` or ``sampledSet``, which are host-only.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
@@ -691,26 +696,111 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">CellGeometry</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Cell centres and volumes, duck-typed over a pybFoam-like fvMesh.</span>
 
-<span class="sd">    The geometry of :class:`~neofoam.postprocess.sources.fields.InternalField`, and the one</span>
-<span class="sd">    adapter that touches no pybFoam symbol: it calls ``C()`` and ``V()`` on</span>
-<span class="sd">    whatever mesh it is handed, so a fake mesh is enough to exercise it. It has</span>
-<span class="sd">    no ``sample``, which is what makes</span>
+<span class="sd">    The geometry of :class:`~neofoam.postprocess.sources.fields.InternalField` for a</span>
+<span class="sd">    pybFoam field, and the one adapter that touches no pybFoam symbol: it calls</span>
+<span class="sd">    ``C()`` and ``V()`` on whatever mesh it is handed, so a fake mesh is enough</span>
+<span class="sd">    to exercise it. It has no ``sample``, which is what makes</span>
 <span class="sd">    ``field("p") | Sample(field="U")`` a named error instead of a crash::</span>
 
-<span class="sd">        CellGeometry(ctx.mesh).measure.sum()  # the mesh volume</span>
+<span class="sd">        CellGeometry(ctx.mesh).volumes().sum()  # the mesh volume</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span> <span class="o">=</span> <span class="n">mesh</span>
 
-    <span class="nd">@property</span>
+<div class="viewcode-block" id="CellGeometry.positions">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.CellGeometry.positions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">positions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span><span class="o">.</span><span class="n">C</span><span class="p">()</span><span class="o">.</span><span class="n">internalField</span><span class="p">())</span>
+<span class="w">        </span><span class="sd">"""Cell centres, shape ``(n, 3)``."""</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span><span class="o">.</span><span class="n">C</span><span class="p">()</span><span class="o">.</span><span class="n">internalField</span><span class="p">())</span></div>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="CellGeometry.volumes">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.CellGeometry.volumes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">volumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Cell volumes, shape ``(n,)``."""</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mesh</span><span class="o">.</span><span class="n">V</span><span class="p">())</span></div>
+</div>
 
+
+
+<div class="viewcode-block" id="NeonCellGeometry">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.NeonCellGeometry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeonCellGeometry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Cell centres and volumes as NeoN vectors on one executor.</span>
+
+<span class="sd">    The geometry a NeoN volume field is post-processed on: a kernel call needs</span>
+<span class="sd">    every array on the executor its values live on, so the mesh's ``C()`` and</span>
+<span class="sd">    ``V()`` — which are host data even on a NeoN run — are copied there once.</span>
+<span class="sd">    Build it through :func:`neon_cell_geometry`, which keeps the copy for the</span>
+<span class="sd">    rest of the run; construct it directly only to pin a second executor::</span>
+
+<span class="sd">        neon_cell_geometry(ctx.mesh, field.internal_vector().exec()).volumes()</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">neon</span>  <span class="c1"># noqa: PLC0415  # NeoN is only needed on the NeoN path</span>
+
+        <span class="n">centres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">C</span><span class="p">()</span><span class="o">.</span><span class="n">internalField</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_positions</span> <span class="o">=</span> <span class="n">neon</span><span class="o">.</span><span class="n">VectorVector</span><span class="p">(</span><span class="n">executor</span><span class="p">,</span> <span class="p">[</span><span class="n">neon</span><span class="o">.</span><span class="n">Vec3</span><span class="p">(</span><span class="o">*</span><span class="n">centre</span><span class="p">)</span> <span class="k">for</span> <span class="n">centre</span> <span class="ow">in</span> <span class="n">centres</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_volumes</span> <span class="o">=</span> <span class="n">neon</span><span class="o">.</span><span class="n">ScalarVector</span><span class="p">(</span><span class="n">executor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">V</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+
+<div class="viewcode-block" id="NeonCellGeometry.positions">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.NeonCellGeometry.positions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">positions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cell centres as a NeoN ``VectorVector``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_positions</span></div>
+
+
+<div class="viewcode-block" id="NeonCellGeometry.volumes">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.NeonCellGeometry.volumes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">volumes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cell volumes as a NeoN ``ScalarVector``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_volumes</span></div>
+</div>
+
+
+
+<span class="c1">#: The cell geometry already mirrored onto an executor, by mesh and executor.</span>
+<span class="c1">#: Post-processing runs on a static mesh, so the copy is made once per run and</span>
+<span class="c1">#: not per write step; a mesh that moved would need this dropped. The mesh is</span>
+<span class="c1">#: kept beside its geometry: the key is the mesh's address, which another object</span>
+<span class="c1">#: could take over once the mesh is collected.</span>
+<span class="n">_NEON_CELL_GEOMETRIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">NeonCellGeometry</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="c1">#: Whether the cache is already set to empty itself at exit (see below).</span>
+<span class="n">_RELEASE_REGISTERED</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="neon_cell_geometry">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.neon_cell_geometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">neon_cell_geometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeonCellGeometry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The cells of *mesh* on *executor*, built on first use and kept afterwards."""</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">mesh</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">executor</span><span class="p">))</span>
+    <span class="n">cached</span> <span class="o">=</span> <span class="n">_NEON_CELL_GEOMETRIES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_release_the_cache_before_kokkos_finalizes</span><span class="p">()</span>
+        <span class="n">cached</span> <span class="o">=</span> <span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">NeonCellGeometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">executor</span><span class="p">))</span>
+        <span class="n">_NEON_CELL_GEOMETRIES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cached</span>
+    <span class="k">return</span> <span class="n">cached</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_release_the_cache_before_kokkos_finalizes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Have the cache drop its vectors at exit, while Kokkos is still up.</span>
+
+<span class="sd">    NeoN's own ``atexit`` handler collects the Python-owned NeoN objects and</span>
+<span class="sd">    then calls ``Kokkos::finalize``; a vector still held here would be</span>
+<span class="sd">    deallocated after that and Kokkos aborts the process. ``atexit`` runs its</span>
+<span class="sd">    handlers last-registered-first, and this one is registered on the first NeoN</span>
+<span class="sd">    field — long after NeoN was initialized — so it runs before that handler.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_RELEASE_REGISTERED</span>
+    <span class="k">if</span> <span class="n">_RELEASE_REGISTERED</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">_NEON_CELL_GEOMETRIES</span><span class="o">.</span><span class="n">clear</span><span class="p">)</span>
+    <span class="n">_RELEASE_REGISTERED</span> <span class="o">=</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="SurfaceGeometry">
@@ -718,10 +808,10 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SurfaceGeometry</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Face centres and areas of a sampled surface, plus the interpolation onto it.</span>
 
-<span class="sd">    What a surface source hands its nodes: ``positions`` are the face centres,</span>
-<span class="sd">    ``measure`` the face areas (so ``| Area() | Sum()`` is the cut area), and</span>
-<span class="sd">    :meth:`sample` interpolates a registered field onto those faces. Holding the</span>
-<span class="sd">    field registry here is what keeps</span>
+<span class="sd">    What a surface source hands its nodes: :meth:`positions` are the face</span>
+<span class="sd">    centres, :meth:`face_area_magnitudes` the face areas (so ``| Area() |</span>
+<span class="sd">    Sum()`` is the cut area), and :meth:`sample` interpolates a registered field</span>
+<span class="sd">    onto those faces. Holding the field registry here is what keeps</span>
 <span class="sd">    :class:`~neofoam.postprocess.sources.sampling.Sample` free of a live mesh — a</span>
 <span class="sd">    pipeline is declared once and re-resolved every time step::</span>
 
@@ -733,15 +823,33 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span> <span class="o">=</span> <span class="n">fields</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheme</span> <span class="o">=</span> <span class="n">scheme</span>
 
-    <span class="nd">@property</span>
+<div class="viewcode-block" id="SurfaceGeometry.positions">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.SurfaceGeometry.positions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">positions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Face centres, shape ``(n, 3)``."""</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surface</span><span class="o">.</span><span class="n">Cf</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surface</span><span class="o">.</span><span class="n">Cf</span><span class="p">())</span></div>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+
+<div class="viewcode-block" id="SurfaceGeometry.face_areas">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_areas">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">face_areas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Face area vectors, shape ``(n, 3)``."""</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surface</span><span class="o">.</span><span class="n">Sf</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="SurfaceGeometry.face_area_magnitudes">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.SurfaceGeometry.face_area_magnitudes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">face_area_magnitudes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Face areas, shape ``(n,)``."""</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surface</span><span class="o">.</span><span class="n">magSf</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surface</span><span class="o">.</span><span class="n">magSf</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="SurfaceGeometry.total_area">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.SurfaceGeometry.total_area">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_area</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The area of the whole surface."""</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surface</span><span class="o">.</span><span class="n">area</span><span class="p">())</span></div>
+
 
 <div class="viewcode-block" id="SurfaceGeometry.sample">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.SurfaceGeometry.sample">[docs]</a>
@@ -767,7 +875,7 @@
 <span class="sd">    surface is built once, at construction, and an unknown patch name — or one</span>
 <span class="sd">    that samples no face at all — raises there::</span>
 
-<span class="sd">        PatchGeometry(ctx.mesh, "movingWall", ctx.fields).measure.sum()  # the patch area</span>
+<span class="sd">        PatchGeometry(ctx.mesh, "movingWall", ctx.fields).total_area()</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">patch_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -793,17 +901,17 @@
 <div class="viewcode-block" id="PointGeometry">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.PointGeometry">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PointGeometry</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The sample points of a pybFoam ``sampledSet`` — positions, no measure.</span>
+<span class="w">    </span><span class="sd">"""The sample points of a pybFoam ``sampledSet`` — positions and distances, no measure.</span>
 
 <span class="sd">    The geometry of :class:`~neofoam.postprocess.sources.fields.LineField`: a probe has</span>
-<span class="sd">    no area or volume, so ``measure`` is ``None`` and the measure-weighted</span>
-<span class="sd">    aggregators reject it — reduce it with</span>
+<span class="sd">    no area or volume, so it offers neither and the measure-weighted</span>
+<span class="sd">    aggregators reject it by name — reduce it with</span>
 <span class="sd">    :class:`~neofoam.postprocess.nodes.aggregators.Mean` or write every point with</span>
 <span class="sd">    :class:`~neofoam.postprocess.nodes.rows.Rows`. OpenFOAM drops the points of the</span>
-<span class="sd">    spec that fall outside the mesh, so ``positions`` may be shorter than the</span>
+<span class="sd">    spec that fall outside the mesh, so :meth:`positions` may be shorter than the</span>
 <span class="sd">    spec asked for::</span>
 
-<span class="sd">        PointGeometry(ctx.mesh, spec.to_foam_dict(), "profile", ctx.fields).positions</span>
+<span class="sd">        PointGeometry(ctx.mesh, spec.to_foam_dict(), "profile", ctx.fields).positions()</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">set_dict</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -813,13 +921,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span> <span class="o">=</span> <span class="n">sampling</span><span class="o">.</span><span class="n">sampledSet</span><span class="o">.</span><span class="n">New</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">mesh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">,</span> <span class="n">set_dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fields</span> <span class="o">=</span> <span class="n">fields</span>
 
-    <span class="nd">@property</span>
+<div class="viewcode-block" id="PointGeometry.positions">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.PointGeometry.positions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">positions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">points</span><span class="p">())</span>
+<span class="w">        </span><span class="sd">"""Sample points, shape ``(n, 3)``."""</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">points</span><span class="p">())</span></div>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="PointGeometry.distance">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.PointGeometry.distance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Distance along the set, shape ``(n,)``."""</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">distance</span><span class="p">())</span></div>
+
 
 <div class="viewcode-block" id="PointGeometry.sample">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.PointGeometry.sample">[docs]</a>

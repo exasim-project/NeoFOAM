@@ -687,8 +687,30 @@ table, so one spec can serve every table of a case:</p>
 <dt class="sig sig-object py" id="neofoam.postprocess.writers.writer.TableWriter.write">
 <span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><span class="pre">AggregatedDataSet</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/writers/writer.html#TableWriter.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.writers.writer.TableWriter.write" title="Link to this definition">¶</a></dt>
 <dd><p>Append one entry per row of <code class="docutils literal notranslate"><span class="pre">result</span></code>, prefixed by <code class="docutils literal notranslate"><span class="pre">time</span></code>.</p>
+<p>Take the columns from <a class="reference internal" href="#neofoam.postprocess.writers.writer.table_headers" title="neofoam.postprocess.writers.writer.table_headers"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_headers()</span></code></a> and the rows from
+<a class="reference internal" href="#neofoam.postprocess.writers.writer.table_rows" title="neofoam.postprocess.writers.writer.table_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_rows()</span></code></a>, so every format writes them in the same order.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.postprocess.writers.writer.table_headers">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.writers.writer.</span></span><span class="sig-name descname"><span class="pre">table_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><span class="pre">AggregatedDataSet</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/writers/writer.html#table_headers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.writers.writer.table_headers" title="Link to this definition">¶</a></dt>
+<dd><p>The result’s column names in file order: what labels a value, then the value.</p>
+<p>An <a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a> carries its value
+columns first; a NeoFOAM table writes the label before the number it names —
+<code class="docutils literal notranslate"><span class="pre">time,bin,p_sum</span></code>, and <code class="docutils literal notranslate"><span class="pre">time,field,solver,metric,iteration,value</span></code> for the
+residuals — so every writer takes its columns from here and its rows from
+<a class="reference internal" href="#neofoam.postprocess.writers.writer.table_rows" title="neofoam.postprocess.writers.writer.table_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_rows()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s2">"time"</span><span class="p">,</span> <span class="o">*</span><span class="n">table_headers</span><span class="p">(</span><span class="n">result</span><span class="p">)])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.postprocess.writers.writer.table_rows">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.writers.writer.</span></span><span class="sig-name descname"><span class="pre">table_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.postprocess.node.html#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><span class="pre">AggregatedDataSet</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/writers/writer.html#table_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.writers.writer.table_rows" title="Link to this definition">¶</a></dt>
+<dd><p>The result’s rows, reordered to match <a class="reference internal" href="#neofoam.postprocess.writers.writer.table_headers" title="neofoam.postprocess.writers.writer.table_headers"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_headers()</span></code></a>.</p>
 </dd></dl>
 
 </section>
@@ -756,6 +778,8 @@ table, so one spec can serve every table of a case:</p>
 <li><a class="reference internal" href="#neofoam.postprocess.writers.writer.TableWriter.write"><code class="docutils literal notranslate"><span class="pre">TableWriter.write()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.writers.writer.table_headers"><code class="docutils literal notranslate"><span class="pre">table_headers()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.writers.writer.table_rows"><code class="docutils literal notranslate"><span class="pre">table_rows()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -647,7 +647,6 @@
 <span class="sd">    line("U", start=(0, 0, 0.005), end=(0, 0.1, 0.005), n_points=20) | Mag() | Rows()</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -655,8 +654,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">Source</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.sources.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellGeometry</span><span class="p">,</span> <span class="n">PatchGeometry</span><span class="p">,</span> <span class="n">PointGeometry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">InternalDataSet</span><span class="p">,</span> <span class="n">PatchDataSet</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">,</span> <span class="n">PointDataSet</span><span class="p">,</span> <span class="n">Source</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.sources.geometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatchGeometry</span><span class="p">,</span> <span class="n">PointGeometry</span>
 
 <span class="c1">#: A point in space, as a spec writes it.</span>
 <span class="n">Point</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
@@ -682,37 +681,6 @@
 <span class="p">}</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_registered_field</span><span class="p">(</span><span class="n">fields</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The field registered under *name*, or the one that answers to it.</span>
-
-<span class="sd">    A solver may register a field under a key of its own: incompressibleVoF</span>
-<span class="sd">    registers the phase fraction ``alpha.water`` as ``alpha1``, and a table</span>
-<span class="sd">    written against either spelling has to find it.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">fields</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="n">own_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">own_name</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">own_name</span><span class="p">())</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">field</span>
-    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"postProcess: field </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is not registered; available: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_internal_values</span><span class="p">(</span><span class="n">field</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The internal values of a volume field as host numpy, pybFoam or NeoN.</span>
-
-<span class="sd">    A pybFoam volume field hands its cell values over as ``internalField()``; a</span>
-<span class="sd">    NeoN one keeps them in a ``Vector`` on its executor, which may be a device,</span>
-<span class="sd">    so ``copy_to_host`` is the only way in — NeoN's ``__array__`` refuses a</span>
-<span class="sd">    device vector outright. Duck-typed on the accessor rather than on the class</span>
-<span class="sd">    so this module keeps importing neither NeoN nor its bindings.</span>
-<span class="sd">    """</span>
-    <span class="n">internal_field</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="s2">"internalField"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">internal_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">internal_field</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">internal_vector</span><span class="p">()</span><span class="o">.</span><span class="n">copy_to_host</span><span class="p">())</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">_in_mesh</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"np.ndarray[Any, Any]"</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Which sampled values are real — the rest carry the ``OUT_OF_MESH`` sentinel.</span>
 
@@ -720,10 +688,11 @@
 <span class="sd">    catches only the points it kept but could not evaluate. The sentinel is the</span>
 <span class="sd">    largest representable double, so any threshold below it separates the two —</span>
 <span class="sd">    and the largest component is the test, not the norm, which would overflow on</span>
-<span class="sd">    the sentinel itself (R9).</span>
+<span class="sd">    the sentinel itself (R9). The result is a mask the way the kernels take one:</span>
+<span class="sd">    0/1 labels, not booleans.</span>
 <span class="sd">    """</span>
     <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">magnitude</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">OUT_OF_MESH</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">magnitude</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">OUT_OF_MESH</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="InternalField">
@@ -733,11 +702,12 @@
 <span class="w">    </span><span class="sd">"""The internal field of a registered volume field, on the cell geometry.</span>
 
 <span class="sd">    The default source: use it whenever a table works on cell values. The</span>
-<span class="sd">    ``field`` is the key the solver registered, or the name the field itself</span>
-<span class="sd">    carries (incompressibleVoF registers ``alpha.water`` as ``alpha1``, and</span>
-<span class="sd">    either spelling finds it). A pybFoam field and a NeoN one are both read —</span>
-<span class="sd">    the NeoN one through a host copy of its internal vector. Build it through</span>
-<span class="sd">    :func:`field`::</span>
+<span class="sd">    ``field`` is the key the solver registered it under — which is not always</span>
+<span class="sd">    the name on disk (incompressibleVoF registers ``alpha.water`` as</span>
+<span class="sd">    ``alpha1``). A pybFoam field and a NeoN one are both read, each on the</span>
+<span class="sd">    executor it lives on (see</span>
+<span class="sd">    :meth:`~neofoam.postprocess.node.InternalDataSet.from_field`).</span>
+<span class="sd">    Build it through :func:`field`::</span>
 
 <span class="sd">        field("p") | VolIntegrate()</span>
 <span class="sd">    """</span>
@@ -745,12 +715,15 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"internal"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"internal"</span>
     <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">DataSet</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span>
-            <span class="n">values</span><span class="o">=</span><span class="n">_internal_values</span><span class="p">(</span><span class="n">_registered_field</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)),</span>
-            <span class="n">geometry</span><span class="o">=</span><span class="n">CellGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">),</span>
-        <span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InternalDataSet</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">registered</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"postProcess: field </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="si">!r}</span><span class="s2"> is not registered; "</span>
+                <span class="sa">f</span><span class="s2">"available: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="n">InternalDataSet</span><span class="o">.</span><span class="n">from_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">registered</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">)</span></div>
 
 
 
@@ -773,9 +746,9 @@
     <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PatchDataSet</span><span class="p">:</span>
         <span class="n">geometry</span> <span class="o">=</span> <span class="n">PatchGeometry</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">DataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">PatchDataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">),</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">)</span></div>
 
 
 
@@ -820,12 +793,12 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PointDataSet</span><span class="p">:</span>
         <span class="n">geometry</span> <span class="o">=</span> <span class="n">PointGeometry</span><span class="p">(</span>
             <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_config</span><span class="p">()</span><span class="o">.</span><span class="n">to_foam_dict</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span>
         <span class="p">)</span>
         <span class="n">values</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">DataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">_in_mesh</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">PointDataSet</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">_in_mesh</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_set_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The spec as the ``pybFoam.sampling`` config that ``sampledSet::New`` reads."""</span>

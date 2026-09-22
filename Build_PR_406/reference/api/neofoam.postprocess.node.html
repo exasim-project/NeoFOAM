@@ -634,10 +634,15 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.postprocess.node">
 <span id="neofoam-postprocess-node"></span><h1>neofoam.postprocess.node<a class="headerlink" href="#module-neofoam.postprocess.node" title="Link to this heading">¶</a></h1>
-<p>The post-processing data contract: DataSet, the Source/Node plugin families and Pipeline.</p>
-<p>A node sees only numpy through the <a class="reference internal" href="#neofoam.postprocess.node.Geometry" title="neofoam.postprocess.node.Geometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a> protocol, so this module —
-and every node built on it — is pure numpy; the simulation backend (pybFoam
-today, NeoN later) stays in the sources, the writers and the reductions.</p>
+<p>The post-processing data contract: the datasets, the Source/Node families and Pipeline.</p>
+<p>One dataset class per geometry kind (cells, a patch, a sampled surface, a set of
+points), each holding the field, the active-element mask and the bins, the way
+pyOFTools shapes them. A node does its arithmetic with the NeoN kernels in
+<code class="docutils literal notranslate"><span class="pre">neofoam.neofoam_bindings.postprocess</span></code>, so <code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">mask</span></code>, <code class="docutils literal notranslate"><span class="pre">groups</span></code> and
+the geometry’s arrays are either host numpy (a pybFoam field, every sampling
+source) or NeoN vectors on the executor a NeoN field lives on — the kernels take
+both, as long as one call sees one executor. The backend libraries themselves
+stay in the sources, the writers and the reductions.</p>
 <p>Both extension points are <a class="reference internal" href="neofoam.core.plugin_system.html#neofoam.core.plugin_system.PluginSystem" title="neofoam.core.plugin_system.PluginSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">PluginSystem</span></code></a>
 families discriminated by <code class="docutils literal notranslate"><span class="pre">type</span></code>: a new source or node is a new
 <code class="docutils literal notranslate"><span class="pre">&#64;Source.register</span></code> / <code class="docutils literal notranslate"><span class="pre">&#64;Node.register</span></code> class, never an edit here.</p>
@@ -646,83 +651,138 @@ families discriminated by <code class="docutils literal notranslate"><span class
 </pre></div>
 </div>
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedDataSet">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">AggregatedDataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#AggregatedDataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.AggregatedDataSet" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedData">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">AggregatedData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#AggregatedData"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.AggregatedData" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
-<p>An aggregation result: the CSV column names and the rows to append.</p>
+<p>One row of an aggregation: the value, and the labels that say which one it is.</p>
+<p><code class="docutils literal notranslate"><span class="pre">group</span></code> holds the labels themselves (the bin index, or a residual’s field
+and solver) and <code class="docutils literal notranslate"><span class="pre">group_name</span></code> their column names; both are <code class="docutils literal notranslate"><span class="pre">None</span></code> for a
+table that reduces to a single row.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedData.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.AggregatedData.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedDataSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">AggregatedDataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.postprocess.node.AggregatedData" title="neofoam.postprocess.node.AggregatedData"><span class="pre">AggregatedData</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#AggregatedDataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.AggregatedDataSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>An aggregation result: the rows a table appends at this write step.</p>
 <p>The terminal value of a pipeline — what a
-<a class="reference internal" href="neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.TableWriter" title="neofoam.postprocess.writers.writer.TableWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TableWriter</span></code></a> turns into time-prefixed
-lines. An ungrouped table has one row and one column per value component
-(<code class="docutils literal notranslate"><span class="pre">[&quot;p_sum&quot;]</span></code>, or <code class="docutils literal notranslate"><span class="pre">[&quot;U_sum_0&quot;,</span> <span class="pre">&quot;U_sum_1&quot;,</span> <span class="pre">&quot;U_sum_2&quot;]</span></code>); a table behind a
-binner has one row per bin and a leading <code class="docutils literal notranslate"><span class="pre">bin</span></code> column holding the bin
-index, so the file reads <code class="docutils literal notranslate"><span class="pre">time,bin,p_sum</span></code>. Every row has as many entries
-as there are headers. An entry is a number for every aggregator; a source
-that aggregates itself (the solver residuals) also puts labels in its rows,
-which is why a row is not typed as floats.</p>
+<a class="reference internal" href="neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.TableWriter" title="neofoam.postprocess.writers.writer.TableWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TableWriter</span></code></a> turns into
+time-prefixed lines. <a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet.headers" title="neofoam.postprocess.node.AggregatedDataSet.headers"><code class="xref py py-attr docutils literal notranslate"><span class="pre">headers</span></code></a> and <a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet.grouped_values" title="neofoam.postprocess.node.AggregatedDataSet.grouped_values"><code class="xref py py-attr docutils literal notranslate"><span class="pre">grouped_values</span></code></a> put the
+value columns first and the group columns after them; a writer that wants
+the group columns first (NeoFOAM’s CSV layout does) reorders with
+<a class="reference internal" href="neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.table_headers" title="neofoam.postprocess.writers.writer.table_headers"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_headers()</span></code></a> and
+<a class="reference internal" href="neofoam.postprocess.writers.writer.html#neofoam.postprocess.writers.writer.table_rows" title="neofoam.postprocess.writers.writer.table_rows"><code class="xref py py-func docutils literal notranslate"><span class="pre">table_rows()</span></code></a>. An entry is a number
+for every aggregator; a source that aggregates itself (the solver
+residuals) also puts labels in its groups, which is why a group entry is not
+typed as a float.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedDataSet.grouped_values">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">grouped_values</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.postprocess.node.AggregatedDataSet.grouped_values" title="Link to this definition">¶</a></dt>
+<dd><p>One row per aggregated value: its components, then its group labels.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedDataSet.headers">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">headers</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.postprocess.node.AggregatedDataSet.headers" title="Link to this definition">¶</a></dt>
+<dd><p>One column name per value component, then one per group label.</p>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.postprocess.node.AggregatedDataSet.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.postprocess.node.AggregatedDataSet.model_config" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.AggregatedDataSet.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.DataSet">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">DataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#DataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.DataSet" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
-<p>One field on one geometry — what flows between the nodes of a pipeline.</p>
-<p>A node returns a <em>new</em> DataSet (use <a class="reference internal" href="#neofoam.postprocess.node.DataSet.with_values" title="neofoam.postprocess.node.DataSet.with_values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_values()</span></code></a>, <a class="reference internal" href="#neofoam.postprocess.node.DataSet.with_mask" title="neofoam.postprocess.node.DataSet.with_mask"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_mask()</span></code></a>,
-<a class="reference internal" href="#neofoam.postprocess.node.DataSet.with_groups" title="neofoam.postprocess.node.DataSet.with_groups"><code class="xref py py-meth docutils literal notranslate"><span class="pre">with_groups()</span></code></a>) and never mutates its input, so the same pipeline can
-be evaluated every time step. A selector narrows <code class="docutils literal notranslate"><span class="pre">mask</span></code>, a binner sets
-<code class="docutils literal notranslate"><span class="pre">groups</span></code>/<code class="docutils literal notranslate"><span class="pre">n_groups</span></code>, and an aggregator honours both (one row per group):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span><span class="o">.</span><span class="n">with_values</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>
+<dt class="sig sig-object py" id="neofoam.postprocess.node.BoundaryMesh">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">BoundaryMesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#BoundaryMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.BoundaryMesh" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>One boundary patch: its face centres and the area of each face.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.BoundaryMesh.face_area_magnitudes">
+<span class="sig-name descname"><span class="pre">face_area_magnitudes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#BoundaryMesh.face_area_magnitudes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.BoundaryMesh.face_area_magnitudes" title="Link to this definition">¶</a></dt>
+<dd><p>Face areas, <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.BoundaryMesh.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#BoundaryMesh.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.BoundaryMesh.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Face centres, <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.DataSets">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">DataSets</span></span><a class="headerlink" href="#neofoam.postprocess.node.DataSets" title="Link to this definition">¶</a></dt>
+<dd><p>Everything that may flow between the nodes of a pipeline.</p>
+<p>alias of <a class="reference internal" href="#neofoam.postprocess.node.InternalDataSet" title="neofoam.postprocess.node.InternalDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.PatchDataSet" title="neofoam.postprocess.node.PatchDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">PatchDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.SurfaceDataSet" title="neofoam.postprocess.node.SurfaceDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurfaceDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.PointDataSet" title="neofoam.postprocess.node.PointDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a></p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.FieldDataSets">
+<span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">FieldDataSets</span></span><a class="headerlink" href="#neofoam.postprocess.node.FieldDataSets" title="Link to this definition">¶</a></dt>
+<dd><p>The datasets that carry a field plus its mask and bins: what a node transforms.</p>
+<p>alias of <a class="reference internal" href="#neofoam.postprocess.node.InternalDataSet" title="neofoam.postprocess.node.InternalDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">InternalDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.PatchDataSet" title="neofoam.postprocess.node.PatchDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">PatchDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.SurfaceDataSet" title="neofoam.postprocess.node.SurfaceDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">SurfaceDataSet</span></code></a> | <a class="reference internal" href="#neofoam.postprocess.node.PointDataSet" title="neofoam.postprocess.node.PointDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointDataSet</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.InternalDataSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">InternalDataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.postprocess.node.InternalMesh" title="neofoam.postprocess.node.InternalMesh"><span class="pre">InternalMesh</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#InternalDataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.InternalDataSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FieldDataSet</span></code></p>
+<p>A volume field on the cells — what the <code class="docutils literal notranslate"><span class="pre">internal</span></code> source hands its nodes.</p>
+<p>A node returns a <em>new</em> dataset (use <code class="xref py py-meth docutils literal notranslate"><span class="pre">with_field()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">with_mask()</span></code>,
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">with_groups()</span></code>) and never mutates its input, so the same pipeline can
+be evaluated every time step. Every array of one dataset is of the same kind
+and on the same executor, because that is what a kernel call takes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span><span class="o">.</span><span class="n">with_field</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">))</span>
 </pre></div>
 </div>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.InternalDataSet.from_field">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.postprocess.node.InternalDataSet" title="neofoam.postprocess.node.InternalDataSet"><span class="pre">InternalDataSet</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#InternalDataSet.from_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.InternalDataSet.from_field" title="Link to this definition">¶</a></dt>
+<dd><p>The internal values of a volume field, on the cells they sit on.</p>
+<p>The one place that branches on the field library, so nothing downstream
+has to: a pybFoam field hands its cell values over as host numpy, a NeoN
+one keeps them in a <code class="docutils literal notranslate"><span class="pre">Vector</span></code> on its executor and stays there — the
+geometry is then the same cells mirrored onto that executor, which is
+what lets a GPU field be reduced where it lives:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">InternalDataSet</span><span class="o">.</span><span class="n">from_field</span><span class="p">(</span><span class="s2">"p"</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"p"</span><span class="p">],</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.DataSet.model_config">
-<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.DataSet.model_config" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.postprocess.node.InternalDataSet.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.InternalDataSet.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.DataSet.with_groups">
-<span class="sig-name descname"><span class="pre">with_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.postprocess.node.DataSet" title="neofoam.postprocess.node.DataSet"><span class="pre">DataSet</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#DataSet.with_groups"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.DataSet.with_groups" title="Link to this definition">¶</a></dt>
-<dd><p>The same dataset binned into <code class="docutils literal notranslate"><span class="pre">n_groups</span></code> groups.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.DataSet.with_mask">
-<span class="sig-name descname"><span class="pre">with_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.postprocess.node.DataSet" title="neofoam.postprocess.node.DataSet"><span class="pre">DataSet</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#DataSet.with_mask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.DataSet.with_mask" title="Link to this definition">¶</a></dt>
-<dd><p>The same dataset with a new active-element mask (already ANDead by the caller).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.DataSet.with_values">
-<span class="sig-name descname"><span class="pre">with_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.postprocess.node.DataSet" title="neofoam.postprocess.node.DataSet"><span class="pre">DataSet</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#DataSet.with_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.DataSet.with_values" title="Link to this definition">¶</a></dt>
-<dd><p>The same dataset with new values.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.Geometry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">Geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#Geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.Geometry" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.postprocess.node.InternalMesh">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">InternalMesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#InternalMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.InternalMesh" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
-<p>Positions and an optional per-element measure — all a node sees of the mesh.</p>
-<p>Implement it for a new geometry kind (cells, patch faces, sampled points);
-<code class="docutils literal notranslate"><span class="pre">measure</span></code> is the cell volume or face area, and <code class="docutils literal notranslate"><span class="pre">None</span></code> where no measure
-exists (a point cloud), which the measure-weighted aggregators reject.</p>
-<dl class="py property">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.Geometry.measure">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">measure</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#neofoam.postprocess.node.Geometry.measure" title="Link to this definition">¶</a></dt>
-<dd><p>Per-element volume/area, shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>The cells a volume field lives on — what an internal dataset is measured against.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.InternalMesh.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#InternalMesh.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.InternalMesh.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Cell centres, <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="neofoam.postprocess.node.Geometry.positions">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">positions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.postprocess.node.Geometry.positions" title="Link to this definition">¶</a></dt>
-<dd><p>Element centres, shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.InternalMesh.volumes">
+<span class="sig-name descname"><span class="pre">volumes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#InternalMesh.volumes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.InternalMesh.volumes" title="Link to this definition">¶</a></dt>
+<dd><p>Cell volumes, <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -734,9 +794,9 @@ exists (a point cloud), which the measure-weighted aggregators reject.</p>
 <p>Plugin interface: one pipeline step, <code class="docutils literal notranslate"><span class="pre">dataset</span> <span class="pre">-&gt;</span> <span class="pre">dataset</span></code>.</p>
 <p>Add a selector, a transform or an aggregator with a <code class="docutils literal notranslate"><span class="pre">&#64;Node.register</span></code>
 subclass carrying a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code> discriminator. A transform returns
-a <a class="reference internal" href="#neofoam.postprocess.node.DataSet" title="neofoam.postprocess.node.DataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataSet</span></code></a>, an aggregator the terminal <a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a>.
-Unknown keys are refused, so a case file’s typo is an error and not a
-default.</p>
+one of the <a class="reference internal" href="#neofoam.postprocess.node.FieldDataSets" title="neofoam.postprocess.node.FieldDataSets"><code class="xref py py-data docutils literal notranslate"><span class="pre">FieldDataSets</span></code></a>, an aggregator the terminal
+<a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a>. Unknown keys are refused, so a case file’s typo
+is an error and not a default.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.postprocess.node.Node.accepts_aggregated">
 <span class="sig-name descname"><span class="pre">accepts_aggregated</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#neofoam.postprocess.node.Node.accepts_aggregated" title="Link to this definition">¶</a></dt>
@@ -755,6 +815,19 @@ every other node <a class="reference internal" href="#neofoam.postprocess.node.P
 <dt class="sig sig-object py" id="neofoam.postprocess.node.Node.plugin_model">
 <span class="sig-name descname"><span class="pre">plugin_model</span></span><a class="headerlink" href="#neofoam.postprocess.node.Node.plugin_model" title="Link to this definition">¶</a></dt>
 <dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">NodeExtensibleModel</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.PatchDataSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">PatchDataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.postprocess.node.BoundaryMesh" title="neofoam.postprocess.node.BoundaryMesh"><span class="pre">BoundaryMesh</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#PatchDataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.PatchDataSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FieldDataSet</span></code></p>
+<p>A field on the faces of one boundary patch — the <code class="docutils literal notranslate"><span class="pre">patch</span></code> source’s dataset.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.PatchDataSet.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.PatchDataSet.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
 </dd></dl>
@@ -784,23 +857,55 @@ pipeline can be branched) and evaluate with <a class="reference internal" href="
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.PointDataSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">PointDataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.postprocess.node.SetGeometry" title="neofoam.postprocess.node.SetGeometry"><span class="pre">SetGeometry</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#PointDataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.PointDataSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FieldDataSet</span></code></p>
+<p>A field at a set of sample points — a probe, which carries no measure.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.PointDataSet.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.PointDataSet.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="neofoam.postprocess.node.SamplingGeometry">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">SamplingGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SamplingGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SamplingGeometry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
-<p>A <a class="reference internal" href="#neofoam.postprocess.node.Geometry" title="neofoam.postprocess.node.Geometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a> that can also interpolate a registered field onto its elements.</p>
+<p>A geometry that can also interpolate a registered field onto its elements.</p>
 <p>What a sampled surface, a boundary patch and a point set have over the
 cells, and what <a class="reference internal" href="neofoam.postprocess.sources.sampling.html#neofoam.postprocess.sources.sampling.Sample" title="neofoam.postprocess.sources.sampling.Sample"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sample</span></code></a> needs: the
 node holds a field <em>name</em>, never a live mesh, so the geometry keeps the
 field registry and the interpolation scheme. Implement it for a new
 samplable geometry; leave it off (as
 <a class="reference internal" href="neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.CellGeometry" title="neofoam.postprocess.sources.geometry.CellGeometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">CellGeometry</span></code></a> does) and <code class="docutils literal notranslate"><span class="pre">Sample</span></code>
-refuses the pipeline by name. It is deliberately <em>not</em> a subclass of
-<a class="reference internal" href="#neofoam.postprocess.node.Geometry" title="neofoam.postprocess.node.Geometry"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a>: a protocol whose members are all methods is the only kind
-<code class="docutils literal notranslate"><span class="pre">issubclass</span></code> accepts, which is how the adapters pin their conformance.</p>
+refuses the pipeline by name.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.postprocess.node.SamplingGeometry.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SamplingGeometry.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SamplingGeometry.sample" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SamplingGeometry.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SamplingGeometry.sample" title="Link to this definition">¶</a></dt>
 <dd><p>The registered field <em>name</em>, interpolated onto the elements.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SetGeometry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">SetGeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SetGeometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SetGeometry" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>A set of sample points: where they are, and how far along the set each one is.</p>
+<p>A probe has no area or volume, which is why the measure-weighted
+aggregators have nothing to ask it for.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SetGeometry.distance">
+<span class="sig-name descname"><span class="pre">distance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SetGeometry.distance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SetGeometry.distance" title="Link to this definition">¶</a></dt>
+<dd><p>Distance along the set, <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SetGeometry.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SetGeometry.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SetGeometry.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Sample points, <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -809,7 +914,7 @@ refuses the pipeline by name. It is deliberately <em>not</em> a subclass of
 <dt class="sig sig-object py" id="neofoam.postprocess.node.Source">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">Source</span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#Source"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.Source" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.base.BaseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code></a></p>
-<p>Plugin interface: turn the live Context into a DataSet.</p>
+<p>Plugin interface: turn the live Context into a dataset.</p>
 <p>A source is where a table reaches into the simulation backend. Add one with
 a <code class="docutils literal notranslate"><span class="pre">&#64;Source.register</span></code> subclass carrying a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code>
 discriminator; it is then selectable by that string from a case file. A
@@ -835,6 +940,50 @@ not a default.</p>
 <dd><p>Whether <code class="xref py py-meth docutils literal notranslate"><span class="pre">resolve()</span></code> already returns the terminal
 <a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet" title="neofoam.postprocess.node.AggregatedDataSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a>; such a source’s table carries no nodes, and
 <a class="reference internal" href="#neofoam.postprocess.node.Pipeline.compute" title="neofoam.postprocess.node.Pipeline.compute"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Pipeline.compute()</span></code></a> refuses one that does.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceDataSet">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">SurfaceDataSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neofoam.postprocess.node.SurfaceMesh" title="neofoam.postprocess.node.SurfaceMesh"><span class="pre">SurfaceMesh</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SurfaceDataSet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SurfaceDataSet" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_FieldDataSet</span></code></p>
+<p>A field on the faces of a sampled surface — a cutting plane or an iso-surface.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceDataSet.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'arbitrary_types_allowed':</span> <span class="pre">True,</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></span><a class="headerlink" href="#neofoam.postprocess.node.SurfaceDataSet.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceMesh">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.postprocess.node.</span></span><span class="sig-name descname"><span class="pre">SurfaceMesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SurfaceMesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SurfaceMesh" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
+<p>A sampled surface: face centres, face area vectors and their magnitudes.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceMesh.face_area_magnitudes">
+<span class="sig-name descname"><span class="pre">face_area_magnitudes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SurfaceMesh.face_area_magnitudes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SurfaceMesh.face_area_magnitudes" title="Link to this definition">¶</a></dt>
+<dd><p>Face areas, <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceMesh.face_areas">
+<span class="sig-name descname"><span class="pre">face_areas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SurfaceMesh.face_areas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SurfaceMesh.face_areas" title="Link to this definition">¶</a></dt>
+<dd><p>Face area vectors, <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceMesh.positions">
+<span class="sig-name descname"><span class="pre">positions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SurfaceMesh.positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SurfaceMesh.positions" title="Link to this definition">¶</a></dt>
+<dd><p>Face centres, <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">3)</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.postprocess.node.SurfaceMesh.total_area">
+<span class="sig-name descname"><span class="pre">total_area</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../../_modules/neofoam/postprocess/node.html#SurfaceMesh.total_area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.postprocess.node.SurfaceMesh.total_area" title="Link to this definition">¶</a></dt>
+<dd><p>The area of the whole surface.</p>
 </dd></dl>
 
 </dd></dl>
@@ -897,20 +1046,31 @@ not a default.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.postprocess.node</a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.AggregatedData"><code class="docutils literal notranslate"><span class="pre">AggregatedData</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.AggregatedData.model_config"><code class="docutils literal notranslate"><span class="pre">AggregatedData.model_config</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet"><code class="docutils literal notranslate"><span class="pre">AggregatedDataSet</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet.grouped_values"><code class="docutils literal notranslate"><span class="pre">AggregatedDataSet.grouped_values</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet.headers"><code class="docutils literal notranslate"><span class="pre">AggregatedDataSet.headers</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.AggregatedDataSet.model_config"><code class="docutils literal notranslate"><span class="pre">AggregatedDataSet.model_config</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#neofoam.postprocess.node.DataSet"><code class="docutils literal notranslate"><span class="pre">DataSet</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.postprocess.node.DataSet.model_config"><code class="docutils literal notranslate"><span class="pre">DataSet.model_config</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.node.DataSet.with_groups"><code class="docutils literal notranslate"><span class="pre">DataSet.with_groups()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.node.DataSet.with_mask"><code class="docutils literal notranslate"><span class="pre">DataSet.with_mask()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.node.DataSet.with_values"><code class="docutils literal notranslate"><span class="pre">DataSet.with_values()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.BoundaryMesh"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.BoundaryMesh.face_area_magnitudes"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh.face_area_magnitudes()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.BoundaryMesh.positions"><code class="docutils literal notranslate"><span class="pre">BoundaryMesh.positions()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#neofoam.postprocess.node.Geometry"><code class="docutils literal notranslate"><span class="pre">Geometry</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.postprocess.node.Geometry.measure"><code class="docutils literal notranslate"><span class="pre">Geometry.measure</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.postprocess.node.Geometry.positions"><code class="docutils literal notranslate"><span class="pre">Geometry.positions</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.DataSets"><code class="docutils literal notranslate"><span class="pre">DataSets</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.FieldDataSets"><code class="docutils literal notranslate"><span class="pre">FieldDataSets</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.InternalDataSet"><code class="docutils literal notranslate"><span class="pre">InternalDataSet</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.InternalDataSet.from_field"><code class="docutils literal notranslate"><span class="pre">InternalDataSet.from_field()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.InternalDataSet.model_config"><code class="docutils literal notranslate"><span class="pre">InternalDataSet.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.InternalMesh"><code class="docutils literal notranslate"><span class="pre">InternalMesh</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.InternalMesh.positions"><code class="docutils literal notranslate"><span class="pre">InternalMesh.positions()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.InternalMesh.volumes"><code class="docutils literal notranslate"><span class="pre">InternalMesh.volumes()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Node"><code class="docutils literal notranslate"><span class="pre">Node</span></code></a><ul>
@@ -919,19 +1079,43 @@ not a default.</p>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Node.plugin_model"><code class="docutils literal notranslate"><span class="pre">Node.plugin_model</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.PatchDataSet"><code class="docutils literal notranslate"><span class="pre">PatchDataSet</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.PatchDataSet.model_config"><code class="docutils literal notranslate"><span class="pre">PatchDataSet.model_config</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Pipeline"><code class="docutils literal notranslate"><span class="pre">Pipeline</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Pipeline.compute"><code class="docutils literal notranslate"><span class="pre">Pipeline.compute()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Pipeline.model_config"><code class="docutils literal notranslate"><span class="pre">Pipeline.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.PointDataSet"><code class="docutils literal notranslate"><span class="pre">PointDataSet</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.PointDataSet.model_config"><code class="docutils literal notranslate"><span class="pre">PointDataSet.model_config</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.SamplingGeometry"><code class="docutils literal notranslate"><span class="pre">SamplingGeometry</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.postprocess.node.SamplingGeometry.sample"><code class="docutils literal notranslate"><span class="pre">SamplingGeometry.sample()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SetGeometry"><code class="docutils literal notranslate"><span class="pre">SetGeometry</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SetGeometry.distance"><code class="docutils literal notranslate"><span class="pre">SetGeometry.distance()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SetGeometry.positions"><code class="docutils literal notranslate"><span class="pre">SetGeometry.positions()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Source"><code class="docutils literal notranslate"><span class="pre">Source</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Source.model_config"><code class="docutils literal notranslate"><span class="pre">Source.model_config</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Source.plugin_model"><code class="docutils literal notranslate"><span class="pre">Source.plugin_model</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.postprocess.node.Source.self_aggregating"><code class="docutils literal notranslate"><span class="pre">Source.self_aggregating</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceDataSet"><code class="docutils literal notranslate"><span class="pre">SurfaceDataSet</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceDataSet.model_config"><code class="docutils literal notranslate"><span class="pre">SurfaceDataSet.model_config</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceMesh"><code class="docutils literal notranslate"><span class="pre">SurfaceMesh</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceMesh.face_area_magnitudes"><code class="docutils literal notranslate"><span class="pre">SurfaceMesh.face_area_magnitudes()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceMesh.face_areas"><code class="docutils literal notranslate"><span class="pre">SurfaceMesh.face_areas()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceMesh.positions"><code class="docutils literal notranslate"><span class="pre">SurfaceMesh.positions()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.postprocess.node.SurfaceMesh.total_area"><code class="docutils literal notranslate"><span class="pre">SurfaceMesh.total_area()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -635,9 +635,13 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span><span class="p">,</span> <span class="n">FieldDataSets</span><span class="p">,</span> <span class="n">Node</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.nodes._arrays</span><span class="w"> </span><span class="kn">import</span> <span class="n">host</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">AggregatedDataSet</span><span class="p">,</span> <span class="n">DataSet</span><span class="p">,</span> <span class="n">Node</span>
+<span class="c1">#: The post-processing kernels: element-wise math and reductions that run on the</span>
+<span class="c1">#: executor the values live on, host numpy included.</span>
+<span class="n">pp</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">postprocess</span>
 
 
 <div class="viewcode-block" id="Scale">
@@ -654,8 +658,8 @@
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"scale"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"scale"</span>
     <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">DataSet</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataSet</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">with_values</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">FieldDataSets</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldDataSets</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">with_field</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">factor</span><span class="p">))</span></div>
 
 
 
@@ -665,10 +669,13 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Print</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Print a one-line summary of what flows through, then pass it on unchanged.</span>
 
-<span class="sd">    A debugging aid to watch a pipeline run; works on a DataSet as well as on an</span>
-<span class="sd">    aggregation, so it can be inserted anywhere::</span>
+<span class="sd">    A debugging aid to watch a pipeline run; works on a field dataset as well as</span>
+<span class="sd">    on an aggregation, so it can be inserted anywhere::</span>
 
 <span class="sd">        field("p") | Print(label="cells") | VolIntegrate() | Print()</span>
+
+<span class="sd">    Printing a NeoN field copies it off its executor — a debug node is where</span>
+<span class="sd">    that cost belongs.</span>
 <span class="sd">    """</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"print"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"print"</span>
@@ -678,13 +685,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">AggregatedDataSet</span><span class="p">):</span>
-            <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">rows</span><span class="p">]</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">headers</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">grouped_values</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">columns</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">columns</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">rows</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: no rows"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">host</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
             <span class="c1"># A plane can cut no cell on this rank; a debug node must not raise.</span>
             <span class="n">extent</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"min=</span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2"> max=</span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.6g</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="s2">"no elements"</span>
