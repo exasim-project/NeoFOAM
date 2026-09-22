@@ -47,9 +47,10 @@ def test_apply_assignments_sets_role_and_surface_refinement():
 
     tubes = next(r for r in out if r["name"] == "tubes")
     assert tubes["role"] == "wall"
-    assert tubes["refinement"] == [2, 3]
+    # The key the geometry table and the snappyHexMeshDict writer read.
+    assert tubes["refinement_str"] == "2 3"
     # Input rows are not mutated.
-    assert "refinement" not in rows[0]
+    assert rows[0]["refinement_str"] == "1 2"
 
 
 def test_apply_assignments_ignores_unknown_and_box_face_refinement():
@@ -65,7 +66,7 @@ def test_apply_assignments_ignores_unknown_and_box_face_refinement():
 
     inlet = next(r for r in out if r["name"] == "inlet")
     assert inlet["role"] == "outlet"
-    assert "refinement" not in inlet
+    assert inlet["refinement_str"] == ""
     assert {r["name"] for r in out} == {"tubes", "inlet"}
 
 

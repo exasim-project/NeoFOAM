@@ -292,10 +292,13 @@ class AgentPanel:
 
     def _autosave(self, configs: list[Any]) -> list[str]:
         """Write ``configs`` to the target dir; returns the reply lines reporting it."""
-        target = self._state.target_dir
-        if not (target and configs):
+        raw = self._state.target_dir
+        if not (raw and raw.strip() and configs):
             return []
         try:
+            # Resolved like every other writer: a relative field would otherwise
+            # write the generated configs into the server's launch directory.
+            target = _resolve_target(raw, "target directory")
             # Not save_case(result.output): a loaded case lives in `configs`, not
             # in the agent's own output, and must be written out too.
             written = write_configs(configs, target)

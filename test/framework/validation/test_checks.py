@@ -76,6 +76,66 @@ def test_pimple_final_flags_a_grouped_field_missing_its_final(
     assert [f.message for f in findings] == ["PIMPLE needs a 'kFinal' solver entry (missing)"]
 
 
+def test_pimple_final_skips_a_steady_simple_case(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # A SIMPLE case has no final outer iteration, so its solvers need no Final entry:
+    # the shipped neoSimpleFoam tutorials declare none and must still validate.
+    solvers = {
+        "p": {"solver": checks_mod.Value(text="GAMG")},
+        "U": {"solver": checks_mod.Value(text="smoothSolver")},
+    }
+    monkeypatch.setattr(checks_mod, "read_section", lambda path, section: solvers)
+    monkeypatch.setattr(checks_mod, "read_keys", lambda path: frozenset({"SIMPLE"}))
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    assert check_pimple_final(_ctx(tmp_path)) == []
+
+
+def test_pimple_final_checks_a_piso_case(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    # PISO selects the Final settings on every iteration, so it needs them too.
+    monkeypatch.setattr(
+        checks_mod,
+        "read_section",
+        lambda path, section: {"U": {"solver": checks_mod.Value(text="smoothSolver")}},
+    )
+    monkeypatch.setattr(checks_mod, "read_keys", lambda path: frozenset({"PISO"}))
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    findings = check_pimple_final(_ctx(tmp_path))
+    assert [f.message for f in findings] == ["PIMPLE needs a 'UFinal' solver entry (missing)"]
+
+
+def test_pimple_final_still_checks_a_case_with_no_control_block(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Only a declared SIMPLE case is exempt. An fvSolution that names no algorithm is
+    # not evidence of a steady run, so the check stays on rather than passing silently.
+    monkeypatch.setattr(
+        checks_mod,
+        "read_section",
+        lambda path, section: {"U": {"solver": checks_mod.Value(text="smoothSolver")}},
+    )
+    monkeypatch.setattr(checks_mod, "read_keys", lambda path: frozenset({"solvers"}))
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    findings = check_pimple_final(_ctx(tmp_path))
+    assert [f.message for f in findings] == ["PIMPLE needs a 'UFinal' solver entry (missing)"]
+
+
+def test_pimple_final_errors_when_fv_solution_is_corrupt(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # couldn't-check ⇒ error: an fvSolution that will not parse must not read as
+    # "no control block" and skip the check silently.
+    monkeypatch.setattr(
+        checks_mod, "read_keys", lambda path: checks_mod.Unreadable(reason="corrupt")
+    )
+    # Pinned, so the escalation can only come from the fvSolution read under test and
+    # not from the Boussinesq helper (which reads through read_keys as well).
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    findings = check_pimple_final(_ctx(tmp_path))
+    assert [f.level for f in findings] == ["error"]
+    assert "could not read the control block (corrupt)" in findings[0].message
+
+
 # -- couldn't-check ⇒ error at the three ported read sites ---------------------
 
 

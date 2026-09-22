@@ -32,7 +32,11 @@ from neofoam.ui.case_load import (  # noqa: E402
     models_to_select,
     read_case_configs,
 )
-from neofoam.ui.steps import build_model_families, select_model_state  # noqa: E402
+from neofoam.ui.steps import (  # noqa: E402
+    build_model_families,
+    select_model_state,
+    selection_key,
+)
 
 #: A checked-in ``simulationType laminar`` case (read-only).
 _LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
@@ -87,6 +91,75 @@ def test_read_case_configs_leaves_out_a_file_the_case_does_not_have(tmp_path, so
     names = {type(config).__name__ for config in configs}
     assert "TransportPropertiesConfig" not in names
     assert {"ControlDictConfig", "TurbulencePropertiesConfig"} <= names
+
+
+def _boussinesq_entry(wizard):
+    return next(e for e in wizard.controller.get_entries() if e.cls_name == "BoussinesqConfig")
+
+
+def test_loading_a_case_deselects_an_optional_model_it_does_not_fill(wizard, solver):
+    # Editing a buoyant case and then loading a non-buoyant one must not leave the
+    # Boussinesq data live and selected: the next Save would write the gravity and
+    # p_rgh configs of the case before into the case just loaded.
+    families = build_model_families(solver)
+    entries = wizard.controller.get_entries()
+    wizard.state.update(select_model_state(families, "boussinesq"))
+    boussinesq = _boussinesq_entry(wizard)
+    wizard.state[boussinesq.state_key] = {"beta": 3e-3, "TRef": 300}
+
+    apply_configs_to_forms(
+        wizard.state, entries, families, read_case_configs(_LAMINAR_CASE, solver), _LAMINAR_CASE
+    )
+
+    assert wizard.state[selection_key("boussinesq")] is False
+    assert wizard.state[boussinesq.state_key] == dict(boussinesq.defaults)
+
+
+def test_an_incremental_fill_keeps_the_forms_it_does_not_cover(wizard, solver):
+    # Without a case_dir the configs are one partial fill (the AI's own output), not a
+    # whole case, so the forms it does not name keep what the user put in them.
+    families = build_model_families(solver)
+    entries = wizard.controller.get_entries()
+    wizard.state.update(select_model_state(families, "boussinesq"))
+    boussinesq = _boussinesq_entry(wizard)
+    wizard.state[boussinesq.state_key] = {"beta": 3e-3, "TRef": 300}
+
+    apply_configs_to_forms(
+        wizard.state, entries, families, read_case_configs(_LAMINAR_CASE, solver)
+    )
+
+    assert wizard.state[selection_key("boussinesq")] is True
+    assert wizard.state[boussinesq.state_key] == {"beta": 3e-3, "TRef": 300}
+
+
+def test_a_load_leaves_every_pick_one_family_with_one_member_selected(wizard, solver):
+    # A family member is gated like an optional model but must never be switched off by
+    # the replacement pass: "no algorithm" is not a case the wizard can save.
+    families = build_model_families(solver)
+    configs = read_case_configs(_LAMINAR_CASE, solver)
+
+    apply_configs_to_forms(
+        wizard.state, wizard.controller.get_entries(), families, configs, _LAMINAR_CASE
+    )
+
+    for family in families:
+        selected = [c.name for c in family.members if wizard.state[selection_key(c.name)]]
+        assert len(selected) == 1, f"{family.name}: {selected}"
+
+
+def test_loaded_models_include_the_turbulence_choice_the_load_moved(wizard, solver):
+    # turbulenceProperties has no owning model, so the move is invisible to
+    # models_to_select — the summary the caller prints still has to name it.
+    families = build_model_families(solver)
+    wizard.state.update(select_model_state(families, "kEpsilon"))
+    configs = read_case_configs(_LAMINAR_CASE, solver)
+
+    selected = apply_configs_to_forms(
+        wizard.state, wizard.controller.get_entries(), families, configs, _LAMINAR_CASE
+    )
+
+    assert wizard.state.choice_momentumTransportModel == "laminar"
+    assert "laminar" in selected
 
 
 def test_loaded_case_fills_the_forms_with_the_values_on_disk(wizard, solver):

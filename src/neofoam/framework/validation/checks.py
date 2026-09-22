@@ -352,16 +352,38 @@ def _expand_group(name: str) -> list[str]:
     return [stripped] if stripped else []
 
 
+# The control blocks whose final outer iteration makes ``fvMatrix::solve`` select the
+# ``Final`` solver settings. Only a case declaring SIMPLE and neither of these is
+# exempt: an undeclared algorithm stays checked rather than silently passing.
+_FINAL_ITERATION_BLOCKS = frozenset({"PIMPLE", "PISO"})
+
+
 def check_pimple_final(ctx: CaseContext) -> list[Finding]:
     """Every solved field needs a ``<field>Final`` entry — grouped keys expanded.
+
+    Skipped for a steady case — one whose ``system/fvSolution`` declares SIMPLE and
+    neither PIMPLE nor PISO. ``Final`` settings exist for the final outer iteration and
+    a steady run has none, so demanding them there false-fails every steady case.
 
     Base and Final solver keys are expanded to individual fields, so a grouped base
     ``"(U|k|epsilon)"`` is satisfied by per-field ``UFinal``/``kFinal``/``epsilonFinal``
     (or a grouped ``"(U|k|epsilon)Final"``) — no literal-string false-fail. In a
     Boussinesq case the vestigial ``p`` solver (never solved; p_rgh is) needs no Final.
     """
+    fv_solution = ctx.case / "system" / "fvSolution"
+    keys = read_keys(fv_solution)
+    if isinstance(keys, Unreadable):
+        return [
+            _error(
+                "system/fvSolution",
+                f"could not read the control block ({keys.reason})",
+                fix="ensure system/fvSolution parses",
+            )
+        ]
+    if keys is not None and "SIMPLE" in keys and keys.isdisjoint(_FINAL_ITERATION_BLOCKS):
+        return []
     findings: list[Finding] = []
-    solvers = read_section(ctx.case / "system" / "fvSolution", "solvers")
+    solvers = read_section(fv_solution, "solvers")
     buoyant, err = _boussinesq_or_error(ctx.case)
     if err is not None:
         return [err]

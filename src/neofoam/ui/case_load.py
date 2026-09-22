@@ -22,7 +22,12 @@ from neofoam.io import OpenFOAMStrategy
 from neofoam.io.dictread import Value, read_keys, read_section, read_toplevel
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
-from neofoam.ui.steps import ModelFamily, loaded_turbulence_model, select_model_state
+from neofoam.ui.steps import (
+    ModelFamily,
+    loaded_turbulence_model,
+    select_model_state,
+    selection_key,
+)
 
 __all__ = [
     "read_case_configs",
@@ -148,6 +153,32 @@ def models_to_select(
     return sorted(chosen)
 
 
+def _clear_absent(
+    state: Any,
+    entries: list[FormEntry],
+    families: list[ModelFamily],
+    filled: dict[str, dict[str, Any]],
+) -> None:
+    """Reset the forms and switch off the optional models a loaded case does not fill.
+
+    The replacement half of a load: without it the previous case's data stays live in
+    every form the new one leaves out, and its optional models stay selected — so the
+    next Save writes, say, the Boussinesq configs of the case before into the case just
+    loaded. A form goes back to the defaults a fresh wizard seeds. A family member is
+    never deselected: a pick-one family must always have exactly one member on, and
+    which one is :func:`models_to_select`'s decision.
+    """
+    family_members = {choice.name for family in families for choice in family.members}
+    filled_owners = {e.owner_model for e in entries if e.key in filled}
+    for entry in entries:
+        if entry.key in filled:
+            continue
+        state[entry.state_key] = dict(entry.defaults)
+        owner = entry.owner_model
+        if owner and owner not in filled_owners and owner not in family_members:
+            state[selection_key(owner)] = False
+
+
 def apply_configs_to_forms(
     state: Any,
     entries: list[FormEntry],
@@ -160,14 +191,20 @@ def apply_configs_to_forms(
     Overwrites whatever the forms currently hold for those configs, so a caller
     that can lose user edits asks first. Pass the ``case_dir`` the configs were read
     from so a pick-one family follows the case (:func:`case_algorithm`,
-    :func:`case_advection_model`). Must run on
+    :func:`case_advection_model`) — and because that marks ``configs`` as one case's
+    whole contents, the load then *replaces* instead of merging (:func:`_clear_absent`).
+    Without a ``case_dir`` the configs are one incremental fill (the AI's own output)
+    and the untouched forms stay as they are. Must run on
     trame's event loop like every other state write::
 
         selected = apply_configs_to_forms(state, entries, families, configs, case_dir)
     """
     by_key = {e.key: e for e in entries}
-    for key, data in configs_to_form_state(entries, configs).items():
+    filled = configs_to_form_state(entries, configs)
+    for key, data in filled.items():
         state[by_key[key].state_key] = data
+    if case_dir is not None:
+        _clear_absent(state, entries, families, filled)
     algorithm = case_algorithm(case_dir, entries) if case_dir else None
     selected = models_to_select(models_filled_by(entries, configs), families, algorithm)
     for model in selected:
@@ -177,7 +214,10 @@ def apply_configs_to_forms(
     # Neither turbulenceProperties nor the advection evidence has an owning model; only
     # a family member has a choice to move.
     advection = case_advection_model(case_dir) if case_dir else None
+    applied = set(selected)
     for named in (loaded_turbulence_model(entries, state), advection):
         if any(c.name == named for family in families for c in family.members):
             state.update(select_model_state(families, str(named)))
-    return set(selected)
+            # Reported too: the caller's summary names every model the load moved.
+            applied.add(str(named))
+    return applied

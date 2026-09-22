@@ -96,8 +96,8 @@ def apply_assignments(
     """Apply the agent's assignments onto the wizard's patch-state dicts (pure).
 
     ``patches`` are the ``state.geometry_patches`` rows (``{"name", "role",
-    "refinement", ...}``). Each assignment updates the matching row's ``role`` (and
-    ``refinement`` when given and the patch is a snappy surface). Unknown patch
+    "refinement_str", ...}``). Each assignment updates the matching row's ``role`` (and
+    ``refinement_str`` when given and the patch is a snappy surface). Unknown patch
     names are ignored. A new list is returned (the input is not mutated).
     """
     by_name = {a.patch: a for a in assignments.assignments}
@@ -110,6 +110,8 @@ def apply_assignments(
         updated = dict(row)
         updated["role"] = assignment.role.value
         if assignment.refinement is not None and not row.get("box_faces"):
-            updated["refinement"] = list(assignment.refinement)
+            # The row key the geometry table and ``_spec_from_state`` read, in
+            # their ``"min max"`` format — a ``refinement`` key would be ignored.
+            updated["refinement_str"] = f"{assignment.refinement[0]} {assignment.refinement[1]}"
         out.append(updated)
     return out

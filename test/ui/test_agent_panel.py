@@ -187,7 +187,7 @@ def test_send_message_also_fills_geometry_roles(solver, server, entries):
     asyncio.run(send("the tubes are heated walls, refine them"))
 
     row = server.state.geometry_patches[0]
-    assert row["refinement"] == [3, 4]
+    assert row["refinement_str"] == "3 4"
     assert any("Mesh roles set" in m["content"] for m in server.state.chat_log)
 
 
@@ -455,8 +455,10 @@ def test_load_target_case_reports_fields_kept_in_zero_orig_only(solver, server, 
 
     server.controller.load_target_case()
 
-    forms = [server.state[e.state_key] for e in entries if e.cls_name == "pFieldConfig"]
-    assert forms == [None, None]  # not read (never seeded here)
+    # A load replaces: a form the case does not fill holds its defaults, not case data.
+    p_entries = [e for e in entries if e.cls_name == "pFieldConfig"]
+    forms = {e.key: server.state[e.state_key] for e in p_entries}
+    assert forms == {e.key: dict(e.defaults) for e in p_entries}
     assert "No `0/` directory: the fields in `0.orig/` were not loaded." in (
         server.state.chat_log[-1]["content"].split("\n\n")
     )
@@ -584,3 +586,26 @@ def test_agent_output_is_auto_saved_before_the_reply(tmp_path, solver, server, e
         "- transportProperties\n\n"
         "Review the forms; click **Save case** when ready."
     )
+
+
+@pytest.mark.parametrize("target", ["relative_case", "   "])
+def test_auto_save_never_writes_to_the_launch_dir(
+    target, tmp_path, monkeypatch, solver, server, entries
+):
+    # The auto-save resolves its target like every other writer, so a relative or
+    # blank field cannot drop the generated configs where the server was started.
+    server.state.target_dir = target
+    monkeypatch.chdir(tmp_path)
+    refined = build_case_output_model(solver=solver).model_construct(
+        transport_properties_config=configurations(solver)[
+            "TransportPropertiesConfig"
+        ].model_construct(transportModel="Newtonian", nu=1e-05)
+    )
+
+    send = build_agent_panel(
+        server, entries, solver, agent_factory=lambda **_kw: _StubAgent(refined)
+    )
+    asyncio.run(send("water, laminar"))
+
+    assert list(tmp_path.iterdir()) == []
+    assert "**Wrote to**" not in server.state.chat_log[-1]["content"]
