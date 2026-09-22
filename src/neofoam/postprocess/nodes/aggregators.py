@@ -1,16 +1,33 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Aggregators — the terminal nodes that reduce a DataSet to CSV rows."""
+"""Aggregators — the terminal nodes that reduce a dataset to table rows."""
 
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Callable, Literal, Optional, Union
 
 import numpy as np
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.postprocess._reduce import reduce_max, reduce_min, reduce_sum
-from neofoam.postprocess.node import AggregatedDataSet, DataSet, Node
+from neofoam.postprocess.node import (
+    AggregatedData,
+    AggregatedDataSet,
+    FieldDataSets,
+    InternalDataSet,
+    Node,
+    PatchDataSet,
+    SurfaceDataSet,
+)
+from neofoam.postprocess.nodes._arrays import ones_like
+
+#: The post-processing kernels: element-wise math and reductions that run on the
+#: executor the values live on, host numpy included.
+pp = nfb.postprocess
+
+#: The column a binner's index fills; the writer puts it before the values.
+BIN_COLUMN = "bin"
 
 GREAT = 1.0e15
 """The sentinel an aggregator writes for a group with no active element (``Foam::GREAT``)."""
@@ -18,103 +35,78 @@ GREAT = 1.0e15
 _SMALL = 1.0e-15
 
 
-def group_sum(
-    dataset: DataSet, weights: Optional["np.ndarray[Any, Any]"]
-) -> "np.ndarray[Any, Any]":
-    """Per-group, mask- and weight-scaled sum of a DataSet, reduced over all ranks.
+def group_sum(dataset: FieldDataSets, weights: Optional[Any]) -> "np.ndarray[Any, Any]":
+    """Per-group, mask- and weight-scaled sum of a dataset, reduced over all ranks.
 
-    The one kernel every additive aggregator shares (``Sum``, ``Mean``,
+    The one kernel call every additive aggregator shares (``Sum``, ``Mean``,
     ``VolIntegrate``, ``SurfIntegrate``); pass ``weights=None`` for a plain sum
-    or the geometry's measure for an integral. A masked-out element contributes
-    zero rather than being dropped, so the result is ``(n_groups,)`` for a scalar
-    field and ``(n_groups, 3)`` for a vector one whatever the mask says::
+    or the geometry's measure for an integral. The sum runs where the values
+    live — the weights, the mask and the groups have to be on that executor too
+    — and comes back as host numpy, ``(n_groups,)`` for a scalar field and
+    ``(n_groups, 3)`` for a vector one. A masked-out element contributes zero
+    rather than being dropped::
 
-        group_sum(dataset, weights=dataset.geometry.measure)
+        group_sum(dataset, weights=dataset.geometry.volumes())
     """
-    values = np.asarray(dataset.values, dtype=float)
-    groups = _group_index(dataset, len(values))
-    scale = _scale(dataset, weights, len(values))
-    if values.ndim == 1:
-        local = np.bincount(groups, weights=values * scale, minlength=dataset.n_groups)
-    else:
-        local = np.stack(
-            [
-                np.bincount(groups, weights=values[:, c] * scale, minlength=dataset.n_groups)
-                for c in range(values.shape[1])
-            ],
-            axis=1,
-        )
-    return reduce_sum(local)
+    _reject_groups_outside_the_bins(dataset)
+    local = pp.sum(dataset.field, dataset.n_groups, dataset.mask, dataset.groups, scaling=weights)
+    return reduce_sum(np.asarray(local, dtype=float))
 
 
-def _group_index(dataset: DataSet, n_elements: int) -> "np.ndarray[Any, Any]":
-    """The bin index of every element; all zeros when the pipeline holds no binner."""
-    if dataset.groups is None:
-        return np.zeros(n_elements, dtype=np.int64)
-    groups = np.asarray(dataset.groups, dtype=np.int64)
-    # A row count that follows the data instead of the binner's spec would differ
-    # between ranks (R6), so an out-of-range index is an error, not a wider table.
-    if groups.size and (groups.min() < 0 or groups.max() >= dataset.n_groups):
+def _group_extremum(dataset: FieldDataSets, kernel: Callable[..., Any]) -> "np.ndarray[Any, Any]":
+    """Per-group ``pp.max``/``pp.min`` over the active elements, as host numpy."""
+    _reject_groups_outside_the_bins(dataset)
+    local = kernel(dataset.field, dataset.n_groups, dataset.mask, dataset.groups)
+    return np.asarray(local, dtype=float)
+
+
+def _reject_groups_outside_the_bins(dataset: FieldDataSets) -> None:
+    """Refuse a bin index the binner never declared, which the kernel would write past.
+
+    A row count that follows the data instead of the binner's spec would differ
+    between ranks (R6). Only a host group array is checked: a NeoN one comes
+    from ``pp.bin_index``, which places every element in a bin it was given, and
+    reading it back would copy the whole field off its executor every step.
+    """
+    groups = dataset.groups
+    if not isinstance(groups, np.ndarray) or groups.size == 0:
+        return
+    if groups.min() < 0 or groups.max() >= dataset.n_groups:
         raise ValueError(
             f"postProcess: {dataset.name!r} has group indices "
             f"[{groups.min()}, {groups.max()}] outside the {dataset.n_groups} groups "
             "the binner declared"
         )
-    return groups
 
 
-def _scale(
-    dataset: DataSet, weights: Optional["np.ndarray[Any, Any]"], n_elements: int
-) -> "np.ndarray[Any, Any]":
-    """The per-element factor: the weights (or one), zeroed where the mask is false."""
-    scale = np.ones(n_elements) if weights is None else np.asarray(weights, dtype=float)
-    if dataset.mask is None:
-        return scale
-    return scale * np.asarray(dataset.mask, dtype=float)
-
-
-def _active_mask(dataset: DataSet, n_elements: int) -> "np.ndarray[Any, Any]":
-    """The elements an extremum looks at — masked-out ones are skipped, not scaled."""
-    if dataset.mask is None:
-        return np.ones(n_elements, dtype=bool)
-    return np.asarray(dataset.mask, dtype=bool)
-
-
-def _group_extremum(dataset: DataSet, ufunc: "np.ufunc", empty: float) -> "np.ndarray[Any, Any]":
-    """Per-group min/max over the active elements; ``empty`` where a group has none."""
-    values = np.asarray(dataset.values, dtype=float)
-    groups = _group_index(dataset, len(values))
-    active = _active_mask(dataset, len(values))
-    shape = (dataset.n_groups,) if values.ndim == 1 else (dataset.n_groups, values.shape[1])
-    local = np.full(shape, empty, dtype=float)
-    ufunc.at(local, groups[active], values[active])
-    return local
-
-
-def _measure(dataset: DataSet, aggregator: str, quantity: str) -> "np.ndarray[Any, Any]":
+def _measure(dataset: FieldDataSets, aggregator: str, accessor: str, quantity: str) -> Any:
     """The geometry's per-element measure, or a TypeError naming the source that lacks one."""
-    measure: Optional["np.ndarray[Any, Any]"] = dataset.geometry.measure
+    measure = getattr(dataset.geometry, accessor, None)
     if measure is None:
         raise TypeError(
             f"{aggregator} needs {quantity}; the source of {dataset.name!r} "
             f"({type(dataset.geometry).__name__}) provides none"
         )
-    return measure
+    return measure()
 
 
 def _to_aggregated(
-    label: str, dataset: DataSet, per_group_values: "np.ndarray[Any, Any]"
+    label: str, dataset: FieldDataSets, per_group_values: "np.ndarray[Any, Any]"
 ) -> AggregatedDataSet:
-    """Turn a ``(n_groups,)`` / ``(n_groups, 3)`` result into the writer's headers and rows."""
+    """Turn a ``(n_groups,)`` / ``(n_groups, 3)`` result into one row per group."""
     values = np.asarray(per_group_values, dtype=float)
-    n_components = 1 if values.ndim == 1 else values.shape[1]
-    columns = [label] if n_components == 1 else [f"{label}_{i}" for i in range(n_components)]
     grouped = dataset.groups is not None
-    rows = [
-        ([float(group)] if grouped else []) + [float(value) for value in np.atleast_1d(row)]
-        for group, row in enumerate(values)
-    ]
-    return AggregatedDataSet(name=label, headers=(["bin"] if grouped else []) + columns, rows=rows)
+    return AggregatedDataSet(
+        name=label,
+        values=[
+            AggregatedData(
+                value=float(row) if values.ndim == 1 else [float(value) for value in row],
+                group=[float(group)] if grouped else None,
+                group_name=[BIN_COLUMN] if grouped else None,
+            )
+            for group, row in enumerate(values)
+        ],
+    )
 
 
 @Node.register
@@ -132,7 +124,7 @@ class Sum(Node):
     type: Literal["sum"] = "sum"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
+    def compute(self, dataset: FieldDataSets) -> AggregatedDataSet:
         label = self.name or f"{dataset.name}_sum"
         return _to_aggregated(label, dataset, group_sum(dataset, weights=None))
 
@@ -151,9 +143,11 @@ class Mean(Node):
     type: Literal["mean"] = "mean"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
+    def compute(self, dataset: FieldDataSets) -> AggregatedDataSet:
         total = group_sum(dataset, weights=None)
-        counts = group_sum(dataset.with_values(np.ones(len(dataset.values))), weights=None)
+        # the divisor is the same sum over a field of ones: the weight each
+        # element carries into `total`, reduced over the same mask and bins.
+        counts = group_sum(dataset.with_field(ones_like(dataset.field)), weights=None)
         divisor = counts if total.ndim == 1 else counts[:, None]
         populated = divisor > _SMALL
         # np.where alone still evaluates both branches, so the division itself has
@@ -177,10 +171,9 @@ class Max(Node):
     type: Literal["max"] = "max"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
+    def compute(self, dataset: FieldDataSets) -> AggregatedDataSet:
         label = self.name or f"{dataset.name}_max"
-        local = _group_extremum(dataset, np.maximum, -GREAT)
-        return _to_aggregated(label, dataset, reduce_max(local))
+        return _to_aggregated(label, dataset, reduce_max(_group_extremum(dataset, pp.max)))
 
 
 @Node.register
@@ -197,10 +190,9 @@ class Min(Node):
     type: Literal["min"] = "min"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
+    def compute(self, dataset: FieldDataSets) -> AggregatedDataSet:
         label = self.name or f"{dataset.name}_min"
-        local = _group_extremum(dataset, np.minimum, GREAT)
-        return _to_aggregated(label, dataset, reduce_min(local))
+        return _to_aggregated(label, dataset, reduce_min(_group_extremum(dataset, pp.min)))
 
 
 @Node.register
@@ -217,8 +209,8 @@ class VolIntegrate(Node):
     type: Literal["volIntegrate"] = "volIntegrate"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
-        measure = _measure(dataset, "volIntegrate", "cell volumes")
+    def compute(self, dataset: InternalDataSet) -> AggregatedDataSet:
+        measure = _measure(dataset, "volIntegrate", "volumes", "cell volumes")
         label = self.name or f"{dataset.name}_volIntegrate"
         return _to_aggregated(label, dataset, group_sum(dataset, weights=measure))
 
@@ -236,7 +228,7 @@ class SurfIntegrate(Node):
     type: Literal["surfIntegrate"] = "surfIntegrate"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
-        measure = _measure(dataset, "surfIntegrate", "face areas")
+    def compute(self, dataset: Union[PatchDataSet, SurfaceDataSet]) -> AggregatedDataSet:
+        measure = _measure(dataset, "surfIntegrate", "face_area_magnitudes", "face areas")
         label = self.name or f"{dataset.name}_surfIntegrate"
         return _to_aggregated(label, dataset, group_sum(dataset, weights=measure))

@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Two package-wide invariants: the value layer is pure numpy, and importing registers every node.
+"""Two package-wide invariants: no pybFoam in the value layer, and importing registers every node.
 
-Keeping the simulation backend out of the nodes is what makes them unit-testable
-without a mesh and what will make a NeoN geometry adapter cheap: a node sees
-only numpy through the :class:`~neofoam.postprocess.node.Geometry` protocol. The
-backend belongs to the sources, the CSV writer and the reduce helper alone, so
-the modules of the value layer are listed below and their source is read for a
-pybFoam import.
+Keeping pybFoam out of the nodes is what makes them unit-testable without a mesh
+and what lets one node serve a pybFoam and a NeoN field alike: a node sees a
+dataset and the NeoN kernels, never a field library. pybFoam belongs to the
+sources, the CSV writer and the reduce helper alone, so the modules of the value
+layer are listed below and their source is read for a pybFoam import.
 
 The second invariant is what makes a YAML ``type:`` string resolve: a node class
 is registered by its module being imported, so the ``__init__.py`` chain (the

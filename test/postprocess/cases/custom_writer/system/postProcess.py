@@ -6,7 +6,14 @@ from typing import Literal
 
 from pydantic import PrivateAttr
 
-from neofoam.postprocess import AggregatedDataSet, TableSet, TableWriter, VolIntegrate, field
+from neofoam.postprocess import (
+    AggregatedDataSet,
+    TableSet,
+    TableWriter,
+    VolIntegrate,
+    field,
+    table_rows,
+)
 
 postProcess = TableSet()
 
@@ -27,7 +34,7 @@ class TextWriter(TableWriter):
 
     def write(self, time: float, result: AggregatedDataSet) -> None:
         with self._path.open("a") as handle:
-            for row in result.rows:
+            for row in table_rows(result):
                 handle.write(" ".join(str(value) for value in [time, *row]) + "\n")
 
 

@@ -7,10 +7,14 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal, cast
 
-import numpy as np
 from pydantic import BeforeValidator, SerializeAsAny, WithJsonSchema
 
-from neofoam.postprocess.node import DataSet, Node
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.postprocess.node import FieldDataSets, Node
+
+#: The post-processing kernels: element-wise math and reductions that run on the
+#: executor the values live on, host numpy included.
+pp = nfb.postprocess
 
 
 class Selector(Node):
@@ -24,16 +28,16 @@ class Selector(Node):
         field("p") | (Box(min=(0, 0, 0), max=(1, 1, 1)) & ~Sphere(center=(0, 0, 0), radius=0.1))
     """
 
-    def select(self, positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        """The elements of ``positions`` (shape ``(n, 3)``) inside the region."""
+    def select(self, positions: Any) -> Any:
+        """The 0/1 mask of the elements of ``positions`` inside the region."""
         raise NotImplementedError
 
-    def compute(self, dataset: DataSet) -> DataSet:
+    def compute(self, dataset: FieldDataSets) -> FieldDataSets:
         # AND with the inbound mask: a line source already masks points outside
         # the mesh, and a selector must not resurrect them.
-        selected = self.select(np.asarray(dataset.geometry.positions))
+        selected = self.select(dataset.geometry.positions())
         if dataset.mask is not None:
-            selected = np.asarray(dataset.mask) & selected
+            selected = pp.mask_and(dataset.mask, selected)
         return dataset.with_mask(selected)
 
     def __and__(self, other: Selector) -> Binary:
@@ -90,8 +94,8 @@ class Box(Selector):
     min: tuple[float, float, float]
     max: tuple[float, float, float]
 
-    def select(self, positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        return np.all((positions >= self.min) & (positions <= self.max), axis=1)
+    def select(self, positions: Any) -> Any:
+        return pp.box_mask(positions, self.min, self.max)
 
 
 @Node.register
@@ -107,11 +111,8 @@ class Sphere(Selector):
     center: tuple[float, float, float]
     radius: float
 
-    def select(self, positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        return cast(
-            "np.ndarray[Any, Any]",
-            np.linalg.norm(positions - np.asarray(self.center), axis=1) <= self.radius,
-        )
+    def select(self, positions: Any) -> Any:
+        return pp.sphere_mask(positions, self.center, self.radius)
 
 
 @Node.register
@@ -128,8 +129,8 @@ class Not(Selector):
     type: Literal["not"] = "not"
     region: NestedSelector
 
-    def select(self, positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
-        return ~self.region.select(positions)
+    def select(self, positions: Any) -> Any:
+        return pp.mask_not(self.region.select(positions))
 
 
 @Node.register
@@ -148,8 +149,7 @@ class Binary(Selector):
     left: NestedSelector
     right: NestedSelector
 
-    def select(self, positions: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+    def select(self, positions: Any) -> Any:
         left = self.left.select(positions)
         right = self.right.select(positions)
-        combined = left & right if self.op == "and" else left | right
-        return cast("np.ndarray[Any, Any]", combined)
+        return pp.mask_and(left, right) if self.op == "and" else pp.mask_or(left, right)

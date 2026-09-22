@@ -20,13 +20,15 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.postprocess.node import AggregatedDataSet
+from neofoam.postprocess.node import AggregatedData, AggregatedDataSet
 from neofoam.postprocess.writers.csv import CsvWriter
 
 
 def _result(*values: float) -> AggregatedDataSet:
-    headers = ["volume_p"] if len(values) == 1 else [f"volume_U_{i}" for i in range(len(values))]
-    return AggregatedDataSet(name="volume_p", headers=headers, rows=[list(values)])
+    """One row: a scalar aggregation, or a vector one with a column per component."""
+    name = "volume_p" if len(values) == 1 else "volume_U"
+    value = values[0] if len(values) == 1 else list(values)
+    return AggregatedDataSet(name=name, values=[AggregatedData(value=value)])
 
 
 def _writer(path_stem: Path, *, append: bool = False) -> CsvWriter:
@@ -56,6 +58,34 @@ def test_the_time_column_is_written_as_the_shortest_spelling_of_the_time(tmp_pat
     writer.write(0.049999999999999996, _result(2.5))
 
     assert (tmp_path / "volume_p.csv").read_text().splitlines()[1] == "0.05,2.5"
+
+
+def test_a_binned_result_writes_the_bin_before_the_value(tmp_path: Path) -> None:
+    # the aggregation carries its value first; the file names what labels it first
+    binned = AggregatedDataSet(
+        name="p_sum",
+        values=[
+            AggregatedData(value=3.0, group=[0.0], group_name=["bin"]),
+            AggregatedData(value=7.0, group=[1.0], group_name=["bin"]),
+        ],
+    )
+
+    _writer(tmp_path / "p_sum").write(0.1, binned)
+
+    assert (tmp_path / "p_sum.csv").read_text().splitlines() == [
+        "time,bin,p_sum",
+        "0.1,0.0,3.0",
+        "0.1,1.0,7.0",
+    ]
+
+
+def test_a_result_with_no_rows_leaves_the_file_alone(tmp_path: Path) -> None:
+    # a residuals step that solved nothing: its columns are not known yet
+    writer = _writer(tmp_path / "residuals")
+
+    writer.write(0.1, AggregatedDataSet(name="value", values=[]))
+
+    assert not (tmp_path / "residuals.csv").exists()
 
 
 def test_a_multi_column_result_keeps_time_as_the_first_column(tmp_path: Path) -> None:

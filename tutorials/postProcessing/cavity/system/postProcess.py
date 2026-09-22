@@ -8,7 +8,7 @@ Table names must not collide with the declared ones, hence the distinct names.
 from typing import Literal
 
 from neofoam.algorithms.field_writer.write_control import IntervalWriteControl
-from neofoam.postprocess import DataSet, Mag, Node, Scale, TableSet, VolIntegrate, field
+from neofoam.postprocess import InternalDataSet, Mag, Node, Scale, TableSet, VolIntegrate, field
 
 
 @Node.register
@@ -17,8 +17,8 @@ class Square(Node):
 
     type: Literal["square"] = "square"
 
-    def compute(self, dataset: DataSet) -> DataSet:
-        return dataset.with_values(dataset.values**2)
+    def compute(self, dataset: InternalDataSet) -> InternalDataSet:
+        return dataset.with_field(dataset.field**2)
 
 
 postProcess = TableSet()  # the single module-level TableSet the loader picks up

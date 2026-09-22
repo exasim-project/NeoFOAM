@@ -32,7 +32,7 @@ from neofoam.postprocess import (
     plane,
 )
 from neofoam.postprocess.config import PostProcessConfig, resolve_table
-from neofoam.postprocess.node import DataSet
+from neofoam.postprocess.node import InternalDataSet, SurfaceDataSet
 
 CASES = Path(__file__).parents[1] / "cases"
 
@@ -48,15 +48,30 @@ class _FakeSurface:
     def Cf(self) -> "np.ndarray[Any, Any]":
         return FACE_CENTRES
 
+    def Sf(self) -> "np.ndarray[Any, Any]":
+        return np.column_stack([FACE_AREAS, np.zeros(2), np.zeros(2)])
+
     def magSf(self) -> "np.ndarray[Any, Any]":
         return FACE_AREAS
+
+    def area(self) -> float:
+        return float(FACE_AREAS.sum())
 
 
 class _FakeSampling:
     """A geometry that samples without a mesh: it hands back the name it was asked for."""
 
-    positions = FACE_CENTRES
-    measure = FACE_AREAS
+    def positions(self) -> "np.ndarray[Any, Any]":
+        return FACE_CENTRES
+
+    def face_areas(self) -> "np.ndarray[Any, Any]":
+        return np.column_stack([FACE_AREAS, np.zeros(2), np.zeros(2)])
+
+    def face_area_magnitudes(self) -> "np.ndarray[Any, Any]":
+        return FACE_AREAS
+
+    def total_area(self) -> float:
+        return float(FACE_AREAS.sum())
 
     def sample(self, name: str) -> "np.ndarray[Any, Any]":
         return np.array([len(name), -len(name)], dtype=float)
@@ -69,8 +84,11 @@ class _FakePatchGeometry(_FakeSampling):
 class _CellGeometry:
     """A geometry with no surface behind it — cells, as an internal source builds."""
 
-    positions = FACE_CENTRES
-    measure = FACE_AREAS
+    def positions(self) -> "np.ndarray[Any, Any]":
+        return FACE_CENTRES
+
+    def volumes(self) -> "np.ndarray[Any, Any]":
+        return FACE_AREAS
 
 
 def _geometry(fields: dict[str, Any]) -> SurfaceGeometry:
@@ -78,9 +96,9 @@ def _geometry(fields: dict[str, Any]) -> SurfaceGeometry:
     return SurfaceGeometry(_FakeSurface(), fields, "cellPoint")
 
 
-def _dataset(geometry: Any) -> DataSet:
+def _dataset(geometry: Any) -> SurfaceDataSet:
     """A dataset on *geometry* whose values are the face areas — what a bare source gives."""
-    return DataSet(name="area", values=FACE_AREAS, geometry=geometry)
+    return SurfaceDataSet(name="area", field=FACE_AREAS, geometry=geometry)
 
 
 def _spec(rel_path: str, index: int) -> Any:
@@ -89,17 +107,17 @@ def _spec(rel_path: str, index: int) -> Any:
 
 
 def test_face_centres_are_the_positions_a_node_selects_on() -> None:
-    assert _geometry({}).positions == pytest.approx(FACE_CENTRES)
+    assert _geometry({}).positions() == pytest.approx(FACE_CENTRES)
 
 
 def test_face_areas_are_the_measure_a_node_weighs_with() -> None:
-    assert _geometry({}).measure == pytest.approx(FACE_AREAS)
+    assert _geometry({}).face_area_magnitudes() == pytest.approx(FACE_AREAS)
 
 
 def test_area_of_a_sampled_surface_is_its_face_areas() -> None:
     dataset = Area().compute(_dataset(_geometry({})))
 
-    assert dataset.values == pytest.approx(FACE_AREAS)
+    assert dataset.field == pytest.approx(FACE_AREAS)
 
 
 def test_sampling_an_unregistered_field_names_the_registered_ones() -> None:
@@ -121,7 +139,7 @@ def test_sampling_a_field_type_without_a_sampler_names_the_ones_with_one() -> No
 def test_sample_replaces_the_values_with_what_the_geometry_interpolates() -> None:
     dataset = Sample(field="U").compute(_dataset(_FakeSampling()))
 
-    assert dataset.values == pytest.approx([1.0, -1.0])
+    assert dataset.field == pytest.approx([1.0, -1.0])
 
 
 def test_sample_renames_the_dataset_after_the_sampled_field() -> None:
@@ -135,12 +153,14 @@ def test_sample_runs_on_a_patch_geometry() -> None:
     # protocol serves both and ``patch(...) | Sample(...)`` resolves.
     dataset = Sample(field="U").compute(_dataset(_FakePatchGeometry()))
 
-    assert dataset.values == pytest.approx([1.0, -1.0])
+    assert dataset.field == pytest.approx([1.0, -1.0])
 
 
 def test_sample_on_a_geometry_with_no_surface_behind_it_is_refused() -> None:
+    cells = InternalDataSet(name="p", field=FACE_AREAS, geometry=_CellGeometry())
+
     with pytest.raises(TypeError, match="sample needs a sampled surface"):
-        Sample(field="U").compute(_dataset(_CellGeometry()))
+        Sample(field="U").compute(cells)
 
 
 def test_plane_sugar_builds_the_declared_plane_source() -> None:

@@ -19,11 +19,11 @@ another solver picks it up by adding the same seam to its ``create_fields.py``
 silently.
 
 On ``incompressibleFluidNeoN`` only the ``internal`` source works. Its fields
-live on the NeoN executor, and the source reads them through a host copy of the
-field's internal vector — a few hundred microseconds per million cells on a host
-executor, a few milliseconds off a GPU, and only on the steps a table is actually
-due. The cell geometry comes off the run-time adapter's mesh, which *is* an
-fvMesh, so volume and surface integrals need no separate path. The other sources
+live on the NeoN executor and stay there: the nodes reduce them with the NeoN
+kernels, so nothing is copied to the host on the way to a CSV row. The cell
+geometry comes off the run-time adapter's mesh, which *is* an fvMesh, and is
+mirrored onto the field's executor once per run (a static mesh), because a
+kernel call needs every array on one executor. The other sources
 interpolate a *pybFoam* field onto a sampled surface or set, and NeoN never
 writes its values back into the OpenFOAM registry while the run goes on: a
 ``patch``, ``line``, ``plane`` or ``isoSurface`` table on a NeoN case raises
@@ -32,12 +32,12 @@ writes its values back into the OpenFOAM registry while the run goes on: a
 ``residuals``, which reads the fvMesh's ``solverPerformanceDict`` — NeoN solves
 through Ginkgo and never fills it.
 
-Field names follow the solver's registry, which is not always the name on disk:
-``incompressibleVoF`` registers the phase fractions as ``alpha1`` and ``alpha2``
-while the files are ``alpha.water`` and ``alpha.air``. The ``internal`` source
-accepts either spelling — it falls back to matching the field's own OpenFOAM
-name — but sources that hand a name straight to OpenFOAM's registry, such as
-``isoSurface``'s ``iso_field``, need the on-disk one.
+Field names are the solver's registry keys, which are not always the name on
+disk: ``incompressibleVoF`` registers the phase fractions as ``alpha1`` and
+``alpha2`` while the files are ``alpha.water`` and ``alpha.air``, so an
+``internal`` table on that solver names ``alpha1``. Sources that hand a name
+straight to OpenFOAM's registry, such as ``isoSurface``'s ``iso_field``, need
+the on-disk one.
 
 Both front doors build the same objects, so pick whichever fits: the spec file
 for a fixed set of tables, the script when you want ``|`` composition or your own
@@ -465,15 +465,19 @@ Adding a node
 -------------
 
 A node is a ``@Node.register`` subclass with a ``type: Literal[...]``
-discriminator and a ``compute`` method. It sees only numpy — a
-:class:`~neofoam.postprocess.node.DataSet` of ``values`` plus a ``geometry``
-exposing ``positions`` and ``measure`` — and returns a *new* dataset, never
-mutating its input:
+discriminator and a ``compute`` method. It sees a dataset —
+:class:`~neofoam.postprocess.node.InternalDataSet` for the cells,
+:class:`~neofoam.postprocess.node.PatchDataSet`,
+:class:`~neofoam.postprocess.node.SurfaceDataSet` or
+:class:`~neofoam.postprocess.node.PointDataSet` for the others, each carrying a
+``field``, a ``mask``, the ``groups`` and a ``geometry`` (``positions()`` plus
+that geometry's measure: ``volumes()``, ``face_area_magnitudes()``) — and
+returns a *new* dataset, never mutating its input:
 
 .. code-block:: python
 
     from typing import Literal
-    from neofoam.postprocess import DataSet, Node
+    from neofoam.postprocess import InternalDataSet, Node
 
     @Node.register
     class Clip(Node):
@@ -482,19 +486,28 @@ mutating its input:
         type: Literal["clip"] = "clip"
         threshold: float = 0.0
 
-        def compute(self, dataset: DataSet) -> DataSet:
-            return dataset.with_values(dataset.values.clip(min=self.threshold))
+        def compute(self, dataset: InternalDataSet) -> InternalDataSet:
+            return dataset.with_field(dataset.field.clip(min=self.threshold))
 
 Registering it in ``system/postProcess.py`` makes ``{type: clip, threshold: 0.0}``
 valid in the same case's spec file. Put it in a package instead and it is
 available to every case that imports it. The terminal node of a table is an
 aggregator: it returns an
-:class:`~neofoam.postprocess.node.AggregatedDataSet` — the CSV column names and
-the rows to append.
+:class:`~neofoam.postprocess.node.AggregatedDataSet` — one
+:class:`~neofoam.postprocess.node.AggregatedData` per row, each a value plus the
+labels (the bin index, say) that name it.
+
+``field``, ``mask``, ``groups`` and the geometry's arrays are host numpy for a
+pybFoam field and NeoN vectors for a NeoN one, and the kernels in
+``neofoam.neofoam_bindings.postprocess`` (``sum``, ``max``, ``min``, ``mag``,
+``component``, ``scale``, the mask builders and ``bin_index``) take both — write
+a node against them and it runs on either backend, on the executor the field
+lives on. A node that reads the numbers itself (``Rows``, ``Print``) copies them
+to the host, which is why only those two do.
 
 A new *source* is the same pattern with ``@Source.register`` and a ``resolve(ctx)``
-returning a ``DataSet``. Nodes are pure numpy; pybFoam appears in the sources,
-the CSV writer (which rank owns the files) and the reductions.
+returning one of those datasets. pybFoam appears in the sources, the CSV writer
+(which rank owns the files) and the reductions.
 
 Writers
 -------
@@ -536,7 +549,7 @@ above, and registering it in ``system/postProcess.py`` likewise makes its
 
     from pydantic import PrivateAttr
 
-    from neofoam.postprocess import AggregatedDataSet, TableWriter
+    from neofoam.postprocess import AggregatedDataSet, TableWriter, table_rows
 
     @TableWriter.register
     class TextWriter(TableWriter):
@@ -554,11 +567,15 @@ above, and registering it in ``system/postProcess.py`` likewise makes its
 
         def write(self, time: float, result: AggregatedDataSet) -> None:
             with self._path.open("a") as handle:
-                for row in result.rows:
+                for row in table_rows(result):
                     handle.write(" ".join(str(value) for value in [time, *row]) + "\n")
 
 ``open`` is handed the output path *without* a suffix — the writer appends the one
 its format owns — and ``append`` says whether the run continues an earlier one.
+:func:`~neofoam.postprocess.writers.writer.table_headers` and
+:func:`~neofoam.postprocess.writers.writer.table_rows` put an aggregation's
+columns in file order (what labels a value first, then the value), so every
+format writes the same layout.
 The writer a table holds is a pure declaration; the ``postProcess`` model
 deep-copies it and opens the copy, so the file state a writer keeps between calls
 belongs to that copy and one declaration can serve every table of a case.

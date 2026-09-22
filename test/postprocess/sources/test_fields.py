@@ -10,13 +10,9 @@ into the ``pybFoam.sampling`` config with OpenFOAM's own spelling. Those are the
 parts that break silently, so they are pinned here. Sampling a live mesh is
 ``test_sources_e2e.py``.
 
-``_internal_values`` is duck-typed over two field libraries, so the two shapes it
-accepts are the whole contract and stand-ins spell them out better than either
-library does: a pybFoam field answers ``internalField()``, a NeoN one hands out a
-``Vector`` whose ``__array__`` refuses a device vector — reading it means
-``copy_to_host`` first. The NeoN stand-in raises from ``__array__`` exactly as
-NeoN does, so a branch that skipped the copy would fail here rather than only on
-a GPU run. The live NeoN read is
+Reading a volume field off either field library moved to
+:meth:`~neofoam.postprocess.node.InternalDataSet.from_field` and is pinned in
+``test/postprocess/test_dataset.py``; the live NeoN read is
 ``test/solver/incompressibleFluidNeoN/test_post_process.py``.
 """
 
@@ -35,7 +31,6 @@ from neofoam.postprocess.sources.fields import (
     LineField,
     PatchField,
     _in_mesh,
-    _internal_values,
     line,
     patch,
 )
@@ -202,64 +197,16 @@ def test_a_line_spec_becomes_the_sampling_config_openfoam_spells(
 @pytest.mark.parametrize(
     ("values", "expected"),
     [
-        pytest.param(np.array([1.0, OUT_OF_MESH, -3.0]), [True, False, True], id="scalar"),
+        pytest.param(np.array([1.0, OUT_OF_MESH, -3.0]), [1, 0, 1], id="scalar"),
         pytest.param(
             np.array([[1.0, 0.0, 0.0], [OUT_OF_MESH, OUT_OF_MESH, OUT_OF_MESH]]),
-            [True, False],
+            [1, 0],
             id="vector",
         ),
     ],
 )
 def test_a_point_the_sampler_could_not_evaluate_is_masked_out(
-    values: "np.ndarray[Any, Any]", expected: list[bool]
+    values: "np.ndarray[Any, Any]", expected: list[int]
 ) -> None:
+    # a mask is 0/1 labels, the way the kernels read one
     assert_array_equal(_in_mesh(values), np.array(expected))
-
-
-# --- reading the internal values off either field library -----------------
-
-
-class _PybFoamField:
-    """A pybFoam volume field as ``_internal_values`` sees it: ``internalField()``."""
-
-    def __init__(self, values: "np.ndarray[Any, Any]") -> None:
-        self._values = values
-
-    def internalField(self) -> "np.ndarray[Any, Any]":  # noqa: N802  # pybFoam's spelling
-        return self._values
-
-
-class _NeonVector:
-    """A NeoN ``Vector`` on a device: ``__array__`` refuses, ``copy_to_host`` does not."""
-
-    def __init__(self, values: "np.ndarray[Any, Any]") -> None:
-        self._values = values
-
-    def __array__(self, dtype: Any = None, copy: Any = None) -> "np.ndarray[Any, Any]":
-        raise RuntimeError("numpy_array() only works for CPU vectors")
-
-    def copy_to_host(self) -> "np.ndarray[Any, Any]":
-        return self._values
-
-
-class _NeonField:
-    """A NeoN ``VolumeField``: its cell values live in ``internal_vector()``."""
-
-    def __init__(self, values: "np.ndarray[Any, Any]") -> None:
-        self._vector = _NeonVector(values)
-
-    def internal_vector(self) -> _NeonVector:
-        return self._vector
-
-
-@pytest.mark.parametrize(
-    ("field", "expected"),
-    [
-        pytest.param(_PybFoamField(np.array([1.0, 2.0, 3.0])), [1.0, 2.0, 3.0], id="pybfoam"),
-        pytest.param(_NeonField(np.array([1.0, 2.0, 3.0])), [1.0, 2.0, 3.0], id="neon"),
-    ],
-)
-def test_a_volume_fields_internal_values_are_read_as_host_numpy(
-    field: Any, expected: list[float]
-) -> None:
-    assert_array_equal(_internal_values(field), np.array(expected))

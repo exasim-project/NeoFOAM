@@ -5,12 +5,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
 from pydantic import field_validator
 
-from neofoam.postprocess.node import DataSet, Node
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.postprocess.node import FieldDataSets, Node
+
+#: The post-processing kernels: element-wise math and reductions that run on the
+#: executor the values live on, host numpy included.
+pp = nfb.postprocess
 
 
 @Node.register
@@ -34,8 +39,9 @@ class Directional(Node):
     @field_validator("bins")
     @classmethod
     def _require_increasing_edges(cls, bins: list[float]) -> list[float]:
-        # np.digitize silently switches to its decreasing convention otherwise,
-        # and the profile comes out reversed with no warning.
+        # the kernel follows np.digitize, which silently switches to its
+        # decreasing convention otherwise, and the profile comes out reversed
+        # with no warning.
         if any(upper <= lower for lower, upper in zip(bins, bins[1:])):
             raise ValueError(f"directional: bins must be strictly increasing, got {bins}")
         return bins
@@ -49,9 +55,7 @@ class Directional(Node):
             raise ValueError("directional: direction must have a non-zero length")
         return direction
 
-    def compute(self, dataset: DataSet) -> DataSet:
-        direction: np.ndarray[Any, Any] = np.asarray(self.direction, dtype=float)
-        normal = direction / np.linalg.norm(direction)  # bin edges are distances
-        distance = (np.asarray(dataset.geometry.positions) - np.asarray(self.origin)) @ normal
-        groups = np.digitize(distance, np.asarray(self.bins, dtype=float))
-        return dataset.with_groups(groups.astype(np.int64), n_groups=len(self.bins) + 1)
+    def compute(self, dataset: FieldDataSets) -> FieldDataSets:
+        # the kernel normalises the direction, so the edges are distances.
+        groups = pp.bin_index(dataset.geometry.positions(), self.direction, self.origin, self.bins)
+        return dataset.with_groups(groups, n_groups=len(self.bins) + 1)

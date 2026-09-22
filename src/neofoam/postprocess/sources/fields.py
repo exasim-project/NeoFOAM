@@ -19,7 +19,6 @@ built per time step::
     line("U", start=(0, 0, 0.005), end=(0, 0.1, 0.005), n_points=20) | Mag() | Rows()
 """
 
-from collections.abc import Mapping
 from typing import Any, Literal, Optional
 
 import numpy as np
@@ -27,8 +26,8 @@ from pybFoam import sampling
 from pydantic import model_validator
 
 from neofoam.framework.context import Context
-from neofoam.postprocess.node import DataSet, Pipeline, Source
-from neofoam.postprocess.sources.geometry import CellGeometry, PatchGeometry, PointGeometry
+from neofoam.postprocess.node import InternalDataSet, PatchDataSet, Pipeline, PointDataSet, Source
+from neofoam.postprocess.sources.geometry import PatchGeometry, PointGeometry
 
 #: A point in space, as a spec writes it.
 Point = tuple[float, float, float]
@@ -54,37 +53,6 @@ _FOAM_NAMES = {
 }
 
 
-def _registered_field(fields: Mapping[str, Any], name: str) -> Any:
-    """The field registered under *name*, or the one that answers to it.
-
-    A solver may register a field under a key of its own: incompressibleVoF
-    registers the phase fraction ``alpha.water`` as ``alpha1``, and a table
-    written against either spelling has to find it.
-    """
-    if name in fields:
-        return fields[name]
-    for field in fields.values():
-        own_name = getattr(field, "name", None)
-        if callable(own_name) and str(own_name()) == name:
-            return field
-    raise KeyError(f"postProcess: field {name!r} is not registered; available: {sorted(fields)}")
-
-
-def _internal_values(field: Any) -> "np.ndarray[Any, Any]":
-    """The internal values of a volume field as host numpy, pybFoam or NeoN.
-
-    A pybFoam volume field hands its cell values over as ``internalField()``; a
-    NeoN one keeps them in a ``Vector`` on its executor, which may be a device,
-    so ``copy_to_host`` is the only way in — NeoN's ``__array__`` refuses a
-    device vector outright. Duck-typed on the accessor rather than on the class
-    so this module keeps importing neither NeoN nor its bindings.
-    """
-    internal_field = getattr(field, "internalField", None)
-    if internal_field is not None:
-        return np.asarray(internal_field())
-    return np.asarray(field.internal_vector().copy_to_host())
-
-
 def _in_mesh(values: "np.ndarray[Any, Any]") -> "np.ndarray[Any, Any]":
     """Which sampled values are real — the rest carry the ``OUT_OF_MESH`` sentinel.
 
@@ -92,10 +60,11 @@ def _in_mesh(values: "np.ndarray[Any, Any]") -> "np.ndarray[Any, Any]":
     catches only the points it kept but could not evaluate. The sentinel is the
     largest representable double, so any threshold below it separates the two —
     and the largest component is the test, not the norm, which would overflow on
-    the sentinel itself (R9).
+    the sentinel itself (R9). The result is a mask the way the kernels take one:
+    0/1 labels, not booleans.
     """
     magnitude = np.abs(values) if values.ndim == 1 else np.abs(values).max(axis=1)
-    return magnitude < 0.1 * OUT_OF_MESH
+    return (magnitude < 0.1 * OUT_OF_MESH).astype(np.int32)
 
 
 @Source.register
@@ -103,11 +72,12 @@ class InternalField(Source):
     """The internal field of a registered volume field, on the cell geometry.
 
     The default source: use it whenever a table works on cell values. The
-    ``field`` is the key the solver registered, or the name the field itself
-    carries (incompressibleVoF registers ``alpha.water`` as ``alpha1``, and
-    either spelling finds it). A pybFoam field and a NeoN one are both read —
-    the NeoN one through a host copy of its internal vector. Build it through
-    :func:`field`::
+    ``field`` is the key the solver registered it under — which is not always
+    the name on disk (incompressibleVoF registers ``alpha.water`` as
+    ``alpha1``). A pybFoam field and a NeoN one are both read, each on the
+    executor it lives on (see
+    :meth:`~neofoam.postprocess.node.InternalDataSet.from_field`).
+    Build it through :func:`field`::
 
         field("p") | VolIntegrate()
     """
@@ -115,12 +85,15 @@ class InternalField(Source):
     type: Literal["internal"] = "internal"
     field: str
 
-    def resolve(self, ctx: Context) -> DataSet:
-        return DataSet(
-            name=self.field,
-            values=_internal_values(_registered_field(ctx.fields, self.field)),
-            geometry=CellGeometry(ctx.mesh),
-        )
+    def resolve(self, ctx: Context) -> InternalDataSet:
+        try:
+            registered = ctx.fields[self.field]
+        except KeyError:
+            raise KeyError(
+                f"postProcess: field {self.field!r} is not registered; "
+                f"available: {sorted(ctx.fields)}"
+            ) from None
+        return InternalDataSet.from_field(self.field, registered, ctx.mesh)
 
 
 @Source.register
@@ -140,9 +113,9 @@ class PatchField(Source):
     field: str
     patch: str
 
-    def resolve(self, ctx: Context) -> DataSet:
+    def resolve(self, ctx: Context) -> PatchDataSet:
         geometry = PatchGeometry(ctx.mesh, self.patch, ctx.fields)
-        return DataSet(name=self.field, values=geometry.sample(self.field), geometry=geometry)
+        return PatchDataSet(name=self.field, field=geometry.sample(self.field), geometry=geometry)
 
 
 @Source.register
@@ -184,12 +157,12 @@ class LineField(Source):
             )
         return self
 
-    def resolve(self, ctx: Context) -> DataSet:
+    def resolve(self, ctx: Context) -> PointDataSet:
         geometry = PointGeometry(
             ctx.mesh, self._set_config().to_foam_dict(), self.field, ctx.fields
         )
         values = geometry.sample(self.field)
-        return DataSet(name=self.field, values=values, geometry=geometry, mask=_in_mesh(values))
+        return PointDataSet(name=self.field, field=values, geometry=geometry, mask=_in_mesh(values))
 
     def _set_config(self) -> Any:
         """The spec as the ``pybFoam.sampling`` config that ``sampledSet::New`` reads."""

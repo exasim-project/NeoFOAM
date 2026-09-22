@@ -20,7 +20,14 @@ from typing import Any, Literal, Optional
 from pybFoam import sampling
 
 from neofoam.framework.context import Context
-from neofoam.postprocess.node import DataSet, Node, Pipeline, SamplingGeometry, Source
+from neofoam.postprocess.node import (
+    FieldDataSets,
+    Node,
+    Pipeline,
+    SamplingGeometry,
+    Source,
+    SurfaceDataSet,
+)
 from neofoam.postprocess.sources.geometry import SurfaceGeometry
 
 
@@ -34,7 +41,7 @@ class _SampledSurface(Source):
         """The ``pybFoam.sampling`` config describing the surface."""
         raise NotImplementedError
 
-    def resolve(self, ctx: Context) -> DataSet:
+    def resolve(self, ctx: Context) -> SurfaceDataSet:
         config = self._foam_config()
         # Rebuilt every time step: an iso-surface follows its field, and a plane
         # follows a moving mesh.
@@ -42,8 +49,10 @@ class _SampledSurface(Source):
         surface.update()
         geometry = SurfaceGeometry(surface, ctx.fields, self.scheme)
         if self.field is None:
-            return DataSet(name="area", values=geometry.measure, geometry=geometry)
-        return DataSet(name=self.field, values=geometry.sample(self.field), geometry=geometry)
+            return SurfaceDataSet(
+                name="area", field=geometry.face_area_magnitudes(), geometry=geometry
+            )
+        return SurfaceDataSet(name=self.field, field=geometry.sample(self.field), geometry=geometry)
 
 
 @Source.register
@@ -99,16 +108,14 @@ class Sample(Node):
     type: Literal["sample"] = "sample"
     field: str
 
-    def compute(self, dataset: DataSet) -> DataSet:
+    def compute(self, dataset: FieldDataSets) -> FieldDataSets:
         geometry = dataset.geometry
         if not isinstance(geometry, SamplingGeometry):
             raise TypeError(
                 f"sample needs a sampled surface; the source of {dataset.name!r} "
                 f"({type(geometry).__name__}) provides none"
             )
-        return dataset.model_copy(
-            update={"name": self.field, "values": geometry.sample(self.field)}
-        )
+        return dataset.model_copy(update={"name": self.field, "field": geometry.sample(self.field)})
 
 
 def plane(

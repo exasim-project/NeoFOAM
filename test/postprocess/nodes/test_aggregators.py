@@ -1,15 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Unit tests for the aggregators on a numpy-only geometry.
+"""Unit tests for the aggregators on a host geometry.
 
-A node sees the mesh only through the ``Geometry`` protocol (positions plus an
-optional measure), so the integrals below run on plain arrays without OpenFOAM.
+A node sees the mesh only through a geometry's accessors (``positions()`` plus
+the measure that geometry has), so the integrals below run on plain arrays
+without OpenFOAM — the NeoN kernels behind them take host numpy as readily as a
+NeoN vector, which is what makes a mesh-free test of the real kernel possible.
 The expected sums are written out by hand in the test — never recomputed with
 the code under test — and compared at ``rtol=1e-12``, i.e. a handful of float64
 ulps, since the kernel is one weighted sum over four cells.
 
-The case table below is the pyOFTools semantics, one row per (aggregator, input)
+The tables below are asserted in *file* order (``table_headers`` /
+``table_rows``: the bin index before the value it labels), because that is the
+layout a reader of the CSV sees; the aggregation's own value-first order is
+pinned in ``test_dataset.py``.
+
+The case table is the pyOFTools semantics, one row per (aggregator, input)
 pair: a mask *scales* the dropped elements to zero for the additive aggregators
 and *skips* them for the extrema, and a bin with nothing in it reports
 ``GREAT``/``-GREAT`` rather than a NaN. Covering a new combination is a new
@@ -24,7 +31,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from neofoam.postprocess.node import DataSet, Geometry, Node
+from neofoam.postprocess.node import InternalDataSet, InternalMesh, Node, PointDataSet
 from neofoam.postprocess.nodes.aggregators import (
     GREAT,
     Max,
@@ -34,6 +41,7 @@ from neofoam.postprocess.nodes.aggregators import (
     SurfIntegrate,
     VolIntegrate,
 )
+from neofoam.postprocess.writers.writer import table_headers, table_rows
 
 CELL_VOLUMES = np.array([0.5, 0.25, 0.25, 1.0])
 # 1*0.5 + 2*0.25 + 3*0.25 + 4*1.0
@@ -41,65 +49,91 @@ SCALAR_INTEGRAL = 5.75
 
 
 class ArrayGeometry:
-    """A geometry made of plain arrays — the numpy stand-in for a cell zone."""
+    """A geometry made of plain arrays — the numpy stand-in for a cell zone.
 
-    def __init__(self, positions: np.ndarray, measure: Optional[np.ndarray]) -> None:
+    It answers both ``volumes()`` and ``face_area_magnitudes()`` with the same
+    numbers, so one fake serves the cell and the surface aggregators.
+    """
+
+    def __init__(self, positions: np.ndarray, measure: np.ndarray) -> None:
         self._positions = positions
         self._measure = measure
 
-    @property
     def positions(self) -> np.ndarray:
         return self._positions
 
-    @property
-    def measure(self) -> Optional[np.ndarray]:
+    def volumes(self) -> np.ndarray:
+        return self._measure
+
+    def face_area_magnitudes(self) -> np.ndarray:
         return self._measure
 
 
-def _cells(measure: Optional[np.ndarray] = CELL_VOLUMES) -> ArrayGeometry:
-    return ArrayGeometry(positions=np.zeros((4, 3)), measure=measure)
+class MeasurelessGeometry:
+    """A probe's geometry: positions and nothing to weigh with.
+
+    A dataset validates its geometry against the protocol its kind declares, so
+    this is what an aggregator that needs a measure actually meets — a
+    ``PointDataSet``, the one dataset whose geometry has no measure at all.
+    """
+
+    def positions(self) -> np.ndarray:
+        return np.zeros((4, 3))
+
+    def distance(self) -> np.ndarray:
+        return np.arange(4.0)
 
 
-def test_array_geometry_satisfies_the_geometry_protocol() -> None:
-    assert isinstance(_cells(), Geometry)
+def _cells() -> ArrayGeometry:
+    return ArrayGeometry(positions=np.zeros((4, 3)), measure=CELL_VOLUMES)
+
+
+def test_array_geometry_satisfies_the_internal_mesh_protocol() -> None:
+    assert isinstance(_cells(), InternalMesh)
 
 
 def test_vol_integrate_is_the_volume_weighted_sum() -> None:
-    dataset = DataSet(name="p", values=np.array([1.0, 2.0, 3.0, 4.0]), geometry=_cells())
+    dataset = InternalDataSet(name="p", field=np.array([1.0, 2.0, 3.0, 4.0]), geometry=_cells())
 
     result = VolIntegrate().compute(dataset)
 
-    assert result.headers == ["p_volIntegrate"]
-    assert_allclose(result.rows, [[SCALAR_INTEGRAL]], rtol=1e-12, err_msg="volume integral of p")
+    assert table_headers(result) == ["p_volIntegrate"]
+    assert_allclose(
+        table_rows(result), [[SCALAR_INTEGRAL]], rtol=1e-12, err_msg="volume integral of p"
+    )
 
 
 def test_vol_integrate_labels_the_column_after_the_field_by_default() -> None:
-    dataset = DataSet(name="alpha.water", values=np.ones(4), geometry=_cells())
+    dataset = InternalDataSet(name="alpha.water", field=np.ones(4), geometry=_cells())
 
     result = VolIntegrate().compute(dataset)
 
     assert result.name == "alpha.water_volIntegrate"
-    assert result.headers == ["alpha.water_volIntegrate"]
+    assert table_headers(result) == ["alpha.water_volIntegrate"]
 
 
 def test_vol_integrate_uses_the_given_name_for_the_column() -> None:
-    dataset = DataSet(name="alpha.water", values=np.ones(4), geometry=_cells())
+    dataset = InternalDataSet(name="alpha.water", field=np.ones(4), geometry=_cells())
 
     result = VolIntegrate(name="water_volume").compute(dataset)
 
     assert result.name == "water_volume"
-    assert result.headers == ["water_volume"]
+    assert table_headers(result) == ["water_volume"]
 
 
 def test_vol_integrate_of_a_vector_field_yields_one_column_per_component() -> None:
     values = np.array([[1.0, 0.0, -1.0], [2.0, 0.0, -2.0], [3.0, 0.0, -3.0], [4.0, 0.0, -4.0]])
-    dataset = DataSet(name="U", values=values, geometry=_cells())
+    dataset = InternalDataSet(name="U", field=values, geometry=_cells())
 
     result = VolIntegrate().compute(dataset)
 
-    assert result.headers == ["U_volIntegrate_0", "U_volIntegrate_1", "U_volIntegrate_2"]
+    assert table_headers(result) == [
+        "U_volIntegrate_0",
+        "U_volIntegrate_1",
+        "U_volIntegrate_2",
+    ]
     assert_allclose(
-        result.rows,
+        table_rows(result),
         [[SCALAR_INTEGRAL, 0.0, -SCALAR_INTEGRAL]],
         rtol=1e-12,
         atol=1e-15,
@@ -108,9 +142,11 @@ def test_vol_integrate_of_a_vector_field_yields_one_column_per_component() -> No
 
 
 def test_vol_integrate_without_a_measure_reports_the_offending_source() -> None:
-    dataset = DataSet(name="p", values=np.ones(4), geometry=_cells(measure=None))
+    dataset = PointDataSet(name="p", field=np.ones(4), geometry=MeasurelessGeometry())
 
-    with pytest.raises(TypeError, match=r"volIntegrate needs cell volumes.*'p'.*ArrayGeometry"):
+    with pytest.raises(
+        TypeError, match=r"volIntegrate needs cell volumes.*'p'.*MeasurelessGeometry"
+    ):
         VolIntegrate().compute(dataset)
 
 
@@ -119,18 +155,20 @@ def test_vol_integrate_without_a_measure_reports_the_offending_source() -> None:
 VALUES = np.array([1.0, 2.0, 3.0, 4.0])
 VECTORS = np.array([[1.0, 0.0, -1.0], [2.0, 0.0, -2.0], [3.0, 0.0, -3.0], [4.0, 0.0, -4.0]])
 # Keeps cells 0 and 2 (values 1 and 3, volumes 0.5 and 0.25): a sum scales the
-# dropped cells to zero while an extremum skips them, so `Max` is 3, not 4.
-MASK = np.array([True, False, True, False])
-PAIRS = np.array([0, 0, 1, 1])
+# dropped cells to zero while an extremum skips them, so `Max` is 3, not 4. A
+# mask is 0/1 labels, which is what the kernels read.
+MASK = np.array([1, 0, 1, 0], dtype=np.int32)
+NOTHING_ACTIVE = np.zeros(4, dtype=np.int32)
+PAIRS = np.array([0, 0, 1, 1], dtype=np.int32)
 # Everything in bin 0 while the binner declared two: bin 1 is the empty group.
-ALL_IN_FIRST = np.array([0, 0, 0, 0])
+ALL_IN_FIRST = np.zeros(4, dtype=np.int32)
 # All negative, so an extremum that scaled the masked cells to zero instead of
 # skipping them would report 0 rather than the largest surviving value.
 NEGATIVES = -VALUES
 
 
 class Case(NamedTuple):
-    """One aggregator run: the DataSet to build, and the table it must produce."""
+    """One aggregator run: the dataset to build, and the table it must produce."""
 
     node: Node
     values: np.ndarray
@@ -249,18 +287,10 @@ CASES = [
         id="min-empty-bin",
     ),
     # every cell masked out: the whole table is the empty-group case
-    pytest.param(
-        _case(Sum(), ["p_sum"], [[0.0]], mask=np.zeros(4, dtype=bool)), id="sum-all-masked"
-    ),
-    pytest.param(
-        _case(Mean(), ["p_mean"], [[GREAT]], mask=np.zeros(4, dtype=bool)), id="mean-all-masked"
-    ),
-    pytest.param(
-        _case(Max(), ["p_max"], [[-GREAT]], mask=np.zeros(4, dtype=bool)), id="max-all-masked"
-    ),
-    pytest.param(
-        _case(Min(), ["p_min"], [[GREAT]], mask=np.zeros(4, dtype=bool)), id="min-all-masked"
-    ),
+    pytest.param(_case(Sum(), ["p_sum"], [[0.0]], mask=NOTHING_ACTIVE), id="sum-all-masked"),
+    pytest.param(_case(Mean(), ["p_mean"], [[GREAT]], mask=NOTHING_ACTIVE), id="mean-all-masked"),
+    pytest.param(_case(Max(), ["p_max"], [[-GREAT]], mask=NOTHING_ACTIVE), id="max-all-masked"),
+    pytest.param(_case(Min(), ["p_min"], [[GREAT]], mask=NOTHING_ACTIVE), id="min-all-masked"),
     # vectors: one column per component, component-wise extrema
     pytest.param(
         _case(
@@ -335,7 +365,7 @@ CASES = [
             ["bin", "p_mean_0", "p_mean_1", "p_mean_2"],
             [[0.0, 2.5, 0.0, -2.5], [1.0, GREAT, GREAT, GREAT]],
             values=VECTORS,
-            groups=np.array([0, 0, 0, 0]),
+            groups=ALL_IN_FIRST,
             n_groups=2,
         ),
         id="mean-vector-empty-bin",
@@ -356,9 +386,9 @@ CASES = [
 
 @pytest.mark.parametrize("case", CASES)
 def test_an_aggregator_reproduces_the_hand_computed_table(case: Case) -> None:
-    dataset = DataSet(
+    dataset = InternalDataSet(
         name="p",
-        values=case.values,
+        field=case.values,
         geometry=_cells(),
         mask=case.mask,
         groups=case.groups,
@@ -367,11 +397,11 @@ def test_an_aggregator_reproduces_the_hand_computed_table(case: Case) -> None:
 
     result = case.node.compute(dataset)
 
-    assert result.headers == case.headers
+    assert table_headers(result) == case.headers
     # One weighted sum (or one comparison) over four cells: a handful of float64
     # ulps, and the exact zeros of the second vector component need an atol.
     assert_allclose(
-        result.rows, case.rows, rtol=1e-12, atol=1e-15, err_msg=f"{case.node.type} on p"
+        table_rows(result), case.rows, rtol=1e-12, atol=1e-15, err_msg=f"{case.node.type} on p"
     )
 
 
@@ -390,35 +420,57 @@ def test_an_aggregator_reproduces_the_hand_computed_table(case: Case) -> None:
     ],
 )
 def test_an_aggregator_names_its_column_after_the_field_and_itself(node: Node, label: str) -> None:
-    dataset = DataSet(name="p", values=VALUES, geometry=_cells())
+    dataset = InternalDataSet(name="p", field=VALUES, geometry=_cells())
 
     result = node.compute(dataset)
 
     assert result.name == label
-    assert result.headers == [label]
+    assert table_headers(result) == [label]
 
 
 def test_an_aggregator_leaves_its_input_dataset_untouched() -> None:
-    dataset = DataSet(name="p", values=VALUES.copy(), geometry=_cells(), mask=MASK.copy())
+    dataset = InternalDataSet(name="p", field=VALUES.copy(), geometry=_cells(), mask=MASK.copy())
 
     Mean().compute(dataset)
 
-    assert_allclose(dataset.values, VALUES, rtol=1e-12)
+    assert_allclose(dataset.field, VALUES, rtol=1e-12)
     np.testing.assert_array_equal(dataset.mask, MASK)
 
 
 def test_surf_integrate_without_a_measure_reports_the_offending_source() -> None:
-    dataset = DataSet(name="p", values=VALUES, geometry=_cells(measure=None))
+    dataset = PointDataSet(name="p", field=VALUES, geometry=MeasurelessGeometry())
 
-    with pytest.raises(TypeError, match=r"surfIntegrate needs face areas.*'p'.*ArrayGeometry"):
+    with pytest.raises(
+        TypeError, match=r"surfIntegrate needs face areas.*'p'.*MeasurelessGeometry"
+    ):
         SurfIntegrate().compute(dataset)
 
 
 def test_a_group_index_beyond_the_declared_bins_is_refused() -> None:
     # A row count read off the data would differ between ranks (plan risk R6).
-    dataset = DataSet(
-        name="p", values=VALUES, geometry=_cells(), groups=np.array([0, 1, 2, 2]), n_groups=2
+    dataset = InternalDataSet(
+        name="p",
+        field=VALUES,
+        geometry=_cells(),
+        groups=np.array([0, 1, 2, 2], dtype=np.int32),
+        n_groups=2,
     )
 
     with pytest.raises(ValueError, match=r"'p' has group indices \[0, 2\] outside the 2 groups"):
         Sum().compute(dataset)
+
+
+def test_a_probe_geometry_is_not_an_internal_mesh() -> None:
+    # what makes the "needs cell volumes" error possible rather than an
+    # AttributeError deep in the kernel call
+    assert not isinstance(MeasurelessGeometry(), InternalMesh)
+
+
+def test_an_aggregated_value_is_plain_python() -> None:
+    # the writers and the MCP catalog serialise these, so a numpy scalar leaking
+    # into a row would show up as its repr in the CSV
+    dataset = InternalDataSet(name="p", field=VALUES, geometry=_cells())
+
+    result = Sum().compute(dataset)
+
+    assert type(result.values[0].value) is float

@@ -10,9 +10,11 @@ output files.
 """
 
 from neofoam.postprocess.writers.csv import CsvWriter
-from neofoam.postprocess.writers.writer import TableWriter
+from neofoam.postprocess.writers.writer import TableWriter, table_headers, table_rows
 
 __all__ = [
     "TableWriter",
     "CsvWriter",
+    "table_headers",
+    "table_rows",
 ]

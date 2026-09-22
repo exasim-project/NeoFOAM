@@ -12,6 +12,12 @@ that samples no face, which is how ``sampledPatch`` silently reports an
 values a real patch or a real point set hand back are pinned in
 ``test_sources_e2e.py``, which has an OpenFOAM case behind it.
 
+``NeonCellGeometry`` is the same cells on a NeoN executor: it is what lets a
+NeoN field be integrated without a host copy, so the numbers it holds and the
+executor it holds them on are both asserted, against a *real* ``neon``
+(a fake vector would prove neither). It is cached per mesh and executor because
+the mesh is static for a run and the copy would otherwise happen every step.
+
 The one contract that cannot be faked is the *shape* of the sampling protocol:
 every samplable geometry takes a registered field **name**, never a live pybFoam
 field, because ``Sample`` holds a name and no mesh. Two adapters disagreeing on
@@ -29,12 +35,14 @@ import pytest
 from numpy.testing import assert_allclose
 
 from neofoam.postprocess import sources
-from neofoam.postprocess.node import SamplingGeometry
+from neofoam.postprocess.node import InternalMesh, SamplingGeometry, SetGeometry, SurfaceMesh
 from neofoam.postprocess.sources.geometry import (
     CellGeometry,
+    NeonCellGeometry,
     PatchGeometry,
     PointGeometry,
     SurfaceGeometry,
+    neon_cell_geometry,
 )
 
 CELL_CENTRES = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
@@ -89,13 +97,62 @@ class FakeMesh:
 def test_cell_geometry_positions_are_the_cell_centres() -> None:
     geometry = CellGeometry(FakeMesh())
 
-    assert_allclose(geometry.positions, CELL_CENTRES, rtol=0, atol=0)
+    assert_allclose(geometry.positions(), CELL_CENTRES, rtol=0, atol=0)
 
 
 def test_cell_geometry_measure_is_the_cell_volumes() -> None:
     geometry = CellGeometry(FakeMesh())
 
-    assert_allclose(geometry.measure, CELL_VOLUMES, rtol=0, atol=0)
+    assert_allclose(geometry.volumes(), CELL_VOLUMES, rtol=0, atol=0)
+
+
+def test_the_cell_geometry_satisfies_the_internal_mesh_protocol() -> None:
+    assert isinstance(CellGeometry(FakeMesh()), InternalMesh)
+
+
+# --- the same cells on a NeoN executor ------------------------------------
+
+
+def test_the_neon_cell_geometry_holds_the_meshs_numbers_on_the_given_executor() -> None:
+    neon = pytest.importorskip("neon")
+    executor = neon.SerialExecutor()
+
+    geometry = NeonCellGeometry(FakeMesh(), executor)
+
+    assert_allclose(np.asarray(geometry.positions().copy_to_host()), CELL_CENTRES, rtol=1e-15)
+    assert_allclose(np.asarray(geometry.volumes().copy_to_host()), CELL_VOLUMES, rtol=1e-15)
+    assert repr(geometry.positions().exec()) == repr(executor)
+    assert repr(geometry.volumes().exec()) == repr(executor)
+
+
+def test_the_neon_cell_geometry_satisfies_the_internal_mesh_protocol() -> None:
+    neon = pytest.importorskip("neon")
+
+    assert isinstance(NeonCellGeometry(FakeMesh(), neon.SerialExecutor()), InternalMesh)
+
+
+def test_one_mesh_and_executor_are_mirrored_once() -> None:
+    # the mesh is static, so a table must not copy it onto the executor again
+    # on every write step
+    neon = pytest.importorskip("neon")
+    mesh = FakeMesh()
+
+    first = neon_cell_geometry(mesh, neon.SerialExecutor())
+    second = neon_cell_geometry(mesh, neon.SerialExecutor())
+
+    assert first is second
+
+
+def test_another_mesh_gets_its_own_copy() -> None:
+    neon = pytest.importorskip("neon")
+
+    first = neon_cell_geometry(FakeMesh(), neon.SerialExecutor())
+    second = neon_cell_geometry(FakeMesh(), neon.SerialExecutor())
+
+    assert first is not second
+
+
+# --- the sampled geometries ------------------------------------------------
 
 
 def test_patch_geometry_rejects_a_patch_the_mesh_does_not_have() -> None:
@@ -138,6 +195,20 @@ def test_a_samplable_geometry_samples_a_registered_field_name(geometry: type) ->
 )
 def test_a_samplable_geometry_satisfies_the_sampling_protocol(geometry: type) -> None:
     assert issubclass(geometry, SamplingGeometry)
+
+
+@pytest.mark.parametrize(
+    ("geometry", "protocol"),
+    [
+        pytest.param(SurfaceGeometry, SurfaceMesh, id="surface"),
+        pytest.param(PatchGeometry, SurfaceMesh, id="patch"),
+        pytest.param(PointGeometry, SetGeometry, id="point"),
+    ],
+)
+def test_a_sampled_geometry_satisfies_the_protocol_its_dataset_declares(
+    geometry: type, protocol: type
+) -> None:
+    assert issubclass(geometry, protocol)
 
 
 def test_the_cell_geometry_is_not_samplable() -> None:

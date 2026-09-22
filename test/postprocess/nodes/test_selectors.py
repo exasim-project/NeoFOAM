@@ -6,9 +6,12 @@
 The case matrix is pyOFTools' (a box, a sphere overlapping one of its corners,
 and points inside / outside / on the boundary of each), extended with the two
 NeoFOAM-specific rules: a selector ANDs with the mask it is handed instead of
-replacing it, and it returns a new DataSet rather than mutating the one it got.
+replacing it, and it returns a new dataset rather than mutating the one it got.
 Positions are the only mesh data a selector reads, so a fake geometry is the
 whole backend here.
+
+A mask is 0/1 labels rather than booleans, because that is what the kernels
+build and combine — the expectations below are written that way.
 """
 
 from __future__ import annotations
@@ -17,9 +20,10 @@ from typing import Any, Optional
 
 import numpy as np
 import pytest
+from numpy.testing import assert_array_equal
 from pydantic import ValidationError
 
-from neofoam.postprocess.node import DataSet, Node
+from neofoam.postprocess.node import InternalDataSet, Node
 from neofoam.postprocess.nodes.selectors import Binary, Box, Not, Selector, Sphere
 
 #: Points ordered: inside the box only, inside both, inside the sphere only,
@@ -47,19 +51,17 @@ class FakeGeometry:
     def __init__(self, positions: np.ndarray) -> None:
         self._positions = positions
 
-    @property
     def positions(self) -> np.ndarray:
         return self._positions
 
-    @property
-    def measure(self) -> Optional[np.ndarray]:
-        return None
+    def volumes(self) -> np.ndarray:
+        return np.ones(len(self._positions))
 
 
-def _dataset(mask: Optional[np.ndarray] = None) -> DataSet:
-    return DataSet(
+def _dataset(mask: Optional[np.ndarray] = None) -> InternalDataSet:
+    return InternalDataSet(
         name="p",
-        values=np.arange(len(POSITIONS), dtype=float),
+        field=np.arange(len(POSITIONS), dtype=float),
         geometry=FakeGeometry(POSITIONS),
         mask=mask,
     )
@@ -71,31 +73,29 @@ def _dataset(mask: Optional[np.ndarray] = None) -> DataSet:
 @pytest.mark.parametrize(
     ("selector", "expected"),
     [
-        pytest.param(BOX, [True, True, False, False, True, True], id="box"),
-        pytest.param(SPHERE, [False, True, True, False, True, True], id="sphere"),
-        pytest.param(Not(region=BOX), [False, False, True, True, False, False], id="not_box"),
-        pytest.param(Not(region=SPHERE), [True, False, False, True, False, False], id="not_sphere"),
+        pytest.param(BOX, [1, 1, 0, 0, 1, 1], id="box"),
+        pytest.param(SPHERE, [0, 1, 1, 0, 1, 1], id="sphere"),
+        pytest.param(Not(region=BOX), [0, 0, 1, 1, 0, 0], id="not_box"),
+        pytest.param(Not(region=SPHERE), [1, 0, 0, 1, 0, 0], id="not_sphere"),
         pytest.param(
             Binary(op="and", left=BOX, right=SPHERE),
-            [False, True, False, False, True, True],
+            [0, 1, 0, 0, 1, 1],
             id="box_and_sphere",
         ),
         pytest.param(
             Binary(op="or", left=BOX, right=SPHERE),
-            [True, True, True, False, True, True],
+            [1, 1, 1, 0, 1, 1],
             id="box_or_sphere",
         ),
-        pytest.param(
-            BOX & ~SPHERE, [True, False, False, False, False, False], id="box_and_not_sphere"
-        ),
+        pytest.param(BOX & ~SPHERE, [1, 0, 0, 0, 0, 0], id="box_and_not_sphere"),
     ],
 )
 def test_selector_masks_the_elements_inside_the_region(
-    selector: Selector, expected: list[bool]
+    selector: Selector, expected: list[int]
 ) -> None:
     result = selector.compute(_dataset())
 
-    assert list(result.mask) == expected
+    assert_array_equal(np.asarray(result.mask), np.array(expected))
 
 
 @pytest.mark.parametrize(
@@ -116,22 +116,22 @@ def test_the_operators_build_the_same_selector_as_the_classes(
 
 
 def test_selector_keeps_elements_masked_out_upstream_masked_out() -> None:
-    inbound = np.array([False, True, True, True, True, True])
+    inbound = np.array([0, 1, 1, 1, 1, 1], dtype=np.int32)
 
     result = BOX.compute(_dataset(mask=inbound))
 
-    assert list(result.mask) == [False, True, False, False, True, True]
+    assert_array_equal(np.asarray(result.mask), np.array([0, 1, 0, 0, 1, 1]))
 
 
 def test_selector_leaves_the_input_dataset_untouched() -> None:
-    inbound = np.array([True, True, True, True, True, True])
+    inbound = np.ones(len(POSITIONS), dtype=np.int32)
     dataset = _dataset(mask=inbound)
 
     result = BOX.compute(dataset)
 
     assert result is not dataset
-    assert list(dataset.mask) == [True] * 6
-    assert list(inbound) == [True] * 6
+    assert_array_equal(np.asarray(dataset.mask), np.ones(len(POSITIONS)))
+    assert_array_equal(inbound, np.ones(len(POSITIONS)))
 
 
 # --- nested selectors from a spec mapping ---------------------------------
@@ -144,7 +144,7 @@ def test_a_nested_selector_resolves_from_a_spec_mapping() -> None:
 
     assert isinstance(node, Not)
     assert isinstance(node.region, Box)
-    assert list(node.compute(_dataset()).mask) == [False, False, True, True, False, False]
+    assert_array_equal(np.asarray(node.compute(_dataset()).mask), np.array([0, 0, 1, 1, 0, 0]))
 
 
 def test_a_nested_selector_round_trips_back_to_its_spec_mapping() -> None:

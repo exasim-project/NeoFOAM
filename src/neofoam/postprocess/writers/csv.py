@@ -13,7 +13,7 @@ import pybFoam as pyf
 from pydantic import PrivateAttr
 
 from neofoam.postprocess.node import AggregatedDataSet
-from neofoam.postprocess.writers.writer import TableWriter
+from neofoam.postprocess.writers.writer import TableWriter, table_headers, table_rows
 
 
 def _owns_the_output_files() -> bool:
@@ -64,14 +64,19 @@ class CsvWriter(TableWriter):
         self._started = False
 
     def write(self, time: float, result: AggregatedDataSet) -> None:
-        """Append one line per row of ``result``, prefixed by ``time``."""
-        if not _owns_the_output_files():
+        """Append one line per row of ``result``, prefixed by ``time``.
+
+        A result with no rows at all (a residuals step that solved nothing)
+        leaves the file untouched — the header names the columns of a row, and
+        those are only known once there is one.
+        """
+        if not _owns_the_output_files() or not result.values:
             return
         if not self._started:
-            self._start(result.headers)
+            self._start(table_headers(result))
         with self._path.open("a", newline="") as handle:
             writer = csv.writer(handle)
-            for row in result.rows:
+            for row in table_rows(result):
                 writer.writerow([_as_time_column(time), *row])
 
     def _start(self, headers: list[str]) -> None:

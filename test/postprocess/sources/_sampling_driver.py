@@ -92,7 +92,9 @@ def main() -> None:
     case, out = Path(sys.argv[1]), Path(sys.argv[2])
     runtime = open_case(case)
     ctx = probe_context(runtime)
-    results = {name: pipeline.compute(ctx).rows[0][0] for name, pipeline in pipelines().items()}
+    results = {
+        name: pipeline.compute(ctx).values[0].value for name, pipeline in pipelines().items()
+    }
     out.write_text(json.dumps(results))
 
 

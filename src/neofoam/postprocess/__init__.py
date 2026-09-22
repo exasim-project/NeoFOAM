@@ -10,20 +10,30 @@ stay here — the loaders behind those doors
 are grouped into :mod:`~neofoam.postprocess.nodes`,
 :mod:`~neofoam.postprocess.sources` and :mod:`~neofoam.postprocess.writers`.
 Importing this package registers every node, source and writer shipped with
-NeoFOAM, so a case file can select them by their ``type`` string. The nodes are
-pure numpy; pybFoam appears in the sources, the CSV writer and the reductions.
+NeoFOAM, so a case file can select them by their ``type`` string. The nodes do
+their arithmetic with the NeoN kernels, so a field is reduced on the executor it
+lives on; pybFoam appears in the sources, the CSV writer and the reductions.
 """
 
 from neofoam.postprocess.config import PostProcessConfig, TableSpec
 from neofoam.postprocess.model import PostProcessor, postProcess
 from neofoam.postprocess.node import (
+    AggregatedData,
     AggregatedDataSet,
-    DataSet,
-    Geometry,
+    BoundaryMesh,
+    DataSets,
+    FieldDataSets,
+    InternalDataSet,
+    InternalMesh,
     Node,
+    PatchDataSet,
     Pipeline,
+    PointDataSet,
     SamplingGeometry,
+    SetGeometry,
     Source,
+    SurfaceDataSet,
+    SurfaceMesh,
 )
 from neofoam.postprocess.nodes import (
     GREAT,
@@ -51,6 +61,7 @@ from neofoam.postprocess.sources import (
     CellGeometry,
     IsoSurface,
     LineField,
+    NeonCellGeometry,
     PatchField,
     PatchGeometry,
     PlaneSurface,
@@ -66,13 +77,23 @@ from neofoam.postprocess.sources import (
     residuals,
 )
 from neofoam.postprocess.table import Table, TableSet
-from neofoam.postprocess.writers import CsvWriter, TableWriter
+from neofoam.postprocess.writers import CsvWriter, TableWriter, table_headers, table_rows
 
 __all__ = [
     # Data contract
+    "AggregatedData",
     "AggregatedDataSet",
-    "DataSet",
-    "Geometry",
+    "InternalDataSet",
+    "PatchDataSet",
+    "SurfaceDataSet",
+    "PointDataSet",
+    "FieldDataSets",
+    "DataSets",
+    # Geometry protocols
+    "InternalMesh",
+    "BoundaryMesh",
+    "SurfaceMesh",
+    "SetGeometry",
     "SamplingGeometry",
     # Plugin families
     "Node",
@@ -126,12 +147,15 @@ __all__ = [
     "PostProcessConfig",
     # Geometry adapters
     "CellGeometry",
+    "NeonCellGeometry",
     "SurfaceGeometry",
     "PatchGeometry",
     "PointGeometry",
     # Output
     "TableWriter",
     "CsvWriter",
+    "table_headers",
+    "table_rows",
     # The framework model
     "postProcess",
     "PostProcessor",

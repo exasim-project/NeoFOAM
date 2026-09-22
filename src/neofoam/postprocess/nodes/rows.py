@@ -10,7 +10,12 @@ from typing import Any, Literal, Optional
 import numpy as np
 
 from neofoam.postprocess._reduce import _is_parallel_run
-from neofoam.postprocess.node import AggregatedDataSet, DataSet, Node
+from neofoam.postprocess.node import AggregatedData, AggregatedDataSet, FieldDataSets, Node
+from neofoam.postprocess.nodes._arrays import host
+from neofoam.postprocess.nodes.aggregators import BIN_COLUMN
+
+#: The columns an element's position fills, before its value.
+POSITION_COLUMNS = ["x", "y", "z"]
 
 
 @Node.register
@@ -25,6 +30,9 @@ class Rows(Node):
 
         line("U", start, end, 20) | Mag() | Rows(name="U_profile")
 
+    It writes the elements themselves, so this is the one node that copies a
+    NeoN field off its executor — a row per cell is host data by definition.
+
     Serial only: an aggregator reduces its per-bin numbers over the ranks, but a
     row table would need the elements themselves gathered onto the master, and
     pybFoam binds no gather. Rather than write the master's share and silently
@@ -34,7 +42,7 @@ class Rows(Node):
     type: Literal["rows"] = "rows"
     name: Optional[str] = None
 
-    def compute(self, dataset: DataSet) -> AggregatedDataSet:
+    def compute(self, dataset: FieldDataSets) -> AggregatedDataSet:
         if _is_parallel_run():
             raise NotImplementedError(
                 f"postProcess: the rows table {self.name or dataset.name!r} cannot run "
@@ -43,22 +51,20 @@ class Rows(Node):
                 "aggregator (sum, mean, max, min, volIntegrate, surfIntegrate), which does "
                 "reduce over the ranks, or run the case serially."
             )
-        values = np.asarray(dataset.values, dtype=float)
-        components = values if values.ndim > 1 else values[:, None]
-        positions = np.asarray(dataset.geometry.positions, dtype=float)
-        active: Any = slice(None) if dataset.mask is None else np.asarray(dataset.mask, dtype=bool)
-        label = self.name or dataset.name
-        n_components = components.shape[1]
-        columns = [label] if n_components == 1 else [f"{label}_{i}" for i in range(n_components)]
+        values = host(dataset.field).astype(float)
+        positions = host(dataset.geometry.positions()).astype(float)
+        active: Any = slice(None) if dataset.mask is None else host(dataset.mask).astype(bool)
         grouped = dataset.groups is not None
-        bins = np.asarray(dataset.groups, dtype=np.int64) if grouped else np.zeros(len(values))
+        bins = host(dataset.groups).astype(float) if grouped else np.zeros(len(values))
+        group_name = [*([BIN_COLUMN] if grouped else []), *POSITION_COLUMNS]
         return AggregatedDataSet(
-            name=label,
-            headers=[*(["bin"] if grouped else []), "x", "y", "z", *columns],
-            rows=[
-                [*([float(group)] if grouped else []), *position, *value]
-                for group, position, value in zip(
-                    bins[active], positions[active], components[active]
+            name=self.name or dataset.name,
+            values=[
+                AggregatedData(
+                    value=float(value) if values.ndim == 1 else [float(entry) for entry in value],
+                    group=[*([float(group)] if grouped else []), *(float(x) for x in position)],
+                    group_name=group_name,
                 )
+                for group, position, value in zip(bins[active], positions[active], values[active])
             ],
         )

@@ -61,8 +61,12 @@ def apply_set_fields(
 
         apply_set_fields(mesh, {"alpha.water": 0.0}, resolve_regions(config))
     """
-    positions = CellGeometry(mesh).positions
-    masks = [(selector.select(positions), values) for selector, values in regions]
+    positions = CellGeometry(mesh).positions()
+    # a selector answers with the kernels' 0/1 labels; indexing wants booleans.
+    masks = [
+        (np.asarray(selector.select(positions)).astype(bool), values)
+        for selector, values in regions
+    ]
 
     written: list[str] = []
     for name in _field_names(defaults, regions):

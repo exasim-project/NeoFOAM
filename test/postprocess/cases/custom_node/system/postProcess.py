@@ -3,7 +3,7 @@ case's postProcess.yaml, which is resolved after this script has run."""
 
 from typing import Literal
 
-from neofoam.postprocess import DataSet, Node, TableSet, VolIntegrate, field
+from neofoam.postprocess import InternalDataSet, Node, TableSet, VolIntegrate, field
 
 postProcess = TableSet()
 
@@ -15,8 +15,8 @@ class Clip(Node):
     type: Literal["clip"] = "clip"
     threshold: float = 0.0
 
-    def compute(self, dataset: DataSet) -> DataSet:
-        return dataset.with_values(dataset.values.clip(min=self.threshold))
+    def compute(self, dataset: InternalDataSet) -> InternalDataSet:
+        return dataset.with_field(dataset.field.clip(min=self.threshold))
 
 
 @postProcess.table("clipped_p_script.csv")

@@ -3,19 +3,24 @@
 
 """Geometry adapters: the cells, a sampled surface, one boundary patch, a set of points.
 
-Every adapter satisfies the :class:`~neofoam.postprocess.node.Geometry` protocol
-(``positions`` and an optional ``measure``), and all but :class:`CellGeometry`
+Every adapter satisfies the protocol its dataset declares —
+:class:`~neofoam.postprocess.node.InternalMesh`,
+:class:`~neofoam.postprocess.node.BoundaryMesh`,
+:class:`~neofoam.postprocess.node.SurfaceMesh` or
+:class:`~neofoam.postprocess.node.SetGeometry` — and all but the two cell adapters
 also satisfy :class:`~neofoam.postprocess.node.SamplingGeometry` — they can
 interpolate a *registered field name* onto their elements, so a node never
-learns which one it is working on. :class:`CellGeometry` needs nothing but an
-fvMesh-shaped object; the others build a pybFoam ``sampledSurface`` or
-``sampledSet``.
+learns which one it is working on. :class:`CellGeometry` and
+:class:`NeonCellGeometry` need nothing but an fvMesh-shaped object, and differ
+only in where they put the numbers (host, or a NeoN executor); the others build
+a pybFoam ``sampledSurface`` or ``sampledSet``, which are host-only.
 """
 
 from __future__ import annotations
 
+import atexit
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pybFoam as pyf
@@ -61,34 +66,101 @@ def _sample(
 class CellGeometry:
     """Cell centres and volumes, duck-typed over a pybFoam-like fvMesh.
 
-    The geometry of :class:`~neofoam.postprocess.sources.fields.InternalField`, and the one
-    adapter that touches no pybFoam symbol: it calls ``C()`` and ``V()`` on
-    whatever mesh it is handed, so a fake mesh is enough to exercise it. It has
-    no ``sample``, which is what makes
+    The geometry of :class:`~neofoam.postprocess.sources.fields.InternalField` for a
+    pybFoam field, and the one adapter that touches no pybFoam symbol: it calls
+    ``C()`` and ``V()`` on whatever mesh it is handed, so a fake mesh is enough
+    to exercise it. It has no ``sample``, which is what makes
     ``field("p") | Sample(field="U")`` a named error instead of a crash::
 
-        CellGeometry(ctx.mesh).measure.sum()  # the mesh volume
+        CellGeometry(ctx.mesh).volumes().sum()  # the mesh volume
     """
 
     def __init__(self, mesh: Any) -> None:
         self._mesh = mesh
 
-    @property
     def positions(self) -> np.ndarray[Any, Any]:
+        """Cell centres, shape ``(n, 3)``."""
         return np.asarray(self._mesh.C().internalField())
 
-    @property
-    def measure(self) -> np.ndarray[Any, Any]:
+    def volumes(self) -> np.ndarray[Any, Any]:
+        """Cell volumes, shape ``(n,)``."""
         return np.asarray(self._mesh.V())
+
+
+class NeonCellGeometry:
+    """Cell centres and volumes as NeoN vectors on one executor.
+
+    The geometry a NeoN volume field is post-processed on: a kernel call needs
+    every array on the executor its values live on, so the mesh's ``C()`` and
+    ``V()`` — which are host data even on a NeoN run — are copied there once.
+    Build it through :func:`neon_cell_geometry`, which keeps the copy for the
+    rest of the run; construct it directly only to pin a second executor::
+
+        neon_cell_geometry(ctx.mesh, field.internal_vector().exec()).volumes()
+    """
+
+    def __init__(self, mesh: Any, executor: Any) -> None:
+        import neon  # noqa: PLC0415  # NeoN is only needed on the NeoN path
+
+        centres = np.asarray(mesh.C().internalField())
+        self._positions = neon.VectorVector(executor, [neon.Vec3(*centre) for centre in centres])
+        self._volumes = neon.ScalarVector(executor, np.asarray(mesh.V(), dtype=float))
+
+    def positions(self) -> Any:
+        """Cell centres as a NeoN ``VectorVector``."""
+        return self._positions
+
+    def volumes(self) -> Any:
+        """Cell volumes as a NeoN ``ScalarVector``."""
+        return self._volumes
+
+
+#: The cell geometry already mirrored onto an executor, by mesh and executor.
+#: Post-processing runs on a static mesh, so the copy is made once per run and
+#: not per write step; a mesh that moved would need this dropped. The mesh is
+#: kept beside its geometry: the key is the mesh's address, which another object
+#: could take over once the mesh is collected.
+_NEON_CELL_GEOMETRIES: dict[tuple[int, str], tuple[Any, NeonCellGeometry]] = {}
+
+
+#: Whether the cache is already set to empty itself at exit (see below).
+_RELEASE_REGISTERED = False
+
+
+def neon_cell_geometry(mesh: Any, executor: Any) -> NeonCellGeometry:
+    """The cells of *mesh* on *executor*, built on first use and kept afterwards."""
+    key = (id(mesh), repr(executor))
+    cached = _NEON_CELL_GEOMETRIES.get(key)
+    if cached is None:
+        _release_the_cache_before_kokkos_finalizes()
+        cached = (mesh, NeonCellGeometry(mesh, executor))
+        _NEON_CELL_GEOMETRIES[key] = cached
+    return cached[1]
+
+
+def _release_the_cache_before_kokkos_finalizes() -> None:
+    """Have the cache drop its vectors at exit, while Kokkos is still up.
+
+    NeoN's own ``atexit`` handler collects the Python-owned NeoN objects and
+    then calls ``Kokkos::finalize``; a vector still held here would be
+    deallocated after that and Kokkos aborts the process. ``atexit`` runs its
+    handlers last-registered-first, and this one is registered on the first NeoN
+    field — long after NeoN was initialized — so it runs before that handler.
+    """
+    global _RELEASE_REGISTERED
+    if _RELEASE_REGISTERED:
+        return
+    atexit.register(_NEON_CELL_GEOMETRIES.clear)
+    _RELEASE_REGISTERED = True
 
 
 class SurfaceGeometry:
     """Face centres and areas of a sampled surface, plus the interpolation onto it.
 
-    What a surface source hands its nodes: ``positions`` are the face centres,
-    ``measure`` the face areas (so ``| Area() | Sum()`` is the cut area), and
-    :meth:`sample` interpolates a registered field onto those faces. Holding the
-    field registry here is what keeps
+    What a surface source hands its nodes: :meth:`positions` are the face
+    centres, :meth:`face_area_magnitudes` the face areas (so ``| Area() |
+    Sum()`` is the cut area), and :meth:`sample` interpolates a registered field
+    onto those faces. Holding the field registry here is what keeps
     :class:`~neofoam.postprocess.sources.sampling.Sample` free of a live mesh — a
     pipeline is declared once and re-resolved every time step::
 
@@ -100,15 +172,21 @@ class SurfaceGeometry:
         self._fields = fields
         self._scheme = scheme
 
-    @property
     def positions(self) -> np.ndarray[Any, Any]:
         """Face centres, shape ``(n, 3)``."""
         return np.asarray(self._surface.Cf())
 
-    @property
-    def measure(self) -> np.ndarray[Any, Any]:
+    def face_areas(self) -> np.ndarray[Any, Any]:
+        """Face area vectors, shape ``(n, 3)``."""
+        return np.asarray(self._surface.Sf())
+
+    def face_area_magnitudes(self) -> np.ndarray[Any, Any]:
         """Face areas, shape ``(n,)``."""
         return np.asarray(self._surface.magSf())
+
+    def total_area(self) -> float:
+        """The area of the whole surface."""
+        return float(self._surface.area())
 
     def sample(self, name: str) -> np.ndarray[Any, Any]:
         """Interpolate the registered field *name* onto the face centres."""
@@ -128,7 +206,7 @@ class PatchGeometry(SurfaceGeometry):
     surface is built once, at construction, and an unknown patch name — or one
     that samples no face at all — raises there::
 
-        PatchGeometry(ctx.mesh, "movingWall", ctx.fields).measure.sum()  # the patch area
+        PatchGeometry(ctx.mesh, "movingWall", ctx.fields).total_area()
     """
 
     def __init__(self, mesh: Any, patch_name: str, fields: Mapping[str, Any]) -> None:
@@ -151,17 +229,17 @@ class PatchGeometry(SurfaceGeometry):
 
 
 class PointGeometry:
-    """The sample points of a pybFoam ``sampledSet`` — positions, no measure.
+    """The sample points of a pybFoam ``sampledSet`` — positions and distances, no measure.
 
     The geometry of :class:`~neofoam.postprocess.sources.fields.LineField`: a probe has
-    no area or volume, so ``measure`` is ``None`` and the measure-weighted
-    aggregators reject it — reduce it with
+    no area or volume, so it offers neither and the measure-weighted
+    aggregators reject it by name — reduce it with
     :class:`~neofoam.postprocess.nodes.aggregators.Mean` or write every point with
     :class:`~neofoam.postprocess.nodes.rows.Rows`. OpenFOAM drops the points of the
-    spec that fall outside the mesh, so ``positions`` may be shorter than the
+    spec that fall outside the mesh, so :meth:`positions` may be shorter than the
     spec asked for::
 
-        PointGeometry(ctx.mesh, spec.to_foam_dict(), "profile", ctx.fields).positions
+        PointGeometry(ctx.mesh, spec.to_foam_dict(), "profile", ctx.fields).positions()
     """
 
     def __init__(self, mesh: Any, set_dict: Any, name: str, fields: Mapping[str, Any]) -> None:
@@ -171,13 +249,13 @@ class PointGeometry:
         self._set = sampling.sampledSet.New(pyf.Word(name), mesh, self._search, set_dict)
         self._fields = fields
 
-    @property
     def positions(self) -> np.ndarray[Any, Any]:
+        """Sample points, shape ``(n, 3)``."""
         return np.asarray(self._set.points())
 
-    @property
-    def measure(self) -> Optional[np.ndarray[Any, Any]]:
-        return None
+    def distance(self) -> np.ndarray[Any, Any]:
+        """Distance along the set, shape ``(n,)``."""
+        return np.asarray(self._set.distance())
 
     def sample(self, name: str) -> np.ndarray[Any, Any]:
         """Interpolate the registered field *name* at the sample points."""

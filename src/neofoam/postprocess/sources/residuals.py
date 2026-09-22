@@ -9,10 +9,16 @@
 from typing import Any, ClassVar, Literal
 
 from neofoam.framework.context import Context
-from neofoam.postprocess.node import AggregatedDataSet, Pipeline, Source
+from neofoam.postprocess.node import AggregatedData, AggregatedDataSet, Pipeline, Source
 
-#: The long-format columns; ``time`` is prefixed by the writer.
-HEADERS = ["field", "solver", "metric", "iteration", "value"]
+#: What labels one residual: the long-format columns before the number.
+GROUP_NAMES = ["field", "solver", "metric", "iteration"]
+
+#: The column the number itself fills.
+VALUE_COLUMN = "value"
+
+#: The long-format columns in file order; ``time`` is prefixed by the writer.
+HEADERS = [*GROUP_NAMES, VALUE_COLUMN]
 
 #: What a field name gains per residual component — nothing for a scalar solve,
 #: OpenFOAM's ``x``/``y``/``z`` for a vector one (``Ux``, ``Uy``, ``Uz``).
@@ -46,9 +52,9 @@ def _performances(solver_dict: Any, field: str) -> list[Any]:
     )
 
 
-def _rows(field: str, performances: list[Any]) -> list[list[Any]]:
+def _rows(field: str, performances: list[Any]) -> list[AggregatedData]:
     """One row per component and metric of every solve of ``field``."""
-    rows: list[list[Any]] = []
+    rows: list[AggregatedData] = []
     for iteration, performance in enumerate(performances):
         solver = str(performance.solverName())
         for metric, residual in (
@@ -57,7 +63,13 @@ def _rows(field: str, performances: list[Any]) -> list[list[Any]]:
         ):
             values = _components(residual)
             for suffix, value in zip(_COMPONENT_SUFFIXES[len(values)], values):
-                rows.append([f"{field}{suffix}", solver, metric, iteration, value])
+                rows.append(
+                    AggregatedData(
+                        value=value,
+                        group=[f"{field}{suffix}", solver, metric, iteration],
+                        group_name=list(GROUP_NAMES),
+                    )
+                )
     return rows
 
 
@@ -88,11 +100,13 @@ class Residuals(Source):
 
     def resolve(self, ctx: Context) -> AggregatedDataSet:
         solver_dict = ctx.mesh.solverPerformanceDict()
-        rows: list[list[Any]] = []
+        rows: list[AggregatedData] = []
         for name in solver_dict.toc().list():
             field = str(name)
             rows.extend(_rows(field, _performances(solver_dict, field)))
-        return AggregatedDataSet(name="residuals", headers=list(HEADERS), rows=rows)
+        # named after the column the number fills: every other aggregation names
+        # its value column after itself, and this table's is ``value``.
+        return AggregatedDataSet(name=VALUE_COLUMN, values=rows)
 
 
 def residuals() -> Pipeline:

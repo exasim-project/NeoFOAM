@@ -19,6 +19,7 @@ from neofoam.postprocess.sources.fields import (
 )
 from neofoam.postprocess.sources.geometry import (
     CellGeometry,
+    NeonCellGeometry,
     PatchGeometry,
     PointGeometry,
     SurfaceGeometry,
@@ -51,6 +52,7 @@ __all__ = [
     "residuals",
     # Geometry adapters
     "CellGeometry",
+    "NeonCellGeometry",
     "SurfaceGeometry",
     "PatchGeometry",
     "PointGeometry",

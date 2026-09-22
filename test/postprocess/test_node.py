@@ -1,13 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Unit tests for the post-processing data contract: DataSet, Source/Node, Pipeline.
+"""Unit tests for the post-processing data contract: the datasets, Source/Node, Pipeline.
 
 The value layer is deliberately pybFoam-free: a source only ever calls
 ``internalField()`` on a registered field and ``C()``/``V()`` on the mesh, so the
 fakes below stand in for the whole backend and a real
 :class:`~neofoam.framework.context.Context` carries them (the genuine object,
-built the way a solver builds it, rather than a duck-typed stand-in).
+built the way a solver builds it, rather than a duck-typed stand-in). The
+datasets themselves — the ``with_*`` helpers and
+:meth:`~neofoam.postprocess.node.InternalDataSet.from_field` — are pinned in
+``test_dataset.py``.
 """
 
 from __future__ import annotations
@@ -16,11 +19,17 @@ from typing import Any, Iterator, Literal
 
 import numpy as np
 import pytest
-from pydantic import ValidationError
 
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.context import Context
-from neofoam.postprocess.node import AggregatedDataSet, DataSet, Node, Pipeline, Source
+from neofoam.postprocess.node import (
+    AggregatedData,
+    AggregatedDataSet,
+    InternalDataSet,
+    Node,
+    Pipeline,
+    Source,
+)
 from neofoam.postprocess.nodes.aggregators import Sum, VolIntegrate
 from neofoam.postprocess.nodes.binning import Directional
 from neofoam.postprocess.nodes.debug import Print
@@ -41,21 +50,6 @@ class FakeField:
 
     def internalField(self) -> np.ndarray:
         return self._values
-
-
-class NamedFakeField(FakeField):
-    """A field whose own name differs from the key it is registered under.
-
-    incompressibleVoF registers ``alpha.water`` as ``alpha1``, so a source has
-    to be able to find a field by either spelling.
-    """
-
-    def __init__(self, values: np.ndarray, name: str) -> None:
-        super().__init__(values)
-        self._name = name
-
-    def name(self) -> str:
-        return self._name
 
 
 class FakeMesh:
@@ -87,7 +81,7 @@ class SelfAggregating(Source):
     type: Literal["self_aggregating"] = "self_aggregating"
 
     def resolve(self, ctx: Context) -> AggregatedDataSet:
-        return AggregatedDataSet(name="residuals", headers=["value"], rows=[[1.0]])
+        return AggregatedDataSet(name="residuals", values=[AggregatedData(value=1.0)])
 
 
 def _ctx() -> Context:
@@ -104,7 +98,7 @@ def doubling_node() -> Iterator[type[Node]]:
         factor: float = 2.0
 
         def compute(self, dataset: Any) -> Any:
-            return dataset.with_values(np.asarray(dataset.values) * self.factor)
+            return dataset.with_field(np.asarray(dataset.field) * self.factor)
 
     Node.register(Doubling)
     yield Doubling
@@ -149,8 +143,8 @@ def test_compute_runs_the_source_then_every_step_in_order() -> None:
     result = (field("p") | first | second).compute(_ctx())
 
     assert log == ["first", "second"]
-    assert isinstance(result, DataSet)
-    np.testing.assert_allclose(result.values, PRESSURE, rtol=1e-12)
+    assert isinstance(result, InternalDataSet)
+    np.testing.assert_allclose(result.field, PRESSURE, rtol=1e-12)
 
 
 def test_a_source_that_aggregates_by_itself_refuses_a_step_after_it() -> None:
@@ -164,25 +158,14 @@ def test_internal_field_resolves_values_and_cell_geometry() -> None:
     dataset = InternalField(field="p").resolve(_ctx())
 
     assert dataset.name == "p"
-    np.testing.assert_allclose(dataset.values, PRESSURE, rtol=1e-12)
-    np.testing.assert_allclose(dataset.geometry.positions, CELL_CENTRES, rtol=1e-12)
-    np.testing.assert_allclose(dataset.geometry.measure, CELL_VOLUMES, rtol=1e-12)
+    np.testing.assert_allclose(dataset.field, PRESSURE, rtol=1e-12)
+    np.testing.assert_allclose(dataset.geometry.positions(), CELL_CENTRES, rtol=1e-12)
+    np.testing.assert_allclose(dataset.geometry.volumes(), CELL_VOLUMES, rtol=1e-12)
 
 
 def test_internal_field_of_an_unregistered_field_names_the_available_fields() -> None:
     with pytest.raises(KeyError, match=r"'U' is not registered; available: \['p'\]"):
         InternalField(field="U").resolve(_ctx())
-
-
-def test_internal_field_falls_back_to_the_field_that_carries_the_name() -> None:
-    ctx = Context(
-        fields={"alpha1": NamedFakeField(PRESSURE, "alpha.water")}, models={}, mesh=FakeMesh()
-    )
-
-    dataset = InternalField(field="alpha.water").resolve(ctx)
-
-    assert dataset.name == "alpha.water"
-    np.testing.assert_allclose(dataset.values, PRESSURE, rtol=1e-12)
 
 
 def test_a_node_after_an_aggregator_names_both_of_them() -> None:
@@ -196,26 +179,6 @@ def test_a_print_node_may_follow_an_aggregator() -> None:
     result = (field("p") | Sum(name="p_sum") | Print()).compute(_ctx())
 
     assert isinstance(result, AggregatedDataSet)
-
-
-# --- the data contract ----------------------------------------------------
-
-
-def test_with_values_returns_a_new_dataset_leaving_the_original_untouched() -> None:
-    dataset = DataSet(name="p", values=PRESSURE, geometry=None)
-
-    scaled = dataset.with_values(PRESSURE * 2.0)
-
-    assert scaled is not dataset
-    np.testing.assert_allclose(dataset.values, PRESSURE, rtol=1e-12)
-    np.testing.assert_allclose(scaled.values, [2.0, 4.0, 6.0], rtol=1e-12)
-
-
-def test_dataset_is_frozen() -> None:
-    dataset = DataSet(name="p", values=PRESSURE, geometry=None)
-
-    with pytest.raises(ValidationError):
-        dataset.values = PRESSURE * 2.0
 
 
 # --- the plugin families --------------------------------------------------
