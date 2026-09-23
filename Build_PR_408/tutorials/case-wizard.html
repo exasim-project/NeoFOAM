@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -537,6 +538,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
@@ -654,19 +656,21 @@ forms by hand still works.</p>
 the default, <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> or <code class="docutils literal notranslate"><span class="pre">incompressibleVoF</span></code>); <code class="docutils literal notranslate"><span class="pre">--port</span></code> and
 <code class="docutils literal notranslate"><span class="pre">--host</span></code> change the address and <code class="docutils literal notranslate"><span class="pre">--no-browser</span></code> keeps the browser closed — see
 <a class="reference internal" href="../reference/cli.html"><span class="doc">The neofoam command line</span></a>.</p>
-<p>Type the case directory into the toolbar’s <strong>Target directory</strong> field. It must be
-an absolute path (e.g. <code class="docutils literal notranslate"><span class="pre">/home/me/cases/my_cavity</span></code>), so the wizard never writes
-into the directory it was launched from.</p>
+<p>Click <strong>Load case</strong> in the toolbar to open a directory browser, and pick the case
+you want to work on. The directory you pick is shown in the toolbar and is where
+<strong>Save case</strong> writes; it is always an absolute path, so the wizard never writes into
+the directory it was launched from. Scanning STL geometry on the <strong>Geometry &amp; mesh</strong>
+step also sets it, which is how a case authored from scratch gets a target.</p>
 <figure class="align-center" id="id1">
 <a class="reference internal image-reference" href="../_images/case_wizard_models.png"><img alt="The case wizard on the Models step, with the step drawer, the toolbar and the AI assistant drawer" src="../_images/case_wizard_models.png" style="width: 90%;" />
 </a>
 <figcaption>
 <p><span class="caption-text">The wizard after start: the step drawer on the left, the <strong>Models</strong> step in the
-middle, the toolbar with <strong>Target directory</strong>, <strong>Load case</strong> and <strong>Save case</strong>.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
+middle, the toolbar with the loaded path, <strong>Load case</strong> and <strong>Save case</strong>.</span><a class="headerlink" href="#id1" title="Link to this image">¶</a></p>
 </figcaption>
 </figure>
-<p>To continue from an existing case, type its directory there and click <strong>Load
-case</strong>: every config file of the case is read from disk into the forms (replacing
+<p>To continue from an existing case, pick its directory in the browser <strong>Load case</strong>
+opens: every config file of the case is read from disk into the forms (replacing
 what they hold) and the models the case uses are selected. The fields — initial
 values and boundary conditions with their patches — are read from <code class="docutils literal notranslate"><span class="pre">0/</span></code> only; a
 case that keeps them in <code class="docutils literal notranslate"><span class="pre">0.orig/</span></code> loads without fields, and the report says so.
@@ -731,7 +735,7 @@ of the suggested prompts, e.g.:</p>
 <div><p><em>Lid-driven cavity, laminar; top patch movingWall, other patches fixedWalls.</em></p>
 </div></blockquote>
 <p>The assistant fills the forms, selects the models it filled, writes the configs
-into the target directory (if one is set) and replies with a summary. Follow-up
+into the loaded directory (if one is set) and replies with a summary. Follow-up
 messages refine the same case. If patches are scanned, the same prompt also
 assigns their roles.
 The model is <code class="docutils literal notranslate"><span class="pre">claude-haiku-4-5</span></code> unless <code class="docutils literal notranslate"><span class="pre">NEOFOAM_CASE_MODEL</span></code> names another.</p>
@@ -749,8 +753,18 @@ changes what you asked for.</p>
 validates the forms against the solver’s configs, writes the OpenFOAM dictionaries
 and field files into the target directory, adds <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> and <code class="docutils literal notranslate"><span class="pre">Allclean</span></code> and
 checks the written case. Each finding names its file and, where known, a fix;
-<strong>Re-validate</strong> repeats the check after an edit on disk. Once the case is valid,
-run it:</p>
+<strong>Re-validate</strong> repeats the check after an edit on disk.</p>
+<p>Once the case is valid, click <strong>Run case</strong> to execute its <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> from the wizard.
+The output appears below the button as it is produced and the run can be stopped with
+<strong>Stop</strong>. Both kinds of case are followed: a scaffolded <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> <code class="docutils literal notranslate"><span class="pre">exec``s</span> <span class="pre">the</span> <span class="pre">solver</span>
+<span class="pre">and</span> <span class="pre">reports</span> <span class="pre">on</span> <span class="pre">stdout,</span> <span class="pre">while</span> <span class="pre">an</span> <span class="pre">OpenFOAM-convention</span> <span class="pre">one</span> <span class="pre">using</span> <span class="pre">``runApplication</span></code> writes
+<code class="docutils literal notranslate"><span class="pre">log.blockMesh</span></code> / <code class="docutils literal notranslate"><span class="pre">log.&lt;solver&gt;</span></code> files instead — the window follows whichever log
+the run is currently writing, naming each as it starts. Only the last few hundred lines
+are kept; the full logs stay in the case directory.</p>
+<p><strong>Clean case</strong> runs the case’s <code class="docutils literal notranslate"><span class="pre">Allclean</span></code> the same way, reporting into the same
+window — it restores the case to its pre-run state, dropping the time directories,
+the logs and the mesh.</p>
+<p>The same thing from a shell:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/home/me/cases/my_cavity
 ./Allrun
 </pre></div>

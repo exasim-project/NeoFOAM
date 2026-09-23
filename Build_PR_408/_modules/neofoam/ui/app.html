@@ -525,6 +525,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -536,6 +537,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
@@ -634,6 +636,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_foam_case</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">tools</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.mcp.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_solver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui</span><span class="w"> </span><span class="kn">import</span> <span class="n">case_spec</span> <span class="k">as</span> <span class="n">cs</span>
@@ -641,11 +644,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">_resolve_target</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui._responsive</span><span class="w"> </span><span class="kn">import</span> <span class="n">_MOBILE</span><span class="p">,</span> <span class="n">_responsive_open</span><span class="p">,</span> <span class="n">_toggle</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.agent_panel</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentPanel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.dir_picker</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_dirs</span><span class="p">,</span> <span class="n">start_dir</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.form_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ADDER_TRANSLATIONS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span><span class="p">,</span> <span class="n">build_forms</span><span class="p">,</span> <span class="n">schema_key</span><span class="p">,</span> <span class="n">uischema_key</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.geometry_panel</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometryPanel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">StepPlugin</span><span class="p">,</span> <span class="n">discover_step_plugins</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.review</span><span class="w"> </span><span class="kn">import</span> <span class="n">FindingRow</span><span class="p">,</span> <span class="n">findings_to_rows</span><span class="p">,</span> <span class="n">save_error_rows</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.run_panel</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunPanel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.scaffold</span><span class="w"> </span><span class="kn">import</span> <span class="n">scaffold_runnable_case</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.steps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ModelChoice</span><span class="p">,</span>
@@ -794,6 +799,10 @@
     <span class="n">state</span><span class="o">.</span><span class="n">ai_panel_mobile</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">state</span><span class="o">.</span><span class="n">main_drawer_mobile</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">state</span><span class="o">.</span><span class="n">target_dir</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="c1"># The "Load case" directory browser (opened from the toolbar; see dir_picker).</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_show</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_dir</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_entries</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">state</span><span class="o">.</span><span class="n">save_report</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state</span><span class="o">.</span><span class="n">scaffolded</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">state</span><span class="o">.</span><span class="n">validation_ok</span> <span class="o">=</span> <span class="kc">None</span>
@@ -892,12 +901,59 @@
         <span class="n">state</span><span class="o">.</span><span class="n">findings</span> <span class="o">=</span> <span class="p">[</span><span class="n">asdict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">save_error_rows</span><span class="p">(</span><span class="n">exc</span><span class="p">)]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_picker_goto</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Show ``directory``'s sub-directories in the open browser."""</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_dir</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_entries</span> <span class="o">=</span> <span class="n">list_dirs</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_open_picker</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Open the "Load case" browser on the loaded case, else the launch directory."""</span>
+    <span class="n">_picker_goto</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">start_dir</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">target_dir</span><span class="p">)))</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_show</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_picker_up</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Step to the parent directory — at the filesystem root, stay put."""</span>
+    <span class="n">_picker_goto</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">picker_dir</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_picker_choose</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Take the directory in view as the case: it becomes the target, then loads.</span>
+
+<span class="sd">    The target every other writer uses (Save, the mesh writer, a sweep export) is set</span>
+<span class="sd">    here, so the browser is the one way into it besides the Geometry step's STL scan.</span>
+<span class="sd">    """</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">picker_show</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">target_dir</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">picker_dir</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">load_target_case</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sync_foam_case</span><span class="p">(</span><span class="n">target_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Keep ``$FOAM_CASE`` on the loaded case, wherever the case came from.</span>
+
+<span class="sd">    OpenFOAM's path tags (``&lt;system&gt;``, as the shipped ``snappyHexMeshDict.cfg`` uses)</span>
+<span class="sd">    expand from it, and ``argList`` — which sets it for a solver run — never runs in</span>
+<span class="sd">    the wizard. Registered on ``target_dir`` so one listener covers every route into</span>
+<span class="sd">    it: the directory browser, the Geometry step's STL scan and a sweep's base-case</span>
+<span class="sd">    restore. The library reads scope their own (:func:`neofoam.io.dictread.foam_case`)</span>
+<span class="sd">    because they are handed a case rather than having one.</span>
+<span class="sd">    """</span>
+    <span class="n">set_foam_case</span><span class="p">(</span><span class="n">target_dir</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_register_case_controllers</span><span class="p">(</span><span class="n">server</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Register the model-selection, save and validate controllers."""</span>
+<span class="w">    </span><span class="sd">"""Register the model-selection, save, validate and directory-browser controllers."""</span>
     <span class="n">state</span><span class="p">,</span> <span class="n">ctrl</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">server</span><span class="o">.</span><span class="n">controller</span>
+    <span class="n">state</span><span class="o">.</span><span class="n">change</span><span class="p">(</span><span class="s2">"target_dir"</span><span class="p">)(</span><span class="n">_sync_foam_case</span><span class="p">)</span>
+
     <span class="n">ctrl</span><span class="o">.</span><span class="n">select_model</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_select_model</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
     <span class="n">ctrl</span><span class="o">.</span><span class="n">save_case</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_save_case</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
     <span class="n">ctrl</span><span class="o">.</span><span class="n">revalidate</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_revalidate</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">open_picker</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_open_picker</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">picker_goto</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_picker_goto</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">picker_up</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_picker_up</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+    <span class="n">ctrl</span><span class="o">.</span><span class="n">picker_choose</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_picker_choose</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">)</span>
     <span class="n">ctrl</span><span class="o">.</span><span class="n">get_entries</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span>
     <span class="n">ctrl</span><span class="o">.</span><span class="n">get_steps</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">wizard</span><span class="o">.</span><span class="n">steps</span>
 
@@ -1003,8 +1059,8 @@
                 <span class="n">v3</span><span class="o">.</span><span class="n">VSwitch</span><span class="p">(</span><span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="n">selection_key</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">),),</span> <span class="n">label</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">inset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_review_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""validate_case findings + scaffolded runnable case."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_review_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">run_panel</span><span class="p">:</span> <span class="n">RunPanel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""validate_case findings, the scaffolded case, and running it."""</span>
     <span class="n">v3</span><span class="p">,</span> <span class="n">html</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">html</span>
     <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VRow</span><span class="p">(</span><span class="n">align</span><span class="o">=</span><span class="s2">"center"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"mb-2"</span><span class="p">,</span> <span class="n">no_gutters</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
@@ -1059,6 +1115,8 @@
         <span class="n">classes</span><span class="o">=</span><span class="s2">"mt-3"</span><span class="p">,</span>
         <span class="n">v_show</span><span class="o">=</span><span class="s2">"scaffolded.length"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">v3</span><span class="o">.</span><span class="n">VDivider</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"my-4"</span><span class="p">)</span>
+    <span class="n">run_panel</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">v3</span><span class="p">,</span> <span class="n">html</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_step_nav</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1089,30 +1147,34 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="o">**</span><span class="n">props</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">""" "Load case": the target directory's case into the forms (``agent_panel``)."""</span>
+<span class="w">    </span><span class="sd">""" "Load case": open the directory browser, which loads what it picks."""</span>
     <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
         <span class="s2">"Load case"</span><span class="p">,</span>
-        <span class="n">click</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">load_target_case</span><span class="p">,</span>
+        <span class="n">click</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">open_picker</span><span class="p">,</span>
         <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
         <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
         <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-folder-open-outline"</span><span class="p">,</span>
-        <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"!target_dir.trim() || ai_busy"</span><span class="p">,),</span>
+        <span class="n">disabled</span><span class="o">=</span><span class="p">(</span><span class="s2">"ai_busy"</span><span class="p">,),</span>
+        <span class="o">**</span><span class="n">props</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_loaded_path</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span> <span class="o">**</span><span class="n">props</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The case Save writes to — read-only: the browser is what sets it."""</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
+        <span class="s2">"{{ target_dir || 'No case loaded' }}"</span><span class="p">,</span>
+        <span class="n">classes</span><span class="o">=</span><span class="sa">f</span><span class="s2">"text-body-2 text-medium-emphasis text-truncate </span><span class="si">{</span><span class="n">classes</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span>
+        <span class="n">title</span><span class="o">=</span><span class="p">(</span><span class="s2">"target_dir"</span><span class="p">,),</span>
         <span class="o">**</span><span class="n">props</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_toolbar</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Target directory, Load, Save and the AI-drawer toggle (the path wraps on a phone)."""</span>
+<span class="w">    </span><span class="sd">"""The loaded path, Load, Save and the AI-drawer toggle (the path drops to its own</span>
+<span class="sd">    row on a phone)."""</span>
     <span class="n">v3</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span>
     <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
-    <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-        <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"target_dir"</span><span class="p">,),</span>
-        <span class="n">label</span><span class="o">=</span><span class="s2">"Target directory"</span><span class="p">,</span>
-        <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">prepend_inner_icon</span><span class="o">=</span><span class="s2">"mdi-folder-arrow-down-outline"</span><span class="p">,</span>
-        <span class="n">style</span><span class="o">=</span><span class="s2">"max-width: 340px"</span><span class="p">,</span>
-        <span class="n">v_if</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">_loaded_path</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"max-width: 340px"</span><span class="p">,</span> <span class="n">v_if</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"ml-3"</span><span class="p">,</span> <span class="n">v_if</span><span class="o">=</span><span class="sa">f</span><span class="s2">"!</span><span class="si">{</span><span class="n">_MOBILE</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
         <span class="s2">"Save case"</span><span class="p">,</span>
@@ -1132,14 +1194,45 @@
     <span class="p">)</span>
     <span class="c1"># A phone toolbar has no room for the path: it gets a second row.</span>
     <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">Template</span><span class="p">(</span><span class="n">v_if</span><span class="o">=</span><span class="n">_MOBILE</span><span class="p">,</span> <span class="n">v_slot_extension</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="n">v3</span><span class="o">.</span><span class="n">VTextField</span><span class="p">(</span>
-            <span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"target_dir"</span><span class="p">,),</span>
-            <span class="n">label</span><span class="o">=</span><span class="s2">"Target directory"</span><span class="p">,</span>
-            <span class="n">hide_details</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">prepend_inner_icon</span><span class="o">=</span><span class="s2">"mdi-folder-arrow-down-outline"</span><span class="p">,</span>
-            <span class="n">classes</span><span class="o">=</span><span class="s2">"ml-3"</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">_loaded_path</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"ml-3"</span><span class="p">)</span>
         <span class="n">_load_button</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"mx-3"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dir_picker_dialog</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The "Load case" directory browser (see :mod:`neofoam.ui.dir_picker`)."""</span>
+    <span class="n">v3</span><span class="p">,</span> <span class="n">html</span><span class="p">,</span> <span class="n">ctrl</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">html</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">controller</span>
+    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VDialog</span><span class="p">(</span><span class="n">v_model</span><span class="o">=</span><span class="p">(</span><span class="s2">"picker_show"</span><span class="p">,),</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">560</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCard</span><span class="p">():</span>
+            <span class="n">v3</span><span class="o">.</span><span class="n">VCardTitle</span><span class="p">(</span><span class="s2">"Load case"</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"text-subtitle-1"</span><span class="p">)</span>
+            <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
+                <span class="s2">"{{ picker_dir }}"</span><span class="p">,</span>
+                <span class="n">classes</span><span class="o">=</span><span class="s2">"px-4 pb-2 text-body-2 text-medium-emphasis text-truncate"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardText</span><span class="p">(</span><span class="n">classes</span><span class="o">=</span><span class="s2">"pt-0"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"max-height: 50vh; overflow-y: auto"</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VList</span><span class="p">(</span><span class="n">density</span><span class="o">=</span><span class="s2">"compact"</span><span class="p">,</span> <span class="n">nav</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VListItem</span><span class="p">(</span><span class="n">click</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">picker_up</span><span class="p">,</span> <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-arrow-up-left"</span><span class="p">):</span>
+                        <span class="n">v3</span><span class="o">.</span><span class="n">VListItemTitle</span><span class="p">(</span><span class="s2">"Parent directory"</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VListItem</span><span class="p">(</span>
+                        <span class="n">v_for</span><span class="o">=</span><span class="s2">"entry in picker_entries"</span><span class="p">,</span>
+                        <span class="n">key</span><span class="o">=</span><span class="s2">"entry.path"</span><span class="p">,</span>
+                        <span class="n">click</span><span class="o">=</span><span class="p">(</span><span class="n">ctrl</span><span class="o">.</span><span class="n">picker_goto</span><span class="p">,</span> <span class="s2">"[entry.path]"</span><span class="p">),</span>
+                        <span class="n">prepend_icon</span><span class="o">=</span><span class="s2">"mdi-folder-outline"</span><span class="p">,</span>
+                    <span class="p">):</span>
+                        <span class="n">v3</span><span class="o">.</span><span class="n">VListItemTitle</span><span class="p">(</span><span class="s2">"{{ entry.name }}"</span><span class="p">)</span>
+                <span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span>
+                    <span class="s2">"Nothing below this one — load it, or step back up."</span><span class="p">,</span>
+                    <span class="n">v_if</span><span class="o">=</span><span class="s2">"!picker_entries.length"</span><span class="p">,</span>
+                    <span class="n">classes</span><span class="o">=</span><span class="s2">"text-body-2 text-medium-emphasis"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">with</span> <span class="n">v3</span><span class="o">.</span><span class="n">VCardActions</span><span class="p">():</span>
+                <span class="n">v3</span><span class="o">.</span><span class="n">VSpacer</span><span class="p">()</span>
+                <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span><span class="s2">"Cancel"</span><span class="p">,</span> <span class="n">click</span><span class="o">=</span><span class="s2">"picker_show = false"</span><span class="p">)</span>
+                <span class="n">v3</span><span class="o">.</span><span class="n">VBtn</span><span class="p">(</span>
+                    <span class="s2">"Load this directory"</span><span class="p">,</span>
+                    <span class="n">click</span><span class="o">=</span><span class="n">ctrl</span><span class="o">.</span><span class="n">picker_choose</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s2">"primary"</span><span class="p">,</span>
+                    <span class="n">variant</span><span class="o">=</span><span class="s2">"tonal"</span><span class="p">,</span>
+                <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_no_patches_in_forms</span><span class="p">(</span><span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1153,7 +1246,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_step_panel</span><span class="p">(</span>
-    <span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">Step</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">:</span> <span class="n">GeometryPanel</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span>
+    <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span>
+    <span class="n">step</span><span class="p">:</span> <span class="n">Step</span><span class="p">,</span>
+    <span class="n">geometry_panel</span><span class="p">:</span> <span class="n">GeometryPanel</span><span class="p">,</span>
+    <span class="n">run_panel</span><span class="p">:</span> <span class="n">RunPanel</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The bespoke part of a step (models / geometry / sweep / review / a plugin's)."""</span>
     <span class="k">if</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"models"</span><span class="p">:</span>
@@ -1173,17 +1270,19 @@
     <span class="k">elif</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"sweep"</span><span class="p">:</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">sweep</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">json_forms</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">"review"</span><span class="p">:</span>
-        <span class="n">_review_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="n">_review_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">run_panel</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">wizard</span><span class="o">.</span><span class="n">plugin_by_id</span><span class="p">:</span>
         <span class="n">wizard</span><span class="o">.</span><span class="n">plugin_by_id</span><span class="p">[</span><span class="n">step</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">:</span> <span class="n">GeometryPanel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_content</span><span class="p">(</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">StepContext</span><span class="p">,</span> <span class="n">wizard</span><span class="p">:</span> <span class="n">_Wizard</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">:</span> <span class="n">GeometryPanel</span><span class="p">,</span> <span class="n">run_panel</span><span class="p">:</span> <span class="n">RunPanel</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Every step mounted once: header, bespoke panel, schema-generated form panels."""</span>
     <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">wizard</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">Div</span><span class="p">(</span><span class="n">v_show</span><span class="o">=</span><span class="sa">f</span><span class="s2">"current_step === '</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">'"</span><span class="p">):</span>
             <span class="n">_step_header</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
-            <span class="n">_step_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">)</span>
+            <span class="n">_step_panel</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">,</span> <span class="n">run_panel</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">step</span><span class="o">.</span><span class="n">entry_keys</span><span class="p">:</span>
                 <span class="k">with</span> <span class="n">ctx</span><span class="o">.</span><span class="n">v3</span><span class="o">.</span><span class="n">VExpansionPanels</span><span class="p">():</span>
                     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">entry_keys</span><span class="p">:</span>
@@ -1215,6 +1314,7 @@
     <span class="n">_seed_state</span><span class="p">(</span><span class="n">server</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
     <span class="n">_register_case_controllers</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="p">)</span>
     <span class="n">geometry_panel</span> <span class="o">=</span> <span class="n">GeometryPanel</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">)</span>
+    <span class="n">run_panel</span> <span class="o">=</span> <span class="n">RunPanel</span><span class="p">(</span><span class="n">server</span><span class="p">)</span>
     <span class="n">agent_panel</span> <span class="o">=</span> <span class="n">AgentPanel</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">sweep_panel</span> <span class="o">=</span> <span class="n">SweepPanel</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">entries</span><span class="p">,</span> <span class="n">wizard</span><span class="o">.</span><span class="n">solver</span><span class="p">,</span> <span class="n">solver_name</span><span class="p">)</span>
 
@@ -1243,8 +1343,9 @@
             <span class="n">_toolbar</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
             <span class="n">agent_panel</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">v3</span><span class="p">,</span> <span class="n">html</span><span class="p">)</span>
+            <span class="n">_dir_picker_dialog</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">layout</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">v3</span><span class="o">.</span><span class="n">VContainer</span><span class="p">(</span><span class="n">fluid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="s2">"pa-4 pa-md-6"</span><span class="p">):</span>
-            <span class="n">_content</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">)</span>
+            <span class="n">_content</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">wizard</span><span class="p">,</span> <span class="n">geometry_panel</span><span class="p">,</span> <span class="n">run_panel</span><span class="p">)</span>
 
     <span class="n">server</span><span class="o">.</span><span class="n">enable_module</span><span class="p">(</span><span class="n">jsonforms_module</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">server</span></div>

@@ -39,9 +39,11 @@ the default, ``incompressibleFluidNeoN`` or ``incompressibleVoF``); ``--port`` a
 ``--host`` change the address and ``--no-browser`` keeps the browser closed — see
 :doc:`../reference/cli`.
 
-Type the case directory into the toolbar's **Target directory** field. It must be
-an absolute path (e.g. ``/home/me/cases/my_cavity``), so the wizard never writes
-into the directory it was launched from.
+Click **Load case** in the toolbar to open a directory browser, and pick the case
+you want to work on. The directory you pick is shown in the toolbar and is where
+**Save case** writes; it is always an absolute path, so the wizard never writes into
+the directory it was launched from. Scanning STL geometry on the **Geometry & mesh**
+step also sets it, which is how a case authored from scratch gets a target.
 
 .. figure:: ../_static/case_wizard_models.png
    :align: center
@@ -49,10 +51,10 @@ into the directory it was launched from.
    :width: 90%
 
    The wizard after start: the step drawer on the left, the **Models** step in the
-   middle, the toolbar with **Target directory**, **Load case** and **Save case**.
+   middle, the toolbar with the loaded path, **Load case** and **Save case**.
 
-To continue from an existing case, type its directory there and click **Load
-case**: every config file of the case is read from disk into the forms (replacing
+To continue from an existing case, pick its directory in the browser **Load case**
+opens: every config file of the case is read from disk into the forms (replacing
 what they hold) and the models the case uses are selected. The fields — initial
 values and boundary conditions with their patches — are read from ``0/`` only; a
 case that keeps them in ``0.orig/`` loads without fields, and the report says so.
@@ -118,7 +120,7 @@ of the suggested prompts, e.g.:
     *Lid-driven cavity, laminar; top patch movingWall, other patches fixedWalls.*
 
 The assistant fills the forms, selects the models it filled, writes the configs
-into the target directory (if one is set) and replies with a summary. Follow-up
+into the loaded directory (if one is set) and replies with a summary. Follow-up
 messages refine the same case. If patches are scanned, the same prompt also
 assigns their roles.
 The model is ``claude-haiku-4-5`` unless ``NEOFOAM_CASE_MODEL`` names another.
@@ -138,8 +140,21 @@ Click **Save case** in the toolbar. The wizard switches to **Review & run**,
 validates the forms against the solver's configs, writes the OpenFOAM dictionaries
 and field files into the target directory, adds ``Allrun`` and ``Allclean`` and
 checks the written case. Each finding names its file and, where known, a fix;
-**Re-validate** repeats the check after an edit on disk. Once the case is valid,
-run it:
+**Re-validate** repeats the check after an edit on disk.
+
+Once the case is valid, click **Run case** to execute its ``Allrun`` from the wizard.
+The output appears below the button as it is produced and the run can be stopped with
+**Stop**. Both kinds of case are followed: a scaffolded ``Allrun`` ``exec``s the solver
+and reports on stdout, while an OpenFOAM-convention one using ``runApplication`` writes
+``log.blockMesh`` / ``log.<solver>`` files instead — the window follows whichever log
+the run is currently writing, naming each as it starts. Only the last few hundred lines
+are kept; the full logs stay in the case directory.
+
+**Clean case** runs the case's ``Allclean`` the same way, reporting into the same
+window — it restores the case to its pre-run state, dropping the time directories,
+the logs and the mesh.
+
+The same thing from a shell:
 
 .. code-block:: bash
 

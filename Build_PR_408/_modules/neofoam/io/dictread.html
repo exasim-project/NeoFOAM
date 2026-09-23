@@ -525,6 +525,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -536,6 +537,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
@@ -624,6 +626,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
@@ -634,11 +639,61 @@
     <span class="s2">"Value"</span><span class="p">,</span>
     <span class="s2">"Unreadable"</span><span class="p">,</span>
     <span class="s2">"Leaf"</span><span class="p">,</span>
+    <span class="s2">"foam_case"</span><span class="p">,</span>
+    <span class="s2">"set_foam_case"</span><span class="p">,</span>
     <span class="s2">"read_section"</span><span class="p">,</span>
     <span class="s2">"read_entry"</span><span class="p">,</span>
     <span class="s2">"read_keys"</span><span class="p">,</span>
     <span class="s2">"read_toplevel"</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="c1">#: What ``argList`` sets when a solver starts, and OpenFOAM's path tags expand from.</span>
+<span class="n">_FOAM_CASE</span> <span class="o">=</span> <span class="s2">"FOAM_CASE"</span>
+
+
+<div class="viewcode-block" id="foam_case">
+<a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.foam_case">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">foam_case</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Expose ``case`` as ``$FOAM_CASE`` while its dictionaries are read.</span>
+
+<span class="sd">    OpenFOAM's path tags (``&lt;system&gt;``, ``&lt;constant&gt;``, ``&lt;case&gt;``) expand from</span>
+<span class="sd">    ``$FOAM_CASE`` — set by ``argList`` when a solver starts, and by nothing at all in</span>
+<span class="sd">    a plain Python process. Unset, the ``#include "&lt;system&gt;/meshQualityDict"`` that</span>
+<span class="sd">    OpenFOAM's own ``snappyHexMeshDict.cfg`` carries degrades to a bare relative path,</span>
+<span class="sd">    which resolves against the *including* file (somewhere under ``etc/``) instead of</span>
+<span class="sd">    the case — so a case including it cannot be read at all, and the failure is a</span>
+<span class="sd">    process abort rather than an exception::</span>
+
+<span class="sd">        with foam_case(case_dir):</span>
+<span class="sd">            configs = load_case_from_disk(case_dir, solver=solver)</span>
+
+<span class="sd">    The variable is process-global, so whatever was there is restored on the way out.</span>
+<span class="sd">    """</span>
+    <span class="n">previous</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_FOAM_CASE</span><span class="p">)</span>
+    <span class="n">set_foam_case</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">set_foam_case</span><span class="p">(</span><span class="n">previous</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_foam_case">
+<a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.set_foam_case">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_foam_case</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Point ``$FOAM_CASE`` at ``case`` until something else moves it; clear it on ``None``.</span>
+
+<span class="sd">    The lasting counterpart of :func:`foam_case`, for an application that *has* a</span>
+<span class="sd">    current case (the wizard, once one is loaded) rather than one reading a case it</span>
+<span class="sd">    was handed. ``argList`` does this for a solver; nothing does it for a plain</span>
+<span class="sd">    Python process, so an app that reads case dictionaries sets it itself.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">case</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">_FOAM_CASE</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">_FOAM_CASE</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span></div>
+
 
 
 <div class="viewcode-block" id="Value">

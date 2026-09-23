@@ -525,6 +525,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -536,6 +537,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
@@ -638,6 +640,7 @@
     <span class="n">Leaf</span><span class="p">,</span>
     <span class="n">Unreadable</span><span class="p">,</span>
     <span class="n">Value</span><span class="p">,</span>
+    <span class="n">foam_case</span><span class="p">,</span>
     <span class="n">read_entry</span><span class="p">,</span>
     <span class="n">read_keys</span><span class="p">,</span>
     <span class="n">read_section</span><span class="p">,</span>
@@ -1148,9 +1151,14 @@
 <div class="viewcode-block" id="validate">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.validate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">solver</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ValidationReport</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Run the default check registry over ``case_dir`` → a :class:`ValidationReport`."""</span>
+<span class="w">    </span><span class="sd">"""Run the default check registry over ``case_dir`` → a :class:`ValidationReport`.</span>
+
+<span class="sd">    Under ``$FOAM_CASE``, so a check reading a dict that uses an OpenFOAM path tag</span>
+<span class="sd">    (``&lt;system&gt;``, as ``snappyHexMeshDict.cfg`` does) resolves it against this case.</span>
+<span class="sd">    """</span>
     <span class="n">ctx</span> <span class="o">=</span> <span class="n">CaseContext</span><span class="p">(</span><span class="n">case</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">),</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">default_registry</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
+    <span class="k">with</span> <span class="n">foam_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">default_registry</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

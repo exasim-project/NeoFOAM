@@ -526,6 +526,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -537,6 +538,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
@@ -641,6 +643,24 @@ skipping it — the opposite of the old <code class="docutils literal notranslat
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neofoam.io.dictread.foam_case">
+<span class="sig-prename descclassname"><span class="pre">neofoam.io.dictread.</span></span><span class="sig-name descname"><span class="pre">foam_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/io/dictread.html#foam_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.io.dictread.foam_case" title="Link to this definition">¶</a></dt>
+<dd><p>Expose <code class="docutils literal notranslate"><span class="pre">case</span></code> as <code class="docutils literal notranslate"><span class="pre">$FOAM_CASE</span></code> while its dictionaries are read.</p>
+<p>OpenFOAM’s path tags (<code class="docutils literal notranslate"><span class="pre">&lt;system&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;constant&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;case&gt;</span></code>) expand from
+<code class="docutils literal notranslate"><span class="pre">$FOAM_CASE</span></code> — set by <code class="docutils literal notranslate"><span class="pre">argList</span></code> when a solver starts, and by nothing at all in
+a plain Python process. Unset, the <code class="docutils literal notranslate"><span class="pre">#include</span> <span class="pre">&quot;&lt;system&gt;/meshQualityDict&quot;</span></code> that
+OpenFOAM’s own <code class="docutils literal notranslate"><span class="pre">snappyHexMeshDict.cfg</span></code> carries degrades to a bare relative path,
+which resolves against the <em>including</em> file (somewhere under <code class="docutils literal notranslate"><span class="pre">etc/</span></code>) instead of
+the case — so a case including it cannot be read at all, and the failure is a
+process abort rather than an exception:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">foam_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">):</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">load_case_from_disk</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The variable is process-global, so whatever was there is restored on the way out.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neofoam.io.dictread.read_entry">
 <span class="sig-prename descclassname"><span class="pre">neofoam.io.dictread.</span></span><span class="sig-name descname"><span class="pre">read_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">section</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.io.dictread.Value" title="neofoam.io.dictread.Value"><span class="pre">Value</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#neofoam.io.dictread.Unreadable" title="neofoam.io.dictread.Unreadable"><span class="pre">Unreadable</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/io/dictread.html#read_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.io.dictread.read_entry" title="Link to this definition">¶</a></dt>
 <dd><p>One leaf of <code class="docutils literal notranslate"><span class="pre">section</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">divSchemes</span></code>/<code class="docutils literal notranslate"><span class="pre">div(phi,U)</span></code>).</p>
@@ -678,6 +698,16 @@ name-or-dictionary entry, which reads as the name it holds.</p>
 <a class="reference internal" href="#neofoam.io.dictread.read_entry" title="neofoam.io.dictread.read_entry"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_entry()</span></code></a> for keys that live at the dict root.</p>
 <p><code class="docutils literal notranslate"><span class="pre">None</span></code> when the file or <code class="docutils literal notranslate"><span class="pre">key</span></code> is absent; <a class="reference internal" href="#neofoam.io.dictread.Unreadable" title="neofoam.io.dictread.Unreadable"><code class="xref py py-class docutils literal notranslate"><span class="pre">Unreadable</span></code></a> when the file
 will not parse <strong>or</strong> the entry is present but not renderable as text.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.io.dictread.set_foam_case">
+<span class="sig-prename descclassname"><span class="pre">neofoam.io.dictread.</span></span><span class="sig-name descname"><span class="pre">set_foam_case</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/io/dictread.html#set_foam_case"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.io.dictread.set_foam_case" title="Link to this definition">¶</a></dt>
+<dd><p>Point <code class="docutils literal notranslate"><span class="pre">$FOAM_CASE</span></code> at <code class="docutils literal notranslate"><span class="pre">case</span></code> until something else moves it; clear it on <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>The lasting counterpart of <a class="reference internal" href="#neofoam.io.dictread.foam_case" title="neofoam.io.dictread.foam_case"><code class="xref py py-func docutils literal notranslate"><span class="pre">foam_case()</span></code></a>, for an application that <em>has</em> a
+current case (the wizard, once one is loaded) rather than one reading a case it
+was handed. <code class="docutils literal notranslate"><span class="pre">argList</span></code> does this for a solver; nothing does it for a plain
+Python process, so an app that reads case dictionaries sets it itself.</p>
 </dd></dl>
 
 </section>
@@ -740,10 +770,12 @@ will not parse <strong>or</strong> the entry is present but not renderable as te
 <li><a class="reference internal" href="#">neofoam.io.dictread</a><ul>
 <li><a class="reference internal" href="#neofoam.io.dictread.Unreadable"><code class="docutils literal notranslate"><span class="pre">Unreadable</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.io.dictread.Value"><code class="docutils literal notranslate"><span class="pre">Value</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.io.dictread.foam_case"><code class="docutils literal notranslate"><span class="pre">foam_case()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.io.dictread.read_entry"><code class="docutils literal notranslate"><span class="pre">read_entry()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.io.dictread.read_keys"><code class="docutils literal notranslate"><span class="pre">read_keys()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.io.dictread.read_section"><code class="docutils literal notranslate"><span class="pre">read_section()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.io.dictread.read_toplevel"><code class="docutils literal notranslate"><span class="pre">read_toplevel()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.io.dictread.set_foam_case"><code class="docutils literal notranslate"><span class="pre">set_foam_case()</span></code></a></li>
 </ul>
 </li>
 </ul>

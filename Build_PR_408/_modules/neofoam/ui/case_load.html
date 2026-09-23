@@ -525,6 +525,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
@@ -536,6 +537,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
@@ -631,7 +633,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.agent.case_fill</span><span class="w"> </span><span class="kn">import</span> <span class="n">case_spec_to_configs</span><span class="p">,</span> <span class="n">load_case_from_disk</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMStrategy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">read_keys</span><span class="p">,</span> <span class="n">read_section</span><span class="p">,</span> <span class="n">read_toplevel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.dictread</span><span class="w"> </span><span class="kn">import</span> <span class="n">Value</span><span class="p">,</span> <span class="n">foam_case</span><span class="p">,</span> <span class="n">read_keys</span><span class="p">,</span> <span class="n">read_section</span><span class="p">,</span> <span class="n">read_toplevel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.case_spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">configs_to_form_state</span><span class="p">,</span> <span class="n">models_filled_by</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormEntry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.ui.steps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -705,8 +707,12 @@
 
 <span class="sd">        configs = read_case_configs(Path(case_dir), solver)</span>
 <span class="sd">    """</span>
-    <span class="n">_require_parsable</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">case_spec_to_configs</span><span class="p">(</span><span class="n">load_case_from_disk</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="n">warnings</span><span class="p">))</span></div>
+    <span class="c1"># Both reads under one $FOAM_CASE: the probe has to see exactly what the real read</span>
+    <span class="c1"># will, or a case whose dicts use OpenFOAM's &lt;system&gt; tag passes the probe and then</span>
+    <span class="c1"># aborts the server process on the read it was meant to protect.</span>
+    <span class="k">with</span> <span class="n">foam_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">):</span>
+        <span class="n">_require_parsable</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">case_spec_to_configs</span><span class="p">(</span><span class="n">load_case_from_disk</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">warnings</span><span class="o">=</span><span class="n">warnings</span><span class="p">))</span></div>
 
 
 
@@ -721,7 +727,8 @@
 
 <span class="sd">        algorithm = case_algorithm(Path(case_dir), entries)</span>
 <span class="sd">    """</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">read_keys</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"fvSolution"</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">foam_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">read_keys</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"fvSolution"</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">declared</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">block</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">_CONTROL_BLOCKS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
@@ -742,10 +749,11 @@
 <span class="sd">        advection = case_advection_model(Path(case_dir))</span>
 <span class="sd">    """</span>
     <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"fvSolution"</span>
-    <span class="n">named</span> <span class="o">=</span> <span class="n">read_toplevel</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">,</span> <span class="s2">"advectionScheme"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">named</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">named</span><span class="o">.</span><span class="n">text</span>
-    <span class="n">blocks</span> <span class="o">=</span> <span class="n">read_section</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">foam_case</span><span class="p">(</span><span class="n">case_dir</span><span class="p">):</span>
+        <span class="n">named</span> <span class="o">=</span> <span class="n">read_toplevel</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">,</span> <span class="s2">"advectionScheme"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">named</span><span class="p">,</span> <span class="n">Value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">named</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="n">read_section</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">,</span> <span class="s2">"solvers"</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="n">controls</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">blocks</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"alpha."</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">block</span><span class="p">}</span>
     <span class="k">return</span> <span class="s2">"isoAdvector"</span> <span class="k">if</span> <span class="n">controls</span> <span class="o">&amp;</span> <span class="n">_ISO_ADVECTOR_CONTROLS</span> <span class="k">else</span> <span class="s2">"MULES"</span></div>
 
