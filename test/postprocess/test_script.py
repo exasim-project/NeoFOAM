@@ -25,10 +25,12 @@ from pathlib import Path
 from typing import Any, Iterator, cast
 
 import pytest
+from pydantic import ValidationError
 
 from neofoam.algorithms.field_writer.write_control import WriteControl
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.postprocess.config import PostProcessConfig, resolve_table
+from neofoam.postprocess.node import Node
 from neofoam.postprocess.script import load_script
 from neofoam.postprocess.table import tables_for_case
 from neofoam.tooling.workspace import CaseAccessError
@@ -112,6 +114,23 @@ def test_loading_the_same_script_twice_still_resolves_its_node(tmp_path: Path) -
     second = tables_for_case(case_dir)
 
     assert [table.name for table in second.tables] == [table.name for table in first.tables]
+
+
+def test_a_case_with_no_script_does_not_inherit_the_previous_case_s_node(
+    tmp_path: Path,
+) -> None:
+    """A node the last case registered must not still resolve for a case without one.
+
+    Otherwise a spec file resolves a ``type`` its own case never declared, and what
+    a run does depends on which case was loaded before it.
+    """
+    load_script(_case(tmp_path, "custom_node"))  # registers `type: clip`
+    assert cast(Any, Node).create(node={"type": "clip", "threshold": 1.5}).node is not None
+
+    assert load_script(tmp_path) is None  # a case with no script at all
+
+    with pytest.raises(ValidationError):
+        cast(Any, Node).create(node={"type": "clip", "threshold": 1.5})
 
 
 def test_a_plugin_outside_the_node_families_survives_the_next_script(tmp_path: Path) -> None:

@@ -61,13 +61,17 @@ class CaseModuleLoader:
         Raises :class:`~neofoam.tooling.workspace.CaseAccessError` for a path that
         leaves the case.
         """
+        # Before the existence check, not after: a case with *no* script must still
+        # take back what the previously loaded one registered, or this case's spec
+        # file could resolve a node it never declared — making the run depend on
+        # which case was loaded first.
+        self._forget()
         if not (Path(case_dir) / rel_path).exists():
             return None
         path = Workspace.at(case_dir).resolve_existing(
             rel_path, require_dir=False, kind=f"{self._kind} script"
         )
 
-        self._forget()
         before = self._snapshot()
         spec = importlib.util.spec_from_file_location(self._module_name, path)
         if spec is None or spec.loader is None:
@@ -113,6 +117,8 @@ class CaseModuleLoader:
         and two union members sharing a discriminator value make pydantic reject the
         union — while the class is being created, i.e. inside the script. So the
         older generation goes before the script runs again (last registration wins).
+        Called on every :meth:`load`, script or not — a case that declares none must
+        not inherit the previous case's registrations either.
         """
         for family, plugin_cls in self._registered:
             PluginSystem.remove_plugin_model(family, plugin_cls)
