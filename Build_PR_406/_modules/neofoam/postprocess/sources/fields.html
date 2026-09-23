@@ -718,7 +718,10 @@
 <span class="sd">    0/1 labels, not booleans.</span>
 <span class="sd">    """</span>
     <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">magnitude</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">OUT_OF_MESH</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="c1"># Bound to a name first: ``OUT_OF_MESH`` comes from pybFoam untyped, so the</span>
+    <span class="c1"># comparison is ``Any`` and returning it directly is a no-any-return.</span>
+    <span class="n">mask</span><span class="p">:</span> <span class="s2">"np.ndarray[Any, Any]"</span> <span class="o">=</span> <span class="p">(</span><span class="n">magnitude</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">OUT_OF_MESH</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mask</span>
 
 
 <div class="viewcode-block" id="InternalField">

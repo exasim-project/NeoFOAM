@@ -671,7 +671,6 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">neofoam.postprocess</span>  <span class="c1"># noqa: F401  (import registers the post-processing plugins)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">neofoam.tools</span>  <span class="c1"># noqa: F401  (import populates the tool registry)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -941,6 +940,11 @@
 <span class="sd">    ``source``/``pipeline``/``write_control``/``writer`` mappings stay open (resolved</span>
 <span class="sd">    against the families at load time), so the accepted strings are only here.</span>
 <span class="sd">    """</span>
+    <span class="c1"># Imported here, not at module scope: ``neofoam.io`` is on the ``import</span>
+    <span class="c1"># neofoam`` path, and the post-processing package reaches pybFoam and the</span>
+    <span class="c1"># compiled bindings. Registering the plugins is this function's business.</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">neofoam.postprocess</span>  <span class="c1"># noqa: F401, PLC0415  (registers the post-processing plugins)</span>
+
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PostPluginInfo</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="n">_POST_FAMILIES</span><span class="p">:</span>
         <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="n">family</span><span class="p">)</span>

@@ -663,7 +663,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">_kernels</span> <span class="k">as</span> <span class="n">pp</span>  <span class="c1"># NeoFOAM post-processing kernels</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess._reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce_max</span><span class="p">,</span> <span class="n">reduce_min</span><span class="p">,</span> <span class="n">reduce_sum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.node</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AggregatedData</span><span class="p">,</span>
@@ -675,10 +675,6 @@
     <span class="n">SurfaceDataSet</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess.nodes._arrays</span><span class="w"> </span><span class="kn">import</span> <span class="n">ones_like</span>
-
-<span class="c1">#: The post-processing kernels: element-wise math and reductions that run on the</span>
-<span class="c1">#: executor the values live on, host numpy included.</span>
-<span class="n">pp</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">postprocess</span>
 
 <span class="c1">#: The column a binner's index fills; the writer puts it before the values.</span>
 <span class="n">BIN_COLUMN</span> <span class="o">=</span> <span class="s2">"bin"</span>
