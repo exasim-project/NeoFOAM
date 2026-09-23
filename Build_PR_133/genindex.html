@@ -9,7 +9,7 @@
 <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=c83e6b79" />
     <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -202,7 +202,7 @@
 <li class="toctree-l1"><a class="reference internal" href="auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -225,13 +225,13 @@
 <li class="toctree-l1"><a class="reference internal" href="reference/project-layout.html">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -518,11 +518,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-45" name="toctree-checkbox-45" role="switch" type="checkbox"/><label for="toctree-checkbox-45"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -603,12 +629,32 @@
           <li><a href="reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.CheckRegistry.add">(neofoam.framework.validation.registry.CheckRegistry method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.add_cad_dimension">add_cad_dimension() (neofoam.ui.sweep_model.SweepModel method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.add_cad_dimension">(neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/neofoam.foam.fv_configs.html#neofoam.foam.fv_configs.fvSolution.add_controls">add_controls() (neofoam.foam.fv_configs.fvSolution class method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.helpers.html#neofoam.framework.initialization.helpers.InitializerBuilder.add_core_models">add_core_models() (neofoam.framework.initialization.helpers.InitializerBuilder method)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.add_dimension">add_dimension() (neofoam.ui.sweep_model.SweepModel method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.add_dimension">(neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/neofoam.framework.initialization.helpers.html#neofoam.framework.initialization.helpers.InitializerBuilder.add_field">add_field() (neofoam.framework.initialization.helpers.InitializerBuilder method)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.add_field_source">add_field_source() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.add_mesh_source">add_mesh_source() (neofoam.ui.sweep_model.SweepModel method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.add_mesh_source">(neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/neofoam.framework.initialization.helpers.html#neofoam.framework.initialization.helpers.InitializerBuilder.add_model">add_model() (neofoam.framework.initialization.helpers.InitializerBuilder method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.helpers.html#neofoam.framework.initialization.helpers.InitializerBuilder.add_operator">add_operator() (neofoam.framework.initialization.helpers.InitializerBuilder method)</a>
@@ -617,16 +663,20 @@
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.helpers.html#neofoam.framework.initialization.helpers.InitializerBuilder.add_resource">add_resource() (neofoam.framework.initialization.helpers.InitializerBuilder method)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.form_schema.html#neofoam.ui.form_schema.ADDER_TRANSLATIONS">ADDER_TRANSLATIONS (in module neofoam.ui.form_schema)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.advance">advance() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html#neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.advectionModel">advectionModel (class in neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel">AgentPanel (class in neofoam.ui.agent_panel)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.all">all() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.all_conditions_hold">all_conditions_hold() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.incompressibleFluidModel.all_specs">all_specs() (neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.incompressibleFluidModel class method)</a>
 
         <ul>
@@ -647,13 +697,25 @@
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.viscosityModel.all_specs">(neofoam.viscosity.viscosityModel.viscosityModel class method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.boundary_forms.html#neofoam.ui.boundary_forms.allowed_bc_types">allowed_bc_types() (in module neofoam.ui.boundary_forms)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.scaffold.html#neofoam.ui.scaffold.allrun_template_path">allrun_template_path() (in module neofoam.ui.scaffold)</a>
+</li>
         <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.shared.html#neofoam.solver.incompressibleVoF.models.alpha_advection.shared.alpha_sub_cycle">alpha_sub_cycle() (in module neofoam.solver.incompressibleVoF.models.alpha_advection.shared)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.AlphatWallFunctionBC">AlphatWallFunctionBC (class in neofoam.fields.bc)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.form_schema.html#neofoam.ui.form_schema.alternatives_uischema">alternatives_uischema() (in module neofoam.ui.form_schema)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.apply_assignments">apply_assignments() (in module neofoam.ui.geometry_agent)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep_runner.html#neofoam.tooling.workflow.sweep_runner.apply_configs">apply_configs() (in module neofoam.tooling.workflow.sweep_runner)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.apply_configs_to_forms">apply_configs_to_forms() (in module neofoam.ui.case_load)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.Workspace.at">at() (neofoam.tooling.workspace.Workspace class method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.plugins.html#neofoam.ui.plugins.AT_START">AT_START (in module neofoam.ui.plugins)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.autowire">autowire() (in module neofoam.tooling.workflow.sweep)</a>
 </li>
@@ -679,6 +741,8 @@
 
         <ul>
           <li><a href="reference/api/neofoam.tooling.workflow.mesh_inputs.html#neofoam.tooling.workflow.mesh_inputs.block_mesh_dict">(in module neofoam.tooling.workflow.mesh_inputs)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.block_mesh_dict">(in module neofoam.ui.geometry)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/neofoam.tools.block_mesh.html#neofoam.tools.block_mesh.BlockMeshDictConfig">BlockMeshDictConfig (class in neofoam.tools.block_mesh)</a>
@@ -707,6 +771,8 @@
 
         <ul>
           <li><a href="reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.patch_set.PatchEntry.box_faces">(neofoam.tooling.workflow.patch_set.PatchEntry attribute)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchGeometry.box_faces">(neofoam.ui.geometry.PatchGeometry attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.BoxMeshStep">BoxMeshStep (class in neofoam.tooling.casebuild.meshing)</a>
@@ -751,6 +817,10 @@
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.build_agent_panel">build_agent_panel() (in module neofoam.ui.agent_panel)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.app.html#neofoam.ui.app.build_app">build_app() (in module neofoam.ui.app)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.casebuild.pipeline.html#neofoam.tooling.casebuild.pipeline.Pipeline.build_at">build_at() (neofoam.tooling.casebuild.pipeline.Pipeline method)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.build_bc_union">build_bc_union() (in module neofoam.fields.bc)</a>
@@ -763,6 +833,14 @@
 </li>
         <li><a href="reference/api/neofoam.framework.graph.validation.html#neofoam.framework.graph.validation.build_dependency_digraph">build_dependency_digraph() (in module neofoam.framework.graph.validation)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.build_field_forms">build_field_forms() (in module neofoam.ui.forms)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.build_forms">build_forms() (in module neofoam.ui.forms)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.build_geometry_agent">build_geometry_agent() (in module neofoam.ui.geometry_agent)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.build_mesh_forms">build_mesh_forms() (in module neofoam.ui.forms)</a>
+</li>
         <li><a href="reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.build_mesh_inputs">build_mesh_inputs() (in module neofoam.mcp.tools)</a>
 
         <ul>
@@ -772,6 +850,10 @@
 </li>
         </ul></li>
         <li><a href="reference/api/neofoam.agent.agent.html#neofoam.agent.agent.build_model">build_model() (in module neofoam.agent.agent)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.build_model_choices">build_model_choices() (in module neofoam.ui.steps)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.build_model_families">build_model_families() (in module neofoam.ui.steps)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec.build_operations_for">build_operations_for() (neofoam.framework.model.spec.ModelSpec method)</a>
 
@@ -789,9 +871,11 @@
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.ModelSpec.build_operations_for">(neofoam.viscosity.viscosityModel.ModelSpec method)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec.build_steps">build_steps() (neofoam.framework.model.spec.ModelSpec method)</a>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.build_steps">build_steps() (in module neofoam.ui.steps)</a>
 
         <ul>
+          <li><a href="reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec.build_steps">(neofoam.framework.model.spec.ModelSpec method)</a>
+</li>
           <li><a href="reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.ModelSpec.build_steps">(neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.ModelSpec method)</a>
 </li>
           <li><a href="reference/api/neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.html#neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.ModelSpec.build_steps">(neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.ModelSpec method)</a>
@@ -821,9 +905,15 @@
   <h2>C</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.cad_dimensions">cad_dimensions() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.CalculatedBC">CalculatedBC (class in neofoam.fields.bc)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.call_hook">call_hook() (in module neofoam.framework.model.extension)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.case_advection_model">case_advection_model() (in module neofoam.ui.case_load)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.case_algorithm">case_algorithm() (in module neofoam.ui.case_load)</a>
 </li>
         <li><a href="reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.case_patches">case_patches() (in module neofoam.mcp.tools)</a>
 </li>
@@ -853,17 +943,21 @@
 </li>
         <li><a href="reference/api/neofoam.algorithms.pressure_reference.html#neofoam.algorithms.pressure_reference.PressureReference.cell">cell (neofoam.algorithms.pressure_reference.PressureReference attribute)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.MeshSettings.cell_size">cell_size (neofoam.ui.geometry.MeshSettings attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.CellLimitedGrad">CellLimitedGrad (class in neofoam.foam.schemes.grad)</a>
 </li>
         <li><a href="reference/api/neofoam.tools.block_mesh.html#neofoam.tools.block_mesh.Block.cells">cells (neofoam.tools.block_mesh.Block attribute)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.MeshSettings.cells">(neofoam.ui.geometry.MeshSettings attribute)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_boussinesq_gravity">check_boussinesq_gravity() (in module neofoam.framework.validation.checks)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_constraint_patches">check_constraint_patches() (in module neofoam.framework.validation.checks)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_div_scheme">check_div_scheme() (in module neofoam.framework.validation.checks)</a>
-</li>
-        <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_gamg_smoother">check_gamg_smoother() (in module neofoam.framework.validation.checks)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_laminar_wall_functions">check_laminar_wall_functions() (in module neofoam.framework.validation.checks)</a>
 </li>
@@ -873,11 +967,17 @@
 </li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_required_files">check_required_files() (in module neofoam.framework.validation.checks)</a>
 </li>
+        <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.check_solver_companion">check_solver_companion() (in module neofoam.framework.validation.checks)</a>
+</li>
         <li><a href="reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.check_validation">check_validation() (neofoam.io.base.BaseConfig method)</a>
 </li>
         <li><a href="reference/api/neofoam.tools.check_mesh.html#neofoam.tools.check_mesh.CheckMeshStep">CheckMeshStep (class in neofoam.tools.check_mesh)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.validation.registry.html#neofoam.framework.validation.registry.CheckRegistry">CheckRegistry (class in neofoam.framework.validation.registry)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.choice_key">choice_key() (in module neofoam.ui.steps)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.RunPanel.clean_case">clean_case() (neofoam.ui.run_panel.RunPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep_runner.html#neofoam.tooling.workflow.sweep_runner.clone_case">clone_case() (in module neofoam.tooling.workflow.sweep_runner)</a>
 
@@ -885,6 +985,10 @@
           <li><a href="reference/api/neofoam.tutorial.html#neofoam.tutorial.clone_case">(in module neofoam.tutorial)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.cls">cls (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.cls_name">cls_name (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.io.scaffold.html#neofoam.io.scaffold.collect_config_classes">collect_config_classes() (in module neofoam.io.scaffold)</a>
 </li>
         <li><a href="reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.collect_errors">collect_errors() (neofoam.io.base.BaseConfig class method)</a>
@@ -937,6 +1041,8 @@
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.CaseSpecSchemaDTO.config_keys">config_keys (neofoam.mcp.dto.CaseSpecSchemaDTO attribute)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.config_name">config_name (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.io.schema.html#neofoam.io.schema.config_schema">config_schema() (in module neofoam.io.schema)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext">ConfigContext (class in neofoam.framework.initialization.config_context)</a>
@@ -969,6 +1075,8 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.tooling.casebuild.steps.html#neofoam.tooling.casebuild.steps.configs">configs() (in module neofoam.tooling.casebuild.steps)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.case_spec.html#neofoam.ui.case_spec.configs_to_form_state">configs_to_form_state() (in module neofoam.ui.case_spec)</a>
+</li>
         <li><a href="reference/api/neofoam.io.schema.html#neofoam.io.schema.ConfigSchema">ConfigSchema (class in neofoam.io.schema)</a>
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.ConfigSchemaDTO">ConfigSchemaDTO (in module neofoam.mcp.dto)</a>
@@ -978,6 +1086,12 @@
         <li><a href="reference/api/neofoam.telemetry.api.html#neofoam.telemetry.api.configure">configure() (in module neofoam.telemetry.api)</a>
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.WorkspaceInfoDTO.confined">confined (neofoam.mcp.dto.WorkspaceInfoDTO attribute)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.confirm_dim">confirm_dim() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.confirm_export">confirm_export() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.confirm_load">confirm_load() (neofoam.ui.sweep_panel.SweepPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.consistent">consistent() (neofoam.algorithms.solution_loop.control.SimpleControl method)</a>
 </li>
@@ -1163,6 +1277,8 @@
 </li>
         <li><a href="reference/api/neofoam.io.pydantic_schema.html#neofoam.io.pydantic_schema.default_values">default_values() (in module neofoam.io.pydantic_schema)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.defaults">defaults (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Extension.defines">defines() (neofoam.framework.model.extension.Extension method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.graph.visualization.html#neofoam.framework.graph.visualization.dependency_dag">dependency_dag() (in module neofoam.framework.graph.visualization)</a>
@@ -1229,6 +1345,12 @@
 </li>
         <li><a href="reference/api/neofoam.viscosity.io.html#neofoam.viscosity.io.dimensioned_viscosity">dimensioned_viscosity() (in module neofoam.viscosity.io)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.DimensionState">DimensionState (class in neofoam.ui.sweep_model)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.discover_geometry">discover_geometry() (in module neofoam.ui.geometry)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.plugins.html#neofoam.ui.plugins.discover_step_plugins">discover_step_plugins() (in module neofoam.ui.plugins)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.tools.graph.html#neofoam.framework.tools.graph.DISK_MESH_STEP">DISK_MESH_STEP (in module neofoam.framework.tools.graph)</a>
 </li>
         <li><a href="reference/api/neofoam.turbulence.base.html#neofoam.turbulence.base.ViscousStress.divDevReff">divDevReff() (neofoam.turbulence.base.ViscousStress method)</a>
@@ -1255,22 +1377,30 @@
 </li>
         <li><a href="reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.ensure_neon_initialized">ensure_neon_initialized() (in module neofoam.solver.neon_runtime)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.plugins.html#neofoam.ui.plugins.ENTRY_POINT_GROUP">ENTRY_POINT_GROUP (in module neofoam.ui.plugins)</a>
+</li>
         <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.Euler">Euler (class in neofoam.foam.schemes.ddt)</a>
 </li>
         <li><a href="reference/api/neofoam.agent.agent.html#neofoam.agent.agent.ExampleResponse">ExampleResponse (class in neofoam.agent.agent)</a>
 </li>
-        <li><a href="reference/api/neofoam.framework.initialization.execution.executor.html#neofoam.framework.initialization.execution.executor.execute_lazy_inits">execute_lazy_inits() (in module neofoam.framework.initialization.execution.executor)</a>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.exclusive_model_families">exclusive_model_families() (in module neofoam.ui.forms)</a>
 </li>
-        <li><a href="reference/api/neofoam.framework.initialization.execution.executor.html#neofoam.framework.initialization.execution.executor.execute_step">execute_step() (in module neofoam.framework.initialization.execution.executor)</a>
+        <li><a href="reference/api/neofoam.framework.initialization.execution.executor.html#neofoam.framework.initialization.execution.executor.execute_lazy_inits">execute_lazy_inits() (in module neofoam.framework.initialization.execution.executor)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.framework.initialization.execution.executor.html#neofoam.framework.initialization.execution.executor.execute_step">execute_step() (in module neofoam.framework.initialization.execution.executor)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.execution_graph">execution_graph() (neofoam.framework.solver.runtime.SolverRuntime method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.execution_graph_step">execution_graph_step() (neofoam.framework.solver.spec.SolverSpec method)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.Sweep.export">export() (neofoam.tooling.workflow.sweep.Sweep method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.export">(neofoam.ui.sweep_panel.SweepPanel method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.export_sweep">export_sweep() (in module neofoam.tooling.workflow.sweep)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.helpers.html#neofoam.framework.initialization.helpers.InitializerBuilder.extend">extend() (neofoam.framework.initialization.helpers.InitializerBuilder method)</a>
@@ -1355,12 +1485,12 @@
 </li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.writer.html#neofoam.algorithms.field_writer.writer.FieldWriter">FieldWriter (class in neofoam.algorithms.field_writer.writer)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappySurface.file">file (neofoam.tools.snappy_hex_mesh.SnappySurface attribute)</a>
 </li>
         <li><a href="reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.file_name">file_name (neofoam.io.base.BaseConfig property)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.DictFile.fill">fill() (neofoam.io.dictfile.DictFile method)</a>
 </li>
         <li><a href="reference/api/neofoam.agent.case_fill.html#neofoam.agent.case_fill.fill_case">fill_case() (in module neofoam.agent.case_fill)</a>
@@ -1393,6 +1523,10 @@
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.FindingDTO">FindingDTO (in module neofoam.mcp.dto)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.review.html#neofoam.ui.review.FindingRow">FindingRow (class in neofoam.ui.review)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.review.html#neofoam.ui.review.findings_to_rows">findings_to_rows() (in module neofoam.ui.review)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.PimpleControl.firstIter">firstIter() (neofoam.algorithms.solution_loop.control.PimpleControl method)</a>
 
         <ul>
@@ -1402,6 +1536,8 @@
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.FixedFluxPressureBC">FixedFluxPressureBC (class in neofoam.fields.bc)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.FixedValueBC">FixedValueBC (class in neofoam.fields.bc)</a>
+</li>
+        <li><a href="reference/api/neofoam.io.dictread.html#neofoam.io.dictread.foam_case">foam_case() (in module neofoam.io.dictread)</a>
 </li>
         <li><a href="reference/api/neofoam.io.strategies.openfoam_strategy.html#neofoam.io.strategies.openfoam_strategy.foam_header">foam_header() (in module neofoam.io.strategies.openfoam_strategy)</a>
 </li>
@@ -1421,6 +1557,8 @@
           <li><a href="reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.form_defaults">(neofoam.io.base.BaseConfig class method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry">FormEntry (class in neofoam.ui.forms)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.casebuild.pipeline.html#neofoam.tooling.casebuild.pipeline.from_template">from_template() (in module neofoam.tooling.casebuild.pipeline)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.FrozenFlowControl">FrozenFlowControl (class in neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory)</a>
@@ -1447,18 +1585,28 @@
 </li>
         <li><a href="reference/api/neofoam.foam.schemes.laplacian.html#neofoam.foam.schemes.laplacian.GaussLaplacian">GaussLaplacian (class in neofoam.foam.schemes.laplacian)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.generate_series">generate_series() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.generate_variants">generate_variants() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.GenericBC">GenericBC (class in neofoam.fields.bc)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.GeometryAssignments">GeometryAssignments (class in neofoam.ui.geometry_agent)</a>
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.GeometryImportDTO">GeometryImportDTO (class in neofoam.mcp.dto)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry_panel.html#neofoam.ui.geometry_panel.GeometryPanel">GeometryPanel (class in neofoam.ui.geometry_panel)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.GeometrySpec">GeometrySpec (class in neofoam.ui.geometry)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get">get() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get_by_prefix">get_by_prefix() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get_by_type">get_by_type() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.get_config">get_config() (neofoam.framework.solver.runtime.SolverRuntime method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.get_configurable_fields">get_configurable_fields() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
@@ -1496,6 +1644,8 @@
         <li><a href="reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Hook">Hook (class in neofoam.framework.model.extension)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Extension.hooks">hooks (neofoam.framework.model.extension.Extension property)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.form_schema.html#neofoam.ui.form_schema.humanize">humanize() (in module neofoam.ui.form_schema)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -1542,6 +1692,8 @@
         <li><a href="reference/api/neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStepExecutionError">InitStepExecutionError</a>
 </li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.InletOutletBC">InletOutletBC (class in neofoam.fields.bc)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.form_schema.html#neofoam.ui.form_schema.inline_refs">inline_refs() (in module neofoam.ui.form_schema)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.inner_loop">inner_loop() (in module neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm)</a>
 
@@ -1624,6 +1776,8 @@
         <ul>
           <li><a href="reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.patch_set.PatchEntry.is_snappy_surface">(neofoam.tooling.workflow.patch_set.PatchEntry property)</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchGeometry.is_snappy_surface">(neofoam.ui.geometry.PatchGeometry property)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.IterationCountCondition">IterationCountCondition (class in neofoam.algorithms.solution_loop.control)</a>
 </li>
@@ -1635,10 +1789,18 @@
   <h2>J</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.js_identifier">js_identifier() (in module neofoam.ui.forms)</a>
+</li>
         <li><a href="reference/api/neofoam.io.decorator.html#neofoam.io.decorator.JSON">JSON() (in module neofoam.io.decorator)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.form_schema.html#neofoam.ui.form_schema.jsonforms_schema">jsonforms_schema() (in module neofoam.ui.form_schema)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.jsonforms_schema">(in module neofoam.ui.forms)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/neofoam.io.strategies.json_strategy.html#neofoam.io.strategies.json_strategy.JSONStrategy">JSONStrategy (class in neofoam.io.strategies.json_strategy)</a>
 </li>
     </ul></td>
@@ -1653,6 +1815,8 @@
 </li>
         <li><a href="reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.Key">Key (in module neofoam.io.dictfile)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.key">key (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.YamlParamSpace.keyed">keyed() (neofoam.tooling.workflow.paramspace.YamlParamSpace method)</a>
 </li>
     </ul></td>
@@ -1662,6 +1826,8 @@
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.KeyedDim">KeyedDim (class in neofoam.tooling.workflow.paramspace)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Kind">Kind (class in neofoam.framework.model.extension)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.kind">kind (neofoam.ui.forms.FormEntry attribute)</a>
 </li>
         <li><a href="reference/api/neofoam.turbulence.models.kOmegaSST.html#neofoam.turbulence.models.kOmegaSST">kOmegaSST (in module neofoam.turbulence.models)</a>
 </li>
@@ -1721,6 +1887,8 @@
 </li>
         <li><a href="reference/api/neofoam.io.schema.html#neofoam.io.schema.list_configs">list_configs() (in module neofoam.io.schema)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.dir_picker.html#neofoam.ui.dir_picker.list_dirs">list_dirs() (in module neofoam.ui.dir_picker)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.solver.registry.html#neofoam.framework.solver.registry.list_solver_names">list_solver_names() (in module neofoam.framework.solver.registry)</a>
 
         <ul>
@@ -1750,16 +1918,26 @@
 </li>
           <li><a href="reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.ModelSpec.load">(neofoam.turbulence.momentumTransport.ModelSpec method)</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.load">(neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.ModelSpec.load">(neofoam.viscosity.viscosityModel.ModelSpec method)</a>
 </li>
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.load_case">load_case() (in module neofoam.mcp.tools)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.load_case">(neofoam.ui.agent_panel.AgentPanel method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/neofoam.agent.case_fill.html#neofoam.agent.case_fill.load_case_from_disk">load_case_from_disk() (in module neofoam.agent.case_fill)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.load_exported">load_exported() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.fields.loader.html#neofoam.fields.loader.load_fields">load_fields() (in module neofoam.fields.loader)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry_panel.html#neofoam.ui.geometry_panel.GeometryPanel.load_geometry">load_geometry() (neofoam.ui.geometry_panel.GeometryPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.foam.libraries.html#neofoam.foam.libraries.load_libraries">load_libraries() (in module neofoam.foam.libraries)</a>
 </li>
@@ -1771,7 +1949,11 @@
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.load_sweep">load_sweep() (in module neofoam.tooling.workflow.sweep)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.load_target_case">load_target_case() (neofoam.ui.agent_panel.AgentPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.turbulence.config.html#neofoam.turbulence.config.load_with_coefficients">load_with_coefficients() (in module neofoam.turbulence.config)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.loaded_turbulence_model">loaded_turbulence_model() (in module neofoam.ui.steps)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.LoadedSweep">LoadedSweep (class in neofoam.tooling.workflow.sweep)</a>
 </li>
@@ -1853,11 +2035,15 @@
           <li><a href="reference/api/neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.html#neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.MaxDeltaTConfig">(class in neofoam.solver.incompressibleFluidNeoN.models.max_delta_t)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.menu_action">menu_action() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.agent.case_forms.html#neofoam.agent.case_forms.merge_field_config">merge_field_config() (in module neofoam.agent.case_forms)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.MESH_DIM">MESH_DIM (in module neofoam.tooling.workflow.rules)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.mesh_patch_types">mesh_patch_types() (in module neofoam.framework.validation.checks)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.mesh_sources">mesh_sources() (neofoam.ui.sweep_model.SweepModel method)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm.html#neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm.mesh_update">mesh_update() (in module neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm)</a>
 
@@ -1865,6 +2051,8 @@
           <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm.mesh_update">(in module neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.MeshSettings">MeshSettings (class in neofoam.ui.geometry)</a>
+</li>
         <li><a href="reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.metadata">metadata (neofoam.io.base.BaseConfig property)</a>
 </li>
         <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.Minmod">Minmod (class in neofoam.foam.schemes.interpolation)</a>
@@ -2166,6 +2354,10 @@
 </li>
           <li><a href="reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel.model_config">(neofoam.turbulence.momentumTransport.momentumTransportModel attribute)</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.GeometryAssignments.model_config">(neofoam.ui.geometry_agent.GeometryAssignments attribute)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.RoleAssignment.model_config">(neofoam.ui.geometry_agent.RoleAssignment attribute)</a>
+</li>
           <li><a href="reference/api/neofoam.viscosity.config.html#neofoam.viscosity.config.TransportPropertiesConfig.model_config">(neofoam.viscosity.config.TransportPropertiesConfig attribute)</a>
 </li>
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.viscosityModel.model_config">(neofoam.viscosity.viscosityModel.viscosityModel attribute)</a>
@@ -2197,7 +2389,11 @@
         </ul></li>
         <li><a href="reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.model_specs">model_specs (neofoam.framework.solver.spec.SolverSpec property)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.ModelChoice">ModelChoice (class in neofoam.ui.steps)</a>
+</li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.ModelEntryDTO">ModelEntryDTO (in module neofoam.mcp.dto)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.ModelFamily">ModelFamily (class in neofoam.ui.steps)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.model.runtime.html#neofoam.framework.model.runtime.ModelRuntime">ModelRuntime (class in neofoam.framework.model.runtime)</a>
 
@@ -2216,6 +2412,10 @@
 </li>
         </ul></li>
         <li><a href="reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.models">models() (neofoam.framework.solver.spec.SolverSpec method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.case_spec.html#neofoam.ui.case_spec.models_filled_by">models_filled_by() (in module neofoam.ui.case_spec)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.models_to_select">models_to_select() (in module neofoam.ui.case_load)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec">ModelSpec (class in neofoam.framework.model.spec)</a>
 
@@ -2248,8 +2448,6 @@
           <li><a href="reference/api/neofoam.agent.case_fill.html#module-neofoam.agent.case_fill">neofoam.agent.case_fill</a>
 </li>
           <li><a href="reference/api/neofoam.agent.case_forms.html#module-neofoam.agent.case_forms">neofoam.agent.case_forms</a>
-</li>
-          <li><a href="reference/api/neofoam.agent.wizard_template.html#module-neofoam.agent.wizard_template">neofoam.agent.wizard_template</a>
 </li>
           <li><a href="reference/api/neofoam.algorithms.html#module-neofoam.algorithms">neofoam.algorithms</a>
 </li>
@@ -2635,6 +2833,50 @@
 </li>
           <li><a href="reference/api/neofoam.tutorial.html#module-neofoam.tutorial">neofoam.tutorial</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.html#module-neofoam.ui">neofoam.ui</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.agent_panel.html#module-neofoam.ui.agent_panel">neofoam.ui.agent_panel</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.app.html#module-neofoam.ui.app">neofoam.ui.app</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.boundary_forms.html#module-neofoam.ui.boundary_forms">neofoam.ui.boundary_forms</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.case_load.html#module-neofoam.ui.case_load">neofoam.ui.case_load</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.case_spec.html#module-neofoam.ui.case_spec">neofoam.ui.case_spec</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.dir_picker.html#module-neofoam.ui.dir_picker">neofoam.ui.dir_picker</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.form_schema.html#module-neofoam.ui.form_schema">neofoam.ui.form_schema</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.forms.html#module-neofoam.ui.forms">neofoam.ui.forms</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#module-neofoam.ui.geometry">neofoam.ui.geometry</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry_agent.html#module-neofoam.ui.geometry_agent">neofoam.ui.geometry_agent</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry_panel.html#module-neofoam.ui.geometry_panel">neofoam.ui.geometry_panel</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.jsonforms_module.html#module-neofoam.ui.jsonforms_module">neofoam.ui.jsonforms_module</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.jsonforms_module.module.html#module-neofoam.ui.jsonforms_module.module">neofoam.ui.jsonforms_module.module</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.plugins.html#module-neofoam.ui.plugins">neofoam.ui.plugins</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.review.html#module-neofoam.ui.review">neofoam.ui.review</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.run_panel.html#module-neofoam.ui.run_panel">neofoam.ui.run_panel</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.scaffold.html#module-neofoam.ui.scaffold">neofoam.ui.scaffold</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.steps.html#module-neofoam.ui.steps">neofoam.ui.steps</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.sweep_model.html#module-neofoam.ui.sweep_model">neofoam.ui.sweep_model</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#module-neofoam.ui.sweep_panel">neofoam.ui.sweep_panel</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.sweep_view.html#module-neofoam.ui.sweep_view">neofoam.ui.sweep_view</a>
+</li>
           <li><a href="reference/api/neofoam.viscosity.html#module-neofoam.viscosity">neofoam.viscosity</a>
 </li>
           <li><a href="reference/api/neofoam.viscosity.config.html#module-neofoam.viscosity.config">neofoam.viscosity.config</a>
@@ -2701,6 +2943,8 @@
 </li>
           <li><a href="reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappySurface.name">(neofoam.tools.snappy_hex_mesh.SnappySurface attribute)</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchGeometry.name">(neofoam.ui.geometry.PatchGeometry attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/neofoam.framework.model.runtime.html#neofoam.framework.model.runtime.ModelRuntime.native_operations">native_operations() (neofoam.framework.model.runtime.ModelRuntime method)</a>
 
@@ -2757,13 +3001,6 @@
 
         <ul>
           <li><a href="reference/api/neofoam.agent.case_forms.html#module-neofoam.agent.case_forms">module</a>
-</li>
-        </ul></li>
-        <li>
-    neofoam.agent.wizard_template
-
-        <ul>
-          <li><a href="reference/api/neofoam.agent.wizard_template.html#module-neofoam.agent.wizard_template">module</a>
 </li>
         </ul></li>
         <li>
@@ -3459,8 +3696,6 @@
           <li><a href="reference/api/neofoam.neofoam_bindings.html#module-neofoam.neofoam_bindings">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     neofoam.solver
 
@@ -3545,6 +3780,8 @@
           <li><a href="reference/api/neofoam.solver.incompressibleFluid.models.pressure_velocity.base.html#module-neofoam.solver.incompressibleFluid.models.pressure_velocity.base">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory
 
@@ -4113,6 +4350,160 @@
 </li>
         </ul></li>
         <li>
+    neofoam.ui
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.html#module-neofoam.ui">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.agent_panel
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.agent_panel.html#module-neofoam.ui.agent_panel">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.app
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.app.html#module-neofoam.ui.app">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.boundary_forms
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.boundary_forms.html#module-neofoam.ui.boundary_forms">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.case_load
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.case_load.html#module-neofoam.ui.case_load">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.case_spec
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.case_spec.html#module-neofoam.ui.case_spec">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.dir_picker
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.dir_picker.html#module-neofoam.ui.dir_picker">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.form_schema
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.form_schema.html#module-neofoam.ui.form_schema">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.forms
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.forms.html#module-neofoam.ui.forms">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.geometry
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.geometry.html#module-neofoam.ui.geometry">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.geometry_agent
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.geometry_agent.html#module-neofoam.ui.geometry_agent">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.geometry_panel
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.geometry_panel.html#module-neofoam.ui.geometry_panel">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.jsonforms_module
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.jsonforms_module.html#module-neofoam.ui.jsonforms_module">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.jsonforms_module.module
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.jsonforms_module.module.html#module-neofoam.ui.jsonforms_module.module">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.plugins
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.plugins.html#module-neofoam.ui.plugins">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.review
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.review.html#module-neofoam.ui.review">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.run_panel
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.run_panel.html#module-neofoam.ui.run_panel">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.scaffold
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.scaffold.html#module-neofoam.ui.scaffold">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.steps
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.steps.html#module-neofoam.ui.steps">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.sweep_model
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_model.html#module-neofoam.ui.sweep_model">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.sweep_panel
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#module-neofoam.ui.sweep_panel">module</a>
+</li>
+        </ul></li>
+        <li>
+    neofoam.ui.sweep_view
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_view.html#module-neofoam.ui.sweep_view">module</a>
+</li>
+        </ul></li>
+        <li>
     neofoam.viscosity
 
         <ul>
@@ -4181,7 +4572,11 @@
 </li>
         <li><a href="reference/api/neofoam.foam.initialization.html#neofoam.foam.initialization.new_mesh">new_mesh() (in module neofoam.foam.initialization)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.newest_log">newest_log() (in module neofoam.ui.run_panel)</a>
+</li>
         <li><a href="reference/api/neofoam.viscosity.models.newtonian.html#neofoam.viscosity.models.newtonian">newtonian (in module neofoam.viscosity.models)</a>
+</li>
+        <li><a href="reference/api/neofoam.viscosity.config.html#neofoam.viscosity.config.TransportPropertiesConfig.newtonian_nu">newtonian_nu() (neofoam.viscosity.config.TransportPropertiesConfig method)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.nodes_to_dimensions">nodes_to_dimensions() (in module neofoam.tooling.workflow.sweep)</a>
 </li>
@@ -4201,6 +4596,8 @@
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.NullLoopBackend">NullLoopBackend (class in neofoam.algorithms.solution_loop.solution_loop)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.DimensionState.numeric_params">numeric_params() (neofoam.ui.sweep_model.DimensionState method)</a>
+</li>
         <li><a href="reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.nut">nut() (neofoam.turbulence.native.NeoNHandle method)</a>
 
         <ul>
@@ -4219,6 +4616,64 @@
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.KeyedDim.of">of() (neofoam.tooling.workflow.paramspace.KeyedDim method)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.open_dim_picker">open_dim_picker() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.open_generator">open_generator() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.Backward.openfoam_str">openfoam_str() (neofoam.foam.schemes.ddt.Backward method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.CrankNicolson.openfoam_str">(neofoam.foam.schemes.ddt.CrankNicolson method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.Euler.openfoam_str">(neofoam.foam.schemes.ddt.Euler method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.LocalEuler.openfoam_str">(neofoam.foam.schemes.ddt.LocalEuler method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.SteadyState.openfoam_str">(neofoam.foam.schemes.ddt.SteadyState method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.div.html#neofoam.foam.schemes.div.BoundedGaussDiv.openfoam_str">(neofoam.foam.schemes.div.BoundedGaussDiv method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.div.html#neofoam.foam.schemes.div.GaussDiv.openfoam_str">(neofoam.foam.schemes.div.GaussDiv method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.div.html#neofoam.foam.schemes.div.NoneDiv.openfoam_str">(neofoam.foam.schemes.div.NoneDiv method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.CellLimitedGrad.openfoam_str">(neofoam.foam.schemes.grad.CellLimitedGrad method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.GaussGrad.openfoam_str">(neofoam.foam.schemes.grad.GaussGrad method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.grad.html#neofoam.foam.schemes.grad.LeastSquaresGrad.openfoam_str">(neofoam.foam.schemes.grad.LeastSquaresGrad method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.LimitedLinear.openfoam_str">(neofoam.foam.schemes.interpolation.LimitedLinear method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.Linear.openfoam_str">(neofoam.foam.schemes.interpolation.Linear method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.LinearUpwind.openfoam_str">(neofoam.foam.schemes.interpolation.LinearUpwind method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.Minmod.openfoam_str">(neofoam.foam.schemes.interpolation.Minmod method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.MUSCL.openfoam_str">(neofoam.foam.schemes.interpolation.MUSCL method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.QUICK.openfoam_str">(neofoam.foam.schemes.interpolation.QUICK method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.SuperBee.openfoam_str">(neofoam.foam.schemes.interpolation.SuperBee method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.Upwind.openfoam_str">(neofoam.foam.schemes.interpolation.Upwind method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.VanLeer.openfoam_str">(neofoam.foam.schemes.interpolation.VanLeer method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.laplacian.html#neofoam.foam.schemes.laplacian.GaussLaplacian.openfoam_str">(neofoam.foam.schemes.laplacian.GaussLaplacian method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.laplacian.html#neofoam.foam.schemes.laplacian.NoneLaplacian.openfoam_str">(neofoam.foam.schemes.laplacian.NoneLaplacian method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.sn_grad.html#neofoam.foam.schemes.sn_grad.Corrected.openfoam_str">(neofoam.foam.schemes.sn_grad.Corrected method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.sn_grad.html#neofoam.foam.schemes.sn_grad.LimitedSnGrad.openfoam_str">(neofoam.foam.schemes.sn_grad.LimitedSnGrad method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.sn_grad.html#neofoam.foam.schemes.sn_grad.Orthogonal.openfoam_str">(neofoam.foam.schemes.sn_grad.Orthogonal method)</a>
+</li>
+          <li><a href="reference/api/neofoam.foam.schemes.sn_grad.html#neofoam.foam.schemes.sn_grad.Uncorrected.openfoam_str">(neofoam.foam.schemes.sn_grad.Uncorrected method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/neofoam.io.strategies.openfoam_strategy.html#neofoam.io.strategies.openfoam_strategy.OpenFOAMStrategy">OpenFOAMStrategy (class in neofoam.io.strategies.openfoam_strategy)</a>
 </li>
         <li><a href="reference/api/neofoam.turbulence.stress.html#neofoam.turbulence.stress.OpenFOAMStress">OpenFOAMStress (class in neofoam.turbulence.stress)</a>
@@ -4249,6 +4704,8 @@
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.ModelSpec.operation">(neofoam.viscosity.viscosityModel.ModelSpec method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec.operation_collection">operation_collection() (neofoam.framework.model.spec.ModelSpec method)</a>
 
         <ul>
@@ -4265,8 +4722,6 @@
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.ModelSpec.operation_collection">(neofoam.viscosity.viscosityModel.ModelSpec method)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.framework.operations.html#neofoam.framework.operations.OperationCollection">OperationCollection (in module neofoam.framework.operations)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.types.html#neofoam.framework.types.OperationMetadata">OperationMetadata (class in neofoam.framework.types)</a>
@@ -4311,6 +4766,12 @@
 </li>
         <li><a href="reference/api/neofoam.foam.schemes.sn_grad.html#neofoam.foam.schemes.sn_grad.Orthogonal">Orthogonal (class in neofoam.foam.schemes.sn_grad)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.Overview">Overview (class in neofoam.ui.sweep_model)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.overview">overview() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.owner_model">owner_model (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Hook.owner_of">owner_of() (neofoam.framework.model.extension.Hook method)</a>
 </li>
     </ul></td>
@@ -4321,11 +4782,17 @@
   <h2>P</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.MeshSettings.padding">padding (neofoam.ui.geometry.MeshSettings attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.dag.html#neofoam.tooling.workflow.dag.parse_dot">parse_dot() (in module neofoam.tooling.workflow.dag)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.parse_uniform">parse_uniform() (in module neofoam.fields.value_types)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.RoleAssignment.patch">patch (neofoam.ui.geometry_agent.RoleAssignment attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.casebuild.steps.html#neofoam.tooling.casebuild.steps.patch">patch() (in module neofoam.tooling.casebuild.steps)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.boundary_forms.html#neofoam.ui.boundary_forms.patch_bc_schema">patch_bc_schema() (in module neofoam.ui.boundary_forms)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.geometry.html#neofoam.tooling.workflow.geometry.PatchSet.patch_names">patch_names() (neofoam.tooling.workflow.geometry.PatchSet method)</a>
 
@@ -4345,10 +4812,14 @@
           <li><a href="reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.patch_set.PatchEntry">(class in neofoam.tooling.workflow.patch_set)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchGeometry">PatchGeometry (class in neofoam.ui.geometry)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.geometry.html#neofoam.tooling.workflow.geometry.PatchRole">PatchRole (class in neofoam.tooling.workflow.geometry)</a>
 
         <ul>
           <li><a href="reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.patch_set.PatchRole">(class in neofoam.tooling.workflow.patch_set)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchRole">(class in neofoam.ui.geometry)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/neofoam.tooling.workflow.geometry.html#neofoam.tooling.workflow.geometry.PatchSet">PatchSet (class in neofoam.tooling.workflow.geometry)</a>
@@ -4375,12 +4846,12 @@
 </li>
         <li><a href="reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.PisoDynamicMeshControls">PisoDynamicMeshControls (class in neofoam.foam.algorithm_configs)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.Sweep.plan">plan (neofoam.tooling.workflow.sweep.Sweep property)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.rules.html#neofoam.tooling.workflow.rules.RuleRegistry.plan">plan() (neofoam.tooling.workflow.rules.RuleRegistry method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.plot_summary">plot_summary() (in module neofoam.telemetry.report)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.WriteControl.plugin_model">plugin_model (neofoam.algorithms.field_writer.write_control.WriteControl attribute)</a>
@@ -4412,7 +4883,11 @@
         <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector.html#neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector.PorosityPropertiesConfig">PorosityPropertiesConfig (class in neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.mesh_inputs.html#neofoam.tooling.workflow.mesh_inputs.preprocess_config">preprocess_config() (in module neofoam.tooling.workflow.mesh_inputs)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.preprocess_config">(in module neofoam.ui.geometry)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/neofoam.framework.tools.graph.html#neofoam.framework.tools.graph.PreprocessConfig">PreprocessConfig (class in neofoam.framework.tools.graph)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.PressureInletOutletVelocityBC">PressureInletOutletVelocityBC (class in neofoam.fields.bc)</a>
@@ -4457,7 +4932,11 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.turbulence.config.html#neofoam.turbulence.config.RASProperties">RASProperties (class in neofoam.turbulence.config)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.read_appended">read_appended() (in module neofoam.ui.run_panel)</a>
+</li>
         <li><a href="reference/api/neofoam.mcp.tools.html#neofoam.mcp.tools.read_case">read_case() (in module neofoam.mcp.tools)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.case_load.html#neofoam.ui.case_load.read_case_configs">read_case_configs() (in module neofoam.ui.case_load)</a>
 </li>
         <li><a href="reference/api/neofoam.agent.case_fill.html#neofoam.agent.case_fill.read_case_text">read_case_text() (in module neofoam.agent.case_fill)</a>
 </li>
@@ -4475,17 +4954,35 @@
 </li>
         <li><a href="reference/api/neofoam.io.dictread.html#neofoam.io.dictread.read_section">read_section() (in module neofoam.io.dictread)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.read_stl_bbox">read_stl_bbox() (in module neofoam.ui.geometry)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.read_stl_vertices">read_stl_vertices() (in module neofoam.ui.geometry)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.read_sweep_csv">read_sweep_csv() (in module neofoam.tooling.workflow.paramspace)</a>
 </li>
         <li><a href="reference/api/neofoam.io.dictread.html#neofoam.io.dictread.read_toplevel">read_toplevel() (in module neofoam.io.dictread)</a>
 </li>
         <li><a href="reference/api/neofoam.turbulence.models.realizableKE.html#neofoam.turbulence.models.realizableKE">realizableKE (in module neofoam.turbulence.models)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchGeometry.refinement">refinement (neofoam.ui.geometry.PatchGeometry attribute)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.RoleAssignment.refinement">(neofoam.ui.geometry_agent.RoleAssignment attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.refresh_dag">refresh_dag() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.foam.initialization.html#neofoam.foam.initialization.refuse_mesh_refinement">refuse_mesh_refinement() (in module neofoam.foam.initialization)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.regions">regions (neofoam.framework.initialization.config_context.ConfigContext property)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.initialization.config_context.html#neofoam.framework.initialization.config_context.ConfigContext.register">register() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.plugins.html#neofoam.ui.plugins.StepPlugin.register">(neofoam.ui.plugins.StepPlugin method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.register_chat_handler">register_chat_handler() (neofoam.ui.agent_panel.AgentPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.register_momentum_transport">register_momentum_transport() (in module neofoam.turbulence.momentumTransport)</a>
 </li>
@@ -4513,6 +5010,30 @@
           <li><a href="reference/api/neofoam.turbulence.momentumTransport.html#neofoam.turbulence.momentumTransport.momentumTransportModel.registered_names">(neofoam.turbulence.momentumTransport.momentumTransportModel class method)</a>
 </li>
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.viscosityModel.registered_names">(neofoam.viscosity.viscosityModel.viscosityModel class method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.remove_dimension">remove_dimension() (neofoam.ui.sweep_model.SweepModel method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.remove_dimension">(neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.remove_mesh_source">remove_mesh_source() (neofoam.ui.sweep_model.SweepModel method)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.remove_mesh_source">(neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/neofoam.ui.sweep_view.html#neofoam.ui.sweep_view.render">render() (in module neofoam.ui.sweep_view)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.render">(neofoam.ui.agent_panel.AgentPanel method)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.geometry_panel.html#neofoam.ui.geometry_panel.GeometryPanel.render">(neofoam.ui.geometry_panel.GeometryPanel method)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.RunPanel.render">(neofoam.ui.run_panel.RunPanel method)</a>
+</li>
+          <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.render">(neofoam.ui.sweep_panel.SweepPanel method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.requested_executor">requested_executor() (in module neofoam.solver.neon_runtime)</a>
@@ -4557,10 +5078,10 @@
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.ModelSpec.resolve">(neofoam.viscosity.viscosityModel.ModelSpec method)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/neofoam.framework.dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver.resolve_arguments">resolve_arguments() (neofoam.framework.dependency_resolver.DependencyResolver method)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.framework.dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver.resolve_arguments">resolve_arguments() (neofoam.framework.dependency_resolver.DependencyResolver method)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workspace.html#neofoam.tooling.workspace.Workspace.resolve_existing">resolve_existing() (neofoam.tooling.workspace.Workspace method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.solver.registry.html#neofoam.framework.solver.registry.resolve_solver">resolve_solver() (in module neofoam.framework.solver.registry)</a>
@@ -4571,9 +5092,15 @@
         </ul></li>
         <li><a href="reference/api/neofoam.framework.tools.graph.html#neofoam.framework.tools.graph.resolve_tools">resolve_tools() (in module neofoam.framework.tools.graph)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.resolve_tri_dir">resolve_tri_dir() (in module neofoam.ui.geometry)</a>
+</li>
         <li><a href="reference/api/neofoam.foam.algorithm_configs.html#neofoam.foam.algorithm_configs.DynamicMeshControls.resolved">resolved() (neofoam.foam.algorithm_configs.DynamicMeshControls method)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.rewire">rewire() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.io.pydantic_schema.html#neofoam.io.pydantic_schema.rjsf_uischema">rjsf_uischema() (in module neofoam.io.pydantic_schema)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry_agent.html#neofoam.ui.geometry_agent.RoleAssignment">RoleAssignment (class in neofoam.ui.geometry_agent)</a>
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.WorkspaceInfoDTO.root">root (neofoam.mcp.dto.WorkspaceInfoDTO attribute)</a>
 </li>
@@ -4623,6 +5150,8 @@
           <li><a href="reference/api/neofoam.viscosity.viscosityModel.html#neofoam.viscosity.viscosityModel.ModelRuntime.run_build">(neofoam.viscosity.viscosityModel.ModelRuntime method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.RunPanel.run_case">run_case() (neofoam.ui.run_panel.RunPanel method)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec.run_detect">run_detect() (neofoam.framework.model.spec.ModelSpec method)</a>
 
         <ul>
@@ -4663,6 +5192,8 @@
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.running">running() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.RunPanel">RunPanel (class in neofoam.ui.run_panel)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.RunTimeWriteControl">RunTimeWriteControl (class in neofoam.algorithms.field_writer.write_control)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleFluid.models.field_writer.html#neofoam.solver.incompressibleFluid.models.field_writer.RuntimeWriteHook">RuntimeWriteHook (class in neofoam.solver.incompressibleFluid.models.field_writer)</a>
@@ -4693,9 +5224,13 @@
         </ul></li>
         <li><a href="reference/api/neofoam.io.scaffold.html#neofoam.io.scaffold.save_configs">save_configs() (in module neofoam.io.scaffold)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.review.html#neofoam.ui.review.save_error_rows">save_error_rows() (in module neofoam.ui.review)</a>
+</li>
         <li><a href="reference/api/neofoam.fields.loader.html#neofoam.fields.loader.save_fields">save_fields() (in module neofoam.fields.loader)</a>
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.SaveResultDTO">SaveResultDTO (class in neofoam.mcp.dto)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.scaffold.html#neofoam.ui.scaffold.scaffold_runnable_case">scaffold_runnable_case() (in module neofoam.ui.scaffold)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.Scalar">Scalar (class in neofoam.fields.value_types)</a>
 </li>
@@ -4705,11 +5240,21 @@
           <li><a href="reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.patch_set.PatchSet.scale_to_meters">(neofoam.tooling.workflow.patch_set.PatchSet attribute)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.schema">schema (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.fields.schema.html#neofoam.fields.schema.schema_for">schema_for() (in module neofoam.fields.schema)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.schema_key">schema_key() (in module neofoam.ui.forms)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.boundary_forms.html#neofoam.ui.boundary_forms.seed_boundary_field">seed_boundary_field() (in module neofoam.ui.boundary_forms)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.seed_tool_ctx">seed_tool_ctx() (in module neofoam.tooling.casebuild.meshing)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html#neofoam.solver.incompressibleVoF.models.alpha_advection.selection.select_advection_scheme">select_advection_scheme() (in module neofoam.solver.incompressibleVoF.models.alpha_advection.selection)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.select_cfg">select_cfg() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.select_cfg_from_node">select_cfg_from_node() (neofoam.ui.sweep_panel.SweepPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html#neofoam.solver.incompressibleVoF.models.alpha_advection.selection.select_from_case">select_from_case() (in module neofoam.solver.incompressibleVoF.models.alpha_advection.selection)</a>
 
@@ -4719,15 +5264,25 @@
           <li><a href="reference/api/neofoam.viscosity.selection.html#neofoam.viscosity.selection.select_from_case">(in module neofoam.viscosity.selection)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.select_model_state">select_model_state() (in module neofoam.ui.steps)</a>
+</li>
         <li><a href="reference/api/neofoam.turbulence.selection.html#neofoam.turbulence.selection.select_turbulence_model">select_turbulence_model() (in module neofoam.turbulence.selection)</a>
 </li>
         <li><a href="reference/api/neofoam.viscosity.selection.html#neofoam.viscosity.selection.select_viscosity_model">select_viscosity_model() (in module neofoam.viscosity.selection)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.selection_key">selection_key() (in module neofoam.ui.steps)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.agent_panel.html#neofoam.ui.agent_panel.AgentPanel.send_message">send_message() (neofoam.ui.agent_panel.AgentPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.series_values">series_values() (in module neofoam.ui.sweep_model)</a>
 </li>
         <li><a href="reference/api/neofoam.io.dictfile.html#neofoam.io.dictfile.DictFile.set">set() (neofoam.io.dictfile.DictFile method)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.set_backend">set_backend() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.set_delta_t">set_delta_t() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
+</li>
+        <li><a href="reference/api/neofoam.io.dictread.html#neofoam.io.dictread.set_foam_case">set_foam_case() (in module neofoam.io.dictread)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.set_initial_delta_t">set_initial_delta_t() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
 </li>
@@ -4770,6 +5325,8 @@
         <ul>
           <li><a href="reference/api/neofoam.tooling.workflow.mesh_inputs.html#neofoam.tooling.workflow.mesh_inputs.snappy_dict">(in module neofoam.tooling.workflow.mesh_inputs)</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.snappy_dict">(in module neofoam.ui.geometry)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.snappy_hex_mesh">snappy_hex_mesh() (in module neofoam.tooling.casebuild.meshing)</a>
 </li>
@@ -4777,10 +5334,10 @@
 </li>
         <li><a href="reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappyHexMeshStep">SnappyHexMeshStep (class in neofoam.tools.snappy_hex_mesh)</a>
 </li>
-        <li><a href="reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappySurface">SnappySurface (class in neofoam.tools.snappy_hex_mesh)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.tools.snappy_hex_mesh.html#neofoam.tools.snappy_hex_mesh.SnappySurface">SnappySurface (class in neofoam.tools.snappy_hex_mesh)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl">SolutionControl (class in neofoam.algorithms.solution_loop.control)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop">SolutionLoop (class in neofoam.algorithms.solution_loop.solution_loop)</a>
@@ -4829,17 +5386,33 @@
 </li>
         <li><a href="reference/api/neofoam.tooling.casebuild.pipeline.html#neofoam.tooling.casebuild.pipeline.Start">Start (in module neofoam.tooling.casebuild.pipeline)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.dir_picker.html#neofoam.ui.dir_picker.start_dir">start_dir() (in module neofoam.ui.dir_picker)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.state">state (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop property)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.state_key">state_key (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.case_spec.html#neofoam.ui.case_spec.state_to_case_spec">state_to_case_spec() (in module neofoam.ui.case_spec)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.SteadyIntegration">SteadyIntegration (class in neofoam.algorithms.solution_loop.time_integration)</a>
 </li>
         <li><a href="reference/api/neofoam.foam.schemes.ddt.html#neofoam.foam.schemes.ddt.SteadyState">SteadyState (class in neofoam.foam.schemes.ddt)</a>
 </li>
-        <li><a href="reference/api/neofoam.tooling.casebuild.pipeline.html#neofoam.tooling.casebuild.pipeline.Step">Step (in module neofoam.tooling.casebuild.pipeline)</a>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.Step">Step (class in neofoam.ui.steps)</a>
+
+        <ul>
+          <li><a href="reference/api/neofoam.tooling.casebuild.pipeline.html#neofoam.tooling.casebuild.pipeline.Step">(in module neofoam.tooling.casebuild.pipeline)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.step">step (neofoam.ui.forms.FormEntry attribute)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolSpec.step_config_type">step_config_type (neofoam.framework.tools.spec.ToolSpec property)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.plugins.html#neofoam.ui.plugins.StepContext">StepContext (class in neofoam.ui.plugins)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.StepperWriteControl">StepperWriteControl (class in neofoam.algorithms.field_writer.write_control)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.plugins.html#neofoam.ui.plugins.StepPlugin">StepPlugin (class in neofoam.ui.plugins)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.StepView">StepView (class in neofoam.algorithms.field_writer.write_control)</a>
 </li>
@@ -4848,8 +5421,12 @@
         <ul>
           <li><a href="reference/api/neofoam.tooling.workflow.patch_set.html#neofoam.tooling.workflow.patch_set.PatchEntry.stl">(neofoam.tooling.workflow.patch_set.PatchEntry attribute)</a>
 </li>
+          <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.PatchGeometry.stl">(neofoam.ui.geometry.PatchGeometry attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.SolutionLoop.stop">stop() (neofoam.algorithms.solution_loop.solution_loop.SolutionLoop method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.run_panel.html#neofoam.ui.run_panel.RunPanel.stop_run">stop_run() (neofoam.ui.run_panel.RunPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl.store_residual">store_residual() (neofoam.algorithms.solution_loop.control.SolutionControl method)</a>
 </li>
@@ -4881,6 +5458,10 @@
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.SweepExport">SweepExport (class in neofoam.tooling.workflow.sweep)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel">SweepModel (class in neofoam.ui.sweep_model)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel">SweepPanel (class in neofoam.ui.sweep_panel)</a>
+</li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.SymmetryBC">SymmetryBC (class in neofoam.fields.bc)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.bc.html#neofoam.fields.bc.SymmetryPlaneBC">SymmetryPlaneBC (class in neofoam.fields.bc)</a>
@@ -4907,11 +5488,19 @@
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.TimeIntegration">TimeIntegration (class in neofoam.algorithms.solution_loop.time_integration)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.title">title (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
         <li><a href="reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.to_chrome_trace">to_chrome_trace() (in module neofoam.telemetry.report)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.to_dimensions">to_dimensions() (neofoam.ui.sweep_model.SweepModel method)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.to_nonuniform_literal">to_nonuniform_literal() (in module neofoam.fields.value_types)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.to_uniform_literal">to_uniform_literal() (in module neofoam.fields.value_types)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.toggle_dimension">toggle_dimension() (neofoam.ui.sweep_panel.SweepPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_panel.html#neofoam.ui.sweep_panel.SweepPanel.toggle_rule">toggle_rule() (neofoam.ui.sweep_panel.SweepPanel method)</a>
 </li>
         <li><a href="reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.Tool">Tool() (in module neofoam.framework.tools.spec)</a>
 </li>
@@ -4927,10 +5516,10 @@
 </li>
         <li><a href="reference/api/neofoam.framework.tools.spec.html#neofoam.framework.tools.spec.ToolSpec">ToolSpec (class in neofoam.framework.tools.spec)</a>
 </li>
-        <li><a href="reference/api/neofoam.framework.graph.ordering.html#neofoam.framework.graph.ordering.topological_order">topological_order() (in module neofoam.framework.graph.ordering)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.framework.graph.ordering.html#neofoam.framework.graph.ordering.topological_order">topological_order() (in module neofoam.framework.graph.ordering)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.graph.sorter.html#neofoam.framework.graph.sorter.TopologicalSorter">TopologicalSorter (class in neofoam.framework.graph.sorter)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.solution_loop.time_integration.html#neofoam.algorithms.solution_loop.time_integration.TransientIntegration">TransientIntegration (class in neofoam.algorithms.solution_loop.time_integration)</a>
@@ -4955,6 +5544,8 @@
           <li><a href="reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.turbulence_correct">(in module neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/neofoam.ui.steps.html#neofoam.ui.steps.turbulence_form_state">turbulence_form_state() (in module neofoam.ui.steps)</a>
+</li>
         <li><a href="reference/api/neofoam.framework.validation.checks.html#neofoam.framework.validation.checks.turbulence_type">turbulence_type() (in module neofoam.framework.validation.checks)</a>
 </li>
         <li><a href="reference/api/neofoam.turbulence.fallback.html#neofoam.turbulence.fallback.TurbulenceFactory">TurbulenceFactory (in module neofoam.turbulence.fallback)</a>
@@ -4983,6 +5574,10 @@
   <h2>U</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.FormEntry.uischema">uischema (neofoam.ui.forms.FormEntry attribute)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.forms.html#neofoam.ui.forms.uischema_key">uischema_key() (in module neofoam.ui.forms)</a>
+</li>
         <li><a href="reference/api/neofoam.foam.schemes.sn_grad.html#neofoam.foam.schemes.sn_grad.Uncorrected">Uncorrected (class in neofoam.foam.schemes.sn_grad)</a>
 </li>
         <li><a href="reference/api/neofoam.io.dictread.html#neofoam.io.dictread.Unreadable">Unreadable (class in neofoam.io.dictread)</a>
@@ -5037,15 +5632,27 @@
 </li>
         <li><a href="reference/api/neofoam.mcp.dto.html#neofoam.mcp.dto.ValidationReportDTO">ValidationReportDTO (in module neofoam.mcp.dto)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/neofoam.io.dictread.html#neofoam.io.dictread.Value">Value (class in neofoam.io.dictread)</a>
 </li>
         <li><a href="reference/api/neofoam.foam.schemes.interpolation.html#neofoam.foam.schemes.interpolation.VanLeer">VanLeer (class in neofoam.foam.schemes.interpolation)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.variant_add">variant_add() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.variant_delete">variant_delete() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.variant_edit">variant_edit() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.variant_error">variant_error() (neofoam.ui.sweep_model.SweepModel method)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.sweep.html#neofoam.tooling.workflow.sweep.variant_errors">variant_errors() (in module neofoam.tooling.workflow.sweep)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.variant_name">variant_name() (in module neofoam.ui.sweep_model)</a>
+</li>
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.YamlParamSpace.variant_of">variant_of() (neofoam.tooling.workflow.paramspace.YamlParamSpace method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.sweep_model.html#neofoam.ui.sweep_model.SweepModel.variant_rename">variant_rename() (neofoam.ui.sweep_model.SweepModel method)</a>
 </li>
         <li><a href="reference/api/neofoam.fields.value_types.html#neofoam.fields.value_types.Vector">Vector (class in neofoam.fields.value_types)</a>
 </li>
@@ -5123,6 +5730,10 @@
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.write_if_changed">write_if_changed() (in module neofoam.tooling.workflow.paramspace)</a>
 </li>
+        <li><a href="reference/api/neofoam.ui.geometry_panel.html#neofoam.ui.geometry_panel.GeometryPanel.write_mesh">write_mesh() (neofoam.ui.geometry_panel.GeometryPanel method)</a>
+</li>
+        <li><a href="reference/api/neofoam.ui.geometry.html#neofoam.ui.geometry.write_mesh_configs">write_mesh_configs() (in module neofoam.ui.geometry)</a>
+</li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.field_writer.html#neofoam.algorithms.field_writer.field_writer.write_output">write_output() (in module neofoam.algorithms.field_writer.field_writer)</a>
 
         <ul>
@@ -5136,8 +5747,6 @@
         <li><a href="reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.write_summary_plot">write_summary_plot() (in module neofoam.telemetry.report)</a>
 </li>
         <li><a href="reference/api/neofoam.tooling.workflow.paramspace.html#neofoam.tooling.workflow.paramspace.write_sweep_csv">write_sweep_csv() (in module neofoam.tooling.workflow.paramspace)</a>
-</li>
-        <li><a href="reference/api/neofoam.agent.wizard_template.html#neofoam.agent.wizard_template.write_wizard_notebook">write_wizard_notebook() (in module neofoam.agent.wizard_template)</a>
 </li>
         <li><a href="reference/api/neofoam.algorithms.field_writer.write_control.html#neofoam.algorithms.field_writer.write_control.WriteControl">WriteControl (class in neofoam.algorithms.field_writer.write_control)</a>
 </li>

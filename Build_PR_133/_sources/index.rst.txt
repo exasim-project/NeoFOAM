@@ -31,7 +31,7 @@ what you're trying to do:
    auto_tutorials/example_02_passive_scalar_plugin
    auto_tutorials/example_03_build_a_solver
    auto_tutorials/example_04_configure_with_io
-   tutorials/scaffold-a-case-wizard
+   tutorials/case-wizard
 
 .. toctree::
    :maxdepth: 1
@@ -58,6 +58,7 @@ what you're trying to do:
    reference/project-layout
    reference/build-and-test
    reference/cli
+   reference/ui-architecture
    reference/index
 
 .. toctree::

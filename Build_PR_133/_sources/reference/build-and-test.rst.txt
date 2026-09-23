@@ -24,7 +24,7 @@ For a normal (non-development) installation, install non-editable:
 Quote the extras (``".[all]"``) — on macOS the default ``zsh`` treats the
 square brackets as a glob pattern. Instead of ``all`` you can pick just the
 optional features you need: ``dev``, ``docs``, ``agent``, ``mcp``,
-``telemetry`` — e.g. ``pip install -e ".[dev,mcp]" -v``.
+``telemetry``, ``ui`` — e.g. ``pip install -e ".[dev,mcp]" -v``.
 
 The editable install uses scikit-build's ``redirect`` mode: edits to
 ``src/neofoam/*.py`` take effect on the next Python start without
@@ -38,8 +38,14 @@ Run the tests
 
     pytest test/<area>                # scoped tests while working
     pytest                            # whole suite (testpaths=test) verify before done
+    pytest test/ui -m browser         # opt-in: the wizard forms in headless Chromium
+    bun test                          # in src/neofoam/ui/jsonforms_module: the JS renderer rules
     pre-commit run --files <changed>  # format + lint + mypy on your diff
     pre-commit run -a                 # format + lint + mypy on all files
+
+The browser tests need ``playwright install chromium`` once. After editing the
+wizard's JS sources, rebuild the checked-in bundle (``bunx vite build``) and commit
+it with the change — see :doc:`ui-architecture`.
 
 Poe tasks
 ---------

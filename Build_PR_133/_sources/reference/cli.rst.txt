@@ -66,6 +66,19 @@ Start the NeoFOAM MCP server (needs the ``mcp`` extra):
     neofoam mcp serve                # bind 127.0.0.1:8000
     neofoam mcp serve --root cases/  # confine case paths for untrusted clients
 
+Case wizard — ``neofoam ui``
+----------------------------
+
+Launch the case-wizard web UI (needs the ``ui`` extra) — see
+:doc:`/tutorials/case-wizard` and :doc:`ui-architecture`:
+
+.. code-block:: bash
+
+    neofoam ui                              # serve http://localhost:8080/ and open a browser
+    neofoam ui --solver incompressibleVoF   # edit another solver's configs
+    neofoam ui --port 8081 --no-browser     # another port, no browser
+    neofoam ui --host 0.0.0.0               # bind every interface (phone on the LAN)
+
 Telemetry — ``neofoam telemetry``
 ---------------------------------
 

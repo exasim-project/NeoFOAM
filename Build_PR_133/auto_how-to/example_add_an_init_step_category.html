@@ -11,7 +11,7 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul class="current">
@@ -227,13 +227,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../reference/project-layout.html">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -520,11 +520,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-45" name="toctree-checkbox-45" role="switch" type="checkbox"/><label for="toctree-checkbox-45"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -608,16 +634,15 @@ closures, boundary patches, post-processors), register a handler on a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CategoryRouter</span></code> and pass it through.</p>
 <section id="imports">
 <h2>Imports<a class="headerlink" href="#imports" title="Link to this heading">¶</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.execution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">default_router</span><span class="p">,</span>
-    <span class="n">execute_initialization</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="w">
+</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">framework</span><span class="nn">.</span><span class="nn">context</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">Context</span></a><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">framework</span><span class="nn">.</span><span class="nn">initialization</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStep" title="neofoam.framework.initialization.InitStep"><span class="n">InitStep</span></a><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">framework</span><span class="nn">.</span><span class="nn">initialization</span><span class="nn">.</span><span class="nn">execution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="w">
+</span>    <span class="n">default_router</span><span class="p">,</span><span class="w">
+</span>    <span class="n">execute_initialization</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="register-a-handler">
 <h2>Register a handler<a class="headerlink" href="#register-a-handler" title="Link to this heading">¶</a></h2>
@@ -625,14 +650,13 @@ closures, boundary patches, post-processors), register a handler on a
 callables that write the produced value into <code class="docutils literal notranslate"><span class="pre">ctx</span></code> in whatever
 shape makes sense. Start from <code class="docutils literal notranslate"><span class="pre">default_router()</span></code> to inherit the
 four built-in handlers, then add your own.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_route_turbulence</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="sa">f</span><span class="s2">"turbulence.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-
-
-<span class="n">router</span> <span class="o">=</span> <span class="n">default_router</span><span class="p">()</span>
-<span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">"turbulence"</span><span class="p">,</span> <span class="n">_route_turbulence</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="k">def</span><span class="w"> </span><span class="nf">_route_turbulence</span><span class="p">(</span><a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a><span class="p">:</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">Context</span></a><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <span class="kc">None</span><span class="p">:</span><span class="w">
+</span>    <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="s2">turbulence.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="w">
+</span><span class="w">
+</span><span class="w">
+</span><a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.CategoryRouter" title="neofoam.framework.initialization.CategoryRouter"><span class="n">router</span></a> <span class="o">=</span> <span class="n">default_router</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.CategoryRouter" title="neofoam.framework.initialization.CategoryRouter"><span class="n">router</span></a><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">turbulence</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_route_turbulence</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="emit-steps-with-the-new-category">
 <h2>Emit steps with the new category<a class="headerlink" href="#emit-steps-with-the-new-category" title="Link to this heading">¶</a></h2>
@@ -641,27 +665,26 @@ four built-in handlers, then add your own.</p>
 category. For a custom category, construct <code class="xref py py-class docutils literal notranslate"><span class="pre">InitStep</span></code>
 directly — <code class="docutils literal notranslate"><span class="pre">category</span></code> is a plain string, no closed enum, no
 <code class="docutils literal notranslate"><span class="pre">Literal</span></code> to extend.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">_KEpsilonModel</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">U</span> <span class="o">=</span> <span class="n">U</span>
-
-
-<span class="n">steps</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">InitStep</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">"fields.U"</span><span class="p">,</span>
-        <span class="n">depends_on</span><span class="o">=</span><span class="p">[],</span>
-        <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="nb">object</span><span class="p">(),</span>  <span class="c1"># stand-in for a real field</span>
-        <span class="n">category</span><span class="o">=</span><span class="s2">"fields"</span><span class="p">,</span>
-    <span class="p">),</span>
-    <span class="n">InitStep</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">"turbulence.kepsilon"</span><span class="p">,</span>
-        <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">],</span>
-        <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">_KEpsilonModel</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">"fields.U"</span><span class="p">]),</span>
-        <span class="n">category</span><span class="o">=</span><span class="s2">"turbulence"</span><span class="p">,</span>
-    <span class="p">),</span>
-<span class="p">]</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="k">class</span><span class="w"> </span><span class="nc">_KEpsilonModel</span><span class="p">:</span><span class="w">
+</span>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <span class="kc">None</span><span class="p">:</span><span class="w">
+</span>        <span class="bp">self</span><span class="o">.</span><span class="n">U</span> <span class="o">=</span> <span class="n">U</span><span class="w">
+</span><span class="w">
+</span><span class="w">
+</span><span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="w">
+</span>    <a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStep" title="neofoam.framework.initialization.InitStep"><span class="n">InitStep</span></a><span class="p">(</span><span class="w">
+</span>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">fields.U</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>        <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a><span class="p">:</span> <span class="nb">object</span><span class="p">(</span><span class="p">)</span><span class="p">,</span>  <span class="c1"># stand-in for a real field</span><span class="w">
+</span>        <span class="n">category</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">fields</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.initialization.init_step.html#neofoam.framework.initialization.init_step.InitStep" title="neofoam.framework.initialization.InitStep"><span class="n">InitStep</span></a><span class="p">(</span><span class="w">
+</span>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">turbulence.kepsilon</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>        <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">fields.U</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a><span class="p">:</span> <span class="n">_KEpsilonModel</span><span class="p">(</span><a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a><span class="p">[</span><span class="s2">&quot;</span><span class="s2">fields.U</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>        <span class="n">category</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">turbulence</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="p">)</span><span class="p">,</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="run-with-the-custom-router">
 <h2>Run with the custom router<a class="headerlink" href="#run-with-the-custom-router" title="Link to this heading">¶</a></h2>
@@ -669,10 +692,9 @@ directly — <code class="docutils literal notranslate"><span class="pre">catego
 Steps whose <code class="docutils literal notranslate"><span class="pre">InitStep.category</span> <span class="pre">==</span> <span class="pre">&quot;turbulence&quot;</span></code> are routed through
 <code class="docutils literal notranslate"><span class="pre">_route_turbulence</span></code>; everything else uses the four built-in
 handlers plus the unknown-category fallback.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">execute_initialization</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">router</span><span class="o">=</span><span class="n">router</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">))</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a> <span class="o">=</span> <span class="n">execute_initialization</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.CategoryRouter" title="neofoam.framework.initialization.CategoryRouter"><span class="n">router</span></a><span class="o">=</span><a class="sphx-glr-backref-module-neofoam-framework-initialization sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.initialization.execution.context_builder.html#neofoam.framework.initialization.execution.context_builder.CategoryRouter" title="neofoam.framework.initialization.CategoryRouter"><span class="n">router</span></a><span class="p">)</span><span class="w">
+</span><span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="n">ctx</span></a><span class="o">.</span><span class="n">models</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>['turbulence.turbulence.kepsilon']
 </pre></div>
 </div>

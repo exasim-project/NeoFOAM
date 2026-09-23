@@ -11,7 +11,7 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul class="current">
@@ -227,13 +227,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../reference/project-layout.html">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -520,11 +520,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-45" name="toctree-checkbox-45" role="switch" type="checkbox"/><label for="toctree-checkbox-45"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -612,29 +638,28 @@ Open <code class="docutils literal notranslate"><span class="pre">dag.html</span
 <code class="docutils literal notranslate"><span class="pre">operation_number</span></code>, and <code class="docutils literal notranslate"><span class="pre">shape</span></code> / <code class="docutils literal notranslate"><span class="pre">color</span></code> hints from the
 metadata; edges follow the resolved <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">before</span></code>
 relationships.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">build_dependency_digraph</span><span class="p">,</span>
-    <span class="n">dependency_dag</span><span class="p">,</span>
-    <span class="n">digraph_to_pyvis_html</span><span class="p">,</span>
-    <span class="n">validate_dependency_graph</span><span class="p">,</span>
-<span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">render_solver_dag</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"dag.html"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
-    <span class="n">metas_by_domain</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"main"</span><span class="p">:</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">]</span>
-        <span class="o">+</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">model_ops</span><span class="o">.</span><span class="n">ops</span><span class="p">],</span>
-    <span class="p">}</span>
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">dependency_dag</span><span class="p">(</span><span class="n">metas_by_domain</span><span class="p">)</span>
-    <span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="w">
+</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span><span class="nn">.</span><span class="nn">pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span><span class="w">
+</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">framework</span><span class="nn">.</span><span class="nn">graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="w">
+</span>    <span class="n">build_dependency_digraph</span><span class="p">,</span><span class="w">
+</span>    <span class="n">dependency_dag</span><span class="p">,</span><span class="w">
+</span>    <span class="n">digraph_to_pyvis_html</span><span class="p">,</span><span class="w">
+</span>    <span class="n">validate_dependency_graph</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="w">
+</span><span class="k">def</span><span class="w"> </span><span class="nf">render_solver_dag</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s2">dag.html</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <span class="kc">None</span><span class="p">:</span><span class="w">
+</span>    <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span>    <span class="n">metas_by_domain</span> <span class="o">=</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">main</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span><span class="p">]</span><span class="w">
+</span>        <span class="o">+</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">model_ops</span><span class="o">.</span><span class="n">ops</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="w">
+</span>    <span class="n">graph</span> <span class="o">=</span> <span class="n">dependency_dag</span><span class="p">(</span><span class="n">metas_by_domain</span><span class="p">)</span><span class="w">
+</span>    <span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="a-worked-example">
 <h2>A worked example<a class="headerlink" href="#a-worked-example" title="Link to this heading">¶</a></h2>
@@ -643,40 +668,39 @@ inline as a static figure (so it appears below this cell on the
 docs page), and as an interactive <code class="docutils literal notranslate"><span class="pre">dag.html</span></code> you can open in a
 browser to drag nodes and inspect edges. The same
 <code class="xref py py-class docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code> feeds both renderers.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">graph</span> <span class="o">=</span> <span class="n">build_dependency_digraph</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">"U_predictor"</span><span class="p">:</span> <span class="p">[],</span>
-        <span class="s2">"p_corrector"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"U_predictor"</span><span class="p">],</span>
-        <span class="s2">"U_corrector"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"p_corrector"</span><span class="p">],</span>
-        <span class="s2">"write_output"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"U_corrector"</span><span class="p">],</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-
-<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">))</span>
-<span class="n">layout</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"U_predictor"</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">"p_corrector"</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">"U_corrector"</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-    <span class="s2">"write_output"</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-<span class="p">}</span>
-<span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span>
-    <span class="n">graph</span><span class="p">,</span>
-    <span class="n">pos</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span>
-    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span>
-    <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">node_color</span><span class="o">=</span><span class="s2">"lightblue"</span><span class="p">,</span>
-    <span class="n">node_size</span><span class="o">=</span><span class="mi">2400</span><span class="p">,</span>
-    <span class="n">edgecolors</span><span class="o">=</span><span class="s2">"black"</span><span class="p">,</span>
-    <span class="n">font_size</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
-    <span class="n">arrowsize</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"PISO-style operation DAG"</span><span class="p">)</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-
-<span class="c1"># Same graph, written to an interactive pyvis page.</span>
-<span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s2">"dag.html"</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="n">graph</span> <span class="o">=</span> <span class="n">build_dependency_digraph</span><span class="p">(</span><span class="w">
+</span>    <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">U_predictor</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">p_corrector</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;</span><span class="s2">U_predictor</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">U_corrector</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;</span><span class="s2">p_corrector</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">write_output</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;</span><span class="s2">U_corrector</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="n">layout</span> <span class="o">=</span> <span class="p">{</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">U_predictor</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">p_corrector</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">U_corrector</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">write_output</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span><span class="n">nx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="w">
+</span>    <span class="n">graph</span><span class="p">,</span><span class="w">
+</span>    <span class="n">pos</span><span class="o">=</span><span class="n">layout</span><span class="p">,</span><span class="w">
+</span>    <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span><span class="w">
+</span>    <span class="n">with_labels</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="w">
+</span>    <span class="n">node_color</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">lightblue</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="n">node_size</span><span class="o">=</span><span class="mi">2400</span><span class="p">,</span><span class="w">
+</span>    <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">black</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="n">font_size</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span><span class="w">
+</span>    <span class="n">arrowsize</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">PISO-style operation DAG</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span><span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Same graph, written to an interactive pyvis page.</span><span class="w">
+</span><span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">dag.html</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 <img src="../_images/sphx_glr_example_visualize_the_operation_dag_001.png" srcset="../_images/sphx_glr_example_visualize_the_operation_dag_001.png" alt="PISO-style operation DAG" class = "sphx-glr-single-img"/></section>
 <section id="inspect-without-rendering">
 <h2>Inspect without rendering<a class="headerlink" href="#inspect-without-rendering" title="Link to this heading">¶</a></h2>
@@ -684,10 +708,9 @@ browser to drag nodes and inspect edges. The same
 you can call <code class="docutils literal notranslate"><span class="pre">graph.predecessors(name)</span></code>, <code class="docutils literal notranslate"><span class="pre">graph.successors(name)</span></code>,
 or <code class="docutils literal notranslate"><span class="pre">nx.find_cycle(graph)</span></code> directly. Useful inside tests or while
 debugging.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">"U_predictor"</span><span class="p">))</span> <span class="o">==</span> <span class="p">[</span><span class="s2">"p_corrector"</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"successors of U_predictor:"</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">"U_predictor"</span><span class="p">)))</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">U_predictor</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;</span><span class="s2">p_corrector</span><span class="s2">&quot;</span><span class="p">]</span><span class="w">
+</span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">successors of U_predictor:</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">successors</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">U_predictor</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>successors of U_predictor: ['p_corrector']
 </pre></div>
 </div>
@@ -698,15 +721,14 @@ debugging.</p>
 duplicates, no missing dependencies, no cycles) use
 <code class="xref py py-func docutils literal notranslate"><span class="pre">validate_dependency_graph()</span></code> — it returns a
 <code class="xref py py-class docutils literal notranslate"><span class="pre">GraphValidationReport</span></code> you can inspect without raising.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">report</span> <span class="o">=</span> <span class="n">validate_dependency_graph</span><span class="p">(</span>
-    <span class="n">node_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"A"</span><span class="p">,</span> <span class="s2">"B"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">],</span>
-    <span class="n">dependencies_by_node</span><span class="o">=</span><span class="p">{</span><span class="s2">"A"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"B"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"A"</span><span class="p">],</span> <span class="s2">"C"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"B"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">]},</span>
-<span class="p">)</span>
-<span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
-    <span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">diagnostic</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><a class="sphx-glr-backref-module-neofoam-framework-graph sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.graph.validation.html#neofoam.framework.graph.validation.GraphValidationReport" title="neofoam.framework.graph.GraphValidationReport"><span class="n">report</span></a> <span class="o">=</span> <span class="n">validate_dependency_graph</span><span class="p">(</span><span class="w">
+</span>    <span class="n">node_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">A</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">B</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">C</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>    <span class="n">dependencies_by_node</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;</span><span class="s2">A</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="p">]</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">B</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;</span><span class="s2">A</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">C</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;</span><span class="s2">B</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">missing</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">}</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="k">if</span> <span class="ow">not</span> <a class="sphx-glr-backref-module-neofoam-framework-graph sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.graph.validation.html#neofoam.framework.graph.validation.GraphValidationReport" title="neofoam.framework.graph.GraphValidationReport"><span class="n">report</span></a><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span><span class="w">
+</span>    <span class="k">for</span> <span class="n">diagnostic</span> <span class="ow">in</span> <a class="sphx-glr-backref-module-neofoam-framework-graph sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.graph.validation.html#neofoam.framework.graph.validation.GraphValidationReport" title="neofoam.framework.graph.GraphValidationReport"><span class="n">report</span></a><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span><span class="w">
+</span>        <span class="nb">print</span><span class="p">(</span><span class="n">diagnostic</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">diagnostic</span><span class="o">.</span><span class="n">message</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>missing_dependency InitStep 'C' depends on 'missing', but 'missing' was not found
 </pre></div>
 </div>
@@ -718,7 +740,7 @@ duplicates, no missing dependencies, no cycles) use
 the resolver pipeline.</p></li>
 <li><p><a class="reference internal" href="../reference/api/neofoam.framework.graph.visualization.html#module-neofoam.framework.graph.visualization" title="neofoam.framework.graph.visualization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.framework.graph.visualization</span></code></a> — full API.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.059 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.054 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-visualize-the-operation-dag-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/dcf9aa64645a892a344f4a7605b2b2bf/example_visualize_the_operation_dag.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_visualize_the_operation_dag.ipynb</span></code></a></p>

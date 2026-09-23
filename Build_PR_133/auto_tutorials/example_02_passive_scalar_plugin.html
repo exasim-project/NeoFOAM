@@ -11,7 +11,7 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -204,7 +204,7 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -227,13 +227,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../reference/project-layout.html">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -520,11 +520,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-45" name="toctree-checkbox-45" role="switch" type="checkbox"/><label for="toctree-checkbox-45"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -614,79 +640,74 @@ haven’t run a NeoFOAM case yet, do
 <a class="reference internal" href="example_01_run_incompressible_fluid.html"><span class="doc">Run your first NeoFOAM case</span></a> first.</p>
 <section id="plugin-imports">
 <h2>Plugin imports<a class="headerlink" href="#plugin-imports" title="Link to this heading">¶</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pyvista</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pv</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">fvm</span><span class="p">,</span>
-    <span class="n">fvScalarMatrix</span><span class="p">,</span>
-    <span class="n">surfaceScalarField</span><span class="p">,</span>
-    <span class="n">volScalarField</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldUpdates</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">field</span>
-
-<span class="c1"># from neofoam.foam import fvSchemes, fvSolution</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.incompressibleFluid</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span> <span class="k">as</span> <span class="n">run_incompressible</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.incompressibleFluid.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluidModel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="w">
+</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">pyvista</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pv</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="w">
+</span>    <span class="n">fvm</span><span class="p">,</span><span class="w">
+</span>    <span class="n">fvScalarMatrix</span><span class="p">,</span><span class="w">
+</span>    <span class="n">surfaceScalarField</span><span class="p">,</span><span class="w">
+</span>    <span class="n">volScalarField</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.FieldUpdates" title="neofoam.framework.context.FieldUpdates"><span class="n">FieldUpdates</span></a><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">field</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># from neofoam.foam import fvSchemes, fvSolution</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="n">BaseConfig</span></a><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">solver</span><span class="nn">.</span><span class="nn">incompressibleFluid</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span> <span class="k">as</span> <span class="n">run_incompressible</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">solver</span><span class="nn">.</span><span class="nn">incompressibleFluid</span><span class="nn">.</span><span class="nn">models</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-solver-incompressibleFluid-models sphx-glr-backref-type-py-module reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#module-neofoam.solver.incompressibleFluid.models.incompressibleFluidModel" title="neofoam.solver.incompressibleFluid.models.incompressibleFluidModel"><span class="n">incompressibleFluidModel</span></a><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">tutorial</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-tutorial sphx-glr-backref-type-py-function reference internal" href="../reference/api/neofoam.tutorial.html#neofoam.tutorial.clone_case" title="neofoam.tutorial.clone_case"><span class="n">clone_case</span></a><span class="w">
+</span></pre></div></div>
 </section>
 <section id="scaffold-the-plugin">
 <h2>Scaffold the plugin<a class="headerlink" href="#scaffold-the-plugin" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">register_with</span></code> adds the empty spec to <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code>’s
 plugin registry. The four decorators below populate it.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">PassiveScalarConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-    <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># diffusivity, m²/s</span>
-
-
-<span class="n">passive_scalar</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">"passive_scalar"</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="k">class</span><span class="w"> </span><a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="nc">PassiveScalarConfig</span></a><span class="p">(</span><a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="n">BaseConfig</span></a><span class="p">)</span><span class="p">:</span><span class="w">
+</span>    <span class="n">D</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># diffusivity, m²/s</span><span class="w">
+</span><span class="w">
+</span><span class="w">
+</span><a class="sphx-glr-backref-module-neofoam-framework-model sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../reference/api/neofoam.framework.model.spec.html#neofoam.framework.model.spec.ModelSpec" title="neofoam.framework.model.ModelSpec"><span class="n">passive_scalar</span></a> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">passive_scalar</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><a class="sphx-glr-backref-module-neofoam-solver-incompressibleFluid-models sphx-glr-backref-type-py-module reference internal" href="../reference/api/neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html#module-neofoam.solver.incompressibleFluid.models.incompressibleFluidModel" title="neofoam.solver.incompressibleFluid.models.incompressibleFluidModel"><span class="n">incompressibleFluidModel</span></a><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="activate-when-constant-scalarproperties-is-present">
 <h2>Activate when <code class="docutils literal notranslate"><span class="pre">constant/scalarProperties</span></code> is present<a class="headerlink" href="#activate-when-constant-scalarproperties-is-present" title="Link to this heading">¶</a></h2>
 <p>Without that file the framework skips the model entirely — no
 config load, no operations, no overhead.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Framework note: in the current branch ``@spec.detect`` takes no</span>
-<span class="c1"># arguments (the old ``case_dir`` parameter was removed) and ``load``</span>
-<span class="c1"># now receives ``(case_dir, instance_id)`` instead of ``(case_dir,</span>
-<span class="c1"># entry)``. Detection happens with the case as the cwd, so a relative</span>
-<span class="c1"># path probes the right file.</span>
-<span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">detect</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"constant/scalarProperties"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="c1"># Framework note: in the current branch ``&#64;spec.detect`` takes no</span><span class="w">
+</span><span class="c1"># arguments (the old ``case_dir`` parameter was removed) and ``load``</span><span class="w">
+</span><span class="c1"># now receives ``(case_dir, instance_id)`` instead of ``(case_dir,</span><span class="w">
+</span><span class="c1"># entry)``. Detection happens with the case as the cwd, so a relative</span><span class="w">
+</span><span class="c1"># path probes the right file.</span><span class="w">
+</span><span class="nd">&#64;passive_scalar</span><span class="o">.</span><span class="n">detect</span><span class="w">
+</span><span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">(</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <span class="nb">bool</span><span class="p">:</span><span class="w">
+</span>    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">constant/scalarProperties</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="load-the-diffusivity-from-the-case">
 <h2>Load the diffusivity from the case<a class="headerlink" href="#load-the-diffusivity-from-the-case" title="Link to this heading">¶</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">load</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">_case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">_instance_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PassiveScalarConfig</span><span class="p">:</span>
-    <span class="n">props</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">"constant/scalarProperties"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">PassiveScalarConfig</span><span class="p">(</span><span class="n">D</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">float</span><span class="p">](</span><span class="s2">"D"</span><span class="p">))</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="nd">&#64;passive_scalar</span><span class="o">.</span><span class="n">load</span><span class="w">
+</span><span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">_case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">_instance_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="n">PassiveScalarConfig</span></a><span class="p">:</span><span class="w">
+</span>    <span class="n">props</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">constant/scalarProperties</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span>    <span class="k">return</span> <a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="n">PassiveScalarConfig</span></a><span class="p">(</span><span class="n">D</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">D</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="register-the-new-field">
 <h2>Register the new field<a class="headerlink" href="#register-the-new-field" title="Link to this heading">¶</a></h2>
 <p>The framework topologically sorts every model’s contributions plus
 the solver’s own. <code class="docutils literal notranslate"><span class="pre">cfg</span></code> is auto-injected by <em>type</em> — the
 framework finds the <code class="docutils literal notranslate"><span class="pre">PassiveScalarConfig</span></code> on <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">build</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">PassiveScalarConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_s</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">],</span> <span class="s2">"s"</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">[</span><span class="n">field</span><span class="p">(</span><span class="s2">"s"</span><span class="p">,</span> <span class="n">create_s</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">])]</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="nd">&#64;passive_scalar</span><span class="o">.</span><span class="n">build</span><span class="w">
+</span><span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="n">PassiveScalarConfig</span></a><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span><span class="p">:</span><span class="w">
+</span>    <span class="k">def</span><span class="w"> </span><span class="nf">create_s</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <span class="n">volScalarField</span><span class="p">:</span><span class="w">
+</span>        <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">mesh</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span>    <span class="k">return</span> <span class="p">[</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">create_s</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">mesh</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">)</span><span class="p">]</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="add-the-transport-operation">
 <h2>Add the transport operation<a class="headerlink" href="#add-the-transport-operation" title="Link to this heading">¶</a></h2>
@@ -695,25 +716,24 @@ algorithm produces a divergence-free <code class="docutils literal notranslate">
 corrected flux is what keeps the scalar conservative.
 <code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add</span></code> / <code class="docutils literal notranslate"><span class="pre">&#64;fvSolution.add</span></code> declare requirements the
 framework’s verifier checks at startup.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">"continuity"</span><span class="p">])</span>
-<span class="c1"># @fvSchemes.add(</span>
-<span class="c1">#     ddt="ddt(s)",</span>
-<span class="c1">#     div="div(phi,s)",</span>
-<span class="c1">#     laplacian="laplacian(D,s)",</span>
-<span class="c1"># )</span>
-<span class="c1"># @fvSolution.add("s")</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">solve_s</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">s</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span>
-    <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-    <span class="n">cfg</span><span class="p">:</span> <span class="n">PassiveScalarConfig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">"D"</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimViscosity</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>
-    <span class="n">sEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
-    <span class="n">sEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">"s"</span><span class="p">:</span> <span class="n">s</span><span class="p">})</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="nd">&#64;passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">continuity</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">)</span><span class="w">
+</span><span class="c1"># &#64;fvSchemes.add(</span><span class="w">
+</span><span class="c1">#     ddt=&quot;ddt(s)&quot;,</span><span class="w">
+</span><span class="c1">#     div=&quot;div(phi,s)&quot;,</span><span class="w">
+</span><span class="c1">#     laplacian=&quot;laplacian(D,s)&quot;,</span><span class="w">
+</span><span class="c1"># )</span><span class="w">
+</span><span class="c1"># &#64;fvSolution.add(&quot;s&quot;)</span><span class="w">
+</span><span class="k">def</span><span class="w"> </span><span class="nf">solve_s</span><span class="p">(</span><span class="w">
+</span>    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span><span class="w">
+</span>    <span class="n">s</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span><span class="w">
+</span>    <span class="n">phi</span><span class="p">:</span> <span class="n">surfaceScalarField</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span> <span class="o">-</span><span class="o">&gt;</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.FieldUpdates" title="neofoam.framework.context.FieldUpdates"><span class="n">FieldUpdates</span></a><span class="p">:</span><span class="w">
+</span>    <span class="n">cfg</span><span class="p">:</span> <a class="sphx-glr-backref-module-neofoam-io sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.BaseConfig"><span class="n">PassiveScalarConfig</span></a> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="w">
+</span>    <span class="n">D</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">D</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dimViscosity</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span><span class="w">
+</span>    <span class="n">sEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span>    <span class="n">sEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span>    <span class="k">return</span> <a class="sphx-glr-backref-module-neofoam-framework-context sphx-glr-backref-type-py-class reference internal" href="../reference/api/neofoam.framework.context.html#neofoam.framework.context.FieldUpdates" title="neofoam.framework.context.FieldUpdates"><span class="n">FieldUpdates</span></a><span class="p">(</span><span class="p">{</span><span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">s</span><span class="p">}</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="run-incompressiblefluid-on-the-bundled-case">
 <h2>Run incompressibleFluid on the bundled case<a class="headerlink" href="#run-incompressiblefluid-on-the-bundled-case" title="Link to this heading">¶</a></h2>
@@ -724,47 +744,45 @@ inlet BC to <code class="docutils literal notranslate"><span class="pre">fixedVa
 clear advection-diffusion front develops. We truncate the runtime
 so the figure captures the dye plume mid-flight rather than a
 domain that has equilibrated to s ≈ 1 everywhere.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">"passive_scalar_pitzDaily"</span><span class="p">)</span>
-<span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"passive_scalar_pitzDaily.foam"</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
-<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"blockMesh"</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="n">control_dict</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"controlDict"</span><span class="p">))</span>
-<span class="n">control_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"endTime"</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
-<span class="n">control_dict</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"system"</span> <span class="o">/</span> <span class="s2">"controlDict"</span><span class="p">))</span>
-
-<span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
-    <span class="n">run_incompressible</span><span class="p">([</span><span class="s2">"neofoam"</span><span class="p">])</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="n">case</span> <span class="o">=</span> <a class="sphx-glr-backref-module-neofoam-tutorial sphx-glr-backref-type-py-function reference internal" href="../reference/api/neofoam.tutorial.html#neofoam.tutorial.clone_case" title="neofoam.tutorial.clone_case"><span class="n">clone_case</span></a><span class="p">(</span><span class="s2">&quot;</span><span class="s2">passive_scalar_pitzDaily</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">passive_scalar_pitzDaily.foam</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">blockMesh</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">-case</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="p">]</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="n">control_dict</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">system</span><span class="s2">&quot;</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">controlDict</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="n">control_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">endTime</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span><span class="w">
+</span><span class="n">control_dict</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">system</span><span class="s2">&quot;</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">controlDict</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="p">:</span><span class="w">
+</span>    <span class="n">run_incompressible</span><span class="p">(</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">neofoam</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="plot-the-dye-field">
 <h2>Plot the dye field<a class="headerlink" href="#plot-the-dye-field" title="Link to this heading">¶</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"passive_scalar_pitzDaily.foam"</span><span class="p">))</span>
-
-<span class="n">pl</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">Plotter</span><span class="p">(</span><span class="n">off_screen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">360</span><span class="p">))</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">open_gif</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"passive_scalar.gif"</span><span class="p">),</span> <span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-
-<span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">"internalMesh"</span><span class="p">]</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">add_mesh</span><span class="p">(</span>
-    <span class="n">mesh</span><span class="p">,</span>
-    <span class="n">scalars</span><span class="o">=</span><span class="s2">"s"</span><span class="p">,</span>
-    <span class="n">cmap</span><span class="o">=</span><span class="s2">"magma"</span><span class="p">,</span>
-    <span class="n">clim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"s [-]"</span><span class="p">},</span>
-<span class="p">)</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">view_xy</span><span class="p">()</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">:</span>
-    <span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-    <span class="n">mesh</span><span class="o">.</span><span class="n">copy_from</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">"internalMesh"</span><span class="p">])</span>
-    <span class="n">pl</span><span class="o">.</span><span class="n">write_frame</span><span class="p">()</span>
-
-<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<img src="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" srcset="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" alt="example 02 passive scalar plugin" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 19.081 seconds)</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">passive_scalar_pitzDaily.foam</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="n">pl</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">Plotter</span><span class="p">(</span><span class="n">off_screen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">360</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">open_gif</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">passive_scalar.gif</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="p">)</span><span class="w">
+</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="p">)</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">internalMesh</span><span class="s2">&quot;</span><span class="p">]</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">add_mesh</span><span class="p">(</span><span class="w">
+</span>    <span class="n">mesh</span><span class="p">,</span><span class="w">
+</span>    <span class="n">scalars</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">magma</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="n">clim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;</span><span class="s2">title</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">s [-]</span><span class="s2">&quot;</span><span class="p">}</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">view_xy</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">:</span><span class="w">
+</span>    <span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="w">
+</span>    <span class="n">mesh</span><span class="o">.</span><span class="n">copy_from</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="p">)</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">internalMesh</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">)</span><span class="w">
+</span>    <span class="n">pl</span><span class="o">.</span><span class="n">write_frame</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
+<img src="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" srcset="../_images/sphx_glr_example_02_passive_scalar_plugin_001.gif" alt="example 02 passive scalar plugin" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 16.734 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-02-passive-scalar-plugin-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/950b58d46c511014879911267bc7ea71/example_02_passive_scalar_plugin.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_02_passive_scalar_plugin.ipynb</span></code></a></p>

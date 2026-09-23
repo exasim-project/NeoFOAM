@@ -11,7 +11,7 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=c83e6b79" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -227,13 +227,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../reference/project-layout.html">Project layout</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/build-and-test.html">Building and testing NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -520,11 +520,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-44" name="toctree-checkbox-44" role="switch" type="checkbox"/><label for="toctree-checkbox-44"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-45" name="toctree-checkbox-45" role="switch" type="checkbox"/><label for="toctree-checkbox-45"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -603,27 +629,25 @@ to download the full example code.</p>
 <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> solver and plot the final velocity field.</p>
 <section id="imports">
 <h2>Imports<a class="headerlink" href="#imports" title="Link to this heading">¶</a></h2>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">pyvista</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pv</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span><span class="w">
+</span><span class="w">
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">pyvista</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pv</span><span class="w">
+</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="nn">.</span><span class="nn">tutorial</span><span class="w"> </span><span class="kn">import</span> <a class="sphx-glr-backref-module-neofoam-tutorial sphx-glr-backref-type-py-function reference internal" href="../reference/api/neofoam.tutorial.html#neofoam.tutorial.clone_case" title="neofoam.tutorial.clone_case"><span class="n">clone_case</span></a><span class="w">
+</span></pre></div></div>
 </section>
 <section id="clone-the-bundled-case">
 <h2>Clone the bundled case<a class="headerlink" href="#clone-the-bundled-case" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">clone_case</span></code> copies the case to a fresh tempdir and restores
 <code class="docutils literal notranslate"><span class="pre">0.orig/</span></code> to <code class="docutils literal notranslate"><span class="pre">0/</span></code> (what <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> normally does). The
 <code class="docutils literal notranslate"><span class="pre">.foam</span></code> marker satisfies pyvista’s OpenFOAMReader at the end.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">case</span> <span class="o">=</span> <span class="n">clone_case</span><span class="p">(</span><span class="s2">"pitzDaily"</span><span class="p">)</span>
-<span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"pitzDaily.foam"</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"working copy: </span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>working copy: /tmp/neofoam_p2d66hc_/pitzDaily
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="n">case</span> <span class="o">=</span> <a class="sphx-glr-backref-module-neofoam-tutorial sphx-glr-backref-type-py-function reference internal" href="../reference/api/neofoam.tutorial.html#neofoam.tutorial.clone_case" title="neofoam.tutorial.clone_case"><span class="n">clone_case</span></a><span class="p">(</span><span class="s2">&quot;</span><span class="s2">pitzDaily</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">pitzDaily.foam</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="s2">working copy: </span><span class="si">{</span><span class="n">case</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>working copy: /tmp/neofoam__xnf_w98/pitzDaily
 </pre></div>
 </div>
 </section>
@@ -631,43 +655,40 @@ to download the full example code.</p>
 <h2>Generate the mesh<a class="headerlink" href="#generate-the-mesh" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">blockMesh</span></code> reads <code class="docutils literal notranslate"><span class="pre">system/blockMeshDict</span></code> and writes
 <code class="docutils literal notranslate"><span class="pre">constant/polyMesh/</span></code>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"blockMesh"</span><span class="p">,</span> <span class="s2">"-case"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">assert</span> <span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"constant"</span> <span class="o">/</span> <span class="s2">"polyMesh"</span> <span class="o">/</span> <span class="s2">"points"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">blockMesh</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">-case</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="p">]</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="w">
+</span><span class="k">assert</span> <span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">constant</span><span class="s2">&quot;</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">polyMesh</span><span class="s2">&quot;</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">points</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="run-the-solver">
 <h2>Run the solver<a class="headerlink" href="#run-the-solver" title="Link to this heading">¶</a></h2>
 <p>Equivalent to running <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span> <span class="pre">incompressiblefluid</span></code> from
 the shell — that CLI command calls the same <code class="docutils literal notranslate"><span class="pre">run</span></code> underneath.
 We <code class="docutils literal notranslate"><span class="pre">chdir</span></code> into the case the way an <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> script does.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">):</span>
-    <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"."</span><span class="p">])</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="p">:</span><span class="w">
+</span>    <span class="n">incompressibleFluid</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">.</span><span class="s2">&quot;</span><span class="p">]</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
 </section>
 <section id="plot-the-final-velocity-field">
 <h2>Plot the final velocity field<a class="headerlink" href="#plot-the-final-velocity-field" title="Link to this heading">¶</a></h2>
 <p>pyvista colours by the magnitude of <code class="docutils literal notranslate"><span class="pre">U</span></code> automatically. A
 flat-blue plot or zero-range colour bar would mean the solve
 didn’t produce data — re-check the log in that case.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">"pitzDaily.foam"</span><span class="p">))</span>
-<span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">()[</span><span class="s2">"internalMesh"</span><span class="p">]</span>
-
-<span class="n">pl</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">Plotter</span><span class="p">(</span><span class="n">off_screen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">360</span><span class="p">))</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">add_mesh</span><span class="p">(</span>
-    <span class="n">mesh</span><span class="p">,</span>
-    <span class="n">scalars</span><span class="o">=</span><span class="s2">"U"</span><span class="p">,</span>
-    <span class="n">cmap</span><span class="o">=</span><span class="s2">"viridis"</span><span class="p">,</span>
-    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">"title"</span><span class="p">:</span> <span class="s2">"|U| [m/s]"</span><span class="p">},</span>
-<span class="p">)</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">view_xy</span><span class="p">()</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span>
-<span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<img src="../_images/sphx_glr_example_01_run_incompressible_fluid_001.png" srcset="../_images/sphx_glr_example_01_run_incompressible_fluid_001.png" alt="example 01 run incompressible fluid" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (1 minutes 5.594 seconds)</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="n">reader</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">OpenFOAMReader</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">pitzDaily.foam</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="n">reader</span><span class="o">.</span><span class="n">set_active_time_value</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">time_values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="p">)</span><span class="w">
+</span><span class="n">mesh</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="p">)</span><span class="p">[</span><span class="s2">&quot;</span><span class="s2">internalMesh</span><span class="s2">&quot;</span><span class="p">]</span><span class="w">
+</span><span class="w">
+</span><span class="n">pl</span> <span class="o">=</span> <span class="n">pv</span><span class="o">.</span><span class="n">Plotter</span><span class="p">(</span><span class="n">off_screen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">(</span><span class="mi">900</span><span class="p">,</span> <span class="mi">360</span><span class="p">)</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">add_mesh</span><span class="p">(</span><span class="w">
+</span>    <span class="n">mesh</span><span class="p">,</span><span class="w">
+</span>    <span class="n">scalars</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">U</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">viridis</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="n">scalar_bar_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;</span><span class="s2">title</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">|U| [m/s]</span><span class="s2">&quot;</span><span class="p">}</span><span class="p">,</span><span class="w">
+</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">view_xy</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">camera</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="mf">1.2</span><span class="p">)</span><span class="w">
+</span><span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span></pre></div></div>
+<img src="../_images/sphx_glr_example_01_run_incompressible_fluid_001.png" srcset="../_images/sphx_glr_example_01_run_incompressible_fluid_001.png" alt="example 01 run incompressible fluid" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 58.974 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-01-run-incompressible-fluid-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/567a31588cbccfdd72c8d71a21dfbe44/example_01_run_incompressible_fluid.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_01_run_incompressible_fluid.ipynb</span></code></a></p>
