@@ -3,8 +3,8 @@
 
 """Tests for the JSON-schema form helpers (``neofoam.io.pydantic_schema``).
 
-Pure pydantic/dict manipulation — no marimo, no OpenFOAM. Uses small local
-models that reproduce the shapes the case notebooks render: a discriminated
+Pure pydantic/dict manipulation — no UI, no OpenFOAM. Uses small local
+models that reproduce the shapes the case forms render: a discriminated
 union (``oneOf``/``anyOf`` + a ``const`` discriminator), a nested union, and a
 patch dict via ``additionalProperties``.
 """

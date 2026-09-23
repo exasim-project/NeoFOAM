@@ -14,10 +14,10 @@ from neofoam.framework.validation.checks import (
     check_boussinesq_gravity,
     check_constraint_patches,
     check_div_scheme,
-    check_gamg_smoother,
     check_laminar_wall_functions,
     check_pimple_final,
     check_required_files,
+    check_solver_companion,
 )
 from neofoam.mcp.registry import resolve_solver
 from neofoam.tools import snappy_hex_mesh
@@ -76,6 +76,66 @@ def test_pimple_final_flags_a_grouped_field_missing_its_final(
     assert [f.message for f in findings] == ["PIMPLE needs a 'kFinal' solver entry (missing)"]
 
 
+def test_pimple_final_skips_a_steady_simple_case(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # A SIMPLE case has no final outer iteration, so its solvers need no Final entry:
+    # the shipped neoSimpleFoam tutorials declare none and must still validate.
+    solvers = {
+        "p": {"solver": checks_mod.Value(text="GAMG")},
+        "U": {"solver": checks_mod.Value(text="smoothSolver")},
+    }
+    monkeypatch.setattr(checks_mod, "read_section", lambda path, section: solvers)
+    monkeypatch.setattr(checks_mod, "read_keys", lambda path: frozenset({"SIMPLE"}))
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    assert check_pimple_final(_ctx(tmp_path)) == []
+
+
+def test_pimple_final_checks_a_piso_case(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    # PISO selects the Final settings on every iteration, so it needs them too.
+    monkeypatch.setattr(
+        checks_mod,
+        "read_section",
+        lambda path, section: {"U": {"solver": checks_mod.Value(text="smoothSolver")}},
+    )
+    monkeypatch.setattr(checks_mod, "read_keys", lambda path: frozenset({"PISO"}))
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    findings = check_pimple_final(_ctx(tmp_path))
+    assert [f.message for f in findings] == ["PIMPLE needs a 'UFinal' solver entry (missing)"]
+
+
+def test_pimple_final_still_checks_a_case_with_no_control_block(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Only a declared SIMPLE case is exempt. An fvSolution that names no algorithm is
+    # not evidence of a steady run, so the check stays on rather than passing silently.
+    monkeypatch.setattr(
+        checks_mod,
+        "read_section",
+        lambda path, section: {"U": {"solver": checks_mod.Value(text="smoothSolver")}},
+    )
+    monkeypatch.setattr(checks_mod, "read_keys", lambda path: frozenset({"solvers"}))
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    findings = check_pimple_final(_ctx(tmp_path))
+    assert [f.message for f in findings] == ["PIMPLE needs a 'UFinal' solver entry (missing)"]
+
+
+def test_pimple_final_errors_when_fv_solution_is_corrupt(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # couldn't-check ⇒ error: an fvSolution that will not parse must not read as
+    # "no control block" and skip the check silently.
+    monkeypatch.setattr(
+        checks_mod, "read_keys", lambda path: checks_mod.Unreadable(reason="corrupt")
+    )
+    # Pinned, so the escalation can only come from the fvSolution read under test and
+    # not from the Boussinesq helper (which reads through read_keys as well).
+    monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
+    findings = check_pimple_final(_ctx(tmp_path))
+    assert [f.level for f in findings] == ["error"]
+    assert "could not read the control block (corrupt)" in findings[0].message
+
+
 # -- couldn't-check ⇒ error at the three ported read sites ---------------------
 
 
@@ -87,7 +147,7 @@ def test_gamg_check_errors_when_solver_leaf_unreadable(
         "read_section",
         lambda path, section: {"p": {"solver": checks_mod.Unreadable(reason="not a name")}},
     )
-    findings = check_gamg_smoother(_ctx(tmp_path))
+    findings = check_solver_companion(_ctx(tmp_path))
     assert findings and findings[0].level == "error"
     assert "could not be read" in findings[0].message
 
@@ -301,9 +361,27 @@ def test_laminar_errors_when_turbulence_unreadable(
 
 def test_gamg_check_flags_a_gamg_solver_without_a_smoother() -> None:
     pytest.importorskip("pybFoam")
-    findings = check_gamg_smoother(_ctx(CASES / "gamg_no_smoother"))
+    findings = check_solver_companion(_ctx(CASES / "gamg_no_smoother"))
     assert [f.level for f in findings] == ["error"]
     assert "is GAMG but has no smoother" in findings[0].message
+
+
+@pytest.mark.parametrize(
+    ("case", "messages"),
+    [
+        ("pcg_no_preconditioner", ["solver 'p' is PCG but has no preconditioner"]),
+        ("smooth_no_smoother", ["solver 'U' is smoothSolver but has no smoother"]),
+        # A solver OpenFOAM does not ship (a plugin) takes keys this check cannot know.
+        ("unknown_solver", []),
+        ("nested_preconditioner", []),
+    ],
+)
+def test_solver_companion_check_flags_a_missing_companion_key(
+    case: str, messages: list[str]
+) -> None:
+    findings = check_solver_companion(_ctx(CASES / case))
+    assert [f.message for f in findings] == messages
+    assert all(f.level == "error" for f in findings)
 
 
 def test_div_check_warns_on_an_unbounded_scheme() -> None:

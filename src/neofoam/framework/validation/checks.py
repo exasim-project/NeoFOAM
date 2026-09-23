@@ -26,6 +26,7 @@ from neofoam.io.dictread import (
     Leaf,
     Unreadable,
     Value,
+    foam_case,
     read_entry,
     read_keys,
     read_section,
@@ -36,12 +37,13 @@ from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
 __all__ = [
+    "SOLVER_COMPANION",
     "mesh_patch_types",
     "is_boussinesq",
     "turbulence_type",
     "check_required_files",
     "check_constraint_patches",
-    "check_gamg_smoother",
+    "check_solver_companion",
     "check_pimple_final",
     "check_boussinesq_gravity",
     "check_laminar_wall_functions",
@@ -296,8 +298,22 @@ def check_constraint_patches(ctx: CaseContext) -> list[Finding]:
     return findings
 
 
-def check_gamg_smoother(ctx: CaseContext) -> list[Finding]:
-    """A GAMG solver needs a smoother; an unreadable solver type is an error."""
+# The key OpenFOAM looks up next to ``solver`` in a linear-solver block, and aborts
+# without: a Krylov solver takes a preconditioner, a smoothing one a smoother. These
+# are the OpenFOAM solvers the NeoN backend maps too; a solver not listed (a plugin
+# such as ``Ginkgo``) is not checked.
+SOLVER_COMPANION = {
+    "PCG": "preconditioner",
+    "PBiCGStab": "preconditioner",
+    "PBiCG": "preconditioner",
+    "smoothSolver": "smoother",
+    "GAMG": "smoother",
+}
+_COMPANION_EXAMPLE = {"preconditioner": "DIC", "smoother": "GaussSeidel"}
+
+
+def check_solver_companion(ctx: CaseContext) -> list[Finding]:
+    """A linear solver needs its preconditioner or smoother; an unreadable type is an error."""
     findings: list[Finding] = []
     solvers = read_section(ctx.case / "system" / "fvSolution", "solvers")
     for name, entry in solvers.items():
@@ -310,12 +326,13 @@ def check_gamg_smoother(ctx: CaseContext) -> list[Finding]:
         if err is not None:
             findings.append(err)
             continue
-        if solver_text == "GAMG" and "smoother" not in entry:
+        companion = SOLVER_COMPANION.get(solver_text or "")
+        if companion is not None and companion not in entry:
             findings.append(
                 _error(
                     "system/fvSolution",
-                    f"solver '{name}' is GAMG but has no smoother",
-                    fix=f"add a smoother to '{name}' (e.g. GaussSeidel)",
+                    f"solver '{name}' is {solver_text} but has no {companion}",
+                    fix=f"add a {companion} to '{name}' (e.g. {_COMPANION_EXAMPLE[companion]})",
                 )
             )
     return findings
@@ -336,16 +353,38 @@ def _expand_group(name: str) -> list[str]:
     return [stripped] if stripped else []
 
 
+# The control blocks whose final outer iteration makes ``fvMatrix::solve`` select the
+# ``Final`` solver settings. Only a case declaring SIMPLE and neither of these is
+# exempt: an undeclared algorithm stays checked rather than silently passing.
+_FINAL_ITERATION_BLOCKS = frozenset({"PIMPLE", "PISO"})
+
+
 def check_pimple_final(ctx: CaseContext) -> list[Finding]:
     """Every solved field needs a ``<field>Final`` entry — grouped keys expanded.
+
+    Skipped for a steady case — one whose ``system/fvSolution`` declares SIMPLE and
+    neither PIMPLE nor PISO. ``Final`` settings exist for the final outer iteration and
+    a steady run has none, so demanding them there false-fails every steady case.
 
     Base and Final solver keys are expanded to individual fields, so a grouped base
     ``"(U|k|epsilon)"`` is satisfied by per-field ``UFinal``/``kFinal``/``epsilonFinal``
     (or a grouped ``"(U|k|epsilon)Final"``) — no literal-string false-fail. In a
     Boussinesq case the vestigial ``p`` solver (never solved; p_rgh is) needs no Final.
     """
+    fv_solution = ctx.case / "system" / "fvSolution"
+    keys = read_keys(fv_solution)
+    if isinstance(keys, Unreadable):
+        return [
+            _error(
+                "system/fvSolution",
+                f"could not read the control block ({keys.reason})",
+                fix="ensure system/fvSolution parses",
+            )
+        ]
+    if keys is not None and "SIMPLE" in keys and keys.isdisjoint(_FINAL_ITERATION_BLOCKS):
+        return []
     findings: list[Finding] = []
-    solvers = read_section(ctx.case / "system" / "fvSolution", "solvers")
+    solvers = read_section(fv_solution, "solvers")
     buoyant, err = _boussinesq_or_error(ctx.case)
     if err is not None:
         return [err]
@@ -454,7 +493,7 @@ def default_registry() -> CheckRegistry:
     reg = CheckRegistry()
     reg.add("required-files", check_required_files)
     reg.add("constraint-patches", check_constraint_patches)
-    reg.add("gamg-smoother", check_gamg_smoother)
+    reg.add("solver-companion", check_solver_companion)
     reg.add("pimple-final", check_pimple_final)
     reg.add("boussinesq-gravity", check_boussinesq_gravity)
     reg.add("laminar-wall-functions", check_laminar_wall_functions)
@@ -463,6 +502,11 @@ def default_registry() -> CheckRegistry:
 
 
 def validate(solver: Any, case_dir: Union[Path, str]) -> ValidationReport:
-    """Run the default check registry over ``case_dir`` → a :class:`ValidationReport`."""
+    """Run the default check registry over ``case_dir`` → a :class:`ValidationReport`.
+
+    Under ``$FOAM_CASE``, so a check reading a dict that uses an OpenFOAM path tag
+    (``<system>``, as ``snappyHexMeshDict.cfg`` does) resolves it against this case.
+    """
     ctx = CaseContext(case=Path(case_dir), solver=solver)
-    return default_registry().run(ctx)
+    with foam_case(case_dir):
+        return default_registry().run(ctx)

@@ -240,6 +240,13 @@ def test_incompressible_fluid_models_required_vs_optional() -> None:
     assert cat["maxDeltaT"].required is False
 
 
+def test_incompressible_fluid_lists_a_field_both_algorithms_declare_once() -> None:
+    """Pimple and Simple each declare ``0/U`` and ``0/p``; only one of them runs."""
+    names = configurations(incompressibleFluid).names
+
+    assert (names.count("UFieldConfig"), names.count("pFieldConfig")) == (1, 1)
+
+
 def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
     cat = {e.name: e for e in model_catalog(incompressibleFluid)}
     bouss = cat["boussinesq"]

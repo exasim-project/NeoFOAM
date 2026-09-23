@@ -6,8 +6,10 @@ repos:
       # formatting and the captured solver log_tails are the record. Reformatting
       # or spell-correcting them rewrites what they exist to preserve.
       - id: check-yaml
+      # jsonforms_module/static/ is Vite build output: the committed bytes must equal
+      # a rebuild (test_jsonforms_module.py compares them).
       - id: end-of-file-fixer
-        exclude: ^verification/baseline/.*\.json$
+        exclude: ^(verification/baseline/.*\.json|src/neofoam/ui/jsonforms_module/static/.*)$
       - id: trailing-whitespace
       - id: pretty-format-json
         args: [--autofix, --no-sort-keys]

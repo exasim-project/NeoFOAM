@@ -127,12 +127,16 @@ def configurations(solver: Any) -> Configurations:
     """The case-free config schema of ``solver`` as a :class:`Configurations`.
 
     Walks the solver's own declared configs and every member of every bound
-    model family (``solver.model_specs``), deduped by identity. Runs no
-    detection and needs no case directory.
+    model family (``solver.model_specs``), deduped by identity and by name: the
+    members of a pick-one family each declare the same ``0/U``, and only the
+    first is kept. Runs no detection and needs no case directory.
     """
     from neofoam.io import collect_config_classes  # noqa: PLC0415  # cycle: io->configs
 
-    classes = collect_config_classes([solver, *solver.model_specs])
+    by_name: dict[str, type] = {}
+    for cls in collect_config_classes([solver, *solver.model_specs]):
+        by_name.setdefault(cls.__name__, cls)
+    classes = list(by_name.values())
     return Configurations(solver=solver, classes=cast("list[type[BaseConfig]]", classes))
 
 

@@ -5,41 +5,39 @@
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, BeforeValidator, Discriminator, Field, model_serializer
+from pydantic import BeforeValidator, Discriminator, Field
+
+from ._variant import SchemeVariant
 
 # -- Variants ----------------------------------------------------------------
 
 
-class Corrected(BaseModel):
+class Corrected(SchemeVariant):
     type: Literal["corrected"] = "corrected"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class Uncorrected(BaseModel):
+class Uncorrected(SchemeVariant):
     type: Literal["uncorrected"] = "uncorrected"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class Orthogonal(BaseModel):
+class Orthogonal(SchemeVariant):
     type: Literal["orthogonal"] = "orthogonal"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class LimitedSnGrad(BaseModel):
+class LimitedSnGrad(SchemeVariant):
     type: Literal["limited"] = "limited"
     coefficient: float = Field(gt=0, le=1)
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return f"limited {self.coefficient:g}"
 
 

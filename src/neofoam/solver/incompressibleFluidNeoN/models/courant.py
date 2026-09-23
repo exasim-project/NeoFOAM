@@ -46,7 +46,11 @@ class CourantConfig(BaseConfig):
     maxCo: float = Field(gt=0.0)
 
 
-courant = Model("courant").register_with(incompressibleFluidNeoNModel)
+courant = (
+    Model("courant")
+    .register_with(incompressibleFluidNeoNModel)
+    .labeled("Adaptive time step (Courant)")
+)
 courant.config(CourantConfig)
 
 

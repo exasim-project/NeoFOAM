@@ -7,7 +7,7 @@ from typing import Optional
 
 import typer
 
-from neofoam.agent import build_case_agent, fill_case, write_wizard_notebook
+from neofoam.agent import build_case_agent, fill_case
 from neofoam.solver.icofoam import IcoFoam
 from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
 from neofoam.solver.incompressibleFluidNeoN import run as run_neon
@@ -175,33 +175,6 @@ def agent_fill(
     typer.echo(f"Wrote configs to {target}: {', '.join(written)}")
 
 
-@agent_app.command("wizard")
-def agent_wizard(
-    target: str = typer.Argument(
-        ".", help="Directory to scaffold the wizard notebook into (default: cwd)."
-    ),
-    name: str = typer.Option("case_wizard.py", "--name", help="Notebook file name to write."),
-    force: bool = typer.Option(False, "--force", help="Overwrite an existing notebook file."),
-) -> None:
-    """Scaffold a marimo *case wizard* notebook into TARGET.
-
-    Writes a self-contained notebook that renders the ``incompressibleFluid``
-    configs as forms (Models / Schemes / BCs / Initial values) with an AI chat
-    that fills and saves the case. The notebook operates on the directory it is
-    written to, so run it from there::
-
-        neofoam agent wizard my_case
-        marimo edit my_case/case_wizard.py
-    """
-    try:
-        path = write_wizard_notebook(target, filename=name, force=force)
-    except FileExistsError as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(code=1) from exc
-    typer.echo(f"Wrote case wizard to {path}")
-    typer.echo(f"Run it with:  marimo edit {path}")
-
-
 @solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def icofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow of Newtonian fluids."""
@@ -289,6 +262,42 @@ def preprocess(case: Path) -> None:
     from neofoam.tools.run import run_preprocess  # noqa: PLC0415
 
     run_preprocess([sys.argv[0], "-case", str(case)])
+
+
+@app.command("ui")
+def ui(
+    port: int = typer.Option(8080, "--port", help="Port to serve the wizard on."),
+    host: str = typer.Option("localhost", "--host", help="Bind host."),
+    solver: str = typer.Option(
+        "incompressibleFluid", "--solver", help="Solver whose configs to edit."
+    ),
+    no_browser: bool = typer.Option(
+        False, "--no-browser", help="Do not open a web browser on launch."
+    ),
+) -> None:
+    """Launch the interactive case-wizard web UI (trame + JSONForms).
+
+    A browser wizard: pick models on the left, fill the JSON-schema forms (or use
+    the AI chat on the right), then Save to write a runnable case (with
+    ``Allrun``/``Allclean``) and validate it. Needs the ``ui`` extra::
+
+        pip install 'neofoam\\[ui]'
+        neofoam ui --port 8080
+    """
+    # Imported at call time so the CLI works without the optional 'ui' extra.
+    from neofoam.ui import build_app  # noqa: PLC0415
+
+    try:
+        server = build_app(solver_name=solver)
+    except ImportError as exc:  # pragma: no cover - only without the 'ui' extra
+        typer.echo(
+            "The case-wizard UI needs the 'ui' extra:  pip install 'neofoam[ui]'",
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"NeoFOAM case wizard → http://{host}:{port}/")
+    server.start(host=host, port=port, open_browser=not no_browser)
 
 
 if __name__ == "__main__":

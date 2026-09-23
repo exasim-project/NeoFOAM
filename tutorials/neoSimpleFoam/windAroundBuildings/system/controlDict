@@ -16,7 +16,9 @@ FoamFile
 
 application     neoSimpleFoam;
 
-startFrom       latestTime;
+startFrom       startTime;
+
+executor        CPU;
 
 startTime       0;
 
@@ -28,11 +30,11 @@ deltaT          1;
 
 writeControl    timeStep;
 
-writeInterval   50;
+writeInterval   1;
 
 purgeWrite      0;
 
-writeFormat     binary;
+writeFormat     ascii;
 
 writePrecision  6;
 
@@ -46,8 +48,6 @@ runTimeModifiable true;
 
 functions
 {
-    #include "ensightWrite"
-    #include "vtkWrite"
 
     // Demonstrate runTimePostProcessing
     #include "visualization"

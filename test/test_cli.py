@@ -27,3 +27,8 @@ def test_cli_mcp_help() -> None:
 def test_cli_mcp_serve_help_lists_host_and_port() -> None:
     out = _help("mcp", "serve", "--help")
     assert "--host" in out and "--port" in out
+
+
+def test_cli_ui_help_shows_the_ui_extra() -> None:
+    out = _help("ui", "--help")
+    assert "neofoam[ui]" in out

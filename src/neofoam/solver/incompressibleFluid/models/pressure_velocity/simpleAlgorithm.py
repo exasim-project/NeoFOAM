@@ -181,7 +181,7 @@ def inner_loop(ctx: Context) -> bool:
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
 )
-@SimpleFvSolution.add("U")
+@SimpleFvSolution.add("U", final_required=False)
 def momentum(
     U: volVectorField,
     phi: surfaceScalarField,
@@ -224,7 +224,7 @@ def momentum(
     interpolation=["flux(HbyA)", "interpolate((1|A(U)))"],
     snGrad="snGrad(p)",
 )
-@SimpleFvSolution.add("p")
+@SimpleFvSolution.add("p", final_required=False)
 def continuity(
     U: volVectorField,
     p: volScalarField,

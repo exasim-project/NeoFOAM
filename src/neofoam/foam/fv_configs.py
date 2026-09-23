@@ -24,10 +24,20 @@ is per-subclass and per-section.
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar, Optional
+from typing import Annotated, Any, Callable, ClassVar, Optional
 
-from pydantic import ConfigDict, Field, create_model, model_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    ValidatorFunctionWrapHandler,
+    WithJsonSchema,
+    WrapValidator,
+    create_model,
+    model_validator,
+)
 from pydantic.fields import FieldInfo
+from typing_extensions import TypedDict
 
 from neofoam.foam.schemes import (
     Corrected,
@@ -58,6 +68,9 @@ _SCHEMES_SECTIONS: dict[str, tuple[str, Any]] = {
     "snGrad": ("snGradSchemes", SnGradScheme),
     "interpolation": ("interpolationSchemes", InterpolationScheme),
 }
+
+#: Section name → value type, for the entries of a section no operation declared.
+_SCHEME_TYPE_BY_SECTION: dict[str, Any] = dict(_SCHEMES_SECTIONS.values())
 
 
 def _sanitize_name(s: str) -> str:
@@ -113,9 +126,11 @@ def _expand_default(cls: type, data: Any) -> Any:
     default_value = data["default"]
     # ``default none`` is OpenFOAM's *sentinel* — "no default; an unlisted operator
     # is an error" — not a value to fill with. Expanding it would fabricate an
-    # invalid ``none`` scheme; leave the required keys missing so the real gap shows.
+    # invalid ``none`` scheme; leave the required keys missing so the real gap shows —
+    # a declared ``default`` too, which the sentinel would fail as a value.
     if isinstance(default_value, str) and default_value.strip() == "none":
-        return data
+        declared = "default" in cls.model_fields  # type: ignore[attr-defined]
+        return {k: v for k, v in data.items() if k != "default"} if declared else data
     out = dict(data)
     for name, field_info in cls.model_fields.items():  # type: ignore[attr-defined]
         alias = field_info.alias or name
@@ -132,6 +147,27 @@ def _expand_default(cls: type, data: Any) -> Any:
 _EXPAND_DEFAULT_VALIDATOR: Any = model_validator(mode="before")(
     classmethod(_expand_default)  # type: ignore[arg-type]
 )
+
+
+def _tokenize_extras_validator(scheme_type: Any) -> Any:
+    """Before-validator that turns a structured undeclared entry into its OpenFOAM token."""
+    adapter: TypeAdapter[Any] = TypeAdapter(scheme_type)
+
+    def _tokenize_extras(cls: type, data: Any) -> Any:
+        # An undeclared key bypasses the typed fields, so a form-shaped scheme
+        # (``{"type": "Gauss", ...}``) would otherwise be written as a sub-dict.
+        if not isinstance(data, dict):
+            return data
+        fields = cls.model_fields  # type: ignore[attr-defined]
+        declared = set(fields) | {info.alias for info in fields.values()}
+        return {
+            key: adapter.validate_python(value).openfoam_str()
+            if isinstance(value, dict) and key not in declared
+            else value
+            for key, value in data.items()
+        }
+
+    return model_validator(mode="before")(classmethod(_tokenize_extras))  # type: ignore[arg-type]
 
 
 def _rebuild_sections(cls: type) -> None:
@@ -153,12 +189,17 @@ def _rebuild_sections(cls: type) -> None:
                 )
             else:
                 field_defs[attr] = (value_type, Field(alias=alias))
+        validators = {"_expand_default": _EXPAND_DEFAULT_VALIDATOR}
+        if section_name in _SCHEME_TYPE_BY_SECTION:
+            validators["_tokenize_extras"] = _tokenize_extras_validator(
+                _SCHEME_TYPE_BY_SECTION[section_name]
+            )
         fresh = create_model(
             f"_{section_name}",
             __config__=ConfigDict(extra="allow", populate_by_name=True),
             # Attach the ``default``-expansion before-validator to the synthesized
             # section model so a tutorial that leans on ``default`` round-trips.
-            __validators__={"_expand_default": _EXPAND_DEFAULT_VALIDATOR},
+            __validators__=validators,
             **field_defs,
         )
         cls.model_fields[section_name] = FieldInfo(  # type: ignore[attr-defined]
@@ -244,6 +285,41 @@ def _canonical_solver(alias: str) -> dict[str, Any]:
         "tolerance": 1e-08,
         "relTol": 0.0 if is_final else 0.1,
     }
+
+
+# ---------------------------------------------------------------------------
+# Linear-solver block
+# ---------------------------------------------------------------------------
+
+
+class _SolverControls(TypedDict, total=False):
+    """One ``solvers.<field>`` block: the standard numeric controls, typed.
+
+    A dict, not a model: every other key (``solver``, ``smoother``, ``nSweeps``, the
+    isoAdvector controls, a nested ``preconditioner``) stays in it as read.
+    """
+
+    __pydantic_config__ = ConfigDict(extra="allow")  # type: ignore[misc]
+
+    tolerance: float
+    relTol: float
+    maxIter: int
+    minIter: int
+
+
+def _in_file_order(block: Any, handler: ValidatorFunctionWrapHandler) -> dict[str, Any]:
+    """The validated block in the key order it came in: it is written back in dump order."""
+    typed = handler(block)
+    return {key: typed[key] for key in block}
+
+
+# Published as the open dictionary it is on disk: the wizard's form pins a block's keys
+# itself and recognises a block by its declaring none (``form_schema``).
+SolverControls = Annotated[
+    _SolverControls,
+    WrapValidator(_in_file_order),
+    WithJsonSchema({"type": "object", "additionalProperties": True}),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -360,20 +436,25 @@ class fvSolution(BaseConfig):
         return out or None
 
     @classmethod
-    def add(cls, *fields: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def add(
+        cls, *fields: str, final_required: bool = True
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Declare solver entries the operation needs.
 
         Each ``field`` adds a typed entry under ``solvers.<field>`` plus its
         ``solvers.<field>Final`` companion: on the final (in PISO mode:
         every) outer iteration ``fvMatrix::solve`` selects the ``Final``
-        solver settings, so OpenFOAM requires both dictionaries. Today the
-        value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a
-        richer typed solver-control model is a follow-up. The presence
-        check alone catches the most common case-misconfiguration failures.
+        solver settings, so OpenFOAM requires both dictionaries. The value
+        is a :data:`SolverControls` dict: its numeric controls load as
+        numbers, every other key as read.
+        A steady (SIMPLE) slice has no final outer iteration: it passes
+        ``final_required=False`` so a case without ``Final`` entries loads.
         """
         for field_name in fields:
-            _register_entry(cls, "solvers", field_name, dict)
-            _register_entry(cls, "solvers", f"{field_name}Final", dict)
+            _register_entry(cls, "solvers", field_name, SolverControls)
+            _register_entry(
+                cls, "solvers", f"{field_name}Final", SolverControls, optional=not final_required
+            )
         _rebuild_sections(cls)
 
         def _decorator(fn: Callable[..., Any]) -> Callable[..., Any]:

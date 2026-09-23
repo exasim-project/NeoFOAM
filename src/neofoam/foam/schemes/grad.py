@@ -5,32 +5,31 @@
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, BeforeValidator, Discriminator, Field, model_serializer
+from pydantic import BeforeValidator, Discriminator, Field
 
+from ._variant import OPENFOAM_CONTEXT, SchemeVariant
 from .interpolation import InterpolationScheme
 
 # -- Variants ----------------------------------------------------------------
 
 
-class GaussGrad(BaseModel):
+class GaussGrad(SchemeVariant):
     type: Literal["Gauss"] = "Gauss"
     interpolation: InterpolationScheme
 
-    @model_serializer
-    def serialize(self) -> str:
-        interp = self.interpolation.model_dump(mode="python")
+    def openfoam_str(self) -> str:
+        interp = self.interpolation.model_dump(mode="python", context=OPENFOAM_CONTEXT)
         return f"Gauss {interp}"
 
 
-class LeastSquaresGrad(BaseModel):
+class LeastSquaresGrad(SchemeVariant):
     type: Literal["pointCellsLeastSquares"] = "pointCellsLeastSquares"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class CellLimitedGrad(BaseModel):
+class CellLimitedGrad(SchemeVariant):
     """``cellLimited <inner grad scheme> <k>`` — minmod slope limiter on an inner scheme."""
 
     type: Literal["cellLimited"] = "cellLimited"
@@ -39,9 +38,8 @@ class CellLimitedGrad(BaseModel):
     # admissible cell range by (1/k - 1)*(max - min)).
     coefficient: float = Field(ge=0, le=1)
 
-    @model_serializer
-    def serialize(self) -> str:
-        inner = self.inner_scheme.model_dump(mode="python")
+    def openfoam_str(self) -> str:
+        inner = self.inner_scheme.model_dump(mode="python", context=OPENFOAM_CONTEXT)
         return f"cellLimited {inner} {self.coefficient:g}"
 
 

@@ -3,7 +3,7 @@
 
 """Wire ``incompressibleFluid`` configs to/from JSON-schema form values.
 
-Bridges the form data the case notebooks collect (or the AI agent produces) and
+Bridges the form data the case wizard collects (or the AI agent produces) and
 the per-field split the wizard uses — a field config's ``internalField`` lives
 on the *Initial values* tab while its ``boundaryField`` lives on the *BCs* tab.
 

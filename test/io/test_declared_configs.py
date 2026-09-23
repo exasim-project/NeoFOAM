@@ -54,8 +54,6 @@ _EXPECTED: dict[str, set[str]] = {
         # … and the algorithm blocks those slices pass through untyped
         "PimpleAlgorithmConfig",
         "DynamicMeshControls",
-        "PisoAlgorithmConfig",
-        "PisoDynamicMeshControls",
         "SimpleAlgorithmConfig",
         # transport + turbulence, closure coefficients included
         "TransportPropertiesConfig",

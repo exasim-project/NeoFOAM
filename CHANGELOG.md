@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Remove the marimo case wizard and its `neofoam agent wizard` command; the trame case wizard (`neofoam ui`, `ui` extra) replaces it [#408](https://github.com/exasim-project/NeoFOAM/pull/408)
 - Fix the bundled `pitzDaily_steady` tutorial: plain SIMPLE (`consistent no`) needs pressure-field relaxation (`fields { p 0.3; }`), without which the case diverges in native simpleFoam as well; the steady simpleFoam-parity test now passes [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
 - Make incompressibleFluid and incompressibleVoF OpenFOAM-faithful: loop control and time stepping, turbulence selection, MRF/fvOptions support, pressure reference handling and prev-iteration relaxation (requires pybFoam >= 0.5.3) [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
 - Add extension points to the pressure-velocity algorithms so models (MRF, fvOptions) contribute momentum terms and pressure constraints declaratively; migrate incompressibleVoF to the same mechanism [#385](https://github.com/exasim-project/NeoFOAM/pull/385)

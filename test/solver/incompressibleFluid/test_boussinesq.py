@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""GravityConfig — the ``constant/g`` the Boussinesq buoyancy build reads at init."""
+"""The Boussinesq model's own configs: ``constant/g`` and its fvSchemes/fvSolution keys.
+
+The buoyant momentum/pressure variants live in the PIMPLE algorithm file, but the
+entries only they read (``rhok`` / ``p_rgh``) belong to the Boussinesq slices, so a
+non-buoyant case is neither asked for them nor written with them.
+"""
 
 from pathlib import Path
 
@@ -53,3 +58,50 @@ def test_gravity_config_openfoam_parses_written_file(tmp_path: Path) -> None:
     root = pyf.dictionary.read(str(tmp_path / "constant" / "g"))
     assert str(root.get[str]("dimensions")) == "[ 0 1 -2 0 0 0 0 ]"
     assert str(root.get[str]("value")) == "( 0 -9.81 0 )"
+
+
+def _default_keys(*config_names: str) -> dict[str, set[str]]:
+    """The entry names per section in the merged form defaults of *config_names*."""
+    cfg = configurations(incompressibleFluid)
+    keys: dict[str, set[str]] = {}
+    for name in config_names:
+        for section, entries in (cfg[name].form_defaults() or {}).items():
+            keys.setdefault(section, set()).update(entries)
+    return keys
+
+
+@pytest.mark.parametrize("config_name", ["Pimple_fvSchemes", "Pimple_fvSolution"])
+def test_pimple_defaults_carry_no_buoyancy_keys(config_name: str) -> None:
+    names = {key for entries in _default_keys(config_name).values() for key in entries}
+    assert [key for key in names if "rhok" in key or "p_rgh" in key] == []
+
+
+def test_pimple_schemes_declare_the_initial_flux() -> None:
+    """``createPhi`` reads ``flux(U)`` in every PIMPLE case, so it is no sign of buoyancy."""
+    assert "flux(U)" in _default_keys("Pimple_fvSchemes")["interpolationSchemes"]
+
+
+def test_boussinesq_schemes_complete_the_buoyant_key_set() -> None:
+    assert _default_keys("Pimple_fvSchemes", "boussinesq_fvSchemes") == {
+        "ddtSchemes": {"ddt(U)", "default"},
+        "divSchemes": {"div(phi,U)", "div((nuEff*dev2(T(grad(U)))))", "div(phi,T)"},
+        "gradSchemes": {"grad(U)", "grad(p)", "grad(rhok)", "grad(p_rgh)", "grad(T)"},
+        "laplacianSchemes": {
+            "laplacian(nuEff,U)",
+            "laplacian(rAU,p)",
+            "laplacian(rAUf,p_rgh)",
+            "default",
+        },
+        "interpolationSchemes": {
+            "flux(HbyA)",
+            "interpolate(rAU)",
+            "dotInterpolate(S,U_0)",
+            "flux(U)",
+        },
+        "snGradSchemes": {"snGrad(p)", "snGrad(rhok)", "snGrad(p_rgh)"},
+    }
+
+
+def test_boussinesq_solution_completes_the_buoyant_solver_set() -> None:
+    solvers = _default_keys("Pimple_fvSolution", "boussinesq_fvSolution")["solvers"]
+    assert solvers == {"U", "UFinal", "p", "pFinal", "p_rgh", "p_rghFinal", "T", "TFinal"}

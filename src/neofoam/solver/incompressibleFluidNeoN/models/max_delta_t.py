@@ -26,7 +26,11 @@ class MaxDeltaTConfig(BaseConfig):
     maxDeltaT: float = Field(gt=0.0)
 
 
-maxDeltaT = Model("maxDeltaT").register_with(incompressibleFluidNeoNModel)
+maxDeltaT = (
+    Model("maxDeltaT")
+    .register_with(incompressibleFluidNeoNModel)
+    .labeled("Time step limit (maxDeltaT)")
+)
 maxDeltaT.config(MaxDeltaTConfig)
 
 

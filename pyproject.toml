@@ -43,9 +43,12 @@ dev = [
     "mypy",
     "pre-commit",
     "types-PyYAML",
+    # test/ui/test_browser_forms.py (opt-in, `-m browser`); the browser itself comes
+    # from `playwright install chromium`.
+    "playwright",
     # build deps needed in env when no-build-isolation is enabled
     "scikit-build-core[pyproject]>=0.11.0",
-    "nanobind>=2.9.0",
+    "nanobind>=3.0.1,<3.1",  # as in [build-system]
 ]
 docs = [
     "sphinx>=4.0",
@@ -98,6 +101,20 @@ telemetry = [
     # export is dependency-free, the summary bar chart needs matplotlib.
     "matplotlib>=3.5",
 ]
+ui = [
+    # Case-wizard UI: a trame app (server + vuetify3 layout) that renders each
+    # config's JSON schema as a NATIVE Vue form. The form component (JSONForms,
+    # @jsonforms/vue-vuetify — Vue3 + Vuetify3, live @change binding) is a
+    # CLIENT-side JS asset (Vite-built UMD, checked in under
+    # src/neofoam/ui/jsonforms_module/static/), not a Python dependency — there is
+    # no working trame<->anywidget bridge on PyPI, so the anywidget approach was
+    # dropped. pydantic-ai backs the AI prompt-fill step.
+    "trame",
+    "trame-vuetify",
+    # Node-editor canvas (VueFlow) for the Parameters sweep step.
+    "trame-flow>=2.2.2",
+    "pydantic-ai-slim[anthropic]>=0.0.40",
+]
 verification = [
     # verification/foam_tutorials: the OpenFOAM tutorial drop-in studies. Each
     # study now carries its own copy of the pipeline under its `rules/` (see
@@ -110,7 +127,7 @@ verification = [
     "snakemake>=8; python_version >= '3.11'",
 ]
 all = [
-    "neofoam[dev,docs,agent,mcp,telemetry,verification]",
+    "neofoam[dev,docs,agent,mcp,telemetry,ui,verification]",
 ]
 
 [project.scripts]
@@ -119,7 +136,9 @@ neofoam = "neofoam.cli.app:app"
 [build-system]
 requires = [
     "scikit-build-core[pyproject]>=0.11.0",
-    "nanobind>=2.9.0",
+    # One ABI (NB_INTERNALS_VERSION) with the libnanobind.so of the installed pybFoam,
+    # which the bindings resolve at run time: keep in step with pybFoam's build.
+    "nanobind>=3.0.1,<3.1",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -166,6 +185,7 @@ testpaths = [
 ]
 markers = [
     "slow: mesh-building tests (blockMesh/snappyHexMesh + checkMesh); deselect with -m 'not slow'",
+    "browser: drives the wizard in headless Chromium; opt-in, select with -m browser",
 ]
 
 [tool.mypy]

@@ -20,7 +20,14 @@ from typing import Annotated, Any, Protocol
 
 import pybFoam as pyf
 from pybFoam import fvm, surfaceScalarField, volScalarField
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializationInfo,
+    field_serializer,
+    field_validator,
+)
 
 from neofoam.fields import (
     AlphatWallFunctionBC,
@@ -121,12 +128,22 @@ class GravityConfig(BaseConfig):
             return [float(p) for p in value.strip().strip("()").split()]
         return [float(v) for v in value]
 
+    # ``dimensions`` keeps its bracket token unconditionally: the form deliberately
+    # renders a fixed units vector as one text field, not a growable spinner list
+    # (``ui.form_schema._dimensions_field``), exactly as the synthesised ``0/<field>`` schemas
+    # do (``fields.schema``). ``value`` is a real vector the form edits component-wise,
+    # so its paren token is opt-in via context={"format": "openfoam"} — dumped plain it
+    # contradicted the array the schema advertises and JSONForms rendered the string
+    # character by character.
+
     @field_serializer("dimensions", when_used="always")
     def _serialize_dimensions(self, value: list[int]) -> str:
         return "[" + " ".join(str(int(v)) for v in value) + "]"
 
     @field_serializer("value", when_used="always")
-    def _serialize_value(self, value: list[float]) -> str:
+    def _serialize_value(self, value: list[float], info: SerializationInfo) -> Any:
+        if (info.context or {}).get("format") != "openfoam":
+            return value
         return "(" + " ".join(_fmt_component(v) for v in value) + ")"
 
 

@@ -131,11 +131,33 @@ def test_fmt_component_drops_gratuitous_trailing_zero(component: float, expected
 
 def test_the_paren_strings_are_serialized_back_from_their_lists() -> None:
     """``_serialize_phases`` and ``_serialize_value`` (the latter through
-    ``_fmt_component``) are the inverses of their parsers."""
-    assert TransportPropertiesConfig(phases=["oil", "water"]).model_dump()["phases"] == (
-        "(oil water)"
+    ``_fmt_component``) are the inverses of their parsers.
+
+    The paren token is what a *case file* carries, so it is opt-in via
+    ``context={"format": "openfoam"}`` — the context both OpenFOAM write paths pass. A
+    plain dump keeps the list its JSON Schema advertises, for the form renderer.
+    """
+    openfoam = {"format": "openfoam"}
+    assert TransportPropertiesConfig(phases=["oil", "water"]).model_dump(context=openfoam)[
+        "phases"
+    ] == ("(oil water)")
+    assert (
+        GravityConfig(value=[0.0, -9.81, 2.5]).model_dump(context=openfoam)["value"]
+        == "(0 -9.81 2.5)"
     )
-    assert GravityConfig(value=[0.0, -9.81, 2.5]).model_dump()["value"] == "(0 -9.81 2.5)"
+
+
+def test_the_plain_dump_keeps_the_lists_the_schema_advertises() -> None:
+    """Ungated, the paren token contradicted ``model_json_schema()`` and the case wizard
+    rendered ``"(water air)"`` as one editable row per character."""
+    assert TransportPropertiesConfig(phases=["oil", "water"]).model_dump()["phases"] == [
+        "oil",
+        "water",
+    ]
+    assert GravityConfig(value=[0.0, -9.81, 2.5]).model_dump()["value"] == [0.0, -9.81, 2.5]
+    # ``dimensions`` stays a token in both dumps — the form renders the fixed units
+    # vector as one text field, so string is the shape its schema advertises there.
+    assert GravityConfig().model_dump()["dimensions"] == "[0 1 -2 0 0 0 0]"
 
 
 def test_control_dict_config_loads_interfoam_adaptive_stepping_from_real_case(

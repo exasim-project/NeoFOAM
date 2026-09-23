@@ -23,6 +23,7 @@ import pytest
 from pydantic import ValidationError
 
 from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam.schemes._variant import OPENFOAM_CONTEXT
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
 
@@ -221,6 +222,61 @@ def test_fvsolution_add_requires_the_final_variant() -> None:
         Sub.model_validate({"solvers": {"U": {"solver": "PBiCG"}}})
 
 
+def test_fvsolution_add_can_leave_the_final_variant_optional() -> None:
+    """A steady (SIMPLE) slice has no final outer iteration, so no Final solver."""
+    spec = Model("FvSolutionOptionalFinal")
+    Sub = spec.config(fvSolution)
+    Sub.add("U", final_required=False)
+
+    inst = Sub.model_validate({"solvers": {"U": {"solver": "PBiCG"}}})
+
+    assert inst.solvers.U == {"solver": "PBiCG"}
+    assert inst.solvers.UFinal is None
+
+
+#: A solver block as the OpenFOAM reader hands it over: every leaf is text.
+_BLOCK_AS_READ = {
+    "solver": "smoothSolver",
+    "smoother": "symGaussSeidel",
+    "tolerance": "1e-13",
+    "relTol": "0.1",
+    "maxIter": "50",
+    "nSweeps": "2",
+}
+
+
+def _solver_block(block: dict[str, object]) -> dict[str, object]:
+    spec = Model(f"FvSolutionTyped{len(block)}")
+    Sub = spec.config(fvSolution)
+    Sub.add("U", final_required=False)
+    return Sub.model_validate({"solvers": {"U": block}}).solvers.U
+
+
+def test_fvsolution_solver_block_loads_its_standard_controls_as_numbers() -> None:
+    """``tolerance``/``relTol``/``maxIter`` are typed; any other key stays as read."""
+    block = _solver_block(_BLOCK_AS_READ)
+
+    assert block == {
+        "solver": "smoothSolver",
+        "smoother": "symGaussSeidel",
+        "tolerance": 1e-13,
+        "relTol": 0.1,
+        "maxIter": 50,
+        "nSweeps": "2",
+    }
+    assert [type(block[key]) for key in ("tolerance", "relTol", "maxIter")] == [float, float, int]
+
+
+def test_fvsolution_solver_block_keeps_the_key_order_of_the_file() -> None:
+    """The block is written back in dump order, so typing must not reorder it."""
+    assert list(_solver_block(_BLOCK_AS_READ)) == list(_BLOCK_AS_READ)
+
+
+def test_fvsolution_solver_block_rejects_a_tolerance_that_is_no_number() -> None:
+    with pytest.raises(ValidationError):
+        _solver_block({"solver": "PCG", "tolerance": "tight"})
+
+
 def test_fvsolution_passes_through_extra_sections() -> None:
     """PIMPLE / SIMPLE / relaxationFactors etc. pass through via extra='allow'."""
     spec = Model("FvSolutionExtra")
@@ -259,13 +315,27 @@ def test_fvschemes_form_defaults_is_a_valid_runnable_scaffold() -> None:
 
     scaffold = Sub.form_defaults()
     assert scaffold is not None
-    # a convection div (a flux) gets bounded upwind; the stress divergence stays linear
-    assert scaffold["divSchemes"]["div(phi,U)"] == "Gauss upwind"
-    assert scaffold["divSchemes"]["div((nuEff*dev2(T(grad(U)))))"] == "Gauss linear"
-    assert scaffold["ddtSchemes"]["ddt(U)"] == "Euler"
-    assert scaffold["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
+    # Structured, not OpenFOAM text: this scaffold is the *form* prefill, and the case
+    # wizard hands it to JSONForms alongside the JSON Schema. The two must agree — a
+    # bare "Gauss upwind" matches no arm of the schema's object union, so the form fell
+    # back to the first arm and displayed `none`. The OpenFOAM text is now opt-in, via
+    # context={"format": "openfoam"} (see neofoam.foam.schemes._variant).
+    # A convection div (a flux) gets bounded upwind; the stress divergence stays linear.
+    assert scaffold["divSchemes"]["div(phi,U)"] == {
+        "type": "Gauss",
+        "interpolation": {"type": "upwind"},
+    }
+    assert scaffold["ddtSchemes"]["ddt(U)"] == {"type": "Euler"}
+
     # and it actually validates as an instance of the config
-    Sub.model_validate(scaffold)
+    inst = Sub.model_validate(scaffold)
+
+    # ...which still writes the same OpenFOAM text a case file needs.
+    text = inst.model_dump(by_alias=True, context=OPENFOAM_CONTEXT)
+    assert text["divSchemes"]["div(phi,U)"] == "Gauss upwind"
+    assert text["divSchemes"]["div((nuEff*dev2(T(grad(U)))))"] == "Gauss linear"
+    assert text["ddtSchemes"]["ddt(U)"] == "Euler"
+    assert text["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
 
 
 def test_fvsolution_form_defaults_blocks_by_field_kind() -> None:
@@ -345,7 +415,10 @@ def test_default_shorthand_does_not_override_explicit_entries() -> None:
     )
     # explicit override kept verbatim
     assert inst.divSchemes.div_phi_U.type == "Gauss"
-    dumped = inst.model_dump(by_alias=True)["divSchemes"]
+    # Asserted on the OpenFOAM text form, which is what makes the merge readable; it is
+    # opt-in via context= since the plain dump is now the structured shape the JSON
+    # Schema describes (see neofoam.foam.schemes._variant).
+    dumped = inst.model_dump(by_alias=True, context=OPENFOAM_CONTEXT)["divSchemes"]
     assert dumped["div(phi,U)"] == "Gauss linearUpwind grad(U)"
     # the omitted operator is filled from the (real) default
     assert dumped["div(phi,T)"] == "Gauss upwind"
@@ -363,6 +436,20 @@ def test_default_none_sentinel_is_not_expanded() -> None:
         Sub.model_validate({"divSchemes": {"default": "none", "div(phi,U)": "Gauss upwind"}})
 
 
+def test_default_none_sentinel_leaves_a_required_default_missing() -> None:
+    """A slice that needs the ``default`` itself has none under ``default none``: no bad value."""
+    spec = Model("DefaultNoneRequired")
+    Sub = spec.config(fvSchemes)
+    Sub.add(ddt="default")
+
+    with pytest.raises(ValidationError) as raised:
+        Sub.model_validate({"ddtSchemes": {"default": "none"}})
+
+    assert [(e["type"], e["loc"]) for e in raised.value.errors()] == [
+        ("missing", ("ddtSchemes", "default"))
+    ]
+
+
 def test_without_default_missing_required_entry_still_raises() -> None:
     """No ``default`` ⇒ a genuinely missing required operator still fails.
 
@@ -376,6 +463,48 @@ def test_without_default_missing_required_entry_still_raises() -> None:
 
     with pytest.raises(ValidationError):
         Sub.model_validate({"gradSchemes": {"grad(U)": "Gauss linear"}})
+
+
+# ---------------------------------------------------------------------------
+# Undeclared entries — a form hands them over structured, a case file as tokens
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("entry", "token"),
+    [
+        (
+            {"type": "Gauss", "interpolation": {"type": "linearUpwind", "grad_field": "grad(k)"}},
+            "Gauss linearUpwind grad(k)",
+        ),
+        ({"type": "none"}, "none"),
+        # a token the scheme union does not model stays the raw string it was read as
+        ("Gauss LUST grad(k)", "Gauss LUST grad(k)"),
+    ],
+)
+def test_undeclared_scheme_entry_is_dumped_as_its_openfoam_token(entry: object, token: str) -> None:
+    """An undeclared key skips the typed fields, so a structured value has to be
+    tokenised on the way in or the writer emits it as a sub-dictionary."""
+    spec = Model("UndeclaredEntry")
+    Sub = spec.config(fvSchemes)
+    Sub.add(div="div(phi,U)")
+
+    inst = Sub.model_validate({"divSchemes": {"div(phi,U)": "Gauss upwind", "div(phi,k)": entry}})
+
+    dumped = inst.model_dump(by_alias=True, context=OPENFOAM_CONTEXT)["divSchemes"]
+    assert dumped["div(phi,k)"] == token
+
+
+def test_undeclared_scheme_entry_with_a_half_picked_scheme_is_rejected() -> None:
+    """``Gauss`` without its interpolation is not writable; fail instead of guessing."""
+    spec = Model("UndeclaredHalfPicked")
+    Sub = spec.config(fvSchemes)
+    Sub.add(div="div(phi,U)")
+
+    with pytest.raises(ValidationError, match="interpolation"):
+        Sub.model_validate(
+            {"divSchemes": {"div(phi,U)": "Gauss upwind", "div(phi,k)": {"type": "Gauss"}}}
+        )
 
 
 if __name__ == "__main__":

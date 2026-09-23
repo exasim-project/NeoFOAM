@@ -52,8 +52,6 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.foam.algorithm_configs import (
     DynamicMeshControls,
     PimpleAlgorithmConfig,
-    PisoAlgorithmConfig,
-    PisoDynamicMeshControls,
 )
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -67,6 +65,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata
 
+from ..boussinesq import BoussinesqFvSchemes, BoussinesqFvSolution
 from ..incompressibleFluidModel import Model
 from .control_factory import create_dynamic_mesh_controls, create_pimple_control
 from .extension import (
@@ -88,14 +87,13 @@ PimpleFvSolution = pimple.config(fvSolution)
 # these stay optional and only serialise when the case author sets them.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
-# Both block spellings (``PIMPLE``, and ``PISO`` for a pisoFoam case) are
-# declared so ``configurations(solver)`` and the MCP export the full key set.
+# Only the ``PIMPLE`` spelling is declared: a declared config is also written,
+# and ``control_factory`` ignores a ``PISO`` block once a ``PIMPLE`` one exists.
 # Loading is unaffected: this spec is used as its own runtime and never
-# auto-loads its configs — ``control_factory`` drives instantiation.
+# auto-loads its configs — ``control_factory`` still reads a pisoFoam case's
+# ``PISO`` block through the undeclared Piso classes.
 pimple.config(PimpleAlgorithmConfig)
 pimple.config(DynamicMeshControls)
-pimple.config(PisoAlgorithmConfig)
-pimple.config(PisoDynamicMeshControls)
 
 # 0/<name> field declarations PIMPLE owns. The framework auto-synthesises
 # the matching read_field InitStep (see
@@ -329,6 +327,9 @@ def mesh_update(
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
+    # ``flux(U)`` builds the initial face flux phi (``createPhi``) in every case,
+    # buoyant or not.
+    interpolation="flux(U)",
 )
 @PimpleFvSolution.add("U")
 def momentum(
@@ -464,10 +465,15 @@ def continuity(
 @PimpleFvSchemes.add(
     ddt="ddt(U)",
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
+)
+# The buoyancy-only entries go on the Boussinesq slices, so a case without the
+# model is neither asked for them nor written with them.
+@BoussinesqFvSchemes.add(
     # ``grad(rhok)`` is needed by the ``corrected`` ``snGrad(rhok)`` below: the
     # non-orthogonal correction of ``fvc::snGrad(rhok)`` looks up the cell gradient.
-    grad=["grad(U)", "grad(rhok)"],
-    laplacian="laplacian(nuEff,U)",
+    grad="grad(rhok)",
     snGrad="snGrad(rhok)",
 )
 @PimpleFvSolution.add("U")
@@ -502,13 +508,13 @@ def momentum_boussinesq(
 
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum_boussinesq"])
-@PimpleFvSchemes.add(
+@BoussinesqFvSchemes.add(
     grad="grad(p_rgh)",
     laplacian="laplacian(rAUf,p_rgh)",
     interpolation="flux(U)",
     snGrad="snGrad(p_rgh)",
 )
-@PimpleFvSolution.add("p_rgh")
+@BoussinesqFvSolution.add("p_rgh")
 def continuity_boussinesq(
     U: volVectorField,
     p: volScalarField,

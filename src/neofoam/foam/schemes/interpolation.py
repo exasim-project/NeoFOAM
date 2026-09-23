@@ -5,82 +5,75 @@
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, BeforeValidator, Discriminator, Field, model_serializer
+from pydantic import BeforeValidator, Discriminator, Field
+
+from ._variant import SchemeVariant
 
 # -- Variants ----------------------------------------------------------------
 
 
-class Linear(BaseModel):
+class Linear(SchemeVariant):
     type: Literal["linear"] = "linear"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class Upwind(BaseModel):
+class Upwind(SchemeVariant):
     type: Literal["upwind"] = "upwind"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class LinearUpwind(BaseModel):
+class LinearUpwind(SchemeVariant):
     type: Literal["linearUpwind"] = "linearUpwind"
     grad_field: str
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return f"linearUpwind {self.grad_field}"
 
 
-class LimitedLinear(BaseModel):
+class LimitedLinear(SchemeVariant):
     type: Literal["limitedLinear"] = "limitedLinear"
     coefficient: float = Field(ge=0, le=1)
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return f"limitedLinear {self.coefficient:g}"
 
 
-class VanLeer(BaseModel):
+class VanLeer(SchemeVariant):
     type: Literal["vanLeer"] = "vanLeer"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class Minmod(BaseModel):
+class Minmod(SchemeVariant):
     type: Literal["Minmod"] = "Minmod"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class SuperBee(BaseModel):
+class SuperBee(SchemeVariant):
     type: Literal["SuperBee"] = "SuperBee"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class MUSCL(BaseModel):
+class MUSCL(SchemeVariant):
     type: Literal["MUSCL"] = "MUSCL"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class QUICK(BaseModel):
+class QUICK(SchemeVariant):
     type: Literal["QUICK"] = "QUICK"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
