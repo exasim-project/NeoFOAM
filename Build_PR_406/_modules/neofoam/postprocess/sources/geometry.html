@@ -680,6 +680,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">sampling</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.postprocess._reduce</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce_sum</span>
+
 <span class="c1">#: The interpolation a patch is sampled with: it hands back the patch's own</span>
 <span class="c1">#: boundary values instead of interpolating them from the adjacent cells.</span>
 <span class="n">_PATCH_INTERPOLATION</span> <span class="o">=</span> <span class="s2">"cell"</span>
@@ -886,6 +888,19 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_global_face_count</span><span class="p">(</span><span class="n">surface</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""How many faces a sampled surface has over all ranks; its own, in serial.</span>
+
+<span class="sd">    Decomposed, a valid patch legitimately has no face on some ranks — one side of</span>
+<span class="sd">    a box is owned by a few subdomains and absent from the rest — so local</span>
+<span class="sd">    emptiness says nothing. Only a patch that samples nothing *anywhere* is the</span>
+<span class="sd">    unusable one. The reduction is collective, so it has to be reached by every</span>
+<span class="sd">    rank and not only by those about to complain (R6).</span>
+<span class="sd">    """</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">surface</span><span class="o">.</span><span class="n">magSf</span><span class="p">())</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">local</span><span class="p">]))[</span><span class="mi">0</span><span class="p">])</span>
+
+
 <div class="viewcode-block" id="PatchGeometry">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.postprocess.sources.geometry.html#neofoam.postprocess.sources.geometry.PatchGeometry">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PatchGeometry</span><span class="p">(</span><span class="n">SurfaceGeometry</span><span class="p">):</span>
@@ -899,7 +914,7 @@
 <span class="sd">    (``triangulate=False``, ``cell`` interpolation, so a row is a face of the</span>
 <span class="sd">    mesh and the sampled values are the patch's own boundary values). The</span>
 <span class="sd">    surface is built once, at construction, and an unknown patch name — or one</span>
-<span class="sd">    that samples no face at all — raises there::</span>
+<span class="sd">    that samples no face on any rank — raises there::</span>
 
 <span class="sd">        PatchGeometry(ctx.mesh, "movingWall", ctx.fields).total_area()</span>
 <span class="sd">    """</span>
@@ -915,10 +930,10 @@
         <span class="n">surface</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
         <span class="c1"># sampledPatch drops a patch it cannot sample (an ``empty`` one) with a</span>
         <span class="c1"># debug message only, and every row of the table would then read zero.</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">surface</span><span class="o">.</span><span class="n">magSf</span><span class="p">())</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_global_face_count</span><span class="p">(</span><span class="n">surface</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"postProcess: patch </span><span class="si">{</span><span class="n">patch_name</span><span class="si">!r}</span><span class="s2"> samples no faces — an 'empty' patch "</span>
-                <span class="sa">f</span><span class="s2">"carries no data to post-process"</span>
+                <span class="sa">f</span><span class="s2">"postProcess: patch </span><span class="si">{</span><span class="n">patch_name</span><span class="si">!r}</span><span class="s2"> samples no face on any rank — an "</span>
+                <span class="sa">f</span><span class="s2">"'empty' patch carries no data to post-process"</span>
             <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">surface</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">_PATCH_INTERPOLATION</span><span class="p">)</span></div>
 

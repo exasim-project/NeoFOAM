@@ -719,13 +719,17 @@
 <span class="sd">        Raises :class:`~neofoam.tooling.workspace.CaseAccessError` for a path that</span>
 <span class="sd">        leaves the case.</span>
 <span class="sd">        """</span>
+        <span class="c1"># Before the existence check, not after: a case with *no* script must still</span>
+        <span class="c1"># take back what the previously loaded one registered, or this case's spec</span>
+        <span class="c1"># file could resolve a node it never declared — making the run depend on</span>
+        <span class="c1"># which case was loaded first.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forget</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">rel_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">Workspace</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve_existing</span><span class="p">(</span>
             <span class="n">rel_path</span><span class="p">,</span> <span class="n">require_dir</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_kind</span><span class="si">}</span><span class="s2"> script"</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_forget</span><span class="p">()</span>
         <span class="n">before</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_snapshot</span><span class="p">()</span>
         <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">spec</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">spec</span><span class="o">.</span><span class="n">loader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -772,6 +776,8 @@
 <span class="sd">        and two union members sharing a discriminator value make pydantic reject the</span>
 <span class="sd">        union — while the class is being created, i.e. inside the script. So the</span>
 <span class="sd">        older generation goes before the script runs again (last registration wins).</span>
+<span class="sd">        Called on every :meth:`load`, script or not — a case that declares none must</span>
+<span class="sd">        not inherit the previous case's registrations either.</span>
 <span class="sd">        """</span>
         <span class="k">for</span> <span class="n">family</span><span class="p">,</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registered</span><span class="p">:</span>
             <span class="n">PluginSystem</span><span class="o">.</span><span class="n">remove_plugin_model</span><span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">plugin_cls</span><span class="p">)</span>
