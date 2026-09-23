@@ -691,10 +691,23 @@
 
 <span class="n">_BC_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"boundaryField"</span><span class="p">,)</span>
 
-<span class="c1"># Mesh / preprocessing dict configs belong to the upstream meshing stage (the</span>
-<span class="c1"># geometry→mesh workflow), not the physics case wizard. They also aren't writable via</span>
-<span class="c1"># write_configs' merged path (preprocess.yaml uses YAMLStrategy). Exclude them.</span>
-<span class="n">_MESH_FILES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"blockMeshDict"</span><span class="p">,</span> <span class="s2">"snappyHexMeshDict"</span><span class="p">,</span> <span class="s2">"preprocess.yaml"</span><span class="p">})</span>
+<span class="c1"># Configs that belong to a stage either side of the physics case wizard, and are excluded</span>
+<span class="c1"># from it. The mesh dicts and preprocess.yaml are the upstream geometry→mesh workflow</span>
+<span class="c1"># (preprocess.yaml is also not writable via write_configs' merged path — it uses</span>
+<span class="c1"># YAMLStrategy). setFields.yaml and postProcess.yaml are the pre- and post-processing</span>
+<span class="c1"># stages: their source/pipeline/region mappings stay open so a case script's own</span>
+<span class="c1"># ``@Node.register`` plugin is selectable by ``type``, which makes them a plugin payload</span>
+<span class="c1"># rather than keys a user names — they need registry-aware rendering (see post_catalog),</span>
+<span class="c1"># not the wizard's "add a key" adder.</span>
+<span class="n">_NON_WIZARD_FILES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"blockMeshDict"</span><span class="p">,</span>
+        <span class="s2">"snappyHexMeshDict"</span><span class="p">,</span>
+        <span class="s2">"preprocess.yaml"</span><span class="p">,</span>
+        <span class="s2">"setFields.yaml"</span><span class="p">,</span>
+        <span class="s2">"postProcess.yaml"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 
 <span class="c1"># The subset of mesh dicts that are per-config *sweepable*: OpenFOAM dict configs</span>
 <span class="c1"># with a real ``@IOStrategy`` file binding (``write_configs`` writes them cleanly).</span>
@@ -863,8 +876,8 @@
     <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FormEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">tools</span><span class="o">.</span><span class="n">list_configs</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">file</span> <span class="ow">and</span> <span class="n">info</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_MESH_FILES</span><span class="p">:</span>
-            <span class="k">continue</span>  <span class="c1"># meshing/preprocessing config — out of scope for the wizard</span>
+        <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">file</span> <span class="ow">and</span> <span class="n">info</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">_NON_WIZARD_FILES</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># meshing / pre- / post-processing config — out of scope for the wizard</span>
         <span class="n">dto</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">config_schema</span><span class="p">(</span><span class="n">solver</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="n">cfgs</span><span class="p">[</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">]</span>
         <span class="n">owner_model</span> <span class="o">=</span> <span class="n">owner</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">cls_name</span><span class="p">)</span>
@@ -931,7 +944,7 @@
 
 <span class="sd">    These are the ``blockMeshDict`` / ``snappyHexMeshDict`` configs that</span>
 <span class="sd">    :func:`build_forms` deliberately drops from the physics wizard</span>
-<span class="sd">    (``_MESH_FILES``). The Parameters step surfaces them as sources of its keyed</span>
+<span class="sd">    (``_NON_WIZARD_FILES``). The Parameters step surfaces them as sources of its keyed</span>
 <span class="sd">    ``mesh`` dimension, so it needs their titles + JSONForms schemas; every entry</span>
 <span class="sd">    is a plain ``dict``-kind ``FormEntry`` with ``step="mesh"`` (never a wizard</span>
 <span class="sd">    step) and no owner model. Same shape as a wizard dict entry, so the sweep</span>
