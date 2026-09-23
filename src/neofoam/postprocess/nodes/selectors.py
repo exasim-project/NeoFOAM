@@ -9,12 +9,8 @@ from typing import Annotated, Any, Literal, cast
 
 from pydantic import BeforeValidator, SerializeAsAny, WithJsonSchema
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.postprocess import _kernels as pp  # NeoFOAM post-processing kernels
 from neofoam.postprocess.node import FieldDataSets, Node
-
-#: The post-processing kernels: element-wise math and reductions that run on the
-#: executor the values live on, host numpy included.
-pp = nfb.postprocess
 
 
 class Selector(Node):

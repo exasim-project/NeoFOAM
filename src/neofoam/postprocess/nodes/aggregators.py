@@ -9,7 +9,7 @@ from typing import Any, Callable, Literal, Optional, Union
 
 import numpy as np
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.postprocess import _kernels as pp  # NeoFOAM post-processing kernels
 from neofoam.postprocess._reduce import reduce_max, reduce_min, reduce_sum
 from neofoam.postprocess.node import (
     AggregatedData,
@@ -21,10 +21,6 @@ from neofoam.postprocess.node import (
     SurfaceDataSet,
 )
 from neofoam.postprocess.nodes._arrays import ones_like
-
-#: The post-processing kernels: element-wise math and reductions that run on the
-#: executor the values live on, host numpy included.
-pp = nfb.postprocess
 
 #: The column a binner's index fills; the writer puts it before the values.
 BIN_COLUMN = "bin"

@@ -64,7 +64,10 @@ def _in_mesh(values: "np.ndarray[Any, Any]") -> "np.ndarray[Any, Any]":
     0/1 labels, not booleans.
     """
     magnitude = np.abs(values) if values.ndim == 1 else np.abs(values).max(axis=1)
-    return (magnitude < 0.1 * OUT_OF_MESH).astype(np.int32)
+    # Bound to a name first: ``OUT_OF_MESH`` comes from pybFoam untyped, so the
+    # comparison is ``Any`` and returning it directly is a no-any-return.
+    mask: "np.ndarray[Any, Any]" = (magnitude < 0.1 * OUT_OF_MESH).astype(np.int32)
+    return mask
 
 
 @Source.register

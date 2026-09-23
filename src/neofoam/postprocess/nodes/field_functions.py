@@ -9,7 +9,7 @@ from typing import Any, Literal, Union
 
 from pydantic import Field
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.postprocess import _kernels as pp  # NeoFOAM post-processing kernels
 from neofoam.postprocess.node import (
     FieldDataSets,
     InternalDataSet,
@@ -18,10 +18,6 @@ from neofoam.postprocess.node import (
     SurfaceDataSet,
 )
 from neofoam.postprocess.nodes._arrays import is_vector
-
-#: The post-processing kernels: element-wise math and reductions that run on the
-#: executor the values live on, host numpy included.
-pp = nfb.postprocess
 
 
 def _vector_field(dataset: FieldDataSets, function: str) -> Any:

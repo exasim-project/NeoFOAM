@@ -17,7 +17,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-import neofoam.postprocess  # noqa: F401  (import registers the post-processing plugins)
 import neofoam.tools  # noqa: F401  (import populates the tool registry)
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.solver.configurations import (
@@ -258,6 +257,11 @@ def post_catalog() -> list[PostPluginInfo]:
     ``source``/``pipeline``/``write_control``/``writer`` mappings stay open (resolved
     against the families at load time), so the accepted strings are only here.
     """
+    # Imported here, not at module scope: ``neofoam.io`` is on the ``import
+    # neofoam`` path, and the post-processing package reaches pybFoam and the
+    # compiled bindings. Registering the plugins is this function's business.
+    import neofoam.postprocess  # noqa: F401, PLC0415  (registers the post-processing plugins)
+
     out: list[PostPluginInfo] = []
     for family in _POST_FAMILIES:
         registry = PluginSystem.get_registered(family)

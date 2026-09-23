@@ -58,7 +58,6 @@ from .solved_case import built_cavity, solve_serially
 
 _HERE = Path(__file__).parent
 _CASES = _HERE / "cases"
-_REPO_ROOT = _HERE.parent.parent.parent
 
 #: Shared with the other parallel tests: ``simple (2 1 1)``, two subdomains.
 _DECOMPOSE_PAR_DICT = _HERE / "_parallel_decomposeParDict"
@@ -116,7 +115,11 @@ def _run_decomposed(case: CaseDir) -> None:
         # inside a collective the other never enters), which would otherwise
         # hang the suite.
         timeout=300,
-        env={**os.environ, "PYTHONPATH": str(_REPO_ROOT / "src")},
+        # The environment is inherited as-is, deliberately: forcing
+        # ``PYTHONPATH=src`` would shadow the installed package with the source
+        # tree, where ``neofoam_bindings`` is not built — and the tables this test
+        # asserts on are computed by those kernels.
+        env={**os.environ},
     )
     assert solved.returncode == 0, (
         f"the decomposed run failed:\nstdout:\n{solved.stdout[-4000:]}\n"
