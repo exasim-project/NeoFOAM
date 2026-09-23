@@ -26,6 +26,8 @@ import numpy as np
 import pybFoam as pyf
 from pybFoam import sampling
 
+from neofoam.postprocess._reduce import reduce_sum
+
 #: The interpolation a patch is sampled with: it hands back the patch's own
 #: boundary values instead of interpolating them from the adjacent cells.
 _PATCH_INTERPOLATION = "cell"
@@ -193,6 +195,19 @@ class SurfaceGeometry:
         return _sample(self._surface, "sampleOnFaces", self._fields, self._scheme, name)
 
 
+def _global_face_count(surface: Any) -> int:
+    """How many faces a sampled surface has over all ranks; its own, in serial.
+
+    Decomposed, a valid patch legitimately has no face on some ranks — one side of
+    a box is owned by a few subdomains and absent from the rest — so local
+    emptiness says nothing. Only a patch that samples nothing *anywhere* is the
+    unusable one. The reduction is collective, so it has to be reached by every
+    rank and not only by those about to complain (R6).
+    """
+    local = float(np.asarray(surface.magSf()).size)
+    return int(reduce_sum(np.array([local]))[0])
+
+
 class PatchGeometry(SurfaceGeometry):
     """One boundary patch of an fvMesh, as a sampled surface.
 
@@ -204,7 +219,7 @@ class PatchGeometry(SurfaceGeometry):
     (``triangulate=False``, ``cell`` interpolation, so a row is a face of the
     mesh and the sampled values are the patch's own boundary values). The
     surface is built once, at construction, and an unknown patch name — or one
-    that samples no face at all — raises there::
+    that samples no face on any rank — raises there::
 
         PatchGeometry(ctx.mesh, "movingWall", ctx.fields).total_area()
     """
@@ -220,10 +235,10 @@ class PatchGeometry(SurfaceGeometry):
         surface.update()
         # sampledPatch drops a patch it cannot sample (an ``empty`` one) with a
         # debug message only, and every row of the table would then read zero.
-        if np.asarray(surface.magSf()).size == 0:
+        if _global_face_count(surface) == 0:
             raise ValueError(
-                f"postProcess: patch {patch_name!r} samples no faces — an 'empty' patch "
-                f"carries no data to post-process"
+                f"postProcess: patch {patch_name!r} samples no face on any rank — an "
+                f"'empty' patch carries no data to post-process"
             )
         super().__init__(surface, fields, _PATCH_INTERPOLATION)
 
