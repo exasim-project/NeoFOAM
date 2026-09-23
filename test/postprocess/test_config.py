@@ -106,6 +106,23 @@ def test_an_unknown_key_outside_the_plugin_mappings_is_refused_when_the_file_is_
         PostProcessConfig.load(case_dir=CASES / case / "system/postProcess.yaml")
 
 
+@pytest.mark.parametrize(
+    "name",
+    ["/tmp/volume_p", "../volume_p", "sub/volume_p", "..", ".", ""],
+    ids=["absolute", "parent", "subdirectory", "dotdot", "dot", "empty"],
+)
+def test_a_table_name_carrying_a_directory_part_is_refused(name: str) -> None:
+    # The name becomes <case>/postProcessing/<name>.csv, so a directory part writes
+    # outside the case — and outside the workspace root save_post confines a spec to.
+    with pytest.raises(ValidationError, match="not a file name"):
+        TableSpec(name=name, source={"type": "internal", "field": "p"})
+
+
+@pytest.mark.parametrize("name", ["volume_p", "alpha.water_volume", "wall_U-2"])
+def test_an_ordinary_table_name_is_still_accepted(name: str) -> None:
+    assert TableSpec(name=name, source={"type": "internal", "field": "p"}).name == name
+
+
 def test_case_without_a_spec_file_declares_no_tables(tmp_path: Path) -> None:
     assert spec_file(tmp_path) is None
     assert load_config(tmp_path).tables == []

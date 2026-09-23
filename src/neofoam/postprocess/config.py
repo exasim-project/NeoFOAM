@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Optional, cast
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from neofoam.algorithms.field_writer.write_control import WriteControl
 from neofoam.core.plugin_system import PluginSystem
@@ -60,6 +60,26 @@ class TableSpec(BaseModel):
     pipeline: list[dict[str, Any]] = []
     write_control: dict[str, Any] = DEFAULT_WRITE_CONTROL
     writer: dict[str, Any] = DEFAULT_WRITER
+
+    @field_validator("name")
+    @classmethod
+    def _one_file_name(cls, name: str) -> str:
+        """Refuse a name carrying a directory part, which would write outside the case.
+
+        :class:`~neofoam.postprocess.model.PostProcessor` opens a table's writer on
+        ``<case>/postProcessing/<name>``, so an absolute name or a ``..`` segment
+        escapes the case — and the workspace root that
+        :func:`~neofoam.mcp.tools.save_post` confines an agent's spec to. The script
+        front door already takes ``Path(filename).stem``; this is the same rule for a
+        declared table, stated where the spec is read.
+        """
+        if name != Path(name).name or name in {"", ".", ".."} or "\\" in name:
+            raise ValueError(
+                f"postProcess table name {name!r} is not a file name — a table is "
+                f"written to postProcessing/<name>.csv, so the name carries no "
+                f"directory part"
+            )
+        return name
 
 
 @IOStrategy(YAML("system/postProcess.yaml"))
