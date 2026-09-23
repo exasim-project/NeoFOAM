@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_tutorials/example_05_postprocessing.html">In-situ post-processing: monitor a run as CSV</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -229,13 +229,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/preprocessing.html">Pre-processing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/postprocessing.html">In-situ post-processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -559,11 +559,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-49" name="toctree-checkbox-49" role="switch" type="checkbox"/><label for="toctree-checkbox-49"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-50" name="toctree-checkbox-50" role="switch" type="checkbox"/><label for="toctree-checkbox-50"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -640,6 +666,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
@@ -650,11 +679,61 @@
     <span class="s2">"Value"</span><span class="p">,</span>
     <span class="s2">"Unreadable"</span><span class="p">,</span>
     <span class="s2">"Leaf"</span><span class="p">,</span>
+    <span class="s2">"foam_case"</span><span class="p">,</span>
+    <span class="s2">"set_foam_case"</span><span class="p">,</span>
     <span class="s2">"read_section"</span><span class="p">,</span>
     <span class="s2">"read_entry"</span><span class="p">,</span>
     <span class="s2">"read_keys"</span><span class="p">,</span>
     <span class="s2">"read_toplevel"</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="c1">#: What ``argList`` sets when a solver starts, and OpenFOAM's path tags expand from.</span>
+<span class="n">_FOAM_CASE</span> <span class="o">=</span> <span class="s2">"FOAM_CASE"</span>
+
+
+<div class="viewcode-block" id="foam_case">
+<a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.foam_case">[docs]</a>
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">foam_case</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Expose ``case`` as ``$FOAM_CASE`` while its dictionaries are read.</span>
+
+<span class="sd">    OpenFOAM's path tags (``&lt;system&gt;``, ``&lt;constant&gt;``, ``&lt;case&gt;``) expand from</span>
+<span class="sd">    ``$FOAM_CASE`` — set by ``argList`` when a solver starts, and by nothing at all in</span>
+<span class="sd">    a plain Python process. Unset, the ``#include "&lt;system&gt;/meshQualityDict"`` that</span>
+<span class="sd">    OpenFOAM's own ``snappyHexMeshDict.cfg`` carries degrades to a bare relative path,</span>
+<span class="sd">    which resolves against the *including* file (somewhere under ``etc/``) instead of</span>
+<span class="sd">    the case — so a case including it cannot be read at all, and the failure is a</span>
+<span class="sd">    process abort rather than an exception::</span>
+
+<span class="sd">        with foam_case(case_dir):</span>
+<span class="sd">            configs = load_case_from_disk(case_dir, solver=solver)</span>
+
+<span class="sd">    The variable is process-global, so whatever was there is restored on the way out.</span>
+<span class="sd">    """</span>
+    <span class="n">previous</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_FOAM_CASE</span><span class="p">)</span>
+    <span class="n">set_foam_case</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">set_foam_case</span><span class="p">(</span><span class="n">previous</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_foam_case">
+<a class="viewcode-back" href="../../../reference/api/neofoam.io.dictread.html#neofoam.io.dictread.set_foam_case">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_foam_case</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Point ``$FOAM_CASE`` at ``case`` until something else moves it; clear it on ``None``.</span>
+
+<span class="sd">    The lasting counterpart of :func:`foam_case`, for an application that *has* a</span>
+<span class="sd">    current case (the wizard, once one is loaded) rather than one reading a case it</span>
+<span class="sd">    was handed. ``argList`` does this for a solver; nothing does it for a plain</span>
+<span class="sd">    Python process, so an app that reads case dictionaries sets it itself.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">case</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">_FOAM_CASE</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">_FOAM_CASE</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span></div>
+
 
 
 <div class="viewcode-block" id="Value">
@@ -704,7 +783,8 @@
 <span class="sd">    A missing file or a missing ``section`` yields ``{}`` (a genuine absence other</span>
 <span class="sd">    checks own). A present sub-entry whose leaf cannot be rendered keeps every</span>
 <span class="sd">    sibling leaf and every other sub-entry — the leaf alone becomes</span>
-<span class="sd">    :class:`Unreadable`.</span>
+<span class="sd">    :class:`Unreadable`. A nested block is skipped, except OpenFOAM's</span>
+<span class="sd">    name-or-dictionary entry, which reads as the name it holds.</span>
 <span class="sd">    """</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Leaf</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -727,11 +807,14 @@
         <span class="n">leaves</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Leaf</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sub</span><span class="o">.</span><span class="n">toc</span><span class="p">():</span>
             <span class="n">leaf_key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">):</span>
+            <span class="c1"># OpenFOAM's name-or-dictionary entry (``preconditioner { preconditioner</span>
+            <span class="c1"># GAMG; … }``) reads as its inner name; any other nested block is skipped.</span>
+            <span class="n">holder</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">)</span> <span class="k">if</span> <span class="n">sub</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">)</span> <span class="k">else</span> <span class="n">sub</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">holder</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="n">leaf_key</span><span class="p">):</span>
                 <span class="k">continue</span>
             <span class="c1"># _leaf invokes the thunk eagerly right here, before ``leaf_key``</span>
             <span class="c1"># advances, so no late-binding capture guard is needed.</span>
-            <span class="n">leaves</span><span class="p">[</span><span class="n">leaf_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_leaf</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">sub</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">str</span><span class="p">](</span><span class="n">leaf_key</span><span class="p">))</span>
+            <span class="n">leaves</span><span class="p">[</span><span class="n">leaf_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_leaf</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">holder</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="nb">str</span><span class="p">](</span><span class="n">leaf_key</span><span class="p">))</span>
         <span class="n">out</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">leaves</span>
     <span class="k">return</span> <span class="n">out</span></div>
 

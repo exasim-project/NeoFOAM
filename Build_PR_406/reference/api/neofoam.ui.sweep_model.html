@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.algorithms" href="neofoam.algorithms.html"><link rel="prev" title="neofoam.agent.case_forms" href="neofoam.agent.case_forms.html">
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.agent.wizard_template.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.ui.sweep_panel" href="neofoam.ui.sweep_panel.html"><link rel="prev" title="neofoam.ui.steps" href="neofoam.ui.steps.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.ui.sweep_model.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>neofoam.agent.wizard_template - NeoFOAM documentation</title>
+        <title>neofoam.ui.sweep_model - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
@@ -205,7 +205,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_05_postprocessing.html">In-situ post-processing: monitor a run as CSV</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -230,13 +230,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../preprocessing.html">Pre-processing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../postprocessing.html">In-situ post-processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
-<li class="toctree-l3 current has-children"><a class="reference internal" href="neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -560,11 +560,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" checked="" class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-49" name="toctree-checkbox-49" role="switch" type="checkbox"/><label for="toctree-checkbox-49"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-50" name="toctree-checkbox-50" role="switch" type="checkbox"/><label for="toctree-checkbox-50"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -614,7 +640,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../../_sources/reference/api/neofoam.agent.wizard_template.rst.txt" title="View this page">
+  <a class="muted-link" href="../../_sources/reference/api/neofoam.ui.sweep_model.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -632,18 +658,213 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="module-neofoam.agent.wizard_template">
-<span id="neofoam-agent-wizard-template"></span><h1>neofoam.agent.wizard_template<a class="headerlink" href="#module-neofoam.agent.wizard_template" title="Link to this heading">¶</a></h1>
-<p>Packaged marimo <em>case wizard</em> notebook template + a writer to scaffold it.</p>
-<p><code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">agent</span> <span class="pre">wizard</span> <span class="pre">&lt;dir&gt;</span></code> writes <code class="xref py py-data docutils literal notranslate"><span class="pre">NOTEBOOK_TEMPLATE</span></code> to
-<code class="docutils literal notranslate"><span class="pre">&lt;dir&gt;/case_wizard.py</span></code>; the notebook is self-contained (imports its helpers
-from <a class="reference internal" href="neofoam.html#module-neofoam" title="neofoam"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam</span></code></a>) and operates on the directory it is saved in, so running
-<code class="docutils literal notranslate"><span class="pre">marimo</span> <span class="pre">edit</span> <span class="pre">&lt;dir&gt;/case_wizard.py</span></code> fills that case. Embedded as a string so it
-ships reliably in the wheel.</p>
+          <section id="module-neofoam.ui.sweep_model">
+<span id="neofoam-ui-sweep-model"></span><h1>neofoam.ui.sweep_model<a class="headerlink" href="#module-neofoam.ui.sweep_model" title="Link to this heading">¶</a></h1>
+<p>The Parameters step’s data model — pure Python, no trame, no VueFlow.</p>
+<p><code class="docutils literal notranslate"><span class="pre">SweepModel</span></code> owns the sweep definition (dimensions → named variants → full
+config payloads, the picked display fields, the enabled pipeline rules and a
+dirty flag) and every derivation over it: the case cross product, the parameters
+table, live validation and the variant-series generator. <code class="docutils literal notranslate"><span class="pre">SweepPanel</span></code> holds
+one of these and renders it into trame state + canvas nodes; keeping the logic
+here makes it unit-testable with no server (see <code class="docutils literal notranslate"><span class="pre">test/ui/test_sweep_model.py</span></code>).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.DimensionState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.ui.sweep_model.</span></span><span class="sig-name descname"><span class="pre">DimensionState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">name:</span> <span class="pre">str,</span> <span class="pre">title:</span> <span class="pre">str,</span> <span class="pre">schema:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any],</span> <span class="pre">entries:</span> <span class="pre">dict[str,</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any]],</span> <span class="pre">selected:</span> <span class="pre">str,</span> <span class="pre">fields:</span> <span class="pre">list[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">rename:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'',</span> <span class="pre">kind:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'config',</span> <span class="pre">model_path:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#DimensionState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.DimensionState" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>One sweep dimension: a config with named variants and a display slice.</p>
+<p><code class="docutils literal notranslate"><span class="pre">entries</span></code> holds the <em>full</em> variant payloads (unrendered keys survive edits
+on a sliced dimension); <code class="docutils literal notranslate"><span class="pre">fields</span></code> is the picked display slice (empty = the
+whole form); <code class="docutils literal notranslate"><span class="pre">schema</span></code> is the JSONForms schema actually rendered (sliced to
+<code class="docutils literal notranslate"><span class="pre">fields</span></code> when picked). <code class="docutils literal notranslate"><span class="pre">selected</span></code> / <code class="docutils literal notranslate"><span class="pre">rename</span></code> are the active variant and
+the rename buffer.</p>
+<p><code class="docutils literal notranslate"><span class="pre">kind</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;config&quot;</span></code> for a solver-config dimension (validated against a
+pydantic class), <code class="docutils literal notranslate"><span class="pre">&quot;cad&quot;</span></code> for the CAD geometry axis (a numeric parameter map
+validated only structurally), or <code class="docutils literal notranslate"><span class="pre">&quot;mesh&quot;</span></code> for the reserved keyed mesh
+dimension (variants are config-name-keyed <code class="docutils literal notranslate"><span class="pre">{config_name:</span> <span class="pre">payload}</span></code> maps, one
+per mesh dict source, validated against each source’s class);
+<code class="docutils literal notranslate"><span class="pre">model_path</span></code> is the parametric model file for a <code class="docutils literal notranslate"><span class="pre">cad</span></code> dimension (empty
+otherwise).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.DimensionState.numeric_params">
+<span class="sig-name descname"><span class="pre">numeric_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#DimensionState.numeric_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.DimensionState.numeric_params" title="Link to this definition">¶</a></dt>
+<dd><p>The top-level numeric properties (the series generator’s targets).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.Overview">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.ui.sweep_model.</span></span><span class="sig-name descname"><span class="pre">Overview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">case_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">valid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">errors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#Overview"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.Overview" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Everything the panel needs to render after a mutation (pure derivation).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.ui.sweep_model.</span></span><span class="sig-name descname"><span class="pre">SweepModel</span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The sweep definition: dimensions, enabled rules, dirty flag + derivations.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.add_cad_dimension">
+<span class="sig-name descname"><span class="pre">add_cad_dimension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.add_cad_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.add_cad_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Add the CAD geometry axis, seeded with a single <code class="docutils literal notranslate"><span class="pre">base</span></code> variant.</p>
+<p>A CAD dimension is a numeric parameter map <code class="docutils literal notranslate"><span class="pre">{alias:</span> <span class="pre">value}</span></code> driving a
+parametric model; its schema is synthesised as a flat numeric JSONForms
+object (no solver config class). It is exempt from config validation.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: If a dimension of this name is already present.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.add_dimension">
+<span class="sig-name descname"><span class="pre">add_dimension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.add_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.add_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Add a dimension seeded with a single <code class="docutils literal notranslate"><span class="pre">base</span></code> variant.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: If a dimension of this name is already present.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.add_mesh_source">
+<span class="sig-name descname"><span class="pre">add_mesh_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.add_mesh_source"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.add_mesh_source" title="Link to this definition">¶</a></dt>
+<dd><p>Add a mesh dict (blockMesh/snappy) as a source of the keyed <code class="docutils literal notranslate"><span class="pre">mesh</span></code> dim.</p>
+<p>The reserved <code class="docutils literal notranslate"><span class="pre">mesh</span></code> dimension is <em>config-name-keyed</em>: every variant
+payload maps each source’s config name to that source’s full config
+(<code class="docutils literal notranslate"><span class="pre">{&quot;block_mesh_dict_config&quot;:</span> <span class="pre">{...},</span> <span class="pre">&quot;snappy_hex_mesh_dict_config&quot;:</span>
+<span class="pre">{...}}</span></code>). Adding the first source creates the dimension (seeded with a
+single <code class="docutils literal notranslate"><span class="pre">base</span></code> variant); a further source is grafted onto <em>every</em>
+existing variant (seeded from <code class="docutils literal notranslate"><span class="pre">seed</span></code>), and its schema property joins the
+combined mesh form so both configs render together.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: If this config is already a mesh source.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.cad_dimensions">
+<span class="sig-name descname"><span class="pre">cad_dimensions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.cad_dimensions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.cad_dimensions" title="Link to this definition">¶</a></dt>
+<dd><p>The CAD axes as <code class="docutils literal notranslate"><span class="pre">{name:</span> <span class="pre">{&quot;model&quot;:</span> <span class="pre">path,</span> <span class="pre">&quot;variants&quot;:</span> <span class="pre">{name:</span> <span class="pre">params}}}</span></code>.</p>
+<p>The shape the external CAD plugin exports; core <code class="docutils literal notranslate"><span class="pre">export_sweep</span></code> has no CAD
+support. Empty when no CAD dimension is on the canvas.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.generate_series">
+<span class="sig-name descname"><span class="pre">generate_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.generate_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.generate_series" title="Link to this definition">¶</a></dt>
+<dd><p>Create one variant per value; return the number generated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neofoam.ui.sweep_model.DimensionState" title="neofoam.ui.sweep_model.DimensionState"><span class="pre">DimensionState</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enabled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.load" title="Link to this definition">¶</a></dt>
+<dd><p>Replace the whole definition (round-trip load); starts clean.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.mesh_sources">
+<span class="sig-name descname"><span class="pre">mesh_sources</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.mesh_sources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.mesh_sources" title="Link to this definition">¶</a></dt>
+<dd><p>The config names currently sourced by the <code class="docutils literal notranslate"><span class="pre">mesh</span></code> dimension (sorted).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.overview">
+<span class="sig-name descname"><span class="pre">overview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warn_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.ui.sweep_model.Overview" title="neofoam.ui.sweep_model.Overview"><span class="pre">Overview</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.overview"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.overview" title="Link to this definition">¶</a></dt>
+<dd><p>Case count, factorized label, validation and the parameters table.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.remove_dimension">
+<span class="sig-name descname"><span class="pre">remove_dimension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.remove_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.remove_dimension" title="Link to this definition">¶</a></dt>
+<dd><p>Drop a dimension and its variants.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: If the dimension is not present.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.remove_mesh_source">
+<span class="sig-name descname"><span class="pre">remove_mesh_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.remove_mesh_source"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.remove_mesh_source" title="Link to this definition">¶</a></dt>
+<dd><p>Drop one mesh source; remove the whole <code class="docutils literal notranslate"><span class="pre">mesh</span></code> dim if it was the last.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If there is no mesh dimension or this config is not a</dt><dd><p>source of it.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.to_dimensions">
+<span class="sig-name descname"><span class="pre">to_dimensions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.to_dimensions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.to_dimensions" title="Link to this definition">¶</a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">{dim:</span> <span class="pre">{variant:</span> <span class="pre">payload}}</span></code> mapping consumed by export.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.variant_add">
+<span class="sig-name descname"><span class="pre">variant_add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.variant_add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.variant_add" title="Link to this definition">¶</a></dt>
+<dd><p>Clone the selected variant into a fresh <code class="docutils literal notranslate"><span class="pre">variant-N</span></code>; return its name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.variant_delete">
+<span class="sig-name descname"><span class="pre">variant_delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.variant_delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.variant_delete" title="Link to this definition">¶</a></dt>
+<dd><p>Delete the selected variant.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: If it is the dimension’s only variant.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.variant_edit">
+<span class="sig-name descname"><span class="pre">variant_edit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">payload</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.variant_edit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.variant_edit" title="Link to this definition">¶</a></dt>
+<dd><p>Apply a form edit to the selected variant.</p>
+<p>On a sliced dimension the edit <em>merges</em> (only the picked fields are
+rendered, so the unrendered keys of the full payload must survive); on a
+whole-form dimension it replaces.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.variant_error">
+<span class="sig-name descname"><span class="pre">variant_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.variant_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.variant_error" title="Link to this definition">¶</a></dt>
+<dd><p>The selected variant’s validation message (for the Configure alert).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.SweepModel.variant_rename">
+<span class="sig-name descname"><span class="pre">variant_rename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#SweepModel.variant_rename"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.SweepModel.variant_rename" title="Link to this definition">¶</a></dt>
+<dd><p>Rename the selected variant.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: On an invalid or duplicate name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
-<dt class="sig sig-object py" id="neofoam.agent.wizard_template.write_wizard_notebook">
-<span class="sig-prename descclassname"><span class="pre">neofoam.agent.wizard_template.</span></span><span class="sig-name descname"><span class="pre">write_wizard_notebook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'case_wizard.py'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../_modules/neofoam/agent/wizard_template.html#write_wizard_notebook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.agent.wizard_template.write_wizard_notebook" title="Link to this definition">¶</a></dt>
-<dd><p>Write the case-wizard notebook into <code class="docutils literal notranslate"><span class="pre">target_dir</span></code> and return its path.</p>
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.series_values">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.sweep_model.</span></span><span class="sig-name descname"><span class="pre">series_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#series_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.series_values" title="Link to this definition">¶</a></dt>
+<dd><p>The variant value series for the generator.</p>
+<p><code class="docutils literal notranslate"><span class="pre">list</span></code> parses comma/space-separated numbers; <code class="docutils literal notranslate"><span class="pre">linear</span></code>/<code class="docutils literal notranslate"><span class="pre">log</span></code> span
+<code class="docutils literal notranslate"><span class="pre">count</span></code> values from <code class="docutils literal notranslate"><span class="pre">vmin</span></code> to <code class="docutils literal notranslate"><span class="pre">vmax</span></code> (inclusive), rounded to 10
+significant digits so generated payloads and names stay readable.</p>
+<dl class="simple">
+<dt>Raises:</dt><dd><p>ValueError: With a user-facing message on any invalid input.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.ui.sweep_model.variant_name">
+<span class="sig-prename descclassname"><span class="pre">neofoam.ui.sweep_model.</span></span><span class="sig-name descname"><span class="pre">variant_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/ui/sweep_model.html#variant_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.ui.sweep_model.variant_name" title="Link to this definition">¶</a></dt>
+<dd><p>An auto variant name like <code class="docutils literal notranslate"><span class="pre">nu1e-05</span></code> (<code class="docutils literal notranslate"><span class="pre">+</span></code> stripped: not name-safe).</p>
 </dd></dl>
 
 </section>
@@ -653,23 +874,23 @@ ships reliably in the wheel.</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="neofoam.algorithms.html">
+          <a class="next-page" href="neofoam.ui.sweep_panel.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam.algorithms</div>
+                <div class="title">neofoam.ui.sweep_panel</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="neofoam.agent.case_forms.html">
+          <a class="prev-page" href="neofoam.ui.steps.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">neofoam.agent.case_forms</div>
+                <div class="title">neofoam.ui.steps</div>
                 
               </div>
             </a>
@@ -703,8 +924,33 @@ ships reliably in the wheel.</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">neofoam.agent.wizard_template</a><ul>
-<li><a class="reference internal" href="#neofoam.agent.wizard_template.write_wizard_notebook"><code class="docutils literal notranslate"><span class="pre">write_wizard_notebook()</span></code></a></li>
+<li><a class="reference internal" href="#">neofoam.ui.sweep_model</a><ul>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.DimensionState"><code class="docutils literal notranslate"><span class="pre">DimensionState</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.DimensionState.numeric_params"><code class="docutils literal notranslate"><span class="pre">DimensionState.numeric_params()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.Overview"><code class="docutils literal notranslate"><span class="pre">Overview</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel"><code class="docutils literal notranslate"><span class="pre">SweepModel</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.add_cad_dimension"><code class="docutils literal notranslate"><span class="pre">SweepModel.add_cad_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.add_dimension"><code class="docutils literal notranslate"><span class="pre">SweepModel.add_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.add_mesh_source"><code class="docutils literal notranslate"><span class="pre">SweepModel.add_mesh_source()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.cad_dimensions"><code class="docutils literal notranslate"><span class="pre">SweepModel.cad_dimensions()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.generate_series"><code class="docutils literal notranslate"><span class="pre">SweepModel.generate_series()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.load"><code class="docutils literal notranslate"><span class="pre">SweepModel.load()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.mesh_sources"><code class="docutils literal notranslate"><span class="pre">SweepModel.mesh_sources()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.overview"><code class="docutils literal notranslate"><span class="pre">SweepModel.overview()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.remove_dimension"><code class="docutils literal notranslate"><span class="pre">SweepModel.remove_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.remove_mesh_source"><code class="docutils literal notranslate"><span class="pre">SweepModel.remove_mesh_source()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.to_dimensions"><code class="docutils literal notranslate"><span class="pre">SweepModel.to_dimensions()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.variant_add"><code class="docutils literal notranslate"><span class="pre">SweepModel.variant_add()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.variant_delete"><code class="docutils literal notranslate"><span class="pre">SweepModel.variant_delete()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.variant_edit"><code class="docutils literal notranslate"><span class="pre">SweepModel.variant_edit()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.variant_error"><code class="docutils literal notranslate"><span class="pre">SweepModel.variant_error()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.SweepModel.variant_rename"><code class="docutils literal notranslate"><span class="pre">SweepModel.variant_rename()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.series_values"><code class="docutils literal notranslate"><span class="pre">series_values()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.ui.sweep_model.variant_name"><code class="docutils literal notranslate"><span class="pre">variant_name()</span></code></a></li>
 </ul>
 </li>
 </ul>

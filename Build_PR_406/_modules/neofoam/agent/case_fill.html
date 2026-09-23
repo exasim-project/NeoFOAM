@@ -204,7 +204,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_tutorials/example_05_postprocessing.html">In-situ post-processing: monitor a run as CSV</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/case-wizard.html">Set up a case with the case wizard</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
@@ -229,13 +229,13 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/preprocessing.html">Pre-processing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/postprocessing.html">In-situ post-processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/ui-architecture.html">Case-wizard UI architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../reference/index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../reference/api/neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.agent.html">neofoam.agent.agent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
@@ -559,11 +559,37 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../reference/api/neofoam.tutorial.html">neofoam.tutorial</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.ui.html">neofoam.ui</a><input aria-label="Toggle navigation of neofoam.ui" class="toctree-checkbox" id="toctree-checkbox-47" name="toctree-checkbox-47" role="switch" type="checkbox"/><label for="toctree-checkbox-47"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.agent_panel.html">neofoam.ui.agent_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.app.html">neofoam.ui.app</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.boundary_forms.html">neofoam.ui.boundary_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_load.html">neofoam.ui.case_load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.case_spec.html">neofoam.ui.case_spec</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.dir_picker.html">neofoam.ui.dir_picker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.form_schema.html">neofoam.ui.form_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.forms.html">neofoam.ui.forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry.html">neofoam.ui.geometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry_agent.html">neofoam.ui.geometry_agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.geometry_panel.html">neofoam.ui.geometry_panel</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.ui.jsonforms_module.html">neofoam.ui.jsonforms_module</a><input aria-label="Toggle navigation of neofoam.ui.jsonforms_module" class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.ui.jsonforms_module.module.html">neofoam.ui.jsonforms_module.module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.plugins.html">neofoam.ui.plugins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.review.html">neofoam.ui.review</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.run_panel.html">neofoam.ui.run_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.scaffold.html">neofoam.ui.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.steps.html">neofoam.ui.steps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_model.html">neofoam.ui.sweep_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_panel.html">neofoam.ui.sweep_panel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.ui.sweep_view.html">neofoam.ui.sweep_view</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-49" name="toctree-checkbox-49" role="switch" type="checkbox"/><label for="toctree-checkbox-49"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-48" name="toctree-checkbox-48" role="switch" type="checkbox"/><label for="toctree-checkbox-48"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-50" name="toctree-checkbox-50" role="switch" type="checkbox"/><label for="toctree-checkbox-50"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
 </ul>
 </li>
@@ -652,9 +678,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">,</span> <span class="n">create_model</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">_snake_case</span><span class="p">,</span> <span class="n">configurations</span>
@@ -672,6 +700,9 @@
 <span class="n">_MISSING_PYDANTIC_AI</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"the agent feature needs pydantic-ai; install with: pip install neofoam[agent]"</span>
 <span class="p">)</span>
+
+<span class="c1">#: A key's address in a dict file, from the file's root.</span>
+<span class="n">_KeyPath</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"DEFAULT_CASE_SYSTEM_PROMPT"</span><span class="p">,</span>
@@ -796,15 +827,17 @@
 
 <span class="sd">    Pass a ``warnings`` list to surface configs that are *present on disk but</span>
 <span class="sd">    don't validate* (e.g. a ``turbulenceProperties`` selecting a model we don't</span>
-<span class="sd">    represent): each is appended as ``{"file", "config", "reason"}`` instead of</span>
-<span class="sd">    only silently nulling the field — so a caller can report the gap (F5).</span>
+<span class="sd">    represent), or that lack some of the keys only they require: each is appended</span>
+<span class="sd">    as ``{"file", "config", "reason"}`` instead of only silently nulling the</span>
+<span class="sd">    field — so a caller can report the gap (F5).</span>
 <span class="sd">    """</span>
     <span class="n">solver</span> <span class="o">=</span> <span class="n">solver</span> <span class="ow">or</span> <span class="n">_solver</span><span class="p">()</span>
     <span class="n">output_model</span> <span class="o">=</span> <span class="n">output_model</span> <span class="ow">or</span> <span class="n">build_case_output_model</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">case_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
 
+    <span class="n">classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">))</span>
     <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
         <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">io</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -813,36 +846,35 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">values</span><span class="p">[</span><span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="c1"># File present but doesn't validate against this schema. Distinguish two</span>
-            <span class="c1"># cases (F5): a config whose failure is only *missing required keys* is a</span>
-            <span class="c1"># completeness gap — the file simply doesn't carry this (often optional)</span>
-            <span class="c1"># config, e.g. a plain case's shared ``controlDict`` has no ``maxCo`` for</span>
-            <span class="c1"># ``CourantConfig``, or a non-buoyant ``fvSchemes`` has no ``div(phi,T)``</span>
-            <span class="c1"># for the boussinesq slice. Those are ``validate_case``'s job, not a load</span>
-            <span class="c1"># warning, so leave the field ``None`` silently. Only *present but invalid*</span>
-            <span class="c1"># data (a value that fails validation) is surfaced as a warning.</span>
-            <span class="k">if</span> <span class="n">warnings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_absence</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"file"</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span>
-                        <span class="s2">"config"</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                        <span class="s2">"reason"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
+            <span class="c1"># File present but doesn't validate against this schema. Several configs</span>
+            <span class="c1"># slice one file (a plain case's shared ``controlDict`` has no ``maxCo``</span>
+            <span class="c1"># for ``CourantConfig``, a non-buoyant ``fvSchemes`` no ``div(phi,T)`` for</span>
+            <span class="c1"># the boussinesq slice), so a slice the file carries nothing of is absent:</span>
+            <span class="c1"># leave the field ``None`` silently. Anything else is surfaced (F5).</span>
+            <span class="n">reason</span> <span class="o">=</span> <span class="n">_invalid_reason</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">_own_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">classes</span><span class="p">),</span> <span class="n">case_dir</span> <span class="o">/</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">warnings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">reason</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"file"</span><span class="p">:</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="s2">"config"</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">})</span>
             <span class="k">continue</span>
     <span class="k">return</span> <span class="n">output_model</span><span class="p">(</span><span class="o">**</span><span class="n">values</span><span class="p">)</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_absence</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""True when ``exc`` signals the config is *absent*, not present-but-invalid.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_invalid_reason</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">own_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">_KeyPath</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Why a config that failed to load is present-but-invalid; ``None`` when it is absent."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_incomplete</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_holds_any</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">own_keys</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="s2">"missing "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">error</span><span class="p">[</span><span class="s2">"loc"</span><span class="p">]))</span> <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">())</span>
 
-<span class="sd">    Two completeness gaps count as absence (both are ``validate_case``'s domain, not</span>
-<span class="sd">    a load warning): a pydantic ``ValidationError`` whose every error is a *missing</span>
-<span class="sd">    required field* (the file carries none of this config's keys), and a ``KeyError``</span>
-<span class="sd">    from a config bound to a sub-dict whose block isn't in the file (e.g.</span>
-<span class="sd">    ``TelemetryDictConfig`` → ``controlDict{telemetry}`` on a case with no telemetry</span>
-<span class="sd">    block). Anything else — a value that fails validation — is present-but-invalid.</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_incomplete</span><span class="p">(</span><span class="n">exc</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when ``exc`` only says that keys are *missing*, not that a value is invalid.</span>
+
+<span class="sd">    That is a pydantic ``ValidationError`` whose every error is a *missing required</span>
+<span class="sd">    field*, or a ``KeyError`` from a config bound to a sub-dict whose block isn't in</span>
+<span class="sd">    the file (e.g. ``TelemetryDictConfig`` → ``controlDict{telemetry}`` on a case with</span>
+<span class="sd">    no telemetry block).</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">):</span>
         <span class="n">errors</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">errors</span><span class="p">()</span>
@@ -851,6 +883,56 @@
         <span class="n">message</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
         <span class="k">return</span> <span class="s2">"Subdict"</span> <span class="ow">in</span> <span class="n">message</span> <span class="ow">and</span> <span class="s2">"not found"</span> <span class="ow">in</span> <span class="n">message</span>
     <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_required_keys</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="n">_KeyPath</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">_KeyPath</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Paths of the required keys ``model`` declares; ``default`` is a shorthand, not a key."""</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">prefix</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">alias</span> <span class="ow">or</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">nested</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">annotation</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+            <span class="k">yield from</span> <span class="n">_required_keys</span><span class="p">(</span><span class="n">nested</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">info</span><span class="o">.</span><span class="n">is_required</span><span class="p">()</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"default"</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">path</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_file_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">_KeyPath</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The required keys of ``cls`` as paths from the root of its file."""</span>
+    <span class="n">subdict</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">subdict</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">_required_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">subdict</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span> <span class="k">if</span> <span class="n">subdict</span> <span class="k">else</span> <span class="p">()))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_own_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">],</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">_KeyPath</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The required keys only ``cls`` declares for its file.</span>
+
+<span class="sd">    A key another config of the same file requires as well (``solvers.p`` of the</span>
+<span class="sd">    Pimple and the Simple slice) is no evidence of either.</span>
+<span class="sd">    """</span>
+    <span class="n">rivals</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">classes</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">cls</span> <span class="ow">and</span> <span class="n">_file</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="n">_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">_file_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">rival</span> <span class="ow">in</span> <span class="n">rivals</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_file_keys</span><span class="p">(</span><span class="n">rival</span><span class="p">)}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The file ``cls`` is bound to, if any."""</span>
+    <span class="n">io</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">"io_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">io</span><span class="o">.</span><span class="n">file</span> <span class="k">if</span> <span class="n">io</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_holds_any</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">_KeyPath</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when the OpenFOAM dict at ``path`` spells one of ``keys`` out."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">_holds</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_holds</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">_KeyPath</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True when the dict spells ``key`` out; ``found`` lets ``"p.*"`` answer ``p_rgh``."""</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">key</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">toc</span><span class="p">())</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">isDict</span><span class="p">(</span><span class="n">part</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">key</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">toc</span><span class="p">())</span>
 
 
 <div class="viewcode-block" id="save_case">
