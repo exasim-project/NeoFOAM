@@ -14,10 +14,12 @@ from neofoam.io.dictfile import DictFile
 from neofoam.io.dictread import (
     Unreadable,
     Value,
+    foam_case,
     read_entry,
     read_keys,
     read_section,
     read_toplevel,
+    set_foam_case,
 )
 from neofoam.io.input_validation import validate_models
 from neofoam.io.pydantic_schema import default_values, rjsf_uischema, slice_schema
@@ -88,4 +90,6 @@ __all__ = [
     "read_entry",
     "read_keys",
     "read_toplevel",
+    "foam_case",
+    "set_foam_case",
 ]

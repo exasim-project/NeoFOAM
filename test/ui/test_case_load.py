@@ -38,6 +38,10 @@ from neofoam.ui.steps import (  # noqa: E402
     selection_key,
 )
 
+#: A case whose ``system/snappyHexMeshDict`` includes OpenFOAM's shipped
+#: ``snappyHexMeshDict.cfg``, which ends in ``#include "<system>/meshQualityDict"``.
+_ETC_INCLUDE_CASE = Path(__file__).resolve().parent / "cases" / "etc_include"
+
 #: A checked-in ``simulationType laminar`` case (read-only).
 _LAMINAR_CASE = Path(__file__).resolve().parents[1] / "setup_pimple"
 _TEST_ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +84,13 @@ def _form_data(server, cls_name: str) -> dict:
 
 def _turbulence_properties(server) -> dict:
     return _form_data(server, "TurbulencePropertiesConfig")
+
+
+def test_read_case_configs_reads_a_case_that_includes_the_shipped_snappy_cfg(solver):
+    # The reported failure: the .cfg's `<system>` tag expands from $FOAM_CASE, which
+    # argList sets for a solver and nothing sets here — unset, the include resolved
+    # against OpenFOAM's own etc/ and the read aborted the process outright.
+    read_case_configs(_ETC_INCLUDE_CASE, solver)
 
 
 def test_read_case_configs_leaves_out_a_file_the_case_does_not_have(tmp_path, solver):

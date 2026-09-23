@@ -23,8 +23,17 @@ The UI needs the ``ui`` extra (``pip install -e ".[ui]"``; part of ``all``):
 ``--solver`` takes ``incompressibleFluid`` (default), ``incompressibleFluidNeoN`` or
 ``incompressibleVoF``. ``NEOFOAM_WIZARD_STL_DIR`` pre-fills the Geometry step's STL
 folder; ``NEOFOAM_CASE_MODEL`` overrides the chat's model, which needs
-``ANTHROPIC_API_KEY``. The target directory must be an absolute path
-(``_paths.py``), so nothing is ever written into the launch directory.
+``ANTHROPIC_API_KEY``. The target directory is not typed: "Load case" opens a
+directory browser (``dir_picker.py``) and the directory picked there becomes the
+target every writer uses. It is still checked for absoluteness (``_paths.py``), so
+nothing is ever written into the launch directory, and it is mirrored into
+``$FOAM_CASE`` (``app._sync_foam_case``) — OpenFOAM's ``<system>`` / ``<constant>`` /
+``<case>`` path tags expand from that variable, which ``argList`` sets for a solver
+run and nothing sets in the wizard's own process. Without it a case whose
+``snappyHexMeshDict`` includes OpenFOAM's shipped ``.cfg`` cannot be read at all: the
+tag resolves against the including file under ``etc/`` and the read *aborts the
+process* rather than raising. Library reads that are handed a case scope the variable
+themselves (:func:`neofoam.io.dictread.foam_case`) instead of relying on the wizard.
 
 Module map
 ----------
@@ -33,9 +42,9 @@ Listed bottom-up. **A module imports only from rows above its own**; two referen
 point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
 ``SweepPanel``) and are ``TYPE_CHECKING``-only.
 
-``_paths``, ``_responsive``, ``_markdown``, ``review``, ``scaffold``, ``geometry``, ``sweep_model``, ``plugins/``, ``jsonforms_module/``
+``_paths``, ``_responsive``, ``_markdown``, ``dir_picker``, ``review``, ``scaffold``, ``geometry``, ``sweep_model``, ``plugins/``, ``jsonforms_module/``
     Leaves: path-field check; phone/desktop drawer props; chat markdown → escaped
-    HTML; findings → alert rows;
+    HTML; the rows the "Load case" directory browser lists; findings → alert rows;
     ``Allrun``/``Allclean``; STL scan and mesh dicts; the sweep data model; the
     step-plugin interface; the bundled ``<json-forms>`` client module.
 ``boundary_forms``
@@ -53,8 +62,10 @@ point the other way (``boundary_forms`` → ``FormEntry``, ``sweep_view`` →
 ``case_load``, ``sweep_view``
     Reopen a case from disk (``case_algorithm``, ``case_advection_model``,
     ``models_to_select``, ``apply_configs_to_forms``); the Parameters step's layout.
-``agent_panel``, ``sweep_panel``
-    ``AgentPanel`` (the AI chat drawer) and ``SweepPanel`` (the Parameters step).
+``agent_panel``, ``sweep_panel``, ``run_panel``
+    ``AgentPanel`` (the AI chat drawer), ``SweepPanel`` (the Parameters step) and
+    ``RunPanel`` (the Review step's "Run case" / "Clean case": execute ``Allrun`` or
+    ``Allclean`` and tail it).
 ``app``
     The orchestrator: ``build_app``, ``_Wizard``, ``_seed_state``,
     ``_register_case_controllers`` and the layout functions.
@@ -183,11 +194,13 @@ computed names with their helper, which makes them valid JS identifiers.
    * - ``current_step``
      - ``app``
      - ``agent_panel`` reads it to pick the step's chat handler
-   * - ``target_dir``
-     - ``app`` (toolbar)
-     - ``geometry_panel`` fills it after a scan when empty; ``sweep_panel`` sets it on
+   * - ``target_dir``; ``picker_show`` / ``picker_dir`` / ``picker_entries``
+     - ``app`` (the toolbar's directory browser)
+     - ``target_dir`` is read-only in the toolbar and set by ``ctrl.picker_choose``;
+       ``geometry_panel`` fills it after a scan when empty; ``sweep_panel`` sets it on
        restoring a base case; ``agent_panel`` auto-saves into it and loads the case
-       in it (``ctrl.load_target_case``)
+       in it (``ctrl.load_target_case``). The ``picker_*`` keys are the browser's own
+       and nothing outside ``app`` touches them
    * - ``sel_<model>`` (``selection_key``), ``choice_<family>`` (``choice_key``)
      - ``app``
      - written through ``steps.select_model_state`` only (radio group,
@@ -212,6 +225,10 @@ computed names with their helper, which makes them valid JS identifiers.
    * - ``validation_ok``, ``findings``, ``save_report``, ``scaffolded``
      - ``app``
      - ``sweep_panel`` reads ``scaffolded`` before an export
+   * - ``run_busy``, ``run_lines``, ``run_status``, ``run_severity``, ``run_source``
+     - ``run_panel``
+     - read-only elsewhere: the Review step's run output. ``run_lines`` is capped at
+       ``run_panel.TAIL_LINES`` because the whole list is pushed on every poll
    * - ``main_drawer`` / ``main_drawer_mobile``, ``ai_panel`` / ``ai_panel_mobile``
      - trame's layout (``main_drawer``), ``app``
      - ``agent_panel`` binds the ``ai_panel`` pair and opens it for a "Load case" report

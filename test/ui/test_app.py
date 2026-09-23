@@ -548,24 +548,119 @@ def test_picking_a_step_closes_the_phone_drawer(pristine_wizard):
     assert "@click=\"current_step = 'bcs'; main_drawer_mobile = false\"" in template
 
 
-def test_target_directory_moves_to_a_second_toolbar_row_on_a_phone(pristine_wizard):
+#: The toolbar's read-only path, which the directory browser (not the user) writes.
+_LOADED_PATH = "{{ target_dir || 'No case loaded' }}"
+
+
+def test_the_loaded_path_moves_to_a_second_toolbar_row_on_a_phone(pristine_wizard):
     template = pristine_wizard.state["trame__template_main"]
     extension = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')[1]
-    assert 'v-model="target_dir"' in extension.split("</template>")[0]
+    assert _LOADED_PATH in extension.split("</template>")[0]
 
 
-def test_load_case_button_sits_beside_the_target_directory_on_both_toolbar_rows(pristine_wizard):
+def test_the_toolbar_has_no_editable_target_directory(pristine_wizard):
+    # The path is set by the browser "Load case" opens, so there is nothing to type
+    # into: a typed relative path was the one way into a launch-directory write.
+    template = pristine_wizard.state["trame__template_main"]
+    assert 'v-model="target_dir"' not in template
+
+
+def test_load_case_button_sits_beside_the_loaded_path_on_both_toolbar_rows(pristine_wizard):
     template = pristine_wizard.state["trame__template_main"]
     desktop, phone = template.split('<template v-if="$vuetify.display.smAndDown" v-slot:extension>')
     for row in (desktop, phone.split("</template>")[0]):
-        field, _, after = row.partition('v-model="target_dir"')
+        _, _, after = row.partition(_LOADED_PATH)
         assert "Load case" in after.split("Save case")[0]
 
 
-def test_load_case_button_needs_a_target_directory(pristine_wizard):
+def test_load_case_button_is_disabled_only_while_the_assistant_is_busy(pristine_wizard):
+    # It opens the browser rather than reading a path, so it no longer needs a target.
     template = pristine_wizard.state["trame__template_main"]
     button = template.split("Load case")[0].rsplit("<", 1)[1]
-    assert ':disabled="!target_dir.trim() || ai_busy"' in button
+    assert ':disabled="ai_busy"' in button
+
+
+def test_opening_the_browser_lists_the_launch_directory(wizard, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "cavity").mkdir()
+
+    wizard.controller.open_picker()
+
+    assert wizard.state.picker_show is True
+    assert wizard.state.picker_dir == str(tmp_path)
+    assert [row["name"] for row in wizard.state.picker_entries] == ["cavity"]
+
+
+def test_opening_the_browser_reopens_on_the_loaded_case(wizard, tmp_path):
+    case = tmp_path / "cavity"
+    (case / "deeper").mkdir(parents=True)
+    wizard.state.target_dir = str(case)
+
+    wizard.controller.open_picker()
+
+    assert wizard.state.picker_dir == str(case)
+    assert [row["name"] for row in wizard.state.picker_entries] == ["deeper"]
+
+
+def test_browsing_steps_into_and_back_out_of_a_directory(wizard, tmp_path):
+    (tmp_path / "cases" / "cavity").mkdir(parents=True)
+
+    wizard.controller.picker_goto(str(tmp_path / "cases"))
+    assert [row["name"] for row in wizard.state.picker_entries] == ["cavity"]
+
+    wizard.controller.picker_up()
+    assert wizard.state.picker_dir == str(tmp_path)
+    assert [row["name"] for row in wizard.state.picker_entries] == ["cases"]
+
+
+def test_browsing_up_from_the_filesystem_root_stays_put(wizard):
+    wizard.controller.picker_goto("/")
+    wizard.controller.picker_up()
+
+    assert wizard.state.picker_dir == "/"
+
+
+def test_loading_a_case_points_foam_case_at_it(tmp_path):
+    # OpenFOAM's <system> tags expand from $FOAM_CASE and argList never runs here, so
+    # the wizard sets it itself. The listener is registered on target_dir, which covers
+    # every route into it; a bare test server never flushes, so the handler is called
+    # directly and the registration is asserted below.
+    import os  # noqa: PLC0415
+
+    from neofoam.ui.app import _sync_foam_case  # noqa: PLC0415
+
+    try:
+        _sync_foam_case(str(tmp_path))
+        assert os.environ["FOAM_CASE"] == str(tmp_path.resolve())
+        _sync_foam_case("")  # no case loaded → nothing claiming to be one
+        assert "FOAM_CASE" not in os.environ
+    finally:
+        os.environ.pop("FOAM_CASE", None)
+
+
+def test_foam_case_is_kept_in_step_with_the_target_directory(wizard):
+    from neofoam.ui.app import _sync_foam_case  # noqa: PLC0415
+
+    # trame keeps (callback, translator) pairs; the wiring is what is asserted here,
+    # since a bare test server never flushes and so never calls the listener itself.
+    registered = [cb for cb, _translator in wizard.state._change_callbacks["target_dir"]]  # noqa: SLF001
+    assert _sync_foam_case in registered
+
+
+def test_choosing_a_directory_makes_it_the_target_and_loads_it(monkeypatch, wizard):
+    # The one way into target_dir from the toolbar: Save, the mesh writer and a sweep
+    # export all write to whatever the browser left here.
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    wizard.controller.picker_goto(str(_PITZ_DAILY))
+
+    wizard.controller.picker_choose()
+
+    assert wizard.state.picker_show is False
+    assert wizard.state.target_dir == str(_PITZ_DAILY)
+    transport = next(
+        e for e in wizard.controller.get_entries() if e.config_name == "transport_properties_config"
+    )
+    assert wizard.state[transport.state_key] == {"transportModel": "Newtonian", "nu": 1e-05}
 
 
 def test_load_case_button_loads_the_target_case_without_an_api_key(monkeypatch, wizard):

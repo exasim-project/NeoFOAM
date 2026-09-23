@@ -486,9 +486,11 @@ def test_load_target_case_opens_the_assistant_drawer_for_its_report(solver, serv
             " constant/transportProperties (could not convert string to float: 'notANumber').",
         ),
         (
+            # Read under $FOAM_CASE, so OpenFOAM names the file relative to the case —
+            # which the message has already given, rather than repeating the path.
             str(UNPARSABLE_CASE),
             f"Could not read {UNPARSABLE_CASE}: Unexpected '}}' while reading dictionary entry"
-            f" ({UNPARSABLE_CASE}/constant/transportProperties at line 14).",
+            " (constant/transportProperties at line 14).",
         ),
     ],
 )

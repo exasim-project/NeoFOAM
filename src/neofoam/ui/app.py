@@ -22,6 +22,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
+from neofoam.io.dictread import set_foam_case
 from neofoam.mcp import tools
 from neofoam.mcp.registry import resolve_solver
 from neofoam.ui import case_spec as cs
@@ -29,11 +30,13 @@ from neofoam.ui import jsonforms_module
 from neofoam.ui._paths import _resolve_target
 from neofoam.ui._responsive import _MOBILE, _responsive_open, _toggle
 from neofoam.ui.agent_panel import AgentPanel
+from neofoam.ui.dir_picker import list_dirs, start_dir
 from neofoam.ui.form_schema import ADDER_TRANSLATIONS
 from neofoam.ui.forms import FormEntry, build_forms, schema_key, uischema_key
 from neofoam.ui.geometry_panel import GeometryPanel
 from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
 from neofoam.ui.review import FindingRow, findings_to_rows, save_error_rows
+from neofoam.ui.run_panel import RunPanel
 from neofoam.ui.scaffold import scaffold_runnable_case
 from neofoam.ui.steps import (
     ModelChoice,
@@ -182,6 +185,10 @@ def _seed_state(state: Any, wizard: _Wizard) -> None:
     state.ai_panel_mobile = False
     state.main_drawer_mobile = False
     state.target_dir = ""
+    # The "Load case" directory browser (opened from the toolbar; see dir_picker).
+    state.picker_show = False
+    state.picker_dir = ""
+    state.picker_entries = []
     state.save_report = None
     state.scaffolded = []
     state.validation_ok = None
@@ -280,12 +287,59 @@ def _revalidate(state: Any, wizard: _Wizard) -> None:
         state.findings = [asdict(r) for r in save_error_rows(exc)]
 
 
+def _picker_goto(state: Any, directory: str) -> None:
+    """Show ``directory``'s sub-directories in the open browser."""
+    state.picker_dir = str(Path(directory))
+    state.picker_entries = list_dirs(Path(directory))
+
+
+def _open_picker(state: Any) -> None:
+    """Open the "Load case" browser on the loaded case, else the launch directory."""
+    _picker_goto(state, str(start_dir(state.target_dir)))
+    state.picker_show = True
+
+
+def _picker_up(state: Any) -> None:
+    """Step to the parent directory — at the filesystem root, stay put."""
+    _picker_goto(state, str(Path(state.picker_dir).parent))
+
+
+def _picker_choose(state: Any, ctrl: Any) -> None:
+    """Take the directory in view as the case: it becomes the target, then loads.
+
+    The target every other writer uses (Save, the mesh writer, a sweep export) is set
+    here, so the browser is the one way into it besides the Geometry step's STL scan.
+    """
+    state.picker_show = False
+    state.target_dir = state.picker_dir
+    ctrl.load_target_case()
+
+
+def _sync_foam_case(target_dir: str, **_kwargs: Any) -> None:
+    """Keep ``$FOAM_CASE`` on the loaded case, wherever the case came from.
+
+    OpenFOAM's path tags (``<system>``, as the shipped ``snappyHexMeshDict.cfg`` uses)
+    expand from it, and ``argList`` — which sets it for a solver run — never runs in
+    the wizard. Registered on ``target_dir`` so one listener covers every route into
+    it: the directory browser, the Geometry step's STL scan and a sweep's base-case
+    restore. The library reads scope their own (:func:`neofoam.io.dictread.foam_case`)
+    because they are handed a case rather than having one.
+    """
+    set_foam_case(target_dir)
+
+
 def _register_case_controllers(server: Any, wizard: _Wizard) -> None:
-    """Register the model-selection, save and validate controllers."""
+    """Register the model-selection, save, validate and directory-browser controllers."""
     state, ctrl = server.state, server.controller
+    state.change("target_dir")(_sync_foam_case)
+
     ctrl.select_model = partial(_select_model, state, wizard)
     ctrl.save_case = partial(_save_case, state, wizard)
     ctrl.revalidate = partial(_revalidate, state, wizard)
+    ctrl.open_picker = partial(_open_picker, state)
+    ctrl.picker_goto = partial(_picker_goto, state)
+    ctrl.picker_up = partial(_picker_up, state)
+    ctrl.picker_choose = partial(_picker_choose, state, ctrl)
     ctrl.get_entries = lambda: wizard.entries
     ctrl.get_steps = lambda: wizard.steps
 
@@ -391,8 +445,8 @@ def _model_selector(ctx: StepContext, wizard: _Wizard) -> None:
                 v3.VSwitch(v_model=(selection_key(c.name),), label=c.label, inset=True)
 
 
-def _review_panel(ctx: StepContext) -> None:
-    """validate_case findings + scaffolded runnable case."""
+def _review_panel(ctx: StepContext, run_panel: RunPanel) -> None:
+    """validate_case findings, the scaffolded case, and running it."""
     v3, html = ctx.v3, ctx.html
     with v3.VRow(align="center", classes="mb-2", no_gutters=True):
         v3.VSpacer()
@@ -447,6 +501,8 @@ def _review_panel(ctx: StepContext) -> None:
         classes="mt-3",
         v_show="scaffolded.length",
     )
+    v3.VDivider(classes="my-4")
+    run_panel.render(v3, html)
 
 
 def _step_nav(ctx: StepContext, wizard: _Wizard, layout: Any) -> None:
@@ -477,30 +533,34 @@ def _step_nav(ctx: StepContext, wizard: _Wizard, layout: Any) -> None:
 
 
 def _load_button(ctx: StepContext, **props: Any) -> None:
-    """ "Load case": the target directory's case into the forms (``agent_panel``)."""
+    """ "Load case": open the directory browser, which loads what it picks."""
     ctx.v3.VBtn(
         "Load case",
-        click=ctx.server.controller.load_target_case,
+        click=ctx.server.controller.open_picker,
         color="primary",
         variant="tonal",
         prepend_icon="mdi-folder-open-outline",
-        disabled=("!target_dir.trim() || ai_busy",),
+        disabled=("ai_busy",),
+        **props,
+    )
+
+
+def _loaded_path(ctx: StepContext, classes: str = "", **props: Any) -> None:
+    """The case Save writes to — read-only: the browser is what sets it."""
+    ctx.html.Div(
+        "{{ target_dir || 'No case loaded' }}",
+        classes=f"text-body-2 text-medium-emphasis text-truncate {classes}".rstrip(),
+        title=("target_dir",),
         **props,
     )
 
 
 def _toolbar(ctx: StepContext) -> None:
-    """Target directory, Load, Save and the AI-drawer toggle (the path wraps on a phone)."""
+    """The loaded path, Load, Save and the AI-drawer toggle (the path drops to its own
+    row on a phone)."""
     v3 = ctx.v3
     v3.VSpacer()
-    v3.VTextField(
-        v_model=("target_dir",),
-        label="Target directory",
-        hide_details=True,
-        prepend_inner_icon="mdi-folder-arrow-down-outline",
-        style="max-width: 340px",
-        v_if=f"!{_MOBILE}",
-    )
+    _loaded_path(ctx, style="max-width: 340px", v_if=f"!{_MOBILE}")
     _load_button(ctx, classes="ml-3", v_if=f"!{_MOBILE}")
     v3.VBtn(
         "Save case",
@@ -520,14 +580,45 @@ def _toolbar(ctx: StepContext) -> None:
     )
     # A phone toolbar has no room for the path: it gets a second row.
     with v3.Template(v_if=_MOBILE, v_slot_extension=True):
-        v3.VTextField(
-            v_model=("target_dir",),
-            label="Target directory",
-            hide_details=True,
-            prepend_inner_icon="mdi-folder-arrow-down-outline",
-            classes="ml-3",
-        )
+        _loaded_path(ctx, classes="ml-3")
         _load_button(ctx, classes="mx-3")
+
+
+def _dir_picker_dialog(ctx: StepContext) -> None:
+    """The "Load case" directory browser (see :mod:`neofoam.ui.dir_picker`)."""
+    v3, html, ctrl = ctx.v3, ctx.html, ctx.server.controller
+    with v3.VDialog(v_model=("picker_show",), max_width=560):
+        with v3.VCard():
+            v3.VCardTitle("Load case", classes="text-subtitle-1")
+            html.Div(
+                "{{ picker_dir }}",
+                classes="px-4 pb-2 text-body-2 text-medium-emphasis text-truncate",
+            )
+            with v3.VCardText(classes="pt-0", style="max-height: 50vh; overflow-y: auto"):
+                with v3.VList(density="compact", nav=True):
+                    with v3.VListItem(click=ctrl.picker_up, prepend_icon="mdi-arrow-up-left"):
+                        v3.VListItemTitle("Parent directory")
+                    with v3.VListItem(
+                        v_for="entry in picker_entries",
+                        key="entry.path",
+                        click=(ctrl.picker_goto, "[entry.path]"),
+                        prepend_icon="mdi-folder-outline",
+                    ):
+                        v3.VListItemTitle("{{ entry.name }}")
+                html.Div(
+                    "Nothing below this one — load it, or step back up.",
+                    v_if="!picker_entries.length",
+                    classes="text-body-2 text-medium-emphasis",
+                )
+            with v3.VCardActions():
+                v3.VSpacer()
+                v3.VBtn("Cancel", click="picker_show = false")
+                v3.VBtn(
+                    "Load this directory",
+                    click=ctrl.picker_choose,
+                    color="primary",
+                    variant="tonal",
+                )
 
 
 def _no_patches_in_forms(entries: list[FormEntry]) -> str:
@@ -541,7 +632,11 @@ def _no_patches_in_forms(entries: list[FormEntry]) -> str:
 
 
 def _step_panel(
-    ctx: StepContext, wizard: _Wizard, step: Step, geometry_panel: GeometryPanel
+    ctx: StepContext,
+    wizard: _Wizard,
+    step: Step,
+    geometry_panel: GeometryPanel,
+    run_panel: RunPanel,
 ) -> None:
     """The bespoke part of a step (models / geometry / sweep / review / a plugin's)."""
     if step.id == "models":
@@ -561,17 +656,19 @@ def _step_panel(
     elif step.id == "sweep":
         ctx.sweep.render(ctx.json_forms)
     elif step.id == "review":
-        _review_panel(ctx)
+        _review_panel(ctx, run_panel)
     elif step.id in wizard.plugin_by_id:
         wizard.plugin_by_id[step.id].render(ctx)
 
 
-def _content(ctx: StepContext, wizard: _Wizard, geometry_panel: GeometryPanel) -> None:
+def _content(
+    ctx: StepContext, wizard: _Wizard, geometry_panel: GeometryPanel, run_panel: RunPanel
+) -> None:
     """Every step mounted once: header, bespoke panel, schema-generated form panels."""
     for step in wizard.steps:
         with ctx.html.Div(v_show=f"current_step === '{step.id}'"):
             _step_header(ctx, wizard, step)
-            _step_panel(ctx, wizard, step, geometry_panel)
+            _step_panel(ctx, wizard, step, geometry_panel, run_panel)
             if step.entry_keys:
                 with ctx.v3.VExpansionPanels():
                     for key in step.entry_keys:
@@ -601,6 +698,7 @@ def build_app(
     _seed_state(server.state, wizard)
     _register_case_controllers(server, wizard)
     geometry_panel = GeometryPanel(server, wizard.entries)
+    run_panel = RunPanel(server)
     agent_panel = AgentPanel(server, wizard.entries, wizard.solver)
     sweep_panel = SweepPanel(server, wizard.entries, wizard.solver, solver_name)
 
@@ -629,8 +727,9 @@ def build_app(
             _toolbar(ctx)
         with layout.root:
             agent_panel.render(v3, html)
+            _dir_picker_dialog(ctx)
         with layout.content, v3.VContainer(fluid=True, classes="pa-4 pa-md-6"):
-            _content(ctx, wizard, geometry_panel)
+            _content(ctx, wizard, geometry_panel, run_panel)
 
     server.enable_module(jsonforms_module)
     return server

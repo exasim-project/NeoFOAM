@@ -12,6 +12,9 @@ false-success in ``validate_case``.
 
 from __future__ import annotations
 
+import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Union
@@ -22,11 +25,55 @@ __all__ = [
     "Value",
     "Unreadable",
     "Leaf",
+    "foam_case",
+    "set_foam_case",
     "read_section",
     "read_entry",
     "read_keys",
     "read_toplevel",
 ]
+
+#: What ``argList`` sets when a solver starts, and OpenFOAM's path tags expand from.
+_FOAM_CASE = "FOAM_CASE"
+
+
+@contextmanager
+def foam_case(case: Union[Path, str]) -> Iterator[None]:
+    """Expose ``case`` as ``$FOAM_CASE`` while its dictionaries are read.
+
+    OpenFOAM's path tags (``<system>``, ``<constant>``, ``<case>``) expand from
+    ``$FOAM_CASE`` — set by ``argList`` when a solver starts, and by nothing at all in
+    a plain Python process. Unset, the ``#include "<system>/meshQualityDict"`` that
+    OpenFOAM's own ``snappyHexMeshDict.cfg`` carries degrades to a bare relative path,
+    which resolves against the *including* file (somewhere under ``etc/``) instead of
+    the case — so a case including it cannot be read at all, and the failure is a
+    process abort rather than an exception::
+
+        with foam_case(case_dir):
+            configs = load_case_from_disk(case_dir, solver=solver)
+
+    The variable is process-global, so whatever was there is restored on the way out.
+    """
+    previous = os.environ.get(_FOAM_CASE)
+    set_foam_case(case)
+    try:
+        yield
+    finally:
+        set_foam_case(previous)
+
+
+def set_foam_case(case: Union[Path, str, None]) -> None:
+    """Point ``$FOAM_CASE`` at ``case`` until something else moves it; clear it on ``None``.
+
+    The lasting counterpart of :func:`foam_case`, for an application that *has* a
+    current case (the wizard, once one is loaded) rather than one reading a case it
+    was handed. ``argList`` does this for a solver; nothing does it for a plain
+    Python process, so an app that reads case dictionaries sets it itself.
+    """
+    if not case:
+        os.environ.pop(_FOAM_CASE, None)
+        return
+    os.environ[_FOAM_CASE] = str(Path(case).resolve())
 
 
 @dataclass(frozen=True)

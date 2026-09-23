@@ -26,6 +26,7 @@ from neofoam.io.dictread import (
     Leaf,
     Unreadable,
     Value,
+    foam_case,
     read_entry,
     read_keys,
     read_section,
@@ -501,6 +502,11 @@ def default_registry() -> CheckRegistry:
 
 
 def validate(solver: Any, case_dir: Union[Path, str]) -> ValidationReport:
-    """Run the default check registry over ``case_dir`` → a :class:`ValidationReport`."""
+    """Run the default check registry over ``case_dir`` → a :class:`ValidationReport`.
+
+    Under ``$FOAM_CASE``, so a check reading a dict that uses an OpenFOAM path tag
+    (``<system>``, as ``snappyHexMeshDict.cfg`` does) resolves it against this case.
+    """
     ctx = CaseContext(case=Path(case_dir), solver=solver)
-    return default_registry().run(ctx)
+    with foam_case(case_dir):
+        return default_registry().run(ctx)

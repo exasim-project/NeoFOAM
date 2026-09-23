@@ -19,7 +19,7 @@ from typing import Any
 from neofoam.agent.case_fill import case_spec_to_configs, load_case_from_disk
 from neofoam.framework.solver.configurations import configurations
 from neofoam.io import OpenFOAMStrategy
-from neofoam.io.dictread import Value, read_keys, read_section, read_toplevel
+from neofoam.io.dictread import Value, foam_case, read_keys, read_section, read_toplevel
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.steps import (
@@ -91,8 +91,12 @@ def read_case_configs(
 
         configs = read_case_configs(Path(case_dir), solver)
     """
-    _require_parsable(case_dir, solver)
-    return case_spec_to_configs(load_case_from_disk(case_dir, solver=solver, warnings=warnings))
+    # Both reads under one $FOAM_CASE: the probe has to see exactly what the real read
+    # will, or a case whose dicts use OpenFOAM's <system> tag passes the probe and then
+    # aborts the server process on the read it was meant to protect.
+    with foam_case(case_dir):
+        _require_parsable(case_dir, solver)
+        return case_spec_to_configs(load_case_from_disk(case_dir, solver=solver, warnings=warnings))
 
 
 def case_algorithm(case_dir: Path, entries: list[FormEntry]) -> str | None:
@@ -104,7 +108,8 @@ def case_algorithm(case_dir: Path, entries: list[FormEntry]) -> str | None:
 
         algorithm = case_algorithm(Path(case_dir), entries)
     """
-    keys = read_keys(case_dir / "system" / "fvSolution")
+    with foam_case(case_dir):
+        keys = read_keys(case_dir / "system" / "fvSolution")
     if not isinstance(keys, frozenset):
         return None
     declared = next((block for name, block in _CONTROL_BLOCKS.items() if name in keys), None)
@@ -122,10 +127,11 @@ def case_advection_model(case_dir: Path) -> str:
         advection = case_advection_model(Path(case_dir))
     """
     fv_solution = case_dir / "system" / "fvSolution"
-    named = read_toplevel(fv_solution, "advectionScheme")
-    if isinstance(named, Value):
-        return named.text
-    blocks = read_section(fv_solution, "solvers").items()
+    with foam_case(case_dir):
+        named = read_toplevel(fv_solution, "advectionScheme")
+        if isinstance(named, Value):
+            return named.text
+        blocks = read_section(fv_solution, "solvers").items()
     controls = {key for name, block in blocks if name.startswith("alpha.") for key in block}
     return "isoAdvector" if controls & _ISO_ADVECTOR_CONTROLS else "MULES"
 
