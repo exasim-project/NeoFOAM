@@ -31,6 +31,7 @@ what you're trying to do:
    auto_tutorials/example_02_passive_scalar_plugin
    auto_tutorials/example_03_build_a_solver
    auto_tutorials/example_04_configure_with_io
+   auto_tutorials/example_05_postprocessing
    tutorials/case-wizard
 
 .. toctree::
@@ -58,6 +59,8 @@ what you're trying to do:
    reference/project-layout
    reference/build-and-test
    reference/cli
+   reference/preprocessing
+   reference/postprocessing
    reference/ui-architecture
    reference/index
 

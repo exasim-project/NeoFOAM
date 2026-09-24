@@ -29,6 +29,9 @@ from neofoam.io.schema import (
     ModelSummary as ModelEntryDTO,
 )
 from neofoam.io.schema import (
+    PostPluginInfo as PostPluginInfoDTO,
+)
+from neofoam.io.schema import (
     ToolInfo as ToolInfoDTO,
 )
 
@@ -37,6 +40,7 @@ __all__ = [
     "ConfigSchemaDTO",
     "ModelEntryDTO",
     "ToolInfoDTO",
+    "PostPluginInfoDTO",
     "PatchDTO",
     "FindingDTO",
     "ValidationReportDTO",
@@ -45,6 +49,8 @@ __all__ = [
     "CaseSpecSchemaDTO",
     "ManifestSchemaDTO",
     "SaveResultDTO",
+    "PostSaveDTO",
+    "PreprocessSaveDTO",
     "GeometryImportDTO",
     "LoadWarningDTO",
     "WorkspaceInfoDTO",
@@ -105,6 +111,28 @@ class MeshInputsDTO(BaseModel):
     has_snappy: bool
     """True when a ``snappyHexMeshDict`` was produced (the manifest has a snappy
     surface); False for a pure blockMesh box."""
+
+
+class PostSaveDTO(BaseModel):
+    """Result of writing a case's post-processing spec (``system/postProcess.yaml``)."""
+
+    written: list[str]
+    """The spec file written, relative to the case directory."""
+    tables: list[str]
+    """The names of the declared tables, in the order the spec declares them —
+    one ``postProcessing/<name>.csv`` per table once the case runs."""
+
+
+class PreprocessSaveDTO(BaseModel):
+    """Result of writing a case's pre-processing pipeline (``system/preprocess.yaml``)."""
+
+    written: list[str]
+    """The files written, relative to the case directory — ``system/preprocess.yaml``
+    plus ``system/setFields.yaml`` when a setFields declaration was given."""
+    tools: list[str]
+    """The tool names the pipeline activates, in the order the entries were declared.
+    That is NOT the run order: the pipeline runs in ``depends_on`` order, which is only
+    known once the init graph is built (and a mesh is available)."""
 
 
 class ManifestSchemaDTO(BaseModel):

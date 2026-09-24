@@ -40,6 +40,8 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
+from neofoam.postprocess import PostProcessConfig
+from neofoam.preprocess import SetFieldsConfig
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
@@ -107,6 +109,13 @@ def _core_spec(state: Any, names: set[str]) -> Any:
     return next(m for m in state.core_models if m.name in names)
 
 
+def _core_model(state: Any, spec_name: str) -> Any:
+    """Find an instantiated core-model runtime by its spec name."""
+    return next(
+        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
+    )
+
+
 incompressibleVoF = Solver("incompressibleVoF")
 
 # Declare the full case-authoring schema on the spec, case-free (mirrors
@@ -124,6 +133,8 @@ incompressibleVoF.config(SnappyHexMeshDictConfig)
 incompressibleVoF.config(TransportPropertiesConfig)  # two-phase phases/nu/rho/sigma
 incompressibleVoF.config(GravityConfig)  # constant/g
 incompressibleVoF.config(TurbulencePropertiesConfig)  # simulationType
+incompressibleVoF.config(PostProcessConfig)  # in-situ tables (system/postProcess.yaml)
+incompressibleVoF.config(SetFieldsConfig)  # region initialisation (system/setFields.yaml)
 
 incompressibleVoF.models(advectionModel, required=True)  # alpha advection (pick ONE)
 incompressibleVoF.models(PressureVelocityAlgorithm, required=True)  # VoF PIMPLE
@@ -156,6 +167,7 @@ def execution_graph(
     )
     alpha_ops = Operations(alpha_model.build_operations_for(alpha_model))
     pimple_ops = Operations(pimple_model.build_operations_for(pimple_model))
+    post_ops = Operations(_core_model(self.state, "postProcess").operations)
 
     # Solver-owned time-loop operations.
     ops = self.operations
@@ -179,6 +191,9 @@ def execution_graph(
             inner_builder.step(ops["turbulence_correction"])
 
         time_builder.step(ops["write_output"])
+        # Last in the loop: a pure reader, so a CSV row and the time directory
+        # just written describe the same state.
+        time_builder.step(post_ops["post_process"])
 
     # Optional-model operations are merged by the resolver (placed by their own
     # depends_on / operation_number).

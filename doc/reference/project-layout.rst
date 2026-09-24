@@ -91,6 +91,31 @@ the linked reference pages for the full API.
     ``PluginSystem`` — discriminated registries for constraints, time-integration
     regimes, and model families.
 
+``postprocess/``
+    In-situ post-processing: a case declares *tables* (a source, pipeline nodes
+    and a write cadence) in ``system/postProcess.yaml`` or ``system/postProcess.py``
+    and the ``postProcess`` model appends them to ``postProcessing/<name>.csv``
+    while the solver runs (wired into ``incompressibleFluid``,
+    ``incompressibleVoF`` and ``incompressibleFluidNeoN``; on the NeoN backend
+    only the ``internal`` source works, see :doc:`postprocessing`).
+    The data contract (``node.py``), the two front doors (``config.py``,
+    ``script.py``) and the table registry stay at the top level;
+    the plugins are grouped into ``postprocess/nodes/`` (selectors, binning,
+    field functions, aggregators, row output, debug), ``postprocess/sources/``
+    (cell/patch/probe fields, sampled surfaces, solver residuals, and the
+    geometry adapters they hand the nodes) and ``postprocess/writers/`` (the
+    ``TableWriter`` interface and the CSV writer a table gets by default).
+    See :doc:`postprocessing`.
+
+``preprocess/``
+    Pre-processing: a case declares a default per field plus a list of regions in
+    ``system/setFields.yaml`` or ``system/setFields.py`` and the ``setFields``
+    tool writes the values into the case's ``0/`` fields before the run. The
+    regions are the post-processing selectors, imported from ``postprocess/``.
+    The two front doors (``config.py``, ``script.py``) are pure numpy;
+    ``apply.py`` is the one module that touches pybFoam, which is what makes the
+    tool pybFoam-only. See :doc:`preprocessing`.
+
 ``tooling/``
     The "above the library" layer: the stdlib-only ``Workspace`` path sandbox and
     other frontend/trust-boundary concerns.

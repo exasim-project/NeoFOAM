@@ -37,10 +37,23 @@ __all__ = [
 
 _BC_KEYS = ("boundaryField",)
 
-# Mesh / preprocessing dict configs belong to the upstream meshing stage (the
-# geometry→mesh workflow), not the physics case wizard. They also aren't writable via
-# write_configs' merged path (preprocess.yaml uses YAMLStrategy). Exclude them.
-_MESH_FILES = frozenset({"blockMeshDict", "snappyHexMeshDict", "preprocess.yaml"})
+# Configs that belong to a stage either side of the physics case wizard, and are excluded
+# from it. The mesh dicts and preprocess.yaml are the upstream geometry→mesh workflow
+# (preprocess.yaml is also not writable via write_configs' merged path — it uses
+# YAMLStrategy). setFields.yaml and postProcess.yaml are the pre- and post-processing
+# stages: their source/pipeline/region mappings stay open so a case script's own
+# ``@Node.register`` plugin is selectable by ``type``, which makes them a plugin payload
+# rather than keys a user names — they need registry-aware rendering (see post_catalog),
+# not the wizard's "add a key" adder.
+_NON_WIZARD_FILES = frozenset(
+    {
+        "blockMeshDict",
+        "snappyHexMeshDict",
+        "preprocess.yaml",
+        "setFields.yaml",
+        "postProcess.yaml",
+    }
+)
 
 # The subset of mesh dicts that are per-config *sweepable*: OpenFOAM dict configs
 # with a real ``@IOStrategy`` file binding (``write_configs`` writes them cleanly).
@@ -192,8 +205,8 @@ def build_forms(solver: Any) -> list[FormEntry]:
     entries: list[FormEntry] = []
 
     for info in tools.list_configs(solver):
-        if info.file and info.file.rsplit("/", 1)[-1] in _MESH_FILES:
-            continue  # meshing/preprocessing config — out of scope for the wizard
+        if info.file and info.file.rsplit("/", 1)[-1] in _NON_WIZARD_FILES:
+            continue  # meshing / pre- / post-processing config — out of scope for the wizard
         dto = tools.config_schema(solver, info.name)
         cls = cfgs[info.cls_name]
         owner_model = owner.get(info.cls_name)
@@ -257,7 +270,7 @@ def build_mesh_forms(solver: Any) -> list[FormEntry]:
 
     These are the ``blockMeshDict`` / ``snappyHexMeshDict`` configs that
     :func:`build_forms` deliberately drops from the physics wizard
-    (``_MESH_FILES``). The Parameters step surfaces them as sources of its keyed
+    (``_NON_WIZARD_FILES``). The Parameters step surfaces them as sources of its keyed
     ``mesh`` dimension, so it needs their titles + JSONForms schemas; every entry
     is a plain ``dict``-kind ``FormEntry`` with ``step="mesh"`` (never a wizard
     step) and no owner model. Same shape as a wizard dict entry, so the sweep

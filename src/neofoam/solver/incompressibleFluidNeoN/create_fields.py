@@ -9,9 +9,10 @@ BUILD   → emit lazy InitSteps for the NeoN runtime, fields, and turbulence
 
 Differences from the pybFoam ``incompressibleFluid`` init graph:
 
-* no ``mesh`` step and no mesh-preprocess pipeline — ``create_adapter_run_time``
-  constructs its own ``MeshAdapter`` (fvMesh) on the ``Foam::Time`` registry;
-  also creating a pybFoam ``fvMesh`` would double-register the default region;
+* no mesh-*read* step and no mesh-preprocess pipeline — ``create_adapter_run_time``
+  constructs its own ``MeshAdapter`` (fvMesh) on the ``Foam::Time`` registry, and
+  the ``mesh`` step only aliases it onto the Context; also creating a pybFoam
+  ``fvMesh`` would double-register the default region;
 * the NeoN ``RunTime`` adapter is the central resource: an init-only
   ``_neon_runtime`` (never routed onto the Context) plus a
   ``models.neon_runtime`` alias so operations inject it by name;
@@ -43,6 +44,7 @@ from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime
+from neofoam.postprocess import postProcess
 from neofoam.solver.neon_runtime import requested_executor
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
@@ -99,10 +101,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
         field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 
+        # postProcess is a third such Model: it LOADs the case's tables and is
+        # stepped last in the time loop.
+        post_process_model = postProcess.instantiate(resolved_case_dir, "main")
+
         core_models: list[Any] = [
             pressure_model,
             solution_loop_model,
             field_writer_model,
+            post_process_model,
         ]
         core_models.append(ControlDictConfig.load(case_dir=resolved_case_dir, validate=False))
 
@@ -154,6 +161,13 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         def alias_neon_runtime(ctx: dict[str, Any]) -> Any:
             return ctx["_neon_runtime"]
 
+        def alias_mesh(ctx: dict[str, Any]) -> Any:
+            # The adapter's MeshAdapter *is* a Foam::fvMesh (see runtime.cpp), so
+            # routing it onto ``Context.mesh`` gives the mesh-reading seams — the
+            # postProcess sources' cell geometry above all — the same object the
+            # pybFoam solvers put there, without a second fvMesh on the registry.
+            return ctx["_neon_runtime"].mesh
+
         def create_nu_vol(ctx: dict[str, Any]) -> Any:
             # Volume nu for the explicit dev2 viscous-stress term (nuEff/nut
             # come from the turbulence model below).
@@ -193,6 +207,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         builder.add(lazy("_foam_time", create_foam_time, depends_on=["_arg_list"]))
         builder.add(lazy("_neon_runtime", create_neon_runtime, depends_on=["_foam_time"]))
         builder.add(init_model("neon_runtime", alias_neon_runtime, depends_on=["_neon_runtime"]))
+        builder.add(lazy("mesh", alias_mesh, depends_on=["_neon_runtime"]))
 
         # solutionLoop + fieldWriter are the framework *core* Models; the NeoN
         # touch-points (NeoNTimeSync backend, write hook, logger, reporter) are
@@ -201,6 +216,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             [
                 ("solution_loop_model", solution_loop_model),
                 ("field_writer_model", field_writer_model),
+                ("post_process_model", _by_spec("postProcess")),
             ]
         )
         builder.extend(neon_loop_backend_steps())

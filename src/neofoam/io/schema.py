@@ -18,6 +18,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 import neofoam.tools  # noqa: F401  (import populates the tool registry)
+from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.solver.configurations import (
     _snake_case,
     configurations,
@@ -33,11 +34,18 @@ __all__ = [
     "ConfigSchema",
     "ToolInfo",
     "ModelSummary",
+    "PostPluginInfo",
     "list_configs",
     "config_schema",
     "tool_catalog",
     "model_catalog",
+    "post_catalog",
 ]
+
+#: The plugin families a post-processing table is assembled from.
+PostFamily = Literal["Source", "Node", "TableWriter", "WriteControl"]
+
+_POST_FAMILIES: tuple[PostFamily, ...] = ("Source", "Node", "TableWriter", "WriteControl")
 
 
 class ConfigInfo(BaseModel):
@@ -83,6 +91,25 @@ class ToolInfo(BaseModel):
     step_schema: dict[str, Any]
     dict_file: str | None = None
     config: str | None = None
+
+
+class PostPluginInfo(BaseModel):
+    """One registered post-processing plugin — what a table's open mappings accept.
+
+    ``type`` is the string a ``system/postProcess.yaml`` mapping selects the plugin
+    by (``write_control_type`` for the ``WriteControl`` family) and ``json_schema``
+    that mapping's schema. ``accepts_aggregated`` is filled for nodes only (the node
+    may sit behind an aggregator) and ``self_aggregating`` for sources only (the
+    source emits the terminal aggregation itself, so its table declares no pipeline);
+    both are ``None`` for the other families.
+    """
+
+    family: PostFamily
+    type: str
+    description: str | None = None
+    json_schema: dict[str, Any]
+    accepts_aggregated: bool | None = None
+    self_aggregating: bool | None = None
 
 
 class ModelSummary(BaseModel):
@@ -219,3 +246,47 @@ def model_catalog(solver: Any) -> list[ModelSummary]:
     configs for a runnable case; this catalog alone is not the full required set.
     """
     return [ModelSummary.from_entry(e) for e in _model_catalog(solver)]
+
+
+def post_catalog() -> list[PostPluginInfo]:
+    """Every registered post-processing plugin, its ``type`` string and its JSON Schema.
+
+    Case- and solver-free: the four families are solver independent. This is the
+    source of truth for what a ``system/postProcess.yaml`` table may name —
+    :func:`config_schema` of ``post_process_config`` describes the envelope, but its
+    ``source``/``pipeline``/``write_control``/``writer`` mappings stay open (resolved
+    against the families at load time), so the accepted strings are only here.
+    """
+    # Imported here, not at module scope: ``neofoam.io`` is on the ``import
+    # neofoam`` path, and the post-processing package reaches pybFoam and the
+    # compiled bindings. Registering the plugins is this function's business.
+    import neofoam.postprocess  # noqa: F401, PLC0415  (registers the post-processing plugins)
+
+    out: list[PostPluginInfo] = []
+    for family in _POST_FAMILIES:
+        registry = PluginSystem.get_registered(family)
+        if registry is None:
+            continue
+        for plugin_cls in registry.plugin_registry:
+            discriminator = plugin_cls.model_fields.get(registry.discriminator)
+            if discriminator is None:
+                continue
+            out.append(
+                PostPluginInfo(
+                    family=family,
+                    type=str(discriminator.default),
+                    description=_describe(plugin_cls),
+                    json_schema=plugin_cls.model_json_schema(),
+                    accepts_aggregated=(
+                        bool(plugin_cls.accepts_aggregated)  # type: ignore[attr-defined]
+                        if family == "Node"
+                        else None
+                    ),
+                    self_aggregating=(
+                        bool(plugin_cls.self_aggregating)  # type: ignore[attr-defined]
+                        if family == "Source"
+                        else None
+                    ),
+                )
+            )
+    return sorted(out, key=lambda info: (info.family, info.type))

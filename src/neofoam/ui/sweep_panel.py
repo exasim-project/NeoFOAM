@@ -95,7 +95,7 @@ class SweepPanel:
         # at save time and their schemas mutate with the geometry scan).
         self._dims: dict[str, FormEntry] = {e.config_name: e for e in entries if e.kind == "dict"}
         # Sweepable mesh dicts (blockMesh/snappy) — sources of the keyed ``mesh``
-        # dimension, kept out of the physics wizard (see forms._MESH_FILES).
+        # dimension, kept out of the physics wizard (see forms._NON_WIZARD_FILES).
         self._mesh_dims: dict[str, FormEntry] = {e.config_name: e for e in build_mesh_forms(solver)}
         # Whole ``0/<field>`` configs — sweepable boundary/field values (e.g. the
         # inlet velocity). Regular per-case dimensions (setup.json), unlike the

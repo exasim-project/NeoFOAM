@@ -25,4 +25,5 @@ NB_MODULE(neofoam_bindings, m)
     NeoFOAM::bindings::registerWallFunctions(m);
     NeoFOAM::bindings::registerFieldRelaxation(m);
     NeoFOAM::bindings::registerMRF(m);
+    NeoFOAM::bindings::registerPostProcess(m);
 }

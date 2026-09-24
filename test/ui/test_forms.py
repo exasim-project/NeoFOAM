@@ -18,14 +18,22 @@ from neofoam.ui.forms import (
     uischema_key,
 )
 
-_MESH_FILES = {"blockMeshDict", "snappyHexMeshDict", "preprocess.yaml"}
+# Mirrors forms._NON_WIZARD_FILES on purpose: an independent restatement of what the
+# wizard drops, so this test does not track the implementation tautologically.
+_NON_WIZARD_FILES = {
+    "blockMeshDict",
+    "snappyHexMeshDict",
+    "preprocess.yaml",
+    "setFields.yaml",
+    "postProcess.yaml",
+}
 
 
 def _dict_and_field_names(solver):
     dicts, fields = set(), set()
     for info in tools.list_configs(solver):
-        if info.file and info.file.rsplit("/", 1)[-1] in _MESH_FILES:
-            continue  # excluded from the wizard (upstream meshing stage)
+        if info.file and info.file.rsplit("/", 1)[-1] in _NON_WIZARD_FILES:
+            continue  # excluded from the wizard (meshing / pre- / post-processing stage)
         (fields if info.file and info.file.startswith("0/") else dicts).add(info.name)
     return dicts, fields
 

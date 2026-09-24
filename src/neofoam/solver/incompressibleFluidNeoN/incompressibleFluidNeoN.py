@@ -30,6 +30,8 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
+from neofoam.postprocess import PostProcessConfig
+from neofoam.preprocess import SetFieldsConfig
 from neofoam.solver.neon_runtime import NeoNControlConfig, ensure_neon_initialized
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
@@ -68,6 +70,11 @@ incompressibleFluidNeoN.config(PreprocessConfig)  # mesh pipeline enable file (c
 # them the sweep's mesh dimension is unavailable.
 incompressibleFluidNeoN.config(BlockMeshDictConfig)
 incompressibleFluidNeoN.config(SnappyHexMeshDictConfig)
+# In-situ tables (system/postProcess.yaml). The ``internal`` source reads a NeoN
+# field through a host copy of its internal vector; the sampling sources need a
+# pybFoam field and raise on this backend (see doc/reference/postprocessing.rst).
+incompressibleFluidNeoN.config(PostProcessConfig)
+incompressibleFluidNeoN.config(SetFieldsConfig)  # region initialisation (system/setFields.yaml)
 # The NeoN C++ factories read constant/transportProperties /
 # constant/turbulenceProperties directly at solve time; declaring the (single-phase)
 # Python config classes here does not change that — it only surfaces the two
@@ -105,6 +112,7 @@ def execution_graph(
         [inner PIMPLE loop]  # momentum + continuity while control.loop(residuals)
         turbulence_correct   # once per step, after the PIMPLE loop
         write_output         # NeoN write hook on write steps + step reporter
+        post_process         # in-situ tables (empty on this backend today)
     """
     _ = domain_name
 
@@ -118,6 +126,7 @@ def execution_graph(
 
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
+    post_ops = Operations(_core_model(self.state, "postProcess").operations)
 
     time_loop_op = Operation(
         func=IterativeOp(SolutionLoopPredicate()),
@@ -135,6 +144,9 @@ def execution_graph(
 
         time_builder.step(algo_ops["turbulence_correct"])
         time_builder.step(writer_ops["write_output"])
+        # Last in the loop: a pure reader, so a CSV row and the time directory
+        # just written describe the same state.
+        time_builder.step(post_ops["post_process"])
 
     # Optional-model operations are merged by the resolver (placed by their own
     # depends_on / operation_number).
