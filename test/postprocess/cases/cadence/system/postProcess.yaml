@@ -1,0 +1,10 @@
+# Two cadences on one case: the default (every step) and every second step.
+tables:
+  - name: every_step
+    source: {type: internal, field: p}
+    pipeline: [{type: volIntegrate, name: every_step}]
+
+  - name: every_second_step
+    source: {type: internal, field: p}
+    pipeline: [{type: volIntegrate, name: every_second_step}]
+    write_control: {write_control_type: timeStep, interval: 2}

@@ -127,3 +127,104 @@ jobs:
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
           ctest --preset develop -E bench --output-on-failure
+
+  build-python:
+    runs-on: ubuntu-latest # may use an older version to test
+    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
+    strategy:
+      matrix:
+        openfoam-version: [ 2506] # 2406, 2412,
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+      fail-fast: false
+    name: neofoam Python with OpenFOAM ${{ matrix.openfoam-version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: ${{ matrix.openfoam-version }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install -v .[all]
+
+      - name: Test with pytest
+        run: |
+          pytest
+
+  python-coverage:
+    runs-on: ubuntu-24.04 # may use an older version to test
+
+    name: Test coverage with OpenFOAM 2506 and Python 3.10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2506
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install test dependencies
+        run: |
+          pip install -v .[all]
+
+      - name: Test with pytest
+        run: |
+          pytest --cov=neofoam --cov-report=xml --cov-report=term
+
+      # - name: Upload code coverage results to Codecov
+      #   uses: codecov/codecov-action@v5
+      #   with:
+      #     files: ./coverage.xml
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+    - name: Lint with Ruff
+      uses: astral-sh/ruff-action@v3
+
+    - name: Format with Ruff
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: 'format --check'
+
+  typing:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Check types with ty
+      run: |
+        pip install -v .[all]
+        poe type_check

@@ -69,7 +69,7 @@ private:
 
     static NeoN::la::Solver createCachedSolver(VolumeField& field, RunTime& rt)
     {
-        auto solverDict = rt.fvSolutionDict.subDict("solvers").subDict(field.name);
+        auto solverDict = solverSettings(rt.fvSolutionDict.subDict("solvers"), field.name);
         PDEType::stripNeoFOAMKeys(solverDict);
         return NeoN::la::Solver(field.exec(), solverDict);
     }

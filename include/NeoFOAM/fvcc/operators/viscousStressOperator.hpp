@@ -270,3 +270,26 @@ inline SpatialOperator<Vec3> viscousStress(
 }
 
 } // namespace NeoN::dsl::exp
+
+
+namespace NeoFOAM
+{
+
+/** @brief Build the explicit viscous-stress SpatialOperator inside libNeoFOAM.
+ *
+ * Thin out-of-line wrapper around ``NeoN::dsl::exp::viscousStress``. The
+ * ``ViscousStressOperator``'s assembly-time ``read()`` resolves the "Gauss"
+ * strategy through ``ViscousStressOperatorFactory``'s runtime-selection table,
+ * which is populated by the ``GaussViscousStress`` self-registration compiled
+ * into libNeoFOAM. Instantiating the operator (and its type-erased model thunks)
+ * here — rather than inline in a ``-fvisibility=hidden`` Python-binding TU —
+ * keeps the factory lookup bound to libNeoFOAM's populated table instead of a
+ * private, empty per-module copy.
+ */
+NeoN::dsl::SpatialOperator<NeoN::Vec3> makeViscousStress(
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nu,
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nut,
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU
+);
+
+} // namespace NeoFOAM

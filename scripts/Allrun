@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# OpenFOAM-convention Allrun for a NeoFOAM incompressibleFluid case.
+#
+# Copied into the case directory and run from there (``./Allrun``), like an
+# OpenFOAM tutorial. The single solver command does everything: meshing
+# (blockMesh / snappyHexMesh, driven in-process by system/preprocess.yaml)
+# followed by the PIMPLE solve — so this script "just" runs the solver.
+#
+# Usage (from the case directory):
+#   ./Allrun [extra solver args…]
+#   NEOFOAM_PYTHON=/path/to/python ./Allrun     # pin the interpreter
+#
+cd "${0%/*}" || exit 1   # run from this case directory
+
+if [ -n "${NEOFOAM_PYTHON:-}" ]; then
+    exec "$NEOFOAM_PYTHON" -m neofoam.cli.app solver incompressiblefluid "$@"
+fi
+exec neofoam solver incompressiblefluid "$@"

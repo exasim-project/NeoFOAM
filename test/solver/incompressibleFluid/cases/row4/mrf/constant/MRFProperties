@@ -1,0 +1,23 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      MRFProperties;
+}
+
+// Spins the `modelZone` cellZone (the two cells at x < 2) about (0 0 1) through
+// the origin at omega 2 -- the frame terms UEqn.H carries as
+// MRF.correctBoundaryVelocity(U) and + MRF.DDt(U).
+
+MRF1
+{
+    cellZone    modelZone;
+    active      yes;
+
+    nonRotatingPatches ();
+
+    origin      (0 0 0);
+    axis        (0 0 1);
+    omega       2;
+}

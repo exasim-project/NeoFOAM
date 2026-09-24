@@ -17,10 +17,15 @@ namespace detail
 {
 
 static constexpr label MAX_ITER = 10;
-static constexpr scalar TOLERANCE = 1e-9;
+// OpenFOAM nutUSpaldingWallFunction defaults (maxIter=10, tolerance=0.01). The
+// Newton loop must stop at the same err threshold as upstream, otherwise the
+// wall nut converges to a slightly different uTau and the momentum solve drifts.
+static constexpr scalar TOLERANCE = 0.01;
 static constexpr scalar KAPPA = 0.41;
-static constexpr scalar E = 9.8;
+static constexpr scalar eCoeff = 9.8;
 
+// tolerance mirrors OpenFOAM's dict-configurable tolerance_ (default 0.01): the
+// Newton loop stops on the relative uTau update, not on full convergence.
 KOKKOS_INLINE_FUNCTION
 scalar computeUTau(
     const scalar magGradU,
@@ -29,7 +34,8 @@ scalar computeUTau(
     const scalar nuw,
     const scalar nutw,
     scalar& err,
-    const int maxIter
+    const int maxIter,
+    const scalar tolerance
 )
 {
     err = 0.0;
@@ -47,15 +53,15 @@ scalar computeUTau(
         const scalar fkUu = Kokkos::exp(kUu) - 1.0 - kUu * (1.0 + 0.5 * kUu);
 
         const scalar f =
-            -ut * y / nuw + magUp / ut + (1.0 / E) * (fkUu - (1.0 / 6.0) * kUu * kUu * kUu);
+            -ut * y / nuw + magUp / ut + (1.0 / eCoeff) * (fkUu - (1.0 / 6.0) * kUu * kUu * kUu);
 
-        const scalar df = y / nuw + magUp / (ut * ut) + (1.0 / E) * kUu * fkUu / ut;
+        const scalar df = y / nuw + magUp / (ut * ut) + (1.0 / eCoeff) * kUu * fkUu / ut;
 
         const scalar uTauNew = ut + f / df;
         err = NeoN::mag((ut - uTauNew) / ut);
         ut = uTauNew;
     }
-    while (ut > ROOTVSMALL && err > TOLERANCE && ++iter < maxIter);
+    while (ut > ROOTVSMALL && err > tolerance && ++iter < maxIter);
 
     return ut > 0.0 ? ut : 0.0;
 }
@@ -100,19 +106,15 @@ inline void setNutUSpaldingWallFunction(
             const scalar currentNut = value[i];
 
             scalar err = 0.0;
-            const scalar uTau = computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER);
+            const scalar uTau =
+                computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER, TOLERANCE);
 
-            // Mirrors OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut restart-
-            // preservation block: if the current nutw already satisfies the Spalding
-            // relation to within tolerance (measured by err after one Newton step from
-            // the current state), keep it. Avoids drifting onto a different Newton
-            // basin when re-entering the wall function from a converged state.
-            scalar errOneIter = 0.0;
-            computeUTau(magGradU, magUp, y, nuw, currentNut, errOneIter, 1);
-
+            // OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut: at the default
+            // tolerance (0.01) the restart-preservation branch (kept only for a
+            // user-overridden tolerance) is skipped, so nutw is taken straight from
+            // the freshly-solved uTau: max(0, uTau^2/magGradU - nuw).
             const scalar nutCandidate = (uTau * uTau) / (magGradU + ROOTVSMALL) - nuw;
-            const scalar nutCandidateClamped = nutCandidate > 0.0 ? nutCandidate : 0.0;
-            const scalar nutw = (errOneIter < TOLERANCE) ? currentNut : nutCandidateClamped;
+            const scalar nutw = nutCandidate > 0.0 ? nutCandidate : 0.0;
 
             refValue[i] = nutw;
             value[i] = nutw;

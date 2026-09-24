@@ -21,6 +21,15 @@ NeoN::label convert(const Foam::label& in);
 
 NeoN::Dictionary convert(const Foam::dictionary dict);
 
+/* @brief The NeoN dictionary key for an OpenFOAM entry.
+ *
+ * OpenFOAM only treats a *quoted* keyword as a regular expression and the NeoN
+ * dictionary has no pattern flag, so a regex keyword keeps its quotes as part of the
+ * key. The regex-aware lookups in NeoFOAM/compatibility/fvSolution.hpp rely on that
+ * to tell a pattern (`"(U|k|epsilon)"`) from a literal keyword.
+ */
+std::string dictKey(const Foam::entry& entry);
+
 template<typename T>
 bool checkEntryType(const Foam::entry& entry)
 {
@@ -67,8 +76,7 @@ bool insert(NeoN::Dictionary& neoDict, const Foam::entry& entry)
 {
     if (checkEntryType<T>(entry))
     {
-        std::string keyword = entry.keyword();
-        neoDict.insert(keyword, convert(entry.get<T>()));
+        neoDict.insert(dictKey(entry), convert(entry.get<T>()));
         return true;
     }
     return false;

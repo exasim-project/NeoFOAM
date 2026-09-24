@@ -71,9 +71,19 @@ collect_system_info() {
 # -------------------------
 # Step 1: Prepare NeoN
 # -------------------------
+NEON_URL=https://gitlab-ce.lrz.de/greole/neon.git
+
+# A coordinated NeoN branch only lives as long as its PR: once that is merged the
+# branch is deleted, but NEON_BRANCH still names it. Fall back to develop instead of
+# failing the clone -- develop is what the submodule pin tracks anyway.
+if ! git ls-remote --exit-code --heads "$NEON_URL" "$NEON_BRANCH" >/dev/null 2>&1; then
+    echo "NeoN branch '$NEON_BRANCH' does not exist; falling back to develop"
+    NEON_BRANCH=develop
+fi
+
 echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
 git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
-    https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
+    "$NEON_URL" ../NeoN
 
 # -------------------------
 # Step 2: Configure and build NeoFOAM for benchmarking
