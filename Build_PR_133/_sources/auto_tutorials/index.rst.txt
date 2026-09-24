@@ -31,6 +31,13 @@ Read them in order:
    dictionary by changing one decorator. Covers load / mutate / save
    round-trips, the subdict pattern that lets several configs share a
    file, and how Pydantic constraints catch bad input on load.
+5. **Monitor a run with in-situ post-processing.** Declare *tables* —
+   a source, a pipeline of nodes, a write cadence — and have the
+   solver append each one to ``postProcessing/<name>.csv`` while it
+   runs. Covers both front doors (``system/postProcess.yaml`` and
+   ``system/postProcess.py``), a case-defined ``@Node.register`` node
+   used by name from the YAML, and the cavity's kinetic energy
+   plotted over time.
 
 
 .. raw:: html
@@ -58,6 +65,23 @@ Read them in order:
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Run your first NeoFOAM case</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="A case can declare tables — a source, a pipeline of nodes and a write cadence — and NeoFOAM checks them after every time step, evaluating each on its own cadence and appending it to postProcessing/&lt;name&gt;.csv in the case directory. Nothing is written unless the case asks for it, and no post-run tooling is involved: the numbers land while the solver runs.">
+
+.. only:: html
+
+  .. image:: /auto_tutorials/images/thumb/sphx_glr_example_05_postprocessing_thumb.png
+    :alt:
+
+  :doc:`/auto_tutorials/example_05_postprocessing`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">In-situ post-processing: monitor a run as CSV</div>
     </div>
 
 
@@ -123,6 +147,7 @@ Read them in order:
    :hidden:
 
    /auto_tutorials/example_01_run_incompressible_fluid
+   /auto_tutorials/example_05_postprocessing
    /auto_tutorials/example_02_passive_scalar_plugin
    /auto_tutorials/example_04_configure_with_io
    /auto_tutorials/example_03_build_a_solver
