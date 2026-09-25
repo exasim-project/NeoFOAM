@@ -3,7 +3,7 @@
 
 """NeoN pressure-velocity model package entrypoint.
 
-Only the PIMPLE algorithm is wired up; SIMPLE / PISO fall back to PIMPLE.
+PIMPLE (transient) and SIMPLE (steady state) are wired up; PISO falls back to PIMPLE.
 """
 
 from . import pimpleAlgorithm as _pimple  # noqa: F401
