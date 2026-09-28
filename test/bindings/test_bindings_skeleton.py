@@ -2,5 +2,5 @@ import neofoam
 
 
 def test_import_neofoam_bindings() -> None:
-    """Test that the C++ greet function is accessible from Python."""
-    assert hasattr(neofoam, "neofoam_bindings")
+    """Test that the compiled bindings module is importable from Python."""
+    assert neofoam.neofoam_bindings is not None
