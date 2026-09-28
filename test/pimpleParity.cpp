@@ -262,6 +262,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
             );
 
             UEqn.setFinalIter(finalIter);
+            UEqn.relax(); // pimpleFoam/UEqn.H: UEqn.relax()
 
             if (piso.momentumPredictor())
             {

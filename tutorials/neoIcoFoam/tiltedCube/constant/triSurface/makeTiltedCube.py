@@ -9,8 +9,9 @@ center = (1.10, 0.60, 0.60)
 half = 0.26  # half side length -> side 0.52
 
 # --- tilt: rotate about z then about y by deliberately non-trivial angles ---
-az = math.radians(27.0)   # yaw   (about z)
-ay = math.radians(18.0)   # pitch (about y)
+az = math.radians(27.0)  # yaw   (about z)
+ay = math.radians(18.0)  # pitch (about y)
+
 
 def rot(p):
     x, y, z = p
@@ -24,9 +25,18 @@ def rot(p):
     z2 = -x1 * math.sin(ay) + z1 * math.cos(ay)
     return (x2, y2, z2)
 
+
 # 8 corners in local frame
-locals_ = [(-half, -half, -half), (half, -half, -half), (half, half, -half), (-half, half, -half),
-           (-half, -half, half), (half, -half, half), (half, half, half), (-half, half, half)]
+locals_ = [
+    (-half, -half, -half),
+    (half, -half, -half),
+    (half, half, -half),
+    (-half, half, -half),
+    (-half, -half, half),
+    (half, -half, half),
+    (half, half, half),
+    (-half, half, half),
+]
 verts = []
 for p in locals_:
     rx, ry, rz = rot(p)
@@ -42,15 +52,23 @@ faces = [
     (0, 4, 7, 3),  # -x
 ]
 
+
 def sub(a, b):
-    return (a[0]-b[0], a[1]-b[1], a[2]-b[2])
+    return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
 
 def cross(a, b):
-    return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0])
+    return (
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    )
+
 
 def norm(a):
-    m = math.sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]) or 1.0
-    return (a[0]/m, a[1]/m, a[2]/m)
+    m = math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]) or 1.0
+    return (a[0] / m, a[1] / m, a[2] / m)
+
 
 def tri(out, i, j, k):
     p0, p1, p2 = verts[i], verts[j], verts[k]
@@ -62,12 +80,13 @@ def tri(out, i, j, k):
     out.append("    endloop\n")
     out.append("  endfacet\n")
 
+
 lines = ["solid tiltedCube\n"]
-for (a, b, c, d) in faces:
+for a, b, c, d in faces:
     tri(lines, a, b, c)
     tri(lines, a, c, d)
 lines.append("endsolid tiltedCube\n")
 
 with open("tiltedCube.stl", "w") as f:
     f.writelines(lines)
-print("wrote tiltedCube.stl with", (len(lines)-2)//7, "facets")
+print("wrote tiltedCube.stl with", (len(lines) - 2) // 7, "facets")

@@ -1,0 +1,216 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Persistent NeoN evaluation worker for one staged case and executor.
+
+Started as ``python neon_worker.py <case_dir> <executor>`` by
+``backends.Worker``; owns the one ``Foam::Time`` and the Kokkos runtime of
+its process, reads the staged fields once, then serves JSON-line requests
+from stdin (``{"func", "args", "scheme", "out"}``), saving each result as
+``<out>.npy`` and replying ``#RESULT {...}`` on stdout.
+
+Field values come from the tests via the pybFoam worker: after it persists
+``0/<name>``, a ``field.reload`` request re-reads the field from disk into a
+fresh NeoN field on this worker's executor (host→device copy on GPU) —
+re-registration is safe, the ``VectorCollection`` keys documents uniquely.
+``flux.update`` rebuilds ``phi`` from the on-disk ``U`` exactly like startup
+(``nfb.create_phi`` runs OpenFOAM's ``fvc::flux``), so both backends consume
+a bit-identical flux. The live fields are looked up per request from the
+``fields`` dict, never captured in the op closures.
+
+Operator notes:
+- explicit ops run through ``nfb.evaluate_explicit`` (zero the result vector,
+  ``read`` the scheme, ``explicitOperation``); implicit ops through
+  ``nfb.evaluate_implicit``, whose matrix-apply ``A·psi - b`` is
+  volume-integrated and divided by the cell volumes here.
+- div schemes are per-request: the tokens (e.g. ``Gauss upwind``) are handed
+  straight to the operator's ``read`` as a TokenList; a request without a
+  scheme hands over the mapped ``fvSchemes`` dictionary instead, so the
+  operator resolves ``div(phi,<field>)`` itself. Everything else reads
+  the staged ``system/fvSchemes`` dictionary.
+- grad schemes are per-request too, but always via that dictionary: the
+  request's scheme id picks the staged ``grad(U_<scheme>)`` key that
+  ``nfb.GradScheme`` resolves (see ``schemes.py``).
+- ``simplecFluxCorrection`` overrides ``snGradSchemes/default`` on a *copy* of
+  the mapped dictionary, so the requested face-normal gradient reaches
+  ``add_consistent_flux_correction`` the same way ``fvc::snGrad`` reads it,
+  without disturbing the schemes every other op shares. Applied to a zeroed
+  ``phiHbyA``, so the result is the correction term alone.
+- all results are copied to host; every NeoN object stays local to
+  ``serve`` so teardown happens before ``nn.finalize()``.
+"""
+
+from __future__ import annotations
+
+import gc
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+import neon._neon as nn
+import numpy as np
+import pybFoam as pyf
+from schemes import div_scheme, grad_key
+
+from neofoam import neofoam_bindings as nfb
+
+Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]
+
+
+def _to_numpy(vec: Any) -> np.ndarray:
+    return np.asarray(vec.copy_to_host())
+
+
+def serve(case_dir: Path, executor: str) -> None:
+    """Read the case once, then serve requests.
+
+    Everything lives in this frame for the whole serve loop: ``arg_list`` and
+    ``run_time`` must stay referenced (pybFoam holds raw references), and all
+    NeoN objects must be destroyed when this frame ends — before ``main``
+    finalizes Kokkos.
+    """
+    os.chdir(case_dir)
+    arg_list = pyf.argList(["neonOpsWorker"])
+    run_time = pyf.Time(arg_list)
+    rt = nfb.create_adapter_run_time(run_time, executor)
+    fv_schemes = nfb.map_fv_schemes(rt.fv_schemes_dict)
+
+    fields: dict[str, Any] = {
+        "T": nfb.read_scalar_volume_field(rt, "T"),
+        "U": nfb.read_vector_volume_field(rt, "U"),
+        "rAU": nfb.read_scalar_volume_field(rt, "rAU"),
+        "rAtU": nfb.read_scalar_volume_field(rt, "rAtU"),
+        "Gamma": nfb.create_uniform_surface_field(rt, "Gamma", 1.0),
+        "phi": nfb.create_phi(rt, "U"),
+    }
+    n_cells = fields["T"].size()
+    volumes = _to_numpy(rt.nf_mesh.cell_volumes)
+
+    def reload_field(name: str, reader: Callable[[], Any]) -> None:
+        fields[name] = reader()
+
+    def div_tokens(scheme: str | None, field: str) -> Any:
+        expanded = div_scheme(scheme, field)
+        if expanded is None:
+            return fv_schemes
+        return nn.TokenList(expanded.split())
+
+    def explicit_scalar(op: Any, schemes: Any) -> np.ndarray:
+        result = nn.ScalarVector(rt.executor, n_cells, 0.0)
+        nfb.evaluate_explicit(op, schemes, result)
+        return _to_numpy(result)
+
+    def explicit_vector(op: Any, schemes: Any) -> np.ndarray:
+        result = nn.VectorVector(rt.executor, n_cells, nn.Vec3(0.0, 0.0, 0.0))
+        nfb.evaluate_explicit(op, schemes, result)
+        return _to_numpy(result)
+
+    def implicit_scalar(op: Any, psi: Any, schemes: Any) -> np.ndarray:
+        result = nn.ScalarVector(rt.executor, n_cells, 0.0)
+        nfb.evaluate_implicit(op, schemes, psi, result)
+        return _to_numpy(result) / volumes
+
+    def implicit_vector(op: Any, psi: Any, schemes: Any) -> np.ndarray:
+        result = nn.VectorVector(rt.executor, n_cells, nn.Vec3(0.0, 0.0, 0.0))
+        nfb.evaluate_implicit(op, schemes, psi, result)
+        return _to_numpy(result) / volumes[:, None]
+
+    def grad_tensor(scheme: str, field: str) -> np.ndarray:
+        """grad(<field>) under the staged ``grad(<field>_<scheme>)``, 9 per cell."""
+        grad = nfb.GradScheme(rt, grad_key(scheme, field)).grad_tensor(fields[field])
+        return _to_numpy(grad.internal_vector())
+
+    def simplec_flux_correction(scheme: str) -> np.ndarray:
+        """The SIMPLEC correction alone — added onto a zeroed phiHbyA."""
+        schemes = nn.Dictionary(fv_schemes)
+        sn_grad_schemes = nn.Dictionary()
+        sn_grad_schemes.insert_string("default", scheme)
+        schemes.insert_dict("snGradSchemes", sn_grad_schemes)
+        phi_hbya = nfb.create_uniform_surface_field(rt, "phiHbyA", 0.0)
+        nfb.add_consistent_flux_correction(
+            phi_hbya, fields["rAU"], fields["rAtU"], fields["T"], schemes
+        )
+        return _to_numpy(phi_hbya.internal_vector())
+
+    def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
+        interp = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
+        return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
+
+    ops: dict[tuple[str, tuple[str, ...]], Op] = {
+        ("field.reload", ("T",)): lambda s, d: reload_field(
+            "T", lambda: nfb.read_scalar_volume_field(rt, "T")
+        ),
+        ("field.reload", ("U",)): lambda s, d: reload_field(
+            "U", lambda: nfb.read_vector_volume_field(rt, "U")
+        ),
+        ("field.reload", ("rAU",)): lambda s, d: reload_field(
+            "rAU", lambda: nfb.read_scalar_volume_field(rt, "rAU")
+        ),
+        ("field.reload", ("rAtU",)): lambda s, d: reload_field(
+            "rAtU", lambda: nfb.read_scalar_volume_field(rt, "rAtU")
+        ),
+        ("flux.update", ("U",)): lambda s, d: reload_field("phi", lambda: nfb.create_phi(rt, "U")),
+        ("interpolate", ("T",)): interpolate_t,
+        ("flux", ("U",)): lambda s, d: _to_numpy(nfb.flux(fields["U"]).internal_vector()),
+        ("simplecFluxCorrection", ("rAU", "rAtU", "T")): lambda s, d: simplec_flux_correction(s),
+        ("exp.grad", ("T",)): lambda s, d: explicit_vector(nn.exp.grad(fields["T"]), fv_schemes),
+        ("exp.gradTensor", ("U",)): lambda s, d: grad_tensor(s, "U"),
+        ("exp.div", ("phi",)): lambda s, d: explicit_scalar(nn.exp.div(fields["phi"]), fv_schemes),
+        ("exp.div", ("phi", "T")): lambda s, d: explicit_scalar(
+            nn.exp.div(fields["phi"], fields["T"]), div_tokens(s, "T")
+        ),
+        ("exp.div", ("phi", "U")): lambda s, d: explicit_vector(
+            nfb.exp_div(fields["phi"], fields["U"]), div_tokens(s, "U")
+        ),
+        ("exp.laplacian", ("Gamma", "T")): lambda s, d: explicit_scalar(
+            nn.exp.laplacian(fields["Gamma"], fields["T"]), fv_schemes
+        ),
+        ("exp.laplacian", ("Gamma", "U")): lambda s, d: explicit_vector(
+            nn.exp.laplacian(fields["Gamma"], fields["U"]), fv_schemes
+        ),
+        ("imp.div", ("phi", "T")): lambda s, d: implicit_scalar(
+            nn.imp.div(fields["phi"], fields["T"]), fields["T"], div_tokens(s, "T")
+        ),
+        ("imp.div", ("phi", "U")): lambda s, d: implicit_vector(
+            nn.imp.div(fields["phi"], fields["U"]), fields["U"], div_tokens(s, "U")
+        ),
+        ("imp.laplacian", ("Gamma", "T")): lambda s, d: implicit_scalar(
+            nn.imp.laplacian(fields["Gamma"], fields["T"]), fields["T"], fv_schemes
+        ),
+        ("imp.laplacian", ("Gamma", "U")): lambda s, d: implicit_vector(
+            nn.imp.laplacian(fields["Gamma"], fields["U"]), fields["U"], fv_schemes
+        ),
+    }
+    _serve(ops)
+
+
+def _serve(ops: dict[tuple[str, tuple[str, ...]], Op]) -> None:
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        request = json.loads(line)
+        if request.get("exit"):
+            return
+        try:
+            data = np.load(request["data"]) if request.get("data") else None
+            result = ops[(request["func"], tuple(request["args"]))](request.get("scheme"), data)
+            if result is not None:
+                np.save(request["out"], result)
+            reply: dict[str, str] = {"status": "ok"}
+        except Exception as exc:  # noqa: BLE001 — report to the client, keep serving
+            reply = {"status": "error", "message": f"{type(exc).__name__}: {exc}"}
+        print("#RESULT " + json.dumps(reply), flush=True)
+
+
+def main() -> None:
+    nn.initialize(["neonOpsWorker"])
+    serve(Path(sys.argv[1]).resolve(), sys.argv[2])
+    gc.collect()  # drop any cyclic refs holding Kokkos views before finalize
+    nn.finalize()
+
+
+if __name__ == "__main__":
+    main()

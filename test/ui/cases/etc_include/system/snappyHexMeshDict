@@ -1,0 +1,17 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      snappyHexMeshDict;
+}
+
+// The shipped .cfg ends in `#include "<system>/meshQualityDict"`, an OpenFOAM path
+// tag that expands from $FOAM_CASE. Unset, it resolves against the .cfg's own
+// directory under etc/ and the read aborts the process — this case guards that.
+#includeEtc "caseDicts/mesh/generation/snappyHexMeshDict.cfg"
+
+castellatedMesh false;
+snap            false;
+addLayers       false;

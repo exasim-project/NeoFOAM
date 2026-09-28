@@ -1,0 +1,31 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// A constant explicit momentum source on the `source` cellZone (the two cells at
+// x < 0.5). `volumeMode specific` means the value below is the source per unit
+// volume, so SemiImplicitSource adds it to the equation as `eqn += Su`, i.e.
+// shifts the matrix source by +V*Su on those cells and by nothing elsewhere.
+
+momentumSource
+{
+    type            vectorSemiImplicitSource;
+
+    selectionMode   cellZone;
+    cellZone        source;
+
+    volumeMode      specific;
+
+    sources
+    {
+        U           ((0 5 0) 0);
+    }
+}
+
+
+// ************************************************************************* //

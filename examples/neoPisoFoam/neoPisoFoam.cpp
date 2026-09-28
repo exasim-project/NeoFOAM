@@ -102,6 +102,8 @@ int main(int argc, char* argv[])
                 + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU())
             );
 
+            UEqn.relax(); // pisoFoam/UEqn.H: UEqn.relax()
+
             const auto ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())

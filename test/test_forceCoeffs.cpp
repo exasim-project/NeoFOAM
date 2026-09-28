@@ -729,9 +729,21 @@ TEST_CASE("nutUSpaldingWallFunction - uTau and nut match independent Spalding re
     {
         const double magGradU = c.magUp / c.y; // = magUp * deltaCoeff, deltaCoeff = 1/y at the wall
 
+        // Drive the Newton solve to convergence (tolerance well below the 1e-6
+        // check): this validates the Spalding f/df math itself. Production stops
+        // at OpenFOAM's default tolerance (wf::TOLERANCE = 0.01), which leaves an
+        // O(1e-5) residual by design — that path is covered by the wiring test.
         NeoN::scalar err = 0.0;
-        const NeoN::scalar utNeo =
-            wf::computeUTau(magGradU, c.magUp, c.y, c.nu, /*nutw0*/ 0.0, err, 50);
+        const NeoN::scalar utNeo = wf::computeUTau(
+            magGradU,
+            c.magUp,
+            c.y,
+            c.nu,
+            /*nutw0*/ 0.0,
+            err,
+            50,
+            /*tolerance*/ 1e-10
+        );
         const double utRef = spaldingUTauReference(c.magUp, c.y, c.nu);
 
         INFO(
@@ -864,9 +876,26 @@ TEST_CASE("nutUSpaldingWallFunction - wall nut via correctBoundaryConditions mat
 
             NeoN::scalar err = 0.0;
             NeoN::scalar errOneIter = 0.0;
-            const NeoN::scalar uTau =
-                wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, err, wf::MAX_ITER);
-            wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, errOneIter, 1);
+            const NeoN::scalar uTau = wf::computeUTau(
+                magGradU,
+                magUp,
+                y,
+                nuVal,
+                /*currentNut*/ 0.0,
+                err,
+                wf::MAX_ITER,
+                wf::TOLERANCE
+            );
+            wf::computeUTau(
+                magGradU,
+                magUp,
+                y,
+                nuVal,
+                /*currentNut*/ 0.0,
+                errOneIter,
+                1,
+                wf::TOLERANCE
+            );
             const NeoN::scalar cand = (uTau * uTau) / (magGradU + NeoN::ROOTVSMALL) - nuVal;
             const NeoN::scalar candClamped = cand > 0.0 ? cand : 0.0;
             const NeoN::scalar nutRef =

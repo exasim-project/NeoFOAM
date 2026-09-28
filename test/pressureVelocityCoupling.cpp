@@ -468,6 +468,9 @@ TEST_CASE("PressureVelocityCoupling")
         // ls_,
         //     so computeRAUandHByA reads the relaxed augmented diag;
         //     nfU now holds the solved momentum field.
+        //     Momentum opts into the equation relaxation (fvMatrix::relax()); the pressure
+        //     equation never does — see PDE::relax().
+        nfUEqn.relax();
         nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
 
         // (4) OF-parity relaxed AUGMENTED-diagonal assertion @1e-12 on the POST-SOLVE relaxed ls_.

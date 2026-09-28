@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Tests for the solution-loop model-owned gather-point interfaces."""
+
+# NOTE: no `from __future__ import annotations` — keep annotations live.
+
+import ast
+from pathlib import Path
+
+import pytest
+
+import neofoam.algorithms.solution_loop as loop_pkg
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    initialTimeStepConstraint,
+    loopCondition,
+    maxTimeStep,
+    solutionLoop,
+    timeStepConstraint,
+)
+from neofoam.framework.model import Hook
+
+_LIMIT_INTERFACES = [timeStepConstraint, maxTimeStep, initialTimeStepConstraint]
+
+
+@pytest.mark.parametrize(
+    "interface",
+    _LIMIT_INTERFACES + [loopCondition],
+    ids=lambda iface: iface.name,
+)
+def test_loop_interfaces_are_owned_by_the_loop_model(interface: Hook) -> None:
+    assert isinstance(interface, Hook)
+    assert solutionLoop.declared_interfaces[interface.name] is interface
+
+
+@pytest.mark.parametrize("interface", _LIMIT_INTERFACES, ids=lambda iface: iface.name)
+@pytest.mark.parametrize(
+    "limits, expected",
+    [([], VGREAT), ([2.0, 1.0, 3.0], 1.0), ([5.0], 5.0)],
+)
+def test_delta_t_limit_interfaces_fold_with_min(
+    interface: Hook, limits: list[float], expected: float
+) -> None:
+    assert interface.declaration(limits) == expected
+
+
+@pytest.mark.parametrize(
+    "flags, expected",
+    [([], True), ([True, True], True), ([True, False], False)],
+)
+def test_loop_condition_folds_with_all(flags: list[bool], expected: bool) -> None:
+    assert loopCondition.declaration(flags) is expected
+
+
+def _imported_names(source: str) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            names.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.add(node.module.split(".")[0])
+    return names
+
+
+def test_framework_solution_loop_imports_no_pybfoam() -> None:
+    pkg_dir = Path(loop_pkg.__file__).parent
+    offenders = {
+        path.name: imported
+        for path in pkg_dir.glob("*.py")
+        if "pybFoam" in (imported := _imported_names(path.read_text()))
+    }
+    assert not offenders, offenders

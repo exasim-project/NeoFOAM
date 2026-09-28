@@ -14,6 +14,11 @@ if(NEOFOAM_WITH_MPI)
   find_package(MPI 3.1 REQUIRED)
 endif()
 
+# nanobind is not fetched here: NeoN's CxxThirdParty.cmake provides it whenever
+# NeoN_BUILD_PYTHON_BINDINGS is ON, taking it from the active Python environment
+# (NeoN_EXTERNAL_NANOBIND, set by the python-bindings preset) so this module, _neon and pybFoam
+# share one libnanobind ABI.
+
 if(NEOFOAM_NEON_VIA_CPM)
   if(NOT DEFINED NEOFOAM_NEON_VERSION)
     # grab the SHA from submodule automatically

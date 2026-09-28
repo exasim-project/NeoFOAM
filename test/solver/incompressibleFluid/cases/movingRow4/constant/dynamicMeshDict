@@ -1,0 +1,23 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+
+// The whole mesh slides along x at a constant 0.25 m/s. `linearMotion` displaces
+// by `velocity*t` exactly, so the volume every face sweeps per time step is
+// exactly `area*velocity` — which makes the mesh flux, and therefore the flux
+// relative to it, a number the test can state rather than recompute.
+
+dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+motionSolver    solidBody;
+
+solidBodyMotionFunction linearMotion;
+
+linearMotionCoeffs
+{
+    velocity    (0.25 0 0);
+}
