@@ -31,6 +31,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          openfoam-version: 2506
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -45,12 +50,17 @@ jobs:
           # Build only the Python version represented by this matrix entry.
           CIBW_BUILD: ${{ matrix.python-version }}-manylinux_x86_64
 
+          # Use the host environment for the first implementation so that
+          # OpenFOAM installed by setup-openfoam is available to CMake.
+          CIBW_CONTAINER_ENGINE: "off"
+
           # CPU-only NeoFOAM build.
           CIBW_CONFIG_SETTINGS: >
             cmake.define.NEOFOAM_BUILD_PYTHON_BINDINGS=ON
 
           CIBW_BUILD_VERBOSITY: 1
 
+          # Test the actual wheel after it has been built.
           CIBW_TEST_COMMAND: >
             python -c
             "import neofoam;
