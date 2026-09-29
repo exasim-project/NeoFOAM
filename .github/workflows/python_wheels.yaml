@@ -1,4 +1,30 @@
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+# SPDX-License-Identifier: MIT
+
 name: Python wheels
+
+# Builds one CPU wheel per supported Python on a runner with OpenFOAM installed.
+#
+# Why not cibuildwheel: it builds Linux wheels inside a clean manylinux container,
+# which has no OpenFOAM, so the top-level configure stops at CMakeLists.txt:12-14
+# ("You must source OpenFOAM before building NeoFOAM"). Putting OpenFOAM in that
+# container is not a small step either — ESI publishes Debian/Ubuntu packages only
+# (dl.openfoam.com/repos/deb), while every stock manylinux image is AlmaLinux or
+# CentOS, so it would mean building OpenFOAM from source into a custom image.
+# There is also no way to opt out of the container: cibuildwheel accepts only
+# "docker" or "podman" as its container engine.
+#
+# CONSEQUENCE, and it is deliberate: these wheels are tagged linux_x86_64, not
+# manylinux_x86_64, because they are built against this runner's glibc and link
+# OpenFOAM/MPI from FOAM_LIBBIN without bundling them. `pip install ./wheel` accepts
+# that locally; PyPI does NOT accept it on upload. They are CI artifacts, installable
+# by anyone who has OpenFOAM 2506 sourced — which is every current NeoFOAM user.
+# Publishing, dependency bundling and GPU wheels remain out of scope, as in #412.
+#
+# Whether a publishable manylinux wheel is reachable at all hinges on one unanswered
+# question: can a manylinux-toolchain build bind at run time against a distro-built
+# OpenFOAM and pybFoam? Until that is answered, a manylinux image is a speculative
+# investment. See the ABI probe on branch ci/abi-probe.
 
 on:
   workflow_dispatch:
@@ -15,60 +41,67 @@ concurrency:
 
 jobs:
   build-cpu-wheels:
-    name: CPU Python ${{ matrix.python-version }}
+    name: CPU wheel Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        python-version:
-          - "cp310"
-          - "cp311"
-          - "cp312"
-          - "cp313"
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      # Exports FOAM_*/WM_* into $GITHUB_ENV, so every later step in this job is
+      # configured. 2506 matches build-python.yaml and static_checks.yaml.
       - name: Set up OpenFOAM
         uses: gerlero/setup-openfoam@v1
         with:
           openfoam-version: 2506
 
-      - name: Set up Python
+      # One interpreter per job, and it is the one the wheel is built for.
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install cibuildwheel
-        run: python -m pip install "cibuildwheel>=3,<4"
+      # --no-deps: build the neofoam wheel only, not wheels for its dependencies.
+      # Build isolation stays on, so scikit-build-core and the pinned
+      # nanobind>=3.0.1,<3.1 come from [build-system] requires.
+      - name: Build wheel
+        run: pip wheel . --no-deps --wheel-dir wheelhouse -v
 
-      - name: Build CPU wheel
-        run: python -m cibuildwheel --output-dir wheelhouse
-        env:
-          # Build only the Python version represented by this matrix entry.
-          CIBW_BUILD: ${{ matrix.python-version }}-manylinux_x86_64
+      # Installs WITH dependencies on purpose: the bindings are built NB_SHARED and
+      # ship no libnanobind.so of their own, resolving it from the installed pybFoam
+      # via an $ORIGIN/../pybFoam rpath so both share one nanobind type registry
+      # (CMakeLists.txt:55-57). pybFoam is sdist-only on PyPI, so this compiles it
+      # here against the same OpenFOAM and the same nanobind pin — which is exactly
+      # the coupling worth testing.
+      - name: Smoke-test the wheel
+        run: |
+          pip install wheelhouse/*.whl
+          cd "$RUNNER_TEMP"  # import the installed package, not the source tree
+          python - <<'PY'
+          import neofoam
 
-          # Use the host environment for the first implementation so that
-          # OpenFOAM installed by setup-openfoam is available to CMake.
-          CIBW_CONTAINER_ENGINE: "off"
+          # src/neofoam/__init__.py deliberately swallows ModuleNotFoundError and
+          # leaves this None when the native stack is simply not built, so importing
+          # the package alone would pass on a wheel with no extension module at all.
+          assert neofoam.neofoam_bindings is not None, (
+              "native bindings missing: __init__ swallowed the ModuleNotFoundError"
+          )
 
-          # CPU-only NeoFOAM build.
-          CIBW_CONFIG_SETTINGS: >
-            cmake.define.NEOFOAM_BUILD_PYTHON_BINDINGS=ON
+          import neofoam.neofoam_bindings as nb
 
-          CIBW_BUILD_VERBOSITY: 1
-
-          # Test the actual wheel after it has been built.
-          CIBW_TEST_COMMAND: >
-            python -c
-            "import neofoam;
-            import neofoam.neofoam_bindings;
-            print('NeoFOAM wheel import test passed')"
+          print("NeoFOAM wheel import test passed:", nb.__file__)
+          PY
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
           name: cpu-wheels-${{ matrix.python-version }}
           path: wheelhouse/*.whl
+          # A build that produces no wheel must fail the job, not upload an empty
+          # artifact with only a warning.
+          if-no-files-found: error
