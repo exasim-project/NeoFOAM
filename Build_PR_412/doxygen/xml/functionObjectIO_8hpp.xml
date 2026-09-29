@@ -1,0 +1,200 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="functionObjectIO_8hpp" kind="file" language="C++">
+    <compoundname>functionObjectIO.hpp</compoundname>
+    <includes local="no">filesystem</includes>
+    <includes local="no">fstream</includes>
+    <includes local="no">functional</includes>
+    <includes local="no">iomanip</includes>
+    <includes local="no">map</includes>
+    <includes local="no">sstream</includes>
+    <includes local="no">string</includes>
+    <includes local="yes">NeoN/NeoN.hpp</includes>
+    <includes local="yes">functionObject.H</includes>
+    <includes local="yes">Time.H</includes>
+    <includedby refid="forces_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/forces.hpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/functionObjectIO.hpp</label>
+        <link refid="functionObjectIO_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+      </node>
+      <node id="9">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="11">
+        <label>Time.H</label>
+      </node>
+      <node id="2">
+        <label>filesystem</label>
+      </node>
+      <node id="3">
+        <label>fstream</label>
+      </node>
+      <node id="10">
+        <label>functionObject.H</label>
+      </node>
+      <node id="4">
+        <label>functional</label>
+      </node>
+      <node id="5">
+        <label>iomanip</label>
+      </node>
+      <node id="6">
+        <label>map</label>
+      </node>
+      <node id="7">
+        <label>sstream</label>
+      </node>
+      <node id="8">
+        <label>string</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="3">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/forceCoeffs.hpp</label>
+        <link refid="forceCoeffs_8hpp"/>
+      </node>
+      <node id="2">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/forces.hpp</label>
+        <link refid="forces_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/functionObjectIO.hpp</label>
+        <link refid="functionObjectIO_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classNeoFOAM_1_1FunctionObjectIO" prot="public">NeoFOAM::FunctionObjectIO</innerclass>
+    <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2025<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;filesystem&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;fstream&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;functional&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;iomanip&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;map&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;sstream&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="comment">//<sp/>NeoN<sp/>must<sp/>be<sp/>included<sp/>before<sp/>OpenFOAM<sp/>headers:<sp/>OpenFOAM<sp/>defines<sp/>a<sp/>NotImplemented</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="comment">//<sp/>macro<sp/>that<sp/>conflicts<sp/>with<sp/>gko::NotImplemented<sp/>in<sp/>the<sp/>Ginkgo<sp/>linear<sp/>algebra<sp/>library.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;functionObject.H&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;Time.H&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="22"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="51" refid="classNeoFOAM_1_1FunctionObjectIO" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1FunctionObjectIO" kindref="compound">FunctionObjectIO</ref><sp/>:<sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal"><sp/>Foam::functionObject</highlight></codeline>
+<codeline lineno="52"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Construct<sp/>from<sp/>name,<sp/>Time<sp/>and<sp/>dictionary.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>Matches<sp/>the<sp/>signature<sp/>expected<sp/>by<sp/>Foam::functionObject::New<sp/>(RTST).</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57" refid="classNeoFOAM_1_1FunctionObjectIO_1a7899bbbcbae3550e2ed0ab9e2c5b0a8c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a7899bbbcbae3550e2ed0ab9e2c5b0a8c" kindref="member">FunctionObjectIO</ref>(</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::word&amp;<sp/>name,</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::Time&amp;<sp/>runTime,</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::dictionary&amp;<sp/>dict</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Destructor</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="64" refid="classNeoFOAM_1_1FunctionObjectIO_1a33ef6f45707b6066e5ae5f665dd4e225" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">virtual</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a33ef6f45707b6066e5ae5f665dd4e225" kindref="member">~FunctionObjectIO</ref>()<sp/>=<sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>----<sp/>Foam::functionObject<sp/>interface<sp/>----</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68" refid="classNeoFOAM_1_1FunctionObjectIO_1a0ac7b890d28e6afcf30c37c052a499a8" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">virtual</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a0ac7b890d28e6afcf30c37c052a499a8" kindref="member">read</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::dictionary&amp;<sp/>dict)<sp/></highlight><highlight class="keyword">override</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>GPU<sp/>computation<sp/>—<sp/>implemented<sp/>by<sp/>derived<sp/>classes</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="71" refid="classNeoFOAM_1_1FunctionObjectIO_1a2a135997dc8957415c3077e11b22557c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">virtual</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a2a135997dc8957415c3077e11b22557c" kindref="member">execute</ref>()<sp/></highlight><highlight class="keyword">override</highlight><highlight class="normal"><sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>scalar<sp/>results<sp/>—<sp/>implemented<sp/>by<sp/>derived<sp/>classes</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="74" refid="classNeoFOAM_1_1FunctionObjectIO_1aa9637f114abb9f1fbf8badbab17d2771" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">virtual</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1aa9637f114abb9f1fbf8badbab17d2771" kindref="member">write</ref>()<sp/></highlight><highlight class="keyword">override</highlight><highlight class="normal"><sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight></codeline>
+<codeline lineno="76" refid="classNeoFOAM_1_1FunctionObjectIO_1ae8010846a247a5d82ed9c9725906fd82" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">virtual</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1ae8010846a247a5d82ed9c9725906fd82" kindref="member">end</ref>()<sp/></highlight><highlight class="keyword">override</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"></highlight><highlight class="keyword">protected</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>----<sp/>Formatting<sp/>constants<sp/>(mirror<sp/>OF<sp/>writeFile)<sp/>----</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="81" refid="classNeoFOAM_1_1FunctionObjectIO_1a59e96df60ff9ea53470a87d2aad34e4a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a59e96df60ff9ea53470a87d2aad34e4a" kindref="member">writePrecision</ref><sp/>=<sp/>6;</highlight></codeline>
+<codeline lineno="82" refid="classNeoFOAM_1_1FunctionObjectIO_1aef5897869b1dd2f418089688e85a2ad0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1aef5897869b1dd2f418089688e85a2ad0" kindref="member">charWidth</ref><sp/>=<sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a59e96df60ff9ea53470a87d2aad34e4a" kindref="member">writePrecision</ref><sp/>+<sp/>8;<sp/></highlight><highlight class="comment">//<sp/>=<sp/>14</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight></codeline>
+<codeline lineno="84" refid="classNeoFOAM_1_1FunctionObjectIO_1af8fcc2e816a770217694f59bd565dabb" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>Foam::Time&amp;<sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1af8fcc2e816a770217694f59bd565dabb" kindref="member">time_</ref>;</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Return<sp/>(and<sp/>create<sp/>if<sp/>needed)<sp/>postProcessing/&lt;name()&gt;/&lt;startTime&gt;/<sp/>path</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="87" refid="classNeoFOAM_1_1FunctionObjectIO_1a598af1cff8c3269503ff0d2cc5c483b9" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::filesystem::path<sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a598af1cff8c3269503ff0d2cc5c483b9" kindref="member">outputDir</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight></codeline>
+<codeline lineno="100" refid="classNeoFOAM_1_1FunctionObjectIO_1ab980cc03b1aece6d2610f18a0e8504d0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::ofstream&amp;<sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1ab980cc03b1aece6d2610f18a0e8504d0" kindref="member">getOrCreateFile</ref>(</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::function&lt;</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">(std::ostream&amp;)&gt;<sp/>writeHeaderFn<sp/>=<sp/>{}</highlight></codeline>
+<codeline lineno="103"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>----<sp/>Output<sp/>formatting<sp/>helpers<sp/>(mirror<sp/>OF<sp/>writeFile<sp/>helpers)<sp/>----</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>current<sp/>simulation<sp/>time<sp/>in<sp/>scientific<sp/>notation</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108" refid="classNeoFOAM_1_1FunctionObjectIO_1a6fc78496f2af0cf1765b37d912a71384" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a6fc78496f2af0cf1765b37d912a71384" kindref="member">writeCurrentTime</ref>(std::ostream&amp;<sp/>os)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Format<sp/>a<sp/>scalar<sp/>in<sp/>scientific<sp/>notation</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111" refid="classNeoFOAM_1_1FunctionObjectIO_1aca5d31786d492293730ba8d77d9b95fd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>std::string<sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1aca5d31786d492293730ba8d77d9b95fd" kindref="member">fmtScalar</ref>(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>v);</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Format<sp/>a<sp/>Vec3<sp/>as<sp/>&quot;(x<sp/>y<sp/>z)&quot;<sp/>string<sp/>for<sp/>header<sp/>metadata<sp/>lines</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="114" refid="classNeoFOAM_1_1FunctionObjectIO_1a265e2aa14058ac9b0f31206c9672b8d8" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>std::string<sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a265e2aa14058ac9b0f31206c9672b8d8" kindref="member">fmtVec3</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Vec3&amp;<sp/>v);</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>&quot;#<sp/>title\n&quot;<sp/>—<sp/>blank<sp/>title<sp/>gives<sp/>just<sp/>&quot;#\n&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117" refid="classNeoFOAM_1_1FunctionObjectIO_1acb9e784d032c2d391e938cfcec0bba52" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1acb9e784d032c2d391e938cfcec0bba52" kindref="member">writeHeader</ref>(std::ostream&amp;<sp/>os,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>title);</highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>&quot;#<sp/>name<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>value\n&quot;<sp/>—<sp/>name<sp/>left-padded<sp/>to<sp/>charWidth-2</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121" refid="classNeoFOAM_1_1FunctionObjectIO_1a7fb1a2b55c2c55a52f058ff23d34c3e2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a7fb1a2b55c2c55a52f058ff23d34c3e2" kindref="member">writeHeaderValue</ref>(std::ostream&amp;<sp/>os,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>name,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>value);</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"></highlight></codeline>
+<codeline lineno="123"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>&quot;#<sp/>str&quot;<sp/>left-padded<sp/>to<sp/>charWidth-2,<sp/>NO<sp/>newline<sp/>(caller<sp/>appends<sp/>columns)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="124" refid="classNeoFOAM_1_1FunctionObjectIO_1a88d8d8b6cc3d6265aed9e46c74e2ee5b" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a88d8d8b6cc3d6265aed9e46c74e2ee5b" kindref="member">writeCommented</ref>(std::ostream&amp;<sp/>os,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>str);</highlight></codeline>
+<codeline lineno="125"><highlight class="normal"></highlight></codeline>
+<codeline lineno="126"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>&quot;<sp/>str&quot;<sp/>right-padded<sp/>to<sp/>charWidth,<sp/>NO<sp/>newline</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="127" refid="classNeoFOAM_1_1FunctionObjectIO_1a32d91cb412d158bf564b1b55cd77e88d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a32d91cb412d158bf564b1b55cd77e88d" kindref="member">writeTabbed</ref>(std::ostream&amp;<sp/>os,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>str);</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="129"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//-<sp/>Write<sp/>one<sp/>Vec3<sp/>as<sp/>three<sp/>scalars<sp/>with<sp/>field<sp/>width</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="130" refid="classNeoFOAM_1_1FunctionObjectIO_1a9e5c8b9c1ffdc6b117087310b43c1a10" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1FunctionObjectIO_1a9e5c8b9c1ffdc6b117087310b43c1a10" kindref="member">writeVec3</ref>(std::ostream&amp;<sp/>os,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Vec3&amp;<sp/>v);</highlight></codeline>
+<codeline lineno="131"><highlight class="normal"></highlight></codeline>
+<codeline lineno="132"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="133"><highlight class="normal"></highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/>startTime_;</highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/>std::map&lt;std::string,<sp/>std::ofstream&gt;<sp/>files_;</highlight></codeline>
+<codeline lineno="136"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"></highlight></codeline>
+<codeline lineno="138"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/functionObjectIO.hpp"/>
+  </compounddef>
+</doxygen>
