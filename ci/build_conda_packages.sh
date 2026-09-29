@@ -55,14 +55,22 @@ if [[ "${target_platform}" != linux-* ]]; then
     exit 1
 fi
 
-# NeoN stamps its version with scripts/set_package_version.py; NeoFOAM has no such script, so
-# read project.version straight out of pyproject.toml, which CMake also parses.
+# Version resolution, highest priority first:
+#   1. NEOFOAM_VERSION — what CI passes, derived from the tag name. PR #411's release.sh says
+#      explicitly that the publishing workflows "should take the version from the tag name, not
+#      pyproject.toml", and a conda version cannot be republished once uploaded.
+#   2. scripts/set_package_version.py --print — the release tooling's single source of truth.
+#   3. pyproject.toml directly, for branches that predate that script.
 if [[ -z "${NEOFOAM_VERSION:-}" ]]; then
-    NEOFOAM_VERSION="$(python3 -c '
+    if [[ -f "${repo_root}/scripts/set_package_version.py" ]]; then
+        NEOFOAM_VERSION="$(python3 "${repo_root}/scripts/set_package_version.py" --print)"
+    else
+        NEOFOAM_VERSION="$(python3 -c '
 import tomllib, sys
 with open(sys.argv[1], "rb") as fh:
     print(tomllib.load(fh)["project"]["version"])
 ' "${repo_root}/pyproject.toml")"
+    fi
 fi
 export NEOFOAM_VERSION
 echo "Building neofoam ${NEOFOAM_VERSION} for ${target_platform} (python ${python_version})" >&2

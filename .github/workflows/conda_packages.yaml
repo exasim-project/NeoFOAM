@@ -21,7 +21,13 @@ name: Conda packages
 on:
   push:
     tags:
+      # PR #411's release.sh tags PEP 440 versions, e.g. v0.3.0rc1, which this matches.
       - "v*.*.*"
+    branches:
+      # TEMPORARY — delete this branches: block before merging. A workflow_dispatch workflow
+      # only appears in the Actions UI once it exists on the default branch, so without this
+      # there is no way to exercise the recipe before it lands on develop.
+      - ci/build-pyhon-wheels
   workflow_dispatch:
     inputs:
       publish:
@@ -31,6 +37,14 @@ on:
         type: boolean
       channel:
         description: "Override the prefix.dev channel to publish to"
+        required: false
+        default: ""
+        type: string
+      version:
+        description: >
+          Override the package version. Use a throwaway value such as 0.0.0.dev1 to rehearse
+          publishing: a conda version cannot be re-uploaded, so testing with a real release
+          number burns it permanently.
         required: false
         default: ""
         type: string
@@ -46,8 +60,48 @@ env:
   RATTLER_BUILD_VERSION: "0.75.0"
 
 jobs:
+  version:
+    name: Resolve package version
+    runs-on: ubuntu-latest
+    if: github.repository == 'exasim-project/NeoFOAM'
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: resolve
+        shell: bash
+        # The dispatch input reaches bash through the environment rather than ${{ }}
+        # interpolation, which would splice attacker-controlled text into the script.
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -n "${INPUT_VERSION:-}" ]]; then
+            version="${INPUT_VERSION}"
+            source="workflow_dispatch input"
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            # v0.3.0rc1 -> 0.3.0rc1. The tag is authoritative for a release: pyproject.toml
+            # may not have been stamped on the commit the tag points at.
+            version="${GITHUB_REF_NAME#v}"
+            source="tag ${GITHUB_REF_NAME}"
+          elif [[ -f scripts/set_package_version.py ]]; then
+            version="$(python3 scripts/set_package_version.py --print)"
+            source="scripts/set_package_version.py"
+          else
+            version="$(python3 -c 'import tomllib;print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+            source="pyproject.toml"
+          fi
+
+          echo "Resolved version ${version} from ${source}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
   build-cpu:
     name: CPU ${{ matrix.python }} linux-64
+    needs: version
     runs-on: ubuntu-latest
     if: github.repository == 'exasim-project/NeoFOAM'
     strategy:
@@ -75,6 +129,8 @@ jobs:
           df -h /
 
       - name: Build conda package
+        env:
+          NEOFOAM_VERSION: ${{ needs.version.outputs.version }}
         run: |
           ci/build_conda_packages.sh \
             --python "${{ matrix.python }}" \
