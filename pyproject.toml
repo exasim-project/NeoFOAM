@@ -18,7 +18,10 @@ dependencies = [
     "numpy",
     "matplotlib",
     "foamlib",
-    "pybFoam>=0.5.3",
+    # pybFoam is NOT a dependency: it is built from source and shipped inside this
+    # distribution as the top-level `pybFoam` package (see CMakeLists.txt). Do not
+    # re-add it here — a `pip install pybFoam` alongside this one would give two
+    # distributions writing the same site-packages/pybFoam/, which pip cannot detect.
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -136,8 +139,9 @@ neofoam = "neofoam.cli.app:app"
 [build-system]
 requires = [
     "scikit-build-core[pyproject]>=0.11.0",
-    # One ABI (NB_INTERNALS_VERSION) with the libnanobind.so of the installed pybFoam,
-    # which the bindings resolve at run time: keep in step with pybFoam's build.
+    # One ABI (NB_INTERNALS_VERSION) for the whole build: the bindings resolve
+    # libnanobind.so from the bundled pybFoam at run time, and both are now compiled
+    # from this one tree, so they cannot drift apart.
     "nanobind>=3.0.1,<3.1",
 ]
 build-backend = "scikit_build_core.build"
@@ -156,9 +160,6 @@ NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 
 [tool.uv]
 no-build-isolation-package = ["neofoam"]
-
-[tool.uv.sources]
-pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
 
 [tool.ruff]
 line-length = 100

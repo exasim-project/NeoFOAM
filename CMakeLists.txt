@@ -94,6 +94,17 @@ endif()
 
 include(cmake/CxxThirdParty.cmake)
 
+# Bundle pybFoam into the wheel rather than depending on it from PyPI, where it is sdist-only and
+# would have to be compiled on every user's machine. Its own CMakeLists installs to `pybFoam/` when
+# SKBUILD is defined — exactly where the bindings' $ORIGIN/../pybFoam rpath below already points —
+# so the layout needs no overriding. The reason to build it here rather than alongside: our
+# NB_SHARED modules ship no libnanobind and resolve pybFoam's by SONAME, so the two must agree on
+# the nanobind version and ABI flags. Building both in one tree makes that true by construction
+# instead of by a version pin kept in step by hand.
+if(DEFINED SKBUILD)
+  cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG v0.5.3)
+endif()
+
 # NeoN hard-sets the _neon binding's INSTALL_RPATH to "$ORIGIN/../lib" (correct only for the old
 # flat layout). _neon installs to site-packages/neon/ while the native libs live in neofoam/lib, so
 # point it at $ORIGIN/../neofoam/lib (+ $ORIGIN/../lib for camp/cpptrace, which leak to the root).

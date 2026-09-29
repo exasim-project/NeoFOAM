@@ -72,17 +72,18 @@ jobs:
       - name: Build wheel
         run: pip wheel . --no-deps --wheel-dir wheelhouse -v
 
-      # Installs WITH dependencies on purpose: the bindings are built NB_SHARED and
-      # ship no libnanobind.so of their own, resolving it from the installed pybFoam
-      # via an $ORIGIN/../pybFoam rpath so both share one nanobind type registry
-      # (CMakeLists.txt:55-57). pybFoam is sdist-only on PyPI, so this compiles it
-      # here against the same OpenFOAM and the same nanobind pin — which is exactly
-      # the coupling worth testing.
+      # --no-deps is the assertion: pybFoam is built into this wheel as a top-level
+      # package, not pulled from PyPI, so the bindings must find libnanobind.so via
+      # their $ORIGIN/../pybFoam rpath inside the wheel itself. If pybFoam were
+      # missing or misplaced, installing dependencies would mask it by fetching the
+      # sdist and compiling a second, ABI-unrelated copy.
       - name: Smoke-test the wheel
         run: |
-          pip install wheelhouse/*.whl
+          pip install --no-deps wheelhouse/*.whl
+          pip install numpy foamlib pydantic pyyaml  # runtime imports of neofoam/__init__
           cd "$RUNNER_TEMP"  # import the installed package, not the source tree
           python - <<'PY'
+          import pybFoam  # bundled in this wheel, not installed from PyPI
           import neofoam
 
           # src/neofoam/__init__.py deliberately swallows ModuleNotFoundError and
