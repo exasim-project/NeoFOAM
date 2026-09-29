@@ -1,0 +1,62 @@
+name: Python wheels
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-cpu-wheels:
+    name: CPU Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "cp310"
+          - "cp311"
+          - "cp312"
+          - "cp313"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cibuildwheel
+        run: python -m pip install "cibuildwheel>=3,<4"
+
+      - name: Build CPU wheel
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          # Build only the Python version represented by this matrix entry.
+          CIBW_BUILD: ${{ matrix.python-version }}-manylinux_x86_64
+
+          # CPU-only NeoFOAM build.
+          CIBW_CONFIG_SETTINGS: >
+            cmake.define.NEOFOAM_BUILD_PYTHON_BINDINGS=ON
+
+          CIBW_BUILD_VERBOSITY: 1
+
+          # Do not run the wheel test yet.
+          # We will add this after validating the first CI wheels.
+          CIBW_TEST_SKIP: "*"
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpu-wheels-${{ matrix.python-version }}
+          path: wheelhouse/*.whl
