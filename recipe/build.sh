@@ -48,6 +48,70 @@ if [[ ! -d "${FOAM_SRC}/OpenFOAM/lnInclude" ]]; then
     exit 1
 fi
 
+# pybFoam's meshing module does not just bind OpenFOAM, it COMPILES five of OpenFOAM's own
+# application sources (src/pybFoam/meshing/CMakeLists.txt:4):
+#
+#   set(CHECKMESH_DIR "$ENV{WM_PROJECT_DIR}/applications/utilities/mesh/manipulation/checkMesh")
+#
+# The conda openfoam package installs headers, libraries, etc, bin, wmake, platforms and
+# tutorials — but not applications/, which it compiles and then discards. So that path does not
+# exist and CMake fails with "Cannot find source file", then "No SOURCES given to target:
+# meshing". pybFoam offers no option to skip the module.
+#
+# Fetch the matching release and stage just that directory. Matching matters: building 2406-era
+# checkMesh sources against 2412 headers would be a silent behaviour risk rather than a build
+# error, so the tarball version is tied to FOAM_API, which the openfoam package itself sets.
+# WM_PROJECT_DIR is safe to re-point — pybFoam reads it only in meshing/CMakeLists.txt (lines 4
+# and 79), and the FOAM_* variables were already exported by activation with absolute values.
+checkmesh_rel="applications/utilities/mesh/manipulation/checkMesh"
+if [[ ! -d "${WM_PROJECT_DIR}/${checkmesh_rel}" ]]; then
+    # Update this checksum whenever the openfoam pin in recipe.yaml moves.
+    case "${FOAM_API}" in
+        2412) openfoam_sha256="c353930105c39b75dac7fa7cfbfc346390caa633a868130fd8c9816ef5f732cd" ;;
+        *)
+            echo "No pinned OpenFOAM source checksum for FOAM_API=${FOAM_API}." >&2
+            echo "Add one next to the openfoam pin in recipe/recipe.yaml." >&2
+            exit 1
+            ;;
+    esac
+
+    apps_stage="${SRC_DIR}/_openfoam_apps"
+    tarball="${SRC_DIR}/openfoam-v${FOAM_API}.tgz"
+
+    echo "Fetching OpenFOAM v${FOAM_API} sources for ${checkmesh_rel}"
+    curl -fsSL --retry 3 -o "${tarball}" \
+        "https://sourceforge.net/projects/openfoam/files/v${FOAM_API}/OpenFOAM-v${FOAM_API}.tgz/download"
+
+    actual_sha256="$("${PYTHON}" -c '
+import hashlib, sys
+h = hashlib.sha256()
+with open(sys.argv[1], "rb") as fh:
+    for chunk in iter(lambda: fh.read(1 << 20), b""):
+        h.update(chunk)
+print(h.hexdigest())
+' "${tarball}")"
+
+    if [[ "${actual_sha256}" != "${openfoam_sha256}" ]]; then
+        echo "OpenFOAM source checksum mismatch." >&2
+        echo "  expected ${openfoam_sha256}" >&2
+        echo "  actual   ${actual_sha256}" >&2
+        exit 1
+    fi
+
+    mkdir -p "${apps_stage}"
+    tar -xzf "${tarball}" -C "${apps_stage}" --strip-components=1 \
+        "OpenFOAM-v${FOAM_API}/${checkmesh_rel}"
+    rm -f "${tarball}"
+
+    if [[ ! -f "${apps_stage}/${checkmesh_rel}/checkGeometry.C" ]]; then
+        echo "checkMesh sources missing after extraction into ${apps_stage}" >&2
+        exit 1
+    fi
+
+    echo "Re-pointing WM_PROJECT_DIR: ${WM_PROJECT_DIR} -> ${apps_stage}"
+    export WM_PROJECT_DIR="${apps_stage}"
+fi
+
 # Passed through to CMake by scikit-build-core. CMAKE_INSTALL_LIBDIR and the rpaths are set by
 # the SKBUILD branch of CMakeLists.txt, so they are deliberately not repeated here.
 export CMAKE_ARGS="${CMAKE_ARGS:-} -DCMAKE_PREFIX_PATH=${PREFIX} -DNEOFOAM_WITH_MPI=ON"
