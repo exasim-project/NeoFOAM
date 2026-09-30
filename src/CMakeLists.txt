@@ -32,6 +32,7 @@ target_sources(
           "functionObjects/forces.cpp"
           "functionObjects/forceCoeffs.cpp"
           "ordering/permutation.cpp"
-          "ordering/identityOrdering.cpp")
+          "ordering/identityOrdering.cpp"
+          "ordering/preparedPermutation.cpp")
 
 install(TARGETS NeoFOAM)
