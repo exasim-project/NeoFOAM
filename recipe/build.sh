@@ -24,6 +24,30 @@ set -euxo pipefail
 : "${FOAM_API:?openfoam activation did not run: FOAM_API is unset in the build environment}"
 echo "Building against OpenFOAM ${FOAM_API} (FOAM_SRC=${FOAM_SRC})"
 
+# conda-forge's openfoam activation exports FOAM_SRC=$PREFIX/src, but that directory does not
+# exist: its build.sh installs every lnInclude tree under $PREFIX/include/OpenFOAM-<version>/src
+# instead. cmake/OpenFOAM.cmake and pybFoam's FindOpenFOAM.cmake both resolve <module>/lnInclude
+# beneath FOAM_SRC, so re-point it at the directory that actually holds the headers.
+# Upstream bug in the openfoam feedstock, not something NeoFOAM can fix from its side.
+if [[ ! -d "${FOAM_SRC}/OpenFOAM/lnInclude" ]]; then
+    for candidate in \
+        "${PREFIX}/include/OpenFOAM-${FOAM_API}/src" \
+        "${PREFIX}"/include/OpenFOAM-*/src; do
+        if [[ -d "${candidate}/OpenFOAM/lnInclude" ]]; then
+            echo "Re-pointing FOAM_SRC: ${FOAM_SRC} -> ${candidate}"
+            export FOAM_SRC="${candidate}"
+            break
+        fi
+    done
+fi
+
+if [[ ! -d "${FOAM_SRC}/OpenFOAM/lnInclude" ]]; then
+    echo "No OpenFOAM headers found under FOAM_SRC=${FOAM_SRC}" >&2
+    echo "Contents of ${PREFIX}/include:" >&2
+    ls -1 "${PREFIX}/include" >&2 || true
+    exit 1
+fi
+
 # Passed through to CMake by scikit-build-core. CMAKE_INSTALL_LIBDIR and the rpaths are set by
 # the SKBUILD branch of CMakeLists.txt, so they are deliberately not repeated here.
 export CMAKE_ARGS="${CMAKE_ARGS:-} -DCMAKE_PREFIX_PATH=${PREFIX} -DNEOFOAM_WITH_MPI=ON"
