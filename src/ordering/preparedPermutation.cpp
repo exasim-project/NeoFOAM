@@ -5,10 +5,9 @@
 
 namespace NeoFOAM
 {
-PreparedPermutation::PreparedPermutation(
-    const Permutation& permutation,
-    const NeoN::Executor& exec)
-    : 
-    {
-    }
+// PreparedPermutation::PreparedPermutation(
+//     const Permutation& permutation,
+//     const NeoN::Executor& exec)
+//     {
+//     }
 } // namespace NeoFOAM
