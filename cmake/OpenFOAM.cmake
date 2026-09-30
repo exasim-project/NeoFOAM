@@ -80,8 +80,8 @@ importoflibrary(turbulenceModels INCLUDE_LN TurbulenceModels/turbulenceModels)
 importoflibrary(incompressibleTurbulenceModels INCLUDE_LN TurbulenceModels/incompressible)
 importoflibrary(
   Pstream
-  INCLUDE
-  Pstream/mpi/lnInclude
+  INCLUDE_LN
+  Pstream/mpi
   LIBPATH
   $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}
   EXTRA_LINK_TARGET
