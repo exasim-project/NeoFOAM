@@ -40,16 +40,16 @@ public:
     NeoN::View<const IndexType> newToOld() const;
 
     /**
-     * @brief Return the executor used to prepare the permutation.
-     */
-    [[nodiscard]]
-    const NeoN::Executor& exec() const noexcept;
-
-    /**
      * @brief Return the number of entities in the permutation.
      */
     [[nodiscard]]
     SizeType size() const noexcept;
+
+    /**
+     * @brief Return the executor used to prepare the permutation.
+     */
+    [[nodiscard]]
+    const NeoN::Executor& exec() const noexcept;
 
 private:
     NeoN::Array<IndexType> oldToNew_;
