@@ -11,6 +11,8 @@ namespace NeoFOAM
 class PreparedPermutation
 {
 public:
+    using IndexType = NeoN::label;
+    using SizeType = NeoN::size_t;
     /**
      * @brief Prepare a permutation for execution on the given executor.
      *  
@@ -27,7 +29,7 @@ public:
      * The returned view is non-owning and read-only
      */
     [[nodiscard]]
-    NeoN::View<const NeoN::label> oldToNew() const;
+    NeoN::View<const IndexType> oldToNew() const;
 
     /**
      * @brief Return the new-to-old mapping.
@@ -35,7 +37,7 @@ public:
      * The returned view is non-owning and read-only.
      */
     [[nodiscard]]
-    NeoN::View<const NeoN::label> newToOld() const;
+    NeoN::View<const IndexType> newToOld() const;
 
     /**
      * @brief Return the executor used to prepare the permutation.
@@ -47,10 +49,10 @@ public:
      * @brief Return the number of entities in the permutation.
      */
     [[nodiscard]]
-    NeoN::localIdx size() const noexcept;
+    SizeType size() const noexcept;
 
 private:
-    NeoN::labelVector oldToNew_;
-    NeoN::labelVector newToOld_;
+    NeoN::Array<IndexType> oldToNew_;
+    NeoN::Array<IndexType> newToOld_;
 }; 
 } // namespace NeoFOAM
