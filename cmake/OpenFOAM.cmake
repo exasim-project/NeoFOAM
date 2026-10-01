@@ -42,10 +42,13 @@ function(importOFLibrary NAME)
   add_library(OpenFOAM::${NAME} SHARED IMPORTED)
   set_target_properties(OpenFOAM::${NAME} PROPERTIES IMPORTED_LOCATION ${OFLIBDIR}
                                                      INTERFACE_INCLUDE_DIRECTORIES "${OFINCDIRS}")
+  # NF_EXTRA_LINK_TARGET, not EXTRA_LINK_TARGET: cmake_parse_arguments prefixes its output with
+  # "NF", so the unprefixed name was always empty and every EXTRA_LINK_TARGET argument was silently
+  # discarded — the same class of bug as the INCLUDE/INCLUDE_LN mismatch below.
   target_link_libraries(
     OpenFOAM
     PUBLIC
-    INTERFACE OpenFOAM::${NAME} ${EXTRA_LINK_TARGET})
+    INTERFACE OpenFOAM::${NAME} ${NF_EXTRA_LINK_TARGET})
 endfunction()
 
 # find_package(MPI REQUIRED)
@@ -78,6 +81,14 @@ importoflibrary(incompressibleTransportModels INCLUDE_ROOT transportModels INCLU
                 transportModels/incompressible)
 importoflibrary(turbulenceModels INCLUDE_LN TurbulenceModels/turbulenceModels)
 importoflibrary(incompressibleTurbulenceModels INCLUDE_LN TurbulenceModels/incompressible)
+# MPI::MPI_CXX is created by find_package(MPI) in cmake/CxxThirdParty.cmake, which is included after
+# this file and only when NEOFOAM_WITH_MPI is ON. CMake resolves target names at generate time so
+# the later definition is fine, but naming it with MPI off would fail the generate step.
+if(NEOFOAM_WITH_MPI)
+  set(_NF_PSTREAM_EXTRA MPI::MPI_CXX)
+else()
+  set(_NF_PSTREAM_EXTRA "")
+endif()
 importoflibrary(
   Pstream
   INCLUDE_LN
@@ -85,7 +96,7 @@ importoflibrary(
   LIBPATH
   $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}
   EXTRA_LINK_TARGET
-  MPI::MPI_CXX)
+  ${_NF_PSTREAM_EXTRA})
 importoflibrary(forces INCLUDE_LN functionObjects/forces)
 
 # pybFoam compatibility.
