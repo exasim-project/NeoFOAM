@@ -87,3 +87,33 @@ importoflibrary(
   EXTRA_LINK_TARGET
   MPI::MPI_CXX)
 importoflibrary(forces INCLUDE_LN functionObjects/forces)
+
+# pybFoam compatibility.
+#
+# pybFoam is built in-tree through CPM (see CMakeLists.txt), and its cmake/FindOpenFOAM.cmake
+# creates its OpenFOAM::* targets guarded by `if(NOT TARGET ...)`. Ours are defined first, so for
+# the two names that overlap — meshTools and finiteVolume — pybFoam silently inherits ours instead
+# of creating its own. Its sources then fail to compile with "messageStream.H: No such file or
+# directory", because our targets carry only their own lnInclude while pybFoam's pull in the core
+# headers transitively.
+#
+# Give those two targets what pybFoam's equivalents provide. Purely additive: these paths and
+# libraries are correct for the modules in question regardless of pybFoam, and nothing NeoFOAM
+# already builds changes.
+#
+# OpenFOAM::OpenFOAM also gains OSspecific, which pybFoam's OpenFOAM::core carries and which NeoFOAM
+# previously had only on the aggregate `OpenFOAM` interface target.
+if(TARGET OpenFOAM::OpenFOAM)
+  target_include_directories(OpenFOAM::OpenFOAM INTERFACE $ENV{FOAM_SRC}/OSspecific/POSIX/lnInclude)
+endif()
+
+if(TARGET OpenFOAM::meshTools)
+  target_include_directories(OpenFOAM::meshTools INTERFACE $ENV{FOAM_SRC}/dynamicMesh/lnInclude)
+  target_link_libraries(OpenFOAM::meshTools INTERFACE OpenFOAM::OpenFOAM)
+endif()
+
+if(TARGET OpenFOAM::finiteVolume)
+  target_include_directories(OpenFOAM::finiteVolume INTERFACE $ENV{FOAM_SRC}/dynamicFvMesh/lnInclude
+                                                              $ENV{FOAM_SRC}/dynamicMesh/lnInclude)
+  target_link_libraries(OpenFOAM::finiteVolume INTERFACE OpenFOAM::meshTools OpenFOAM::OpenFOAM)
+endif()
