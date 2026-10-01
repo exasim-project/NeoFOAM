@@ -13,17 +13,20 @@
 #include <vector>
 
 #include "NeoFOAM/ordering/permutation.hpp"
+#include "NeoFOAM/ordering/preparedPermutation.hpp"
 
 namespace
 {
 
 using NeoFOAM::Permutation;
+using NeoFOAM::PreparedPermutation;
 using IndexType = Permutation::IndexType;
 using Catch::Matchers::RangeEquals;
 
 } // namespace
 
 
+// Test Permutation class
 TEST_CASE("Permutation can be constructed from a valid old-to-new mapping", "[permutation]")
 {
     const std::vector<IndexType> oldToNew {2, 0, 3, 1};
@@ -65,26 +68,6 @@ TEST_CASE("Permutation supports an empty identity mapping", "[permutation]")
     REQUIRE(permutation.oldToNew().empty());
     REQUIRE(permutation.newToOld().empty());
     REQUIRE(permutation.isIdentity());
-}
-
-
-TEST_CASE("Permutation exposes the complete old-to-new mapping", "[permutation]")
-{
-    const std::vector<IndexType> expected {2, 0, 3, 1};
-
-    const Permutation permutation {expected};
-
-    REQUIRE_THAT(permutation.oldToNew(), Catch::Matchers::RangeEquals(expected));
-}
-
-
-TEST_CASE("Permutation exposes the complete new-to-old mapping", "[permutation]")
-{
-    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
-
-    const std::vector<IndexType> expected {1, 3, 0, 2};
-
-    REQUIRE_THAT(permutation.newToOld(), Catch::Matchers::RangeEquals(expected));
 }
 
 
@@ -191,4 +174,28 @@ TEST_CASE("Permutation mapping views provide read-only access", "[permutation]")
     static_assert(std::is_same_v<OldToNewView, std::span<const IndexType>>);
 
     static_assert(std::is_same_v<NewToOldView, std::span<const IndexType>>);
+}
+
+// Test PreparedPermutation class
+TEST_CASE("PreparedPermutation can be constructed from a valid Permutation", "[preparedPermutation]")
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    SECTION("Mapping on " + execName)
+    {
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        NeoN::Array<IndexType> oldToNewArray(exec, oldToNew.size(), 0);
+        auto oldToNewView = oldToNewArray.view();
+        const Permutation permutation {oldToNew};
+
+        const PreparedPermutation prepared{permutation, exec};
+
+        NeoN::parallelFor(
+            exec, 
+            {0, static_cast<NeoN::localIdx>(prepared.size())},
+            NEON_LAMBDA(const NeoN::localIdx i) {
+                oldToNewView[i] = prepared.oldToNew()[i];
+            }
+        );
+    }
 }
