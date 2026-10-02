@@ -24,6 +24,7 @@ target_platform="linux-64"
 # glibc floor for the linux package. 2.17 is the widest baseline conda-forge still ships a
 # sysroot for, matching NeoN.
 glibc_version="2.17"
+macos_deployment_target="12.0"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -49,11 +50,14 @@ if (( BASH_REMATCH[1] < 3 || (BASH_REMATCH[1] == 3 && BASH_REMATCH[2] < 10) )); 
     exit 1
 fi
 
-if [[ "${target_platform}" != linux-* ]]; then
-    echo "Only linux target platforms are supported: conda-forge builds openfoam for" >&2
-    echo "linux-64 only, so '${target_platform}' has no OpenFOAM to build against." >&2
-    exit 1
-fi
+case "${target_platform}" in
+    linux-64 | osx-arm64) ;;
+    *)
+        echo "Unsupported target platform '${target_platform}'." >&2
+        echo "openfoam is published for linux-64 and osx-arm64 only." >&2
+        exit 1
+        ;;
+esac
 
 # Version resolution, highest priority first:
 #   1. NEOFOAM_VERSION — what CI passes, derived from the tag name. PR #411's release.sh says
@@ -82,10 +86,23 @@ trap 'rm -f "${variant_file}"' EXIT
     echo "python:"
     echo "  - \"${python_version}\""
     # ${{ stdlib('c') }} in the recipe has no built-in default; name the C runtime floor.
-    echo "c_stdlib:"
-    echo "  - sysroot"
-    echo "c_stdlib_version:"
-    echo "  - \"${glibc_version}\""
+    # ${{ stdlib('c') }} has no built-in default; name the C runtime floor per platform.
+    case "${target_platform}" in
+        osx-*)
+            echo "c_stdlib:"
+            echo "  - macosx_deployment_target"
+            echo "c_stdlib_version:"
+            echo "  - \"${macos_deployment_target}\""
+            echo "MACOSX_DEPLOYMENT_TARGET:"
+            echo "  - \"${macos_deployment_target}\""
+            ;;
+        *)
+            echo "c_stdlib:"
+            echo "  - sysroot"
+            echo "c_stdlib_version:"
+            echo "  - \"${glibc_version}\""
+            ;;
+    esac
 } > "${variant_file}"
 
 {

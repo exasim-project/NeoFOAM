@@ -15,7 +15,7 @@
 #     wrong (openfoam-feedstock#8); it also ships neither the src/ nor the applications/
 #     tree that downstream projects compile against. See exasim-project/openfoam-conda.
 #   * mpich, matching the WM_MPLIB=SYSTEMMPI build of that package.
-#   * linux-64 only for now — that is where openfoam 2506 is published.
+#   * linux-64 and osx-arm64 — the platforms openfoam 2506 is published for.
 #   * CPU only — no cuda/rocm variants until the CPU package is proven.
 #   * built through pip/scikit-build-core rather than plain CMake, see build.sh.
 
@@ -38,9 +38,10 @@ build:
   number: 0
   string: py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
   skip:
-    # openfoam 2506 is published for linux-64; osx-arm64 follows once it is in the channel.
-    # The PyPI wheel remains the path on other platforms.
-    - not linux
+    # openfoam from greole/exasim-project is published for linux-64 and osx-arm64. The PyPI
+    # wheel remains the path on Windows and on intel macs.
+    - win
+    - osx and x86_64
   script:
     file: build.sh
   dynamic_linking:
