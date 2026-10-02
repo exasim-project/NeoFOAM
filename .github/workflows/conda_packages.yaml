@@ -188,4 +188,7 @@ jobs:
             exit 1
           fi
 
-          rattler-build upload prefix --channel "${PREFIX_CHANNEL}" --skip-existing "${packages[@]}"
+          # No --skip-existing: it turns an already-published name-version-build into a
+          # silent no-op, so a release that uploads nothing still reports success. Let the
+          # upload fail loudly instead; a repeat run means the version was already burned.
+          rattler-build upload prefix --channel "${PREFIX_CHANNEL}" "${packages[@]}"
