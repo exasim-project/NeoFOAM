@@ -138,5 +138,16 @@ if(TARGET OpenFOAM::finiteVolume)
     OpenFOAM::finiteVolume
     INTERFACE $ENV{FOAM_SRC}/dynamicFvMesh/lnInclude $ENV{FOAM_SRC}/dynamicMesh/lnInclude
               $ENV{FOAM_SRC}/fileFormats/lnInclude $ENV{FOAM_SRC}/surfMesh/lnInclude)
-  target_link_libraries(OpenFOAM::finiteVolume INTERFACE OpenFOAM::meshTools OpenFOAM::OpenFOAM)
+  # The libraries pybFoam's chain links, by absolute path so no new OpenFOAM:: targets are created
+  # that pybFoam's find module could then inherit instead of its own. Without libdynamicFvMesh the
+  # module builds but fails at import with "undefined symbol: _ZTIN4Foam13dynamicFvMeshE" (typeinfo
+  # for Foam::dynamicFvMesh).
+  target_link_libraries(
+    OpenFOAM::finiteVolume
+    INTERFACE OpenFOAM::meshTools
+              OpenFOAM::OpenFOAM
+              $ENV{FOAM_LIBBIN}/libdynamicMesh${CMAKE_SHARED_LIBRARY_SUFFIX}
+              $ENV{FOAM_LIBBIN}/libdynamicFvMesh${CMAKE_SHARED_LIBRARY_SUFFIX}
+              $ENV{FOAM_LIBBIN}/libsurfMesh${CMAKE_SHARED_LIBRARY_SUFFIX}
+              $ENV{FOAM_LIBBIN}/libfileFormats${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif()
