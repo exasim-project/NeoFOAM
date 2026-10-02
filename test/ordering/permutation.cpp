@@ -197,5 +197,6 @@ TEST_CASE("PreparedPermutation can be constructed from a valid Permutation", "[p
                 oldToNewView[i] = prepared.oldToNew()[i];
             }
         );
+    REQUIRE_THAT(oldToNewArray, Equals(oldToNew, EqualInt{}));
     }
 }
