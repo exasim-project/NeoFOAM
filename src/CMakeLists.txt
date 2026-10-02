@@ -30,6 +30,9 @@ target_sources(
           "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
           "functionObjects/forces.cpp"
-          "functionObjects/forceCoeffs.cpp")
+          "functionObjects/forceCoeffs.cpp"
+          "ordering/permutation.cpp"
+          "ordering/identityOrdering.cpp"
+          "ordering/preparedPermutation.cpp")
 
 install(TARGETS NeoFOAM)
