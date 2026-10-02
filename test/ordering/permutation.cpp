@@ -177,16 +177,19 @@ TEST_CASE("Permutation mapping views provide read-only access", "[permutation]")
 }
 
 // Test PreparedPermutation class
-TEST_CASE("PreparedPermutation can be constructed from a valid Permutation", "[preparedPermutation]")
+TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings", "[preparedPermutation]")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    SECTION("Mapping on " + execName)
+    SECTION("Permutation mappings on " + execName)
     {
-        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
-        NeoN::Array<IndexType> oldToNewArray(exec, oldToNew.size(), 0);
-        auto oldToNewView = oldToNewArray.view();
-        const Permutation permutation {oldToNew};
+        const std::vector<IndexType> expectedOldToNew {2, 0, 3, 1};
+
+        NeoN::Array<IndexType> oldToNewResult(exec, expectedOldToNew.size(), 0);
+
+        auto oldToNewResultView = oldToNewResult.view();
+
+        const Permutation permutation {expectedOldToNew};
 
         const PreparedPermutation prepared{permutation, exec};
 
@@ -194,9 +197,9 @@ TEST_CASE("PreparedPermutation can be constructed from a valid Permutation", "[p
             exec, 
             {0, static_cast<NeoN::localIdx>(prepared.size())},
             NEON_LAMBDA(const NeoN::localIdx i) {
-                oldToNewView[i] = prepared.oldToNew()[i];
+                oldToNewResultView[i] = prepared.oldToNew()[i];
             }
         );
-    REQUIRE_THAT(oldToNewArray, Equals(oldToNew, EqualInt{}));
+    REQUIRE_THAT(oldToNewResult, Equals(expectedOldToNew, EqualInt{}));
     }
 }
