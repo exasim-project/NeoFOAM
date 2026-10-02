@@ -10,9 +10,9 @@
 #   ci/build_conda_packages.sh [--python 3.12] [--output-dir output]
 #                              [--target-platform linux-64] [--] [extra rattler-build arguments]
 #
-# Ported from src/NeoN/ci/build_conda_packages.sh. NeoN's GPU flavours and its macOS/aarch64
-# target platforms are dropped: conda-forge builds `openfoam` for linux-64 only, so there is
-# nothing else to build against.
+# Ported from src/NeoN/ci/build_conda_packages.sh, without NeoN's GPU flavours. The target
+# platforms follow whatever `openfoam` is published for in greole/exasim-project, which is
+# linux-64 and osx-arm64.
 
 set -euo pipefail
 
@@ -113,11 +113,75 @@ trap 'rm -f "${variant_file}"' EXIT
 
 rattler_build="${RATTLER_BUILD:-rattler-build}"
 
+# ---------------------------------------------------------------------------
+# macOS: build on a case-sensitive volume.
+#
+# The openfoam package installs OpenFOAM's source tree, whose lnInclude directories carry
+# headers such as string.H, time.H and wchar.H. macOS filesystems are case-INSENSITIVE by
+# default, so libc++ asking for <string.h> resolves to OpenFOAM's string.H instead:
+#
+#   <cstring> tried including <string.h> but didn't find libc++'s <string.h> header
+#
+# after which every std::string-dependent OpenFOAM type collapses. No compiler flag fixes
+# this — OpenFOAM's own macOS instructions require a case-sensitive filesystem.
+#
+# rattler-build derives SRC_DIR and the build/host prefixes from --output-dir
+# (<output>/bld/rattler-build_<pkg>_<n>/...), so relocating that moves the whole build,
+# the unpacked openfoam headers included. Packages are copied back afterwards so the
+# workflow's artifact path is unchanged. Mirrors exasim-project/openfoam-conda.
+# ---------------------------------------------------------------------------
+build_output_dir="${output_dir}"
+casefs_mount=""
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+    casefs_mount="${NEOFOAM_CASEFS_MOUNT:-/Volumes/NeoFOAMBuild}"
+    casefs_image="${TMPDIR:-/tmp}/neofoam-build"
+
+    echo "Disk before creating the case-sensitive volume:" >&2
+    df -h / "${TMPDIR:-/tmp}" >&2 || true
+
+    if [[ ! -d "${casefs_mount}" ]]; then
+        # SPARSE so it consumes only what the build actually writes; macOS runners have
+        # limited free space and a fixed-size image would not fit.
+        hdiutil create -size 60g -type SPARSE -fs "Case-sensitive APFS" \
+            -volname NeoFOAMBuild -quiet "${casefs_image}"
+        hdiutil attach "${casefs_image}.sparseimage" \
+            -mountpoint "${casefs_mount}" -nobrowse -quiet
+    fi
+
+    # Prove it is actually case-sensitive rather than trusting the -fs argument.
+    probe="${casefs_mount}/.casecheck"
+    rm -rf "${probe}"; mkdir -p "${probe}"
+    printf 'lower\n' > "${probe}/string.h"
+    printf 'upper\n' > "${probe}/string.H"
+    if [[ "$(cat "${probe}/string.h")" != "lower" ]]; then
+        echo "${casefs_mount} is not case-sensitive — string.h and string.H collide." >&2
+        echo "The OpenFOAM headers cannot be compiled against here." >&2
+        exit 1
+    fi
+    rm -rf "${probe}"
+    echo "Case-sensitive build volume ready at ${casefs_mount}" >&2
+
+    build_output_dir="${casefs_mount}/output"
+    mkdir -p "${build_output_dir}"
+fi
+
 "${rattler_build}" build \
     --recipe "${repo_root}/recipe/recipe.yaml" \
     --variant-config "${variant_file}" \
-    --output-dir "${output_dir}" \
+    --output-dir "${build_output_dir}" \
     --target-platform "${target_platform}" \
     --channel https://prefix.dev/greole/exasim-project \
     --channel conda-forge \
     "$@"
+
+# Copy the packages back off the volume so the workflow finds them where it expects.
+if [[ -n "${casefs_mount}" && "${build_output_dir}" != "${output_dir}" ]]; then
+    mkdir -p "${output_dir}"
+    while IFS= read -r pkg; do
+        rel="${pkg#"${build_output_dir}"/}"
+        mkdir -p "${output_dir}/$(dirname "${rel}")"
+        cp "${pkg}" "${output_dir}/${rel}"
+        echo "Recovered ${rel}" >&2
+    done < <(find "${build_output_dir}" -type f -name '*.conda')
+fi
