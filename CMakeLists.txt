@@ -104,16 +104,22 @@ include(cmake/CxxThirdParty.cmake)
 if(DEFINED SKBUILD)
   cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG v0.5.3)
 
-  # pybFoam's own CMake installs only __init__.py and _version.py. Its wheel additionally ships
-  # py.typed and the .pyi stubs through scikit-build-core, which CPM does not use — so a bundled
-  # build drops them, mypy then sees pybFoam as Any, and NeoFOAM's own annotations fail with
-  # "Returning Any from function declared to return ...". Install them alongside.
+  # pybFoam's own CMake installs only __init__.py and _version.py. Everything else in its wheel —
+  # examples.py, the io/ subpackage, py.typed and the .pyi stubs — comes from its scikit-build-core
+  # configuration, which CPM does not use. A bundled build therefore drops them, and pybFoam becomes
+  # unimportable: its __init__.py does `from .examples import clone_example, ...` unconditionally.
+  #
+  # Install the whole python layer rather than named files, so this does not have to be revisited
+  # each time pybFoam adds a module.
   if(pybFoam_SOURCE_DIR)
-    file(GLOB _NF_PYBFOAM_STUBS "${pybFoam_SOURCE_DIR}/src/pybFoam/*.pyi")
     install(
-      FILES ${_NF_PYBFOAM_STUBS} "${pybFoam_SOURCE_DIR}/src/pybFoam/py.typed"
+      DIRECTORY "${pybFoam_SOURCE_DIR}/src/pybFoam/"
       DESTINATION pybFoam
-      COMPONENT python)
+      COMPONENT python
+      FILES_MATCHING
+      PATTERN "*.py"
+      PATTERN "*.pyi"
+      PATTERN "py.typed")
   endif()
 endif()
 
