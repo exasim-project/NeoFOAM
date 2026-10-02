@@ -103,6 +103,18 @@ include(cmake/CxxThirdParty.cmake)
 # instead of by a version pin kept in step by hand.
 if(DEFINED SKBUILD)
   cpmaddpackage(NAME pybFoam GITHUB_REPOSITORY HenningScheufler/pybFoam GIT_TAG v0.5.3)
+
+  # pybFoam's own CMake installs only __init__.py and _version.py. Its wheel additionally ships
+  # py.typed and the .pyi stubs through scikit-build-core, which CPM does not use — so a bundled
+  # build drops them, mypy then sees pybFoam as Any, and NeoFOAM's own annotations fail with
+  # "Returning Any from function declared to return ...". Install them alongside.
+  if(pybFoam_SOURCE_DIR)
+    file(GLOB _NF_PYBFOAM_STUBS "${pybFoam_SOURCE_DIR}/src/pybFoam/*.pyi")
+    install(
+      FILES ${_NF_PYBFOAM_STUBS} "${pybFoam_SOURCE_DIR}/src/pybFoam/py.typed"
+      DESTINATION pybFoam
+      COMPONENT python)
+  endif()
 endif()
 
 # NeoN hard-sets the _neon binding's INSTALL_RPATH to "$ORIGIN/../lib" (correct only for the old
