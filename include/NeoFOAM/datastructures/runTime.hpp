@@ -6,14 +6,6 @@
 
 #include "NeoN/NeoN.hpp"
 
-// Before any other OpenFOAM header: IOobject.H pulls in Enum.H, whose template body
-// Enum.C calls dict.get<word>() on a dictionary that debug.H has only forward-declared.
-// The expression does not depend on the template parameter, so clang rejects it while
-// parsing the template; gcc defers non-dependent diagnostics and never reports it.
-// It has to come after NeoN.hpp — OpenFOAM's error.H defines a NotImplemented macro
-// that collides with Ginkgo's NotImplemented class if OpenFOAM is parsed first.
-#include "dictionary.H"
-
 #include "fvMesh.H"
 
 #include <map>
