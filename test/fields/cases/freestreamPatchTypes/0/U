@@ -1,0 +1,44 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (1 2 3);
+
+boundaryField
+{
+    // The far field as simpleFoam/airFoil2D writes it, except that the
+    // freestreamValue differs from the internal field: the expectation then tells
+    // the fixedValue translation apart from a zeroGradient fallback.
+    xMin
+    {
+        type            freestreamVelocity;
+        freestreamValue uniform (25.75 3.62 0);
+    }
+
+    xMax
+    {
+        type            zeroGradient;
+    }
+
+    "(yMin|yMax|zMin|zMax)"
+    {
+        type            noSlip;
+    }
+}
+
+
+// ************************************************************************* //

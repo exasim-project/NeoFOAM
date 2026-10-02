@@ -1,0 +1,42 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      epsilon;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -3 0 0 0 0];
+
+// epsilon = Cmu * k^2 / nut = 0.09 * (9.375e-4)^2 / 9.375e-6 = 8.44e-3 m^2/s^3
+internalField   uniform 8.44e-3;
+
+boundaryField
+{
+    fixedWalls
+    {
+        type            fixedValue;
+        value           uniform 8.44e-3;
+    }
+
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 8.44e-3;
+    }
+
+    outlet
+    {
+        type            zeroGradient;
+    }
+}
+
+// ************************************************************************* //

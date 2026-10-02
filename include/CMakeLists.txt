@@ -3,6 +3,12 @@
 
 add_library(NeoFOAM_public_api INTERFACE) # dummy target
 
+if(NeoN_WITH_SUNDIALS)
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_SUNDIALS=1)
+else()
+  target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_SUNDIALS=0)
+endif()
+
 set_property(
   TARGET NeoFOAM_public_api
   APPEND
@@ -14,6 +20,11 @@ set_property(
   PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}")
 
 target_link_libraries(NeoFOAM_public_api INTERFACE NeoN::NeoN NeoN::NeoN_public_api)
+
+if(NEOFOAM_WITH_MPI)
+  target_link_libraries(NeoN_public_api INTERFACE MPI::MPI_CXX)
+  target_link_libraries(NeoFOAM_public_api INTERFACE MPI::MPI_CXX)
+endif()
 
 # Get list of some *.hpp files in folder include
 file(GLOB_RECURSE include_files *.hpp)

@@ -1,0 +1,111 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+domain
+{
+    xMin   -20; // L = 350
+    xMax   330;
+    yMin   -50; // L = 280
+    yMax   230;
+    zMin     0;
+    zMax   140;
+    xCells  25;
+    yCells  20;
+    zCells  10;
+}
+
+scale   1;
+
+// Note: uses older '.' syntax (to test compatibility)
+vertices
+(
+    ($:domain.xMin $:domain.yMin $:domain.zMin)
+    ($:domain.xMax $:domain.yMin $:domain.zMin)
+    ($:domain.xMax $:domain.yMax $:domain.zMin)
+    ($:domain.xMin $:domain.yMax $:domain.zMin)
+
+    ($:domain.xMin $:domain.yMin $:domain.zMax)
+    ($:domain.xMax $:domain.yMin $:domain.zMax)
+    ($:domain.xMax $:domain.yMax $:domain.zMax)
+    ($:domain.xMin $:domain.yMax $:domain.zMax)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7)
+    (
+        $:domain.xCells
+        $:domain.yCells
+        $:domain.zCells
+    )
+    simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    inlet
+    {
+        type patch;
+        faces
+        (
+            (0 3 7 4)
+        );
+    }
+
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (1 5 6 2)
+        );
+    }
+
+    ground
+    {
+        type wall;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+
+    frontAndBack
+    {
+        type symmetry;
+        faces
+        (
+            (0 4 5 1)
+            (3 2 6 7)
+            (4 7 6 5)
+        );
+    }
+
+);
+
+mergePatchPairs
+(
+);
+
+
+// Cleanup
+#remove ( domain )
+
+// ************************************************************************* //

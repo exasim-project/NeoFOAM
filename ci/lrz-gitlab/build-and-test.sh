@@ -5,10 +5,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Argument parsing
-GPU_VENDOR=${1:?Error: GPU vendor (nvidia|amd) must be specified}
-NEON_BRANCH=${2:?Error: NeoN branch must be specified}
-PRESET=${3:-develop}   # Which CMakePreset to use, defaults to 'develop'
+# Fail fast on a bad/expired credential instead of letting git block on a terminal
+# prompt: a stale github.com entry turns an anonymous-OK public clone into a 401,
+# which otherwise surfaces as three silent retries that read like a network fault.
+export GIT_TERMINAL_PROMPT=0
+
+# Dependency clones (Kokkos, libdwarf via cpptrace, ...) are public and need no
+# credentials. A stale credential in the runner's git config makes GitHub answer
+# 401 to them, so disable any configured helper for every git call in this job.
+# GIT_CONFIG_* is applied last, overriding the system and global config.
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0=credential.helper
+export GIT_CONFIG_VALUE_0=
+
+# Report where credential/insteadOf config comes from should the above not be
+# enough (an insteadOf URL rewrite carries its own token). --name-only drops
+# values, but a rewrite embeds its token in the key itself
+# (url.https://<token>@github.com/.insteadOf), so strip any URL userinfo too.
+echo "=== git credential configuration ==="
+git config --list --show-origin --name-only \
+    | grep -Ei 'credential|insteadof' \
+    | sed -E 's#//[^/@[:space:]]*@#//***@#g' \
+    || echo "none"
+
+# Check required environment variables
+GPU_VENDOR=${GPU_VENDOR:?Error: Must set GPU vendor (nvidia|amd|intel)}
+NEON_BRANCH=${NEON_BRANCH:?Error: Must set NeoN branch}
+PRESET="develop"
 
 echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
@@ -16,7 +39,11 @@ echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
 echo "=== Tool versions ==="
 cmake --version
+mpirun --version
 g++ --version || clang++ --version
+
+# use host buffer since no gpu aware mpi is available
+export NEON_FORCE_HOST_BUFFER=1
 
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     echo "=== NVIDIA GPU info ==="
@@ -26,13 +53,28 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
 
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     # Set up environment
-    export PATH=/opt/rocm/bin:$PATH
-    export HIPCC_CXX=/usr/bin/g++
+    export CXX_COMPILER_PATH="$(which g++)"
+    export CXX_SOURCE="${CXX_COMPILER_PATH%/*/*}"
+    export CXX_LIBDIR="${CXX_SOURCE}/lib64"
+    export LD_LIBRARY_PATH=${CXX_LIBDIR}:${LD_LIBRARY_PATH}
 
     echo "=== AMD GPU info ==="
     rocminfo | grep "Marketing Name.*AMD"
     echo "=== AMD compiler driver info ==="
     hipcc --version
+
+elif [[ "$GPU_VENDOR" == "intel" ]]; then
+    SYCL_PI_TRACE=1
+    sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
+    # Compiler info (non-fatal)
+    icpx --version 2>/dev/null | head -1 || echo "icpx not found"
+    # Intel PVC has two tiles and implicit scaling routes work across them;
+    # sycl::queue::wait() only drains the root-device queue and misses
+    # in-flight work on tile 1, causing GPU page faults on freed USM memory.
+    # COMPOSITE hierarchy exposes each tile as a separate L0 device so Kokkos
+    # selects a single tile — all work and synchronisation stay on one tile.
+    export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+
 else
     echo "Unsupported GPU vendor: $GPU_VENDOR"
     exit 1
@@ -41,9 +83,19 @@ fi
 # -------------------------
 # Step 1: Prepare NeoN
 # -------------------------
+NEON_URL=https://gitlab-ce.lrz.de/greole/neon.git
+
+# A coordinated NeoN branch only lives as long as its PR: once that is merged the
+# branch is deleted, but NEON_BRANCH still names it. Fall back to develop instead of
+# failing the clone -- develop is what the submodule pin tracks anyway.
+if ! git ls-remote --exit-code --heads "$NEON_URL" "$NEON_BRANCH" >/dev/null 2>&1; then
+    echo "NeoN branch '$NEON_BRANCH' does not exist; falling back to develop"
+    NEON_BRANCH=develop
+fi
+
 echo "=== Cloning NeoN (branch=$NEON_BRANCH) ==="
 git clone --depth 1 --single-branch --branch "$NEON_BRANCH" \
-    https://gitlab-ce.lrz.de/greole/neon.git ../NeoN
+    "$NEON_URL" ../NeoN
 
 # -------------------------
 # Step 2: Configure and build NeoFOAM
@@ -53,15 +105,34 @@ echo "=== Configuring NeoFOAM against NeoN ==="
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CUDA_ARCHITECTURES=90 \
-        -DNeoN_WITH_THREADS=OFF
+        -DCMAKE_CUDA_ARCHITECTURES=89 \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_WITH_MPI=ON \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CXX_COMPILER=hipcc \
+        -DCMAKE_PREFIX_PATH=/opt/rocm \
+        -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
+        -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
+        -DCMAKE_CXX_FLAGS="--gcc-toolchain=${CXX_SOURCE}" \
+        -DCMAKE_EXE_LINKER_FLAGS="-L${CXX_LIBDIR}" \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
-        -DNeoN_WITH_THREADS=OFF
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_WITH_MPI=ON \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
+elif [[ "$GPU_VENDOR" == "intel" ]]; then
+    cmake --preset $PRESET \
+        -DNEOFOAM_NEON_DIR=../NeoN \
+        -DCMAKE_CXX_COMPILER=icpx \
+        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
+        -DKokkos_ENABLE_SYCL=ON \
+        -DKokkos_ARCH_INTEL_PVC=ON \
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_WITH_MPI=ON \
+        -DCMAKE_BUILD_TYPE="release" \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
 
 echo "=== Building NeoFOAM against NeoN ==="
@@ -71,4 +142,93 @@ cmake --build --preset $PRESET
 # Step 3: Run Tests
 # -------------------------
 echo "=== Running NeoFOAM tests ==="
-ctest --preset $PRESET -R adapter --output-on-failure
+ctest --preset $PRESET -R neofoam --output-on-failure
+
+# -----------------------------
+# Step 4: Smoke-test neoPisoFoam (pitzDaily, 10 timesteps)
+# -----------------------------
+SKIP_PISO_SMOKETEST=${SKIP_PISO_SMOKETEST:-false}
+if [[ "$SKIP_PISO_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoPisoFoam/pitzDaily >/dev/null
+    blockMesh > log.blockMesh 2>&1
+    foamDictionary -entry endTime -set 1e-04 system/controlDict
+    if ! "../../../build/$PRESET/bin/neoPisoFoam" -executor GPU > log.neoPisoFoam 2>&1; then
+        cat log.neoPisoFoam; exit 1
+    fi
+    popd >/dev/null
+else
+    echo "=== Skipping neoPisoFoam smoke test (SKIP_PISO_SMOKETEST set) ==="
+fi
+
+# -----------------------------
+# Step 5: Smoke-test neoPimpleFoam (pitzDaily, 10 timesteps)
+# -----------------------------
+SKIP_PIMPLE_SMOKETEST=${SKIP_PIMPLE_SMOKETEST:-false}
+if [[ "$SKIP_PIMPLE_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoPimpleFoam/pitzDaily >/dev/null
+    blockMesh > log.blockMesh 2>&1
+    foamDictionary -entry endTime -set 1e-03 system/controlDict
+    if ! "../../../build/$PRESET/bin/neoPimpleFoam" -executor GPU > log.neoPimpleFoam 2>&1; then
+        cat log.neoPimpleFoam; exit 1
+    fi
+    popd >/dev/null
+else
+    echo "=== Skipping neoPimpleFoam smoke test (SKIP_PIMPLE_SMOKETEST set) ==="
+fi
+
+# -----------------------------
+# Step 6: Validate neoIcoFoam
+# -----------------------------
+SKIP_VALIDATION=${SKIP_VALIDATION:-false}
+if [[ "$SKIP_VALIDATION" != "true" ]]; then
+    pushd tutorials/neoIcoFoam/cavity >/dev/null
+    python3 cleanRunValidate.py --preset "$PRESET" --mode serial
+    # currently intel is too slow and nvidia hangs
+    if [[ "$GPU_VENDOR" != "intel" ]]; then
+        python3 cleanRunValidate.py --preset "$PRESET" --mode parallel
+    fi
+    popd >/dev/null
+else
+    echo "=== Skipping validation (skip-validation label set) ==="
+fi
+
+# -----------------------------
+# Step 7: Smoke-test neoSimpleFoam (motorBike, 5 iterations)
+# -----------------------------
+SKIP_SIMPLE_SMOKETEST=${SKIP_SIMPLE_SMOKETEST:-false}
+if [[ "${GPU_VENDOR:-}" == "intel" ]]; then
+    SKIP_SIMPLE_SMOKETEST=true
+fi
+if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoSimpleFoam/motorBike >/dev/null
+    mkdir -p constant/triSurface
+    cp -f "$FOAM_TUTORIALS"/resources/geometry/motorBike.obj.gz constant/triSurface/
+    surfaceFeatureExtract > log.surfaceFeatureExtract 2>&1
+    blockMesh > log.blockMesh 2>&1
+    decomposePar -decomposeParDict system/decomposeParDict.6 > log.decomposePar 2>&1
+    for proc in processor*/; do rm -rf "${proc}0" && cp -r 0.orig "${proc}0"; done
+    mpirun -np 6 snappyHexMesh -parallel -overwrite \
+        -decomposeParDict system/decomposeParDict.6 > log.snappyHexMesh 2>&1
+    mpirun -np 6 topoSet -parallel \
+        -decomposeParDict system/decomposeParDict.6 > log.topoSet 2>&1
+    mpirun -np 6 potentialFoam -parallel -writephi \
+        -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
+    foamDictionary -entry endTime -set 5 system/controlDict
+    # Ginkgo DPC++ backend lacks build_mapping for distributed solvers; run serial on Intel PVC
+    if [[ "${GPU_VENDOR:-}" == "intel" ]]; then
+        reconstructPar > log.reconstructPar 2>&1
+        if ! "../../../build/$PRESET/bin/neoSimpleFoam" \
+                -executor GPU > log.neoSimpleFoam 2>&1; then
+            cat log.neoSimpleFoam; exit 1
+        fi
+    else
+        if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+                -executor GPU \
+                -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
+            cat log.neoSimpleFoam; exit 1
+        fi
+    fi
+    popd >/dev/null
+else
+    echo "=== Skipping neoSimpleFoam smoke test (SKIP_SIMPLE_SMOKETEST set or Intel) ==="
+fi

@@ -1,0 +1,7 @@
+# The volume integral of the water fraction, appended every time step (the
+# default cadence). ``alpha1`` is the name the VoF mixture registers the phase
+# fraction under in ctx.fields; on disk it is ``alpha.water``.
+tables:
+  - name: water_volume
+    source: {type: internal, field: alpha1}
+    pipeline: [{type: volIntegrate, name: water_volume}]

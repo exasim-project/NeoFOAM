@@ -1,0 +1,18 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+solvers
+{
+    p               { solver GAMG; smoother GaussSeidel; }
+    pFinal          { solver GAMG; smoother GaussSeidel; }
+    "(U|k|epsilon)" { solver smoothSolver; smoother GaussSeidel; }
+    UFinal          { solver smoothSolver; smoother GaussSeidel; }
+    kFinal          { solver smoothSolver; smoother GaussSeidel; }
+    epsilonFinal    { solver smoothSolver; smoother GaussSeidel; }
+}

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-
-#include "Kokkos_Core.hpp"
-
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 #include <catch2/catch_approx.hpp>
+
+#include <cstdlib>
+#include <filesystem>
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
@@ -22,6 +22,8 @@ Foam::fvMesh* meshPtr;  // A single mesh object
 
 int main(int argc, char* argv[])
 {
+    std::cout << __FILE__ << ":" << __LINE__ << "\n";
+    int result;
     NeoN::initialize(argc, argv);
     {
         Catch::Session session;
@@ -64,6 +66,22 @@ int main(int argc, char* argv[])
             argv[i] = foamArgv[i];
         }
 
+        // Generate the polyMesh on the fly when a case directory ships only
+        // a blockMeshDict — keeps generated mesh files out of the source tree.
+        if (!std::filesystem::exists("constant/polyMesh/points")
+            && std::filesystem::exists("system/blockMeshDict"))
+        {
+            std::cout << "polyMesh not found — running blockMesh...\n";
+            int rc = std::system("blockMesh > log.blockMesh 2>&1");
+            if (rc != 0)
+            {
+                std::cerr << "blockMesh failed (rc=" << rc
+                          << "); ensure OpenFOAM is sourced and 'blockMesh' is on PATH. "
+                          << "See log.blockMesh for details.\n";
+                return 1;
+            }
+        }
+
 #include "setRootCase.H"
 #include "createTime.H"
 
@@ -72,11 +90,9 @@ int main(int argc, char* argv[])
         argsPtr = &args;
         timePtr = &runTime;
 
-        int result = session.run();
-
         // Run benchmarks if there are any
-        Kokkos::finalize();
-
-        return result;
+        result = session.run();
     }
+    NeoN::finalize();
+    return result;
 }

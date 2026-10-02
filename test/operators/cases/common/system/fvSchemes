@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+ddtSchemes
+{
+    default         Euler;
+}
+
+gradSchemes
+{
+    default         none;
+    grad(T)         Gauss linear;
+    grad(U)         Gauss linear;
+    // nfb.GradScheme resolves a gradient operator by the literal key
+    // grad(<name>) from this dictionary, so each variant is staged under its own
+    // name and selected by constructing GradScheme with that name. The
+    // coefficient has to arrive through the parser: a TokenList built from
+    // Python strings silently reads back as k=1 (see test_exp_grad.py).
+    grad(U_cellLimited)     cellLimited Gauss linear 1;
+    grad(U_cellLimitedOff)  cellLimited Gauss linear 0;
+}
+
+divSchemes
+{
+    default         none;
+    div(phi,T)      Gauss linear;
+    // read only by the scheme="fromFvSchemes" parity parameter: every other div
+    // test passes its scheme explicitly. Carries the "bounded" convection prefix
+    // so that parameter sees whether map_fv_schemes hands the prefix through
+    // untouched and the operator resolves it.
+    div(phi,U)      bounded Gauss upwind;
+    // named entries for the scalar-convection flux: fvc.flux(phi, T, key=...)
+    // only takes a lookup key, so each div-scheme variant is staged here
+    divT_linear         Gauss linear;
+    divT_upwind         Gauss upwind;
+    divT_linearUpwind   Gauss linearUpwind grad(T);
+}
+
+laplacianSchemes
+{
+    default         none;
+    laplacian(Gamma,T) Gauss linear uncorrected;
+    laplacian(Gamma,U) Gauss linear uncorrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         uncorrected;
+}
+
+// ************************************************************************* //

@@ -6,13 +6,164 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/convert.hpp"
-#include "NeoFOAM/auxiliary/type_conversion.hpp"
+#include "NeoFOAM/auxiliary/typeConversion.hpp"
+#include "NeoFOAM/auxiliary/fieldTraits.hpp"
+#include "messageStream.H"
+#include "processorFvPatch.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
 namespace NeoFOAM
 {
+
+namespace detail
+{
+
+/**
+ * @brief Promote a single TokenList entry to a NeoN::scalar regardless of
+ * whether OpenFOAM's lexer classified it as a SCALAR (double) or a LABEL (int).
+ *
+ * OpenFOAM tokenizes numeric primitives per token: a literal with a decimal
+ * point (e.g. `0.1`) becomes a SCALAR while a bare integer (e.g. `0`) becomes a
+ * LABEL. The components of a single vector value can therefore have different
+ * stored types — `uniform (0.1 0 0)` yields [scalar, label, label]. A strict
+ * `TokenList::get<NeoN::scalar>` throws `bad_any_cast` on the label components,
+ * so each component must be probed and promoted independently.
+ */
+inline NeoN::scalar tokenAsScalar(NeoN::TokenList& tokenList, std::size_t idx)
+{
+    auto& tokens = tokenList.tokens();
+    if (const NeoN::scalar* asScalar = std::any_cast<NeoN::scalar>(&tokens[idx]))
+    {
+        return *asScalar;
+    }
+    // Not stored as a scalar — it was parsed as an integer label. Promote it.
+    return NeoN::scalar(tokenList.get<Foam::label>(idx));
+}
+
+/**
+ * @brief Mean unit normal of an OpenFOAM patch and how far its faces deviate from it.
+ *
+ * NeoN's fixedValue carries a single value for the whole patch, so a boundary condition
+ * defined per face along the surface normal has to collapse to one normal. `deviation` is
+ * the largest |n_f - meanNormal| over the patch faces: 0 on a planar patch (where the
+ * collapse is exact), O(1) on a strongly curved one.
+ */
+struct PatchNormal
+{
+    NeoN::Vec3 meanNormal;
+    NeoN::scalar deviation;
+};
+
+inline PatchNormal meanUnitNormal(const Foam::fvPatch& patch)
+{
+    const Foam::vectorField faceNormals(patch.nf());
+    if (faceNormals.empty())
+    {
+        return {NeoN::Vec3(0.0, 0.0, 0.0), 0.0};
+    }
+
+    Foam::vector mean(Foam::Zero);
+    for (const Foam::vector& faceNormal : faceNormals)
+    {
+        mean += faceNormal;
+    }
+    // Re-normalise: averaging unit normals shortens the sum on a curved patch, and on a
+    // closed one it cancels to (almost) zero — VSMALL keeps that finite, and the deviation
+    // it produces then trips the caller's non-planar warning.
+    mean /= Foam::mag(mean) + Foam::VSMALL;
+
+    NeoN::scalar deviation = 0.0;
+    for (const Foam::vector& faceNormal : faceNormals)
+    {
+        deviation = std::max(deviation, NeoN::scalar(Foam::mag(faceNormal - mean)));
+    }
+    return {convert(mean), deviation};
+}
+
+/**
+ * @brief Pin a total-pressure patch at the value OpenFOAM evaluated when the field was read.
+ *
+ * Shared by `totalPressure` and `uniformTotalPressure`: NeoN models neither the dynamic-head
+ * correction nor a time-dependent p0, so the patch becomes a fixedValue at the start-time
+ * total pressure. Non-scalar (or valueless) falls back to zeroGradient.
+ */
+template<typename ValueType>
+void insertFrozenTotalPressure(NeoN::Dictionary& dict)
+{
+    if constexpr (std::is_same<ValueType, NeoN::scalar>::value)
+    {
+        if (dict.contains("value"))
+        {
+            NeoN::TokenList tokenList = dict.get<NeoN::TokenList>("value");
+            if (tokenList.size() > 1)
+            {
+                dict.insert("type", std::string("fixedValue"));
+                dict.insert("fixedValue", tokenAsScalar(tokenList, 1));
+                return;
+            }
+        }
+    }
+    dict.insert("type", std::string("fixedGradient"));
+    dict.insert("fixedGradient", NeoN::zero<ValueType>());
+}
+
+/**
+ * @brief Copy a `uniform` primitive from one dictionary entry into another key.
+ *
+ * The freestream family stores its patch value under `freestreamValue` in the same
+ * `uniform <value>` form the `value`/`inletValue` entries use: the components start at
+ * token index 1, one for a scalar and three for a vector, each promoted on its own
+ * because OpenFOAM types the numeric tokens independently (see tokenAsScalar).
+ *
+ * A short token list has exactly one benign cause: a decomposed run writes
+ * `nonuniform List<...> 0` for a patch that owns no faces on this rank, and the parse
+ * reduces that to a single token (the same quirk the `fixedValue` entry below sidesteps by reading
+ * the patch field). No face carries the value there, so zero is safe. With faces present it is an
+ * error, not a zero — the freestream family is a far-field datum, and silently reading it as zero
+ * would remove the only forcing in an external-aerodynamics case.
+ */
+template<typename ValueType>
+void insertUniformValue(
+    NeoN::Dictionary& dict,
+    const std::string& sourceKey,
+    const std::string& targetKey,
+    const std::string& patchName,
+    const Foam::fvPatch* patch
+)
+{
+    NeoN::TokenList tokenList = dict.get<NeoN::TokenList>(sourceKey);
+    constexpr NeoN::localIdx required = std::is_same<ValueType, NeoN::Vec3>::value ? 4 : 2;
+    if (tokenList.size() < required)
+    {
+        if (patch != nullptr && patch->size() == 0)
+        {
+            dict.insert(targetKey, NeoN::zero<ValueType>());
+            return;
+        }
+        throw std::runtime_error(
+            "patch '" + patchName + "': `" + sourceKey + "` is not a uniform value ("
+            + std::to_string(tokenList.size()) + " tokens, expected " + std::to_string(required)
+            + ")."
+        );
+    }
+    if constexpr (std::is_same<ValueType, NeoN::Vec3>::value)
+    {
+        NeoN::Vec3 value {};
+        value[0] = tokenAsScalar(tokenList, 1);
+        value[1] = tokenAsScalar(tokenList, 2);
+        value[2] = tokenAsScalar(tokenList, 3);
+        dict.insert(targetKey, value);
+    }
+    else
+    {
+        dict.insert(targetKey, tokenAsScalar(tokenList, 1));
+    }
+}
+
+} // namespace detail
 
 template<typename FoamType>
 auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
@@ -24,7 +175,6 @@ auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
         reinterpret_cast<const mapped_t*>(field.cdata()),
         static_cast<size_t>(field.size())
     );
-
     return nfField;
 };
 
@@ -40,92 +190,411 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     Foam::IStringStream is(os.str());
     Foam::dictionary bDict(is);
 
-    std::map<std::string, std::function<void(NeoN::Dictionary&)>> patchInserter {
-        {"fixedGradient",
-         [](auto& dict)
-         {
-             dict.insert("type", std::string("fixedGradient"));
-             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
-             type_primitive_t fixedGradient = tokenList.get<type_primitive_t>(1);
-             dict.insert("fixedGradient", fixedGradient);
-         }},
-        {"zeroGradient",
-         [&](auto& dict)
-         {
-             dict.insert("type", std::string("fixedGradient"));
-             dict.insert("fixedGradient", type_primitive_t {});
-         }},
-        {"fixedValue",
-         [](auto& dict)
-         {
-             dict.insert("type", std::string("fixedValue"));
-             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
-             type_primitive_t fixedValue {};
-             if (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+    // The inserters receive only the patch dictionary, but the translations below need the
+    // patch itself — its geometry (surfaceNormalFixedValue) and its name (the approximation
+    // notices). applyVolInserter points these at the patch it is about to translate. The
+    // notices stream the name as a `const char*`: OpenFOAM's Ostream writes a std::string
+    // as a quoted string token.
+    std::string activePatchName;
+    const Foam::fvPatch* activeFoamPatch = nullptr;
+
+    std::map<std::string, std::function<void(NeoN::Dictionary&)>>
+        patchInserter {
+            {"fixedGradient",
+             [](auto& dict)
              {
-                 NeoN::Vec3 tmpFixedValue {};
-                 tmpFixedValue[0] = tokenList.get<int>(1);
-                 tmpFixedValue[1] = tokenList.get<int>(2);
-                 tmpFixedValue[2] = tokenList.get<int>(3);
-                 dict.insert("fixedValue", tmpFixedValue);
-             }
-             else
+                 dict.insert("type", std::string("fixedGradient"));
+                 NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
+                 type_primitive_t fixedGradient = tokenList.get<type_primitive_t>(1);
+                 dict.insert("fixedGradient", fixedGradient);
+             }},
+            {"zeroGradient",
+             [&](auto& dict)
              {
-                 try
+                 dict.insert("type", std::string("fixedGradient"));
+                 dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+             }},
+            {"fixedValue",
+             [](auto& dict)
+             {
+                 dict.insert("type", std::string("fixedValue"));
+
+                 // A nonuniform patch value (`value nonuniform List<vector> ...`, as written
+                 // by setExprBoundaryFields, mapFields or decomposePar) parses to a single
+                 // token, so the uniform path below cannot read it. The caller has already
+                 // copied the per-face values straight off the OpenFOAM patch field then.
+                 if (dict.contains("fixedValues"))
                  {
-                     fixedValue = tokenList.get<type_primitive_t>(1);
+                     return;
                  }
-                 catch (const std::bad_any_cast& e)
+
+                 NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
+                 auto fixedValue = NeoN::zero<type_primitive_t>();
+
+                 if (tokenList.size() > 1)
                  {
-                     fixedValue = NeoN::one<type_primitive_t>() * (tokenList.get<int>(1));
+                     // OpenFOAM classifies each numeric token independently: a literal
+                     // with a decimal point is a SCALAR, a bare integer is a LABEL. A
+                     // single vector value can therefore mix the two (e.g. `(0.1 0 0)`
+                     // -> [scalar, label, label]). Read every component via
+                     // detail::tokenAsScalar so each is promoted to scalar on its own,
+                     // instead of choosing one branch for the whole value based solely
+                     // on the first component (which caused bad_any_cast on index 2/3).
+                     if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                     {
+                         NeoN::Vec3 tmpFixedValue {};
+                         tmpFixedValue[0] = detail::tokenAsScalar(tokenList, 1);
+                         tmpFixedValue[1] = detail::tokenAsScalar(tokenList, 2);
+                         tmpFixedValue[2] = detail::tokenAsScalar(tokenList, 3);
+                         dict.insert("fixedValue", tmpFixedValue);
+                         return;
+                     }
+                     else
+                     {
+                         fixedValue = detail::tokenAsScalar(tokenList, 1);
+                     }
+                     dict.insert("fixedValue", fixedValue);
                  }
-                 dict.insert("fixedValue", fixedValue);
-             }
-         }},
-        {"noSlip", // TODO specialize for vector
-         [](auto& dict)
-         {
-             dict.insert("type", std::string("fixedValue"));
-             dict.insert("fixedValue", type_primitive_t {});
-         }},
-        {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
-        {"extrapolatedCalculated",
-         [](auto& dict) { dict.insert("type", std::string("calculated")); }},
-        {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
-        {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
-        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
+                 else
+                 {
+                     // Never silently degrade to a patch that contributes nothing: an
+                     // unreadable fixedValue patch drops the boundary out of the assembled
+                     // system, and the solver then converges happily on the wrong problem.
+                     throw std::runtime_error(
+                         "Could not read the 'value' entry of a fixedValue patch: got "
+                         + std::to_string(tokenList.size()) + " token(s)."
+                     );
+                 }
+             }},
+            {"uniformFixedValue",
+             [](auto& dict)
+             {
+                 // uniformFixedValue stores its value as a Function1. We only support
+                 // the (by far most common) `constant <value>` form, which converts to
+                 // a TokenList of [word "constant", value...]; the value therefore
+                 // starts at index 1, exactly like the `value uniform ...` case above.
+                 dict.insert("type", std::string("fixedValue"));
+                 NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("uniformValue");
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     NeoN::Vec3 tmpFixedValue {};
+                     tmpFixedValue[0] = detail::tokenAsScalar(tokenList, 1);
+                     tmpFixedValue[1] = detail::tokenAsScalar(tokenList, 2);
+                     tmpFixedValue[2] = detail::tokenAsScalar(tokenList, 3);
+                     dict.insert("fixedValue", tmpFixedValue);
+                 }
+                 else
+                 {
+                     dict.insert("fixedValue", detail::tokenAsScalar(tokenList, 1));
+                 }
+             }},
+            {"noSlip", // TODO specialize for vector
+             [](auto& dict)
+             {
+                 dict.insert("type", std::string("fixedValue"));
+                 dict.insert("fixedValue", type_primitive_t {});
+             }},
+            {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+            {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
+            {"extrapolatedCalculated",
+             [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+            {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
+            {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+            {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+            {"nutUSpaldingWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }},
+            {"kqRWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("kqRWallFunction")); }},
+            {"omegaWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("omegaWallFunction")); }},
+            {"epsilonWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("epsilonWallFunction")); }},
+            {"nutkWallFunction",
+             [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }},
+            {"inletOutlet",
+             [](auto& dict)
+             {
+                 dict.insert("type", std::string("inletOutlet"));
+                 NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("inletValue");
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     NeoN::Vec3 inletValue {};
+                     if (tokenList.size() >= 4)
+                     {
+                         inletValue[0] = detail::tokenAsScalar(tokenList, 1);
+                         inletValue[1] = detail::tokenAsScalar(tokenList, 2);
+                         inletValue[2] = detail::tokenAsScalar(tokenList, 3);
+                     }
+                     dict.insert("inletValue", inletValue);
+                 }
+                 else
+                 {
+                     dict.insert(
+                         "inletValue",
+                         tokenList.size() >= 2 ? detail::tokenAsScalar(tokenList, 1)
+                                               : type_primitive_t {}
+                     );
+                 }
+             }},
+            {"freestream",
+             [&](auto& dict)
+             {
+                 WarningInFunction
+                     << "freestream on patch '" << activePatchName.c_str()
+                     << "' is approximated as a fixedValue at the freestreamValue.\n"
+                        "    OpenFOAM blends it with zeroGradient using valueFraction = neg(phi);"
+                        " this pins the valueFraction = 1 endpoint, so outflow faces stay Dirichlet"
+                        " instead of extrapolating."
+                     << Foam::endl;
+                 // OpenFOAM's freestream<Type> derives from inletOutlet<Type> and only renames
+                 // inletValue to freestreamValue, so inletOutlet looks like the exact mapping --
+                 // but NeoN's inletOutlet consults the flux only in its
+                 // correctBoundaryCondition(field, BoundaryContext) overload, and this path calls
+                 // the no-context one, which treats every face as outflow. On airFoil2D that left
+                 // the far-field nuTilda unpinned and it grew from its 4e-05 freestreamValue to
+                 // ~41 against a native peak of 0.29. Same reasoning as freestreamVelocity below:
+                 // pin the value rather than lose the far-field datum. Restore the inletOutlet
+                 // mapping once a phi BoundaryContext reaches correctBoundaryCondition.
+                 dict.insert("type", std::string("fixedValue"));
+                 detail::insertUniformValue<type_primitive_t>(
+                     dict,
+                     "freestreamValue",
+                     "fixedValue",
+                     activePatchName,
+                     activeFoamPatch
+                 );
+             }},
+            {"freestreamVelocity",
+             [&](auto& dict)
+             {
+                 WarningInFunction
+                     << "freestreamVelocity on patch '" << activePatchName.c_str()
+                     << "' is approximated as a fixedValue at the freestreamValue.\n"
+                        "    OpenFOAM blends the freestream value with zeroGradient using"
+                        " valueFraction = neg(phi); this pins the valueFraction = 1 endpoint, so"
+                        " outflow faces stay Dirichlet instead of extrapolating."
+                     << Foam::endl;
+                 // Deliberately not inletOutlet: NeoN's inletOutlet only consults the flux in its
+                 // correctBoundaryCondition(field, BoundaryContext) overload, and the
+                 // incompressibleFluidNeoN path calls the no-context one, which treats every face
+                 // as outflow. The whole far field would go Neumann for U, and airFoil2D has no
+                 // other inlet — the freestream forcing would vanish silently and the run would
+                 // produce garbage instead of failing. fixedValue keeps the momentum system
+                 // well posed.
+                 dict.insert("type", std::string("fixedValue"));
+                 detail::insertUniformValue<type_primitive_t>(
+                     dict,
+                     "freestreamValue",
+                     "fixedValue",
+                     activePatchName,
+                     activeFoamPatch
+                 );
+             }},
+            {"freestreamPressure",
+             [&](auto& dict)
+             {
+                 WarningInFunction
+                     << "freestreamPressure on patch '" << activePatchName.c_str()
+                     << "' is approximated as zeroGradient.\n"
+                        "    NeoN models neither the flux-driven blend nor the freestreamValue"
+                        " datum on this patch, so the far-field pressure follows the interior."
+                     << Foam::endl;
+                 // The complement of the freestreamVelocity mapping above: U is Dirichlet on the
+                 // far field, so p has to be Neumann there for the pressure system to stay
+                 // well posed.
+                 dict.insert("type", std::string("fixedGradient"));
+                 dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+             }},
+            // Two-phase VoF outlet/pressure conditions from the damBreak case. These
+            // are outflow-dominant and are approximated here as zeroGradient so the
+            // fields can be read; a faithful treatment lands with the VoF solve.
+            {"pressureInletOutletVelocity",
+             [&](auto& dict)
+             {
+                 // Outflow-side zeroGradient with an inflow value tied to the flux; NeoN's
+                 // no-context correction cannot see phi, so take the zeroGradient branch, which
+                 // is what the patch does wherever the flow leaves the domain.
+                 dict.insert("type", std::string("fixedGradient"));
+                 dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+             }},
+            {"fixedFluxPressure",
+             [&](auto& dict)
+             {
+                 // Faithful wall fixedFluxPressure: the per-face refGrad is set externally by
+                 // NeoFOAM::constrainPressure so the projection cancels the buoyancy/capillary
+                 // wall face flux. The FixedFluxPressure BC ignores the dict (refGrad is
+                 // zero-initialised -> zeroGradient until the first constrainPressure).
+                 dict.insert("type", std::string("fixedFluxPressure"));
+             }},
+            {"totalPressure",
+             [&](auto& dict)
+             {
+                 // NeoN models this patch properly: p0 on outflow, p0 minus the dynamic head on
+                 // inflow, read from phi and U in the BoundaryContext. Only p0 needs translating
+                 // -- it arrives as the token list "uniform <value>", and the BC wants a plain
+                 // scalar, same as inletValue above. A solver that does not pass a
+                 // BoundaryContext gets the documented fallback: a fixedValue at p0.
+                 dict.insert("type", std::string("totalPressure"));
+                 if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     if (dict.contains("p0"))
+                     {
+                         NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("p0");
+                         if (tokenList.size() > 1)
+                         {
+                             dict.insert("p0", detail::tokenAsScalar(tokenList, 1));
+                         }
+                     }
+                 }
+             }},
+            {"uniformTotalPressure",
+             [&](auto& dict)
+             {
+                 WarningInFunction
+                     << "uniformTotalPressure on patch '" << activePatchName.c_str()
+                     << "' is approximated as a fixedValue at the total pressure OpenFOAM"
+                        " evaluated for the start time.\n    NeoN applies neither the p0(t)"
+                        " Function1 nor the dynamic-head correction p0 - 0.5|U|^2, so the patch"
+                        " pressure stays constant for the whole run."
+                     << Foam::endl;
+                 detail::insertFrozenTotalPressure<type_primitive_t>(dict);
+             }},
+            {"slip", [](auto& dict) { dict.insert("type", std::string("slip")); }},
+            {"movingWallVelocity",
+             [&](auto& dict)
+             {
+                 WarningInFunction
+                     << "movingWallVelocity on patch '" << activePatchName.c_str()
+                     << "' is approximated as a stationary no-slip wall, fixedValue (0 0 0).\n"
+                        "    NeoN has no mesh motion, so the wall velocity U_wall = U_mesh = 0;"
+                        " the result differs from OpenFOAM wherever the mesh actually moves."
+                     << Foam::endl;
+                 dict.insert("type", std::string("fixedValue"));
+                 dict.insert("fixedValue", NeoN::zero<type_primitive_t>());
+             }},
+            {"surfaceNormalFixedValue",
+             [&](auto& dict)
+             {
+                 // OpenFOAM evaluates refValue*n_f per face; NeoN's fixedValue holds one value
+                 // for the whole patch, so refValue is projected onto the patch's mean unit
+                 // normal here — exact on a planar patch (every intake in the sweep), an
+                 // approximation on a curved one, which is why the deviation is checked.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     if (activeFoamPatch == nullptr)
+                     {
+                         throw std::runtime_error(
+                             "surfaceNormalFixedValue on patch '" + activePatchName
+                             + "': patch geometry not found in the mesh."
+                         );
+                     }
+                     NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("refValue");
+                     const std::string* form =
+                         tokenList.size() > 1 ? std::any_cast<std::string>(&tokenList.tokens()[0])
+                                              : nullptr;
+                     if (form == nullptr || *form != "uniform")
+                     {
+                         throw std::runtime_error(
+                             "surfaceNormalFixedValue on patch '" + activePatchName
+                             + "': only a uniform refValue is supported."
+                         );
+                     }
+                     const NeoN::scalar refValue = detail::tokenAsScalar(tokenList, 1);
+                     const auto [meanNormal, deviation] = detail::meanUnitNormal(*activeFoamPatch);
+
+                     if (dict.contains("ramp"))
+                     {
+                         WarningInFunction
+                             << "surfaceNormalFixedValue on patch '" << activePatchName.c_str()
+                             << "' carries a `ramp` Function1, which NeoN does not model: the full"
+                                " refValue is applied from the first time step."
+                             << Foam::endl;
+                     }
+                     if (deviation > 1e-6)
+                     {
+                         WarningInFunction
+                             << "surfaceNormalFixedValue on patch '" << activePatchName.c_str()
+                             << "' is not planar (face normals deviate by up to " << deviation
+                             << " from the patch mean): the single fixedValue refValue*n uses the"
+                                " mean normal for every face."
+                             << Foam::endl;
+                     }
+                     dict.insert("type", std::string("fixedValue"));
+                     dict.insert("fixedValue", refValue * meanNormal);
+                 }
+                 else
+                 {
+                     throw std::runtime_error(
+                         "surfaceNormalFixedValue on patch '" + activePatchName
+                         + "' is only defined for vector fields."
+                     );
+                 }
+             }}
+        };
+
+    auto applyVolInserter =
+        [&](const std::string& patchName, const std::string& bcType, NeoN::Dictionary& dict)
+    {
+        auto it = patchInserter.find(bcType);
+        if (it == patchInserter.end())
+        {
+            std::string supported;
+            for (const auto& [key, _] : patchInserter)
+                supported += "\n  " + key;
+            throw std::runtime_error(
+                "Unsupported boundary condition type '" + bcType + "' on patch '" + patchName
+                + "'.\nSupported types:" + supported
+            );
+        }
+        activePatchName = patchName;
+        const Foam::label foamPatchID = ofVolField.mesh().boundaryMesh().findPatchID(patchName);
+        activeFoamPatch = foamPatchID >= 0 ? &ofVolField.mesh().boundary()[foamPatchID] : nullptr;
+        it->second(dict);
+    };
+
+    // The OpenFOAM patch field is the authority on the boundary values: it holds one value per
+    // face whether the file said `uniform` or `nonuniform List<...>`. Hand those to the BC
+    // directly instead of trying to recover them from the dictionary tokens, which only works
+    // for the uniform form.
+    auto insertPatchValues = [&](const Foam::word& patchName, NeoN::Dictionary& dict)
+    {
+        const auto patchID = ofVolField.mesh().boundaryMesh().findPatchID(patchName);
+        if (patchID < 0) return;
+        const auto& patchField = ofVolField.boundaryField()[patchID];
+        const auto* begin = reinterpret_cast<const type_primitive_t*>(patchField.cdata());
+        dict.insert("fixedValues", std::vector<type_primitive_t>(begin, begin + patchField.size()));
     };
 
     int patchi = 0;
     std::vector<fvcc::VolumeBoundary<type_primitive_t>> bcs;
-    for (const auto& bName : bDict.toc())
+    // do non processor first
+    for (const auto bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        NeoN::Dictionary neoPatchDict = convert(patchDict);
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
-        bcs.emplace_back(nfMesh, neoPatchDict, patchi);
-        patchi++;
+        std::string bcType = patchDict.get<Foam::word>("type");
+        if (bcType != "processor")
+        {
+            NeoN::Dictionary neoPatchDict = convert(patchDict);
+            if (bcType == "fixedValue") insertPatchValues(bName, neoPatchDict);
+            applyVolInserter(bName, bcType, neoPatchDict);
+            bcs.emplace_back(nfMesh, neoPatchDict, patchi);
+            patchi++;
+        }
+    }
+    for (const auto bName : bDict.toc())
+    {
+        Foam::dictionary patchDict = bDict.subDict(bName);
+        std::string bcType = patchDict.get<Foam::word>("type");
+        if (bcType == "processor")
+        {
+            NeoN::Dictionary neoPatchDict = convert(patchDict);
+            applyVolInserter(bName, bcType, neoPatchDict);
+            bcs.emplace_back(nfMesh, neoPatchDict, patchi);
+            patchi++;
+        }
     }
     return bcs;
 }
-
-template<typename FoamType>
-auto constructFrom(
-    const NeoN::Executor exec,
-    const NeoN::UnstructuredMesh& nfMesh,
-    const FoamType& in
-)
-{
-    using type_container_t = typename TypeMap<FoamType>::container_type;
-    using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
-
-    type_container_t out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
-
-    out.internalVector() = fromFoamField(exec, in.primitiveField());
-    out.correctBoundaryConditions();
-
-    return out;
-};
 
 template<typename FoamType>
 auto readSurfaceBoundaryConditions(
@@ -145,6 +614,7 @@ auto readSurfaceBoundaryConditions(
     Foam::dictionary bDict(is);
     int patchi = 0;
 
+    // TODO this approach fails for procBoundary0to1
     std::map<std::string, std::function<void(NeoN::Dictionary&)>> patchInserter {
         {"fixedGradient", [](auto& dict) { dict.insert("type", std::string("fixedGradient")); }},
         {"zeroGradient",
@@ -159,65 +629,173 @@ auto readSurfaceBoundaryConditions(
              dict.insert("type", std::string("fixedValue"));
              dict.insert("fixedValue", type_primitive_t {});
          }},
+        {"noSlip", // TODO specialize for vector
+         [](auto& dict)
+         {
+             dict.insert("type", std::string("fixedValue"));
+             dict.insert("fixedValue", type_primitive_t {});
+         }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+        {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
     };
 
+    auto applySurfaceInserter =
+        [&](const std::string& patchName, const std::string& bcType, NeoN::Dictionary& dict)
+    {
+        auto it = patchInserter.find(bcType);
+        if (it == patchInserter.end())
+        {
+            std::string supported;
+            for (const auto& [key, _] : patchInserter)
+                supported += "\n  " + key;
+            throw std::runtime_error(
+                "Unsupported boundary condition type '" + bcType + "' on patch '" + patchName
+                + "'.\nSupported types:" + supported
+            );
+        }
+        it->second(dict);
+    };
+
     for (const auto& bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        NeoN::Dictionary neoPatchDict;
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
-        bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
-        patchi++;
+        std::string bcType = patchDict.get<Foam::word>("type");
+        if (bcType != "processor")
+        {
+            NeoN::Dictionary neoPatchDict;
+            applySurfaceInserter(bName, bcType, neoPatchDict);
+            bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
+            patchi++;
+        }
+    }
+    for (const auto& bName : bDict.toc())
+    {
+        Foam::dictionary patchDict = bDict.subDict(bName);
+        std::string bcType = patchDict.get<Foam::word>("type");
+        if (bcType == "processor")
+        {
+            NeoN::Dictionary neoPatchDict;
+            applySurfaceInserter(bName, bcType, neoPatchDict);
+            bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
+            patchi++;
+        }
     }
     return bcs;
 }
 
-template<typename FoamType>
-auto constructSurfaceField(
+template<class FoamFieldType>
+auto constructFrom(
     const NeoN::Executor exec,
     const NeoN::UnstructuredMesh& nfMesh,
-    const FoamType& in
+    const FoamFieldType& in
 )
 {
-    using type_container_t = typename TypeMap<FoamType>::container_type;
-    using type_primitive_t = typename TypeMap<FoamType>::mapped_type;
-    using foam_primitive_t = typename FoamType::cmptType;
+    using ContainerType = typename TypeMap<FoamFieldType>::container_type;
+    using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
 
-    type_container_t
-        out(exec, in.name(), nfMesh, std::move(readSurfaceBoundaryConditions(nfMesh, in)));
-
-    Foam::Field<foam_primitive_t> flattenedField(out.internalVector().size());
-    size_t nInternal = nfMesh.nInternalFaces();
-
-    forAll(in, facei)
+    if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
     {
-        flattenedField[facei] = convert(in[facei]);
-    }
-
-    Foam::label idx = nInternal;
-    Foam::Field<foam_primitive_t> bvalue(out.internalVector().size());
-    forAll(in.boundaryField(), patchi)
-    {
-        const Foam::fvsPatchField<foam_primitive_t>& pin = in.boundaryField()[patchi];
-
-        forAll(pin, facei)
+        using FoamValueType = typename FoamFieldType::value_type;
+        ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
+        out.internalVector() = fromFoamField(exec, in.primitiveField());
+        std::size_t nBnd = 0;
+        forAll(in.boundaryField(), patchi)
         {
-            flattenedField[idx] = pin[facei];
-            bvalue[idx - nInternal] = pin[facei];
-            idx++;
+            nBnd += in.boundaryField()[patchi].size();
         }
+
+        Foam::Field<FoamValueType> bval(nBnd);
+
+        Foam::label bi = 0;
+        forAll(in.boundaryField(), patchi)
+        {
+            const auto& pin = in.boundaryField()[patchi];
+            forAll(pin, i)
+            {
+                // IMPORTANT:
+                // keep OpenFOAM type here (scalar or vector)
+                bval[bi++] = pin[i];
+            }
+        }
+
+        NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
+        out.boundaryData().value() = fromFoamField(exec, bval);
+        out.correctBoundaryConditions();
+        return out;
     }
-    assert(idx == flattenedField.size());
+    else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
+    {
+        // Element type of the GeometricField (T in GeometricField<T,...>) — NOT cmptType,
+        // which decomposes vectors into scalars and would break the surface-vector path.
+        using FoamComponentType = typename FoamFieldType::value_type;
 
-    out.internalVector() = fromFoamField(exec, flattenedField);
-    out.boundaryData().value() = fromFoamField(exec, bvalue);
-    out.correctBoundaryConditions();
+        ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
 
-    return out;
+        const std::size_t nInt = nfMesh.nInternalFaces();
+        const std::size_t nBnd = nfMesh.boundaryMesh().offset().back();
+
+        NF_DINFO("Internal: " + std::to_string(nInt) + ", Boundary: " + std::to_string(nBnd));
+
+        Foam::Field<FoamComponentType> internalData(nInt);
+        Foam::Field<FoamComponentType> bval(nBnd);
+
+        // Internal faces only: [0, nInt)
+        forAll(in, facei)
+        {
+            if (static_cast<std::size_t>(facei) < nInt)
+            {
+                internalData[facei] = in[facei];
+            }
+        }
+
+        // Boundary faces in patch order: [0, nBnd)
+        Foam::label bi = 0;
+        // Pass 1 — non-processor patches.
+        forAll(in.boundaryField(), patchi)
+        {
+            const auto& pin = in.boundaryField()[patchi];
+            if (pin.patch().type() == "processor")
+            {
+                continue;
+            }
+            forAll(pin, facei)
+            {
+                bval[bi] = pin[facei];
+                ++bi;
+            }
+        }
+        // Pass 2 — processor patches (proc tail of the boundary range).
+        forAll(in.boundaryField(), patchi)
+        {
+            const auto& pin = in.boundaryField()[patchi];
+            if (pin.patch().type() != "processor")
+            {
+                continue;
+            }
+            forAll(pin, facei)
+            {
+                bval[bi] = pin[facei];
+                ++bi;
+            }
+        }
+
+        NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
+
+        out.internalVector() = fromFoamField(exec, internalData);
+        out.boundaryData().value() = fromFoamField(exec, bval);
+        return out;
+    }
+    else
+    {
+        NF_ASSERT(
+            (!std::is_same_v<ContainerType, ContainerType>),
+            "TypeMap<FoamFieldType>::container_type must be VolumeField<ValueType> or "
+            "SurfaceField<ValueType>."
+        );
+    }
 }
 
 /**
@@ -241,7 +819,9 @@ public:
     fvcc::VectorDocument operator()(NeoN::Database& db)
     {
         using type_container_t = typename TypeMap<FieldType>::container_type;
+
         type_container_t convertedField = constructFrom(exec, nfMesh, foamField);
+
         if (name != "")
         {
             convertedField.name = name;
@@ -277,5 +857,43 @@ public:
         );
     }
 };
+
+/**
+ * @brief Constructs a set of NN fields from OF fields
+ * @tparam Types Types of the classes
+ * @return Tuple containing the fields
+ */
+template<typename... Types>
+auto constFromMany(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& uMesh, Types&... args)
+{
+    return std::tuple(constructFrom(exec, uMesh, args)...);
+}
+
+/**@brief construct an NF field from a given OF field and register*/
+template<typename FoamFieldType>
+auto& constructAndRegister(
+    fvcc::VectorCollection& fieldCollection,
+    RunTime& rt,
+    const FoamFieldType& of,
+    bool storeOldTime = true
+)
+{
+    using ContainerType = typename TypeMap<FoamFieldType>::container_type;
+    ContainerType& ret = fieldCollection.template registerVector<ContainerType>(
+        NeoFOAM::CreateFromFoamField<FoamFieldType> {
+            .exec = rt.exec,
+            .nfMesh = rt.nfMesh,
+            .foamField = of,
+            .name = of.name()
+        }
+    );
+    if (storeOldTime)
+    {
+        fvcc::rotateOldTimes(ret);
+    }
+    ret.correctBoundaryConditions();
+    return ret;
+}
+
 
 }; // namespace Foam

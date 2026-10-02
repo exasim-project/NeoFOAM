@@ -15,8 +15,21 @@ target_sources(
           "auxiliary/setup.cpp"
           "auxiliary/writers.cpp"
           "auxiliary/comparison.cpp"
-          # "datastructures/foamMesh.cpp"
           "datastructures/meshAdapter.cpp"
-          "compatibility/fvSolution.cpp")
+          "datastructures/databaseWrapper.cpp"
+          "datastructures/pde.cpp"
+          "compatibility/fvSchemes.cpp"
+          "compatibility/fvSolution.cpp"
+          "solutionControl/pimpleControl.cpp"
+          "turbulenceModels/turbulenceModel.cpp"
+          "turbulenceModels/laminar.cpp"
+          "turbulenceModels/spalartAllmarasDDES.cpp"
+          "turbulenceModels/kOmegaSST.cpp"
+          "turbulenceModels/kOmegaSSTKernels.cpp"
+          "turbulenceModels/kEpsilon.cpp"
+          "fvcc/operators/viscousStressOperator.cpp"
+          "functionObjects/functionObjectIO.cpp"
+          "functionObjects/forces.cpp"
+          "functionObjects/forceCoeffs.cpp")
 
 install(TARGETS NeoFOAM)

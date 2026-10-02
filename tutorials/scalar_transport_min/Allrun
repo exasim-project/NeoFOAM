@@ -1,0 +1,17 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+# Minimal case for the scalar-transport solver built in
+# doc/tutorials/03-build-a-solver. The bundled `my_solver/` package is
+# a reference implementation matching the tutorial; we put it on
+# PYTHONPATH so the case is self-contained.
+touch scalar_transport_min.foam
+restore0Dir
+
+runApplication blockMesh
+
+export PYTHONPATH="$PWD:${PYTHONPATH}"
+runApplication python -c "import my_solver; my_solver.run(['scalar_transport'])"
+
+#------------------------------------------------------------------------------

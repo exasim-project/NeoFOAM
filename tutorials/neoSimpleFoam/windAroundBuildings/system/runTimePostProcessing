@@ -1,0 +1,295 @@
+// -*- C++ -*-
+
+postPro1
+{
+    #includeEtc "caseDicts/postProcessing/visualization/runTimePostPro.cfg"
+
+    // Time control etc
+    ${_visualization};
+
+    // debug       true;
+    // parallel    true;
+
+    showIsoSurface false;
+
+    output
+    {
+        name        image;
+        width       1280;
+        height      720;
+    }
+
+    camera
+    {
+        // If camera is moving, optionally provide start and end times
+        // startPosition    0.2;
+        // endPosition      0.75;
+
+        // Total number of frames to generate
+        nFrameTotal     1;
+
+        // Parallel projection flag
+        parallelProjection  yes;
+
+        // clipBox is optional
+
+        position        (385 -560 650);
+        focalPoint      (160 90 60);
+        up              (0.06 0.7 0.7);
+
+        position
+        (
+            -41.95
+            -247.55
+            426.87
+        );
+        focalPoint
+        (
+            146
+            76
+            40
+        );
+        up
+        (
+            0.3646
+            0.6194
+            0.6953
+        );
+
+        zoom    1.5;
+        // clipBox (-10 18 0)(280 160 76);
+        clipBox (-30 0 0)(300 200 80);
+    }
+
+    // Default colours
+    colours
+    {
+        ${../colourScheme/paraview};
+    }
+
+    // Line data
+    lines
+    {
+        streamline
+        {
+            type            functionObjectLine;
+            functionObject  streamLines;
+            colourMap       rainbow;
+            representation  tube;
+            visible         yes;
+            tubeRadius      0.5;
+            colourBy        field;
+            field           U;
+            range           (0 20);
+            opacity         1;
+        }
+    }
+
+    _sampled
+    {
+        type            functionObjectSurface;
+        colourMap       coolToWarm;
+        representation  glyph;
+        representation  surface;
+        maxGlyphLength  0.1;
+        visible         yes;
+        featureEdges    no;
+        colourBy        field;
+        field           U;
+        range           (0 20);
+        opacity         1;
+    }
+
+
+    _velocity_scalarBar
+    {
+        visible         yes;
+        vertical        false;
+        titleHack       false;
+        position        (0.75 0);
+        size            (0.22 0.1);
+
+        // fontSize        0;
+        // titleSize       0;
+        title           "velocity [m/s]";
+        labelFormat     "%.0f";
+        numberOfLabels  5;
+
+        bold        yes;
+        italic      yes;
+        shadow      yes;
+    }
+
+    surfaces
+    {
+        /*
+        geom
+        {
+            type            geometry;
+            files           ("<case>/buildings.vtp");
+            renderMode      phong;
+            representation  surface;
+            edgeColour      (0.5 0.5 0.5);
+            visible         yes;
+            featureEdges    none;
+            opacity         1.0;
+        }
+        */
+
+        ground1
+        {
+            type            patches;
+            patches         ( ground );
+            nearCellValue   true;
+            colourMap       coolToWarm;
+            representation  glyph;
+
+            // maxGlyphLength  5;
+            maxGlyphLength  0;
+            colourBy        field;
+
+            field           U;
+            range           (0 20);
+        }
+
+        ground2
+        {
+            type            patches;
+            patches         ( ground );
+            nearCellValue   true;
+            smooth          true;
+            colourMap       coolToWarm;
+            representation  wireframe;
+
+            // maxGlyphLength  5;
+            maxGlyphLength  0;
+            visible         yes;
+            colourBy        field;
+
+            field           U;
+            range           (0 20);
+        }
+
+        buildings
+        {
+            type            patches;
+            patches         ( buildings );
+            nearCellValue   true;
+            smooth          true;
+            colourMap       coolToWarm;
+            representation  surface;
+            renderMode      phong;
+
+            colourBy        field;
+            field           U;
+            range           (0 20);
+
+            scalarBar
+            {
+                ${_velocity_scalarBar};
+            }
+        }
+
+        // A cutting plane from sampled surfaces:
+        stored1
+        {
+            ${_sampled};
+            functionObject  planes.plane2;
+            smooth          true;
+        }
+
+        // VTK cutting planes:
+        cutting
+        {
+            type            plane;
+
+            point           (100 100 50);
+            normal          (1 0 0);
+            offsets         (0 200);
+
+            smooth          true;
+            colourMap       coolToWarm;
+            representation  surface;
+
+            // representation  glyph;
+
+            // maxGlyphLength  5;
+            maxGlyphLength  0;
+            visible         yes;
+            featureEdges    none;
+
+            colourBy        field;
+            colourField     U;
+            field           U;
+            range           (0 20);
+        }
+
+        // VTK iso surfaces of something
+        iso
+        {
+            visible         ${showIsoSurface};
+            type            isoSurface;
+
+            field           U;
+            values          (10);
+
+            smooth          true;
+            colourMap       coolToWarm;
+
+            representation  surface;
+
+            // maxGlyphLength  5;
+            maxGlyphLength  0;
+            featureEdges    none;
+
+            colourBy        field;
+            colourField     p;
+            range           (-120 120);
+        }
+    }
+
+    // Text data
+    text
+    {
+        title
+        {
+            string      "Wind around buildings";
+            position    (0 0.95);
+            size        32;
+            bold        yes;
+            italic      yes;
+            shadow      yes;
+            visible     yes;
+        }
+
+        version
+        {
+            ${title};
+            string      "OpenFOAM ${FOAM_API}";
+            position    (0 0);
+            size        24;
+        }
+
+        watermark
+        {
+            string      "www.openfoam.com";
+            halign      centre;
+            size        24;
+            opacity     0.3;
+            bold        yes;
+            italic      yes;
+            shadow      yes;
+
+            positions
+            (
+                (0.50 0.05) (0.50 0.95)
+                (0.25 0.25) (0.75 0.25)
+                (0.25 0.50) (0.75 0.50)
+                (0.25 0.75) (0.75 0.75)
+            );
+        }
+    }
+}
+
+
+// ************************************************************************* //

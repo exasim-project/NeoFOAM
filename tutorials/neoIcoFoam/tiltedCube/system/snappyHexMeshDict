@@ -1,0 +1,118 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           | tutorials/tiltedCube snappyHexMesh               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh true;
+snap            true;
+addLayers       true;
+
+geometry
+{
+    tiltedCube
+    {
+        type triSurfaceMesh;
+        file "tiltedCube.stl";
+    }
+}
+
+castellatedMeshControls
+{
+    maxLocalCells   100000;
+    maxGlobalCells  300000;
+    minRefinementCells 0;
+    nCellsBetweenLevels 2;
+    maxLoadUnbalance 0.10;
+    resolveFeatureAngle 30;
+    allowFreeStandingZoneFaces true;
+
+    features
+    (
+        { file "tiltedCube.eMesh"; level 1; }
+    );
+
+    refinementSurfaces
+    {
+        tiltedCube
+        {
+            level (1 1);
+            patchInfo { type wall; }
+        }
+    }
+
+    refinementRegions {}
+
+    // Point in the background fluid region (outside the tilted cube, which is centred
+    // near (1.1 0.6 0.6)); snappy keeps the region containing this point and carves out
+    // the solid cube.
+    locationInMesh (0.05 0.05 0.05);
+}
+
+snapControls
+{
+    nSmoothPatch    3;
+    tolerance       2.0;
+    nSolveIter      30;
+    nRelaxIter      5;
+    nFeatureSnapIter 10;
+    implicitFeatureSnap false;
+    explicitFeatureSnap true;
+    multiRegionFeatureSnap false;
+}
+
+addLayersControls
+{
+    relativeSizes   true;
+    layers
+    {
+        tiltedCube { nSurfaceLayers 2; }
+    }
+    expansionRatio  1.2;
+    finalLayerThickness 0.4;
+    minThickness    0.1;
+    nGrow           0;
+    featureAngle    60;
+    nRelaxIter      5;
+    nSmoothSurfaceNormals 1;
+    nSmoothNormals  3;
+    nSmoothThickness 10;
+    maxFaceThicknessRatio 0.5;
+    maxThicknessToMedialRatio 0.3;
+    minMedialAxisAngle 90;
+    nBufferCellsNoExtrude 0;
+    nLayerIter      50;
+}
+
+meshQualityControls
+{
+    maxNonOrtho     65;
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    maxConcave      80;
+    minFlatness     0.5;
+    minVol          1e-13;
+    minTetQuality   1e-15;
+    minArea         -1;
+    minTwist        0.02;
+    minDeterminant  0.001;
+    minFaceWeight   0.05;
+    minVolRatio     0.01;
+    minTriangleTwist -1;
+    nSmoothScale    4;
+    errorReduction  0.75;
+}
+
+mergeTolerance 1e-6;
+
+// ************************************************************************* //

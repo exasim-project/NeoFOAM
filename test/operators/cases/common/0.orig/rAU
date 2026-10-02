@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      rAU;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// rAU = 1/UEqn.A(): the reciprocal momentum diagonal, so rAU*grad(p) carries
+// velocity — seconds. Inert here: the SIMPLEC-correction test only compares
+// numbers between the two backends, and neither multiplication nor
+// interpolation checks dimensions.
+dimensions      [0 0 1 0 0 0 0];
+
+// placeholder — the tests seed the values (test_simplec_flux_correction)
+internalField   uniform 1;
+
+boundaryField
+{
+    walls
+    {
+        type            zeroGradient;
+    }
+}
+
+// ************************************************************************* //

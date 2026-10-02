@@ -7,6 +7,7 @@
 #include "NeoN/NeoN.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
 
+#include "argList.H"
 #include "fvc.H"
 
 namespace NeoFOAM
@@ -28,6 +29,11 @@ NeoN::Executor createExecutor(const Foam::dictionary& dict);
  */
 NeoN::Executor createExecutor(const Foam::word& execName);
 
+/* @brief create a NeoN executor, preferring the -executor CLI flag over the dictionary entry
+ * @return the NeoN::Executor
+ */
+NeoN::Executor createExecutor(const Foam::argList& args, const Foam::dictionary& dict);
+
 /* @brief create the commonly required objects for a simulation
  * @return a tuple of the executor, the controlDict, the schemesDict, the  solutionDict*/
 RunTime createAdapterRunTime(const Foam::Time& runTime, const NeoN::Executor exec);
@@ -35,5 +41,10 @@ RunTime createAdapterRunTime(const Foam::Time& runTime, const NeoN::Executor exe
 /* @brief create a struct holding the commonly required objects for a simulation
  * @return the RunTime instance*/
 RunTime createAdapterRunTime(const Foam::Time& runTime);
+
+/* @brief create a struct holding the commonly required objects for a simulation,
+ *        honouring the -executor CLI flag when present
+ * @return the RunTime instance*/
+RunTime createAdapterRunTime(const Foam::Time& runTime, const Foam::argList& args);
 
 } // namespace NeoFoam

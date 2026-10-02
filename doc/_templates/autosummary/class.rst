@@ -1,0 +1,12 @@
+.. Autosummary resolves a dotted name attribute-first, so a module shadowed by
+   a same-named re-exported class (viscosityModel, advectionModel,
+   incompressibleFluidModel, incompressibleFluidNeoNModel) lands on this class
+   template instead of module.rst. ``automodule`` imports the dotted path as a
+   module, so these pages still document the whole module, like every other
+   page. No other autosummary entry generates class pages.
+
+{{ fullname | escape | underline }}
+
+.. automodule:: {{ fullname }}
+   :members:
+   :show-inheritance:

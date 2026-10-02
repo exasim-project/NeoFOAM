@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 #include "NeoFOAM/auxiliary/comparison.hpp"
-#include "NeoFOAM/auxiliary/type_conversion.hpp"
+#include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/convert.hpp"
 
 namespace NeoFOAM

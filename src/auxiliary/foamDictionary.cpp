@@ -9,46 +9,72 @@
 namespace NeoFOAM
 {
 
-static std::vector<std::function<bool(NeoN::Dictionary&, const Foam::entry&)>> mapEntries = {
-    [](NeoN::Dictionary& neoDict, const Foam::entry& entry)
-    {
-        if (checkEntryType<Foam::label>(entry))
-        {
-            Foam::token::tokenType tt = entry.stream()[0].type();
-            if (tt == Foam::token::tokenType::LABEL)
-            {
-                neoDict.insert(entry.keyword(), convert(entry.get<Foam::label>()));
-            }
-            else
-            {
-                neoDict.insert(entry.keyword(), entry.get<Foam::scalar>());
-            }
-            return true;
-        }
-        return false;
-    },
-    &insert<Foam::scalar>,
-    &insert<Foam::vector>,
-    &insert<Foam::word>,
-    {[](NeoN::Dictionary& neoDict, const Foam::entry& entry)
-     {
-         if (entry.isStream())
-         {
-             neoDict.insert(entry.keyword(), convert(entry.stream()));
-             return true;
-         }
-         return false;
-     }}
-};
 
+std::string dictKey(const Foam::entry& entry)
+{
+    const Foam::keyType& keyword = entry.keyword();
+    return keyword.isPattern() ? "\"" + std::string(keyword) + "\"" : std::string(keyword);
+}
+
+static bool insertStream(NeoN::Dictionary& neoDict, const Foam::entry& entry)
+{
+    if (!entry.isStream()) return false;
+    std::any insert = convert(entry.stream());
+    neoDict.insert(dictKey(entry), insert);
+    return true;
+}
+
+static bool insertScalar(NeoN::Dictionary& neoDict, const Foam::entry& entry)
+{
+    if (!checkEntryType<Foam::scalar>(entry))
+    {
+        return false;
+    }
+    std::any insert = convert(entry.get<Foam::scalar>());
+    neoDict.insert(dictKey(entry), insert);
+    return true;
+}
+
+static bool insertWord(NeoN::Dictionary& neoDict, const Foam::entry& entry)
+{
+    if (!checkEntryType<Foam::word>(entry))
+    {
+        return false;
+    }
+    std::any insert = convert(entry.get<Foam::word>());
+    neoDict.insert(dictKey(entry), insert);
+    return true;
+}
+
+static bool insertLabel(NeoN::Dictionary& neoDict, const Foam::entry& entry)
+{
+    if (!checkEntryType<Foam::label>(entry))
+    {
+        return false;
+    }
+    std::any insert = convert(entry.get<Foam::label>());
+    neoDict.insert(dictKey(entry), insert);
+    return true;
+}
+
+
+/**@brief a vector of possible conversions */
+static std::vector<std::function<bool(NeoN::Dictionary&, const Foam::entry&)>>
+    foamToNeoNEntryConverters = {
+        insertScalar,
+        insertLabel,
+        insertWord,
+        &insert<Foam::vector>,
+        insertStream,
+};
 
 void insertEntry(NeoN::Dictionary& neoDict, const Foam::entry& entry)
 {
     std::string keyword = entry.keyword();
-    for (auto& mapEntry : mapEntries)
+    for (auto& mapEntry : foamToNeoNEntryConverters)
     {
         if (mapEntry(neoDict, entry))
-        {
+        { // a match has been found return
             return;
         }
     }
@@ -74,7 +100,7 @@ void readFoamDictionary(const Foam::dictionary& dict, NeoN::Dictionary& neoDict)
         {
             NeoN::Dictionary subDict;
             readFoamDictionary(entry.dict(), subDict);
-            neoDict.insert(entry.keyword(), subDict);
+            neoDict.insert(dictKey(entry), subDict);
         }
         else
         {
@@ -83,7 +109,7 @@ void readFoamDictionary(const Foam::dictionary& dict, NeoN::Dictionary& neoDict)
     }
 }
 
-NeoN::Dictionary convert(const Foam::dictionary& dict)
+NeoN::Dictionary convert(const Foam::dictionary dict)
 {
     NeoN::Dictionary neoDict;
     readFoamDictionary(dict, neoDict);

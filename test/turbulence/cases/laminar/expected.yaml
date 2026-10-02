@@ -1,0 +1,16 @@
+# Expected values for the laminar turbulence case. Drives the data-driven
+# turbulence tests (see test/turbulence/conftest.py). Adding a case directory
+# with its own expected.yaml extends coverage without editing any test module.
+#
+# The case also ships constant/transportProperties so the native laminar model
+# is built exactly as the solver builds it: LaminarModel(viscosity=<from dict>).
+config:                       # cross-checked against the real turbulenceProperties read
+  simulationType: laminar
+  RAS: null
+  LES: null
+selection:
+  model_name: laminar
+  resolves_to: native         # native | fallback
+model:                        # per-model runtime expectations (native cases only)
+  nut: 0.0                    # laminar has no eddy viscosity
+  nu: 1.0e-05                 # delegated from the viscosity model (transportProperties)

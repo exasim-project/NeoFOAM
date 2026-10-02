@@ -1,0 +1,24 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+
+// The whole mesh slides along x at a constant 0.25 m/s — the same motion as
+// `test/solver/incompressibleFluid/cases/movingRow4`. Which motion it is does not
+// matter here: the presence of this file is what selects a moving mesh
+// (createDynamicFvMesh.H, neofoam.foam.initialization.new_mesh), and that alone is
+// what the rotating-frame model refuses.
+
+dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+motionSolver    solidBody;
+
+solidBodyMotionFunction linearMotion;
+
+linearMotionCoeffs
+{
+    velocity    (0.25 0 0);
+}

@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      nut;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -1 0 0 0 0];
+
+// nut ~ a1*k/(a1*omega) = k/omega = 9.375e-4/100 = 9.375e-6
+internalField   uniform 9.375e-6;
+
+boundaryField
+{
+    fixedWalls
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    inlet
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    outlet
+    {
+        type            calculated;
+        value           $internalField;
+    }
+}
+
+// ************************************************************************* //
