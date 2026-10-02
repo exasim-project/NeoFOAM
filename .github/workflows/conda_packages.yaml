@@ -12,8 +12,8 @@ name: Conda packages
 #   secrets.PREFIX_DEV_API_KEY  an API key with write access to that channel
 #
 # Ported from src/NeoN/.github/workflows/conda_packages.yaml, without NeoN's CUDA and ROCm
-# jobs. The platform matrix follows whatever `openfoam` is published for in
-# greole/exasim-project, which is linux-64 and osx-arm64.
+# jobs. `openfoam` is published for linux-64 and osx-arm64 in greole/exasim-project, but the
+# matrix below builds linux-64 only — see the note on it.
 #
 # Note this cannot go to conda-forge. CPM clones NeoN, Kokkos, Ginkgo, Umpire and pybFoam from
 # GitHub during the build, which conda-forge's offline build policy forbids. NeoN hit the same
@@ -105,8 +105,16 @@ jobs:
       matrix:
         # Mirrors the wheel matrix. No 3.9: conda-forge has no nanobind for it.
         python: ["3.10", "3.11", "3.12", "3.13"]
-        # The platforms openfoam is published for in greole/exasim-project.
-        platform: [linux-64, osx-arm64]
+        # openfoam is published for linux-64 and osx-arm64, but osx-arm64 is held back:
+        # under clang, OpenFOAM's NoRepository template bodies (Enum.C, HashTable.C, List.C)
+        # are parsed where their types are still incomplete, e.g.
+        #   Enum.C:162: member access into incomplete type 'const dictionary'
+        #   FixedList.H:88: implicit instantiation of undefined template 'Foam::Vector<double>'
+        # gcc defers those diagnostics, so linux-64 is unaffected. dictionary.H cannot be
+        # parsed on its own either, so no include ordering here fixes it — it needs patching
+        # in the openfoam package. Add osx-arm64 back once that lands; the recipe and
+        # ci/build_conda_packages.sh already support it.
+        platform: [linux-64]
 
     steps:
       - name: Checkout repository
