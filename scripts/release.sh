@@ -116,7 +116,16 @@ check_pypi_unused() {
     case "${status}" in
     404) ;;
     200) err "${PYPI_PACKAGE} ${version} is already published on PyPI and cannot be re-uploaded; pick a new version" ;;
-    *) echo "warning: could not reach PyPI to verify ${version} is unused (HTTP ${status})" >&2 ;;
+    # Fail closed. A tag and GitHub release are permanent, so proceeding on an inconclusive
+    # answer risks burning a version PyPI may later refuse. Override deliberately with
+    # SKIP_PYPI_CHECK=1 when PyPI is unreachable and you accept that risk.
+    *)
+        if [[ "${SKIP_PYPI_CHECK:-0}" == "1" ]]; then
+            echo "warning: PyPI unreachable (HTTP ${status}); continuing because SKIP_PYPI_CHECK=1" >&2
+        else
+            err "could not reach PyPI to verify ${version} is unused (HTTP ${status}); re-run when PyPI responds, or set SKIP_PYPI_CHECK=1 to override"
+        fi
+        ;;
     esac
 }
 
@@ -253,7 +262,6 @@ cmd_tag() {
     require_tools
     check_version_format "${version}"
     check_clean_tree
-    check_tag_unused "${tag}"
     check_pypi_unused "${version}"
 
     base="$(base_version "${version}")"
@@ -276,9 +284,35 @@ cmd_tag() {
         info "${version} is a prerelease; the GitHub release will be marked as such"
     fi
 
-    info "tagging ${sha} as ${tag}"
-    run git tag --annotate "${tag}" "${sha}" --message "NeoFOAM ${tag}"
-    run git push "${REMOTE}" "refs/tags/${tag}"
+    # Resumable: the tag is pushed before the GitHub release is created, so a transient
+    # failure in `gh release create` used to leave `tag` unable to re-run — the tag now
+    # existed and check_tag_unused aborted. Accept an existing tag only when it already
+    # points at the SHA we are about to tag, and skip straight to creating the release.
+    local remote_tag remote_peeled
+    remote_tag="$(git ls-remote --tags "${REMOTE}" "refs/tags/${tag}" | cut -f1)"
+    if [[ -n "${remote_tag}" ]]; then
+        # ^{} is the peeled ref: the commit an annotated tag points at. Read it from the
+        # remote rather than locally, so `tag` can be resumed from a different checkout.
+        remote_peeled="$(git ls-remote --tags "${REMOTE}" "refs/tags/${tag}^{}" | cut -f1)"
+        [[ -n "${remote_peeled}" ]] || remote_peeled="${remote_tag}"
+        if [[ "${remote_peeled}" == "${sha}" ]]; then
+            info "tag ${tag} already points at ${sha}; resuming"
+        else
+            err "tag ${tag} already exists and does not point at ${sha}; delete it or pick a new version"
+        fi
+    else
+        if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            err "tag ${tag} exists locally but not on ${REMOTE}; delete it or push it deliberately"
+        fi
+        info "tagging ${sha} as ${tag}"
+        run git tag --annotate "${tag}" "${sha}" --message "NeoFOAM ${tag}"
+        run git push "${REMOTE}" "refs/tags/${tag}"
+    fi
+
+    if gh release view "${tag}" >/dev/null 2>&1; then
+        info "GitHub release ${tag} already exists; nothing further to do"
+        return 0
+    fi
 
     info "creating the GitHub release"
     run gh release create "${tag}" \
