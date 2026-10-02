@@ -131,7 +131,12 @@ if(TARGET OpenFOAM::meshTools)
 endif()
 
 if(TARGET OpenFOAM::finiteVolume)
-  target_include_directories(OpenFOAM::finiteVolume INTERFACE $ENV{FOAM_SRC}/dynamicFvMesh/lnInclude
-                                                              $ENV{FOAM_SRC}/dynamicMesh/lnInclude)
+  # The full transitive include set pybFoam's own OpenFOAM::finiteVolume reaches via its fileFormats
+  # target: sampling's sampledSurface.H includes polySurface.H from surfMesh. Listing them here
+  # keeps ours self-sufficient without depending on targets pybFoam only creates later.
+  target_include_directories(
+    OpenFOAM::finiteVolume
+    INTERFACE $ENV{FOAM_SRC}/dynamicFvMesh/lnInclude $ENV{FOAM_SRC}/dynamicMesh/lnInclude
+              $ENV{FOAM_SRC}/fileFormats/lnInclude $ENV{FOAM_SRC}/surfMesh/lnInclude)
   target_link_libraries(OpenFOAM::finiteVolume INTERFACE OpenFOAM::meshTools OpenFOAM::OpenFOAM)
 endif()
