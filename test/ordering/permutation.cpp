@@ -208,6 +208,7 @@ TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings
         );
 
         // Assert
+        REQUIRE(prepared.size() == expectedOldToNew.size());
         REQUIRE_THAT(oldToNewResult, Equals(expectedOldToNew, EqualInt{}));
         REQUIRE_THAT(newToOldResult, Equals(expectedNewToOld, EqualInt{}));
     }
