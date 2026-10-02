@@ -175,46 +175,6 @@ auto Equals(Expected expected, Predicate pred)
     return EqualsMatcher<Expected, Predicate> {std::move(expected), pred};
 }
 
-namespace Catch{
-// Disable Catch2's generic range handling.
-template<typename T>
-struct is_range<NeoN::Array<T>> : std::false_type
-{
-};
-
-template<typename T>
-struct is_range<NeoN::Vector<T>> : std::false_type
-{
-};
-
-// Common conversion.
-template<typename T>
-std::string stringifyNeoNContainer(const T& value)
-{
-    auto host = value.copyToHost();
-    return rangeToString(host.view());
-}
-
-// Explicit Catch2 integrations.
-template<typename T>
-struct StringMaker<NeoN::Array<T>>
-{
-    static std::string convert(const NeoN::Array<T>& value)
-    {
-        return stringifyNeoNContainer(value);
-    }
-};
-
-template<typename T>
-struct StringMaker<NeoN::Vector<T>>
-{
-    static std::string convert(const NeoN::Vector<T>& value)
-    {
-        return stringifyNeoNContainer(value);
-    }
-};
-} // namespace Catch
-
 /** @brief Approximate scalar comparison predicate for use with EqualsInternal/EqualsBoundary. */
 struct ApproxScalar
 {
@@ -579,24 +539,43 @@ using NeoFOAM::EqualsBoundary;
 
 namespace Catch
 {
+// Disable Catch2's generic range handling.
+template<typename T>
+struct is_range<NeoN::Array<T>> : std::false_type
+{
+};
 
-// /** @brief Disable Catch2's range StringMaker for NeoN::Vector to avoid ambiguous specializations.
-//  */
-// template<typename T>
-// struct is_range<NeoN::Vector<T>> : std::false_type
-// {
-// };
+template<typename T>
+struct is_range<NeoN::Vector<T>> : std::false_type
+{
+};
 
-// /** @brief Stringify a NeoN::Vector by copying to host first. */
-// template<typename T>
-// struct StringMaker<NeoN::Vector<T>>
-// {
-//     static std::string convert(const NeoN::Vector<T>& v)
-//     {
-//         auto host = v.copyToHost();
-//         return rangeToString(host.view());
-//     }
-// };
+// Common conversion.
+template<typename T>
+std::string stringifyNeoNContainer(const T& value)
+{
+    auto host = value.copyToHost();
+    return rangeToString(host.view());
+}
+
+// Explicit Catch2 integrations.
+template<typename T>
+struct StringMaker<NeoN::Array<T>>
+{
+    static std::string convert(const NeoN::Array<T>& value)
+    {
+        return stringifyNeoNContainer(value);
+    }
+};
+
+template<typename T>
+struct StringMaker<NeoN::Vector<T>>
+{
+    static std::string convert(const NeoN::Vector<T>& value)
+    {
+        return stringifyNeoNContainer(value);
+    }
+};
 
 /** @brief Stringify any NeoN field that exposes internalVector() (VolumeField, SurfaceField). */
 template<typename Field>
