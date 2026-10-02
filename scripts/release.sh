@@ -123,8 +123,11 @@ channel = os.environ["CONDA_CHANNEL"]
 package = os.environ["CONDA_PACKAGE"]
 version = os.environ["VERSION"]
 
+SUBDIRS = ("linux-64", "osx-arm64", "noarch")
+
 found = []
-for subdir in ("linux-64", "osx-arm64", "noarch"):
+missing = 0
+for subdir in SUBDIRS:
     url = f"https://repo.prefix.dev/{channel}/{subdir}/repodata.json"
     # An explicit User-Agent is required: prefix.dev answers 403 to urllib's default
     # "Python-urllib/3.x", which would make this guard fail closed on every release.
@@ -134,7 +137,10 @@ for subdir in ("linux-64", "osx-arm64", "noarch"):
             data = json.load(fh)
     except urllib.error.HTTPError as exc:
         # A subdir with nothing published in it does not exist yet; that is not an error.
+        # repo.prefix.dev answers 404 for an unknown channel too, so count these: all of
+        # them missing means the channel itself is wrong, not that it is empty.
         if exc.code == 404:
+            missing += 1
             continue
         print(f"UNREACHABLE {subdir} HTTP {exc.code}")
         sys.exit(0)
@@ -148,6 +154,12 @@ for subdir in ("linux-64", "osx-arm64", "noarch"):
         for name, meta in packages.items()
         if meta.get("name") == package and meta.get("version") == version
     ]
+
+# Every subdir 404s for a misspelled or renamed channel, which would otherwise read as
+# "nothing published" and wave the release through. Treat it as inconclusive instead.
+if missing == len(SUBDIRS):
+    print(f"UNREACHABLE no subdir of '{channel}' exists; is the channel name right?")
+    sys.exit(0)
 
 print("FOUND " + " ".join(sorted(found)) if found else "FREE")  # noqa: E501
 PYEOF
