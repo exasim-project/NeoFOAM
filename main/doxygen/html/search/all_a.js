@@ -1,6 +1,10 @@
 var searchData=
 [
-  ['operator_26_0',['operator&amp;',['../namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc',1,'NeoFOAM']]],
-  ['operator_28_29_1',['operator()',['../classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f',1,'NeoFOAM::CreateFromFoamField::operator()()'],['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a47ab1991c1a3be26016c83df5c0d2283',1,'NeoFOAM::PDESolver::SetReference::operator()()']]],
-  ['operator_3d_3d_2',['operator==',['../namespaceNeoFOAM.html#adb3f301260a65dd30182893f75665a8a',1,'NeoFOAM::operator==(const NeoN::Vector&lt; NT &gt; &amp;nf, const Foam::Field&lt; OT &gt; &amp;of)'],['../namespaceNeoFOAM.html#ab57ab173a9df89dbffffcf9a42aa673d',1,'NeoFOAM::operator==(fvcc::VolumeField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvPatchField, Foam::volMesh &gt; &amp;of)'],['../namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805',1,'NeoFOAM::operator==(const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)']]]
+  ['laminar_0',['laminar',['../classNeoFOAM_1_1Laminar.html',1,'NeoFOAM::Laminar'],['../classNeoFOAM_1_1Laminar.html#a77e8c0f6fc163e3fc4bf2a8e8c58c1dd',1,'NeoFOAM::Laminar::Laminar()']]],
+  ['laminar_2ehpp_1',['laminar.hpp',['../laminar_8hpp.html',1,'']]],
+  ['lastresult_2',['lastResult',['../classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7',1,'NeoFOAM::Forces']]],
+  ['linearsystem_3',['linearsystem',['../classNeoFOAM_1_1PDE.html#ad7837cb66df5a2d02a51079865fd9b69',1,'NeoFOAM::PDE::linearSystem()'],['../classNeoFOAM_1_1PDE.html#abf7d5b6d2580ccb4c3afdb73e06e39e9',1,'NeoFOAM::PDE::linearSystem() const']]],
+  ['lookupeqnrelaxation_4',['lookupEqnRelaxation',['../namespaceNeoFOAM.html#a26d70bfdefea0c104b27867a553012d2',1,'NeoFOAM']]],
+  ['lookupfieldrelaxation_5',['lookupFieldRelaxation',['../namespaceNeoFOAM.html#a10696ee81bee18fb95ff3175e368d99a',1,'NeoFOAM']]],
+  ['loop_6',['loop',['../classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08',1,'NeoFOAM::PimpleControl']]]
 ];

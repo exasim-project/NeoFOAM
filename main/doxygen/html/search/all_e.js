@@ -1,15 +1,17 @@
 var searchData=
 [
-  ['t_0',['t',['../structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7',1,'NeoFOAM::RunTime']]],
-  ['type_5fconversion_2ehpp_1',['type_conversion.hpp',['../type__conversion_8hpp.html',1,'']]],
-  ['typemap_2',['TypeMap',['../structNeoFOAM_1_1TypeMap.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3afield_3c_20foam_3a_3ascalar_20_3e_20_3e_3',['TypeMap&lt; Foam::Field&lt; Foam::scalar &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1Field_3_01Foam_1_1scalar_01_4_01_4.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3afield_3c_20foam_3a_3avector_20_3e_20_3e_4',['TypeMap&lt; Foam::Field&lt; Foam::vector &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1Field_3_01Foam_1_1vector_01_4_01_4.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3ageometricfield_3c_20foam_3a_3ascalar_2c_20foam_3a_3afvpatchfield_2c_20foam_3a_3avolmesh_20_3e_20_3e_5',['TypeMap&lt; Foam::GeometricField&lt; Foam::scalar, Foam::fvPatchField, Foam::volMesh &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1GeometricField_3_01Foam_1_1scalar_00_01Foam_1_1fvPatchField_00_01Foam_1_1volMesh_01_4_01_4.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3ageometricfield_3c_20foam_3a_3ascalar_2c_20foam_3a_3afvspatchfield_2c_20foam_3a_3asurfacemesh_20_3e_20_3e_6',['TypeMap&lt; Foam::GeometricField&lt; Foam::scalar, Foam::fvsPatchField, Foam::surfaceMesh &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1GeometricField_3_01Foam_1_1scalar_00_01Foam_1_1fvsPatchFiel207eb922bed1988a32f85d43fb7e21c1.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3ageometricfield_3c_20foam_3a_3avector_2c_20foam_3a_3afvpatchfield_2c_20foam_3a_3avolmesh_20_3e_20_3e_7',['TypeMap&lt; Foam::GeometricField&lt; Foam::vector, Foam::fvPatchField, Foam::volMesh &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1GeometricField_3_01Foam_1_1vector_00_01Foam_1_1fvPatchField_00_01Foam_1_1volMesh_01_4_01_4.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3ageometricfield_3c_20foam_3a_3avector_2c_20foam_3a_3afvspatchfield_2c_20foam_3a_3asurfacemesh_20_3e_20_3e_8',['TypeMap&lt; Foam::GeometricField&lt; Foam::vector, Foam::fvsPatchField, Foam::surfaceMesh &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1GeometricField_3_01Foam_1_1vector_00_01Foam_1_1fvsPatchFielb88985145f7d7fa2741b3f6234d210f1.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3alist_3c_20foam_3a_3alabel_20_3e_20_3e_9',['TypeMap&lt; Foam::List&lt; Foam::label &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1List_3_01Foam_1_1label_01_4_01_4.html',1,'NeoFOAM']]],
-  ['typemap_3c_20foam_3a_3alist_3c_20foam_3a_3ascalar_20_3e_20_3e_10',['TypeMap&lt; Foam::List&lt; Foam::scalar &gt; &gt;',['../structNeoFOAM_1_1TypeMap_3_01Foam_1_1List_3_01Foam_1_1scalar_01_4_01_4.html',1,'NeoFOAM']]],
-  ['typename_11',['TypeName',['../classNeoFOAM_1_1MeshAdapter.html#a691a24bcf22a1e249311741b6ec85ab2',1,'NeoFOAM::MeshAdapter']]]
+  ['patchindices_5f_0',['patchIndices_',['../classNeoFOAM_1_1Forces.html#a94d7f3013ae6b22c5ace473c0711a273',1,'NeoFOAM::Forces']]],
+  ['patchnames_5f_1',['patchNames_',['../classNeoFOAM_1_1Forces.html#aa9bc2a0ad5d0d9b689ed644a03abe2c8',1,'NeoFOAM::Forces']]],
+  ['patchnormal_2',['PatchNormal',['../structNeoFOAM_1_1detail_1_1PatchNormal.html',1,'NeoFOAM::detail']]],
+  ['pde_3',['pde',['../classNeoFOAM_1_1PDE.html',1,'NeoFOAM::PDE&lt; ValueType, MatrixValueType, IndexType &gt;'],['../classNeoFOAM_1_1PDE.html#a68afddbbdb4f8a60bcb1acc7ad045587',1,'NeoFOAM::PDE::PDE(const PDE &amp;expr)'],['../classNeoFOAM_1_1PDE.html#aa50cadcb517785b86e8ad4f806a38e95',1,'NeoFOAM::PDE::PDE(dsl::Expression&lt; ValueType &gt; expr)'],['../classNeoFOAM_1_1PDE.html#a41bcce83d26dafe9c61220a63731831b',1,'NeoFOAM::PDE::PDE(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, RunTime &amp;runTime)']]],
+  ['pde_2ehpp_4',['pde.hpp',['../pde_8hpp.html',1,'']]],
+  ['pdesolver_5',['PDESolver',['../namespaceNeoFOAM.html#ae698f2a4b5a7e67bfd294b0e09b1e303',1,'NeoFOAM']]],
+  ['pimplecontrol_6',['pimplecontrol',['../classNeoFOAM_1_1PimpleControl.html',1,'NeoFOAM::PimpleControl'],['../classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7',1,'NeoFOAM::PimpleControl::PimpleControl()']]],
+  ['pimplecontrol_2ehpp_7',['pimpleControl.hpp',['../pimpleControl_8hpp.html',1,'']]],
+  ['pkfield_8',['pkfield',['../classNeoFOAM_1_1KEpsilon.html#a1b86813f51f63b0e6767b07075a95921',1,'NeoFOAM::KEpsilon::pkField()'],['../classNeoFOAM_1_1KOmegaSST.html#a4f0456bbf40c0a22c83bd45c09c75ee1',1,'NeoFOAM::KOmegaSST::pkField()']]],
+  ['pname_5f_9',['pName_',['../classNeoFOAM_1_1Forces.html#aa9f46c8adb157e16c05dda009b12a9e5',1,'NeoFOAM::Forces']]],
+  ['pref_5f_10',['pRef_',['../classNeoFOAM_1_1Forces.html#a5e4a1da57cca4dccd6b38bf956c6630c',1,'NeoFOAM::Forces']]],
+  ['pressureforce_11',['pressureForce',['../structNeoFOAM_1_1ForceResult.html#a6af32dd16d16d1c8b93b66b9ed736018',1,'NeoFOAM::ForceResult']]],
+  ['pressuremoment_12',['pressureMoment',['../structNeoFOAM_1_1ForceResult.html#a1c34a1ca43886bcae820eb5f5ec03797',1,'NeoFOAM::ForceResult']]],
+  ['pressurevelocitycoupling_2ehpp_13',['pressureVelocityCoupling.hpp',['../pressureVelocityCoupling_8hpp.html',1,'']]]
 ];

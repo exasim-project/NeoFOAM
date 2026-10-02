@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['pdesolver_0',['PDESolver',['../classNeoFOAM_1_1PDESolver.html',1,'NeoFOAM']]]
+  ['databasewrapper_0',['DatabaseWrapper',['../classNeoFOAM_1_1DatabaseWrapper.html',1,'NeoFOAM']]]
 ];
