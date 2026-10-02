@@ -116,6 +116,13 @@ importoflibrary(forces INCLUDE_LN functionObjects/forces)
 # previously had only on the aggregate `OpenFOAM` interface target.
 if(TARGET OpenFOAM::OpenFOAM)
   target_include_directories(OpenFOAM::OpenFOAM INTERFACE $ENV{FOAM_SRC}/OSspecific/POSIX/lnInclude)
+  # These definitions were only on the aggregate `OpenFOAM` interface target. Anything linking an
+  # individual OpenFOAM::<lib> — as pybFoam's modules do — compiled without them and failed on
+  # `#error "WM_LABEL_SIZE must be set to either 32 or 64"` from labelFwd.H. pybFoam's own
+  # OpenFOAM::core carries them for exactly this reason.
+  target_compile_definitions(
+    OpenFOAM::OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} NoRepository
+                                 WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
 endif()
 
 if(TARGET OpenFOAM::meshTools)
