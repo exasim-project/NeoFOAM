@@ -7,6 +7,12 @@ add_library(NeoFOAM SHARED)
 target_compile_definitions(NeoFOAM INTERFACE namespaceFoam=1)
 target_link_libraries(NeoFOAM PUBLIC NeoFOAM_public_api OpenFOAM)
 
+# Bind libNeoFOAM's calls to its own NeoN template instantiations instead of the solver's copy: nvcc
+# extended lambdas keep a TU-local call slot, so a foreign copy calls 0x0 (#410).
+if(NOT APPLE AND NOT WIN32)
+  target_link_options(NeoFOAM PRIVATE "LINKER:-Bsymbolic-functions")
+endif()
+
 target_sources(
   NeoFOAM
   PRIVATE "algorithms/pressureVelocityCoupling.cpp"
