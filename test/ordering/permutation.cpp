@@ -183,12 +183,17 @@ TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings
 
     SECTION("Permutation mappings on " + execName)
     {
+        // Arrange
         const std::vector<IndexType> expectedOldToNew {2, 0, 3, 1};
+        const std::vector<IndexType> expectedNewToOld {1, 3, 0, 2};
 
         NeoN::Array<IndexType> oldToNewResult(exec, expectedOldToNew.size(), 0);
+        NeoN::Array<IndexType> newToOldResult(exec, expectedNewToOld.size(), 0);
 
         auto oldToNewResultView = oldToNewResult.view();
+        auto newToOldResultView = newToOldResult.view();
 
+        // Act
         const Permutation permutation {expectedOldToNew};
 
         const PreparedPermutation prepared{permutation, exec};
@@ -198,8 +203,12 @@ TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings
             {0, static_cast<NeoN::localIdx>(prepared.size())},
             NEON_LAMBDA(const NeoN::localIdx i) {
                 oldToNewResultView[i] = prepared.oldToNew()[i];
+                newToOldResultView[i] = prepared.newToOld()[i];
             }
         );
-    REQUIRE_THAT(oldToNewResult, Equals(expectedOldToNew, EqualInt{}));
+
+        // Assert
+        REQUIRE_THAT(oldToNewResult, Equals(expectedOldToNew, EqualInt{}));
+        REQUIRE_THAT(newToOldResult, Equals(expectedNewToOld, EqualInt{}));
     }
 }
