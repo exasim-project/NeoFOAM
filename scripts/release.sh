@@ -14,8 +14,9 @@
 ##   scripts/release.sh tag v0.3.0rc1       tag the merge commit and create the GitHub release
 ##
 ## Pushing the tag is what triggers everything downstream: build_doc.yaml publishes the
-## documentation for the tag. NeoFOAM does not publish wheels or conda packages yet; when
-## it does, those workflows should take the version from the tag name, not pyproject.toml.
+## documentation and conda_packages.yaml builds and publishes the conda packages to the
+## prefix.dev channel, which is how NeoFOAM is distributed (`pixi add neofoam`). Those
+## workflows take the version from the tag name, not from pyproject.toml.
 ##
 ##   scripts/release.sh check v0.3.0rc1     run the preflight checks only
 ##
@@ -33,7 +34,9 @@ cd "${ROOT}"
 REMOTE="origin"
 SOURCE_BRANCH="develop"
 TARGET_BRANCH="main"
-PYPI_PACKAGE="neofoam"
+CONDA_PACKAGE="neofoam"
+# Published to a prefix.dev channel and consumed with pixi; see recipe/recipe.yaml.
+CONDA_CHANNEL="${NEOFOAM_CONDA_CHANNEL:-greole/exasim-project}"
 
 DRY_RUN=0
 
@@ -71,8 +74,9 @@ is_prerelease() { [[ "$1" != "$(base_version "$1")" ]]; }
 
 check_version_format() {
     local version="$1"
-    # PEP 440 subset: PyPI accepts this form, and the v* tag glob in build_doc.yaml
-    # matches the corresponding tag.
+    # PEP 440 subset. Conda needs the dash-free form in particular, because a package
+    # filename is name-version-build and a dash inside the version breaks that; the v* tag
+    # glob in build_doc.yaml matches the corresponding tag.
     if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]+)?$ ]]; then
         err "'${version}' is not a supported version. Use 0.3.0 or a PEP 440 prerelease like 0.3.0rc1 (no dash)."
     fi
@@ -106,24 +110,60 @@ check_tag_unused() {
     fi
 }
 
-# PyPI burns a version permanently: once uploaded it can never be re-uploaded, not even
-# after deleting the files. NeoFOAM does not publish to PyPI yet, so this passes trivially
-# today and starts guarding the moment a wheel workflow lands.
-check_pypi_unused() {
-    local version="$1" status
-    status="$(curl -s -o /dev/null -w '%{http_code}' \
-        "https://pypi.org/pypi/${PYPI_PACKAGE}/${version}/json")"
-    case "${status}" in
-    404) ;;
-    200) err "${PYPI_PACKAGE} ${version} is already published on PyPI and cannot be re-uploaded; pick a new version" ;;
+# A published conda version is permanent: prefix.dev will not accept a re-upload of the same
+# name-version-build, so a tag must not be created for a version already in the channel.
+check_channel_unused() {
+    local version="$1" result
+    result="$(
+        CONDA_CHANNEL="${CONDA_CHANNEL}" CONDA_PACKAGE="${CONDA_PACKAGE}" VERSION="${version}" \
+            python3 - <<'PYEOF'
+import json, os, sys, urllib.error, urllib.request
+
+channel = os.environ["CONDA_CHANNEL"]
+package = os.environ["CONDA_PACKAGE"]
+version = os.environ["VERSION"]
+
+found = []
+for subdir in ("linux-64", "osx-arm64", "noarch"):
+    url = f"https://repo.prefix.dev/{channel}/{subdir}/repodata.json"
+    # An explicit User-Agent is required: prefix.dev answers 403 to urllib's default
+    # "Python-urllib/3.x", which would make this guard fail closed on every release.
+    request = urllib.request.Request(url, headers={"User-Agent": "neofoam-release-script"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as fh:
+            data = json.load(fh)
+    except urllib.error.HTTPError as exc:
+        # A subdir with nothing published in it does not exist yet; that is not an error.
+        if exc.code == 404:
+            continue
+        print(f"UNREACHABLE {subdir} HTTP {exc.code}")
+        sys.exit(0)
+    except Exception as exc:  # noqa: BLE001 - network failures of any shape
+        print(f"UNREACHABLE {subdir} {type(exc).__name__}")
+        sys.exit(0)
+
+    packages = {**data.get("packages", {}), **data.get("packages.conda", {})}
+    found += [
+        name
+        for name, meta in packages.items()
+        if meta.get("name") == package and meta.get("version") == version
+    ]
+
+print("FOUND " + " ".join(sorted(found)) if found else "FREE")  # noqa: E501
+PYEOF
+    )"
+
+    case "${result}" in
+    FREE) ;;
+    FOUND*) err "${CONDA_PACKAGE} ${version} is already published in ${CONDA_CHANNEL} and cannot be re-uploaded; pick a new version (${result#FOUND })" ;;
     # Fail closed. A tag and GitHub release are permanent, so proceeding on an inconclusive
-    # answer risks burning a version PyPI may later refuse. Override deliberately with
-    # SKIP_PYPI_CHECK=1 when PyPI is unreachable and you accept that risk.
+    # answer risks burning a version the channel may later refuse. Override deliberately
+    # with SKIP_CHANNEL_CHECK=1.
     *)
-        if [[ "${SKIP_PYPI_CHECK:-0}" == "1" ]]; then
-            echo "warning: PyPI unreachable (HTTP ${status}); continuing because SKIP_PYPI_CHECK=1" >&2
+        if [[ "${SKIP_CHANNEL_CHECK:-0}" == "1" ]]; then
+            echo "warning: could not verify ${version} against ${CONDA_CHANNEL} (${result}); continuing because SKIP_CHANNEL_CHECK=1" >&2
         else
-            err "could not reach PyPI to verify ${version} is unused (HTTP ${status}); re-run when PyPI responds, or set SKIP_PYPI_CHECK=1 to override"
+            err "could not verify ${version} is unused in ${CONDA_CHANNEL} (${result}); re-run when the channel responds, or set SKIP_CHANNEL_CHECK=1 to override"
         fi
         ;;
     esac
@@ -169,7 +209,7 @@ cmd_check() {
     check_version_format "${version}"
     check_clean_tree
     check_tag_unused "${tag}"
-    check_pypi_unused "${version}"
+    check_channel_unused "${version}"
     changelog_section "$(base_version "${version}")" >/dev/null
     info "preflight checks passed for ${tag}"
 }
@@ -262,7 +302,7 @@ cmd_tag() {
     require_tools
     check_version_format "${version}"
     check_clean_tree
-    check_pypi_unused "${version}"
+    check_channel_unused "${version}"
 
     base="$(base_version "${version}")"
     fetch "${TARGET_BRANCH}"
