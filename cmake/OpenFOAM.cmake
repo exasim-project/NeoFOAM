@@ -61,6 +61,19 @@ target_include_directories(
 target_compile_definitions(OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} NoRepository
                                               WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
 
+# NoRepository makes Enum.H include its template body Enum.C, which calls dict.get<word>() on a
+# dictionary that debug.H has only forward-declared. The expression does not depend on the template
+# parameter, so clang diagnoses it when it parses the template:
+#
+# Enum.C:162:29: error: member access into incomplete type 'const dictionary'
+#
+# gcc defers non-dependent diagnostics to instantiation and never reports it, which is why linux-64
+# builds and osx-arm64 does not. Completing the type before any OpenFOAM header is reached avoids
+# depending on which NeoFOAM header pulls in IOobject.H first.
+if(APPLE)
+  target_compile_options(OpenFOAM INTERFACE -include dictionary.H)
+endif()
+
 # OpenFOAM exposes its label width via WM_LABEL_SIZE (32/64). Configure NeoN's corresponding CMake
 # option before it is added as a subdirectory so that NeoN can set its own public compile
 # definitions (NeoN_DP_LABEL) consistently.
