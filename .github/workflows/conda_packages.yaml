@@ -95,15 +95,17 @@ jobs:
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
   build-cpu:
-    name: CPU ${{ matrix.python }} linux-64
+    name: CPU ${{ matrix.python }} ${{ matrix.platform }}
     needs: version
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform == 'osx-arm64' && 'macos-14' || 'ubuntu-latest' }}
     if: github.repository == 'exasim-project/NeoFOAM'
     strategy:
       fail-fast: false
       matrix:
         # Mirrors the wheel matrix. No 3.9: conda-forge has no nanobind for it.
         python: ["3.10", "3.11", "3.12", "3.13"]
+        # The platforms openfoam is published for in greole/exasim-project.
+        platform: [linux-64, osx-arm64]
 
     steps:
       - name: Checkout repository
@@ -119,9 +121,16 @@ jobs:
       # The build compiles NeoFOAM, NeoN, Kokkos, Ginkgo, Umpire and pybFoam in one go, which
       # needs considerably more disk than a stock runner leaves free.
       - name: Free disk space
+        if: runner.os == 'Linux'
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
           df -h /
+
+      # The conda clang toolchain needs an SDK to compile against; GitHub runners ship one with
+      # Xcode rather than as a conda package.
+      - name: Point the conda toolchain at the macOS SDK
+        if: runner.os == 'macOS'
+        run: echo "CONDA_BUILD_SYSROOT=$(xcrun --show-sdk-path)" >> "${GITHUB_ENV}"
 
       - name: Build conda package
         env:
@@ -129,13 +138,13 @@ jobs:
         run: |
           ci/build_conda_packages.sh \
             --python "${{ matrix.python }}" \
-            --target-platform linux-64 \
+            --target-platform "${{ matrix.platform }}" \
             --output-dir output
 
       - name: Upload conda package artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: conda-cpu-linux-64-py${{ matrix.python }}
+          name: conda-cpu-${{ matrix.platform }}-py${{ matrix.python }}
           path: output/**/*.conda
           if-no-files-found: error
 
