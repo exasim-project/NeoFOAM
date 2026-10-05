@@ -70,6 +70,16 @@ TEST_CASE("Permutation supports an empty identity mapping", "[permutation]")
     REQUIRE(permutation.isIdentity());
 }
 
+TEST_CASE("Permutation supports a single-element identity mapping", "[permutation]")
+{
+    const std::vector<IndexType> expected{0};
+    const auto permutation = Permutation::identity(1);
+
+    REQUIRE(permutation.size() == 1);
+    REQUIRE_THAT(permutation.oldToNew(), Catch::Matchers::RangeEquals(expected));
+    REQUIRE_THAT(permutation.newToOld(), Catch::Matchers::RangeEquals(expected));
+    REQUIRE(permutation.isIdentity());
+}
 
 TEST_CASE("Old-to-new and new-to-old mappings are inverses", "[permutation]")
 {
