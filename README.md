@@ -38,7 +38,7 @@ We provide several Cmake presets to set commmonly required flags for building Ne
     cmake --preset production # Configure for production
     cmake --build --preset production # Build for production
 
-Check the documentation for [details](https://exasim-project.com/NeoFOAM/develop/gettingStarted.html#getting-started)
+Check the documentation for [details](https://exasim-project.com/NeoFOAM/develop/how-to/install.html)
 
 ## Structure
 
