@@ -40,6 +40,7 @@ what you're trying to do:
 
    how-to/install
    how-to/declare-fields
+   how-to/declare-init-steps
    how-to/extend-operations
    auto_how-to/example_register_a_model
    auto_how-to/example_add_an_init_step_category
