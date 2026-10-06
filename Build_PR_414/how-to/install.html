@@ -211,6 +211,7 @@
 <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Install NeoFOAM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="declare-fields.html">Declare on-disk fields with typed BCs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="declare-init-steps.html">Declare BUILD-stage init steps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extend-operations.html">Extend operations from another model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
@@ -700,13 +701,50 @@ provides:</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">poe</span> <span class="pre">build_docs</span></code> errors with <code class="docutils literal notranslate"><span class="pre">command</span> <span class="pre">not</span> <span class="pre">found</span></code>, <code class="docutils literal notranslate"><span class="pre">poethepoet</span></code> isn’t
 in the venv yet — re-run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.[all]</span> <span class="pre">-v</span></code> and try again.</p>
 </section>
+<section id="build-the-c-core-directly">
+<h2>Build the C++ core directly<a class="headerlink" href="#build-the-c-core-directly" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> drives CMake for you. To build the C++ core on its own, use the
+presets from <code class="docutils literal notranslate"><span class="pre">CMakePresets.json</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--list-presets<span class="w">            </span><span class="c1"># list the presets</span>
+cmake<span class="w"> </span>--preset<span class="w"> </span>develop<span class="w">          </span><span class="c1"># configure</span>
+cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>develop<span class="w">  </span><span class="c1"># build</span>
+ctest<span class="w"> </span>--preset<span class="w"> </span>develop<span class="w">          </span><span class="c1"># run the unit tests</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">production</span></code> builds Release with the examples, <code class="docutils literal notranslate"><span class="pre">develop</span></code> builds Debug with
+the unit tests and Kokkos bounds checking, <code class="docutils literal notranslate"><span class="pre">profiling</span></code> builds RelWithDebInfo
+with the benchmarks, and <code class="docutils literal notranslate"><span class="pre">python-bindings</span></code> adds the shared-library build the
+wheel needs. Each preset builds into <code class="docutils literal notranslate"><span class="pre">build/&lt;preset&gt;$NEON_DEVICE</span></code>.</p>
+<section id="where-neon-comes-from">
+<h3>Where NeoN comes from<a class="headerlink" href="#where-neon-comes-from" title="Link to this heading">¶</a></h3>
+<p>By default NeoFOAM builds the bundled <code class="docutils literal notranslate"><span class="pre">src/NeoN</span></code> submodule. If that submodule
+is not checked out, NeoN is fetched with CPM at the revision the submodule
+points to. Two cache variables override this:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_NEON_DIR=&lt;path&gt;</span></code></dt><dd><p>Build an external NeoN checkout instead of the submodule.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">-DNEOFOAM_NEON_VERSION=&lt;tag|branch|sha&gt;</span></code></dt><dd><p>Fetch that NeoN revision with CPM, ignoring the submodule. CI uses this to
+build against NeoN’s development branch.</p>
+</dd>
+</dl>
+</section>
+<section id="gpu-backends">
+<h3>GPU backends<a class="headerlink" href="#gpu-backends" title="Link to this heading">¶</a></h3>
+<p>The device backend is selected through Kokkos; NeoFOAM forwards the flags to
+NeoN:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>--preset<span class="w"> </span>production<span class="w"> </span>-DKokkos_ENABLE_CUDA<span class="o">=</span>ON<span class="w">  </span><span class="c1"># NVIDIA</span>
+cmake<span class="w"> </span>--preset<span class="w"> </span>production<span class="w"> </span>-DKokkos_ENABLE_HIP<span class="o">=</span>ON<span class="w">   </span><span class="c1"># AMD</span>
+</pre></div>
+</div>
+<p>The presets set <code class="docutils literal notranslate"><span class="pre">CMAKE_CUDA_ARCHITECTURES=native</span></code>; set it explicitly when the
+build host and the target GPU differ.</p>
+</section>
+</section>
 <section id="notes">
 <h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>For the full development build/test workflow (scoped tests, <code class="docutils literal notranslate"><span class="pre">pre-commit</span></code>,
 and the build gotchas) see <a class="reference internal" href="../reference/build-and-test.html"><span class="doc">Building and testing NeoFOAM</span></a>.</p></li>
-<li><p>For C++/CMake-level build options (alternate NeoN sources, GPU flags,
-CMake presets) see the project README.</p></li>
 </ul>
 </section>
 </section>
@@ -771,6 +809,11 @@ CMake presets) see the project README.</p></li>
 <li><a class="reference internal" href="#install">Install</a></li>
 <li><a class="reference internal" href="#verify">Verify</a></li>
 <li><a class="reference internal" href="#build-the-docs">Build the docs</a></li>
+<li><a class="reference internal" href="#build-the-c-core-directly">Build the C++ core directly</a><ul>
+<li><a class="reference internal" href="#where-neon-comes-from">Where NeoN comes from</a></li>
+<li><a class="reference internal" href="#gpu-backends">GPU backends</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#notes">Notes</a></li>
 </ul>
 </li>
