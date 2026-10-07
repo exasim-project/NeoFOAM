@@ -4,7 +4,7 @@
 #pragma once
 
 #include "NeoN/NeoN.hpp"
-#include "NeoFOAM/ordering/permutation.hpp"
+#include "NeoFOAM/ordering/preparedPermutation.hpp"
 
 namespace NeoFOAM
 {
@@ -59,7 +59,7 @@ public:
      */
     void apply(
         NeoN::UnstructuredMesh& mesh,
-        const Permutation& permutation) const;
+        const PreparedPermutation& permutation) const;
      
     /**
      * @brief Applies a cell permutation to a cell-associated field.
@@ -80,10 +80,10 @@ public:
      * @post Each field value remains associated with the same cell as before
      *       the permutation was applied.
      */
-    template<typename T>
-    void apply(
-        NeoN::Field<T>& field,
-        const Permutation& permutation) const;
+    // template<typename T>
+    // void apply(
+    //     NeoN::Field<T>& field,
+    //     const PreparedPermutation& permutation) const;
 
 private:
     NeoN::Executor exec_;
@@ -91,15 +91,15 @@ private:
     // check that permutation is valid for mesh (host side)
     void validate(
         const NeoN::UnstructuredMesh& mesh,
-        const Permutation& permutation) const;
+        const PreparedPermutation& permutation) const;
     
     template<typename T>
     void reorderField(
         NeoN::Field<T>& field,
-        const Permutation& permutation) const;
+        const PreparedPermutation& permutation) const;
     
     void remapCellReferences(
         NeoN::UnstructuredMesh& mesh,
-        const Permutation& permutation) const;
+        const PreparedPermutation& permutation) const;
 };
 } // namespace NeoFOAM

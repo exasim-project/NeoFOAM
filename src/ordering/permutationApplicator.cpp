@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-#pragma once
-
 #include "NeoFOAM/ordering/permutationApplicator.hpp"
 #include <stdexcept>
 
@@ -15,9 +13,10 @@ PermutationApplicator::PermutationApplicator(const NeoN::Executor& exec)
 
 void PermutationApplicator::apply(
     NeoN::UnstructuredMesh& mesh,
-    const Permutation& permutation) const
+    const PreparedPermutation& permutation) const
 {
     // validate permutation
+   validate(mesh, permutation);
 
     // reoder cell volumes
 
@@ -28,18 +27,18 @@ void PermutationApplicator::apply(
     // remap face neighbors
 }
 
-void PermutationApplicator::apply(
-    NeoN::Field<T>& field,
-    const Permutation& permutation) const
-{
-    // validate permutation
+// void PermutationApplicator::apply(
+//     NeoN::Field<T>& field,
+//     const PreparedPermutation& permutation) const
+// {
+//     // validate permutation
 
-    // reorder field values
-}
+//     // reorder field values
+// }
 
 void PermutationApplicator::validate(
     const NeoN::UnstructuredMesh& mesh,
-    const Permutation& permutation) const
+    const PreparedPermutation& permutation) const
 {
     using SizeType = NeoFOAM::Permutation::SizeType;
     if (permutation.size() != static_cast<SizeType>(mesh.nCells()))
