@@ -14,10 +14,8 @@ Applies cell permutations to mesh and cell-\/associated data.
 \item 
 \mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_acd5e8a7f462e07781b010953354485b7}{Permutation\+Applicator}} (const Neo\+N\+::\+Executor \&exec)
 \begin{DoxyCompactList}\small\item\em Constructs a permutation applicator for the specified executor. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_a4e3503b678f11ba087c4fba8309ef676}{apply}} (Neo\+N\+::\+Unstructured\+Mesh \&mesh, const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&permutation) const
-\begin{DoxyCompactList}\small\item\em Applies a cell permutation to a mesh. \end{DoxyCompactList}\item 
-{\footnotesize template$<$typename T $>$ }\\void \mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_a6b5165ee15c8a17f5149dd5ff57d0fa0}{apply}} (Neo\+N\+::\+Field$<$ T $>$ \&field, const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&permutation) const
-\begin{DoxyCompactList}\small\item\em Applies a cell permutation to a cell-\/associated field. \end{DoxyCompactList}\end{DoxyCompactItemize}
+void \mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_ac783ecc5a97ea045e3775ef60a9a86b7}{apply}} (Neo\+N\+::\+Unstructured\+Mesh \&mesh, const \mbox{\hyperlink{classNeoFOAM_1_1PreparedPermutation}{Prepared\+Permutation}} \&permutation) const
+\begin{DoxyCompactList}\small\item\em Applies a cell permutation to a mesh. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -67,42 +65,11 @@ Constructs a permutation applicator for the specified executor.
 
 
 \doxysubsection{Member Function Documentation}
-\Hypertarget{classNeoFOAM_1_1PermutationApplicator_a6b5165ee15c8a17f5149dd5ff57d0fa0}\label{classNeoFOAM_1_1PermutationApplicator_a6b5165ee15c8a17f5149dd5ff57d0fa0} 
+\Hypertarget{classNeoFOAM_1_1PermutationApplicator_ac783ecc5a97ea045e3775ef60a9a86b7}\label{classNeoFOAM_1_1PermutationApplicator_ac783ecc5a97ea045e3775ef60a9a86b7} 
 \index{NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}!apply@{apply}}
 \index{apply@{apply}!NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}}
-\doxysubsubsection{\texorpdfstring{apply()}{apply()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily template$<$typename T $>$ \\
-void Neo\+FOAM\+::\+Permutation\+Applicator\+::apply (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Field$<$ T $>$ \&}]{field,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&}]{permutation }\end{DoxyParamCaption}) const}
-
-
-
-Applies a cell permutation to a cell-\/associated field. 
-
-The values of {\ttfamily field} are reordered according to {\ttfamily permutation} so that each value remains associated with the same physical cell after the cell ordering changes.
-
-
-\begin{DoxyTemplParams}{Template Parameters}
-{\em T} & Value type of the cell-\/associated field.\\
-\hline
-\end{DoxyTemplParams}
-
-\begin{DoxyParams}{Parameters}
-{\em field} & Cell-\/associated field to reorder. \\
-\hline
-{\em permutation} & \doxylink{classNeoFOAM_1_1Permutation}{Permutation} defining the mapping from old cell indices to new cell indices.\\
-\hline
-\end{DoxyParams}
-\begin{DoxyPrecond}{Precondition}
-{\ttfamily permutation} is a valid permutation over the cells represented by {\ttfamily field}.
-\end{DoxyPrecond}
-\begin{DoxyPostcond}{Postcondition}
-Each field value remains associated with the same cell as before the permutation was applied. 
-\end{DoxyPostcond}
-\Hypertarget{classNeoFOAM_1_1PermutationApplicator_a4e3503b678f11ba087c4fba8309ef676}\label{classNeoFOAM_1_1PermutationApplicator_a4e3503b678f11ba087c4fba8309ef676} 
-\index{NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}!apply@{apply}}
-\index{apply@{apply}!NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}}
-\doxysubsubsection{\texorpdfstring{apply()}{apply()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily void Neo\+FOAM\+::\+Permutation\+Applicator\+::apply (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Unstructured\+Mesh \&}]{mesh,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&}]{permutation }\end{DoxyParamCaption}) const}
+\doxysubsubsection{\texorpdfstring{apply()}{apply()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Permutation\+Applicator\+::apply (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Unstructured\+Mesh \&}]{mesh,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PreparedPermutation}{Prepared\+Permutation}} \&}]{permutation }\end{DoxyParamCaption}) const}
 
 
 

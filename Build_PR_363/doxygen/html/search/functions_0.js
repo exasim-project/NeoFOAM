@@ -1,7 +1,7 @@
 var searchData=
 [
   ['addconsistentfluxcorrection_0',['addConsistentFluxCorrection',['../namespaceNeoFOAM.html#a8cb1800d5b6a017b3c9003bce3ea6a4b',1,'NeoFOAM']]],
-  ['apply_1',['apply',['../classNeoFOAM_1_1PermutationApplicator.html#a4e3503b678f11ba087c4fba8309ef676',1,'NeoFOAM::PermutationApplicator::apply(NeoN::UnstructuredMesh &amp;mesh, const Permutation &amp;permutation) const'],['../classNeoFOAM_1_1PermutationApplicator.html#a6b5165ee15c8a17f5149dd5ff57d0fa0',1,'NeoFOAM::PermutationApplicator::apply(NeoN::Field&lt; T &gt; &amp;field, const Permutation &amp;permutation) const']]],
+  ['apply_1',['apply',['../classNeoFOAM_1_1PermutationApplicator.html#ac783ecc5a97ea045e3775ef60a9a86b7',1,'NeoFOAM::PermutationApplicator']]],
   ['applyfixedvalueconstraints_2',['applyFixedValueConstraints',['../namespaceNeoFOAM_1_1detail.html#a599b28f960f5c2fb5023957ebb933d30',1,'NeoFOAM::detail']]],
   ['applyoperator_3',['applyOperator',['../namespaceNeoFOAM.html#a1a20de9aeea93a39b256d91014ce9039',1,'NeoFOAM']]],
   ['applyrelaxation_4',['applyRelaxation',['../classNeoFOAM_1_1PDE.html#a6651b874bb117d327e8c923255c8d0fc',1,'NeoFOAM::PDE']]],
