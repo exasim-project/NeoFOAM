@@ -86,9 +86,13 @@ what you're trying to do:
 
    ci
    debugProfileTools
+   ordering/architecture
 
 Indices and tables
 ==================
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+=======
+   gettingStarted
+   testcases
