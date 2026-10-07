@@ -21,6 +21,7 @@ target_sources(
           "auxiliary/setup.cpp"
           "auxiliary/writers.cpp"
           "auxiliary/comparison.cpp"
+          "auxiliary/bound.cpp"
           "datastructures/meshAdapter.cpp"
           "datastructures/databaseWrapper.cpp"
           "datastructures/pde.cpp"
