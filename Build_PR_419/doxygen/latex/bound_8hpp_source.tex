@@ -1,0 +1,43 @@
+\doxysection{bound.\+hpp}
+\hypertarget{bound_8hpp_source}{}\label{bound_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/bound.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/bound.hpp}}
+\mbox{\hyperlink{bound_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00010}00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00011}00011\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00012}00012\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00020}\mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{00020}}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{BoundCache}}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00021}00021\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00022}\mbox{\hyperlink{structNeoFOAM_1_1BoundCache_a787dbec3f543e8eb7d047f57821d9e01}{00022}}\ \ \ \ \ std::optional<NeoN::Vector<NeoN::scalar>>\ \mbox{\hyperlink{structNeoFOAM_1_1BoundCache_a787dbec3f543e8eb7d047f57821d9e01}{sumFaceArea}};}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00023}00023\ \};}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00024}00024\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00044}00044\ \textcolor{comment}{//\ Defined\ in\ src/auxiliary/bound.cpp,\ not\ inline\ here:\ its\ NEON\_LAMBDA\ kernels\ would\ otherwise\ be}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00045}00045\ \textcolor{comment}{//\ instantiated\ in\ every\ including\ translation\ unit,\ and\ nvcc's\ extended-\/lambda\ wrappers\ are\ not}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00046}00046\ \textcolor{comment}{//\ ODR-\/safe\ across\ them\ (the\ linker\ keeps\ one\ copy\ of\ the\ inline\ function\ whose\ lambda\ wrapper\ may}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00047}00047\ \textcolor{comment}{//\ belong\ to\ another\ TU\ and\ is\ never\ initialized\ -\/>\ null\ function\ pointer\ on\ the\ device\ launch).}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00048}\mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{00048}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00049}00049\ \ \ \ \ NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>\&\ vsf,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00050}00050\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ lowerBound,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00051}00051\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{BoundCache}}\&\ cache}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00052}00052\ );}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00053}00053\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00059}\mbox{\hyperlink{namespaceNeoFOAM_a6e6b831af8b12c7823794018471346a6}{00059}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00060}00060\ \ \ \ \ NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>\&\ vsf,}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ lowerBound}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00062}00062\ )}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00063}00063\ \{}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00064}00064\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1BoundCache}{BoundCache}}\ scratch;}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00065}00065\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a6cbdfd4b2fffd39d6929b34f32cb586f}{bound}}(vsf,\ lowerBound,\ scratch);}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00066}00066\ \}}
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{bound_8hpp_source_l00068}00068\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
