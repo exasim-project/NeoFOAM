@@ -1,0 +1,111 @@
+# SPDX-FileCopyrightText: 2023 - 2025 NeoN authors
+#
+# SPDX-License-Identifier: Unlicense
+#
+# Intel oneAPI + OpenFOAM + Ginkgo (SYCL)
+# build: docker build -t neofoam-intel - < Dockerfile.intel
+
+ARG ONEAPI_BASE_IMAGE=intel/oneapi-hpckit:2025.3.1-0-devel-ubuntu24.04
+FROM ${ONEAPI_BASE_IMAGE}
+
+ARG OPENFOAM_VERSION=2512
+ARG GINKGO_TAG=6a3abf8c920228006f3b28bc3bf04fc7a5f6aee0
+ARG JOBS=12
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/2025.3/lib:$LD_LIBRARY_PATH
+ENV PATH=/opt/intel/oneapi/compiler/2025.3/bin/compiler:$PATH
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-pip \
+    ninja-build \
+    pre-commit \
+    intel-ocloc \
+    xpu-smi \
+    build-essential \
+    git \
+    cmake \
+    wget \
+    curl \
+    gnupg \
+    ca-certificates \
+    flex \
+    libfl-dev \
+    bison \
+    zlib1g-dev \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libscotch-dev \
+    libptscotch-dev \
+    libfftw3-dev \
+    libreadline-dev \
+    libncurses-dev \
+    libxt-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    intel-oneapi-mpi-devel && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir --break-system-packages numpy foamlib
+
+WORKDIR /opt/openfoam
+
+# ThirdParty is .tar.gz since v2512
+RUN wget -q https://dl.openfoam.com/source/v${OPENFOAM_VERSION}/OpenFOAM-v${OPENFOAM_VERSION}.tgz && \
+    wget -q https://dl.openfoam.com/source/v${OPENFOAM_VERSION}/ThirdParty-v${OPENFOAM_VERSION}.tar.gz && \
+    tar -xzf OpenFOAM-v${OPENFOAM_VERSION}.tgz && \
+    tar -xzf ThirdParty-v${OPENFOAM_VERSION}.tar.gz && \
+    rm -f OpenFOAM-v${OPENFOAM_VERSION}.tgz ThirdParty-v${OPENFOAM_VERSION}.tar.gz
+
+# use icx and intel mpi
+RUN sed -i 's|^#\?export WM_COMPILER=.*|export WM_COMPILER=Icx|' \
+    /opt/openfoam/OpenFOAM-v${OPENFOAM_VERSION}/etc/bashrc && \
+    sed -i 's|^#\?export WM_MPLIB=.*|export WM_MPLIB=INTELMPI|' \
+    /opt/openfoam/OpenFOAM-v${OPENFOAM_VERSION}/etc/bashrc
+
+ENV OPENFOAM_BASHRC=/opt/openfoam/OpenFOAM-v${OPENFOAM_VERSION}/etc/bashrc
+
+RUN set -o pipefail && \
+    source /opt/intel/oneapi/setvars.sh --force && \
+    source ${OPENFOAM_BASHRC} && \
+    cd /opt/openfoam/ThirdParty-v${OPENFOAM_VERSION} && \
+    ./Allwmake -j ${JOBS} -s -q 2>&1 | tee /tmp/thirdparty-build.log && \
+    cd /opt/openfoam/OpenFOAM-v${OPENFOAM_VERSION} && \
+    ./Allwmake -j ${JOBS} -s -q 2>&1 | tee /tmp/openfoam-build.log
+
+RUN echo "source /opt/intel/oneapi/setvars.sh --force > /dev/null 2>&1" >> /etc/bash.bashrc && \
+    echo "source ${OPENFOAM_BASHRC}"                                      >> /etc/bash.bashrc
+
+WORKDIR /opt
+
+RUN git clone https://github.com/ginkgo-project/ginkgo.git && \
+    cd ginkgo && \
+    git checkout ${GINKGO_TAG}
+
+RUN source /opt/intel/oneapi/setvars.sh --force && \
+    cd /opt/ginkgo && \
+    mkdir build && cd build && \
+    cmake \
+    -DCMAKE_CXX_COMPILER=icpx \
+    -DGINKGO_BUILD_SYCL=ON \
+    -DGINKGO_BUILD_TESTS=OFF \
+    -DGINKGO_BUILD_BENCHMARKS=OFF \
+    -DGINKGO_BUILD_EXAMPLES=OFF \
+    -DGINKGO_BUILD_OMP=OFF \
+    -DGINKGO_ENABLE_HALF=OFF \
+    -DGINKGO_BUILD_MPI=ON \
+    -DMPI_CXX_COMPILER=mpiicpx \
+    .. && \
+    cmake --build . --parallel ${JOBS} && \
+    make install
+
+LABEL org.opencontainers.image.description="NeoFOAM Intel image: oneAPI, OpenFOAM ${OPENFOAM_VERSION}, Ginkgo ${GINKGO_TAG}"
+
+WORKDIR /root
+CMD ["/bin/bash", "--login"]

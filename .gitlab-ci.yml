@@ -8,28 +8,28 @@
 .gpu-base:
   variables:
     PYTHONPATH: /opt/intel/oneapi/advisor/2025.3/pythonapi
-    WM_PROJECT_VERSION: v2412
+    WM_PROJECT_VERSION: v2512
 
 .gpu-nvidia:
   extends: .gpu-base
   tags: ["nvidia-gpus"]
-  image: chihtaw/cuda-openfoam-ginkgo:12.8.1-v2412-arch_89
+  image: dheerajraghunathan/cuda-openfoam-ginkgo:12.8.1-v2512-arch_89
   variables:
-    FOAM_INST_DIR: /usr/local/app/openfoam
+    FOAM_INST_DIR: /opt/openfoam
     GPU_VENDOR: nvidia
 
 .gpu-amd:
   extends: .gpu-base
   tags: ["amd-gpus"]
-  image: chihtaw/rocm-openfoam-ginkgo:6.4.1-v2412-arch_gfx90a
+  image: dheerajraghunathan/rocm-openfoam-ginkgo:6.4.1-v2512-arch_gfx90a
   variables:
-    FOAM_INST_DIR: /workspace/openfoam
+    FOAM_INST_DIR: /opt/openfoam
     GPU_VENDOR: amd
 
 .gpu-intel:
   extends: .gpu-base
   tags: ["intel-gpus"]
-  image: dheerajraghunathan/oneapi-openfoam-ginkgo:2025.3-v2412-arch_pvc
+  image: dheerajraghunathan/oneapi-openfoam-ginkgo:2025.3-v2512-arch_pvc
   variables:
     FOAM_INST_DIR: /opt/openfoam
     GPU_VENDOR: intel
@@ -47,7 +47,7 @@
             ;;
         esac
         echo "Running OpenFOAM environment setup"
-        eval "$(bash -c 'source $FOAM_INST_DIR/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
+        eval "$(bash -c 'source $FOAM_INST_DIR/OpenFOAM-$WM_PROJECT_VERSION/etc/bashrc >/dev/null 2>&1; export -p')"
 
 # ============================================================
 #  Benchmarking variables

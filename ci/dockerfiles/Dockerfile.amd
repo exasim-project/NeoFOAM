@@ -1,0 +1,104 @@
+# SPDX-FileCopyrightText: 2023 - 2025 NeoN authors
+#
+# SPDX-License-Identifier: Unlicense
+#
+# ROCm + OpenFOAM + Ginkgo (HIP, MPI)
+# build: docker build -t neofoam-amd - < Dockerfile.amd
+
+# -complete has hipblas, hipsparse, rocrand and rocthrust which ginkgo needs
+ARG ROCM_BASE_IMAGE=rocm/dev-ubuntu-24.04:6.4.1-complete
+FROM ${ROCM_BASE_IMAGE}
+
+ARG OPENFOAM_VERSION=2512
+ARG GINKGO_TAG=6a3abf8c920228006f3b28bc3bf04fc7a5f6aee0
+ARG HIP_ARCH=gfx90a
+ARG JOBS=12
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ci runs mpirun as root
+ENV OMPI_ALLOW_RUN_AS_ROOT=1
+ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3-pip \
+    ninja-build \
+    pre-commit \
+    build-essential \
+    git \
+    cmake \
+    wget \
+    curl \
+    gnupg \
+    ca-certificates \
+    openmpi-bin \
+    libopenmpi-dev \
+    flex \
+    libfl-dev \
+    bison \
+    zlib1g-dev \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libscotch-dev \
+    libptscotch-dev \
+    libfftw3-dev \
+    libreadline-dev \
+    libncurses-dev \
+    libxt-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir --break-system-packages numpy foamlib
+
+WORKDIR /opt/openfoam
+
+# ThirdParty is .tar.gz since v2512
+RUN wget -q https://dl.openfoam.com/source/v${OPENFOAM_VERSION}/OpenFOAM-v${OPENFOAM_VERSION}.tgz && \
+    wget -q https://dl.openfoam.com/source/v${OPENFOAM_VERSION}/ThirdParty-v${OPENFOAM_VERSION}.tar.gz && \
+    tar -xzf OpenFOAM-v${OPENFOAM_VERSION}.tgz && \
+    tar -xzf ThirdParty-v${OPENFOAM_VERSION}.tar.gz && \
+    rm -f OpenFOAM-v${OPENFOAM_VERSION}.tgz ThirdParty-v${OPENFOAM_VERSION}.tar.gz
+
+ENV OPENFOAM_BASHRC=/opt/openfoam/OpenFOAM-v${OPENFOAM_VERSION}/etc/bashrc
+
+# default bashrc already uses gcc and system openmpi
+RUN set -o pipefail && \
+    source ${OPENFOAM_BASHRC} && \
+    cd /opt/openfoam/ThirdParty-v${OPENFOAM_VERSION} && \
+    ./Allwmake -j ${JOBS} -s -q 2>&1 | tee /tmp/thirdparty-build.log && \
+    cd /opt/openfoam/OpenFOAM-v${OPENFOAM_VERSION} && \
+    ./Allwmake -j ${JOBS} -s -q 2>&1 | tee /tmp/openfoam-build.log
+
+RUN echo "source ${OPENFOAM_BASHRC}" >> /etc/bash.bashrc
+
+WORKDIR /opt
+
+RUN git clone https://github.com/ginkgo-project/ginkgo.git && \
+    cd ginkgo && \
+    git checkout ${GINKGO_TAG}
+
+RUN cd /opt/ginkgo && \
+    mkdir build && cd build && \
+    cmake \
+    -DCMAKE_PREFIX_PATH=/opt/rocm \
+    -DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ \
+    -DCMAKE_HIP_ARCHITECTURES=${HIP_ARCH} \
+    -DGINKGO_BUILD_HIP=ON \
+    -DGINKGO_BUILD_MPI=ON \
+    -DGINKGO_BUILD_OMP=OFF \
+    -DGINKGO_BUILD_CUDA=OFF \
+    -DGINKGO_BUILD_SYCL=OFF \
+    -DGINKGO_BUILD_TESTS=OFF \
+    -DGINKGO_BUILD_BENCHMARKS=OFF \
+    -DGINKGO_BUILD_EXAMPLES=OFF \
+    -DGINKGO_ENABLE_HALF=OFF \
+    .. && \
+    cmake --build . --parallel ${JOBS} && \
+    make install
+
+LABEL org.opencontainers.image.description="NeoFOAM AMD image: ROCm, OpenFOAM ${OPENFOAM_VERSION}, Ginkgo ${GINKGO_TAG}, ${HIP_ARCH}"
+
+WORKDIR /root
+CMD ["/bin/bash", "--login"]
