@@ -299,6 +299,68 @@ def extract_centreline(x, y, U_int, line_value, is_vertical=True):
 
 
 # =========================================================
+#  Parallel vs serial trajectory comparison
+# =========================================================
+TRAJECTORY_FIELDS = ("U", "p")
+
+
+def snapshot_fields(case_path: Path) -> dict[float, dict[str, np.ndarray]]:
+    """Internal fields of every written time > 0, keyed by time."""
+    return {
+        t.time: {f: np.asarray(t[f].internal_field) for f in TRAJECTORY_FIELDS}
+        for t in FoamCase(case_path)
+        if t.time > 0
+    }
+
+
+def compare_trajectories(
+    serial: dict[float, dict[str, np.ndarray]],
+    parallel: dict[float, dict[str, np.ndarray]],
+    tol: float,
+) -> bool:
+    """Max abs difference per field and time, relative to the serial field's max."""
+    if not serial or sorted(serial) != sorted(parallel):
+        logger.error(f"Written times differ: serial={sorted(serial)} parallel={sorted(parallel)}")
+        return False
+    ok = True
+    for t in sorted(serial):
+        for f in TRAJECTORY_FIELDS:
+            ref, val = serial[t][f], parallel[t][f]
+            scale = max(float(np.max(np.abs(ref))), np.finfo(float).tiny)
+            err = float(np.max(np.abs(val - ref))) / scale
+            logger.info(f"t={t:g} {f}: relative max difference {err:.3e}")
+            ok &= err <= tol
+    return ok
+
+
+def run_trajectory_check(case_path: Path, preset: str, end_time: float, tol: float) -> None:
+    """Run a short serial and parallel case and compare their trajectories."""
+    control_dict = case_path / "system" / "controlDict"
+    original = control_dict.read_text()
+    try:
+        cd = FoamCase(case_path).control_dict
+        cd["endTime"] = end_time
+        cd["writeInterval"] = end_time / 5
+        logger.info(f"Shortened run: endTime={end_time:g}, writeInterval={end_time / 5:g}")
+
+        clean_case(case_path)
+        run_case(case_path, preset, "serial")
+        serial = snapshot_fields(case_path)
+
+        clean_case(case_path)
+        run_case(case_path, preset, "parallel")
+        parallel = snapshot_fields(case_path)
+    finally:
+        control_dict.write_text(original)
+
+    logger.info(f"Tolerance: tol-trajectory={tol:.3e}")
+    if not compare_trajectories(serial, parallel, tol):
+        logger.error("Parallel trajectory deviates from serial.")
+        sys.exit(2)
+    logger.info("Parallel trajectory matches serial.")
+
+
+# =========================================================
 #  Main
 # =========================================================
 def main() -> None:
@@ -308,7 +370,12 @@ def main() -> None:
         parser.add_argument("--clean", action="store_true", help="Clean case only")
         parser.add_argument("--run", action="store_true", help="Run solver only")
         parser.add_argument("--case", type=str, default=".", help="Case directory")
-        parser.add_argument("--mode", type=str, default="serial", help="Case directory")
+        parser.add_argument(
+            "--mode",
+            choices=("serial", "parallel"),
+            default="serial",
+            help="serial: full Ghia validation; parallel: short trajectory check vs serial",
+        )
         parser.add_argument(
             "--preset",
             type=str,
@@ -317,6 +384,13 @@ def main() -> None:
         )
         parser.add_argument("--tol-u", type=float, default=5e-2)
         parser.add_argument("--tol-v", type=float, default=5e-2)
+        parser.add_argument(
+            "--end-time",
+            type=float,
+            default=0.5,
+            help="endTime of the shortened serial/parallel comparison run",
+        )
+        parser.add_argument("--tol-trajectory", type=float, default=1e-3)
         args = parser.parse_args()
 
         case_path = Path(args.case).resolve()
@@ -328,6 +402,11 @@ def main() -> None:
 
         if args.run and not args.clean:
             run_case(case_path, args.preset)
+            return
+
+        # Parallel: compare a short run against serial instead of the full validation
+        if args.mode == "parallel":
+            run_trajectory_check(case_path, args.preset, args.end_time, args.tol_trajectory)
             return
 
         # Default: clean + run + validate
