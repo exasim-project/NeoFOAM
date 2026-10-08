@@ -26,9 +26,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# must match numberOfSubdomains in system/decomposeParDict
-N_RANKS = 2
-
 
 # =========================================================
 #  Utility: locate the repository root
@@ -148,7 +145,9 @@ def log_gpu_mapping(n_ranks: int) -> None:
         logger.warning(f"{n_ranks} ranks share {len(gpus)} GPU(s)")
 
 
-def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> None:
+def run_case(
+    case_path: Path, preset: str = "develop", mode: str = "serial", n_ranks: int = 2
+) -> None:
     logger.info("Starting Allrun workflow...")
 
     foamfile = case_path / "cavity.foam"
@@ -192,8 +191,8 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
     logger.info("Running neoIcoFoam")
     try:
         if mode == "parallel":
-            log_gpu_mapping(N_RANKS)
-            run_args = ["mpirun", "-n", str(N_RANKS), str(solver), "-parallel"]
+            log_gpu_mapping(n_ranks)
+            run_args = ["mpirun", "-n", str(n_ranks), str(solver), "-parallel"]
         else:
             run_args = [str(solver)]
 
@@ -333,31 +332,43 @@ def compare_trajectories(
     return ok
 
 
-def run_trajectory_check(case_path: Path, preset: str, end_time: float, tol: float) -> None:
-    """Run a short serial and parallel case and compare their trajectories."""
-    control_dict = case_path / "system" / "controlDict"
-    original = control_dict.read_text()
+def run_trajectory_check(
+    case_path: Path, preset: str, end_time: float, tol: float, subdomains: list[int]
+) -> None:
+    """Run a short serial case and compare each parallel decomposition against it."""
+    dicts = [case_path / "system" / name for name in ("controlDict", "decomposeParDict")]
+    originals = [d.read_text() for d in dicts]
+    failed = []
     try:
-        cd = FoamCase(case_path).control_dict
-        cd["endTime"] = end_time
-        cd["writeInterval"] = end_time / 5
+        case = FoamCase(case_path)
+        case.control_dict["endTime"] = end_time
+        case.control_dict["writeInterval"] = end_time / 5
         logger.info(f"Shortened run: endTime={end_time:g}, writeInterval={end_time / 5:g}")
 
         clean_case(case_path)
         run_case(case_path, preset, "serial")
         serial = snapshot_fields(case_path)
 
-        clean_case(case_path)
-        run_case(case_path, preset, "parallel")
-        parallel = snapshot_fields(case_path)
+        logger.info(f"Tolerance: tol-trajectory={tol:.3e}")
+        for n in subdomains:
+            logger.info(f"=== Parallel run on {n} subdomains ===")
+            case.decompose_par_dict["numberOfSubdomains"] = n
+            case.decompose_par_dict["coeffs"]["n"] = [n, 1, 1]
+            clean_case(case_path)
+            run_case(case_path, preset, "parallel", n)
+            if compare_trajectories(serial, snapshot_fields(case_path), tol):
+                logger.info(f"{n} subdomains: trajectory matches serial.")
+            else:
+                logger.error(f"{n} subdomains: trajectory deviates from serial.")
+                failed.append(n)
     finally:
-        control_dict.write_text(original)
+        for d, text in zip(dicts, originals):
+            d.write_text(text)
 
-    logger.info(f"Tolerance: tol-trajectory={tol:.3e}")
-    if not compare_trajectories(serial, parallel, tol):
-        logger.error("Parallel trajectory deviates from serial.")
+    if failed:
+        logger.error(f"Parallel trajectory check failed for subdomains {failed}.")
         sys.exit(2)
-    logger.info("Parallel trajectory matches serial.")
+    logger.info("All parallel trajectories match serial.")
 
 
 # =========================================================
@@ -391,6 +402,13 @@ def main() -> None:
             help="endTime of the shortened serial/parallel comparison run",
         )
         parser.add_argument("--tol-trajectory", type=float, default=1e-3)
+        parser.add_argument(
+            "--subdomains",
+            type=int,
+            nargs="+",
+            default=[2, 3, 4],
+            help="subdomain counts compared against serial in parallel mode",
+        )
         args = parser.parse_args()
 
         case_path = Path(args.case).resolve()
@@ -406,7 +424,9 @@ def main() -> None:
 
         # Parallel: compare a short run against serial instead of the full validation
         if args.mode == "parallel":
-            run_trajectory_check(case_path, args.preset, args.end_time, args.tol_trajectory)
+            run_trajectory_check(
+                case_path, args.preset, args.end_time, args.tol_trajectory, args.subdomains
+            )
             return
 
         # Default: clean + run + validate
