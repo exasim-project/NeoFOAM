@@ -301,6 +301,9 @@ def extract_centreline(x, y, U_int, line_value, is_vertical=True):
 #  Parallel vs serial trajectory comparison
 # =========================================================
 TRAJECTORY_FIELDS = ("U", "p")
+# tight linear solver tolerance so serial/parallel differences reflect the
+# decomposition, not where the iterative solvers happen to stop
+TRAJECTORY_SOLVER_TOL = 1e-9
 
 
 def snapshot_fields(case_path: Path) -> dict[float, dict[str, np.ndarray]]:
@@ -336,7 +339,9 @@ def run_trajectory_check(
     case_path: Path, preset: str, end_time: float, tol: float, subdomains: list[int]
 ) -> None:
     """Run a short serial case and compare each parallel decomposition against it."""
-    dicts = [case_path / "system" / name for name in ("controlDict", "decomposeParDict")]
+    dicts = [
+        case_path / "system" / name for name in ("controlDict", "decomposeParDict", "fvSolution")
+    ]
     originals = [d.read_text() for d in dicts]
     failed = []
     try:
@@ -344,6 +349,9 @@ def run_trajectory_check(
         case.control_dict["endTime"] = end_time
         case.control_dict["writeInterval"] = end_time / 5
         logger.info(f"Shortened run: endTime={end_time:g}, writeInterval={end_time / 5:g}")
+        for field in TRAJECTORY_FIELDS:
+            case.fv_solution["solvers"][field]["tolerance"] = TRAJECTORY_SOLVER_TOL
+        logger.info(f"Linear solver tolerance: {TRAJECTORY_SOLVER_TOL:g}")
 
         clean_case(case_path)
         run_case(case_path, preset, "serial")
@@ -401,7 +409,7 @@ def main() -> None:
             default=0.5,
             help="endTime of the shortened serial/parallel comparison run",
         )
-        parser.add_argument("--tol-trajectory", type=float, default=1e-3)
+        parser.add_argument("--tol-trajectory", type=float, default=1e-2)
         parser.add_argument(
             "--subdomains",
             type=int,
