@@ -5,6 +5,7 @@
 
 import argparse
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -24,6 +25,9 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+# must match numberOfSubdomains in system/decomposeParDict
+N_RANKS = 2
 
 
 # =========================================================
@@ -113,6 +117,37 @@ def restore0_dir(case_path: Path) -> None:
     logger.info("Restored 0/ from 0.orig/")
 
 
+def log_gpu_mapping(n_ranks: int) -> None:
+    """Log the visible GPUs and the GPU each MPI rank will pick."""
+    gpus = []
+    if shutil.which("nvidia-smi"):
+        out = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True).stdout
+        gpus = [line for line in out.splitlines() if line.startswith("GPU")]
+    logger.info(f"Visible GPUs: {len(gpus)}")
+    for gpu in gpus:
+        logger.info(f"  {gpu}")
+    logger.info(f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES', '<unset>')}")
+    # Kokkos maps each rank to device (local rank % device count)
+    probe = subprocess.run(
+        [
+            "mpirun",
+            "-n",
+            str(n_ranks),
+            "sh",
+            "-c",
+            "echo $OMPI_COMM_WORLD_RANK $OMPI_COMM_WORLD_LOCAL_RANK",
+        ],
+        capture_output=True,
+        text=True,
+    ).stdout
+    for line in sorted(probe.splitlines()):
+        rank, local = line.split()
+        device = int(local) % len(gpus) if gpus else "?"
+        logger.info(f"  rank {rank} (local rank {local}) -> GPU {device}")
+    if gpus and n_ranks > len(gpus):
+        logger.warning(f"{n_ranks} ranks share {len(gpus)} GPU(s)")
+
+
 def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> None:
     logger.info("Starting Allrun workflow...")
 
@@ -157,7 +192,8 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
     logger.info("Running neoIcoFoam")
     try:
         if mode == "parallel":
-            run_args = ["mpirun", "-n", "2", str(solver), "-parallel"]
+            log_gpu_mapping(N_RANKS)
+            run_args = ["mpirun", "-n", str(N_RANKS), str(solver), "-parallel"]
         else:
             run_args = [str(solver)]
 
