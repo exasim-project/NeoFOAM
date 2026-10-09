@@ -5,6 +5,7 @@
 
 import argparse
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -113,7 +114,40 @@ def restore0_dir(case_path: Path) -> None:
     logger.info("Restored 0/ from 0.orig/")
 
 
-def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> None:
+def log_gpu_mapping(n_ranks: int) -> None:
+    """Log the visible GPUs and the GPU each MPI rank will pick."""
+    gpus = []
+    if shutil.which("nvidia-smi"):
+        out = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True).stdout
+        gpus = [line for line in out.splitlines() if line.startswith("GPU")]
+    logger.info(f"Visible GPUs: {len(gpus)}")
+    for gpu in gpus:
+        logger.info(f"  {gpu}")
+    logger.info(f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES', '<unset>')}")
+    # Kokkos maps each rank to device (local rank % device count)
+    probe = subprocess.run(
+        [
+            "mpirun",
+            "-n",
+            str(n_ranks),
+            "sh",
+            "-c",
+            "echo $OMPI_COMM_WORLD_RANK $OMPI_COMM_WORLD_LOCAL_RANK",
+        ],
+        capture_output=True,
+        text=True,
+    ).stdout
+    for line in sorted(probe.splitlines()):
+        rank, local = line.split()
+        device = int(local) % len(gpus) if gpus else "?"
+        logger.info(f"  rank {rank} (local rank {local}) -> GPU {device}")
+    if gpus and n_ranks > len(gpus):
+        logger.warning(f"{n_ranks} ranks share {len(gpus)} GPU(s)")
+
+
+def run_case(
+    case_path: Path, preset: str = "develop", mode: str = "serial", n_ranks: int = 2
+) -> None:
     logger.info("Starting Allrun workflow...")
 
     foamfile = case_path / "cavity.foam"
@@ -157,7 +191,8 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
     logger.info("Running neoIcoFoam")
     try:
         if mode == "parallel":
-            run_args = ["mpirun", "-n", "4", str(solver), "-parallel"]
+            log_gpu_mapping(n_ranks)
+            run_args = ["mpirun", "-n", str(n_ranks), str(solver), "-parallel"]
         else:
             run_args = [str(solver)]
 
@@ -263,6 +298,88 @@ def extract_centreline(x, y, U_int, line_value, is_vertical=True):
 
 
 # =========================================================
+#  Parallel vs serial trajectory comparison
+# =========================================================
+TRAJECTORY_FIELDS = ("U", "p")
+# tight linear solver tolerance so serial/parallel differences reflect the
+# decomposition, not where the iterative solvers happen to stop
+TRAJECTORY_SOLVER_TOL = 1e-9
+
+
+def snapshot_fields(case_path: Path) -> dict[float, dict[str, np.ndarray]]:
+    """Internal fields of every written time > 0, keyed by time."""
+    return {
+        t.time: {f: np.asarray(t[f].internal_field) for f in TRAJECTORY_FIELDS}
+        for t in FoamCase(case_path)
+        if t.time > 0
+    }
+
+
+def compare_trajectories(
+    serial: dict[float, dict[str, np.ndarray]],
+    parallel: dict[float, dict[str, np.ndarray]],
+    tol: float,
+) -> bool:
+    """Max abs difference per field and time, relative to the serial field's max."""
+    if not serial or sorted(serial) != sorted(parallel):
+        logger.error(f"Written times differ: serial={sorted(serial)} parallel={sorted(parallel)}")
+        return False
+    ok = True
+    for t in sorted(serial):
+        for f in TRAJECTORY_FIELDS:
+            ref, val = serial[t][f], parallel[t][f]
+            scale = max(float(np.max(np.abs(ref))), np.finfo(float).tiny)
+            err = float(np.max(np.abs(val - ref))) / scale
+            logger.info(f"t={t:g} {f}: relative max difference {err:.3e}")
+            ok &= err <= tol
+    return ok
+
+
+def run_trajectory_check(
+    case_path: Path, preset: str, end_time: float, tol: float, subdomains: list[int]
+) -> None:
+    """Run a short serial case and compare each parallel decomposition against it."""
+    dicts = [
+        case_path / "system" / name for name in ("controlDict", "decomposeParDict", "fvSolution")
+    ]
+    originals = [d.read_text() for d in dicts]
+    failed = []
+    try:
+        case = FoamCase(case_path)
+        case.control_dict["endTime"] = end_time
+        case.control_dict["writeInterval"] = end_time / 5
+        logger.info(f"Shortened run: endTime={end_time:g}, writeInterval={end_time / 5:g}")
+        for field in TRAJECTORY_FIELDS:
+            case.fv_solution["solvers"][field]["tolerance"] = TRAJECTORY_SOLVER_TOL
+        logger.info(f"Linear solver tolerance: {TRAJECTORY_SOLVER_TOL:g}")
+
+        clean_case(case_path)
+        run_case(case_path, preset, "serial")
+        serial = snapshot_fields(case_path)
+
+        logger.info(f"Tolerance: tol-trajectory={tol:.3e}")
+        for n in subdomains:
+            logger.info(f"=== Parallel run on {n} subdomains ===")
+            case.decompose_par_dict["numberOfSubdomains"] = n
+            case.decompose_par_dict["coeffs"]["n"] = [n, 1, 1]
+            clean_case(case_path)
+            run_case(case_path, preset, "parallel", n)
+            if compare_trajectories(serial, snapshot_fields(case_path), tol):
+                logger.info(f"{n} subdomains: trajectory matches serial.")
+            else:
+                logger.error(f"{n} subdomains: trajectory deviates from serial.")
+                failed.append(n)
+    finally:
+        for d, text in zip(dicts, originals):
+            d.write_text(text)
+
+    if failed:
+        logger.error(f"Parallel trajectory check failed for subdomains {failed}.")
+        sys.exit(2)
+    logger.info("All parallel trajectories match serial.")
+
+
+# =========================================================
 #  Main
 # =========================================================
 def main() -> None:
@@ -272,7 +389,12 @@ def main() -> None:
         parser.add_argument("--clean", action="store_true", help="Clean case only")
         parser.add_argument("--run", action="store_true", help="Run solver only")
         parser.add_argument("--case", type=str, default=".", help="Case directory")
-        parser.add_argument("--mode", type=str, default="serial", help="Case directory")
+        parser.add_argument(
+            "--mode",
+            choices=("serial", "parallel"),
+            default="serial",
+            help="serial: full Ghia validation; parallel: short trajectory check vs serial",
+        )
         parser.add_argument(
             "--preset",
             type=str,
@@ -281,6 +403,20 @@ def main() -> None:
         )
         parser.add_argument("--tol-u", type=float, default=5e-2)
         parser.add_argument("--tol-v", type=float, default=5e-2)
+        parser.add_argument(
+            "--end-time",
+            type=float,
+            default=0.5,
+            help="endTime of the shortened serial/parallel comparison run",
+        )
+        parser.add_argument("--tol-trajectory", type=float, default=1e-2)
+        parser.add_argument(
+            "--subdomains",
+            type=int,
+            nargs="+",
+            default=[2, 3, 4],
+            help="subdomain counts compared against serial in parallel mode",
+        )
         args = parser.parse_args()
 
         case_path = Path(args.case).resolve()
@@ -292,6 +428,13 @@ def main() -> None:
 
         if args.run and not args.clean:
             run_case(case_path, args.preset)
+            return
+
+        # Parallel: compare a short run against serial instead of the full validation
+        if args.mode == "parallel":
+            run_trajectory_check(
+                case_path, args.preset, args.end_time, args.tol_trajectory, args.subdomains
+            )
             return
 
         # Default: clean + run + validate
