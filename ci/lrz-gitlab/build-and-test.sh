@@ -37,10 +37,28 @@ echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
 # Step 0: GPU/Compiler/Tool Info
 # -------------------------
+# The runner sets its own PATH, so the PATH entries of the image are lost: add the
+# GPU-aware MPICH of the Ginkgo images and the CUDA toolkit back (missing dirs are harmless).
+export PATH="/opt/mpich/bin:/usr/local/cuda/bin:${PATH}"
+
+# Launch everything with MPICH's own mpiexec, matching the libmpi that NeoN, NeoFOAM and
+# OpenFOAM link, and start the ranks locally: inside the Slurm allocation hydra would
+# otherwise bootstrap through srun, and every rank comes up as a singleton.
+export HYDRA_BOOTSTRAP=fork
+MPIEXEC="$(command -v mpiexec.mpich || command -v mpiexec || true)"
+
 echo "=== Tool versions ==="
 cmake --version
-mpirun --version
+echo "MPI launcher: ${MPIEXEC}"
+[ -n "${MPIEXEC}" ] && { "${MPIEXEC}" --version | head -4 || true; }
 g++ --version || clang++ --version
+
+# Benchmark generation (benchmarks/benchmarkSuite/createStudies.py) needs pandas and
+# foamlib; the images only provide python3, pip and venv. Install them into a venv in
+# the job directory on /scratch: $HOME on the runners is small and full.
+python3 -m venv .venv-ci
+source .venv-ci/bin/activate
+pip install --no-cache-dir --quiet pandas "foamlib[preprocessing,postprocessing]"
 
 # use host buffer since no gpu aware mpi is available
 export NEON_FORCE_HOST_BUFFER=1
@@ -108,6 +126,7 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_WITH_MPI=ON \
+        -DMPIEXEC_EXECUTABLE="${MPIEXEC}" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
@@ -121,6 +140,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_WITH_MPI=ON \
+        -DMPIEXEC_EXECUTABLE="${MPIEXEC}" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
@@ -131,6 +151,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DKokkos_ARCH_INTEL_PVC=ON \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_WITH_MPI=ON \
+        -DMPIEXEC_EXECUTABLE="${MPIEXEC}" \
         -DCMAKE_BUILD_TYPE="release" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
@@ -207,11 +228,11 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
     blockMesh > log.blockMesh 2>&1
     decomposePar -decomposeParDict system/decomposeParDict.6 > log.decomposePar 2>&1
     for proc in processor*/; do rm -rf "${proc}0" && cp -r 0.orig "${proc}0"; done
-    mpirun -np 6 snappyHexMesh -parallel -overwrite \
+    "${MPIEXEC}" -np 6 snappyHexMesh -parallel -overwrite \
         -decomposeParDict system/decomposeParDict.6 > log.snappyHexMesh 2>&1
-    mpirun -np 6 topoSet -parallel \
+    "${MPIEXEC}" -np 6 topoSet -parallel \
         -decomposeParDict system/decomposeParDict.6 > log.topoSet 2>&1
-    mpirun -np 6 potentialFoam -parallel -writephi \
+    "${MPIEXEC}" -np 6 potentialFoam -parallel -writephi \
         -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
     foamDictionary -entry endTime -set 5 system/controlDict
     # Ginkgo DPC++ backend lacks build_mapping for distributed solvers; run serial on Intel PVC
@@ -222,7 +243,7 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
             cat log.neoSimpleFoam; exit 1
         fi
     else
-        if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+        if ! "${MPIEXEC}" -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
                 -executor GPU \
                 -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
             cat log.neoSimpleFoam; exit 1
