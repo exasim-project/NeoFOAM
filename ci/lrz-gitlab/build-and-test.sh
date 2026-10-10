@@ -54,8 +54,11 @@ echo "MPI launcher: ${MPIEXEC}"
 g++ --version || clang++ --version
 
 # Benchmark generation (benchmarks/benchmarkSuite/createStudies.py) needs pandas and
-# foamlib; the images only provide python3 and pip.
-python3 -m pip install --user --break-system-packages --quiet pandas foamlib
+# foamlib; the images only provide python3, pip and venv. Install them into a venv in
+# the job directory on /scratch: $HOME on the runners is small and full.
+python3 -m venv .venv-ci
+source .venv-ci/bin/activate
+pip install --no-cache-dir --quiet pandas foamlib
 
 # use host buffer since no gpu aware mpi is available
 export NEON_FORCE_HOST_BUFFER=1
