@@ -53,6 +53,10 @@ echo "MPI launcher: ${MPIEXEC}"
 [ -n "${MPIEXEC}" ] && { "${MPIEXEC}" --version | head -4 || true; }
 g++ --version || clang++ --version
 
+# Benchmark generation (benchmarks/benchmarkSuite/createStudies.py) needs pandas and
+# foamlib; the images only provide python3 and pip.
+python3 -m pip install --user --break-system-packages --quiet pandas foamlib
+
 # use host buffer since no gpu aware mpi is available
 export NEON_FORCE_HOST_BUFFER=1
 
