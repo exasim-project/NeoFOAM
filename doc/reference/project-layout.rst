@@ -9,7 +9,8 @@ the linked reference pages for the full API.
 ``io/``
     Binds config classes to files (``BaseConfig`` + ``@IOStrategy``), writes and
     deep-merges case files, and exposes the frontend-agnostic config-introspection
-    surface (``schema.py``).
+    surface (``schema.py``). ``load``/``save`` take an optional ``region``, which
+    reads a multi-region case's ``constant/<region>/...`` (OpenFOAM.org layout).
 
 ``fields/``
     Boundary-condition types, ``FieldValue`` scalar/vector values, and the
