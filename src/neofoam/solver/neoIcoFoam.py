@@ -11,6 +11,7 @@ import neon._neon as nn  # NeoN Python bindings
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.solver.neon_runtime import requested_executor
 from neofoam.solver.pisoControl import PisoControl
 
 
@@ -27,7 +28,7 @@ class NeoIcoFoam:
 
         runTime = pyf.Time(argList)
 
-        rt = nfb.create_adapter_run_time(runTime)
+        rt = nfb.create_adapter_run_time(runTime, requested_executor())
 
         piso_dict = rt.fv_solution_dict.subDict("PISO")
         piso = PisoControl(
