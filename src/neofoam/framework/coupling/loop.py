@@ -20,7 +20,7 @@ stepped (serial): the second side receives what the first sent in the same pass.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, Optional
 
 import numpy as np
 
@@ -64,6 +64,8 @@ class SideChange(NamedTuple):
 Transfer = Callable[[Data, CoupledSide, CoupledSide, int], Data]
 # Whether the coupling has converged, from the change of every side's data in the last pass.
 Convergence = Callable[[list[SideChange]], bool]
+# Relaxes the data carried into a pass: (data of the carried sides, iteration) -> data.
+Acceleration = Callable[[list[Data], int], list[Data]]
 
 
 def identity_transfer(data: Data, source: CoupledSide, target: CoupledSide, iteration: int) -> Data:
@@ -95,8 +97,12 @@ class CouplingOp(IterativeOp):
     interface (possibly in two regions) wrap their solution with the same
     instance and join one loop. Before each pass it checks ``converged`` on what
     the sides sent in the last pass; it stops after ``max_iterations`` passes
-    regardless. ``transfer`` maps (and may relax) the data of one side onto the
-    other. A coupling joins exactly two sides. Not thread safe.
+    regardless. ``transfer`` maps the data of one side onto the other. Serial
+    (the default), a side receives what the other sent last, in the same pass if
+    it was stepped before; ``parallel``, both sides receive what the other sent
+    in the previous pass. ``acceleration`` relaxes, once per pass, the data a
+    pass receives from the pass before (serial: the second side's, parallel:
+    both). A coupling joins exactly two sides. Not thread safe.
 
     Example::
 
@@ -108,11 +114,15 @@ class CouplingOp(IterativeOp):
         converged: Convergence = unchanged,
         transfer: Transfer = identity_transfer,
         max_iterations: int = 100,
+        parallel: bool = False,
+        acceleration: Optional[Acceleration] = None,
     ) -> None:
         super().__init__(self._next_pass)
         self.converged = converged
         self.transfer = transfer
         self.max_iterations = max_iterations
+        self.parallel = parallel
+        self.acceleration = acceleration
         self.sides: list[_Attached] = []
         # the pass of the current time step; 0 between time steps
         self.iteration = 0
@@ -161,9 +171,19 @@ class CouplingOp(IterativeOp):
         return self._start_pass()
 
     def _start_pass(self) -> bool:
-        self._previous = list(self._sent)
         self.iteration += 1
+        if self.acceleration is not None:
+            carried = self._carried()
+            relaxed = self.acceleration([self._sent[i] for i in carried], self.iteration)
+            for index, data in zip(carried, relaxed):
+                self._sent[index] = data
+        self._previous = list(self._sent)
         return True
+
+    def _carried(self) -> list[int]:
+        """The sides whose data a pass receives from the pass before."""
+        # Serial, the first side's data reaches the second within the pass.
+        return list(range(len(self.sides))) if self.parallel else list(range(1, len(self.sides)))
 
     def _changes(self) -> list[SideChange]:
         return [
@@ -173,8 +193,10 @@ class CouplingOp(IterativeOp):
 
     def _receive(self, index: int) -> None:
         partner = self._partner(index)
+        # _previous holds what the sides sent before this pass
+        sent = self._previous if self.parallel else self._sent
         data = self.transfer(
-            self._sent[partner],
+            sent[partner],
             self.sides[partner].side,
             self.sides[index].side,
             self.iteration,

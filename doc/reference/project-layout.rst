@@ -35,8 +35,9 @@ the linked reference pages for the full API.
       visualization, and the runtime graph edits (``ctx.graph``). See
       :mod:`neofoam.framework.graph`.
     - ``coupling/`` — ``CouplingOp``, the loop that repeats the solution of two
-      coupled sides (``CoupledSide``) until their exchange converges. See
-      :mod:`neofoam.framework.coupling`.
+      coupled sides (``CoupledSide``) until their exchange converges, and its
+      numpy kernels (nearest-neighbor mapping, constant/Aitken relaxation,
+      relative convergence). See :mod:`neofoam.framework.coupling`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 
@@ -52,8 +53,8 @@ the linked reference pages for the full API.
     Several solvers, one per region, in one case and one time loop (OpenFOAM.org
     ``foamMultiRun`` layout): ``system/controlDict.yaml`` lists ``regionSolvers``
     and each region reads ``constant/<region>/``, ``0/<region>/``. The driver
-    steps every region's operations; coupled patches of two regions join one
-    coupling loop.
+    steps every region's operations; the patches ``system/regionCoupling.yaml``
+    couples join one coupling loop.
 
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and

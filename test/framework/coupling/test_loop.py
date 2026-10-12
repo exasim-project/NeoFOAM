@@ -88,6 +88,55 @@ def test_coupling_op_serial_side_receives_what_the_other_sent_in_the_same_pass()
     ]
 
 
+def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_before() -> None:
+    log: list[str] = []
+    ctx = Context(fields={}, models={})
+    coupling = CouplingOp(converged=_never, max_iterations=2, parallel=True)
+    a, b = _Side("a", log), _Side("b", log)
+    a.register(ctx, coupling)
+    b.register(ctx, coupling)
+
+    _run(ctx, a, b)
+
+    assert log == [
+        "receive_a 0.0",
+        "solve_a",
+        "receive_b 0.0",
+        "solve_b",
+        "receive_a 1.0",
+        "solve_a",
+        "receive_b 1.0",
+        "solve_b",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("parallel", "carried"),
+    [(False, [[0.0], [2.0]]), (True, [[0.0, 0.0], [1.0, 2.0]])],
+    ids=["serial: b only", "parallel: a and b"],
+)
+def test_coupling_op_accelerates_the_data_carried_into_a_pass(
+    parallel: bool, carried: list[list[float]]
+) -> None:
+    ctx = Context(fields={}, models={})
+    relaxed: list[list[float]] = []
+
+    def acceleration(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
+        relaxed.append([float(data["x"][0]) for data in sent])
+        return sent
+
+    coupling = CouplingOp(
+        converged=_never, max_iterations=2, parallel=parallel, acceleration=acceleration
+    )
+    a, b = _Side("a", [], fixed=1.0), _Side("b", [], fixed=2.0)
+    a.register(ctx, coupling)
+    b.register(ctx, coupling)
+
+    _run(ctx, a, b)
+
+    assert relaxed == carried
+
+
 def test_coupling_op_stops_once_the_sent_data_is_unchanged() -> None:
     ctx = Context(fields={}, models={})
     coupling = CouplingOp(max_iterations=10)
