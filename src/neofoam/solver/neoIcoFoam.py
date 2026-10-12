@@ -23,6 +23,12 @@ class NeoIcoFoam:
     def run(self) -> None:
         nn.initialize(self._argv)
 
+        # Scoped so NeoN-backed objects are freed before nn.finalize().
+        self._solve()
+
+        nn.finalize()
+
+    def _solve(self) -> None:
         argList = pyf.argList(self._argv)
 
         runTime = pyf.Time(argList)
@@ -58,7 +64,7 @@ class NeoIcoFoam:
             nn.rotate_old_times(U)
             nn.rotate_old_times(phi)
 
-            max_co, mean_co = nn.compute_co_num(rt.nf_mesh, phi.internal_vector(), rt.dt)
+            max_co, mean_co = nn.compute_co_num(phi, rt.dt)
             print(f"Courant Number mean: {mean_co:.6f} max: {max_co:.6f}")
 
             nfb.sync_run_times(runTime, rt, max_co)
@@ -114,7 +120,6 @@ class NeoIcoFoam:
             runTime.printExecutionTime()
 
         print("End")
-        nn.finalize()
 
 
 def main() -> None:
