@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
+from neofoam.framework.coupling.loop import CoupledSide, CouplingOp
 from neofoam.framework.operations import IterativeOp, Operation, StepBuilder
 from neofoam.framework.types import OperationMetadata
 
@@ -64,10 +65,15 @@ class Selector:
 
 @dataclass(frozen=True)
 class _Wrap:
-    """One registered wrap: the operations it selects and the loop around them."""
+    """One registered wrap: the operations it selects, the loop around them, its coupled side."""
 
     ops: Selector
     with_: IterativeOp
+    side: CoupledSide | None = None
+
+
+# A wrap with the operations of one scope it selects.
+_Pick = tuple[_Wrap, list[Operation]]
 
 
 class GraphEdits:
@@ -86,20 +92,40 @@ class GraphEdits:
 
     def __init__(self) -> None:
         self._wraps: list[_Wrap] = []
+        # the coupling of each coupled patch (CouplingOp.shared); a driver that
+        # knows the interfaces fills it before the boundary conditions are built
+        self.couplings: dict[str, CouplingOp] = {}
 
     def solving(self, field: str) -> Selector:
         """The operations that solve ``field`` and every operation downstream of them."""
         return Selector(field)
 
-    def wrap(self, ops: Selector, with_: IterativeOp) -> None:
+    def wrap(self, ops: Selector, with_: IterativeOp, side: CoupledSide | None = None) -> None:
         """Run the operations ``ops`` selects inside a loop driven by ``with_``.
 
         The loop takes the place of the last selected operation; the other
         operations of its scope keep their order, those before it run before the
         loop. ``with_`` is called before each pass and repeats the body while it
-        returns ``True``.
+        returns ``True``. With a ``side``, ``with_`` must be a
+        :class:`~neofoam.framework.coupling.CouplingOp`: the side receives before
+        the selected operations and sends after them, inside the loop.
         """
-        self._wraps.append(_Wrap(ops, with_))
+        if side is not None:
+            if not isinstance(with_, CouplingOp):
+                raise TypeError(f"a coupled side needs a CouplingOp, got {type(with_).__name__}")
+            with_.attach(ops.field, side)
+        self._wraps.append(_Wrap(ops, with_, side))
+
+    def include_region(self, region: GraphEdits, name: str) -> None:
+        """Take over the edits of the region ``name``, whose operations this graph steps.
+
+        Use it in a driver that steps a region's operations in its own graph under
+        the names ``<name>.<op>`` (:func:`~neofoam.framework.solver.region_operations`).
+        The region's wraps then select the region's operations only; wraps of
+        several regions that share one ``with_`` join one loop.
+        """
+        for wrap in region._wraps:
+            self._wraps.append(replace(wrap, ops=Selector(f"{name}.{wrap.ops.field}")))
 
     def apply(self, builder: StepBuilder) -> StepBuilder:
         """Return the resolved graph *builder* with every registered edit applied.
@@ -124,9 +150,9 @@ def _apply_to_scope(ops: list[Operation], wraps: list[_Wrap], applied: set[int])
     """Apply the wraps to the loops nested in *ops*, then to *ops* themselves."""
     ops = [_apply_to_loop(op, wraps, applied) for op in ops]
     for group in _group_by_loop(wraps):
-        members = _members(ops, group, applied)
-        if members:
-            ops = _wrapped(ops, members, group[0].with_)
+        picks = _picks(ops, group, applied)
+        if picks:
+            ops = _wrapped(ops, picks, group[0].with_)
     return ops
 
 
@@ -144,9 +170,9 @@ def _group_by_loop(wraps: list[_Wrap]) -> list[list[_Wrap]]:
     return list(groups.values())
 
 
-def _members(ops: list[Operation], group: list[_Wrap], applied: set[int]) -> list[Operation]:
-    """The operations of *ops* that any wrap of *group* selects, in scope order."""
-    selected: set[int] = set()
+def _picks(ops: list[Operation], group: list[_Wrap], applied: set[int]) -> list[_Pick]:
+    """The wraps of *group* that select operations of *ops*, with what they select."""
+    picks: list[_Pick] = []
     for wrap in group:
         picked = wrap.ops.select(ops)
         if not picked:
@@ -157,21 +183,38 @@ def _members(ops: list[Operation], group: list[_Wrap], applied: set[int]) -> lis
                 "loop scope; a graph edit wraps operations of one scope"
             )
         applied.add(id(wrap))
-        selected.update(id(op) for op in picked)
-    return [op for op in ops if id(op) in selected]
+        picks.append((wrap, picked))
+    return picks
 
 
-def _wrapped(ops: list[Operation], members: list[Operation], with_: IterativeOp) -> list[Operation]:
-    """*ops* with *members* moved into one loop at the place of the last member."""
-    member_ids = {id(op) for op in members}
+def _wrapped(ops: list[Operation], picks: list[_Pick], with_: IterativeOp) -> list[Operation]:
+    """*ops* with the picked operations moved into one loop at the place of the last one."""
+    member_ids = {id(op) for _wrap, picked in picks for op in picked}
+    members = [op for op in ops if id(op) in member_ids]
     last = max(index for index, op in enumerate(ops) if id(op) in member_ids)
     solves = sorted({field for op in members for field in op.metadata.solves})
     loop = Operation(
         func=with_,
         metadata=OperationMetadata(op_name=f"loop_solving_{'_'.join(solves)}", solves=solves),
-        sub_operations=members,
+        sub_operations=_with_sides(members, picks),
     )
     # Operations before the last member that are not members do not depend on one
     # (they would be downstream), so running them before the loop keeps every edge.
     earlier = [op for op in ops[:last] if id(op) not in member_ids]
     return [*earlier, loop, *ops[last + 1 :]]
+
+
+def _with_sides(members: list[Operation], picks: list[_Pick]) -> list[Operation]:
+    """*members* with each coupled side's receive before its operations and send after them."""
+    before: dict[int, list[Operation]] = {}
+    after: dict[int, list[Operation]] = {}
+    for wrap, picked in picks:
+        if wrap.side is None or not isinstance(wrap.with_, CouplingOp):
+            continue
+        receive, send = wrap.with_.side_operations(wrap.side, wrap.ops.field)
+        before.setdefault(id(picked[0]), []).append(receive)
+        after.setdefault(id(picked[-1]), []).append(send)
+    body: list[Operation] = []
+    for op in members:
+        body += [*before.get(id(op), []), op, *after.get(id(op), [])]
+    return body

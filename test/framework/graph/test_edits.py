@@ -9,7 +9,8 @@ The graphs are built as a solver's resolved time step: a ``time_loop`` around
 fields, and ``write`` (stepped last, but depends on nothing). ``_RepeatSolution``
 stands in for a boundary condition: built with the context, it wraps the
 solution of its field in a loop of a fixed number of passes. Expected graphs are
-nested ``(loop, [body])`` / name literals.
+nested ``(loop, [body])`` / name literals. A coupled side's send and receive are
+never called here: only where the edit puts them is checked.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from typing import Union
 import pytest
 
 from neofoam.framework.context import Context
+from neofoam.framework.coupling import CoupledSide, CouplingOp
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
     IterativeOp,
@@ -199,3 +201,51 @@ def test_graph_edits_wrap_of_an_unsolved_field_raises() -> None:
 
     with pytest.raises(ValueError, match=r"no operation solves \['h'\]"):
         ctx.graph.apply(_time_step([]))
+
+
+def _side() -> CoupledSide:
+    return CoupledSide(send=dict, receive=lambda: None, coordinates=None)
+
+
+def test_graph_edits_wrap_puts_a_side_around_the_solving_ops() -> None:
+    ctx = Context(fields={}, models={})
+    ctx.graph.wrap(ops=ctx.graph.solving("T"), with_=CouplingOp(), side=_side())
+
+    graph = ctx.graph.apply(_time_step([]))
+
+    assert _tree(graph.operations.ops) == [
+        (
+            "time_loop",
+            [
+                "start_step",
+                "solve_U",
+                ("loop_solving_T", ["receive_T", "solve_T", "update_rho", "send_T"]),
+                "write",
+            ],
+        )
+    ]
+
+
+def test_graph_edits_wrap_of_a_side_without_a_coupling_raises() -> None:
+    ctx = Context(fields={}, models={})
+
+    with pytest.raises(TypeError, match="a coupled side needs a CouplingOp, got IterativeOp"):
+        ctx.graph.wrap(ops=ctx.graph.solving("T"), with_=IterativeOp(_Passes(2)), side=_side())
+
+
+def test_graph_edits_include_region_wraps_the_ops_of_that_region() -> None:
+    log: list[str] = []
+    region = Context(fields={}, models={})
+    _RepeatSolution("T", count=2, ctx=region)
+    ctx = Context(fields={}, models={})
+    ctx.graph.include_region(region.graph, "left")
+    builder = StepBuilder(
+        [_op("left.solve_T", log, solves=["left.T"]), _op("right.solve_T", log, solves=["right.T"])]
+    )
+
+    graph = ctx.graph.apply(builder)
+
+    assert _tree(graph.operations.ops) == [
+        ("loop_solving_left.T", ["left.solve_T"]),
+        "right.solve_T",
+    ]

@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional
 
+from neofoam.framework.graph.edits import GraphEdits
+
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
     from neofoam.framework.operations import OperationCollection, StepBuilder
@@ -44,6 +46,9 @@ class SolverRuntime:
     argv: list[Any] = field(default_factory=list)
     # the region of a multi-region case this runtime solves; None for a single region
     region: Optional[str] = None
+    # the graph edits the runtime's context starts with; a multi-region driver
+    # fills its couplings before initialize(), the initializer hands it to ctx.graph
+    graph: GraphEdits = field(default_factory=GraphEdits)
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)

@@ -265,6 +265,15 @@ operation such as the old-time rotation at the start of the step runs once.
 Wraps that share one ``IterativeOp`` become one loop. Without edits
 ``apply`` returns the resolved graph unchanged.
 
+A coupled boundary condition wraps with a ``CouplingOp`` and its side of the
+interface (``side=CoupledSide(send, receive, coordinates)``): the side receives
+before the operations of its field and sends after them, inside the loop, which
+repeats until the exchanged data converges. ``CouplingOp.shared(ctx, key)`` hands
+both sides of an interface the same instance. In a multi-region case the multiRun
+driver steps every region's operations itself, named ``<region>.<op>``
+(``region_operations``), and takes over the regions' edits
+(``ctx.graph.include_region``), so the sides of two regions join one loop.
+
 Trade-offs
 ----------
 
