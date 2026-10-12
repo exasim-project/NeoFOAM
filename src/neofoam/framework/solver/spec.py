@@ -25,7 +25,12 @@ from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.operations import Operation, OperationCollection, SequentialOp
+from neofoam.framework.operations import (
+    Operation,
+    OperationCollection,
+    SequentialOp,
+    StepBuilder,
+)
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import SolverRuntime
@@ -53,6 +58,8 @@ class SolverSpec:
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
+        self._time_step_func: Optional[Callable[..., None]] = None
+        self._finalize_func: Optional[Callable[..., None]] = None
         self._dependency_resolver = DependencyResolver()
 
     @property
@@ -200,6 +207,22 @@ class SolverSpec:
         self._execution_graph_func = func
         return func
 
+    def time_step(self, func: Callable[..., None]) -> Callable[..., None]:
+        """Decorator to register the body of one time step, without the time loop.
+
+        The callback ``(self, ctx, builder)`` adds the step's operations to
+        ``builder``. The solver's own execution graph puts it inside its time
+        loop; a multi-region driver puts every region's body inside one shared
+        loop (see :func:`neofoam.framework.solver.region_step`).
+        """
+        self._time_step_func = func
+        return func
+
+    def finalizer(self, func: Callable[..., None]) -> Callable[..., None]:
+        """Decorator to register the end-of-run step ``(self, ctx)`` (close files, ...)."""
+        self._finalize_func = func
+        return func
+
     def operation(
         self,
         operation_number: Optional[str] = None,
@@ -318,6 +341,17 @@ class SolverSpec:
             )
 
         return self._execution_graph_func(**kwargs)
+
+    def _run_time_step(self, runtime: SolverRuntime, ctx: Context, builder: StepBuilder) -> None:
+        """Add the registered time-step body to *builder*."""
+        if self._time_step_func is None:
+            raise RuntimeError(f"No time_step function registered for solver {self.name}")
+        self._time_step_func(self=runtime, ctx=ctx, builder=builder)
+
+    def _run_finalize(self, runtime: SolverRuntime, ctx: Context) -> None:
+        """Run the registered end-of-run step, if any."""
+        if self._finalize_func is not None:
+            self._finalize_func(self=runtime, ctx=ctx)
 
     # ------------------------------------------------------------------
     # Operation building (called by SolverRuntime.operations)

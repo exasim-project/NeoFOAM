@@ -26,7 +26,8 @@ the linked reference pages for the full API.
     - ``model/`` — ``ModelSpec``/``Model``, the decorator-driven model definition
       and its runtime. See :mod:`neofoam.framework.model`.
     - ``solver/`` — ``SolverSpec``/``Solver``, core/optional model selection and
-      the case-free config schema. See :mod:`neofoam.framework.solver`.
+      the case-free config schema; ``region_step`` runs a region's time-step body
+      (``@spec.time_step``) in a shared loop. See :mod:`neofoam.framework.solver`.
     - ``initialization/`` — staged init (load → resolve → build) via ``InitStep``
       and ``InitializerBuilder``. See :mod:`neofoam.framework.initialization`.
     - ``graph/`` — operation-graph sort, resolution, validation, and
@@ -41,6 +42,11 @@ the linked reference pages for the full API.
 ``solver/incompressibleFluid/``
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
+
+``solver/multiRun/``
+    Several solvers, one per region, in one case and one time loop (OpenFOAM.org
+    ``foamMultiRun`` layout): ``system/controlDict.yaml`` lists ``regionSolvers``
+    and each region reads ``constant/<region>/``, ``0/<region>/``. No coupling yet.
 
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and

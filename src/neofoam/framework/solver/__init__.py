@@ -8,9 +8,11 @@ Public API:
     SolverSpec    — immutable solver definition
     SolverRuntime — one instantiation of a spec, owns per-instance state
     Solver        — factory alias: Solver("Name") -> SolverSpec
+    region_step   — a region's time-step body as one operation of a shared loop
 """
 
 from .configurations import Configurations, configurations
+from .regions import region_step
 from .runtime import SolverRuntime, SolverState
 from .spec import Solver, SolverSpec
 
@@ -21,4 +23,5 @@ __all__ = [
     "Solver",
     "Configurations",
     "configurations",
+    "region_step",
 ]

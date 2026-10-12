@@ -98,6 +98,14 @@ class SolverRuntime:
         """
         return self.spec._run_execution_graph(self, domain_name, ctx)
 
+    def time_step(self, ctx: "Context", builder: "StepBuilder") -> None:
+        """Add the registered body of one time step to ``builder``."""
+        self.spec._run_time_step(self, ctx, builder)
+
+    def finalize(self, ctx: "Context") -> None:
+        """Run the registered end-of-run step (if any)."""
+        self.spec._run_finalize(self, ctx)
+
     @property
     def operations(self) -> "OperationCollection":
         """Build operations with this runtime as the self binding."""
