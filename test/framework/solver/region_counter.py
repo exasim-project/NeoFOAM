@@ -38,6 +38,6 @@ def _finalize(self: Any, ctx: Context) -> None:
     ctx.models["finalized"] = True
 
 
-@counter.operation()
+@counter.operation(solves=["total"])
 def add_increment(self: Any, ctx: Context) -> None:
     ctx.fields["total"] += ctx.models["increment"]

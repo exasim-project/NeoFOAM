@@ -85,6 +85,9 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
+    # the fields the operation solves for; a graph edit selects by them
+    # (``GraphEdits.solving``)
+    solves: list[str] = field(default_factory=list)
 
     # DAG visualization properties
     shape: str = "box"
