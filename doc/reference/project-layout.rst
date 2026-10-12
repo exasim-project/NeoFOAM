@@ -27,11 +27,16 @@ the linked reference pages for the full API.
       and its runtime. See :mod:`neofoam.framework.model`.
     - ``solver/`` — ``SolverSpec``/``Solver``, core/optional model selection and
       the case-free config schema; ``region_step`` runs a region's time-step body
-      (``@spec.time_step``) in a shared loop. See :mod:`neofoam.framework.solver`.
+      (``@spec.time_step``) in a shared loop, ``region_operations`` hands its
+      operations to a driver's graph. See :mod:`neofoam.framework.solver`.
     - ``initialization/`` — staged init (load → resolve → build) via ``InitStep``
       and ``InitializerBuilder``. See :mod:`neofoam.framework.initialization`.
     - ``graph/`` — operation-graph sort, resolution, validation, and
-      visualization. See :mod:`neofoam.framework.graph`.
+      visualization, and the runtime graph edits (``ctx.graph``). See
+      :mod:`neofoam.framework.graph`.
+    - ``coupling/`` — ``CouplingOp``, the loop that repeats the solution of two
+      coupled sides (``CoupledSide``) until their exchange converges. See
+      :mod:`neofoam.framework.coupling`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 
@@ -46,7 +51,9 @@ the linked reference pages for the full API.
 ``solver/multiRun/``
     Several solvers, one per region, in one case and one time loop (OpenFOAM.org
     ``foamMultiRun`` layout): ``system/controlDict.yaml`` lists ``regionSolvers``
-    and each region reads ``constant/<region>/``, ``0/<region>/``. No coupling yet.
+    and each region reads ``constant/<region>/``, ``0/<region>/``. The driver
+    steps every region's operations; coupled patches of two regions join one
+    coupling loop.
 
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and

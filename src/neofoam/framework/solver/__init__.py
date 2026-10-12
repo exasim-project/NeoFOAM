@@ -9,10 +9,11 @@ Public API:
     SolverRuntime — one instantiation of a spec, owns per-instance state
     Solver        — factory alias: Solver("Name") -> SolverSpec
     region_step   — a region's time-step body as one operation of a shared loop
+    region_operations — a region's time-step operations for a driver's own graph
 """
 
 from .configurations import Configurations, configurations
-from .regions import region_step
+from .regions import region_operations, region_step
 from .runtime import SolverRuntime, SolverState
 from .spec import Solver, SolverSpec
 
@@ -24,4 +25,5 @@ __all__ = [
     "Configurations",
     "configurations",
     "region_step",
+    "region_operations",
 ]

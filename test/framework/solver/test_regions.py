@@ -9,13 +9,15 @@ increment.yaml`` of ``cases/regions``, 2 on the left and 3 on the right) to a
 the other's file, shared its context or ran on the driver's context shows up in
 its total. A region's graph edits (``ctx.graph``) apply to its own time step
 only: a loop of two passes around ``add_increment`` doubles that region's total.
+``region_operations`` hands the same body to a driver as single operations named
+``<region>.<op>``; a driver that includes the region's edits loops them the same way.
 """
 
 from framework.conftest import MaxIterations
 from framework.solver.region_counter import counter
 from neofoam.framework.context import Context
-from neofoam.framework.operations import IterativeOp
-from neofoam.framework.solver import region_step
+from neofoam.framework.operations import IterativeOp, StepBuilder
+from neofoam.framework.solver import region_operations, region_step
 
 
 def _run_steps(steps: int, driver_ctx: Context) -> dict[str, Context]:
@@ -59,3 +61,37 @@ def test_region_step_applies_the_region_graph_edits() -> None:
         operation.run(Context(fields={}, models={}))
 
     assert (left_ctx.fields["total"], right_ctx.fields["total"]) == (4.0, 3.0)
+
+
+def test_region_operations_prefix_the_names_with_the_region() -> None:
+    left = counter.instantiate(region="left")
+
+    operations = region_operations(left, left.initialize())
+
+    assert [(op.operation_name, op.metadata.solves) for op in operations] == [
+        ("left.add_increment", ["left.total"])
+    ]
+
+
+def test_region_operations_run_on_the_region_context() -> None:
+    left = counter.instantiate(region="left")
+    left_ctx = left.initialize()
+    driver_ctx = Context(fields={}, models={})
+
+    for operation in region_operations(left, left_ctx):
+        operation.run(driver_ctx)
+
+    assert (left_ctx.fields["total"], driver_ctx.fields) == (2.0, {})
+
+
+def test_region_operations_join_the_loop_of_an_included_region_edit() -> None:
+    left = counter.instantiate(region="left")
+    left_ctx = left.initialize()
+    left_ctx.graph.wrap(ops=left_ctx.graph.solving("total"), with_=IterativeOp(MaxIterations(2)))
+    driver_ctx = Context(fields={}, models={})
+    driver_ctx.graph.include_region(left_ctx.graph, "left")
+
+    graph = driver_ctx.graph.apply(StepBuilder(region_operations(left, left_ctx)))
+    graph.operations.run(driver_ctx)
+
+    assert left_ctx.fields["total"] == 4.0
