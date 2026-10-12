@@ -1,0 +1,148 @@
+\doxysection{NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Omega\+Wall\+Function Class Reference}
+\hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction}{}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction}\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+
+
+Specific dissipation rate wall function BC.  
+
+
+
+
+{\ttfamily \#include $<$omega\+Wall\+Function.\+hpp$>$}
+
+Inheritance diagram for NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Omega\+Wall\+Function\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ac0943294b58f4309efe67121dd9f4ebb}{Omega\+Wall\+Function}} (const Unstructured\+Mesh \&mesh, const Dictionary \&dict, local\+Idx patch\+ID)
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ade878bc1924a572a412e73210fc42193}{correct\+Boundary\+Condition}} (Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&) final
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a9f77a168cf212f6ee009a5dc7ad2ef40}{correct\+Boundary\+Condition}} (Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&domain\+Vector, const fvcc\+::\+Boundary\+Context \&ctx) final
+\item 
+std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a542de3fda3eee63d128e7f83d023509a}{get\+Name}} () const override
+\item 
+std\+::unique\+\_\+ptr$<$ Volume\+Boundary\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ $>$ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ad8d6125c35743afcd35e0352ac452e6d}{clone}} () const final
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a3fa4baf9aa7bc075511b6faeac3513da}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a387b8f9582784cc00f59e786686129b8}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a0126c542f5f90c4169e4919a44491531}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Specific dissipation rate wall function BC. 
+
+Mirrors Foam\+::omega\+Wall\+Function\+Fv\+Patch\+Scalar\+Field\+: blends a viscous-\/sublayer and log-\/layer ω estimate (BINOMIAL n=2) and sets the wall face value.
+
+Required Boundary\+Context fields\+:
+\begin{DoxyItemize}
+\item {\ttfamily "{}k"{}} Volume\+Field$<$scalar$>$ — √k at the wall-\/adjacent cell
+\item {\ttfamily "{}nu"{}} Volume\+Field$<$scalar$>$ — laminar viscosity, boundary values
+\item {\ttfamily "{}near\+Wall\+Dist"{}} Volume\+Field$<$scalar$>$ — cell-\/to-\/wall distance y, boundary values
+\end{DoxyItemize}
+
+The no-\/arg \doxylink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ade878bc1924a572a412e73210fc42193}{correct\+Boundary\+Condition()} overload is a no-\/op; this BC must be driven via correct\+Boundary\+Condition(ctx) from k\+Omega\+SST\+::correct(). 
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00129}{129}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ac0943294b58f4309efe67121dd9f4ebb}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ac0943294b58f4309efe67121dd9f4ebb} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!OmegaWallFunction@{OmegaWallFunction}}
+\index{OmegaWallFunction@{OmegaWallFunction}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{OmegaWallFunction()}{OmegaWallFunction()}}
+{\footnotesize\ttfamily Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::\+Omega\+Wall\+Function (\begin{DoxyParamCaption}\item[{const Unstructured\+Mesh \&}]{mesh,  }\item[{const Dictionary \&}]{dict,  }\item[{local\+Idx}]{patch\+ID }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00135}{135}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ad8d6125c35743afcd35e0352ac452e6d}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ad8d6125c35743afcd35e0352ac452e6d} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!clone@{clone}}
+\index{clone@{clone}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{clone()}{clone()}}
+{\footnotesize\ttfamily std\+::unique\+\_\+ptr$<$ Volume\+Boundary\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ $>$ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::clone (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00181}{181}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ade878bc1924a572a412e73210fc42193}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_ade878bc1924a572a412e73210fc42193} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!correctBoundaryCondition@{correctBoundaryCondition}}
+\index{correctBoundaryCondition@{correctBoundaryCondition}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{correctBoundaryCondition()}{correctBoundaryCondition()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::correct\+Boundary\+Condition (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00147}{147}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a9f77a168cf212f6ee009a5dc7ad2ef40}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a9f77a168cf212f6ee009a5dc7ad2ef40} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!correctBoundaryCondition@{correctBoundaryCondition}}
+\index{correctBoundaryCondition@{correctBoundaryCondition}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{correctBoundaryCondition()}{correctBoundaryCondition()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::correct\+Boundary\+Condition (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{domain\+Vector,  }\item[{const fvcc\+::\+Boundary\+Context \&}]{ctx }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00150}{150}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a387b8f9582784cc00f59e786686129b8}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a387b8f9582784cc00f59e786686129b8} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!doc@{doc}}
+\index{doc@{doc}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily static std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00169}{169}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a542de3fda3eee63d128e7f83d023509a}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a542de3fda3eee63d128e7f83d023509a} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!getName@{getName}}
+\index{getName@{getName}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{getName()}{getName()}}
+{\footnotesize\ttfamily std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::get\+Name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00167}{167}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a3fa4baf9aa7bc075511b6faeac3513da}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a3fa4baf9aa7bc075511b6faeac3513da} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!name@{name}}
+\index{name@{name}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00165}{165}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a0126c542f5f90c4169e4919a44491531}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a0126c542f5f90c4169e4919a44491531} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}!schema@{schema}}
+\index{schema@{schema}!NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::OmegaWallFunction}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily static std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Omega\+Wall\+Function\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00179}{179}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/fvcc/boundary/volume/\mbox{\hyperlink{omegaWallFunction_8hpp}{omega\+Wall\+Function.\+hpp}}\end{DoxyCompactItemize}
