@@ -7,6 +7,7 @@ The ``counter`` solver loads ``constant/increment.yaml`` for its runtime's regio
 ``cases/regions`` holds a different increment per region and another one at the
 single-region path, so a runtime that read the wrong file shows up in its value;
 a runtime without a region reads the single-region file, as before regions.
+``finalize`` runs the solver's ``@finalizer`` on the region's context.
 """
 
 from typing import Optional
@@ -21,3 +22,12 @@ def test_runtime_region_selects_the_region_configs(region: Optional[str], expect
     ctx = counter.instantiate(region=region).initialize()
 
     assert ctx.models["increment"] == expected
+
+
+def test_runtime_finalize_runs_the_registered_finalizer() -> None:
+    runtime = counter.instantiate(region="left")
+    ctx = runtime.initialize()
+
+    runtime.finalize(ctx)
+
+    assert ctx.models["finalized"] is True
