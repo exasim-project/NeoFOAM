@@ -229,8 +229,14 @@ class SolverSpec:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
+        solves: Optional[list[str]] = None,
     ) -> Callable[..., Any]:
-        """Decorator to register a solver operation."""
+        """Decorator to register a solver operation.
+
+        ``solves`` names the fields the operation solves for, so a boundary
+        condition or model can select it at runtime (``ctx.graph.solving("T")``)
+        without knowing the solver's operation names.
+        """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             self._operations.append(
@@ -241,6 +247,7 @@ class SolverSpec:
                         "depends_on": depends_on,
                         "before": before,
                         "name": name or func.__name__,
+                        "solves": solves or [],
                     },
                 )
             )
@@ -380,6 +387,7 @@ class SolverSpec:
                     ),
                     depends_on=metadata["depends_on"] or [],
                     before=metadata["before"] or [],
+                    solves=metadata["solves"],
                 ),
             )
             ops.add(op)

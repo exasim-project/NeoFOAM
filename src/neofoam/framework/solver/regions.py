@@ -22,6 +22,7 @@ def region_step(runtime: SolverRuntime, ctx: Context) -> Operation:
     The driver runs it inside its time loop with the driver's context, which the
     operation ignores: fields and models stay per region. The region reads the
     driver's time only if the driver shares it (``ctx.time = driver_ctx.time``).
+    The region's graph edits (``ctx.graph``) apply to its time-step body.
 
     Example::
 
@@ -32,7 +33,8 @@ def region_step(runtime: SolverRuntime, ctx: Context) -> Operation:
     """
     builder = StepBuilder()
     runtime.time_step(ctx, builder)
-    body: Operations = DAGResolver().resolve(builder, Operations()).operations
+    resolved = DAGResolver().resolve(builder, Operations())
+    body: Operations = ctx.graph.apply(resolved).operations
     return Operation(
         func=SequentialOp(lambda _driver_ctx: body.run(ctx)),
         metadata=OperationMetadata(op_name=f"time_step_{runtime.region}"),
