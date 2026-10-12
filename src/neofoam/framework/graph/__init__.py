@@ -15,10 +15,12 @@ operations can run, the framework needs to:
    :mod:`~neofoam.framework.graph.resolver`. For the simpler
    ``{node: [deps]}`` case, :func:`topological_order` (see
    :mod:`~neofoam.framework.graph.ordering`) builds the graph and sorts it.
-3. Optionally render the resulting graph for diagnostics — see
+3. Apply the graph edits that boundary conditions and models registered at
+   runtime (``ctx.graph``) — see :mod:`~neofoam.framework.graph.edits`.
+4. Optionally render the resulting graph for diagnostics — see
    :mod:`~neofoam.framework.graph.visualization`.
 
-The package exposes its public symbols across five modules:
+The package exposes its public symbols across six modules:
 
 - :class:`DAGResolver` — the main entry point; merges and orders
   operations across loop scopes.
@@ -32,6 +34,8 @@ The package exposes its public symbols across five modules:
   validation and the underlying :class:`networkx.DiGraph` builder.
 - :class:`CyclicDependencyError`, :class:`MissingDependencyError` —
   the two domain exceptions the resolver can raise.
+- :class:`GraphEdits`, :class:`Selector` — runtime edits of a resolved
+  graph, e.g. a loop around the operations that solve a field.
 - :func:`dependency_dag`, :func:`digraph_to_pyvis_html` — compose
   per-domain DAGs and render them to an interactive HTML page.
 
@@ -39,6 +43,7 @@ See :doc:`/explanation/operations-and-the-dag` for the design
 rationale and where the resolver fits into the solver lifecycle.
 """
 
+from .edits import GraphEdits, Selector
 from .ordering import topological_order
 from .resolver import (
     CyclicDependencyError,
@@ -58,6 +63,8 @@ __all__ = [
     "TopologicalSorter",
     "NetworkxTopologicalSorter",
     "DAGResolver",
+    "GraphEdits",
+    "Selector",
     "topological_order",
     "CyclicDependencyError",
     "MissingDependencyError",

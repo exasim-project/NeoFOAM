@@ -7,12 +7,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Iterator, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Union
 
 from neofoam import telemetry
-from neofoam.framework.context import Context
 
 from .types import OperationMetadata, OperationNumber
+
+if TYPE_CHECKING:
+    # Context holds the graph edits, which build operations: import it for typing only.
+    from neofoam.framework.context import Context
 
 
 class ConditionalOp:

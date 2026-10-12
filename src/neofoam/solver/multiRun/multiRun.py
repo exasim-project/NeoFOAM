@@ -89,6 +89,6 @@ def run() -> Context:
     solver = multiRun.instantiate()
     ctx = solver.initialize()
     builder, model_ops = solver.execution_graph(ctx=ctx)
-    DAGResolver().resolve(builder, model_ops).operations.run(ctx)
+    ctx.graph.apply(DAGResolver().resolve(builder, model_ops)).operations.run(ctx)
     solver.finalize(ctx)
     return ctx

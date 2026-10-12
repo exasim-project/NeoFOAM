@@ -237,6 +237,34 @@ plus ``operation_number=2.5``; the turbulence update lands after
 ``continuity`` because of its ``depends_on=continuity``. The solver
 itself never named the model operations.
 
+Runtime edits: ``ctx.graph``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some changes to the graph are known only once the case is read: a
+boundary condition that needs the solution of its field repeated inside a
+loop, for example. The solver cannot name those, but it declares which
+fields its operations solve (``@solver.operation(solves=["T"])``). The
+boundary condition or model registers its change on the context while the
+case initializes, and the runtime applies the edits to the resolved graph:
+
+.. code-block:: python
+
+    # in the boundary condition, built with the context
+    ctx.graph.wrap(ops=ctx.graph.solving("T"), with_=IterativeOp(predicate))
+
+    # in the runtime
+    ctx = runtime.initialize()
+    builder, model_ops = runtime.execution_graph(ctx=ctx)
+    graph = ctx.graph.apply(DAGResolver().resolve(builder, model_ops))
+
+``solving("T")`` picks, in the scope holding them, the operations that
+solve ``T`` and everything downstream of them over ``depends_on`` /
+``before``. ``wrap`` moves them into one loop driven by the
+``IterativeOp``; the other operations of the scope stay outside, so an
+operation such as the old-time rotation at the start of the step runs once.
+Wraps that share one ``IterativeOp`` become one loop. Without edits
+``apply`` returns the resolved graph unchanged.
+
 Trade-offs
 ----------
 

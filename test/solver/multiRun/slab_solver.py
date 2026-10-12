@@ -113,7 +113,7 @@ def _time_step(self: Any, ctx: Context, builder: StepBuilder) -> None:
     builder.step(self.operations["solve_T"])
 
 
-@slab.operation()
+@slab.operation(solves=["T"])
 def solve_T(self: Any, ctx: Context) -> None:
     """One forward-Euler step; ghost cells hold the fixed face temperatures."""
     geometry = ctx.models["slab"]
@@ -130,5 +130,5 @@ def run_alone() -> Context:
     runtime = slab.instantiate()
     ctx = runtime.initialize()
     builder, model_ops = runtime.execution_graph(ctx=ctx)
-    DAGResolver().resolve(builder, model_ops).operations.run(ctx)
+    ctx.graph.apply(DAGResolver().resolve(builder, model_ops)).operations.run(ctx)
     return ctx
