@@ -3,6 +3,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/map.h>
 
 // NeoN headers
 #include "NeoN/NeoN.hpp"
@@ -46,6 +47,42 @@ void registerUtility(nb::module_& m)
         },
         "runtime"_a,
         "Read kinematic viscosity nu from constant/transportProperties"
+    );
+
+    m.def(
+        "read_thermophysical_properties",
+        [](nf::RunTime& rt) -> std::map<std::string, double>
+        {
+            Foam::IOdictionary thermoDict(Foam::IOobject(
+                "thermophysicalProperties",
+                rt.mesh.time().constant(),
+                rt.mesh,
+                Foam::IOobject::MUST_READ_IF_MODIFIED,
+                Foam::IOobject::NO_WRITE
+            ));
+            const Foam::dictionary& mixture = thermoDict.subDict("mixture");
+            const Foam::dictionary& specie = mixture.subDict("specie");
+            const Foam::dictionary& thermodynamics = mixture.subDict("thermodynamics");
+            const Foam::dictionary& transport = mixture.subDict("transport");
+
+            std::map<std::string, double> out;
+            out["molWeight"] = specie.get<double>("molWeight");
+            out["mu"] = transport.get<double>("mu");
+            out["Pr"] = transport.get<double>("Pr");
+            if (thermodynamics.found("Cv"))
+            {
+                out["Cv"] = thermodynamics.get<double>("Cv");
+            }
+            if (thermodynamics.found("Cp"))
+            {
+                out["Cp"] = thermodynamics.get<double>("Cp");
+            }
+            out["Hf"] = thermodynamics.found("Hf") ? thermodynamics.get<double>("Hf") : 0.0;
+            return out;
+        },
+        "runtime"_a,
+        "Read molWeight/Cv-or-Cp/Hf/mu/Pr from constant/thermophysicalProperties "
+        "(perfectGas + const transport)"
     );
 
     m.def(
