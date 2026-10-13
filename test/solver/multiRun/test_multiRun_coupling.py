@@ -6,8 +6,8 @@
 In ``cases/coupled_slabs`` the slab ``left`` (x in [0, 1], conductivity 1, 400 K
 at x = 0) and the slab ``right`` (x in [1, 2], conductivity 3, 300 K at x = 2)
 meet at x = 1, where left's patch ``right`` and right's patch ``left`` are
-``coupledConduction``. multiRun does not read the interfaces from the case yet,
-so the test injects them (``region_couplings``): both patches share one
+``coupledConduction``. The test injects the interface (``region_couplings``) in
+place of the case's ``system/regionCoupling.yaml``: both patches share one
 ``CouplingOp`` with its defaults, which hand the data over unchanged (both
 patches lie at x = 1) and stop once it changes by round-off only.
 

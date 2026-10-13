@@ -19,14 +19,20 @@ from typing import Any
 
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import CouplingOp
+from neofoam.framework.coupling import (
+    AitkenRelaxation,
+    ConstantRelaxation,
+    CouplingOp,
+    MappedTransfer,
+    RelativeConvergence,
+)
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
 from neofoam.framework.solver import Solver, region_operations
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.types import OperationMetadata
 
-from .configs import ControlDictConfig
+from .configs import ControlDictConfig, RegionCouplingConfig
 from .create_fields import create_init
 
 multiRun = Solver("multiRun")
@@ -62,9 +68,34 @@ def initialize(self: Any) -> Context:
 def region_couplings(regions: list[str]) -> dict[str, dict[str, CouplingOp]]:
     """The coupling of each coupled patch, by region; patches sharing one are coupled.
 
-    No interface is known yet, so every region couples its patches by itself.
+    The interface comes from ``system/regionCoupling.yaml``
+    (:class:`~neofoam.solver.multiRun.configs.RegionCouplingConfig`); without the
+    file every region couples its patches by itself.
     """
-    return {}
+    if not RegionCouplingConfig.get_default_path().exists():
+        return {}
+    config = RegionCouplingConfig.load()
+    unknown = sorted(set(config.interface) - set(regions))
+    if unknown:
+        raise ValueError(
+            f"system/regionCoupling.yaml couples the regions {unknown}, "
+            f"which are not in regionSolvers {regions}"
+        )
+    coupling = _coupling(config)
+    return {region: {patch: coupling} for region, patch in config.interface.items()}
+
+
+def _coupling(config: RegionCouplingConfig) -> CouplingOp:
+    """The coupling loop the config describes."""
+    relaxation = {"constant": ConstantRelaxation, "aitken": AitkenRelaxation}
+    measures = [RelativeConvergence(entry.data, entry.limit) for entry in config.convergence]
+    return CouplingOp(
+        converged=lambda changes: all(measure(changes) for measure in measures),
+        transfer=MappedTransfer(),
+        max_iterations=config.maxIterations,
+        parallel=config.scheme == "parallel",
+        acceleration=relaxation[config.acceleration.type](config.acceleration.relaxation),
+    )
 
 
 @multiRun.execution_graph_step
