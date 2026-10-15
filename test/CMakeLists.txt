@@ -263,6 +263,27 @@ neofoam_generate_controldict(
   default)
 
 neofoam_generate_controldict(
+  setup_rhoPimple
+  APPLICATION
+  neorhoPimpleFoam
+  END_TIME
+  0.004
+  DELTA_T
+  0.0002
+  WRITE_CONTROL
+  timeStep
+  WRITE_INTERVAL
+  20
+  WRITE_PRECISION
+  15
+  TIME_PRECISION
+  6
+  EXECUTOR
+  Serial
+  ALLOCATOR
+  default)
+
+neofoam_generate_controldict(
   setup_ddtCorr
   APPLICATION
   icoFoam
