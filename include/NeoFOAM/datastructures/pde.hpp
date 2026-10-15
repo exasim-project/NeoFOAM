@@ -159,7 +159,7 @@ public:
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
         // Accept the call in serial (MPI not initialised — mpiRank is the
-        // sentinel -1, which would compare unequal to 0 if cast to size_t)
+        // sentinel -1, which would compare unequal to 0 if cast to NeoN::sizeType)
         // and on rank 0 in parallel. SetReference::operator() further guards
         // the matrix mutation against non-rank-0 in initialised MPI.
         // When runTime_ is null (1-arg constructor path), default to accepting

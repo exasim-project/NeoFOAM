@@ -43,8 +43,8 @@ inline ContinuityErrors computeContinuityError(
     NeoN::scalar localAbsVolSum = 0.0;
     NeoN::parallelReduce(
         rt.exec,
-        {0, static_cast<size_t>(nCells)},
-        NEON_LAMBDA(const size_t i, NeoN::scalar& s) {
+        {0, static_cast<NeoN::size_t>(nCells)},
+        NEON_LAMBDA(const NeoN::size_t i, NeoN::scalar& s) {
             s += Kokkos::abs(divPhiView[i]) * volView[i];
         },
         localAbsVolSum
@@ -53,16 +53,16 @@ inline ContinuityErrors computeContinuityError(
     NeoN::scalar localSignedVolSum = 0.0;
     NeoN::parallelReduce(
         rt.exec,
-        {0, static_cast<size_t>(nCells)},
-        NEON_LAMBDA(const size_t i, NeoN::scalar& s) { s += divPhiView[i] * volView[i]; },
+        {0, static_cast<NeoN::size_t>(nCells)},
+        NEON_LAMBDA(const NeoN::size_t i, NeoN::scalar& s) { s += divPhiView[i] * volView[i]; },
         localSignedVolSum
     );
 
     NeoN::scalar localTotalVol = 0.0;
     NeoN::parallelReduce(
         rt.exec,
-        {0, static_cast<size_t>(nCells)},
-        NEON_LAMBDA(const size_t i, NeoN::scalar& s) { s += volView[i]; },
+        {0, static_cast<NeoN::size_t>(nCells)},
+        NEON_LAMBDA(const NeoN::size_t i, NeoN::scalar& s) { s += volView[i]; },
         localTotalVol
     );
 

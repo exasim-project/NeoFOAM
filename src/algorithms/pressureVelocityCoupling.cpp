@@ -29,7 +29,7 @@ void constrainHbyA(
             parallelFor(
                 hByA.exec(),
                 hByA.boundaryData().range(patchi),
-                NEON_LAMBDA(const size_t bfacei) { hByABcValue[bfacei] = uBcValue[bfacei]; }
+                NEON_LAMBDA(const NeoN::sizeType bfacei) { hByABcValue[bfacei] = uBcValue[bfacei]; }
             );
         }
     }
@@ -362,7 +362,7 @@ void updateFaceVelocity(
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        NEON_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const NeoN::sizeType facei) {
             auto own = static_cast<std::size_t>(owner[facei]);
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
@@ -388,8 +388,8 @@ void updateFaceVelocity(
 
     NeoN::parallelFor(
         exec,
-        {0, static_cast<size_t>(mesh.nBoundaryFaces())},
-        NEON_LAMBDA(const size_t bfacei) {
+        {0, static_cast<NeoN::sizeType>(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(const NeoN::sizeType bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
@@ -409,7 +409,7 @@ void updateFaceVelocity(
         NeoN::parallelFor(
             exec,
             {0, nProcFaces},
-            NEON_LAMBDA(const size_t procFacei) {
+            NEON_LAMBDA(const NeoN::sizeType procFacei) {
                 auto bfacei = nBoundaryFaces + procFacei;
                 auto own = static_cast<std::size_t>(faceCells[bfacei]);
                 auto coupling = nlValues[rowOrderV[procFacei]];
@@ -482,7 +482,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nInternalFaces},
-        NEON_LAMBDA(const size_t facei) {
+        NEON_LAMBDA(const NeoN::sizeType facei) {
             auto own = static_cast<std::size_t>(owner[facei]);
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
@@ -495,7 +495,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nBoundaryFaces},
-        NEON_LAMBDA(const size_t faceBCI) { bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI]; }
+        NEON_LAMBDA(const NeoN::sizeType faceBCI) { bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI]; }
     );
 
     // Processor-boundary faces.
@@ -507,8 +507,8 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nProcFaces},
-        NEON_LAMBDA(const size_t proci) {
-            auto faceBCI = static_cast<size_t>(nBoundaryFaces) + proci;
+        NEON_LAMBDA(const NeoN::sizeType proci) {
+            auto faceBCI = static_cast<NeoN::sizeType>(nBoundaryFaces) + proci;
             auto own = static_cast<std::size_t>(procFaceCells[faceBCI]);
             auto w = bndWeights[faceBCI];
             auto faceVal = w * (volFieldIn[own] - volFieldBc[faceBCI]) + volFieldBc[faceBCI];

@@ -135,7 +135,7 @@ namespace
 {
 
 // Distributed-mode detection: `Environment::sizeRank()` returns
-// static_cast<size_t>(-1) when MPI hasn't been initialised (a serial run, or
+// static_cast<NeoN::sizeType>(-1) when MPI hasn't been initialised (a serial run, or
 // a parallel binary that hasn't called MPI_Init yet). Comparing > 1 alone
 // would be true in those cases too, so we'd wrap the preconditioner in
 // Schwarz for a serial solve and SIGILL inside Ginkgo. Gate the wrap on
