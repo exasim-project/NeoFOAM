@@ -50,7 +50,7 @@ RUN apt-get update && \
     libxt-dev && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --no-cache-dir --break-system-packages numpy foamlib
+RUN pip3 install --no-cache-dir --break-system-packages numpy pandas foamlib
 
 WORKDIR /opt/openfoam
 
@@ -83,6 +83,7 @@ RUN cd /opt/ginkgo && \
     mkdir build && cd build && \
     cmake \
     -DCMAKE_PREFIX_PATH=/opt/rocm \
+    -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
     -DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ \
     -DCMAKE_HIP_ARCHITECTURES=${HIP_ARCH} \
     -DGINKGO_BUILD_HIP=ON \
