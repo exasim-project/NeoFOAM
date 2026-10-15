@@ -173,7 +173,7 @@ auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
     type_container_t nfField(
         exec,
         reinterpret_cast<const mapped_t*>(field.cdata()),
-        static_cast<size_t>(field.size())
+        static_cast<NeoN::sizeType>(field.size())
     );
     return nfField;
 };

@@ -97,7 +97,7 @@ TEST_CASE("matrix multiplication")
         auto sourceHost = source.copyToHost();
 
         auto nftHost = nfT.internalVector().copyToHost();
-        for (size_t i = 0; i < sourceHost.size(); i++)
+        for (NeoN::sizeType i = 0; i < sourceHost.size(); i++)
         {
             REQUIRE(sourceHost.view()[i] == coeff * nftHost.view()[i]);
         }
@@ -111,14 +111,14 @@ TEST_CASE("matrix multiplication")
         auto diag = ls.matrix().diag();
         auto diagHost = diag.copyToHost();
 
-        for (size_t celli = 0; celli < diagHost.size(); celli++)
+        for (NeoN::sizeType celli = 0; celli < diagHost.size(); celli++)
         {
             REQUIRE(diagHost.view()[celli] == coeff * cellVolumes.view()[celli]);
         }
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto resultHost = result.internalVector().copyToHost();
-        for (size_t celli = 0; celli < resultHost.size(); celli++)
+        for (NeoN::sizeType celli = 0; celli < resultHost.size(); celli++)
         {
             REQUIRE(
                 resultHost.view()[celli]
