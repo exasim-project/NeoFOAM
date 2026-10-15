@@ -205,7 +205,7 @@ for cfg in hot_result.configs:
 
 # %%
 # Read and write ``0/<name>`` fields with ``load_fields`` / ``save_fields``
-# ------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 # Dict configs that share a target file (``constant/transportProperties``,
 # ``system/fvSchemes``) need ``save_merged`` so multi-owner contributions
 # survive. Field files are single-owner per ``0/<name>``, so
