@@ -174,6 +174,7 @@ class NeoRhoPimpleFoam:
                 else:
                     UEqn.assemble_and_relax()
 
+                prev_T = nfb.field_relaxation_snapshot(T)
                 phiv = phi / surf_interp.interpolate(rho)
                 phiv.name = "phiv"
                 EEqn = nfb.PDESolverScalar(
@@ -192,6 +193,11 @@ class NeoRhoPimpleFoam:
                 residuals["T"] = (
                     stats_t.entries[0].initial_residual,
                     stats_t.entries[0].final_residual,
+                )
+                nfb.apply_field_relaxation(
+                    T,
+                    prev_T,
+                    nfb.lookup_field_relaxation(rt.fv_solution_dict, T.name, final_iter),
                 )
                 T.correct_boundary_conditions()
                 psi.assign(gas.psi(T))
