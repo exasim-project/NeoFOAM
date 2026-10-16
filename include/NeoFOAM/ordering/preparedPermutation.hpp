@@ -57,7 +57,7 @@ public:
      * @brief Return the executor used to prepare the permutation.
      */
     [[nodiscard]]
-    const NeoN::Executor& exec() const noexcept;
+    const NeoN::Executor& exec() const noexcept
     {
         return oldToNew_.exec();
     }
