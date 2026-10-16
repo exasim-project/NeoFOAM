@@ -14,11 +14,18 @@ conditions from T's BCs, which NeoFOAM has no machinery for.
 
 The pressure equation uses fvm::ddt(psi, p) in place of literal
 rhoPimpleFoam's fvc::ddt(rho) + psi*correction(fvm::ddt(p)): NeoN's DSL has
-no fvm::correction() equivalent, and this is a physically motivated
-simplification (rho ~= psi*p with psi held fixed across the inner PISO loop,
-same as OpenFOAM does internally). The literal ddtCorr flux correction and
-the bounded thermo.correctRho() increment are both dropped for this first
-version in favor of directly reassigning rho from the current psi/p.
+no fvm::correction() equivalent. imp.ddt(psi, p) discretizes the full
+conservative d(psi*p)/dt directly (psi_new weighting the diagonal), which
+already carries the psi-sensitivity that rhoPimpleFoam's explicit
+p*fvc::ddt(psi) term supplies on top of its psi-frozen implicit part; adding
+that term here would double-count it, so it is subtracted instead to cancel
+the redundant implicit contribution. Getting this sign right (rather than
+masking the resulting instability with field relaxation on T) is what lets
+this solver match classic rhoPimpleFoam's robustness on the duct test case
+with no relaxation of any kind. phiHbyA also includes the density-weighted
+ddtFluxCorr term (rho_f^0 * uf^0), matching rhoPimpleFoam's own phiHbyA
+correction. The bounded thermo.correctRho() increment is dropped for this
+first version in favor of directly reassigning rho from the current psi/p.
 """
 
 from __future__ import annotations
@@ -111,8 +118,10 @@ class NeoRhoPimpleFoam:
         )
 
         rho_face = surf_interp.interpolate(rho)
-        phi = rho_face * nfb.flux(U)
-        phi.name = "phi"
+        phi_seed = rho_face * nfb.flux(U)
+        phi_seed.name = "phi"
+        phi = nfb.register_computed_surface_field(rt, phi_seed, "phi")
+        nn.old_time(phi)
 
         p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
@@ -134,6 +143,7 @@ class NeoRhoPimpleFoam:
             nn.rotate_old_times(rho)
             nn.rotate_old_times(psi)
             nn.rotate_old_times(K)
+            nn.rotate_old_times(phi)
 
             max_co, mean_co = nn.compute_co_num(phi, rt.dt)
             print(f"Courant Number mean: {mean_co:.6f} max: {max_co:.6f}")
@@ -215,12 +225,27 @@ class NeoRhoPimpleFoam:
                     rAUf.name = "rAUf"
                     rhorAUf = surf_interp.interpolate(rho * rAU)
                     rhorAUf.name = "rhorAUf"
-                    phiHbyA = rho_face * nfb.flux(hByA)
+                    phiHbyA = rho_face * nfb.flux(hByA) + rhorAUf * nfb.ddt_flux_corr(
+                        rho, U, phi, rt.dt, ddt_scheme
+                    )
+
+                    # imp.ddt(psi, p) discretizes the FULL conservative d(rho)/dt =
+                    # d(psi*p)/dt directly (psi_new on the diagonal, psi_old*p_old on the
+                    # rhs) -- unlike literal rhoPimpleFoam's fvc::ddt(rho) +
+                    # psi*correction(fvm::ddt(p)), which holds psi frozen for the implicit
+                    # part and adds back p*fvc::ddt(psi) explicitly. Our imp.ddt(psi, p)
+                    # already carries that psi-sensitivity implicitly, so adding
+                    # p*fvc::ddt(psi) on top double-counts it (and was the actual source
+                    # of the instability T-relaxation was masking); it must be subtracted
+                    # instead, to remove the redundant implicit-psi contribution.
+                    ddt_psi = (psi - nn.old_time(psi)) / rt.dt
+                    p_ddt_psi = p * ddt_psi
 
                     while piso.correct_non_orthogonal():
                         pEqn = nfb.PDESolverScalar(
                             nn.imp.ddt(psi, p)
                             + nn.exp.div(phiHbyA)
+                            - nn.exp.source(p_ddt_psi)
                             - nn.imp.laplacian(rhorAUf, p),
                             p,
                             rt,
