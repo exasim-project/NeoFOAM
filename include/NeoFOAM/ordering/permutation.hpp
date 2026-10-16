@@ -71,7 +71,7 @@ public:
      * @return An identity permutation of size @p size.
      */
     [[nodiscard]]
-    static Permutation identity(NeoN::sizeType size);
+    static Permutation identity(const NeoN::sizeType size);
 
     /**
      * @brief Returns the number of indices represented by the permutation.
@@ -92,7 +92,7 @@ public:
      * @pre @p oldIndex is in the range [0, size()).
      */
     [[nodiscard]]
-    IndexType oldToNew(IndexType oldIndex) const;
+    IndexType oldToNew(const IndexType oldIndex) const;
 
     /**
      * @brief Returns the old index corresponding to a new index.
@@ -104,7 +104,7 @@ public:
      * @pre @p newIndex is in the range [0, size()).
      */
     [[nodiscard]]
-    IndexType newToOld(IndexType newIndex) const;
+    IndexType newToOld(const IndexType newIndex) const;
 
     /**
      * @brief Returns a read-only view of the old-to-new mapping.

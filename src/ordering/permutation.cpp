@@ -20,7 +20,7 @@ Permutation::Permutation(std::vector<IndexType> oldToNew)
     // Every entry in newToOld_ is initially marked as unassigned.
     std::vector<bool> newIndexAssigned(permutationSize, false);
 
-    for (std::size_t oldIndex = 0; oldIndex < permutationSize; ++oldIndex)
+    for (NeoN::localIdx oldIndex = 0; oldIndex < NeoN::toLocalIdx(permutationSize); ++oldIndex)
     {
         const auto newIndex = oldToNew_[oldIndex];
 
@@ -53,7 +53,7 @@ Permutation::Permutation(std::vector<IndexType> oldToNew)
 }
 
 
-Permutation Permutation::identity(const std::size_t size)
+Permutation Permutation::identity(const NeoN::sizeType size)
 {
     if (size > static_cast<std::size_t>(std::numeric_limits<IndexType>::max()))
     {
@@ -121,7 +121,9 @@ Permutation Permutation::inverse() const { return Permutation {newToOld_}; }
 
 bool Permutation::isIdentity() const noexcept
 {
-    for (std::size_t index = 0; index < oldToNew_.size(); ++index)
+    const NeoN::localIdx size = NeoN::toLocalIdx(oldToNew_.size());
+
+    for (NeoN::localIdx index = 0; index < size; ++index)
     {
         if (oldToNew_[index] != static_cast<IndexType>(index))
         {
