@@ -270,6 +270,31 @@ void registerFieldFactories(nb::module_& m)
         "so it gains old-time storage (rotate_old_times / oldTime)"
     );
 
+    m.def(
+        "register_computed_surface_field",
+        [](nf::RunTime& rt, const fvcc::SurfaceField<NeoN::scalar>& field, const std::string& name)
+            -> fvcc::SurfaceField<NeoN::scalar>&
+        {
+            fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            return vc.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+                fvcc::CreateFromExistingVector<fvcc::SurfaceField<NeoN::scalar>> {
+                    .name = name,
+                    .field = field,
+                    .timeIndex = 0,
+                    .iterationIndex = 0,
+                    .subCycleIndex = 0
+                }
+            );
+        },
+        "runtime"_a,
+        "field"_a,
+        "name"_a,
+        nb::rv_policy::reference,
+        "Register a Python-computed scalar SurfaceField (e.g. a mass flux phi built from "
+        "rho_f * flux(U)) into the VectorCollection so it gains old-time storage "
+        "(rotate_old_times / oldTime)"
+    );
+
     // Overwrite a scalar field's internal values from a host array (the closure's
     // nonlinear scalar maths — chi, fv1, fw, ... — is authored in plain NumPy).
     m.def(
