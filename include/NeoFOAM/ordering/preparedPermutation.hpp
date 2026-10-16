@@ -28,7 +28,10 @@ public:
      * The returned view is non-owning and read-only
      */
     [[nodiscard]]
-    NeoN::View<const IndexType> oldToNew() const;
+    NeoN::View<const IndexType> oldToNew() const
+    {
+        return oldToNew_.view();
+    }
 
     /**
      * @brief Return the new-to-old mapping.
@@ -36,19 +39,28 @@ public:
      * The returned view is non-owning and read-only.
      */
     [[nodiscard]]
-    NeoN::View<const IndexType> newToOld() const;
+    NeoN::View<const IndexType> newToOld() const
+    {
+        return newToOld_.view();
+    }
 
     /**
      * @brief Return the number of entities in the permutation.
      */
     [[nodiscard]]
-    NeoN::sizeType size() const noexcept;
+    const NeoN::sizeType size() const noexcept
+    {
+        return oldToNew_.size();
+    }
 
     /**
      * @brief Return the executor used to prepare the permutation.
      */
     [[nodiscard]]
     const NeoN::Executor& exec() const noexcept;
+    {
+        return oldToNew_.exec();
+    }
 
 private:
     NeoN::Array<IndexType> oldToNew_;

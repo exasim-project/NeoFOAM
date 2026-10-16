@@ -20,25 +20,4 @@ namespace NeoFOAM
             permutation.size()
         )
     {}
-
-    NeoN::View<const PreparedPermutation::IndexType> PreparedPermutation::oldToNew() const
-    {
-        return oldToNew_.view();
-    }
-
-    NeoN::View<const PreparedPermutation::IndexType> PreparedPermutation::newToOld() const
-    {
-        return newToOld_.view();
-    }
-
-    NeoN::sizeType PreparedPermutation::size() const noexcept
-    {
-        return oldToNew_.size();
-    }
-
-    const NeoN::Executor& PreparedPermutation::exec() const noexcept
-    {
-        return oldToNew_.exec();
-    }
-
 } // namespace NeoFOAM
