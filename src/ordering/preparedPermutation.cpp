@@ -1,37 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+#include "NeoN/NeoN.hpp"
 #include "NeoFOAM/ordering/preparedPermutation.hpp"
 
 namespace NeoFOAM
 {
-namespace
-{
-    // Convert the permutation size to NeoN::localIdx and reject
-    // values that cannot be represented.
-    NeoN::localIdx checkedSize(NeoN::sizeType size)
-    {
-        if (!std::in_range<NeoN::localIdx>(size))
-        {
-            throw std::length_error("Permutation size exceeds NeoN::localIdx range");
-        }
-        return static_cast<NeoN::localIdx>(size);
-    }
-
-} // namespace
-
     PreparedPermutation::PreparedPermutation(
         const Permutation& permutation,
         const NeoN::Executor& exec)
         : oldToNew_(
             exec, 
             permutation.oldToNew().data(),
-            checkedSize(permutation.size())
+            NeoN::toLocalIdx(permutation.size())
         ),
         newToOld_(
             exec,
             permutation.newToOld().data(),
-            checkedSize(permutation.size())
+            NeoN::toLocalIdx(permutation.size())
         )
     {}
 
