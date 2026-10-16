@@ -65,25 +65,25 @@ struct ComponentAccess;
 template<>
 struct ComponentAccess<scalar>
 {
-    static constexpr NeoN::size_t count = 1;
+    static constexpr NeoN::sizeType count = 1;
 
     KOKKOS_INLINE_FUNCTION
-    static scalar read(const scalar& value, NeoN::size_t) { return value; }
+    static scalar read(const scalar& value, NeoN::sizeType) { return value; }
 
     KOKKOS_INLINE_FUNCTION
-    static scalar* at(scalar* value, NeoN::size_t) { return value; }
+    static scalar* at(scalar* value, NeoN::sizeType) { return value; }
 };
 
 template<>
 struct ComponentAccess<Vec3>
 {
-    static constexpr NeoN::size_t count = 3;
+    static constexpr NeoN::sizeType count = 3;
 
     KOKKOS_INLINE_FUNCTION
-    static scalar read(const Vec3& value, NeoN::size_t component) { return value[component]; }
+    static scalar read(const Vec3& value, NeoN::sizeType component) { return value[component]; }
 
     KOKKOS_INLINE_FUNCTION
-    static scalar* at(Vec3* value, NeoN::size_t component) { return &(*value)[component]; }
+    static scalar* at(Vec3* value, NeoN::sizeType component) { return &(*value)[component]; }
 };
 
 template<bool IsMax>
@@ -152,7 +152,7 @@ NeoN::Vector<ValueType> groupSum(
             // keeps its shape whatever the mask says.
             const scalar weight = ((maskPtr != nullptr) ? static_cast<scalar>(maskPtr[i]) : 1.0)
                                 * ((scalingPtr != nullptr) ? scalingPtr[i] : 1.0);
-            for (NeoN::size_t c = 0; c < Access::count; ++c)
+            for (NeoN::sizeType c = 0; c < Access::count; ++c)
             {
                 Kokkos::atomic_add(
                     Access::at(resultPtr + g, c),
@@ -198,7 +198,7 @@ NeoN::Vector<ValueType> groupExtremum(
                 return;
             }
             const localIdx g = (groupPtr != nullptr) ? groupPtr[i] : 0;
-            for (NeoN::size_t c = 0; c < Access::count; ++c)
+            for (NeoN::sizeType c = 0; c < Access::count; ++c)
             {
                 AtomicExtremum<IsMax>::apply(
                     Access::at(resultPtr + g, c),
@@ -240,7 +240,7 @@ NeoN::Vector<scalar> componentOf(const NeoN::Vector<Vec3>& values, localIdx inde
 
     const Vec3* valuesPtr = values.data();
     scalar* resultPtr = result.data();
-    const NeoN::size_t component = static_cast<NeoN::size_t>(index);
+    const NeoN::sizeType component = static_cast<NeoN::sizeType>(index);
 
     NeoN::parallelFor(
         values.exec(),
@@ -266,7 +266,7 @@ NeoN::Vector<ValueType> scaled(const NeoN::Vector<ValueType>& values, scalar fac
         values.exec(),
         {0, values.size()},
         NEON_LAMBDA(const localIdx i) {
-            for (NeoN::size_t c = 0; c < Access::count; ++c)
+            for (NeoN::sizeType c = 0; c < Access::count; ++c)
             {
                 *Access::at(resultPtr + i, c) = Access::read(valuesPtr[i], c) * factor;
             }
@@ -420,7 +420,7 @@ NeoN::Vector<localIdx> invertMask(const NeoN::Vector<localIdx>& a)
 
 template<typename ComponentType>
 nb::ndarray<nb::numpy, ComponentType, nb::c_contig>
-ownedArray(const ComponentType* source, NeoN::size_t count, NeoN::size_t nComponents)
+ownedArray(const ComponentType* source, NeoN::sizeType count, NeoN::sizeType nComponents)
 {
     auto* buffer = new ComponentType[count * nComponents];
     std::memcpy(buffer, source, count * nComponents * sizeof(ComponentType));
@@ -428,7 +428,7 @@ ownedArray(const ComponentType* source, NeoN::size_t count, NeoN::size_t nCompon
         buffer,
         [](void* data) noexcept { delete[] static_cast<ComponentType*>(data); }
     );
-    NeoN::size_t shape[2] = {count, nComponents};
+    NeoN::sizeType shape[2] = {count, nComponents};
     return nb::ndarray<nb::numpy, ComponentType, nb::c_contig>(
         buffer,
         (nComponents > 1) ? 2 : 1,
@@ -441,7 +441,7 @@ template<typename ValueType>
 auto toNumpy(const NeoN::Vector<ValueType>& values)
 {
     const NeoN::Vector<ValueType> host = values.copyToHost();
-    const auto count = static_cast<NeoN::size_t>(host.size());
+    const auto count = static_cast<NeoN::sizeType>(host.size());
     if constexpr (std::is_same_v<ValueType, Vec3>)
     {
         return ownedArray<scalar>(reinterpret_cast<const scalar*>(host.data()), count, 3);
