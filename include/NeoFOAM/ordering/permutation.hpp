@@ -118,7 +118,7 @@ public:
      *       and is valid only while that storage remains valid.
      */
     [[nodiscard]]
-    std::span<const IndexType> oldToNew() const noexcept;
+    std::span<const IndexType> oldToNew() const noexcept { return oldToNew_; }
 
     /**
      * @brief Returns a read-only view of the new-to-old mapping.
@@ -132,7 +132,7 @@ public:
      *       and is valid only while that storage remains valid.
      */
     [[nodiscard]]
-    std::span<const IndexType> newToOld() const noexcept;
+    std::span<const IndexType> newToOld() const noexcept { return newToOld_; }
 
     /**
      * @brief Returns the inverse permutation.
@@ -148,7 +148,7 @@ public:
      * @return The inverse of this permutation.
      */
     [[nodiscard]]
-    Permutation inverse() const;
+    Permutation inverse() const { return Permutation {newToOld_}; }
 
     // [[nodiscard]]
     // Permutation compose(

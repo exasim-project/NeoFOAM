@@ -110,15 +110,6 @@ Permutation::IndexType Permutation::newToOld(const IndexType newIndex) const
 }
 
 
-std::span<const Permutation::IndexType> Permutation::oldToNew() const noexcept { return oldToNew_; }
-
-
-std::span<const Permutation::IndexType> Permutation::newToOld() const noexcept { return newToOld_; }
-
-
-Permutation Permutation::inverse() const { return Permutation {newToOld_}; }
-
-
 bool Permutation::isIdentity() const noexcept
 {
     const NeoN::localIdx size = NeoN::toLocalIdx(oldToNew_.size());
