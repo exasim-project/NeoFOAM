@@ -5,17 +5,18 @@
 
 #include "common.hpp"
 
+#include "NeoN/NeoN.hpp"
 #include "NeoFOAM/ordering/permutation.hpp"
 #include "NeoFOAM/ordering/preparedPermutation.hpp"
 #include "NeoFOAM/ordering/permutationApplicator.hpp"
 
 namespace
 {
+using NeoN::sizeType;
 using NeoFOAM::Permutation;
 using NeoFOAM::PreparedPermutation;
 using NeoFOAM::PermutationApplicator;
 using IndexType = Permutation::IndexType;
-using SizeType = Permutation::SizeType;
 }
 
 TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationApplicator]")
@@ -25,7 +26,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationAp
     SECTION("Identity mapping on " + execName);
     {
         // Arrange
-        constexpr SizeType size = 4; 
+        constexpr sizeType size = 4; 
         const Permutation permutation = Permutation::identity(size);
         const PreparedPermutation prepared(permutation, exec);
         NeoN::UnstructuredMesh mesh = NeoN::create1DUniformMesh(exec, size);

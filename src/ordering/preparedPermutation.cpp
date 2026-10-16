@@ -12,12 +12,12 @@ namespace NeoFOAM
         : oldToNew_(
             exec, 
             permutation.oldToNew().data(),
-            NeoN::toLocalIdx(permutation.size())
+            permutation.size()
         ),
         newToOld_(
             exec,
             permutation.newToOld().data(),
-            NeoN::toLocalIdx(permutation.size())
+            permutation.size()
         )
     {}
 
@@ -31,9 +31,9 @@ namespace NeoFOAM
         return newToOld_.view();
     }
 
-    PreparedPermutation::SizeType PreparedPermutation::size() const noexcept
+    NeoN::sizeType PreparedPermutation::size() const noexcept
     {
-        return static_cast<PreparedPermutation::SizeType>(oldToNew_.size());
+        return oldToNew_.size();
     }
 
     const NeoN::Executor& PreparedPermutation::exec() const noexcept

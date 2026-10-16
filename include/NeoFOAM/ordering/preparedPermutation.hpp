@@ -12,7 +12,6 @@ class PreparedPermutation
 {
 public:
     using IndexType = NeoN::label;
-    using SizeType = NeoN::sizeType;
     /**
      * @brief Prepare a permutation for execution on the given executor.
      *  
@@ -43,7 +42,7 @@ public:
      * @brief Return the number of entities in the permutation.
      */
     [[nodiscard]]
-    SizeType size() const noexcept;
+    NeoN::sizeType size() const noexcept;
 
     /**
      * @brief Return the executor used to prepare the permutation.

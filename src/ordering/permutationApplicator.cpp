@@ -40,7 +40,7 @@ void PermutationApplicator::validate(
     const NeoN::UnstructuredMesh& mesh,
     const PreparedPermutation& permutation) const
 {
-    if (permutation.size() != static_cast<NeoFOAM::Permutation::SizeType>(mesh.nCells()))
+    if (permutation.size() != mesh.nCells())
     {
         throw std::invalid_argument(
             "Permutation size does not match number of cells in mesh.");
