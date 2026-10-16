@@ -12,7 +12,7 @@ class PreparedPermutation
 {
 public:
     using IndexType = NeoN::label;
-    using SizeType = NeoN::size_t;
+    using SizeType = NeoN::sizeType;
     /**
      * @brief Prepare a permutation for execution on the given executor.
      *  

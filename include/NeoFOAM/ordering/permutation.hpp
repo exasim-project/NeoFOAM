@@ -36,7 +36,7 @@ class Permutation
 public:
 
     using IndexType = NeoN::label;
-    using SizeType = NeoN::size_t;
+    using SizeType = std::size_t;
 
     /**
      * @brief Constructs a permutation from an old-to-new mapping.

@@ -9,7 +9,7 @@ namespace
 {
     // Convert the permutation size to NeoN::localIdx and reject
     // values that cannot be represented.
-    NeoN::localIdx checkedSize(NeoN::size_t size)
+    NeoN::localIdx checkedSize(NeoN::sizeType size)
     {
         if (!std::in_range<NeoN::localIdx>(size))
         {
