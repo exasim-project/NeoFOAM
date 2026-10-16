@@ -139,6 +139,22 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "Compute ddt flux correction for PISO loop (BDF1/BDF2)"
     );
 
+    m.def(
+        "ddt_flux_corr",
+        [](const fvcc::VolumeField<NeoN::scalar>& rho,
+           const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phi,
+           double dt,
+           fvcc::DdtScheme scheme)
+        { return fvcc::ddtFluxCorr(rho, U, phi, static_cast<NeoN::scalar>(dt), scheme); },
+        "rho"_a,
+        "U"_a,
+        "phi"_a,
+        "dt"_a,
+        "scheme"_a,
+        "Density-weighted ddt flux correction for compressible PISO loop (BDF1/BDF2)"
+    );
+
     // -------------------------------------------------------------------
     // Outer PIMPLE loop control (NeoFOAM-native, residual-driven).
     // residuals is a {field: (initResNorm, finalResNorm)} dict fed each pass.
