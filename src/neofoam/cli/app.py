@@ -2,12 +2,14 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 import sys
+from importlib import metadata
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import typer
 
 from neofoam.agent import build_case_agent, fill_case
+from neofoam.core.entry_points import load_plugins, solver_entry_points
 from neofoam.solver.icofoam import IcoFoam
 from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
 from neofoam.solver.incompressibleFluidNeoN import run as run_neon
@@ -18,6 +20,13 @@ from neofoam.solver.pimplefoam import PimpleFoam
 from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
 
 app = typer.Typer()
+
+
+@app.callback()
+def _load_plugins() -> None:
+    # Before any command, so plugin models are registered when a case resolves its families.
+    load_plugins()
+
 
 #: Kept in sync by hand with ``verification.dropin.execute.POSTPROCESS_NOT_IMPLEMENTED``
 #: (not imported — ``cli`` and ``tooling.workflow`` are deliberately not coupled).
@@ -249,6 +258,40 @@ def incompressiblefluidneon(ctx: typer.Context) -> None:
     _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_neon(argv)
+
+
+def _plugin_solver_command(entry_point: metadata.EntryPoint) -> Callable[[typer.Context], None]:
+    """Build the CLI command that runs a ``neofoam.solvers`` entry point."""
+
+    def command(ctx: typer.Context) -> None:
+        _reject_postprocess(ctx.args)
+        argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+        entry_point.load()(argv)
+
+    return command
+
+
+def add_plugin_solvers(solvers: typer.Typer) -> None:
+    """Add one ``solvers`` command per ``neofoam.solvers`` entry point."""
+    taken = {
+        command.name or (command.callback.__name__ if command.callback else "")
+        for command in solvers.registered_commands
+    }
+    for entry_point in solver_entry_points():
+        if entry_point.name in taken:
+            raise ValueError(
+                f"plugin solver {entry_point.name!r} ({entry_point.value}) clashes with an "
+                "existing solver command"
+            )
+        taken.add(entry_point.name)
+        solvers.command(
+            name=entry_point.name,
+            help=f"Plugin solver from {entry_point.value}.",
+            context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+        )(_plugin_solver_command(entry_point))
+
+
+add_plugin_solvers(solver_app)
 
 
 @app.command()

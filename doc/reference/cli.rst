@@ -20,6 +20,25 @@ Available solvers: ``icofoam``, ``pimplefoam``, ``incompressiblefluid``,
 ``incompressiblevof`` (pybFoam backend); ``neoicofoam``, ``neopimplefoam``,
 ``incompressiblefluidneon`` (NeoN backend).
 
+Plugin packages
+~~~~~~~~~~~~~~~
+
+A separately installed package extends neofoam through two entry-point groups
+(``src/neofoam/core/entry_points.py``):
+
+.. code-block:: toml
+
+    [project.entry-points."neofoam.plugins"]
+    mdao = "neofoam_mdao.models"        # module; importing it registers models
+
+    [project.entry-points."neofoam.solvers"]
+    mdaofluid = "neofoam_mdao.solver:run"   # run(argv) -> neofoam solver mdaofluid
+
+The CLI imports every ``neofoam.plugins`` module before running a command, so a
+plugin can add to any ``PluginSystem`` family (viscosity models, post-processing
+nodes, …). A plugin that fails to import aborts the command; a plugin solver
+whose name matches a built-in one is refused.
+
 Executor selection and GPU initialization
 -----------------------------------------
 
