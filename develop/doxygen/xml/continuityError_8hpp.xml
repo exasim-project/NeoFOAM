@@ -116,8 +116,8 @@
 <codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>localAbsVolSum<sp/>=<sp/>0.0;</highlight></codeline>
 <codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::parallelReduce(</highlight></codeline>
 <codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rt.<ref refid="structNeoFOAM_1_1RunTime_1a8dcd260a0853c8590add966729198cb1" kindref="member">exec</ref>,</highlight></codeline>
-<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>static_cast&lt;size_t&gt;(nCells)},</highlight></codeline>
-<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NEON_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i,<sp/>NeoN::scalar&amp;<sp/>s)<sp/>{</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>static_cast&lt;NeoN::sizeType&gt;(nCells)},</highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NEON_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::sizeType<sp/>i,<sp/>NeoN::scalar&amp;<sp/>s)<sp/>{</highlight></codeline>
 <codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>s<sp/>+=<sp/>Kokkos::abs(divPhiView[i])<sp/>*<sp/>volView[i];</highlight></codeline>
 <codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>},</highlight></codeline>
 <codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>localAbsVolSum</highlight></codeline>
@@ -126,16 +126,16 @@
 <codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>localSignedVolSum<sp/>=<sp/>0.0;</highlight></codeline>
 <codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::parallelReduce(</highlight></codeline>
 <codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rt.<ref refid="structNeoFOAM_1_1RunTime_1a8dcd260a0853c8590add966729198cb1" kindref="member">exec</ref>,</highlight></codeline>
-<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>static_cast&lt;size_t&gt;(nCells)},</highlight></codeline>
-<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NEON_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i,<sp/>NeoN::scalar&amp;<sp/>s)<sp/>{<sp/>s<sp/>+=<sp/>divPhiView[i]<sp/>*<sp/>volView[i];<sp/>},</highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>static_cast&lt;NeoN::sizeType&gt;(nCells)},</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NEON_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::sizeType<sp/>i,<sp/>NeoN::scalar&amp;<sp/>s)<sp/>{<sp/>s<sp/>+=<sp/>divPhiView[i]<sp/>*<sp/>volView[i];<sp/>},</highlight></codeline>
 <codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>localSignedVolSum</highlight></codeline>
 <codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="60"><highlight class="normal"></highlight></codeline>
 <codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>localTotalVol<sp/>=<sp/>0.0;</highlight></codeline>
 <codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::parallelReduce(</highlight></codeline>
 <codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>rt.<ref refid="structNeoFOAM_1_1RunTime_1a8dcd260a0853c8590add966729198cb1" kindref="member">exec</ref>,</highlight></codeline>
-<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>static_cast&lt;size_t&gt;(nCells)},</highlight></codeline>
-<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NEON_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>i,<sp/>NeoN::scalar&amp;<sp/>s)<sp/>{<sp/>s<sp/>+=<sp/>volView[i];<sp/>},</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>{0,<sp/>static_cast&lt;NeoN::sizeType&gt;(nCells)},</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NEON_LAMBDA(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::sizeType<sp/>i,<sp/>NeoN::scalar&amp;<sp/>s)<sp/>{<sp/>s<sp/>+=<sp/>volView[i];<sp/>},</highlight></codeline>
 <codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>localTotalVol</highlight></codeline>
 <codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="68"><highlight class="normal"></highlight></codeline>
