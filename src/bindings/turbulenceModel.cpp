@@ -429,6 +429,17 @@ void registerTurbulenceModel(nb::module_& m)
             "Construct a Gauss-Green gradient operator on the runtime mesh"
         )
         .def(
+            // §4.26 probe (neorhoPimpleFoam_investigation_summary.md): grad() for a scalar field
+            // was not previously exposed to Python -- only grad_tensor (Vec3). Added to directly
+            // check NeoN's scalar Gauss-Green gradient against literal's fvc::grad(T) at a
+            // specific cell, the same way grad_tensor already let gradTensor(U) be checked.
+            "grad_scalar",
+            [](fvcc::GaussGreenGrad& self, const fvcc::VolumeField<NeoN::scalar>& phi)
+            { return self.grad(phi); },
+            "phi"_a,
+            "Compute the scalar gradient field grad(phi)"
+        )
+        .def(
             "grad_tensor",
             [](fvcc::GaussGreenGrad& self, const fvcc::VolumeField<NeoN::Vec3>& u)
             { return self.gradTensor(u); },

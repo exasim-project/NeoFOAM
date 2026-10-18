@@ -191,6 +191,24 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "runtime"_a,
         "Return (sum_local, global) time-step continuity errors from the face flux"
     );
+
+    // -------------------------------------------------------------------
+    // Per-cell div(phi), for spatially localizing continuity imbalance
+    // (debugging helper, mirrors computeContinuityError's internal evaluation).
+    // -------------------------------------------------------------------
+    m.def(
+        "compute_div_phi",
+        [](const fvcc::SurfaceField<NeoN::scalar>& phi, const nf::RunTime& rt)
+        {
+            const auto nCells = static_cast<NeoN::localIdx>(rt.nfMesh.nCells());
+            NeoN::dsl::Expression<NeoN::scalar> divExpr(rt.exec);
+            divExpr.addOperator(NeoN::dsl::exp::div(phi));
+            return divExpr.explicitOperation(nCells);
+        },
+        "phi"_a,
+        "runtime"_a,
+        "Return the per-cell fvc::div(phi) field (debugging helper)"
+    );
 }
 
 } // namespace NeoFOAM::bindings
