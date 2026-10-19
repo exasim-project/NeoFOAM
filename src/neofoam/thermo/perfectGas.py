@@ -22,9 +22,17 @@ class PerfectGasConstTransport:
         props = nfb.read_thermophysical_properties(rt)
         self.R = UNIVERSAL_GAS_CONSTANT / props["molWeight"]
         self.Cv = props["Cv"] if "Cv" in props else props["Cp"] - self.R
+        self.Cp = self.Cv + self.R
+        self.gamma = self.Cp / self.Cv
         self.mu = props["mu"]
         self.Pr = props["Pr"]
+        # alpha = mu/Pr = kappa/Cp: the diffusivity for *temperature* diffusion
+        # (laplacian(alpha, T) represents div(kappa*grad(T))/Cp). Diffusing he
+        # (internal energy) instead needs div(kappa*grad(T)) directly, i.e.
+        # kappa/Cv -- matching OpenFOAM's own heThermo::alphahe() =
+        # CpByCpv()*alpha_ = gamma*(kappa/Cp) = kappa/Cv exactly.
         self.alpha = self.mu / self.Pr
+        self.alphaHe = self.gamma * self.alpha
 
     def psi(self, T: Any) -> Any:
         return 1.0 / (self.R * T)

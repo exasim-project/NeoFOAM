@@ -228,7 +228,11 @@ class NeoRhoPimpleFoam:
 
         mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu)
         zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
-        alphaEff = nfb.create_uniform_surface_field(rt, "alphaEff", gas.alpha)
+        # he (internal energy) is being diffused here, not T, so this needs
+        # kappa/Cv (gas.alphaHe), not kappa/Cp (gas.alpha) -- see gas.alphaHe's
+        # definition for the derivation; matches OpenFOAM's own
+        # heThermo::alphahe() exactly for this thermo type.
+        alphaEff = nfb.create_uniform_surface_field(rt, "alphaEff", gas.alphaHe)
         # Feature-for-feature port of literal rhoPimpleFoam's `psip0 = psi*p` /
         # `thermo.correctRho(psi*p - psip0, rhoMin, rhoMax)` -- captured once per PISO
         # pass, used to replace the plain EOS rho.assign() with literal's incremental
