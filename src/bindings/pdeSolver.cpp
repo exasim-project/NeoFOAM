@@ -89,16 +89,6 @@ void registerPDESolver(nb::module_& m)
         "create_scalar_field_with_boundary_types",
         [](nf::RunTime& rt, std::string name, std::vector<std::string> patchTypes)
         {
-            // he/T boundary-mapping: build a field whose patches are FixedEnergy/
-            // GradientEnergy/Empty (or any other registered VolumeBoundaryFactory type) --
-            // one type name per boundary patch, in patch order -- so a solver can construct
-            // `he` with the right real NeoN BC objects attached, rather than inheriting
-            // another field's (e.g. T's FixedValue/FixedGradient) ones. Mirrors
-            // fvcc::createCalculatedBCs' pattern of a one-entry "type" dict per patch,
-            // generalised to a caller-supplied type per patch instead of one type for all.
-            // Takes RunTime rather than a separately-passed executor/mesh: both are reused
-            // from rt internally, in the same C++ translation unit that constructs the
-            // field, avoiding any Python-level cross-module object hand-off for them.
             const NeoN::Executor& exec = rt.exec;
             const NeoN::UnstructuredMesh& mesh = rt.nfMesh;
             std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
