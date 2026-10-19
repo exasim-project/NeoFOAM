@@ -369,20 +369,6 @@ void updateFaceVelocity(
             auto rowNeiStart = rowPtrs[nei];
             auto rowOwnStart = rowPtrs[own];
 
-            // FaceToMatrixAddress's own convention (faceToMatrixAddress.hpp):
-            // upperIdx(own,f) = rowOffs[own] + ownerOffset[f]      -> A[own, nei]
-            // lowerIdx(nei,f) = rowOffs[nei] + neighbourOffset[f]  -> A[nei, own]
-            // This previously fetched them swapped (ownOffs[] from rowOwnStart was
-            // called "lower", neiOffs[] from rowNeiStart was called "upper") and then
-            // applied an extra overall minus sign, so the reconstructed pressure-
-            // correction flux came out with the opposite sign from the assembled
-            // matrix's own faceH()-equivalent: phi = phiHbyA + A[own,nei]*p[nei] -
-            // A[nei,own]*p[own] (mirrors OpenFOAM's lduMatrix::faceH + fvMatrix::flux()).
-            // Confirmed by direct measurement: with the old formula, an exact (direct)
-            // solve of the assembled pEqn left div(phi) far from zero at a corner cell
-            // even though the matrix residual there was machine-zero -- i.e. the
-            // reconstructed phi did not actually satisfy the continuity equation pEqn
-            // was solved for.
             auto A_own_nei = values[rowOwnStart + ownOffs[facei]];
             auto A_nei_own = values[rowNeiStart + neiOffs[facei]];
 
