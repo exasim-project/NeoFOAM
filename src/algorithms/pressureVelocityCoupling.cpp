@@ -333,8 +333,9 @@ void updateFaceVelocity(
 )
 {
     // The two PEqnConvention forms assemble pEqn with exactly opposite-signed matrix
-    // coefficients for the same physical equation (see the enum's doc in the header),
-    // so the correction below is applied with the matching sign.
+    // coefficients for the same physical equation (see the enum's doc in the header), so
+    // every correction below -- internal faces, regular boundary faces, and processor-
+    // boundary faces alike -- is applied with this matching sign, not just the internal one.
     const scalar sign = (convention == PEqnConvention::DivMinusLaplacian) ? scalar(1) : scalar(-1);
 
     const auto& mesh = phi.mesh();
@@ -410,7 +411,7 @@ void updateFaceVelocity(
         NEON_LAMBDA(const NeoN::sizeType bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
-            bvalue[bfacei] = bPredValue[bfacei] - bflux;
+            bvalue[bfacei] = bPredValue[bfacei] + sign * bflux;
         }
     );
 
@@ -433,7 +434,7 @@ void updateFaceVelocity(
                 auto coupling = nlValues[rowOrderV[procFacei]];
                 auto pGhost = pBoundV[bfacei];
                 scalar pflux = coupling * (pGhost - internalP[own]);
-                bvalue[bfacei] = bPredValue[bfacei] - pflux;
+                bvalue[bfacei] = bPredValue[bfacei] + sign * pflux;
             }
         );
     }
