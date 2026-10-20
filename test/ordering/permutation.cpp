@@ -212,7 +212,7 @@ TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings
 
         NeoN::parallelFor(
             exec, 
-            {0, static_cast<NeoN::localIdx>(prepared.size())},
+            {0, NeoN::toLocalIdx(prepared.size())},
             NEON_LAMBDA(const NeoN::localIdx i) {
                 oldToNewResultView[i] = oldToNewView[i];
                 newToOldResultView[i] = newToOldView[i];
@@ -247,7 +247,7 @@ TEST_CASE("PreparedPermutation provides identity mappings", "[preparedPermutatio
 
         NeoN::parallelFor(
             exec,
-            {0, static_cast<NeoN::localIdx>(prepared.size())},
+            {0, NeoN::toLocalIdx(prepared.size())},
             NEON_LAMBDA(const NeoN::localIdx i) {
                 resultView[i] = oldToNewView[i];
             }

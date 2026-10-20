@@ -92,6 +92,10 @@ private:
     void validate(
         const NeoN::UnstructuredMesh& mesh,
         const PreparedPermutation& permutation) const;
+
+    void reorderCellVolumes(
+        const NeoN::UnstructuredMesh& mesh,
+        const PreparedPermutation& permutation) const;
     
     template<typename T>
     void reorderField(

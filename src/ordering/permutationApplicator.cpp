@@ -16,9 +16,10 @@ void PermutationApplicator::apply(
     const PreparedPermutation& permutation) const
 {
     // validate permutation
-   validate(mesh, permutation);
+    validate(mesh, permutation);
 
-    // reoder cell volumes
+    // reorder cell volumes
+    // reorderCellVolumes(mesh, permutation);
 
     // reorder cell centers
 
@@ -46,6 +47,20 @@ void PermutationApplicator::validate(
             "Permutation size does not match number of cells in mesh.");
     }
 }
+
+
+// new cell volumes [oldToNew[old index i]] = old cell volumes [old index i] 
+// void reorderCellVolumes(
+//     const NeoN::UnstructuredMesh& mesh,
+//     const PreparedPermutation& permutation) const
+// {
+//    NeoN::scalarVector(exec_, permutation.size(), 0.0);
+
+//    NeoN::parallelFor(
+//         exec_,
+//         {0, static_cast}
+//    );
+// }
 } // namespace NeoFOAM
 
 
