@@ -15,6 +15,7 @@ from neofoam.solver.incompressibleVoF import run as run_incompressible_vof
 from neofoam.solver.neoIcoFoam import NeoIcoFoam
 from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
 from neofoam.solver.neorhoPimpleFoam import NeoRhoPimpleFoam
+from neofoam.solver.neorhoSimpleFoam import NeoRhoSimpleFoam
 from neofoam.solver.neoSimpleFoam import NeoSimpleFoam
 from neofoam.solver.pimplefoam import PimpleFoam
 from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
@@ -227,6 +228,16 @@ def neorhopimplefoam(ctx: typer.Context) -> None:
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
     solver = NeoRhoPimpleFoam(argv)
+    solver.run()
+
+
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+def neorhosimplefoam(ctx: typer.Context) -> None:
+    """Steady-state compressible SIMPLE solver (perfectGas, laminar) using NeoN bindings."""
+    _reject_postprocess(ctx.args)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    solver = NeoRhoSimpleFoam(argv)
     solver.run()
 
 
