@@ -73,7 +73,29 @@ void subtractConsistentHbyA(
     const nnfvcc::VolumeField<scalar>& p
 );
 
-/* @brief Updates the face flux: phi = phiHbyA - pEqn.flux().
+/* @brief Which overall sign convention the caller's pEqn was assembled with.
+ *
+ * LaplacianMinusDiv: pEqn built as +laplacian(...) - div(...) == 0, mirroring OpenFOAM's
+ *   pimpleFoam/simpleFoam-style `fvm::laplacian(rAtU, p) == fvc::div(phiHbyA)`. This is
+ *   what NeoFOAM's incompressible solvers (and the "compute flux" unit test) build, and
+ *   is the default.
+ * DivMinusLaplacian: pEqn built as +div(...) - laplacian(...) == 0, mirroring OpenFOAM's
+ *   rhoPimpleFoam-style `pDDtEqn - fvm::laplacian(rhorAUf, p)`. The compressible solver
+ *   uses this form because its ddt(psi,p) term then also contributes a positive diagonal,
+ *   keeping the matrix positive-definite -- required for Cholesky-family (DIC/IC)
+ *   preconditioning of p, matching literal rhoPimpleFoam's own solver choice.
+ *
+ * The two forms assemble pEqn with exactly opposite-signed matrix coefficients for the
+ * same physical equation, so updateFaceVelocity needs to know which one it was given in
+ * order to reconstruct the correctly-signed face flux.
+ */
+enum class PEqnConvention
+{
+    LaplacianMinusDiv,
+    DivMinusLaplacian
+};
+
+/* @brief Updates the face flux: phi = phiHbyA - pEqn.flux() (sign per `convention`).
  *
  * pEqn.flux() includes both the orthogonal matrix-coefficient flux and the non-orthogonal
  * face flux correction stashed in the linear system. Without the correction div(phi) != 0
@@ -83,7 +105,8 @@ void subtractConsistentHbyA(
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
     const PDE<scalar>& expr,
-    nnfvcc::SurfaceField<scalar>& phi
+    nnfvcc::SurfaceField<scalar>& phi,
+    PEqnConvention convention = PEqnConvention::LaplacianMinusDiv
 );
 
 /* @brief Velocity corrector: U = HbyA - rAU*grad(p).
