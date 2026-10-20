@@ -19,7 +19,7 @@ ddtSchemes
 {
     default         Euler;
     ddt(U)          Euler;
-    ddt(T)          Euler;
+    ddt(he)         Euler;
     ddt(p)          Euler;
     ddt(K)          Euler;
 }
@@ -34,7 +34,7 @@ divSchemes
 {
     default         none;
     div(phi,U)      Gauss linearUpwindV;
-    div(phi,T)      Gauss limitedLinear 1;
+    div(phi,he)     Gauss limitedLinear 1;
     div(phi,K)      Gauss limitedLinear 1;
     div(phiv,p)     Gauss limitedLinear 1;
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
@@ -45,7 +45,7 @@ laplacianSchemes
     default               Gauss linear uncorrected;
     laplacian(mu,U)       Gauss linear uncorrected;
     laplacian(rhorAUf,p)  Gauss linear uncorrected;
-    laplacian(alphaEff,T) Gauss linear uncorrected;
+    laplacian(alphaEff,he) Gauss linear uncorrected;
 }
 
 interpolationSchemes
