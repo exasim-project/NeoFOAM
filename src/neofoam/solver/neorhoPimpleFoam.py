@@ -355,7 +355,18 @@ class NeoRhoPimpleFoam:
                         p.correct_boundary_conditions()
 
                         if piso.final_non_orthogonal_iter():
-                            nfb.update_face_velocity(phiHbyA, pEqn, phi)
+                            # pEqn above is assembled +ddt(psi,p) + div(phiHbyA) -
+                            # laplacian(rhorAUf,p) (literal rhoPimpleFoam's own
+                            # pDDtEqn - fvm::laplacian ordering, needed to keep the
+                            # matrix positive-definite for p's DIC/IC preconditioner),
+                            # the opposite overall sign from NeoFOAM's incompressible
+                            # solvers' +laplacian(...) - div(...) convention. Must be
+                            # told explicitly, or update_face_velocity's default
+                            # (calibrated for the incompressible convention) would
+                            # reconstruct phi with the wrong sign.
+                            nfb.update_face_velocity(
+                                phiHbyA, pEqn, phi, nfb.PEqnConvention.DivMinusLaplacian
+                            )
 
                     nfb.apply_field_relaxation(
                         p,
