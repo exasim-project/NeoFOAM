@@ -392,7 +392,8 @@ void updateFaceVelocity(
             auto A_nei_own = values[rowNeiStart + neiOffs[facei]];
 
             scalar corrFlux = hasCorrection ? ffc[facei] : scalar(0);
-            iPhi[facei] = iPredPhi[facei]
+            iPhi[facei] =
+                iPredPhi[facei]
                 + sign * (A_own_nei * internalP[nei] - A_nei_own * internalP[own] + corrFlux);
         }
     );
