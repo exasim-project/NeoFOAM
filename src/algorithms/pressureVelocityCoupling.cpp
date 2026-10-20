@@ -328,9 +328,15 @@ void subtractConsistentHbyA(
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
     const PDE<scalar>& expr,
-    nnfvcc::SurfaceField<scalar>& phi
+    nnfvcc::SurfaceField<scalar>& phi,
+    PEqnConvention convention
 )
 {
+    // The two PEqnConvention forms assemble pEqn with exactly opposite-signed matrix
+    // coefficients for the same physical equation (see the enum's doc in the header),
+    // so the correction below is applied with the matching sign.
+    const scalar sign = (convention == PEqnConvention::DivMinusLaplacian) ? scalar(1) : scalar(-1);
+
     const auto& mesh = phi.mesh();
     const auto& p = expr.getField();
     const auto nInternalFaces = mesh.nInternalFaces();
@@ -373,23 +379,20 @@ void updateFaceVelocity(
             // upperIdx(own,f) = rowOffs[own] + ownerOffset[f]      -> A[own, nei]
             // lowerIdx(nei,f) = rowOffs[nei] + neighbourOffset[f]  -> A[nei, own]
             // This previously fetched them swapped (ownOffs[] from rowOwnStart was
-            // called "lower", neiOffs[] from rowNeiStart was called "upper") and then
-            // applied an extra overall minus sign, so the reconstructed pressure-
-            // correction flux came out with the opposite sign from the assembled
-            // matrix's own faceH()-equivalent: phi = phiHbyA + A[own,nei]*p[nei] -
-            // A[nei,own]*p[own] (mirrors OpenFOAM's lduMatrix::faceH + fvMatrix::flux()).
-            // Confirmed by direct measurement: with the old formula, an exact (direct)
+            // called "lower", neiOffs[] from rowNeiStart was called "upper"), independently
+            // of the overall `sign` above, so the reconstructed pressure-correction flux
+            // came out wrong regardless of which PEqnConvention the caller used. Confirmed
+            // by direct measurement: with the old (swapped) formula, an exact (direct)
             // solve of the assembled pEqn left div(phi) far from zero at a corner cell
-            // even though the matrix residual there was machine-zero -- i.e. the
+            // even though the matrix's own row residual there was machine-zero -- i.e. the
             // reconstructed phi did not actually satisfy the continuity equation pEqn
             // was solved for.
             auto A_own_nei = values[rowOwnStart + ownOffs[facei]];
             auto A_nei_own = values[rowNeiStart + neiOffs[facei]];
 
             scalar corrFlux = hasCorrection ? ffc[facei] : scalar(0);
-            iPhi[facei] =
-                iPredPhi[facei] + (A_own_nei * internalP[nei] - A_nei_own * internalP[own])
-              + corrFlux;
+            iPhi[facei] = iPredPhi[facei]
+                + sign * (A_own_nei * internalP[nei] - A_nei_own * internalP[own] + corrFlux);
         }
     );
 
