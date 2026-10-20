@@ -207,15 +207,19 @@ TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings
 
         // Act
         const PreparedPermutation prepared{permutation, exec};
+        const auto oldToNewView = prepared.oldToNew();
+        const auto newToOldView = prepared.newToOld();
 
         NeoN::parallelFor(
             exec, 
             {0, static_cast<NeoN::localIdx>(prepared.size())},
             NEON_LAMBDA(const NeoN::localIdx i) {
-                oldToNewResultView[i] = prepared.oldToNew()[i];
-                newToOldResultView[i] = prepared.newToOld()[i];
+                oldToNewResultView[i] = oldToNewView[i];
+                newToOldResultView[i] = newToOldView[i];
             }
         );
+
+        NeoN::fence(exec);
 
         // Assert
         REQUIRE(prepared.size() == expectedOldToNew.size());
@@ -228,7 +232,7 @@ TEST_CASE("PreparedPermutation provides identity mappings", "[preparedPermutatio
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    SECTION("Identity mapping on " + execName);
+    SECTION("Identity mapping on " + execName)
     {
         // Arrange
         const std::vector<IndexType> expected{0, 1, 2, 3};
@@ -239,14 +243,17 @@ TEST_CASE("PreparedPermutation provides identity mappings", "[preparedPermutatio
 
         // Act
         const PreparedPermutation prepared{permutation, exec};
+        const auto oldToNewView = prepared.oldToNew();
 
         NeoN::parallelFor(
             exec,
             {0, static_cast<NeoN::localIdx>(prepared.size())},
             NEON_LAMBDA(const NeoN::localIdx i) {
-                resultView[i] = prepared.oldToNew()[i];
+                resultView[i] = oldToNewView[i];
             }
         );
+
+        NeoN::fence(exec);
 
         // Assert
         REQUIRE(prepared.size() == expected.size());
