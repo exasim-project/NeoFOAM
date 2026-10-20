@@ -590,6 +590,8 @@ TEST_CASE("PressureVelocityCoupling")
         );
     }
 
+    // LaplacianMinusDiv: pEqn built as +laplacian(...) - div(...), updateFaceVelocity's
+    // default convention (matches NeoFOAM's incompressible solvers).
     SECTION("compute flux")
     {
         REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
@@ -628,6 +630,52 @@ TEST_CASE("PressureVelocityCoupling")
         );
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
+        REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0, ApproxScalar(1e-15)));
+        REQUIRE_THAT(nfPhi0.boundaryData(), EqualsBoundary(ofPhi0, ApproxScalar(1e-15)));
+    }
+
+    // DivMinusLaplacian: pEqn built as +div(...) - laplacian(...) instead -- the opposite
+    // overall sign from the "compute flux" case above, mirroring OpenFOAM's rhoPimpleFoam-
+    // style pEqn.H (used by NeoFOAM's compressible solver to keep its pEqn positive-definite
+    // for DIC/IC preconditioning of p). Catches the two conventions needing opposite-signed
+    // flux reconstruction, which the "compute flux" case alone cannot: both the owner/
+    // neighbour coefficient swap bug (5612661cd) and the follow-up convention conflict
+    // (23770adfd) only ever surfaced in one convention at a time.
+    SECTION("compute flux (DivMinusLaplacian convention)")
+    {
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
+        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+
+        Foam::fvScalarMatrix ofpEqn(fvc::div(ofPhi) - fvm::laplacian(forAUf, ofp));
+        ofPhi0 = ofPhi + ofpEqn.flux();
+
+        nf::PDE<NeoN::scalar> pEqn(
+            dsl::exp::div(nfPhi) - dsl::imp::laplacian(nfrAUf, nfP),
+            nfP,
+            rt
+        );
+
+        pEqn.linearSystem().keepFaceFluxCorrection(true);
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        pEqn.assemble();
+
+        REQUIRE_THAT(
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+            EqualsInternal(ofpEqn.diag(), ApproxScalar(1e-15))
+        );
+        REQUIRE_THAT(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            EqualsInternal(ofpEqn.upper(), ApproxScalar(1e-15))
+        );
+
+        nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0, nf::PEqnConvention::DivMinusLaplacian);
         REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0, ApproxScalar(1e-15)));
         REQUIRE_THAT(nfPhi0.boundaryData(), EqualsBoundary(ofPhi0, ApproxScalar(1e-15)));
     }
