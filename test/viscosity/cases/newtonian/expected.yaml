@@ -1,0 +1,11 @@
+# Expected values for the Newtonian viscosity case. Drives the data-driven
+# viscosity tests (see test/viscosity/conftest.py). Adding a case directory with
+# its own expected.yaml extends coverage without editing any test module.
+config:                       # cross-checked against the real transportProperties read
+  transportModel: Newtonian
+  nu: 1.0e-05
+selection:
+  model_name: Newtonian
+  resolves_to: native         # native | fallback
+model:                        # per-model runtime expectations (native cases only)
+  nu: 1.0e-05                 # what model.nu().value() must return when built from the dict

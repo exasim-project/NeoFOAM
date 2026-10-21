@@ -1,9 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2025 nf authors
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
+
+/*---------------------------------------------------------------------------*\
+Application
+    neoSimpleFoam
+
+Description
+    Steady-state incompressible SIMPLE/SIMPLEC solver with turbulence,
+    the NeoFOAM/NeoN port of OpenFOAM's simpleFoam.
+\*---------------------------------------------------------------------------*/
 
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include "fvCFD.H"
 #include "simpleControl.H"
@@ -15,49 +25,22 @@ using Foam::Info;
 using Foam::endl;
 using Foam::nl;
 
-// NOTE about namespace usage
-// here the namespaces are used deliberately verbose to
-// demonstrate where things are implemented
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
-
-namespace
-{
-
-// Resolve the field under-relaxation factor (alpha) for the given field name
-// from fvSolution.relaxationFactors.fields.<name>. Returns 1.0 (a bitwise
-// no-op inside applyFieldRelaxation) if the block, the fields subdict, or the
-// entry is absent. Tolerates int / scalar typing the same way the equation
-// factor lookup in PDESolver does.
-NeoN::scalar
-readFieldRelaxationFactor(const NeoN::Dictionary& fvSolutionDict, const std::string& fieldName)
-{
-    if (!fvSolutionDict.contains("relaxationFactors")) return NeoN::scalar(1);
-    const auto& rf = fvSolutionDict.subDict("relaxationFactors");
-    if (!rf.contains("fields")) return NeoN::scalar(1);
-    const auto& fields = rf.subDict("fields");
-    if (!fields.contains(fieldName)) return NeoN::scalar(1);
-    if (fields.isType<int>(fieldName)) return NeoN::scalar(fields.get<int>(fieldName));
-    return fields.get<NeoN::scalar>(fieldName);
-}
-
-} // namespace
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char* argv[])
 {
-// Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam, so the rank is
-// known when NeoN configures logging and the rank-0 muting engages immediately.
 #include "addCheckCaseOptions.H"
+    Foam::argList::addOption("executor", "word", "NeoN executor type (Serial/CPU/GPU/default)");
 #include "setRootCase.H"
 #include "createTime.H"
     NeoN::initialize(argc, argv);
     {
-        auto rt = nf::createAdapterRunTime(runTime);
+        auto rt = nf::createAdapterRunTime(runTime, args);
         auto& mesh = rt.mesh;
 
         Foam::simpleControl simple(mesh);
@@ -67,6 +50,11 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        for (const auto& field : {"k", "omega", "epsilon"})
+        {
+            if (solverDict.contains(field))
+                solverDict.subDict(field) = nf::mapFvSolution(solverDict.subDict(field));
+        }
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -85,7 +73,6 @@ int main(int argc, char* argv[])
 
         turb->validate(U);
 
-        // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
@@ -93,17 +80,12 @@ int main(int argc, char* argv[])
         );
         NeoN::scalar cumulativeContErr = 0.0;
 
-        // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
             rt.t = runTime.time().value();
             NeoN::Logging::info("Time = {}", rt.t);
 
-            // Steady-state: no rotateOldTimes, no Courant number, no syncRunTimes
-
-            // Momentum predictor (no ddt for steady-state SIMPLE)
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
                     + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
@@ -111,45 +93,65 @@ int main(int argc, char* argv[])
                 rt
             );
 
+            // simpleFoam/UEqn.H: UEqn.relax()
+            UEqn.relax();
+
             if (simple.momentumPredictor())
             {
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
             }
             else
             {
-                UEqn.assemble();
+                UEqn.assembleAndRelax();
             }
 
-            // SIMPLE pressure-velocity coupling (single pass, no inner PISO loop)
+            // SIMPLE / SIMPLEC pressure-velocity coupling (single pass, no inner PISO loop)
             {
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
-                nnfvcc::SurfaceField<NeoN::scalar> rAU = surfInterpol.interpolate(crAU);
+                // SIMPLEC: rAtU absorbs off-diagonal coupling; for plain SIMPLE crAtU == crAU.
+                const bool consistent = simple.consistent();
+                fvcc::VolumeField<NeoN::scalar> crAtU =
+                    consistent ? nf::computeRAtU(UEqn, crAU) : crAU;
+
+                fvcc::SurfaceField<NeoN::scalar> rAU = surfInterpol.interpolate(crAtU);
                 rAU.name = "rAUf";
 
-                // No ddtFluxCorr: SIMPLE is steady-state
                 auto phiHbyA = nf::flux(hByA);
 
-                // TODO additionally missing
-                // Foam::adjustPhi(phiHbyA, U, p);
-                // Foam::constrainPressure(p, U, phiHbyA, rAU);
+                if (consistent)
+                {
+                    nf::addConsistentFluxCorrection(phiHbyA, crAU, crAtU, p, rt.fvSchemesDict);
+                    nf::subtractConsistentHbyA(hByA, crAU, crAtU, p);
+                }
 
-                // Pre-solve snapshots: internal vector for applyFieldRelaxation
-                // and a full VolumeField for the deferred-correction recovery
-                // below (the Laplacian uses pre-solve p in its deferred
-                // correction; recovering it post-solve must use the same p).
                 auto pPrev = NeoN::dsl::fieldRelaxationSnapshot(p);
-                nnfvcc::VolumeField<NeoN::scalar> pSnapshot(p);
 
-                // Non-orthogonal pressure corrector loop
+                // totalPressure needs phi and U to subtract the dynamic head on inflow
+                // faces; without them it degenerates to a fixedValue at p0.
+                fvcc::BoundaryContext pCtx;
+                pCtx.insert("phi", phi);
+                pCtx.insert("U", U);
+
                 while (simple.correctNonOrthogonal())
                 {
+                    // Refresh the pressure boundary BEFORE assembly. OpenFOAM's fvMatrix
+                    // constructor calls psi.boundaryField().updateCoeffs(), so the
+                    // total-pressure value built from the current phi/U is what the laplacian
+                    // discretises; correcting only after the solve would assemble every
+                    // iteration against the previous one's boundary value.
+                    p.correctBoundaryConditions(pCtx);
+
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
                         rt
                     );
+
+                    // Required so updateFaceVelocity can subtract the non-orthogonal
+                    // faceFluxCorrection and keep phi consistent with the corrected snGrad.
+                    pEqn.linearSystem().keepFaceFluxCorrection(true);
 
                     if (ofP.needReference() && pRefCell >= 0)
                     {
@@ -157,70 +159,26 @@ int main(int argc, char* argv[])
                     }
 
                     pEqn.solve();
-                    p.correctBoundaryConditions();
+                    // Mirrors the psi.correctBoundaryConditions() that closes
+                    // fvMatrix::solveSegregated, so the boundary tracks the new solution.
+                    p.correctBoundaryConditions(pCtx);
 
                     if (simple.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
-
-                        // Add back the deferred non-orthogonal correction the
-                        // Laplacian assembly moved to the RHS. Mirrors OF's
-                        // `fieldFlux += *faceFluxCorrectionPtr_` in
-                        // fvMatrix::flux() (fvMatrix.C:1516-1519) — without
-                        // this, phi carries leftover div(correctionFlux) on
-                        // non-orthogonal meshes and continuity errors diverge
-                        // by ~step 13 on the motorBike snappy mesh. No-op when
-                        // fvSchemes selects 'uncorrected' snGrad.
-                        {
-                            NeoN::Input snGradInput = NeoN::TokenList({std::string("corrected")});
-                            fvcc::FaceNormalGradient<NeoN::scalar> sng(
-                                rt.exec,
-                                rt.nfMesh,
-                                snGradInput
-                            );
-                            if (sng.hasImplicitCorrection())
-                            {
-                                nnfvcc::SurfaceField<NeoN::scalar> snGradCorr(
-                                    rt.exec,
-                                    "snGradCorr",
-                                    rt.nfMesh,
-                                    fvcc::createCalculatedBCs<
-                                        nnfvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh)
-                                );
-                                sng.implicitCorrection(pSnapshot, snGradCorr);
-
-                                const auto nInt = rt.nfMesh.nInternalFaces();
-                                const auto snGradCorrV = snGradCorr.internalVector().view();
-                                const auto rAUV = rAU.internalVector().view();
-                                const auto magSf = rt.nfMesh.faceAreas().view();
-                                auto phiV = phi.internalVector().view();
-                                NeoN::parallelFor(
-                                    rt.exec,
-                                    {0, nInt},
-                                    NEON_LAMBDA(const NeoN::localIdx i) {
-                                        phiV[i] += snGradCorrV[i] * rAUV[i] * magSf[i];
-                                    },
-                                    "addNonOrthCorrToPhi"
-                                );
-                            }
-                        }
                     }
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                // Explicit pressure field under-relaxation — mirrors p.relax()
-                // in OpenFOAM's simpleFoam. Blends p with the pre-solve
-                // snapshot in place: p = pPrev + alpha*(p - pPrev). alpha=1
-                // is a bitwise no-op; reading the factor from
-                // relaxationFactors.fields.<name> in fvSolution.
                 NeoN::dsl::applyFieldRelaxation(
                     p,
                     pPrev,
-                    readFieldRelaxationFactor(rt.fvSolutionDict, "p")
+                    nf::lookupFieldRelaxation(rt.fvSolutionDict, "p", false)
+                        .value_or(NeoN::scalar(1))
                 );
-                p.correctBoundaryConditions();
+                p.correctBoundaryConditions(pCtx);
 
-                nf::updateVelocity(hByA, crAU, p, U);
+                nf::updateVelocity(hByA, crAtU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

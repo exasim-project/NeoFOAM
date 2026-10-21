@@ -1,0 +1,39 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 5;
+
+boundaryField
+{
+    // p0 as a time table, as pimpleFoam/RAS/TJunction writes it: the start-time
+    // entry (10) is what the patch must hold, not the later one (40) and not the
+    // internal field an extrapolating fallback would give.
+    xMax
+    {
+        type            uniformTotalPressure;
+        p0              table ((0 10) (1 40));
+    }
+
+    ".*"
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //

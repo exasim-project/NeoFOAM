@@ -1,0 +1,40 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Two subdomains so the VoF parallel tests run on a two-core runner.
+//
+// ``simple (1 2 1)`` — a split along **y**, not x — is the choice that makes
+// the test discriminating for the damBreak case. The water column occupies
+// x < 0.1461, y < 0.292 of a 0.584 x 0.584 domain, so an equal-cell-count
+// y-split (the processor boundary lands at y ~ 0.269) cuts the column itself:
+// both ranks own water, both develop interface cells within the first steps,
+// and every global reduction in the solver (the gMax/gSum of the alpha-Courant
+// number, the MULES limiter sweeps) sees a non-trivial contribution from each
+// rank. An x-split at the domain mid-plane would leave the whole column — and
+// therefore the whole interface — inside rank 0 for the 0.05 s horizon, so a
+// rank-local max would still give the right answer and the test would prove
+// much less.
+numberOfSubdomains  2;
+
+method          simple;
+
+coeffs
+{
+    n           (1 2 1);
+}
+
+
+// ************************************************************************* //

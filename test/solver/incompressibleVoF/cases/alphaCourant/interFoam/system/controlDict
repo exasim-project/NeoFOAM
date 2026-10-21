@@ -1,0 +1,68 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Run control for the native-interFoam oracle of test_alpha_courant.py: this
+// file replaces tutorials/damBreak/system/controlDict, everything else in the
+// case (mesh, 0.orig, schemes, setFieldsDict) is the tutorial as checked in.
+//
+// adjustTimeStep is OFF so that the deltaT alphaCourantNo.H multiplies with is
+// the fixed value below at *every* step — the test re-imposes exactly this
+// number before calling the Python function, so there is nothing to infer from
+// the log. writeControl/writeInterval write every step, so each printed
+// "Interface Courant Number" line has the time directory it was computed from
+// sitting on disk. writeFormat is binary: the fields are then read back
+// bit-identical to the state interFoam used, leaving the log's 6 significant
+// digits as the only source of disagreement.
+
+application     interFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         0.005;
+
+deltaT          0.001;
+
+writeControl    timeStep;
+
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     binary;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable no;
+
+adjustTimeStep  no;
+
+maxCo           1;
+
+maxAlphaCo      1;
+
+maxDeltaT       1;
+
+// ************************************************************************* //

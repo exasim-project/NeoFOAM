@@ -248,7 +248,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
             auto prevP = NeoN::dsl::fieldRelaxationSnapshot(p);
 
             auto gradU = gradOp.gradTensor(U);
-            nf::PDESolver<NeoN::Vec3> UEqn(
+            nf::PDE<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U)
                     + dsl::exp::viscousStress(nuVol, nutVol, gradU),
                 U,
@@ -262,6 +262,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
             );
 
             UEqn.setFinalIter(finalIter);
+            UEqn.relax(); // pimpleFoam/UEqn.H: UEqn.relax()
 
             if (piso.momentumPredictor())
             {
@@ -288,7 +289,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
 
                 while (piso.correctNonOrthogonal())
                 {
-                    nf::PDESolver<NeoN::scalar> pEqn(
+                    nf::PDE<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
                         rt
@@ -324,7 +325,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
 
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                nf::updateVelocity(hByA, crAU, p, U);
+                nf::updateVelocity(hByA, crAU, p, U, rt);
                 U.correctBoundaryConditions();
             }
 

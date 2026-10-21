@@ -1,0 +1,125 @@
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# SPDX-License-Identifier: Unlicense
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
+#
+# rattler-build recipe for the conda package published to https://prefix.dev.
+# Build it through ci/build_conda_packages.sh, which resolves NEOFOAM_VERSION and
+# writes the per-build variant file this recipe expects.
+#
+# Ported from src/NeoN/recipe/recipe.yaml. The differences are all consequences of
+# NeoFOAM depending on OpenFOAM, which NeoN does not:
+#   * openfoam comes from https://prefix.dev/greole/exasim-project, NOT conda-forge.
+#     conda-forge has only v2412, and its builds are reported to compute 3-D results ~25%
+#     wrong (openfoam-feedstock#8); it also ships neither the src/ nor the applications/
+#     tree that downstream projects compile against. See exasim-project/openfoam-conda.
+#   * mpich, matching the WM_MPLIB=SYSTEMMPI build of that package.
+#   * linux-64 and osx-arm64 — the platforms openfoam 2506 is published for.
+#   * CPU only — no cuda/rocm variants until the CPU package is proven.
+#   * built through pip/scikit-build-core rather than plain CMake, see build.sh.
+
+context:
+  name: neofoam
+  # project.version in pyproject.toml stays the single source of truth. rattler-build can only
+  # read that file with --experimental, so ci/build_conda_packages.sh exports it instead.
+  # Deliberately no default: an unset variable must fail the build rather than stamp a version
+  # that disagrees with the wheel built from the same commit.
+  version: ${{ env.get("NEOFOAM_VERSION") }}
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  - path: ../
+
+build:
+  number: 0
+  string: py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+  skip:
+    # openfoam from greole/exasim-project is published for linux-64 and osx-arm64. The PyPI
+    # wheel remains the path on Windows and on intel macs.
+    - win
+    - osx and x86_64
+  script:
+    file: build.sh
+  dynamic_linking:
+    # scikit-build-core installs every native library under site-packages/neofoam/lib with
+    # relative $ORIGIN rpaths already baked in (see CMakeLists.txt), so unlike NeoN there is
+    # nothing in $PREFIX/lib for the default rewrite to find.
+    rpaths:
+      - lib/
+
+requirements:
+  build:
+    - ${{ compiler('c') }}
+    - ${{ compiler('cxx') }}
+    - ${{ stdlib('c') }}
+    - cmake >=3.22
+    - ninja
+    # CPM clones NeoN, Kokkos, Ginkgo, Umpire and pybFoam from GitHub during the build, so this
+    # recipe needs network access. That is fine for our own channel but would fail conda-forge's
+    # offline build policy — which is why this publishes to prefix.dev, as NeoN's does.
+    - git
+  host:
+    - python
+    - pip
+    # Build backend and binding generator come from conda rather than PyPI so the build does not
+    # silently pull a different nanobind than the one pinned in [build-system].
+    - scikit-build-core >=0.11.0
+    # Must match pyproject.toml: one NB_INTERNALS_VERSION for NeoFOAM's bindings and the bundled
+    # pybFoam, which share a single nanobind type registry at run time.
+    - nanobind >=3.0.1,<3.1
+    # From greole/exasim-project. Its activation script exports FOAM_SRC, FOAM_API and
+    # FOAM_LIBBIN at paths that exist, and the package ships the complete src/ and
+    # applications/ trees — which is what lets build.sh below stay simple.
+    - openfoam ==2506
+    - mpich
+  run:
+    - python
+    - numpy
+    - matplotlib-base
+    - foamlib
+    - typer
+    - pydantic >=2.0.0
+    - networkx >=3.0
+    - pyvis >=0.3.2
+    - pyyaml >=6
+    # pybFoam is deliberately absent: it is compiled into this package from source, exactly as
+    # in the wheel. See the note in pyproject.toml.
+    - openfoam ==2506
+    - mpich
+
+tests:
+  - script:
+      - python check_conda_package.py
+    files:
+      recipe:
+        - check_conda_package.py
+    requirements:
+      run:
+        - python
+
+about:
+  homepage: https://github.com/exasim-project/NeoFOAM
+  repository: https://github.com/exasim-project/NeoFOAM
+  documentation: https://exasim-project.com/NeoFOAM
+  # The OpenFOAM-facing sources are GPL-3.0-or-later, and so is the bundled pybFoam, so the
+  # package as a whole is distributed under the GPL.
+  license: GPL-3.0-or-later
+  license_file:
+    - LICENSES/GPL-3.0-or-later.txt
+    - LICENSES/MIT.txt
+  summary: NeoFOAM - NeoN-based solvers and Python tooling for OpenFOAM
+  description: |
+    NeoFOAM couples the NeoN CFD framework to OpenFOAM: portable, GPU-capable
+    finite-volume operators and linear solvers driven from Python, together with
+    a solver CLI, case preprocessing and postprocessing tooling.
+    This package ships the `neofoam` python package, its native bindings and a
+    bundled copy of pybFoam.
+
+extra:
+  recipe-maintainers:
+    - greole
+    - exasim-project

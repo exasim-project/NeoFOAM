@@ -133,7 +133,9 @@ jobs:
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
         grep -v "examples/" files > files_wo_examples
-        clang-tidy-16 --fix --extra-arg=-w -p build/develop $(cat files_wo_examples)
+        run-clang-tidy-16 -fix -extra-arg=-w -p build/develop -j $(nproc) \
+          -header-filter='.*/include/NeoFOAM/.*' \
+          $(cat files_wo_examples)
 
     - name: Check for fixes
       run: |
@@ -151,12 +153,22 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true # Recursively clone submodules
-    - name: Install dependencies
+
+    - name: Set up OpenFOAM
+      uses: gerlero/setup-openfoam@v1
+      with:
+        openfoam-version: 2506
+
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+
+    - name: Install Python dependencies
       run: |
-        sudo apt update
-        sudo apt install \
-           pre-commit python3-identify
-        pre-commit install
+        pip install .[all] -v
+
     - name: Run pre-commit on all files
       run: pre-commit run --all --color always --verbose
     - name: check for todo fixme note

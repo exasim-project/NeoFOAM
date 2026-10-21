@@ -8,6 +8,7 @@
 #include "common.hpp"
 
 #include "gaussConvectionScheme.H"
+#include "boundedConvectionScheme.H"
 
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -96,7 +97,7 @@ TEST_CASE("matrix multiplication")
         auto sourceHost = source.copyToHost();
 
         auto nftHost = nfT.internalVector().copyToHost();
-        for (size_t i = 0; i < sourceHost.size(); i++)
+        for (NeoN::sizeType i = 0; i < sourceHost.size(); i++)
         {
             REQUIRE(sourceHost.view()[i] == coeff * nftHost.view()[i]);
         }
@@ -110,14 +111,14 @@ TEST_CASE("matrix multiplication")
         auto diag = ls.matrix().diag();
         auto diagHost = diag.copyToHost();
 
-        for (size_t celli = 0; celli < diagHost.size(); celli++)
+        for (NeoN::sizeType celli = 0; celli < diagHost.size(); celli++)
         {
             REQUIRE(diagHost.view()[celli] == coeff * cellVolumes.view()[celli]);
         }
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto resultHost = result.internalVector().copyToHost();
-        for (size_t celli = 0; celli < resultHost.size(); celli++)
+        for (NeoN::sizeType celli = 0; celli < resultHost.size(); celli++)
         {
             REQUIRE(
                 resultHost.view()[celli]
@@ -135,7 +136,7 @@ TEST_CASE("matrix multiplication")
         auto divV = divT * mesh.V();
 
         auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
-        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+        auto nfPDE = NeoFOAM::PDE<NeoN::scalar>(
             NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::div(nfPhi, nfT)),
             nfT,
             rt
@@ -185,6 +186,34 @@ TEST_CASE("matrix multiplication")
         REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
     }
 
+    SECTION("div bounded_" + execName)
+    {
+        // Foam::fv::boundedConvectionScheme::fvmDiv adds -fvm::Sp(fvc::surfaceIntegrate(faceFlux),
+        // T) to the inner scheme's matrix; ofPhi is a random, non-solenoidal flux so this
+        // correction is actually nonzero and exercised here (unlike a divergence-free flux, where
+        // it vanishes and the "div_" section above already covers the plain-Gauss path).
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
+        auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
+
+        Foam::IStringStream isInner("Gauss upwind");
+        Foam::fv::boundedConvectionScheme<Foam::scalar> foamBoundedDiv(mesh, ofPhi, isInner);
+        Foam::fvScalarMatrix matrix(foamBoundedDiv.fvmDiv(ofPhi, ofT));
+        Foam::volScalarField divT("divT", matrix & ofT);
+        auto divV = divT * mesh.V();
+
+        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("bounded"), std::string("Gauss"), std::string("upwind")});
+        fvcc::DivOperatorFactory<NeoN::scalar>::create(exec, rt.nfMesh, scheme)
+            ->div(ls, nfPhi, nfT, dsl::Coeff(1.0));
+
+        // diag and rhs differ from the foam matrix as openfoam does not add the boundary values to
+        // the matrix; check the operator action instead (same convention as "div linearUpwind_").
+        auto result = NeoFOAM::applyOperator(ls, nfT);
+        REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
+    }
+
     SECTION("laplacian_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
@@ -194,7 +223,7 @@ TEST_CASE("matrix multiplication")
         auto lapV = laplacian * mesh.V();
 
         auto [nfT, nfNuf] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofNuf);
-        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+        auto nfPDE = NeoFOAM::PDE<NeoN::scalar>(
             NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfNuf, nfT)),
             nfT,
             rt

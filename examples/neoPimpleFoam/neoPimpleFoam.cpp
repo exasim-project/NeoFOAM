@@ -65,11 +65,6 @@ int main(int argc, char* argv[])
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
-        // Gauss-Green gradient operator for the explicit deviatoric viscous-stress term.
-        // The full viscous term is div(nuEff*(grad(U) + grad(U)^T)) = laplacian(nuEff,U)
-        // + div(nuEff*dev2(T(grad(U)))); the implicit laplacian alone is not sufficient.
-        fvcc::GaussGreenGrad gradOp(rt.exec, rt.nfMesh);
-
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
@@ -82,7 +77,21 @@ int main(int argc, char* argv[])
         // Hoisted reuse buffer for the 2nd+ outer correctors' current-U velocity gradient,
         // allocated ONCE here and refilled in place via gradTensor(U, localGradU) when needed —
         // so no VolumeField<Tensor> (~nCells*9 scalars) is allocated per outer corrector.
-        auto localGradU = gradOp.gradTensor(U);
+        fvcc::VolumeField<NeoN::Tensor> localGradU(
+            rt.exec,
+            "gradU",
+            rt.nfMesh,
+            fvcc::createCalculatedProcBCs<fvcc::VolumeBoundary<NeoN::Tensor>>(rt.nfMesh)
+        );
+        NeoN::fill(localGradU.internalVector(), NeoN::zero<NeoN::Tensor>());
+        // grad(U) for the explicit deviatoric viscous-stress term: the full viscous term is
+        // div(nuEff*(grad(U) + grad(U)^T)) = laplacian(nuEff,U) + div(nuEff*dev2(T(grad(U)))),
+        // so the implicit laplacian alone is not sufficient. gradScheme caches the operator,
+        // so resolving it per call is a lookup, not a rebuild.
+        nf::gradScheme(rt, "grad(U)").gradTensor(U, localGradU, dsl::Coeff {});
+        // Exchange the neighbour-cell gradient into the processor tail so the explicit
+        // viscous-stress term sees correct proc-boundary gradients in parallel runs.
+        localGradU.correctBoundaryConditions();
 
         // Hoist the surface interpolation once to avoid re-constructing it per inner corrector.
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -92,6 +101,9 @@ int main(int argc, char* argv[])
         );
 
         NeoN::scalar cumulativeContErr = 0.0;
+
+        auto uSolver = nf::Solver(U, rt);
+        auto pSolver = nf::Solver(p, rt);
 
         nf::PimpleControl pimpleLoop(rt.fvSolutionDict);
 
@@ -142,16 +154,16 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    gradOp.gradTensor(U, localGradU);
+                    nf::gradScheme(rt, "grad(U)").gradTensor(U, localGradU, dsl::Coeff {});
+                    // Refill the processor tail with neighbour-cell gradients (see above).
+                    localGradU.correctBoundaryConditions();
                     gradUPtr = &localGradU;
                 }
                 const auto& gradU = *gradUPtr;
 
-                nf::PDESolver<NeoN::Vec3> UEqn(
+                nf::PDE<NeoN::Vec3> UEqn(
                     dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
-                        + dsl::exp::viscousStress(nu, turb->nut(), gradU),
-                    U,
-                    rt
+                    + dsl::exp::viscousStress(nu, turb->nut(), gradU)
                 );
 
                 const auto ddtScheme = UEqn.ddtScheme();
@@ -161,17 +173,18 @@ int main(int argc, char* argv[])
                 );
 
                 UEqn.setFinalIter(finalIter);
+                UEqn.relax(); // pimpleFoam/UEqn.H: UEqn.relax()
 
                 if (piso.momentumPredictor())
                 {
-                    auto statsU = UEqn.solve(-1.0 * dsl::exp::grad(p));
+                    auto statsU = uSolver.solve(UEqn, -1.0 * dsl::exp::grad(p));
                     residuals["U"] = reduceU(statsU);
                 }
                 else
                 {
                     // Relax unconditionally so computeRAUandHByA reads the relaxed diagonal
                     // regardless of whether the momentum predictor runs.
-                    UEqn.assembleAndRelax();
+                    uSolver.assembleAndRelax(UEqn);
                 }
 
                 std::pair<NeoN::scalar, NeoN::scalar> pRes {};
@@ -198,10 +211,8 @@ int main(int argc, char* argv[])
                     while (piso.correctNonOrthogonal())
                     {
                         // Pressure corrector
-                        nf::PDESolver<NeoN::scalar> pEqn(
-                            NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
-                            p,
-                            rt
+                        nf::PDE<NeoN::scalar> pEqn(
+                            NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
                         );
 
                         pEqn.setFinalIter(finalIter);
@@ -211,7 +222,7 @@ int main(int argc, char* argv[])
                             pEqn.setReference(pRefCell, pRefValue);
                         }
 
-                        auto statsP = pEqn.solve();
+                        auto statsP = pSolver.solve(pEqn);
                         if (!havePRes)
                         {
                             pRes = {statsP.entries[0].initResNorm, statsP.entries[0].finalResNorm};
@@ -235,7 +246,7 @@ int main(int argc, char* argv[])
 
                     nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                    nf::updateVelocity(hByA, crAU, p, U);
+                    nf::updateVelocity(hByA, crAU, p, U, rt);
                     U.correctBoundaryConditions();
                 }
 

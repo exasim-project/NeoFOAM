@@ -1,0 +1,14 @@
+# Expected values for the wrong-family case: kEpsilon IS registered, but as a RAS
+# closure, and this case asks for it as an LES model. OpenFOAM keeps a separate
+# run-time selection table per family, so the RAS closure is not this model —
+# selection must refuse it on both backends rather than silently build the RAS one.
+config:                       # cross-checked against the real turbulenceProperties read
+  simulationType: LES
+  RAS: null
+  LES:                        # full sub-dictionary, compared wholesale
+    LESModel: kEpsilon
+    turbulence: true
+    delta: cubeRootVol
+selection:
+  model_name: kEpsilon
+  resolves_to: wrong_family    # native (registered) | unregistered | wrong_family

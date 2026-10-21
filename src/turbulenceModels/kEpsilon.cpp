@@ -3,12 +3,15 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
 #include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
+#include "NeoFOAM/auxiliary/bound.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include "wallDist.H"
+#include "nearWallDist.H"
 #include "IOobject.H"
 #include "volFields.H"
 
@@ -22,7 +25,8 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-namespace
+// Named (not anonymous) so this model's SYCL device-kernel names stay unique across TUs.
+namespace kEpsilonDetail
 {
 
 // ---------------------------------------------------------------------------
@@ -37,17 +41,17 @@ void kernelComputeSources(
     const NeoN::Vector<scalar>& epsVec,
     const NeoN::Vector<scalar>& nutVec,
     const NeoN::Vector<Tensor>& gradUVec,
-    NeoN::Vector<scalar>& PkVec,
+    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& epsSourceVec,
     NeoN::Vector<scalar>& spEpsVec,
-    scalar Cmu,
+    scalar cmu,
     scalar C1,
     scalar C2
 )
 {
-    const auto [kV, epsV, nutV, gradUV, PkV, spKV, epsSV, spEpsV] =
-        NeoN::views(kVec, epsVec, nutVec, gradUVec, PkVec, spKVec, epsSourceVec, spEpsVec);
+    const auto [kV, epsV, nutV, gradUV, pkV, spKV, epsSV, spEpsV] =
+        NeoN::views(kVec, epsVec, nutVec, gradUVec, pkVec, spKVec, epsSourceVec, spEpsVec);
 
     const scalar rootVSmall = scalar(1e-30);
 
@@ -55,9 +59,9 @@ void kernelComputeSources(
         exec,
         {0, static_cast<localIdx>(kVec.size())},
         NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = Kokkos::max(kV[i], scalar(0));
-            const scalar eps_i = Kokkos::max(epsV[i], rootVSmall);
-            const scalar nut_i = nutV[i];
+            const scalar kI = Kokkos::max(kV[i], scalar(0));
+            const scalar epsI = Kokkos::max(epsV[i], rootVSmall);
+            const scalar nutI = nutV[i];
 
             // GbyNu0 = ∇U && devTwoSymm(∇U)
             //   = ∇U·∇U + ∇U·∇Uᵀ - (2/3)(div U)²
@@ -74,24 +78,24 @@ void kernelComputeSources(
                 }
             }
             const scalar divU = g(0, 0) + g(1, 1) + g(2, 2);
-            const scalar S2_i = normSq + dotTrans;
-            const scalar GbyNu0_i = S2_i - (scalar(2) / scalar(3)) * divU * divU;
+            const scalar s2I = normSq + dotTrans;
+            const scalar gbyNu0I = s2I - (scalar(2) / scalar(3)) * divU * divU;
 
             // Production: G = ν_t · GbyNu0
-            const scalar G_i = nut_i * GbyNu0_i;
+            const scalar gI = nutI * gbyNu0I;
 
             // k equation:
             //   source: +G
             //   implicit destruction (sp): ε/k     → spK = ε/k
-            PkV[i] = G_i;
-            spKV[i] = eps_i / Kokkos::max(k_i, rootVSmall);
+            pkV[i] = gI;
+            spKV[i] = epsI / Kokkos::max(kI, rootVSmall);
 
             // ε equation:
             //   source: +C1 · Cμ · k · GbyNu0  (since C1·G·ε/k = C1·Cμ·k·GbyNu0
             //                                    using ν_t = Cμ·k²/ε)
             //   implicit destruction (sp): C2 · ε/k → spEps = C2 · ε/k
-            epsSV[i] = C1 * Cmu * k_i * GbyNu0_i;
-            spEpsV[i] = C2 * eps_i / Kokkos::max(k_i, rootVSmall);
+            epsSV[i] = C1 * cmu * kI * gbyNu0I;
+            spEpsV[i] = C2 * epsI / Kokkos::max(kI, rootVSmall);
         },
         "kEpsilon::computeSources"
     );
@@ -105,7 +109,7 @@ void kernelCorrectNutInternal(
     const NeoN::Vector<scalar>& kVec,
     const NeoN::Vector<scalar>& epsVec,
     NeoN::Vector<scalar>& nutVec,
-    scalar Cmu
+    scalar cmu
 )
 {
     const auto [kV, epsV, nutV_] = NeoN::views(kVec, epsVec, nutVec);
@@ -115,9 +119,9 @@ void kernelCorrectNutInternal(
         exec,
         {0, static_cast<localIdx>(kVec.size())},
         NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = Kokkos::max(kV[i], scalar(0));
-            const scalar eps_i = Kokkos::max(epsV[i], rootVSmall);
-            nutV_[i] = Cmu * k_i * k_i / eps_i;
+            const scalar kI = Kokkos::max(kV[i], scalar(0));
+            const scalar epsI = Kokkos::max(epsV[i], rootVSmall);
+            nutV_[i] = cmu * kI * kI / epsI;
         },
         "kEpsilon::correctNutInternal"
     );
@@ -131,23 +135,23 @@ void kernelCalcDiffusivities(
     const NeoN::Vector<scalar>& surfNuVec,
     const NeoN::Vector<scalar>& surfNutVec,
     NeoN::Vector<scalar>& nuEffVec,
-    NeoN::Vector<scalar>& DkEffVec,
-    NeoN::Vector<scalar>& DepsEffVec,
+    NeoN::Vector<scalar>& dkEffVec,
+    NeoN::Vector<scalar>& depsEffVec,
     scalar sigmaK,
     scalar sigmaEps,
     std::string label
 )
 {
-    const auto [nuF, nutF, nuEffF, DkF, DepsF] =
-        NeoN::views(surfNuVec, surfNutVec, nuEffVec, DkEffVec, DepsEffVec);
+    const auto [nuF, nutF, nuEffF, dkF, depsF] =
+        NeoN::views(surfNuVec, surfNutVec, nuEffVec, dkEffVec, depsEffVec);
 
     NeoN::parallelFor(
         exec,
         {0, static_cast<localIdx>(nuEffVec.size())},
         NEON_LAMBDA(const localIdx f) {
             nuEffF[f] = nuF[f] + nutF[f];
-            DkF[f] = nuF[f] + nutF[f] / sigmaK;
-            DepsF[f] = nuF[f] + nutF[f] / sigmaEps;
+            dkF[f] = nuF[f] + nutF[f] / sigmaK;
+            depsF[f] = nuF[f] + nutF[f] / sigmaEps;
         },
         std::move(label)
     );
@@ -173,7 +177,37 @@ void kernelDevRhoReff(
     );
 }
 
-} // namespace
+// Populate nearWallDist's boundary face values from wallDist's owner-cell internal value.
+// Kept as a free function (not a constructor body / member) because NVCC forbids extended
+// __host__ __device__ lambdas (NEON_LAMBDA) inside functions whose address can't be taken
+// (constructors) or inside private/protected members.
+void initNearWallDistBoundary(
+    const NeoN::Executor& exec,
+    const nnfvcc::VolumeField<scalar>& wallDist,
+    const NeoN::UnstructuredMesh& mesh,
+    nnfvcc::VolumeField<scalar>& nearWallDist
+)
+{
+    // The wall functions need the distance to *their own* patch, not the distance to the
+    // nearest wall anywhere in the domain; with more than one wall patch those differ, and
+    // eLog ~ 1/y then comes out too large on whichever patch is not the closest. OpenFOAM
+    // draws this from turbulenceModel::y() (Foam::nearWallDist), which buildWallDistKEps
+    // has already copied onto this field's boundary -- so take it from there rather than
+    // from the owner cell's global wallDist.
+    const auto wdBoundary = wallDist.boundaryData().value().view();
+    auto nwdBoundary = nearWallDist.boundaryData().value().view();
+    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
+    NeoN::parallelFor(
+        exec,
+        {0, nBoundaryFaces},
+        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdBoundary[i]; },
+        "kEpsilon::initNearWallDistBoundary"
+    );
+}
+
+} // namespace kEpsilonDetail
+
+using namespace kEpsilonDetail;
 
 // ============================================================
 // Constructor
@@ -228,36 +262,31 @@ KEpsilon::KEpsilon(
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
-    , DkEffF_(exec, "DkEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
-    , DepsilonEffF_(
+    , dkEffF_(exec, "DkEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
+    , depsilonEffF_(
           exec,
           "DepsilonEff",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , gradOp_(exec, mesh)
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
+    , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , epsilonWallValue_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , epsilonWallMask_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , divU_(exec, "divU", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
 {
     surfInterp_.interpolate(nu_, surfNu_);
 
     // Populate nearWallDist_'s boundary face values by copying wallDist_'s
-    // adjacent-cell internal value. Same pattern as KOmegaSST.
-    initNearWallDistBoundary();
-}
-
-void KEpsilon::initNearWallDistBoundary()
-{
-    const auto wdInternal = wallDist_.internalVector().view();
-    const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
-    auto nwdBoundary = nearWallDist_.boundaryData().value().view();
-    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
-    NeoN::parallelFor(
-        exec_,
-        {0, nBoundaryFaces},
-        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
-        "kEpsilon::initNearWallDistBoundary"
-    );
+    // adjacent-cell internal value. Same pattern as KOmegaSST. Done via a free function
+    // because NVCC forbids NEON_LAMBDA in a constructor body.
+    initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
 }
 
 // ============================================================
@@ -271,7 +300,7 @@ void KEpsilon::validate(
     nnfvcc::VolumeField<scalar>& nut
 )
 {
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     gradU_.correctBoundaryConditions();
 
     computeSources(k, epsilon, nut, gradU_);
@@ -299,7 +328,7 @@ void KEpsilon::correct(
 )
 {
     // Compute ∇U once — reused for the production term
-    gradOp_.gradTensor(U, gradU_);
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
     gradU_.correctBoundaryConditions();
 
     fvcc::BoundaryContext ctx;
@@ -324,8 +353,10 @@ void KEpsilon::correct(
     // source that balances the wall-function ε boundary value.
     //
     // Identifies wall-function patches by name on epsilon's BC list.
+    bool anyEpsilonWF = false;
     {
-        const scalar Cmu25 = Kokkos::pow(coeffs_.Cmu, scalar(0.25));
+        const scalar cmu25 = Kokkos::pow(coeffs_.cmu, scalar(0.25));
+        const scalar cmu75 = Kokkos::pow(coeffs_.cmu, scalar(0.75));
         const scalar kappa_ = scalar(0.41); // matches epsilonWallFunction default
         const auto& epsilonBCs = epsilon.boundaryConditions();
         const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
@@ -337,20 +368,85 @@ void KEpsilon::correct(
         const auto yBoundaryV = nearWallDist_.boundaryData().value().view();
         const auto kInternalV = k.internalVector().view();
         auto pkInternalV = Pk_.internalVector().view();
+        const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
+
+        // One-time: build cornerWeight_[c] = 1/(number of epsilonWallFunction faces touching cell
+        // c), 0 for non-wall cells. Mirrors kOmegaSST corner-averaging to avoid data races when
+        // multiple boundary faces share the same owner cell (edges/corners).
+        if (!cornerWeightsBuilt_)
+        {
+            NeoN::fill(cornerWeight_, scalar(0));
+            auto cwBuild = cornerWeight_.view();
+            for (NeoN::localIdx patchID = 0;
+                 patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
+                 ++patchID)
+            {
+                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+                    continue;
+                const auto [start, end] = epsilon.boundaryData().range(patchID);
+                NeoN::parallelFor(
+                    exec_,
+                    {start, end},
+                    NEON_LAMBDA(const NeoN::localIdx i) {
+                        Kokkos::atomic_add(&cwBuild[faceOwnersV[i]], scalar(1));
+                    },
+                    "kEpsilon::epsilonWFCountFaces"
+                );
+            }
+            NeoN::parallelFor(
+                exec_,
+                {0, nCells},
+                NEON_LAMBDA(const NeoN::localIdx c) {
+                    if (cwBuild[c] > scalar(0)) cwBuild[c] = scalar(1) / cwBuild[c];
+                },
+                "kEpsilon::epsilonWFInvertCount"
+            );
+            // The pin mask follows the same static topology, so build it here rather than
+            // from the face loop below: a corner cell is touched by several faces at once
+            // and a per-face store would be a data race even though every writer stores 1.
+            auto maskBuild = epsilonWallMask_.view();
+            NeoN::parallelFor(
+                exec_,
+                {0, nCells},
+                NEON_LAMBDA(const NeoN::localIdx c) {
+                    maskBuild[c] = cwBuild[c] > scalar(0) ? scalar(1) : scalar(0);
+                },
+                "kEpsilon::epsilonWFBuildMask"
+            );
+            cornerWeightsBuilt_ = true;
+        }
+        const auto cornerWeightV = cornerWeight_.view();
+
+        // Only the value is per-step (it tracks k); the mask is topology and stays put.
+        NeoN::fill(epsilonWallValue_, scalar(0));
+        auto epsWallValueV = epsilonWallValue_.view();
+
+        // Zero Pk_ at wall cells before accumulation (computeSources wrote bulk production there).
+        NeoN::parallelFor(
+            exec_,
+            {0, nCells},
+            NEON_LAMBDA(const NeoN::localIdx c) {
+                if (cornerWeightV[c] > scalar(0)) pkInternalV[c] = scalar(0);
+            },
+            "kEpsilon::epsilonWFZeroWallPk"
+        );
+        NeoN::fence(exec_);
 
         for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
              ++patchID)
         {
-            if (epsilonBCs[static_cast<size_t>(patchID)].name() != "epsilonWallFunction")
+            if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
             {
                 continue;
             }
+            anyEpsilonWF = true;
             const auto [start, end] = epsilon.boundaryData().range(patchID);
             NeoN::parallelFor(
                 exec_,
                 {start, end},
                 NEON_LAMBDA(const NeoN::localIdx i) {
                     const auto owner = faceOwnersV[i];
+                    const scalar cw = cornerWeightV[owner];
                     const NeoN::Vec3 uOwn = uInternalV[owner];
                     const NeoN::Vec3 uWall = uBoundaryV[i];
                     const scalar deltaInv = deltaCoeffsV[i];
@@ -361,36 +457,152 @@ void KEpsilon::correct(
                     const scalar y = yBoundaryV[i];
                     const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
                     const scalar gWall =
-                        (nutw + nuw) * magGradUw * Cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
-                    pkInternalV[owner] = gWall;
+                        (nutw + nuw) * magGradUw * cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
+                    Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
+
+                    // Cell half of epsilonWallFunction, corner-averaged onto the owner, and
+                    // the same value setEpsilonWallFunction puts on the face: the log-law
+                    // branch, which is what OpenFOAM uses for every face unless the
+                    // non-default lowReCorrection is switched on.
+                    const scalar eLog = cmu75 * Kokkos::pow(kc, scalar(1.5)) / (kappa_ * y);
+                    Kokkos::atomic_add(&epsWallValueV[owner], cw * eLog);
                 },
                 "kEpsilon::epsilonWFGFeedback"
             );
         }
     }
 
+    // Dilatation sinks, applied after the wall-function block so they survive the Pk_
+    // overwrite at wall cells -- upstream's SuSp is a matrix contribution independent of the
+    // G the wall function imposes there.
+    //
+    // kEpsilon.C:280,259 carry -fvm::SuSp((2/3)*divU, k) and
+    // -fvm::SuSp(((2/3)*C1 - C3)*divU, eps). divU is the *flux* divergence
+    // fvc::div(fvc::absolute(phi, U)) (kEpsilon.C:232) -- the discrete continuity error --
+    // not the trace of grad(U); the two differ on a discrete mesh. A SIMPLE/PIMPLE run never
+    // drives it to exactly zero, so leaving these out holds k and epsilon high.
+    //
+    // SuSp, not Sp: the positive part goes on the diagonal, the negative part moves to the
+    // explicit source, so a locally negative divU cannot eat the diagonal. On the LHS the
+    // term is +SuSp(s, psi), so the explicit half lands on the source that is subtracted
+    // there -- hence the -min(s, 0) * psi.
+    {
+        // divU = fvc::div(phi): surfaceIntegrate sums the face fluxes and divides by the cell
+        // volume, which is exactly what OpenFOAM's fvc::div of a surface field does.
+        //
+        // surfaceIntegrate ACCUMULATES into its result (atomic_add per face, then a single
+        // divide by the volume), so the target must start at zero. divU_ is a persistent member
+        // rather than a per-call temporary, so without this fill it would carry the previous
+        // iteration's value into the divide and evaluate divU_prev/V + div(phi) -- a geometric
+        // amplification by 1/V per iteration in every cell whose volume is below unity.
+        NeoN::fill(divU_.internalVector(), scalar(0));
+        nnfvcc::surfaceIntegrate<scalar>(
+            exec_,
+            mesh_.nInternalFaces(),
+            mesh_.faceNeighbors().view(),
+            mesh_.faceOwners().view(),
+            mesh_.boundaryMesh().faceOwners().view(),
+            phi.internalVector().view(),
+            phi.boundaryData().value().view(),
+            mesh_.cellVolumes().view(),
+            divU_.internalVector().view(),
+            NeoN::dsl::Coeff(1.0)
+        );
+
+        const scalar c1 = coeffs_.C1;
+        const scalar c3 = coeffs_.C3;
+        const auto divUV = divU_.internalVector().view();
+        const auto kV = k.internalVector().view();
+        const auto epsV = epsilon.internalVector().view();
+        auto pkV = Pk_.internalVector().view();
+        auto spKV = spK_.internalVector().view();
+        auto epsSV = epsilonSource_.internalVector().view();
+        auto spEpsV = spEpsilon_.internalVector().view();
+        NeoN::parallelFor(
+            exec_,
+            {0, static_cast<NeoN::localIdx>(k.internalVector().size())},
+            NEON_LAMBDA(const NeoN::localIdx i) {
+                const scalar divU = divUV[i];
+                const scalar suspK = (scalar(2) / scalar(3)) * divU;
+                const scalar suspEps = ((scalar(2) / scalar(3)) * c1 - c3) * divU;
+                const scalar kI = Kokkos::max(kV[i], scalar(0));
+                const scalar epsI = Kokkos::max(epsV[i], scalar(0));
+
+                spKV[i] += Kokkos::max(suspK, scalar(0));
+                pkV[i] -= Kokkos::min(suspK, scalar(0)) * kI;
+                spEpsV[i] += Kokkos::max(suspEps, scalar(0));
+                epsSV[i] -= Kokkos::min(suspEps, scalar(0)) * epsI;
+            },
+            "kEpsilon::dilatationSources"
+        );
+    }
+
     // ----- epsilon equation -----
     // Solved BEFORE k so spK can be updated from the new ε to match OF's
     // sequencing (kEpsilon.C:251-291: ε first, then k).
-    PDESolver<scalar> epsEqn(
+    auto epsEqn = PDESolver<scalar>(
         dsl::imp::ddt(epsilon) + dsl::imp::div(phi, epsilon)
-            - dsl::imp::laplacian(DepsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
+            - dsl::imp::laplacian(depsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
             - dsl::exp::source(epsilonSource_),
         epsilon,
         rt
     );
+    // Hard-pin the near-wall cells to the log-law epsilon built above. This is the cell half
+    // of OpenFOAM's epsilonWallFunction, which fixes epsilon in the wall-adjacent cells via
+    // manipulateMatrix/fvMatrix::setValues rather than solving for them. Without it the
+    // near-wall dissipation is under-predicted, the eps/k destruction of k is too weak, and
+    // k runs high through the whole boundary layer. Mirrors the omega pin in KOmegaSST,
+    // which likewise constrains before relaxing.
+    if (anyEpsilonWF)
+    {
+        epsEqn.setConstraints(epsilonWallMask_, epsilonWallValue_);
+    }
+    epsEqn.relax(); // OpenFOAM kEpsilon.C: epsEqn.ref().relax()
     epsEqn.solve();
 
-    // Bound ε > 0
+    // Bound ε > 0. A plain clamp pins an undershooting cell at the floor, and ν_t = Cμ k²/ε then
+    // explodes; bound() refills those cells from the neighbourhood as OpenFOAM does.
+    bound(epsilon, epsilonMin_, boundCache_);
+    epsilon.correctBoundaryConditions(ctx);
+
+    // Corner averaging of the wall face value. Upstream writes the corner-weighted
+    // epsilon0[celli] onto every face of a wall-adjacent cell (updateCoeffs, then
+    // setValues(faceCells, patchInternalField())), so a cell touched by several wall faces
+    // carries one averaged value rather than a different value per face. The BC cannot do
+    // that itself: it sees one patch at a time, while a corner cell can touch two -- upstream
+    // solves this with a master patch that aggregates across all of them. epsilonWallValue_
+    // is already that cross-patch corner-weighted value (it is what the pin uses, built from
+    // the same k), so scatter it back onto the faces here.
+    if (anyEpsilonWF)
     {
-        auto epsView = epsilon.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(epsilon.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { epsView[i] = Kokkos::max(epsView[i], scalar(1e-10)); },
-            "kEpsilon::boundEpsilon"
-        );
-        epsilon.correctBoundaryConditions(ctx);
+        const auto epsWallValueV = epsilonWallValue_.view();
+        const auto maskV = epsilonWallMask_.view();
+        const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
+        auto [epsValueV, epsRefValueV] =
+            NeoN::views(epsilon.boundaryData().value(), epsilon.boundaryData().refValue());
+        const auto& epsilonBCs = epsilon.boundaryConditions();
+        for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
+             ++patchID)
+        {
+            if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+            {
+                continue;
+            }
+            const auto [start, end] = epsilon.boundaryData().range(patchID);
+            NeoN::parallelFor(
+                exec_,
+                {start, end},
+                NEON_LAMBDA(const NeoN::localIdx i) {
+                    const auto owner = faceOwnersV[i];
+                    if (maskV[owner] > scalar(0))
+                    {
+                        epsValueV[i] = epsWallValueV[owner];
+                        epsRefValueV[i] = epsWallValueV[owner];
+                    }
+                },
+                "kEpsilon::epsilonWFCornerAverage"
+            );
+        }
     }
 
     // Update spK from the new ε (ε/k destruction term)
@@ -403,33 +615,26 @@ void KEpsilon::correct(
             exec_,
             {0, static_cast<localIdx>(epsilon.internalVector().size())},
             NEON_LAMBDA(const localIdx i) {
-                const scalar k_i = Kokkos::max(kV[i], rootVSmall);
-                spKView[i] = epsV[i] / k_i;
+                const scalar kI = Kokkos::max(kV[i], rootVSmall);
+                spKView[i] = epsV[i] / kI;
             },
             "kEpsilon::updateSpKFromNewEpsilon"
         );
     }
 
     // ----- k equation -----
-    PDESolver<scalar> kEqn(
-        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(DkEffF_, k)
+    auto kEqn = PDESolver<scalar>(
+        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(dkEffF_, k)
             + dsl::imp::source(spK_, k) - dsl::exp::source(Pk_),
         k,
         rt
     );
+    kEqn.relax(); // OpenFOAM kEpsilon.C: kEqn.ref().relax()
     kEqn.solve();
 
-    // Bound k >= 0
-    {
-        auto kView = k.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(k.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { kView[i] = Kokkos::max(kView[i], scalar(0)); },
-            "kEpsilon::boundK"
-        );
-        k.correctBoundaryConditions(ctx);
-    }
+    // Bound k >= kMin
+    bound(k, kMin_, boundCache_);
+    k.correctBoundaryConditions(ctx);
 
     // Update ν_t = Cμ k²/ε from new k, ε
     correctNutInternal(k, epsilon, nut);
@@ -441,11 +646,17 @@ void KEpsilon::correct(
 
 nnfvcc::SurfaceField<scalar>& KEpsilon::nuEff() { return nuEff_; }
 
-nnfvcc::SurfaceField<scalar>& KEpsilon::DkEff() { return DkEffF_; }
+nnfvcc::SurfaceField<scalar>& KEpsilon::dkEff() { return dkEffF_; }
 
-nnfvcc::SurfaceField<scalar>& KEpsilon::DepsilonEff() { return DepsilonEffF_; }
+nnfvcc::SurfaceField<scalar>& KEpsilon::depsilonEff() { return depsilonEffF_; }
 
 const nnfvcc::VolumeField<Tensor>& KEpsilon::gradU() const { return gradU_; }
+
+void KEpsilon::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
+{
+    gradUOp_->gradTensor(U, gradU_, NeoN::dsl::Coeff {});
+    gradU_.correctBoundaryConditions();
+}
 
 NeoN::Vector<SymmTensor> KEpsilon::devRhoReff() const
 {
@@ -476,7 +687,7 @@ void KEpsilon::computeSources(
         spK_.internalVector(),
         epsilonSource_.internalVector(),
         spEpsilon_.internalVector(),
-        coeffs_.Cmu,
+        coeffs_.cmu,
         coeffs_.C1,
         coeffs_.C2
     );
@@ -493,7 +704,21 @@ void KEpsilon::correctNutInternal(
         k.internalVector(),
         epsilon.internalVector(),
         nut.internalVector(),
-        coeffs_.Cmu
+        coeffs_.cmu
+    );
+
+    // OpenFOAM's correctNut is a GeometricField assignment (kEpsilon.C:45,
+    // nut_ = Cmu*sqr(k)/epsilon), so it evaluates the boundary faces too; only then does
+    // correctBoundaryConditions() overwrite the wall-function patches. Doing the interior
+    // alone leaves every other patch -- `calculated` inlets/outlets above all -- pinned at
+    // whatever the 0/ file held, which is usually zero, and that zero then propagates into
+    // nuEff on those faces.
+    kernelCorrectNutInternal(
+        exec_,
+        k.boundaryData().value(),
+        epsilon.boundaryData().value(),
+        nut.boundaryData().value(),
+        coeffs_.cmu
     );
 }
 
@@ -506,8 +731,8 @@ void KEpsilon::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         surfNu_.internalVector(),
         surfNut_.internalVector(),
         nuEff_.internalVector(),
-        DkEffF_.internalVector(),
-        DepsilonEffF_.internalVector(),
+        dkEffF_.internalVector(),
+        depsilonEffF_.internalVector(),
         coeffs_.sigmaK,
         coeffs_.sigmaEps,
         "kEpsilon::calcDiffusivities::internal"
@@ -517,21 +742,20 @@ void KEpsilon::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         surfNu_.boundaryData().value(),
         surfNut_.boundaryData().value(),
         nuEff_.boundaryData().value(),
-        DkEffF_.boundaryData().value(),
-        DepsilonEffF_.boundaryData().value(),
+        dkEffF_.boundaryData().value(),
+        depsilonEffF_.boundaryData().value(),
         coeffs_.sigmaK,
         coeffs_.sigmaEps,
         "kEpsilon::calcDiffusivities::boundary"
     );
 }
 
-namespace
+namespace kEpsilonDetail
 {
 
 nnfvcc::VolumeField<scalar> buildWallDistKEps(const NeoN::Executor& exec, MeshAdapter& mesh)
 {
-    Foam::wallDist y(mesh);
-    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), y.y());
+    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), makeNearWallDistField(mesh));
 }
 
 Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string& fieldName)
@@ -549,13 +773,43 @@ Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string&
     );
 }
 
-} // namespace
+} // namespace kEpsilonDetail
+
+Foam::volScalarField makeNearWallDistField(MeshAdapter& mesh)
+{
+    Foam::volScalarField y(
+        Foam::IOobject(
+            "nearWallDist",
+            mesh.time().timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("zero", Foam::dimLength, Foam::scalar(0))
+    );
+    const Foam::nearWallDist nwd(mesh);
+    forAll(mesh.boundary(), patchi)
+    {
+        Foam::fvPatchScalarField& yPatch = y.boundaryFieldRef()[patchi];
+        const Foam::scalarField& nwdPatch = nwd[patchi];
+        forAll(yPatch, facei)
+        {
+            yPatch[facei] = nwdPatch[facei];
+        }
+    }
+    return y;
+}
 
 KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : nu_(nu)
     , wallDist_(buildWallDistKEps(rt.exec, rt.mesh))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
+    // grad(U) honours the configured gradSchemes; the operator is shared with the
+    // solver's other grad(U) call sites via RunTime's cache.
+    model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "k"), true);
@@ -566,10 +820,7 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "epsilon", "kFinal", "epsilonFinal"})
     {
-        if (solverDict.isDict(f))
-        {
-            solverDict.subDict(f) = mapFvSolution(solverDict.subDict(f));
-        }
+        mapSolverSettings(solverDict, f);
     }
 }
 
@@ -592,6 +843,8 @@ nnfvcc::SurfaceField<scalar>& KEpsilonModel::nuEff() { return model_.nuEff(); }
 const nnfvcc::VolumeField<scalar>& KEpsilonModel::nut() const { return *nut_; }
 
 const nnfvcc::VolumeField<NeoN::Tensor>& KEpsilonModel::gradU() const { return model_.gradU(); }
+
+void KEpsilonModel::updateGradU(const nnfvcc::VolumeField<Vec3>& U) { model_.updateGradU(U); }
 
 void KEpsilonModel::rotateOldTimes()
 {

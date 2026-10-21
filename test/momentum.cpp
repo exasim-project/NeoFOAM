@@ -77,7 +77,7 @@ TEST_CASE("Momentum")
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
         );
 
-        nf::PDESolver<NeoN::Vec3> nfUEqn(
+        nf::PDE<NeoN::Vec3> nfUEqn(
             dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
             nfU,
             rt
@@ -109,7 +109,7 @@ TEST_CASE("Momentum")
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
         );
 
-        nf::PDESolver<NeoN::Vec3> nfUEqn(
+        nf::PDE<NeoN::Vec3> nfUEqn(
             dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
             nfU,
             rt

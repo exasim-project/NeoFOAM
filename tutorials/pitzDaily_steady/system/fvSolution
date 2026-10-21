@@ -1,0 +1,67 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          GAMG;
+        tolerance       1e-06;
+        relTol          0.1;
+        smoother        GaussSeidel;
+    }
+
+    "(U|k|epsilon|omega|f|v2)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    consistent      no;
+
+    residualControl
+    {
+        p               1e-2;
+        U               1e-3;
+        "(k|epsilon|omega|f|v2)" 1e-3;
+    }
+}
+
+// Plain-SIMPLE (consistent no) relaxation: the pressure FIELD must be
+// relaxed via fields/p — SIMPLE diverges without it. The upstream tutorial
+// this case derives from is SIMPLEC (consistent yes), which needs no p
+// relaxation and tolerates 0.9 on the equations.
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+    equations
+    {
+        U               0.7;
+        ".*"            0.7;
+    }
+}
+
+
+// ************************************************************************* //

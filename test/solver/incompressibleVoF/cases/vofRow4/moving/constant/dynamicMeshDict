@@ -1,0 +1,35 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// The whole mesh oscillates along gravity: the cheapest motion that makes the
+// buoyancy head gh, the mesh flux meshPhi and the face velocity Uf all
+// non-trivial, on the same 4-cell row as vofRow4.
+
+dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+motionSolver    solidBody;
+
+solidBodyMotionFunction oscillatingLinearMotion;
+
+oscillatingLinearMotionCoeffs
+{
+    amplitude   (0 0.05 0);
+    omega       1.5708; // rad/s — quarter period at the endTime of 1 s,
+                       // so the mesh sits at its full offset when it is written
+}
+
+
+// ************************************************************************* //

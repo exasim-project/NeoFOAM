@@ -1,0 +1,153 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Every linear solve is driven to a very tight tolerance so both backends
+// (OpenFOAM and NeoN/Ginkgo) converge to the same true solution of the same
+// matrix — the cross-solver comparison then measures discretisation parity,
+// not linear-solver residuals.
+
+// Explicit (non-regex) keys: NeoN's PDESolver looks the field's solver up by a
+// literal ``unordered_map::at(name)``, so regex keys would miss on NeoN.
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         5000;
+        l1ScaledResidual true;
+    }
+
+    pFinal
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         5000;
+        l1ScaledResidual true;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         1000;
+        l1ScaledResidual true;
+    }
+
+    UFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         1000;
+        l1ScaledResidual true;
+    }
+
+    k
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    kFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    epsilon
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    epsilonFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    nuTilda
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    nuTildaFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    omega
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+
+    omegaFinal
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-14;
+        relTol          0;
+        maxIter         2000;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor   yes;
+    nOuterCorrectors    1;
+    nCorrectors         2;
+    nNonOrthogonalCorrectors 0;
+
+    // All-zeroGradient pressure BCs: the closed-domain pressure level is
+    // pinned by the reference cell on both backends.
+    pRefCell            0;
+    pRefValue           0;
+}
+
+
+// ************************************************************************* //

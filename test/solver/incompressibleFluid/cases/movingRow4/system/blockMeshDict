@@ -1,0 +1,64 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+
+// Four unit cells in a row along x — the duct constant/dynamicMeshDict slides
+// bodily along its own axis. Unit faces make every face area exactly 1, so a
+// face flux equals the velocity it carries and the mesh flux equals the mesh
+// velocity. `slip` side walls and a uniform inlet keep the solution the uniform
+// (1 0 0) it starts from, which is what makes the relative flux hand-derivable.
+
+convertToMeters 1;
+
+vertices
+(
+    (0 0 0)   (4 0 0)
+    (0 1 0)   (4 1 0)
+    (0 0 1)   (4 0 1)
+    (0 1 1)   (4 1 1)
+);
+
+blocks
+(
+    hex (0 1 3 2 4 5 7 6) (4 1 1) simpleGrading (1 1 1)
+);
+
+edges ();
+
+boundary
+(
+    inlet
+    {
+        type patch;
+        faces ((0 4 6 2));
+    }
+    outlet
+    {
+        type patch;
+        faces ((1 3 7 5));
+    }
+    walls
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+            (2 6 7 3)
+        );
+    }
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 2 3 1)
+            (4 5 7 6)
+        );
+    }
+);
+
+mergePatchPairs ();

@@ -1,0 +1,102 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+// SIMPLEC variant of the case's system/fvSolution: same solvers and the same
+// equation relaxation, but the SIMPLE block asks for the consistent
+// formulation and, as a real SIMPLEC case does, drops
+// relaxationFactors.fields.p entirely (SIMPLEC relaxes the pressure
+// implicitly, so p.relax() is a no-op).
+//
+// The equation relaxation is deliberately left at the base case's values: the
+// NeoN and OpenFOAM matrix-relaxation kernels clamp diagonal dominance
+// differently, and at looser factors (k/epsilon at 0.7) that clamp bites and
+// costs ~1e-3 of peak on the turbulence fields — a difference that has nothing
+// to do with SIMPLEC and would only blunt this comparison.
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         5000;
+        l1ScaledResidual true;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         1000;
+        l1ScaledResidual true;
+    }
+
+    k
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    epsilon
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    omega
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    nuTilda
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    consistent      yes;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        U               0.7;
+        k               0.3;
+        epsilon         0.3;
+        omega           0.3;
+        nuTilda         0.3;
+    }
+}
+
+// ************************************************************************* //

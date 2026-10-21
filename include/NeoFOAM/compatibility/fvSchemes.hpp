@@ -16,6 +16,29 @@ void updateDdtSchemes(NeoN::Dictionary& solverDict);
 NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict);
 
 /**
+ * @brief Build a runtime-selected gradient operator for a field from gradSchemes.
+ *
+ * Looks up @p gradEntry (e.g. "grad(U)") in the gradSchemes sub-dict, falling back
+ * to the "default" entry, and finally to "Gauss linear". This lets the hardcoded
+ * grad call sites (velocity correction, turbulence grad(U)/grad(nuTilda)) honour
+ * the configured scheme — e.g. cellLimited — instead of always using Gauss-Green.
+ *
+ * The returned operator handles both the scalar gradient (grad(scalar) -> Vec3)
+ * and the tensor gradient (gradTensor: grad(Vec3) -> Tensor).
+ *
+ * @param exc        Executor.
+ * @param mesh       NeoN unstructured mesh.
+ * @param fvSchemes  Mapped fvSchemes dictionary (see mapFvSchemes).
+ * @param gradEntry  The gradSchemes key, e.g. "grad(U)" / "grad(p)" / "grad(nuTilda)".
+ */
+std::unique_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>> makeGradOperator(
+    const NeoN::Executor& exc,
+    const NeoN::UnstructuredMesh& mesh,
+    const NeoN::Dictionary& fvSchemes,
+    const std::string& gradEntry
+);
+
+/**
  * @brief Fill missing specific scheme keys from the "default" entry in each scheme sub-dict.
  *
  * NeoN operators look up explicit keys (e.g. "laplacian(nuEff,U)") and do not fall back to

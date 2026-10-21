@@ -3,9 +3,11 @@
 
 #pragma once
 
+#include "NeoFOAM/auxiliary/bound.hpp"
+
 #include "NeoN/NeoN.hpp"
 
-#include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pde.hpp"
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
@@ -34,17 +36,34 @@ namespace NeoFOAM
  * Coefficients are the upstream defaults from `kEpsilon.C` (Cμ=0.09, C1=1.44,
  * C2=1.92, σ_k=1.0, σ_ε=1.3).
  */
+/**
+ * @brief A volScalarField carrying OpenFOAM's per-patch near-wall distance on its boundary.
+ *
+ * This is turbulenceModel::y(): the distance from each wall-adjacent cell centre to its own
+ * patch, which is what the wall functions consume. It is deliberately NOT Foam::wallDist --
+ * that is the distance to the nearest wall anywhere in the domain, so on a mesh with more
+ * than one wall patch the two disagree and eLog ~ 1/y comes out too large on whichever
+ * patch is not the closest. Foam::wallDist would also demand an `fvSchemes/wallDist` entry
+ * that stock OpenFOAM cases do not ship.
+ *
+ * Internal values are zero: kEpsilon only ever reads the boundary. Build the field through
+ * this helper everywhere, tests included, so the boundary is always populated.
+ */
+Foam::volScalarField makeNearWallDistField(MeshAdapter& mesh);
+
 class KEpsilon
 {
 public:
 
     struct Coefficients
     {
-        scalar Cmu = 0.09;
+        scalar cmu = 0.09;
         scalar C1 = 1.44;
         scalar C2 = 1.92;
         scalar sigmaK = 1.0;
         scalar sigmaEps = 1.3;
+        // Upstream's C3 (kEpsilon.C:259) scales the epsilon dilatation sink; 0 by default.
+        scalar C3 = 0.0;
     };
 
     /**
@@ -53,7 +72,11 @@ public:
      * @param exec     Kokkos executor (Serial/CPU/GPU)
      * @param mesh     NeoN unstructured mesh
      * @param nu       Laminar kinematic viscosity (cell-centred)
-     * @param wallDist Cell-centred wall distances (Foam::wallDist::y())
+     * @param wallDist Per-patch near-wall distance carried on the BOUNDARY, i.e.
+     *                 turbulenceModel::y() / Foam::nearWallDist -- see makeNearWallDistField.
+     *                 Only the boundary values are read; the internal field is unused. This is
+     *                 deliberately NOT Foam::wallDist::y(), whose boundary values are ~0 and
+     *                 would divide by zero in the wall functions' eLog ~ 1/y.
      */
     KEpsilon(
         const NeoN::Executor& exec,
@@ -88,13 +111,16 @@ public:
     nnfvcc::SurfaceField<scalar>& nuEff();
 
     /// @brief Effective k diffusion coefficient on faces: ν_t/σ_k + ν
-    nnfvcc::SurfaceField<scalar>& DkEff();
+    nnfvcc::SurfaceField<scalar>& dkEff();
 
     /// @brief Effective ε diffusion coefficient on faces: ν_t/σ_ε + ν
-    nnfvcc::SurfaceField<scalar>& DepsilonEff();
+    nnfvcc::SurfaceField<scalar>& depsilonEff();
 
     /// @brief Velocity gradient tensor (updated each correct() call)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
+
+    /// @brief Recompute gradU_ in place at the given velocity (internal + boundary).
+    void updateGradU(const nnfvcc::VolumeField<Vec3>& U);
 
     /// @brief Returns the deviatoric stress at boundary faces: -ν_eff · symm(twoSymm(∇U)).dev2
     NeoN::Vector<NeoN::SymmTensor> devRhoReff() const;
@@ -103,7 +129,7 @@ public:
     const Coefficients& coeffs() const { return coeffs_; }
 
     // Internal result fields — read-only access for testing
-    const nnfvcc::VolumeField<scalar>& PkField() const { return Pk_; }
+    const nnfvcc::VolumeField<scalar>& pkField() const { return Pk_; }
     const nnfvcc::VolumeField<scalar>& spKField() const { return spK_; }
     const nnfvcc::VolumeField<scalar>& epsilonSourceField() const { return epsilonSource_; }
     const nnfvcc::VolumeField<scalar>& spEpsilonField() const { return spEpsilon_; }
@@ -135,23 +161,31 @@ public:
     /**
      * @brief Recompute surface diffusivity fields from current ν_t.
      *
-     * Interpolates ν_t → surfNut_, then fills nuEff_, DkEffF_, DepsilonEffF_.
+     * Interpolates ν_t → surfNut_, then fills nuEff_, dkEffF_, depsilonEffF_.
      */
     void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
 
-    /**
-     * @brief Populate nearWallDist_'s boundary face values from wallDist_.
-     *
-     * Copies each wall face's adjacent-cell internal value. Extracted into a
-     * member function (rather than inlined in the constructor) because CUDA
-     * forbids extended __host__ __device__ lambdas inside constructors.
-     */
-    void initNearWallDistBoundary();
+    /** @brief Replace the default Gauss-Green tensor-gradient operator with the
+     *  gradSchemes-configured one, so grad(U) honours e.g. cellLimited. Used by the
+     *  RunTime-constructed wrapper, which alone can reach the schemes dictionary. */
+    void setGradUOperator(std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> op)
+    {
+        gradUOp_ = std::move(op);
+    }
 
 private:
 
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
+
+    // Lower bounds applied to k and epsilon after each solve, as OpenFOAM's kMin_/epsilonMin_.
+    // They floor the field; cells that undershoot to zero or below are refilled from the
+    // neighbourhood by bound() rather than pinned here.
+    scalar kMin_ = 0.0;
+    scalar epsilonMin_ = 1e-10;
+
+    // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
+    mutable BoundCache boundCache_;
 
     // Constant physics inputs (held by reference — must outlive this object)
     const nnfvcc::VolumeField<scalar>& nu_;
@@ -175,15 +209,29 @@ private:
     // Surface fields
     nnfvcc::SurfaceField<scalar> surfNut_;
     nnfvcc::SurfaceField<scalar> nuEff_;
-    nnfvcc::SurfaceField<scalar> DkEffF_;
-    nnfvcc::SurfaceField<scalar> DepsilonEffF_;
+    nnfvcc::SurfaceField<scalar> dkEffF_;
+    nnfvcc::SurfaceField<scalar> depsilonEffF_;
 
     // Cached operators (constructed once)
-    nnfvcc::GaussGreenGrad gradOp_;
+    // gradSchemes-configured tensor-gradient operator, shared with RunTime's gradScheme cache
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // Model coefficients
     Coefficients coeffs_;
+
+    // Corner-averaging weights for wall-function G feedback (1/N per wall cell, 0 elsewhere).
+    // Built once on first correct() since wall topology is static.
+    NeoN::Vector<scalar> cornerWeight_;
+    bool cornerWeightsBuilt_ = false;
+
+    // Per-cell epsilon wall pin (equivalent of epsilonWallFunction::manipulateMatrix): the
+    // log-law value each wall-adjacent cell is fixed to, and the 0/1 mask selecting them.
+    NeoN::Vector<scalar> epsilonWallValue_;
+    NeoN::Vector<scalar> epsilonWallMask_;
+
+    // fvc::div(phi) for the dilatation sinks, recomputed each correct().
+    nnfvcc::VolumeField<scalar> divU_;
 };
 
 /**
@@ -202,19 +250,29 @@ public:
     static std::string doc() { return "k-epsilon turbulence model"; }
     static std::string schema() { return "{}"; }
 
+    /** @brief Read k, epsilon, nut from RunTime and construct the KEpsilon physics object. */
     KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu);
 
+    /** @brief Initialise ν_t and diffusivities from the on-disk k/ε. */
     void validate(const nnfvcc::VolumeField<Vec3>& U) override;
 
+    /** @brief Solve the ε and k PDEs and update ν_t. */
     void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
         override;
 
+    /** @brief Surface effective viscosity (ν + ν_t). */
     nnfvcc::SurfaceField<scalar>& nuEff() override;
+    /** @brief Cell-centred turbulent viscosity. */
     const nnfvcc::VolumeField<scalar>& nut() const override;
+    /** @brief Velocity gradient tensor (updated each correct()). */
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
+    /** @brief Recompute gradU in place at the given velocity. */
+    void updateGradU(const nnfvcc::VolumeField<Vec3>& U) override;
 
+    /** @brief Write k, epsilon and nut fields to disk. */
     void write(MeshAdapter& mesh) const override;
 
+    /** @brief Rotate k, epsilon and nut old-time levels for BDF2. */
     void rotateOldTimes() override;
 
 private:

@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (1 2 3);
+
+boundaryField
+{
+    // refValue and ramp as the simpleFoam/simpleCar intake writes them.
+    xMin
+    {
+        type            surfaceNormalFixedValue;
+        refValue        uniform 1.2;
+        ramp            table ((0 0) (10 1));
+    }
+
+    xMax
+    {
+        type            zeroGradient;
+    }
+
+    yMin
+    {
+        type            slip;
+    }
+
+    // A non-zero `value` the static-mesh translation must discard.
+    yMax
+    {
+        type            movingWallVelocity;
+        value           uniform (3 0 0);
+    }
+
+    "(zMin|zMax)"
+    {
+        type            noSlip;
+    }
+}
+
+
+// ************************************************************************* //

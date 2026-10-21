@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Solid-body motion: the mesh moves, its topology does not. This is the
+// supported kind of dynamic mesh, so the refinement guard must let it through.
+
+dynamicFvMesh   dynamicMotionSolverFvMesh;
+
+motionSolver    solidBody;
+
+solidBodyMotionFunction oscillatingLinearMotion;
+
+oscillatingLinearMotionCoeffs
+{
+    amplitude   (0 0.05 0);
+    omega       1.5708; // rad/s — quarter period at the endTime of 1 s,
+                       // so the mesh sits at its full offset when it is written
+}
+
+
+// ************************************************************************* //

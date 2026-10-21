@@ -7,6 +7,8 @@
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/auxiliary/bound.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp"
 
 #include "wallDist.H"
 #include "IOobject.H"
@@ -22,13 +24,9 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-namespace
+// Named per-model so this model's SYCL device-kernel names stay unique across TUs.
+namespace kOmegaSSTDetail
 {
-
-// ---------------------------------------------------------------------------
-// Fused kernel: F1, production/sp for k, production/sp for omega, and the
-// internal nut update in a single pass over cells.
-// ---------------------------------------------------------------------------
 void kernelComputeF1AndSources(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& kVec,
@@ -39,8 +37,8 @@ void kernelComputeF1AndSources(
     const NeoN::Vector<Vec3>& gradKVec,
     const NeoN::Vector<Vec3>& gradOmegaVec,
     const NeoN::Vector<Tensor>& gradUVec,
-    NeoN::Vector<scalar>& F1Vec,
-    NeoN::Vector<scalar>& PkVec,
+    NeoN::Vector<scalar>& f1Vec,
+    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
@@ -56,145 +54,7 @@ void kernelComputeF1AndSources(
     scalar a1,
     scalar b1,
     scalar c1
-)
-{
-    const auto
-        [kV,
-         omegaV,
-         nutV,
-         nuV,
-         wallDistV,
-         gradKV,
-         gradOmegaV,
-         gradUV,
-         F1V,
-         PkV,
-         spKV,
-         omegaSourceV,
-         spOmegaV] =
-            NeoN::views(
-                kVec,
-                omegaVec,
-                nutVec,
-                nuVec,
-                wallDistVec,
-                gradKVec,
-                gradOmegaVec,
-                gradUVec,
-                F1Vec,
-                PkVec,
-                spKVec,
-                omegaSourceVec,
-                spOmegaVec
-            );
-
-    const scalar rootVSmall = scalar(1e-30);
-
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<localIdx>(kVec.size())},
-        NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = kV[i];
-            const scalar omega_i = omegaV[i];
-            const scalar nu_i = nuV[i];
-            const scalar y_i = Kokkos::max(wallDistV[i], rootVSmall);
-            const scalar y2_i = y_i * y_i;
-
-            // ----- CDkOmega (cross-diffusion, clamped for F1 stability) -----
-            const scalar dotGradKOmega = gradKV[i][0] * gradOmegaV[i][0]
-                                       + gradKV[i][1] * gradOmegaV[i][1]
-                                       + gradKV[i][2] * gradOmegaV[i][2];
-
-            const scalar CDkOmegaPlus =
-                Kokkos::max(scalar(2) * alphaOmega2 * dotGradKOmega / omega_i, scalar(1e-10));
-
-            // ----- F1 blending (inner ↔ outer) -----
-            const scalar sqrtK = Kokkos::sqrt(Kokkos::max(k_i, scalar(0)));
-
-            const scalar arg1 = Kokkos::min(
-                Kokkos::min(
-                    Kokkos::max(
-                        sqrtK / (betaStar * omega_i * y_i),
-                        scalar(500) * nu_i / (y2_i * omega_i)
-                    ),
-                    scalar(4) * alphaOmega2 * k_i / (CDkOmegaPlus * y2_i)
-                ),
-                scalar(10)
-            );
-            const scalar arg14 = arg1 * arg1 * arg1 * arg1;
-            F1V[i] = Kokkos::tanh(arg14);
-            const scalar F1_i = F1V[i];
-
-            // ----- F2 (for nut correction) -----
-            const scalar arg2 = Kokkos::min(
-                Kokkos::max(
-                    scalar(2) * sqrtK / (betaStar * omega_i * y_i),
-                    scalar(500) * nu_i / (y2_i * omega_i)
-                ),
-                scalar(100)
-            );
-            const scalar F2_i = Kokkos::tanh(arg2 * arg2);
-
-            // ----- S2 = 2*|symm(gradU)|^2 and GbyNu0 = gradU && devTwoSymm(gradU) -----
-            const Tensor& g = gradUV[i];
-
-            scalar normSq = scalar(0);
-            scalar dotTrans = scalar(0);
-            for (int r = 0; r < 3; ++r)
-            {
-                for (int c = 0; c < 3; ++c)
-                {
-                    normSq += g(r, c) * g(r, c);
-                    dotTrans += g(r, c) * g(c, r);
-                }
-            }
-            const scalar divU = g(0, 0) + g(1, 1) + g(2, 2);
-
-            const scalar S2_i = normSq + dotTrans;
-            const scalar GbyNu0_i = S2_i - (scalar(2) / scalar(3)) * divU * divU;
-
-            // ----- nut (for production G = nut * GbyNu0) -----
-            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(S2_i, scalar(0)));
-            const scalar nut_i = nutV[i]; // use OLD nut for G (consistent with OF sequence)
-
-            // ----- Blended coefficients -----
-            const scalar gamma_i = F1_i * (gamma1 - gamma2) + gamma2;
-            const scalar beta_i = F1_i * (beta1 - beta2) + beta2;
-
-            // ----- k equation sources -----
-            // G = nut * GbyNu0, Pk = min(G, c1*betaStar*k*omega)
-            const scalar G_i = nut_i * GbyNu0_i;
-            PkV[i] = Kokkos::min(G_i, c1 * betaStar * k_i * omega_i);
-
-            // betaStar*omega as implicit destruction for k
-            spKV[i] = betaStar * omega_i;
-
-            // ----- omega equation sources -----
-            // Bounded GbyNu for omega production
-            const scalar GbyNuBound_i = Kokkos::min(
-                GbyNu0_i,
-                (c1 / a1) * betaStar * omega_i * Kokkos::max(a1 * omega_i, b1 * F2_i * sqrtS2)
-            );
-            omegaSourceV[i] = gamma_i * GbyNuBound_i;
-
-            // beta*omega as implicit destruction for omega (base)
-            spOmegaV[i] = beta_i * omega_i;
-
-            // Cross-diffusion: (1-F1)*CDkOmega (actual, may be negative)
-            const scalar CDkOmegaActual = scalar(2) * alphaOmega2 * dotGradKOmega / omega_i;
-            const scalar crossSource = (scalar(1) - F1_i) * CDkOmegaActual;
-
-            // Positive cross-source → explicit; negative → implicit sink for stability
-            omegaSourceV[i] += Kokkos::max(crossSource, scalar(0));
-            spOmegaV[i] += Kokkos::max(-crossSource / omega_i, scalar(0));
-        },
-        "kOmegaSST::computeF1AndSources"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Kernel: update internal nut from new k/omega using current gradU_ for S2.
-// ---------------------------------------------------------------------------
+);
 void kernelCorrectNutInternal(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& kVec,
@@ -206,116 +66,43 @@ void kernelCorrectNutInternal(
     scalar betaStar,
     scalar a1,
     scalar b1
-)
-{
-    const auto [kV, omegaV, wallDistV, nuV, gradUV, nutV_] =
-        NeoN::views(kVec, omegaVec, wallDistVec, nuVec, gradUVec, nutVec);
-
-    const scalar rootVSmall = scalar(1e-30);
-
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<localIdx>(kVec.size())},
-        NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = kV[i];
-            const scalar omega_i = omegaV[i];
-            const scalar nu_i = nuV[i];
-            const scalar y_i = Kokkos::max(wallDistV[i], rootVSmall);
-            const scalar y2_i = y_i * y_i;
-
-            // F2
-            const scalar sqrtK = Kokkos::sqrt(Kokkos::max(k_i, scalar(0)));
-            const scalar arg2 = Kokkos::min(
-                Kokkos::max(
-                    scalar(2) * sqrtK / (betaStar * omega_i * y_i),
-                    scalar(500) * nu_i / (y2_i * omega_i)
-                ),
-                scalar(100)
-            );
-            const scalar F2_i = Kokkos::tanh(arg2 * arg2);
-
-            // S2 from current gradU
-            const Tensor& g = gradUV[i];
-            scalar normSq = scalar(0);
-            scalar dotTrans = scalar(0);
-            for (int r = 0; r < 3; ++r)
-            {
-                for (int c = 0; c < 3; ++c)
-                {
-                    normSq += g(r, c) * g(r, c);
-                    dotTrans += g(r, c) * g(c, r);
-                }
-            }
-            const scalar S2_i = normSq + dotTrans;
-            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(S2_i, scalar(0)));
-
-            // nut = a1*k / max(a1*omega, b1*F2*sqrt(S2))
-            nutV_[i] = a1 * k_i / Kokkos::max(a1 * omega_i, b1 * F2_i * sqrtS2);
-        },
-        "kOmegaSST::correctNutInternal"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Kernel: compute blended diffusivities on faces.
-// DkEffF    = (F1*(alphaK1-alphaK2) + alphaK2)*nutF + nuF
-// DomegaEffF = (F1*(alphaO1-alphaO2) + alphaO2)*nutF + nuF
-// nuEffF     = nutF + nuF
-// ---------------------------------------------------------------------------
+);
 void kernelCalcDiffusivities(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& surfNuVec,
     const NeoN::Vector<scalar>& surfNutVec,
-    const NeoN::Vector<scalar>& surfF1Vec,
+    const NeoN::Vector<scalar>& surff1Vec,
     NeoN::Vector<scalar>& nuEffVec,
-    NeoN::Vector<scalar>& DkEffVec,
-    NeoN::Vector<scalar>& DomegaEffVec,
+    NeoN::Vector<scalar>& dkEffVec,
+    NeoN::Vector<scalar>& domegaEffVec,
     scalar alphaK1,
     scalar alphaK2,
     scalar alphaOmega1,
     scalar alphaOmega2,
     std::string label
-)
-{
-    const auto [nuF, nutF, F1F, nuEffF, DkF, DomF] =
-        NeoN::views(surfNuVec, surfNutVec, surfF1Vec, nuEffVec, DkEffVec, DomegaEffVec);
-
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<localIdx>(nuEffVec.size())},
-        NEON_LAMBDA(const localIdx f) {
-            const scalar alphaK = F1F[f] * (alphaK1 - alphaK2) + alphaK2;
-            const scalar alphaOmega = F1F[f] * (alphaOmega1 - alphaOmega2) + alphaOmega2;
-
-            nuEffF[f] = nuF[f] + nutF[f];
-            DkF[f] = alphaK * nutF[f] + nuF[f];
-            DomF[f] = alphaOmega * nutF[f] + nuF[f];
-        },
-        std::move(label)
-    );
-}
-
+);
 void kernelDevRhoReff(
     const NeoN::Executor& exec,
     const NeoN::Vector<Tensor>& gradUB,
     const NeoN::Vector<scalar>& nuEffB,
     NeoN::Vector<SymmTensor>& result
-)
+);
+void initNearWallDistBoundary(
+    const NeoN::Executor& exec,
+    const nnfvcc::VolumeField<scalar>& wallDist,
+    const NeoN::UnstructuredMesh& mesh,
+    nnfvcc::VolumeField<scalar>& nearWallDist
+);
+} // namespace kOmegaSSTDetail
+
+namespace
 {
-    const auto [gV, nuEffV, resV] = NeoN::views(gradUB, nuEffB, result);
-    const localIdx nBF = static_cast<localIdx>(gradUB.size());
-
-    NeoN::parallelFor(
-        exec,
-        {0, nBF},
-        NEON_LAMBDA(const localIdx bf) {
-            resV[bf] = NeoN::symm(NeoN::twoSymm(gV[bf])).dev2() * (-nuEffV[bf]);
-        },
-        "kOmegaSST::devRhoReff::boundary"
-    );
-}
-
+inline constexpr scalar KOSST_OMEGA_MIN = scalar(1e-10);
+inline constexpr scalar KOSST_NUT_MAX = scalar(1e6);
+inline constexpr scalar KOSST_OMEGA_WALL_MAX =
+    NeoN::finiteVolume::cellCentred::volumeBoundary::detail::OMEGA_WF_OMEGA_MAX;
 } // namespace
+
 
 // ============================================================
 // Constructor
@@ -331,92 +118,93 @@ KOmegaSST::KOmegaSST(
     , mesh_(mesh)
     , nu_(nu)
     , wallDist_(wallDist)
-    , nearWallDist_(
+    , nearWallDistTmp_(
           exec,
           "nearWallDist",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
       )
-    , surfNu_(
+    , surfNuTmp_(
           exec,
           "surfNu",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , gradU_(
+    , gradUTmp_(
           exec,
           "gradU",
           mesh,
           fvcc::createCalculatedProcBCs<nnfvcc::VolumeBoundary<Tensor>>(mesh)
       )
-    , gradK_(exec, "gradK", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh))
-    , gradOmega_(
+    , gradKTmp_(exec, "gradK", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh))
+    , gradOmegaTmp_(
           exec,
           "gradOmega",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
       )
-    , F1_(exec, "F1", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
-    , Pk_(exec, "Pk", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
-    , spK_(exec, "spK", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
-    , omegaSource_(
+    , F1Tmp_(exec, "F1", mesh, fvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
+    , PkTmp_(exec, "Pk", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
+    , spKTmp_(exec, "spK", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
+    , omegaSourceTmp_(
           exec,
           "omegaSource",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
       )
-    , spOmega_(
+    , spOmegaTmp_(
           exec,
           "spOmega",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
       )
-    , surfNut_(
+    , surfNutTmp_(
           exec,
           "surfNut",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , surfF1_(
+    , surfF1Tmp_(
           exec,
           "surfF1",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
-    , DkEffF_(exec, "DkEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
-    , DomegaEffF_(
+    , nuEffTmp_(
+          exec,
+          "nuEff",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
+      )
+    , dkEffFTmp_(
+          exec,
+          "DkEff",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
+      )
+    , domegaEffFTmp_(
           exec,
           "DomegaEff",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , gradOp_(exec, mesh)
+    , gradUOp_(nnfvcc::GradOperatorFactory<Vec3>::create(
+          exec,
+          mesh,
+          NeoN::TokenList({std::string("Gauss"), std::string("linear")})
+      ))
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
+    , omegaWallValueTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , omegaWallMaskTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , cornerWeightTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
 {
-    surfInterp_.interpolate(nu_, surfNu_);
+    surfInterp_.interpolate(nu_, surfNuTmp_);
 
-    // Populate nearWallDist_'s boundary face values by copying wallDist_'s
-    // adjacent-cell internal value. This is the same per-face "y" that
-    // OpenFOAM's turbulenceModel::y()[patchi] exposes (and what the
-    // wall-function unit tests construct explicitly). Mesh is static, so
-    // doing it once at construction is sufficient.
-    initNearWallDistBoundary();
-}
-
-void KOmegaSST::initNearWallDistBoundary()
-{
-    const auto wdInternal = wallDist_.internalVector().view();
-    const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
-    auto nwdBoundary = nearWallDist_.boundaryData().value().view();
-    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
-    NeoN::parallelFor(
-        exec_,
-        {0, nBoundaryFaces},
-        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
-        "kOmegaSST::initNearWallDistBoundary"
-    );
+    // NVCC forbids NEON_LAMBDA in a constructor body — use a free function.
+    kOmegaSSTDetail::initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDistTmp_);
+    NeoN::fence(exec_);
 }
 
 // ============================================================
@@ -430,26 +218,26 @@ void KOmegaSST::validate(
     nnfvcc::VolumeField<scalar>& nut
 )
 {
-    gradOp_.gradTensor(U, gradU_);
-    gradOp_.grad(k, gradK_);
-    gradOp_.grad(omega, gradOmega_);
+    reserveScratch(); // re-grow per-step scratch released by a previous correct()/validate()
 
-    computeF1AndSources(k, omega, nut, gradK_, gradOmega_, gradU_);
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
+    gradUTmp_.correctBoundaryConditions();
+    gradOp_.grad(k, gradKTmp_);
+    gradOp_.grad(omega, gradOmegaTmp_);
+
+    computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
 
     correctNutInternal(k, omega, nut);
-    // Wall-function BCs on nut (Spalding) need (U, nu, nearWallDist). The
-    // cell-centered wallDist field with zeroGradient-style boundary values
-    // gives the cell-to-wall distance at wall faces, which is what the
-    // wall-function kernels consume as `y`. Same context is reused for
-    // omega and k below (kqRWallFunction ignores it).
     fvcc::BoundaryContext ctx;
     ctx.insert("U", U);
     ctx.insert("k", k);
     ctx.insert("nu", nu_);
-    ctx.insert("nearWallDist", nearWallDist_);
+    ctx.insert("nearWallDist", nearWallDistTmp_);
     nut.correctBoundaryConditions(ctx);
 
     calcDiffusivities(nut);
+
+    releaseScratch(); // free per-step scratch until the next correct()
 }
 
 void KOmegaSST::correct(
@@ -461,44 +249,33 @@ void KOmegaSST::correct(
     RunTime& rt
 )
 {
-    // Compute gradients once — reused for production, CDkOmega, and correctNut
-    gradOp_.gradTensor(U, gradU_);
-    gradU_.correctBoundaryConditions();
-    gradOp_.grad(k, gradK_);
-    gradOp_.grad(omega, gradOmega_);
+    reserveScratch();
 
-    // Build the BoundaryContext once and reuse for the three correctBC calls
-    // below. omegaWallFunction reads k+nu+nearWallDist;
-    // nutUSpaldingWallFunction reads U+nu+nearWallDist; kqRWallFunction
-    // ignores the context (pure zero-gradient). Passing extras is harmless.
+    // Compute gradients once — reused for production, CDkOmega, and correctNut
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
+    gradUTmp_.correctBoundaryConditions();
+    gradOp_.grad(k, gradKTmp_);
+    gradOp_.grad(omega, gradOmegaTmp_);
+
     fvcc::BoundaryContext ctx;
     ctx.insert("U", U);
+    ctx.insert("phi", phi);
     ctx.insert("k", k);
     ctx.insert("nu", nu_);
-    ctx.insert("nearWallDist", nearWallDist_);
+    ctx.insert("nearWallDist", nearWallDistTmp_);
 
     // Compute F1, sources, and sp coefficients using OLD nut
-    computeF1AndSources(k, omega, nut, gradK_, gradOmega_, gradU_);
+    computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
 
-    // Refresh face diffusivities (need DkEffF_ and DomegaEffF_ for PDEs below)
+    freeVecs(gradKTmp_.internalVector(), gradOmegaTmp_.internalVector());
     calcDiffusivities(nut);
 
-    // OF feedback: overwrite Pk_ at wall-function cells with the omega wall
-    // function's G formula. Mirrors omegaWallFunctionFvPatchScalarField::
-    // calculate() (omega.C:319-333) + updateCoeffs() (omega.C:518-524):
-    //   G[wall_cell] = (ν_t_w + ν_w) · |∂U/∂n|_w · C_µ^0.25 · √k / (κ · y)
-    // The standard formula Pk = nut · GbyNu0 underestimates near-wall
-    // production at refined meshes because the cell-center gradU is a poor
-    // proxy for the true wall stress; the wall-function form uses the log-law
-    // gradient directly. Without this overwrite the k equation lacks the
-    // source it needs to balance the wall-function ω boundary value.
-    //
-    // Identifies wall-function patches by name match on omega's BC list;
-    // BINOMIAL blender always applies the formula on every face (omega.C:262
-    // STEPWISE gates on yPlus, not modelled here).
+    bool anyOmegaWF = false;
     {
         const scalar Cmu25 = Kokkos::pow(coeffs_.betaStar, scalar(0.25));
         const scalar kappa_ = scalar(0.41); // matches omegaWallFunction default
+        const scalar beta1 = coeffs_.beta1;
+        const scalar omegaWallMax = KOSST_OMEGA_WALL_MAX; // device-capture copy
         const auto& omegaBCs = omega.boundaryConditions();
         const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
         const auto deltaCoeffsV = mesh_.boundaryMesh().deltaCoeffs().view();
@@ -506,23 +283,76 @@ void KOmegaSST::correct(
         const auto uBoundaryV = U.boundaryData().value().view();
         const auto nuBoundaryV = nu_.boundaryData().value().view();
         const auto nutBoundaryV = nut.boundaryData().value().view();
-        const auto yBoundaryV = nearWallDist_.boundaryData().value().view();
+        const auto yBoundaryV = nearWallDistTmp_.boundaryData().value().view();
         const auto kInternalV = k.internalVector().view();
-        auto pkInternalV = Pk_.internalVector().view();
+        auto pkInternalV = PkTmp_.internalVector().view();
+        const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
+
+        // One-time: build cornerWeightTmp_[c] = 1/(number of omegaWallFunction faces touching cell
+        // c), 0 for non-wall cells. The wall topology is static so this is computed once. Mirrors
+        // OpenFOAM omegaWallFunction::createAveragingWeights (omega.C:71-126).
+        if (!cornerWeightsBuilt_)
+        {
+            NeoN::fill(cornerWeightTmp_, scalar(0));
+            auto cwBuild = cornerWeightTmp_.view();
+            for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(omegaBCs.size());
+                 ++patchID)
+            {
+                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+                const auto [start, end] = omega.boundaryData().range(patchID);
+                NeoN::parallelFor(
+                    exec_,
+                    {start, end},
+                    NEON_LAMBDA(const NeoN::localIdx i) {
+                        Kokkos::atomic_add(&cwBuild[faceOwnersV[i]], scalar(1));
+                    },
+                    "kOmegaSST::omegaWFCountFaces"
+                );
+            }
+            NeoN::parallelFor(
+                exec_,
+                {0, nCells},
+                NEON_LAMBDA(const NeoN::localIdx c) {
+                    if (cwBuild[c] > scalar(0)) cwBuild[c] = scalar(1) / cwBuild[c];
+                },
+                "kOmegaSST::omegaWFInvertCount"
+            );
+            cornerWeightsBuilt_ = true;
+        }
+        const auto cornerWeightV = cornerWeightTmp_.view();
+
+        // Per-step reset of the accumulators: the pin mask, the pinned value (now ACCUMULATED, so
+        // it must start at zero), and PkTmp_ at the wall cells (computeF1AndSources wrote the bulk
+        // production there; the wall log-law production replaces it via the weighted sum below).
+        NeoN::fill(omegaWallMaskTmp_, scalar(0));
+        NeoN::fill(omegaWallValueTmp_, scalar(0));
+        auto omegaWallValueV = omegaWallValueTmp_.view();
+        auto omegaWallMaskV = omegaWallMaskTmp_.view();
+        NeoN::parallelFor(
+            exec_,
+            {0, nCells},
+            NEON_LAMBDA(const NeoN::localIdx c) {
+                if (cornerWeightV[c] > scalar(0)) pkInternalV[c] = scalar(0);
+            },
+            "kOmegaSST::omegaWFZeroWallPk"
+        );
+        NeoN::fence(exec_); // zeroing must complete before the atomic accumulation below
 
         for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(omegaBCs.size());
              ++patchID)
         {
-            if (omegaBCs[static_cast<size_t>(patchID)].name() != "omegaWallFunction")
+            if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
             {
                 continue;
             }
+            anyOmegaWF = true;
             const auto [start, end] = omega.boundaryData().range(patchID);
             NeoN::parallelFor(
                 exec_,
                 {start, end},
                 NEON_LAMBDA(const NeoN::localIdx i) {
                     const auto owner = faceOwnersV[i];
+                    const scalar cw = cornerWeightV[owner]; // 1/(num wall faces on this cell)
                     const NeoN::Vec3 uOwn = uInternalV[owner];
                     const NeoN::Vec3 uWall = uBoundaryV[i];
                     const scalar deltaInv = deltaCoeffsV[i];
@@ -536,8 +366,16 @@ void KOmegaSST::correct(
                     const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
                     const scalar gWall =
                         (nutw + nuw) * magGradUw * Cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
-                    // Overwrite — matches OF's G[celli] = G0[celli] assignment.
-                    pkInternalV[owner] = gWall;
+
+                    const scalar ySafe = Kokkos::max(y, scalar(1e-30));
+                    const scalar wVis = scalar(6) * nuw / (beta1 * ySafe * ySafe);
+                    const scalar wLog = Kokkos::sqrt(kc) / (Cmu25 * kappa_ * ySafe);
+                    const scalar wOmega =
+                        Kokkos::min(Kokkos::sqrt(wVis * wVis + wLog * wLog), omegaWallMax);
+
+                    Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
+                    Kokkos::atomic_add(&omegaWallValueV[owner], cw * wOmega);
+                    omegaWallMaskV[owner] = scalar(1);
                 },
                 "kOmegaSST::omegaWFGFeedback"
             );
@@ -546,34 +384,36 @@ void KOmegaSST::correct(
 
     // ----- omega equation -----
     PDESolver<scalar> omegaEqn(
-        dsl::imp::ddt(omega) + dsl::imp::div(phi, omega) - dsl::imp::laplacian(DomegaEffF_, omega)
-            + dsl::imp::source(spOmega_, omega) - dsl::exp::source(omegaSource_),
+        dsl::imp::ddt(omega) + dsl::imp::div(phi, omega)
+            - dsl::imp::laplacian(domegaEffFTmp_, omega) + dsl::imp::source(spOmegaTmp_, omega)
+            - dsl::exp::source(omegaSourceTmp_),
         omega,
         rt
     );
+    // Hard-pin the near-wall cells to the blended wall omega built above (the missing
+    // omegaWallFunction setValues equivalent). Skipped when no omegaWallFunction patch exists.
+    if (anyOmegaWF)
+    {
+        omegaEqn.setConstraints(omegaWallMaskTmp_, omegaWallValueTmp_);
+    }
+    omegaEqn.relax(); // OpenFOAM kOmegaSSTBase.C: omegaEqn.ref().relax()
     omegaEqn.solve();
 
-    // Bound omega > 0
-    {
-        auto omegaView = omega.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(omega.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) {
-                omegaView[i] = Kokkos::max(omegaView[i], scalar(1e-10));
-            },
-            "kOmegaSST::boundOmega"
-        );
-        omega.correctBoundaryConditions(ctx);
-    }
+    bound(omega, KOSST_OMEGA_MIN, boundCache_);
+    omega.correctBoundaryConditions(ctx);
 
-    // Update spK_ with new omega so the k equation uses the post-omega-solve
-    // destruction coefficient — matching OpenFOAM's kOmegaSSTBase::correct() sequence
-    // where epsilonByk(F1, gradU) = betaStar*omega_() references the updated omega.
+    freeVecs(
+        omegaSourceTmp_.internalVector(),
+        spOmegaTmp_.internalVector(),
+        domegaEffFTmp_.internalVector(),
+        omegaWallValueTmp_,
+        omegaWallMaskTmp_
+    );
+
     {
         const scalar betaStar = coeffs_.betaStar;
         auto omegaView = omega.internalVector().view();
-        auto spKView = spK_.internalVector().view();
+        auto spKView = spKTmp_.internalVector().view();
         NeoN::parallelFor(
             exec_,
             {0, static_cast<localIdx>(omega.internalVector().size())},
@@ -584,46 +424,51 @@ void KOmegaSST::correct(
 
     // ----- k equation -----
     PDESolver<scalar> kEqn(
-        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(DkEffF_, k)
-            + dsl::imp::source(spK_, k) - dsl::exp::source(Pk_),
+        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(dkEffFTmp_, k)
+            + dsl::imp::source(spKTmp_, k) - dsl::exp::source(PkTmp_),
         k,
         rt
     );
+    kEqn.relax(); // OpenFOAM kOmegaSSTBase.C: kEqn.ref().relax()
     kEqn.solve();
 
-    // Bound k >= 0
-    {
-        auto kView = k.internalVector().view();
-        NeoN::parallelFor(
-            exec_,
-            {0, static_cast<localIdx>(k.internalVector().size())},
-            NEON_LAMBDA(const localIdx i) { kView[i] = Kokkos::max(kView[i], scalar(0)); },
-            "kOmegaSST::boundK"
-        );
-        k.correctBoundaryConditions(ctx);
-    }
+    bound(k, kMin_, boundCache_);
+    k.correctBoundaryConditions(ctx);
 
-    // Update nut from new k, omega (uses gradU_ from start of this timestep for S2)
+    freeVecs(PkTmp_.internalVector(), spKTmp_.internalVector(), dkEffFTmp_.internalVector());
     correctNutInternal(k, omega, nut);
     nut.correctBoundaryConditions(ctx);
 
     // Refresh surface diffusivities with new nut
     calcDiffusivities(nut);
+
+    releaseScratch();
 }
 
-nnfvcc::SurfaceField<scalar>& KOmegaSST::nuEff() { return nuEff_; }
+nnfvcc::SurfaceField<scalar>& KOmegaSST::nuEff() { return nuEffTmp_; }
 
-nnfvcc::SurfaceField<scalar>& KOmegaSST::DkEff() { return DkEffF_; }
+nnfvcc::SurfaceField<scalar>& KOmegaSST::dkEff() { return dkEffFTmp_; }
 
-nnfvcc::SurfaceField<scalar>& KOmegaSST::DomegaEff() { return DomegaEffF_; }
+nnfvcc::SurfaceField<scalar>& KOmegaSST::domegaEff() { return domegaEffFTmp_; }
 
-const nnfvcc::VolumeField<Tensor>& KOmegaSST::gradU() const { return gradU_; }
+const nnfvcc::VolumeField<Tensor>& KOmegaSST::gradU() const { return gradUTmp_; }
+
+void KOmegaSST::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
+{
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
+    gradUTmp_.correctBoundaryConditions();
+}
 
 NeoN::Vector<SymmTensor> KOmegaSST::devRhoReff() const
 {
-    const localIdx nBF = static_cast<localIdx>(gradU_.boundaryData().value().size());
+    const localIdx nBF = static_cast<localIdx>(gradUTmp_.boundaryData().value().size());
     NeoN::Vector<SymmTensor> result(exec_, nBF, NeoN::zero<SymmTensor>());
-    kernelDevRhoReff(exec_, gradU_.boundaryData().value(), nuEff_.boundaryData().value(), result);
+    kOmegaSSTDetail::kernelDevRhoReff(
+        exec_,
+        gradUTmp_.boundaryData().value(),
+        nuEffTmp_.boundaryData().value(),
+        result
+    );
     return result;
 }
 
@@ -640,7 +485,7 @@ void KOmegaSST::computeF1AndSources(
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU
 )
 {
-    kernelComputeF1AndSources(
+    kOmegaSSTDetail::kernelComputeF1AndSources(
         exec_,
         k.internalVector(),
         omega.internalVector(),
@@ -650,11 +495,11 @@ void KOmegaSST::computeF1AndSources(
         gradK.internalVector(),
         gradOmega.internalVector(),
         gradU.internalVector(),
-        F1_.internalVector(),
-        Pk_.internalVector(),
-        spK_.internalVector(),
-        omegaSource_.internalVector(),
-        spOmega_.internalVector(),
+        F1Tmp_.internalVector(),
+        PkTmp_.internalVector(),
+        spKTmp_.internalVector(),
+        omegaSourceTmp_.internalVector(),
+        spOmegaTmp_.internalVector(),
         coeffs_.alphaK1,
         coeffs_.alphaK2,
         coeffs_.alphaOmega1,
@@ -668,6 +513,9 @@ void KOmegaSST::computeF1AndSources(
         coeffs_.b1,
         coeffs_.c1
     );
+
+    // Extrapolate F1 to boundary faces — surface interpolation reads these values.
+    F1Tmp_.correctBoundaryConditions();
 }
 
 void KOmegaSST::correctNutInternal(
@@ -676,14 +524,26 @@ void KOmegaSST::correctNutInternal(
     nnfvcc::VolumeField<scalar>& nut
 ) const
 {
-    kernelCorrectNutInternal(
+    kOmegaSSTDetail::kernelCorrectNutInternal(
         exec_,
         k.internalVector(),
         omega.internalVector(),
         wallDist_.internalVector(),
         nu_.internalVector(),
-        gradU_.internalVector(),
+        gradUTmp_.internalVector(),
         nut.internalVector(),
+        coeffs_.betaStar,
+        coeffs_.a1,
+        coeffs_.b1
+    );
+    kOmegaSSTDetail::kernelCorrectNutInternal(
+        exec_,
+        k.boundaryData().value(),
+        omega.boundaryData().value(),
+        wallDist_.boundaryData().value(),
+        nu_.boundaryData().value(),
+        gradUTmp_.boundaryData().value(),
+        nut.boundaryData().value(),
         coeffs_.betaStar,
         coeffs_.a1,
         coeffs_.b1
@@ -692,36 +552,109 @@ void KOmegaSST::correctNutInternal(
 
 void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
 {
-    surfInterp_.interpolate(nut, surfNut_);
-    surfInterp_.interpolate(F1_, surfF1_);
+    const auto nsf = surfNuTmp_.internalVector().size();
+    auto ensure = [](auto& v, NeoN::localIdx n)
+    {
+        if (v.size() != n) v.resize(n);
+    };
+    ensure(surfNutTmp_.internalVector(), nsf);
+    ensure(surfF1Tmp_.internalVector(), nsf);
+    ensure(nuEffTmp_.internalVector(), nsf);
+    ensure(dkEffFTmp_.internalVector(), nsf);
+    ensure(domegaEffFTmp_.internalVector(), nsf);
 
-    kernelCalcDiffusivities(
+    surfInterp_.interpolate(nut, surfNutTmp_);
+    surfInterp_.interpolate(F1Tmp_, surfF1Tmp_);
+
+    kOmegaSSTDetail::kernelCalcDiffusivities(
         exec_,
-        surfNu_.internalVector(),
-        surfNut_.internalVector(),
-        surfF1_.internalVector(),
-        nuEff_.internalVector(),
-        DkEffF_.internalVector(),
-        DomegaEffF_.internalVector(),
+        surfNuTmp_.internalVector(),
+        surfNutTmp_.internalVector(),
+        surfF1Tmp_.internalVector(),
+        nuEffTmp_.internalVector(),
+        dkEffFTmp_.internalVector(),
+        domegaEffFTmp_.internalVector(),
         coeffs_.alphaK1,
         coeffs_.alphaK2,
         coeffs_.alphaOmega1,
         coeffs_.alphaOmega2,
         "kOmegaSST::calcDiffusivities::internal"
     );
-    kernelCalcDiffusivities(
+    kOmegaSSTDetail::kernelCalcDiffusivities(
         exec_,
-        surfNu_.boundaryData().value(),
-        surfNut_.boundaryData().value(),
-        surfF1_.boundaryData().value(),
-        nuEff_.boundaryData().value(),
-        DkEffF_.boundaryData().value(),
-        DomegaEffF_.boundaryData().value(),
+        surfNuTmp_.boundaryData().value(),
+        surfNutTmp_.boundaryData().value(),
+        surfF1Tmp_.boundaryData().value(),
+        nuEffTmp_.boundaryData().value(),
+        dkEffFTmp_.boundaryData().value(),
+        domegaEffFTmp_.boundaryData().value(),
         coeffs_.alphaK1,
         coeffs_.alphaK2,
         coeffs_.alphaOmega1,
         coeffs_.alphaOmega2,
         "kOmegaSST::calcDiffusivities::boundary"
+    );
+
+    freeVecs(surfNutTmp_.internalVector(), surfF1Tmp_.internalVector());
+    NeoN::fence(exec_);
+}
+
+void KOmegaSST::reserveScratch()
+{
+    const auto nc = static_cast<NeoN::localIdx>(mesh_.nCells());
+    auto ensure = [](auto& vec, NeoN::localIdx n)
+    {
+        if (vec.size() != n) vec.resize(n);
+    };
+    ensure(gradKTmp_.internalVector(), nc);
+    ensure(gradOmegaTmp_.internalVector(), nc);
+    ensure(F1Tmp_.internalVector(), nc);
+    ensure(PkTmp_.internalVector(), nc);
+    ensure(spKTmp_.internalVector(), nc);
+    ensure(omegaSourceTmp_.internalVector(), nc);
+    ensure(spOmegaTmp_.internalVector(), nc);
+    // plain per-cell Vectors, rebuilt (filled) every correct()
+    ensure(omegaWallValueTmp_, nc);
+    ensure(omegaWallMaskTmp_, nc);
+}
+
+bool KOmegaSST::devicePoolActive()
+{
+    static const bool active = []
+    {
+#if NF_WITH_UMPIRE && defined(KOKKOS_ENABLE_CUDA)
+        try
+        {
+            (void)NeoN::UmpireMempoolHandler::getUmpirePool(NeoN::MemorySpace::GPU);
+            return true;
+        }
+        catch (...)
+        {
+            return false;
+        }
+#else
+        return false;
+#endif
+    }();
+    return active;
+}
+
+void KOmegaSST::releaseScratch()
+{
+    freeVecs(
+        gradKTmp_.internalVector(),
+        gradOmegaTmp_.internalVector(),
+        F1Tmp_.internalVector(),
+        PkTmp_.internalVector(),
+        spKTmp_.internalVector(),
+        omegaSourceTmp_.internalVector(),
+        spOmegaTmp_.internalVector(),
+        surfNutTmp_.internalVector(),
+        surfF1Tmp_.internalVector(),
+        dkEffFTmp_.internalVector(),
+        domegaEffFTmp_.internalVector(),
+        omegaWallValueTmp_,
+        omegaWallMaskTmp_
     );
 }
 
@@ -756,6 +689,10 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
     , wallDist_(buildWallDistKOmega(rt.exec, rt.mesh))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
+    // grad(U) honours the configured gradSchemes; the operator is shared with the
+    // solver's other grad(U) call sites via RunTime's cache.
+    model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarField(rt.mesh, "k"), true);
@@ -765,10 +702,7 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "omega", "kFinal", "omegaFinal"})
     {
-        if (solverDict.isDict(f))
-        {
-            solverDict.subDict(f) = mapFvSolution(solverDict.subDict(f));
-        }
+        mapSolverSettings(solverDict, f);
     }
 }
 
@@ -791,6 +725,8 @@ nnfvcc::SurfaceField<scalar>& KOmegaSSTModel::nuEff() { return model_.nuEff(); }
 const nnfvcc::VolumeField<scalar>& KOmegaSSTModel::nut() const { return *nut_; }
 
 const nnfvcc::VolumeField<NeoN::Tensor>& KOmegaSSTModel::gradU() const { return model_.gradU(); }
+
+void KOmegaSSTModel::updateGradU(const nnfvcc::VolumeField<Vec3>& U) { model_.updateGradU(U); }
 
 void KOmegaSSTModel::rotateOldTimes()
 {

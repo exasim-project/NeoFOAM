@@ -2,10 +2,24 @@
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
 [files]
-extend-exclude = ["third_party/*", "doc/Doxyfile.in"]
+# The JSONForms UMD bundle is a checked-in Vite build artifact: its minified
+# identifiers trip the spell checker and are not editable source.
+extend-exclude = [
+    "third_party/*",
+    "doc/Doxyfile.in",
+    "src/neofoam/ui/jsonforms_module/static/*",
+    "src/neofoam/ui/jsonforms_module/bun.lock",
+]
+
+[default]
+extend-ignore-identifiers-re = ["nuTilda"]
 
 [default.extend-words]
 nd = "nd"
 ot = "OT"
+PRECICE = "PRECICE"
+# German "oder" appears verbatim in a translated Linux error message
+# shown in doc/how-to/install.rst.
+oder = "oder"
 ilda = "ilda"
 tilda = "tilda"

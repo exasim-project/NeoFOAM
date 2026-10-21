@@ -1,0 +1,43 @@
+# One table per source shape, all on the 0.1 x 0.1 x 0.01 m cavity3x3 mesh.
+tables:
+  # The cells carry a measure, so summing it is the mesh volume.
+  - name: mesh_volume
+    source: {type: internal, field: p}
+    pipeline:
+      - {type: area}
+      - {type: sum, name: mesh_volume}
+  # The patch measure is the face area, so this is the surface integral of p
+  # over the lid.
+  - name: wall_p
+    source: {type: patch, field: p, patch: movingWall}
+    pipeline:
+      - {type: surfIntegrate, name: wall_p}
+  # U on the lid is fixedValue (1 0 0) while the cells under it are not, so
+  # this pins that a patch table reads the patch's own boundary values.
+  - name: wall_U
+    source: {type: patch, field: U, patch: movingWall}
+    pipeline:
+      - {type: surfIntegrate, name: wall_U}
+  # A probe from the bottom wall to the lid: one row per point, per write step.
+  - name: u_profile
+    source:
+      type: line
+      field: U
+      start: [0.05, 0.0, 0.005]
+      end: [0.05, 0.1, 0.005]
+      n_points: 5
+    pipeline:
+      - {type: mag}
+      - {type: rows, name: magU}
+  # The same probe extended past both walls: the points outside the mesh must
+  # not reach the file.
+  - name: u_profile_outside
+    source:
+      type: line
+      field: U
+      start: [0.05, -0.05, 0.005]
+      end: [0.05, 0.15, 0.005]
+      n_points: 5
+    pipeline:
+      - {type: mag}
+      - {type: rows, name: magU}
