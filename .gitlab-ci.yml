@@ -8,7 +8,6 @@
 # OpenFOAM v2512 + Ginkgo develop + MPICH built from source (GPU-aware for CUDA and ROCm;
 # Intel MPI on SYCL), built by
 # exasim-project/openfoam-conda on top of the exasim-project/ginkgo-packaging images.
-# Dated tags: the runner caches SIF images by name.
 .gpu-base:
   variables:
     PYTHONPATH: /opt/intel/oneapi/advisor/2025.3/pythonapi
@@ -16,21 +15,21 @@
 .gpu-nvidia:
   extends: .gpu-base
   tags: ["nvidia-gpus"]
-  image: ghcr.io/exasim-project/openfoam-ginkgo-cuda:2512-20261010
+  image: ghcr.io/exasim-project/openfoam-ginkgo-cuda:2512
   variables:
     GPU_VENDOR: nvidia
 
 .gpu-amd:
   extends: .gpu-base
   tags: ["amd-gpus"]
-  image: ghcr.io/exasim-project/openfoam-ginkgo-rocm:2512-20261010
+  image: ghcr.io/exasim-project/openfoam-ginkgo-rocm:2512
   variables:
     GPU_VENDOR: amd
 
 .gpu-intel:
   extends: .gpu-base
   tags: ["intel-gpus"]
-  image: ghcr.io/exasim-project/openfoam-ginkgo-sycl:2512-20261009-2
+  image: ghcr.io/exasim-project/openfoam-ginkgo-sycl:2512
   variables:
     GPU_VENDOR: intel
 
