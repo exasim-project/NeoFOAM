@@ -195,6 +195,12 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  dict.insert("fixedValue", detail::tokenAsScalar(tokenList, 1));
              }
          }},
+        {"slip", // TODO specialize for vector
+         [](auto& dict)
+         {
+             dict.insert("type", std::string("slip"));
+             dict.insert("fixedValue", type_primitive_t {});
+         }},        
         {"noSlip", // TODO specialize for vector
          [](auto& dict)
          {

@@ -31,11 +31,11 @@ function(NeoN_benchmark BENCH)
         "${JULIA_DIR}/lib/libjulia.so"
     )
     target_compile_definitions(bench_${BENCH} PRIVATE
-        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+        JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
     )
     target_link_options(bench_${BENCH} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
     target_compile_definitions(bench_${BENCH} PRIVATE
-        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+        JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
     )
   endif()
 

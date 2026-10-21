@@ -90,7 +90,7 @@ TEST_CASE("julia")
             fmt::runtime(
                 "include(\"{}\")"
             ),
-            JULIA_MODULE_INIT
+            JUNE_MODULE_INIT
         );
         jl_eval_string(path.c_str());
         UEQN.warmupFaceBased();

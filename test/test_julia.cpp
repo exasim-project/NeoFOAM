@@ -41,7 +41,7 @@ TEST_CASE("Julia Momentum")
     std::cout << "exec: " << exec.name() << std::endl;
     auto path = fmt::format(
 		fmt::runtime("include(\"{}\")"),
-		JULIA_MODULE_INIT
+		JUNE_MODULE_INIT
 	); 
 	std::cout << "path to init: "<< path << std::endl;
     jl_eval_string(path.c_str());

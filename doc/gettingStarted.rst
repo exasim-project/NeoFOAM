@@ -76,7 +76,7 @@ The following Cmake variables need to be set:
 .. code-block:: bash
    
    -DNeoN_WITH_JULIA=<ON/OFF> 
-   -DJULIA_MODULE_INIT=<path/to/moduleInit.jl>
+   -DJUNE_MODULE_INIT=<path/to/moduleInit.jl>
 
 The latter denotes the path to a file that loads a given module which exposes the necessary functions for the NeoX - Julia Interface.
 A preliminary example can be found at `<https://github.com/lupeterm/FVM-Prototyping/blob/main/MinimalFVM/init.jl>`

@@ -314,7 +314,9 @@ public:
         auto deltaCoeffB = deltaCoeffsB.view();
 
         bool useGPU = std::holds_alternative<NeoN::GPUExecutor>(mesh.exec());
-        const auto [faceCenters, cellCenters] = views(mesh.faceCenters(), mesh.cellCenters());
+        const auto [cellCenters, faceNormals, faceAreas] = views(
+            mesh.cellCenters(), mesh.faceNormals(), mesh.faceAreas()
+        );
         const auto [owners, neighbors, surfFaceCells] = views(mesh.faceOwners(), mesh.faceNeighbors(), mesh.boundaryMesh().faceOwners());
         
         parallelFor(
@@ -322,21 +324,42 @@ public:
             {0, nInternalFaces},
             NEON_LAMBDA(const size_t facei) {
                 NeoN::Vec3 cellToCellDist = cellCenters[neighbors[facei]] - cellCenters[owners[facei]];
-                deltaCoeff[facei] = 1.0 / mag(cellToCellDist);
+                NeoN::Vec3 faceUnitNormal = 1 / faceAreas[facei] * faceNormals[facei];
+                NeoN::scalar orthoDist = faceUnitNormal & cellToCellDist;
+
+                // deltaCoeff[facei] = 1.0 / mag(cellToCellDist);
+                // floor with ROOTVSMALL so a degenerate (coincident-centre) face cannot
+                // produce 1/0 -> inf
+                deltaCoeff[facei] =
+                    1.0
+                    / std::max(
+                        orthoDist,
+                        std::max(0.05 * mag(cellToCellDist), NeoN::scalar(1e-18)
+                    )
+                );
             },
             "basicGeometricScheme::updateDeltaCoeffsInternal"
         );
-
+        const auto bFaceCenters = mesh.boundaryMesh().faceCenters().view();
+        const auto bFaceNormals = mesh.boundaryMesh().faceNormals().view();
+        const auto bFaceAreas = mesh.boundaryMesh().faceAreas().view();
         parallelFor(
             ls_.exec(),
             {0, mesh.nBoundaryFaces()},
             NEON_LAMBDA(const size_t bfi) {
                 auto own = surfFaceCells[bfi];
-                // TODO Issue #515
-                NeoN::Vec3 cellToCellDist = faceCenters[nInternalFaces + bfi] - cellCenters[own];
-                deltaCoeffB[bfi] = 1.0 / mag(cellToCellDist);
+                NeoN::Vec3 cellToFaceDist = bFaceCenters[bfi] - cellCenters[own];
+                NeoN::Vec3 faceNormal = (1.0 / bFaceAreas[bfi]) * bFaceNormals[bfi];
+                NeoN::scalar orthoDist = faceNormal & cellToFaceDist;
+                // floor with ROOTVSMALL so a degenerate face cannot produce 1/0 -> inf
+                deltaCoeffB[bfi] =
+                    1.0
+                    / std::max(
+                        orthoDist,
+                        std::max(0.05 * mag(cellToFaceDist), NeoN::scalar(1e-18))
+                    );
             },
-            "basicGeometricScheme::updateDeltaCoeffsBoundary"
+            "basicGeometricScheme::updateNonOrthDeltaCoeffsBoundary"
         );
 
         const auto matIt = ls_.faceToMatrixAddress();
@@ -471,10 +494,7 @@ public:
         const auto nInternalFaces = mesh.nInternalFaces();
         const auto nBoundaryFaces = mesh.nBoundaryFaces();
         
-        const auto [owners, neighbors, surfFaceCells] = views(mesh.faceOwners(), mesh.faceNeighbors(), mesh.boundaryMesh().faceOwners());
 
-
-        const auto [faceCenters, cellCenters] = views(mesh.faceCenters(), mesh.cellCenters());
         auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces);
         auto deltaCoeffsB = NeoN::Vector<double>(ls_.exec(), nBoundaryFaces);
 
@@ -482,27 +502,52 @@ public:
         auto deltaCoeffB = deltaCoeffsB.view();
 
         bool useGPU = std::holds_alternative<NeoN::GPUExecutor>(mesh.exec());
+        const auto [cellCenters, faceNormals, faceAreas] = views(
+            mesh.cellCenters(), mesh.faceNormals(), mesh.faceAreas()
+        );
+        const auto [owners, neighbors, surfFaceCells] = views(mesh.faceOwners(), mesh.faceNeighbors(), mesh.boundaryMesh().faceOwners());
         
         parallelFor(
             ls_.exec(),
             {0, nInternalFaces},
             NEON_LAMBDA(const size_t facei) {
                 NeoN::Vec3 cellToCellDist = cellCenters[neighbors[facei]] - cellCenters[owners[facei]];
-                deltaCoeff[facei] = 1.0 / mag(cellToCellDist);
+                NeoN::Vec3 faceUnitNormal = 1 / faceAreas[facei] * faceNormals[facei];
+                NeoN::scalar orthoDist = faceUnitNormal & cellToCellDist;
+
+                // deltaCoeff[facei] = 1.0 / mag(cellToCellDist);
+                // floor with ROOTVSMALL so a degenerate (coincident-centre) face cannot
+                // produce 1/0 -> inf
+                deltaCoeff[facei] =
+                    1.0
+                    / std::max(
+                        orthoDist,
+                        std::max(0.05 * mag(cellToCellDist), NeoN::scalar(1e-18)
+                    )
+                );
             },
             "basicGeometricScheme::updateDeltaCoeffsInternal"
         );
-
+        const auto bFaceCenters = mesh.boundaryMesh().faceCenters().view();
+        const auto bFaceNormals = mesh.boundaryMesh().faceNormals().view();
+        const auto bFaceAreas = mesh.boundaryMesh().faceAreas().view();
         parallelFor(
             ls_.exec(),
             {0, mesh.nBoundaryFaces()},
             NEON_LAMBDA(const size_t bfi) {
                 auto own = surfFaceCells[bfi];
-                // TODO Issue #515
-                NeoN::Vec3 cellToCellDist = faceCenters[nInternalFaces + bfi] - cellCenters[own];
-                deltaCoeffB[bfi] = 1.0 / mag(cellToCellDist);
+                NeoN::Vec3 cellToFaceDist = bFaceCenters[bfi] - cellCenters[own];
+                NeoN::Vec3 faceNormal = (1.0 / bFaceAreas[bfi]) * bFaceNormals[bfi];
+                NeoN::scalar orthoDist = faceNormal & cellToFaceDist;
+                // floor with ROOTVSMALL so a degenerate face cannot produce 1/0 -> inf
+                deltaCoeffB[bfi] =
+                    1.0
+                    / std::max(
+                        orthoDist,
+                        std::max(0.05 * mag(cellToFaceDist), NeoN::scalar(1e-18))
+                    );
             },
-            "basicGeometricScheme::updateDeltaCoeffsBoundary"
+            "basicGeometricScheme::updateNonOrthDeltaCoeffsBoundary"
         );
         
         
@@ -522,6 +567,7 @@ public:
         const auto boundaryFaceOwners = mesh.boundaryMesh().faceOwners().juliaPtr();
         // uint8
         const auto JUdiagOffs = ls_.faceToMatrixAddress()->diagOffset().juliaPtr();
+        
         // uint8
         const auto JUownOffs = ls_.faceToMatrixAddress()->ownerOffset().juliaPtr();
         // uint8
@@ -607,10 +653,10 @@ public:
                 funcName = "assemble";
             }
         }
-        
+        std::cout << "function: " << funcName << std::endl;
         jl_function_t* func = jl_get_function(mod, funcName);
         jl_call(func, args, nbinputs);
-        // auto va = ls_.matrix().values();
+        // auto va = ls_.matrix().values().view();
         // auto cpu = NeoN::CPUExecutor {};
         // auto cpuarr = va.copyToExecutor(cpu);
         // auto v = cpuarr.view();   
@@ -620,7 +666,9 @@ public:
         // else {
         //     std::cout << "JULIA FACEBASED values: " << std::endl;
         // }
-        // std::cout << v[0] << std::endl;
+        // for (auto i = 7; i > 0; i++){
+        //     std::cout <<va.size() - i << ": " << va[460041232 - i] << std::endl;
+        // }
         // std::cout << v[1] << std::endl;
         // std::cout << v[2] << std::endl;
         // std::cout << v[3] << std::endl;
