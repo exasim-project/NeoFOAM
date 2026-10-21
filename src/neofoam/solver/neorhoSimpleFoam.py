@@ -49,7 +49,7 @@ from neofoam.solver.neon_runtime import (  # noqa: F401
 )
 from neofoam.solver.neon_runtime import requested_executor
 from neofoam.solver.simpleControl import SimpleControl
-from neofoam.thermo.perfectGas import PerfectGasConstTransport
+from neofoam.thermo.perfectGas import PerfectGasTransport
 
 # Same he = Cv*(T - Tstd) rationale as neorhoPimpleFoam.py.
 _TSTD = 298.15
@@ -96,7 +96,7 @@ class NeoRhoSimpleFoam:
             if solvers.contains(name):
                 solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
 
-        gas = PerfectGasConstTransport(rt)
+        gas = PerfectGasTransport(rt)
 
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
