@@ -419,7 +419,7 @@ def main() -> None:
             "--subdomains",
             type=int,
             nargs="+",
-            default=[2, 3, 4],
+            default=[4],
             help="subdomain counts compared against serial in parallel mode",
         )
         args = parser.parse_args()
