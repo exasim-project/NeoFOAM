@@ -18,22 +18,7 @@ function(NeoN_benchmark BENCH)
   target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 OpenFOAM NeoFOAM)
   target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
   if(NeoN_WITH_JULIA AND "${BENCH}" STREQUAL "julia")
-    execute_process(
-        COMMAND julialauncher +1.11 -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
-        OUTPUT_VARIABLE JULIA_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    execute_process(
-      COMMAND echo "[BENCHMARKING] JULIA_DIR: --------> '${JULIA_DIR}'"
-    )
-    target_include_directories(bench_${BENCH} PRIVATE "${JULIA_DIR}/include/julia")
-    target_link_libraries(bench_${BENCH} PRIVATE
-        "${JULIA_DIR}/lib/libjulia.so"
-    )
-    target_compile_definitions(bench_${BENCH} PRIVATE
-        JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
-    )
-    target_link_options(bench_${BENCH} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
+    # julia.h and libjulia come through NeoN_public_api (Julia::Julia)
     target_compile_definitions(bench_${BENCH} PRIVATE
         JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
     )

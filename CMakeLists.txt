@@ -21,7 +21,10 @@ option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_WITH_MPI "Enable MPI support" ON)
 option(NEOFOAM_ENABLE_KOKKOS_TOOLS "Enable Kokkos Tools" OFF)
-option(NeoN_WITH_JULIA "Enable Julia Matrix Assembly" ON)
+option(NeoN_WITH_JULIA "Enable Julia Matrix Assembly (Julia is found by NeoN, see JULIA_DIR)" OFF)
+set(JUNE_MODULE_INIT
+    ""
+    CACHE FILEPATH "init.jl of the JuNe package, loaded by the Julia tests and benchmarks")
 
 option(NEOFOAM_BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 
