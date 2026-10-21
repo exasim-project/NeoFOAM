@@ -147,12 +147,12 @@ TEST_CASE("Julia Momentum")
 
         SECTION("Interface Facebased")
         {
-            juliaUEqn.juliaFaceBased(faceFlux, phi, gamma);
+            dsl::june::assemble(juliaUEqn.expression(), juliaUEqn.linearSystem(), rt.dt, dsl::june::Strategy::Face);
 
             for(size_t i = 0; i < 3; i++){
             
                 std::chrono::steady_clock::time_point beginj2 = std::chrono::steady_clock::now();
-                juliaUEqn.juliaFaceBased(faceFlux, phi, gamma);
+                dsl::june::assemble(juliaUEqn.expression(), juliaUEqn.linearSystem(), rt.dt, dsl::june::Strategy::Face);
                 std::chrono::steady_clock::time_point endj2 = std::chrono::steady_clock::now();
                 auto result = fmt::format(
                     fmt::runtime("Assembly time (JULIA{}) = {}[ns]"),
@@ -166,7 +166,7 @@ TEST_CASE("Julia Momentum")
             for(size_t i = 0; i < 3; i++){
             
                 std::chrono::steady_clock::time_point beginj2 = std::chrono::steady_clock::now();
-                juliaUEqn.juliaFaceBased(faceFlux, phi, gamma);
+                dsl::june::assemble(juliaUEqn.expression(), juliaUEqn.linearSystem(), rt.dt, dsl::june::Strategy::Face);
                 std::chrono::steady_clock::time_point endj2 = std::chrono::steady_clock::now();
                 auto result = fmt::format(
                     fmt::runtime("Assembly time (UNPINNED{}) = {}[ns]"),

@@ -144,10 +144,10 @@ TEST_CASE("Julia Momentum")
         );
         // nfUEqn_c.assemble();
         // nfUEqn_f.assemble();
-        juliaUEqn_c.juliaCellbased(faceFlux, phi, gamma);
-        juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, true);
+        dsl::june::assemble(juliaUEqn_c.expression(), juliaUEqn_c.linearSystem(), rt.dt, dsl::june::Strategy::Cell);
+        dsl::june::assemble(juliaUEqn_f.expression(), juliaUEqn_f.linearSystem(), rt.dt, dsl::june::Strategy::GlobalFace);
 
-        juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, false);
+        dsl::june::assemble(juliaUEqn_f.expression(), juliaUEqn_f.linearSystem(), rt.dt, dsl::june::Strategy::Face);
 
         // for(size_t i = 0; i < 3; i++){
         //     std::chrono::steady_clock::time_point beginj2 = std::chrono::steady_clock::now();
@@ -172,7 +172,7 @@ TEST_CASE("Julia Momentum")
         // }
         // for(size_t i = 0; i < 3; i++){
         //     std::chrono::steady_clock::time_point beginj2 = std::chrono::steady_clock::now();
-        //     juliaUEqn_c.juliaCellbased(faceFlux, phi, gamma);
+        //     dsl::june::assemble(juliaUEqn_c.expression(), juliaUEqn_c.linearSystem(), rt.dt, dsl::june::Strategy::Cell);
         //     std::chrono::steady_clock::time_point endj2 = std::chrono::steady_clock::now();
         //     auto result = fmt::format(
         //         fmt::runtime("Assembly time (JULIACELL{}) = {}[ns]"),
@@ -182,7 +182,7 @@ TEST_CASE("Julia Momentum")
         //     std::cout << result << std::endl;
 
         //     beginj2 = std::chrono::steady_clock::now();
-        //     juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, true);
+        //     dsl::june::assemble(juliaUEqn_f.expression(), juliaUEqn_f.linearSystem(), rt.dt, dsl::june::Strategy::GlobalFace);
         //     endj2 = std::chrono::steady_clock::now();
         //     result = fmt::format(
         //         fmt::runtime("Assembly time (JULIAGLOBAL{}) = {}[ns]"),
@@ -192,7 +192,7 @@ TEST_CASE("Julia Momentum")
         //     std::cout << result << std::endl;
 
         //     beginj2 = std::chrono::steady_clock::now();
-        //     juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, false);
+        //     dsl::june::assemble(juliaUEqn_f.expression(), juliaUEqn_f.linearSystem(), rt.dt, dsl::june::Strategy::Face);
         //     endj2 = std::chrono::steady_clock::now();
         //     result = fmt::format(
         //         fmt::runtime("Assembly time (JULIAFACE{}) = {}[ns]"),

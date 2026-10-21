@@ -93,10 +93,10 @@ TEST_CASE("julia")
             JUNE_MODULE_INIT
         );
         jl_eval_string(path.c_str());
-        UEQN.warmupFaceBased();
+        dsl::june::warmup(UEQN.expression());
         BENCHMARK("SpatialOperators")
         {
-            UEQN.juliaFaceBased(faceFlux, phi, gamma);
+            dsl::june::assemble(UEQN.expression(), UEQN.linearSystem(), rt.dt, dsl::june::Strategy::Face);
             return;
         };
     }

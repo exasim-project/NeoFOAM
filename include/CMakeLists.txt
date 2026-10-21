@@ -8,9 +8,6 @@ if(NeoN_WITH_SUNDIALS)
 else()
   target_compile_definitions(NeoFOAM_public_api INTERFACE NF_WITH_SUNDIALS=0)
 endif()
-if(NeoN_WITH_JULIA)
-    target_compile_definitions(NeoFOAM_public_api INTERFACE NeoN_WITH_JULIA=1)
-endif()
 set_property(
   TARGET NeoFOAM_public_api
   APPEND
