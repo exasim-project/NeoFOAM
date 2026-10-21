@@ -50,16 +50,25 @@ void PermutationApplicator::validate(
 
 
 // new cell volumes [oldToNew[old index i]] = old cell volumes [old index i] 
-// void reorderCellVolumes(
+// void PermutationApplicator::reorderCellVolumes(
 //     const NeoN::UnstructuredMesh& mesh,
 //     const PreparedPermutation& permutation) const
 // {
-//    NeoN::scalarVector(exec_, permutation.size(), 0.0);
+//     const NeoN::Executor exec = this->exec();
+//     const NeoN::sizeType permutationSize = permutation.size();
+//     NeoN::scalarVector reorderedCellVolumes(exec, permutationSize, 0.0);
+//     auto reorderedCellVolumesView = reorderedCellVolumes.view();
+//     auto originalCellVolumesView = mesh.cellVolumes().view();
 
-//    NeoN::parallelFor(
-//         exec_,
-//         {0, static_cast}
-//    );
+//     NeoN::parallelFor(
+//         exec,
+//         {0, NeoN::toLocalIdx(permutationSize)},
+//         NEON_LAMBDA(const NeoN::localIdx i){
+
+//             // reorderCellVolumes[permutation.oldToNew()[i]] = mesh.cellVolumes()[i];
+//         },
+//         "reorder cell volumes"
+//     );
 // }
 } // namespace NeoFOAM
 

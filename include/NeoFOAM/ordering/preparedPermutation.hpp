@@ -48,7 +48,7 @@ public:
      * @brief Return the number of entities in the permutation.
      */
     [[nodiscard]]
-    const NeoN::sizeType size() const noexcept
+    NeoN::sizeType size() const noexcept
     {
         return oldToNew_.size();
     }

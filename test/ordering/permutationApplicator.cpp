@@ -44,6 +44,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationAp
         // );
 
         // Assert
+        REQUIRE(applicator.exec() == exec);
         // REQUIRE(prepared.size() == expected.size());
         // REQUIRE_THAT(result, Equals(expected, EqualInt{}));
     }

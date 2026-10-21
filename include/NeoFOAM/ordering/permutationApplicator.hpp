@@ -38,6 +38,9 @@ public:
      */
     explicit PermutationApplicator(const NeoN::Executor& exec);
 
+    // return executor on which the applicator is performed
+    NeoN::Executor exec(){ return exec_; }
+
     /**
      * @brief Applies a cell permutation to a mesh.
      *
