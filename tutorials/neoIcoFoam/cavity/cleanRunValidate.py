@@ -192,7 +192,9 @@ def run_case(
     try:
         if mode == "parallel":
             log_gpu_mapping(n_ranks)
-            run_args = ["mpirun", "-n", str(n_ranks), str(solver), "-parallel"]
+            # The CI exports MPIEXEC, the launcher matching the libmpi the solver links.
+            mpiexec = os.environ.get("MPIEXEC") or "mpirun"
+            run_args = [mpiexec, "-n", str(n_ranks), str(solver), "-parallel"]
         else:
             run_args = [str(solver)]
 

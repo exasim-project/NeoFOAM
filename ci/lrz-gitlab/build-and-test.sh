@@ -45,7 +45,7 @@ export PATH="/opt/mpich/bin:/usr/local/cuda/bin:${PATH}"
 # OpenFOAM link, and start the ranks locally: inside the Slurm allocation hydra would
 # otherwise bootstrap through srun, and every rank comes up as a singleton.
 export HYDRA_BOOTSTRAP=fork
-MPIEXEC="$(command -v mpiexec.mpich || command -v mpiexec || true)"
+export MPIEXEC="$(command -v mpiexec.mpich || command -v mpiexec || true)"
 
 echo "=== Tool versions ==="
 cmake --version
