@@ -207,6 +207,22 @@ class NeoRhoPimpleFoam:
         p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
 
+        def boundary_context() -> Any:
+            # Built fresh at each call site from whatever phi/rho/psi/p currently hold --
+            # matches literal OpenFOAM's own per-call BC evaluation, not a value cached once
+            # per timestep. Covers every context-aware BC this solver's fields can carry:
+            # inletOutlet/totalPressure (phi), waveTransmissive (phi, rho, psi, p's own
+            # old-time, deltaT), pressureInletOutletVelocity (phi), a sine-forced fixedValue
+            # (time). A BC that doesn't need a given key simply never looks it up.
+            ctx = nn.BoundaryContext()
+            ctx.insert("phi", phi)
+            ctx.insert("rho", rho)
+            ctx.insert("psi", psi)
+            ctx.insert("p", p)
+            ctx.insert_value("deltaT", rt.dt)
+            ctx.insert_value("time", runTime.value())
+            return ctx
+
         def reduce_u(stats: Any) -> tuple[float, float]:
             mi = 0.0
             mf = 0.0
@@ -305,7 +321,7 @@ class NeoRhoPimpleFoam:
                 # fixedEnergy/gradientEnergy mechanism (recomputed every call, not
                 # captured once) -- push T's current boundary state onto energy's
                 # refValue/refGrad, then materialise energy's value() from it.
-                T.correct_boundary_conditions()
+                T.correct_boundary_conditions(boundary_context())
                 nfb.map_energy_boundary_from_temperature(T, energy, gas.energy_coeff, _TSTD)
                 energy.correct_boundary_conditions()
 
@@ -401,7 +417,7 @@ class NeoRhoPimpleFoam:
                             entry = stats_p.entries[0]
                             p_res = (entry.initial_residual, entry.final_residual)
                             have_p_res = True
-                        p.correct_boundary_conditions()
+                        p.correct_boundary_conditions(boundary_context())
 
                         if piso.final_non_orthogonal_iter():
                             # pEqn above is assembled +ddt(psi,p) + div(phiHbyA) -
@@ -422,10 +438,10 @@ class NeoRhoPimpleFoam:
                         prev_p,
                         nfb.lookup_field_relaxation(rt.fv_solution_dict, p.name, final_iter),
                     )
-                    p.correct_boundary_conditions()
+                    p.correct_boundary_conditions(boundary_context())
 
                     nfb.update_velocity(hByA, rAU, p, U, rt)
-                    U.correct_boundary_conditions()
+                    U.correct_boundary_conditions(boundary_context())
                     # Feature-for-feature port: literal pEqn.H also refreshes K here, from
                     # the just-pressure-corrected U -- not just once after the momentum
                     # predictor. Without this, K stays one-PISO-pass stale for the rest of
