@@ -298,7 +298,8 @@ void registerWallFunctions(nb::module_& m)
             for (localIdx patchID = 0; patchID < static_cast<localIdx>(epsilonBCs.size());
                  ++patchID)
             {
-                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()
+                    != "epsilonWallFunction")
                     continue;
                 const auto [start, end] = epsilon.boundaryData().range(patchID);
                 NeoN::parallelFor(
@@ -329,7 +330,8 @@ void registerWallFunctions(nb::module_& m)
             for (localIdx patchID = 0; patchID < static_cast<localIdx>(epsilonBCs.size());
                  ++patchID)
             {
-                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()
+                    != "epsilonWallFunction")
                     continue;
                 const auto [start, end] = epsilon.boundaryData().range(patchID);
                 NeoN::parallelFor(
@@ -395,7 +397,8 @@ void registerWallFunctions(nb::module_& m)
             auto cwBuild = cornerWeight.view();
             for (localIdx patchID = 0; patchID < static_cast<localIdx>(omegaBCs.size()); ++patchID)
             {
-                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
+                    continue;
                 const auto [start, end] = omega.boundaryData().range(patchID);
                 NeoN::parallelFor(
                     exec,
@@ -424,7 +427,8 @@ void registerWallFunctions(nb::module_& m)
 
             for (localIdx patchID = 0; patchID < static_cast<localIdx>(omegaBCs.size()); ++patchID)
             {
-                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
+                    continue;
                 const auto [start, end] = omega.boundaryData().range(patchID);
                 NeoN::parallelFor(
                     exec,
@@ -495,7 +499,8 @@ void registerWallFunctions(nb::module_& m)
             auto cwBuild = cornerWeight.view();
             for (localIdx patchID = 0; patchID < static_cast<localIdx>(omegaBCs.size()); ++patchID)
             {
-                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
+                    continue;
                 const auto [start, end] = omega.boundaryData().range(patchID);
                 NeoN::parallelFor(
                     exec,
@@ -521,7 +526,8 @@ void registerWallFunctions(nb::module_& m)
             NeoN::fence(exec);
             for (localIdx patchID = 0; patchID < static_cast<localIdx>(omegaBCs.size()); ++patchID)
             {
-                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
+                    continue;
                 const auto [start, end] = omega.boundaryData().range(patchID);
                 NeoN::parallelFor(
                     exec,

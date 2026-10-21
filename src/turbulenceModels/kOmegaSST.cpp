@@ -298,7 +298,8 @@ void KOmegaSST::correct(
             for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(omegaBCs.size());
                  ++patchID)
             {
-                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
+                    continue;
                 const auto [start, end] = omega.boundaryData().range(patchID);
                 NeoN::parallelFor(
                     exec_,
