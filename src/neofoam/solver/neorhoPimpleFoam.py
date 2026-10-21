@@ -132,8 +132,11 @@ class NeoRhoPimpleFoam:
             "TFinal",
             gas.energy_field_name + "Final",
         ):
-            if solvers.contains(name):
-                solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
+            # map_solver_settings (not a plain contains()/subDict() lookup) honours
+            # OpenFOAM's wildcard fvSolution keys (e.g. "rho.*", "(U|h)"), which a literal
+            # name lookup would silently miss, leaving that field's solver/preconditioner
+            # as the raw OpenFOAM name the Ginkgo factory doesn't recognise.
+            nfb.map_solver_settings(solvers, name)
 
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
@@ -177,15 +180,26 @@ class NeoRhoPimpleFoam:
 
         # mu_vol/alpha_energy_vol are recomputed from T every outer iteration for
         # sutherland transport (see the UEqn/EEqn assembly below); for const transport
-        # gas.mu(T)/gas.alphaEnergy(T) don't actually depend on T, so this initial fill
-        # is also the value they keep for the whole run.
-        mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu(T))
+        # gas.mu(T)/gas.alphaEnergy(T) don't actually depend on T, so this initial fill is
+        # also the value they keep for the whole run. gas.mu(T)/alphaEnergy(T) return a
+        # per-cell field (not a plain float, which create_uniform_volume_field needs) for
+        # sutherland, since they're evaluated from the current T there -- seed at 0 and
+        # .assign() the real (possibly spatially-varying) value instead in that case.
         zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
-        # The energy variable being diffused (he or h) needs kappa/Cv or kappa/Cp
-        # respectively, not the Pr-based kappa/Cp const transport uses for *temperature*
-        # diffusion -- see gas.alphaEnergy's definition for the derivation; matches
-        # OpenFOAM's own heThermo::alphahe()/alpha() exactly for this thermo type.
-        alpha_energy_vol = nfb.create_uniform_volume_field(rt, "alphaEnergy", gas.alphaEnergy(T))
+        if gas.transport_type == "sutherland":
+            mu_vol = nfb.create_uniform_volume_field(rt, "mu", 0.0)
+            mu_vol.assign(gas.mu(T))
+            # The energy variable being diffused (he or h) needs kappa/Cv or kappa/Cp
+            # respectively, not the Pr-based kappa/Cp const transport uses for
+            # *temperature* diffusion -- see gas.alphaEnergy's definition for the
+            # derivation; matches OpenFOAM's own heThermo::alphahe()/alpha() exactly.
+            alpha_energy_vol = nfb.create_uniform_volume_field(rt, "alphaEnergy", 0.0)
+            alpha_energy_vol.assign(gas.alphaEnergy(T))
+        else:
+            mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu(T))
+            alpha_energy_vol = nfb.create_uniform_volume_field(
+                rt, "alphaEnergy", gas.alphaEnergy(T)
+            )
         # Feature-for-feature port of literal rhoPimpleFoam's `psip0 = psi*p` /
         # `thermo.correctRho(psi*p - psip0, rhoMin, rhoMax)` -- captured once per PISO
         # pass, used to replace the plain EOS rho.assign() with literal's incremental
