@@ -50,26 +50,26 @@ void PermutationApplicator::validate(
 
 
 // new cell volumes [oldToNew[old index i]] = old cell volumes [old index i] 
-void PermutationApplicator::reorderCellVolumes(
-    const NeoN::UnstructuredMesh& mesh,
-    const PreparedPermutation& permutation) const
-{
-    // const NeoN::Executor exec = this->exec();
-    // const NeoN::sizeType permutationSize = permutation.size();
-    // NeoN::scalarVector reorderedCellVolumes(exec, permutationSize, 0.0);
-    // auto reorderedCellVolumesView = reorderedCellVolumes.view();
-    // auto originalCellVolumesView = mesh.cellVolumes().view();
+// void PermutationApplicator::reorderCellVolumes(
+//     const NeoN::UnstructuredMesh& mesh,
+//     const PreparedPermutation& permutation) const
+// {
+//     const NeoN::Executor exec = this->exec();
+//     const NeoN::sizeType permutationSize = permutation.size();
+//     NeoN::scalarVector reorderedCellVolumes(exec, permutationSize, 0.0);
+//     // auto reorderedCellVolumesView = reorderedCellVolumes.view();
+//     // auto originalCellVolumesView = mesh.cellVolumes().view();
 
-    // NeoN::parallelFor(
-    //     exec,
-    //     {0, NeoN::toLocalIdx(permutationSize)},
-    //     NEON_LAMBDA(const NeoN::localIdx i){
+//     // NeoN::parallelFor(
+//     //     exec,
+//     //     {0, NeoN::toLocalIdx(permutationSize)},
+//     //     NEON_LAMBDA(const NeoN::localIdx i){
 
-    //         // reorderCellVolumes[permutation.oldToNew()[i]] = mesh.cellVolumes()[i];
-    //     },
-    //     "reorder cell volumes"
-    // );
-}
+//     //         // reorderCellVolumes[permutation.oldToNew()[i]] = mesh.cellVolumes()[i];
+//     //     },
+//     //     "reorder cell volumes"
+//     // );
+// }
 } // namespace NeoFOAM
 
 

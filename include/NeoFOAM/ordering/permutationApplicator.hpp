@@ -39,7 +39,7 @@ public:
     explicit PermutationApplicator(const NeoN::Executor& exec);
 
     // return executor on which the applicator is performed
-    const NeoN::Executor& exec(){ return exec_; }
+    const NeoN::Executor& exec() const { return exec_; }
 
     /**
      * @brief Applies a cell permutation to a mesh.
@@ -56,7 +56,10 @@ public:
      *                    indices to new cell indices.
      *
      * @pre @p permutation is a valid permutation over the cells of @p mesh.
-     *
+     
+     * @param mesh Mesh whose cell-related data is to be reordered.
+     * @param permutation Permutation defining the mapping from old cell
+     *                    i*
      * @post Cell-associated mesh data and cell references are consistent with
      *       the new cell ordering.
      */
