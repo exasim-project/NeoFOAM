@@ -495,7 +495,9 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::parallelFor(
         exec,
         {0, nBoundaryFaces},
-        NEON_LAMBDA(const NeoN::sizeType faceBCI) { bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI]; }
+        NEON_LAMBDA(const NeoN::sizeType faceBCI) {
+            bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI];
+        }
     );
 
     // Processor-boundary faces.
