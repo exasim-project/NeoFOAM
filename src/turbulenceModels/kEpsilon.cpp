@@ -381,7 +381,8 @@ void KEpsilon::correct(
                  patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
                  ++patchID)
             {
-                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name() != "epsilonWallFunction")
+                if (epsilonBCs[static_cast<NeoN::sizeType>(patchID)].name()
+                    != "epsilonWallFunction")
                     continue;
                 const auto [start, end] = epsilon.boundaryData().range(patchID);
                 NeoN::parallelFor(

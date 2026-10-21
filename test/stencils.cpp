@@ -44,7 +44,8 @@ TEST_CASE("cell To Face Stencil")
             NeoN::sizeType nInternalCellFaces = 0;
             for (auto facei : mesh.cells()[celli])
             {
-                if (static_cast<NeoN::sizeType>(facei) < static_cast<NeoN::sizeType>(mesh.nInternalFaces()))
+                if (static_cast<NeoN::sizeType>(facei)
+                    < static_cast<NeoN::sizeType>(mesh.nInternalFaces()))
                     nInternalCellFaces++;
                 faceSet.insert(facei);
             }
