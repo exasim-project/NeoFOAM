@@ -116,7 +116,7 @@ TEST_CASE("Julia Momentum")
             rt                                         // runtime
         );
 
-        nf::PDESolver<NeoN::Vec3> juliaUEqn(
+        nf::PDESolver<NeoN::Vec3, NeoN::Vec3> juliaUEqn(
         //    dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi)+
             dsl::imp::laplacian(gamma, phi), // expr

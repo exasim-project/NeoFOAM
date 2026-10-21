@@ -78,7 +78,7 @@ TEST_CASE("julia")
     auto& nfOldPhi = fvcc::oldTime(phi);
     NeoN::fill(nfOldPhi.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
     
-    nf::PDESolver<NeoN::Vec3> UEQN(
+    nf::PDESolver<NeoN::Vec3, NeoN::Vec3> UEQN(
         dsl::imp::div(faceFlux, phi) - dsl::imp::laplacian(gamma, phi),
         phi,
         rt
