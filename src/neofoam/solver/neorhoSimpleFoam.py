@@ -49,7 +49,7 @@ from neofoam.solver.neon_runtime import (  # noqa: F401
 )
 from neofoam.solver.neon_runtime import requested_executor
 from neofoam.solver.simpleControl import SimpleControl
-from neofoam.thermo.perfectGas import PerfectGasConstTransport
+from neofoam.thermo.perfectGas import PerfectGasTransport
 
 # Same he = Cv*(T - Tstd) rationale as neorhoPimpleFoam.py.
 _TSTD = 298.15
@@ -96,7 +96,7 @@ class NeoRhoSimpleFoam:
             if solvers.contains(name):
                 solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
 
-        gas = PerfectGasConstTransport(rt)
+        gas = PerfectGasTransport(rt)
 
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
@@ -162,7 +162,8 @@ class NeoRhoSimpleFoam:
             mu_face.name = "mu"
 
             UEqn = nfb.PDESolverVec3(
-                nn.imp.div(phi, U) - nn.imp.laplacian(mu_face, U)
+                nn.imp.div(phi, U)
+                - nn.imp.laplacian(mu_face, U)
                 + nfb.viscous_stress(mu_vol, zero_nut, grad_u),
                 U,
                 rt,
@@ -184,7 +185,8 @@ class NeoRhoSimpleFoam:
             phiv.name = "phiv"
 
             EEqn = nfb.PDESolverScalar(
-                nn.imp.div(phi, he) - nn.imp.laplacian(alphaEff, he)
+                nn.imp.div(phi, he)
+                - nn.imp.laplacian(alphaEff, he)
                 + nn.exp.div(phi, K)
                 + nn.exp.div(phiv, p),
                 he,

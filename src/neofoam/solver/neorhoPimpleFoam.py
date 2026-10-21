@@ -6,14 +6,19 @@ neorhoPimpleFoam.py — Transient compressible PIMPLE solver using NeoN +
 NeoFOAM bindings.
 
 Minimal first version: laminar only, subsonic (no transonic pEqn branch), no
-SIMPLEC/consistent variant. perfectGas equation of state, constant Cv,
-constant transport (mu, Pr), read from constant/thermophysicalProperties.
-Energy equation is solved for he = Cv*(T - Tstd), not raw T (see _TSTD below
-for why): he's boundary is kept live every outer iteration via real
-FixedEnergy/GradientEnergy BCs (NeoN feat/he-temperature-boundary-mapping),
-mirroring OpenFOAM's own fixedEnergyFvPatchScalarField/
-gradientEnergyFvPatchScalarField, mapped from T's current boundary via
-map_energy_boundary_from_temperature rather than derived from scratch.
+SIMPLEC/consistent variant. perfectGas equation of state, constant Cv-or-Cp,
+const-or-sutherland transport, read from constant/thermophysicalProperties
+(see neofoam.thermo.perfectGas.PerfectGasTransport). Energy equation is
+solved for he = Cv*(T - Tstd) (sensibleInternalEnergy) or h = Cp*(T - Tstd)
+(sensibleEnthalpy), not raw T (see _TSTD below for why) -- which one, and
+whether the EEqn's pressure-coupling term is +div(phiv,p) or -dpdt, is
+decided by the case's own thermoType.energy. The energy field's boundary is
+kept live every outer iteration via real FixedEnergy/GradientEnergy BCs
+(NeoN feat/he-temperature-boundary-mapping), mirroring OpenFOAM's own
+fixedEnergyFvPatchScalarField/gradientEnergyFvPatchScalarField, mapped from
+T's current boundary via map_energy_boundary_from_temperature rather than
+derived from scratch, with per-patch types derived from T's own literal BC
+types (any patch count/order) rather than a hardcoded list.
 
 The pressure equation uses fvm::ddt(psi, p) in place of literal
 rhoPimpleFoam's fvc::ddt(rho) + psi*correction(fvm::ddt(p)): NeoN's DSL has
@@ -45,11 +50,12 @@ from neofoam.solver.neon_runtime import (  # noqa: F401
 )
 from neofoam.solver.neon_runtime import requested_executor
 from neofoam.solver.pisoControl import PisoControl
-from neofoam.thermo.perfectGas import PerfectGasConstTransport
+from neofoam.thermo.perfectGas import PerfectGasTransport
 
-# EEqn is solved for he = Cv*(T - Tstd), not raw T, to keep the energy
-# equation's own reference scale (rather than T's absolute ~300K baseline)
-# small relative to typical mid-PIMPLE-loop mass-conservation slip. he's
+# EEqn is solved for energy = coeff*(T - Tstd) (he/Cv or h/Cp, see
+# PerfectGasTransport.energy_coeff), not raw T, to keep the energy equation's
+# own reference scale (rather than T's absolute ~300K baseline) small
+# relative to typical mid-PIMPLE-loop mass-conservation slip. energy's
 # boundary is kept live every outer iteration via the real FixedEnergy/
 # GradientEnergy BCs (feat/he-temperature-boundary-mapping), mirroring
 # OpenFOAM's own fixedEnergyFvPatchScalarField/gradientEnergyFvPatchScalarField
@@ -69,6 +75,23 @@ def _read_switch(d: Any, key: str, default: bool) -> bool:
         return bool(d.get_bool(key))
     except Exception:
         return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
+
+
+def _energy_patch_types(t_patch_types: list[str]) -> list[str]:
+    """Derive the energy field's per-patch BC types from T's literal ones, mirroring
+    OpenFOAM's own fixedEnergyFvPatchScalarField/gradientEnergyFvPatchScalarField
+    derivation: fixedValue -> fixedEnergy, empty -> empty, anything else (zeroGradient,
+    inletOutlet, ...) -> gradientEnergy. General over patch count/order (reads T's own
+    case-file types rather than assuming a fixed layout)."""
+    mapped = []
+    for t in t_patch_types:
+        if t == "fixedValue":
+            mapped.append("fixedEnergy")
+        elif t == "empty":
+            mapped.append("empty")
+        else:
+            mapped.append("gradientEnergy")
+    return mapped
 
 
 class NeoRhoPimpleFoam:
@@ -93,49 +116,48 @@ class NeoRhoPimpleFoam:
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
 
+        gas = PerfectGasTransport(rt)
+
         rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
         solvers = rt.fv_solution_dict.subDict("solvers")
         for name in (
-            "p", "U", "rho", "T", "he",
-            "pFinal", "UFinal", "rhoFinal", "TFinal", "heFinal",
+            "p",
+            "U",
+            "rho",
+            "T",
+            gas.energy_field_name,
+            "pFinal",
+            "UFinal",
+            "rhoFinal",
+            "TFinal",
+            gas.energy_field_name + "Final",
         ):
             if solvers.contains(name):
                 solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
-
-        gas = PerfectGasConstTransport(rt)
 
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
         U = nfb.read_vector_volume_field(rt, "U")
 
-        # he's patches are real FixedEnergy/GradientEnergy BC objects
-        # (feat/he-temperature-boundary-mapping), externally-pushed and refreshed from
-        # T's current boundary every outer iteration via
-        # map_energy_boundary_from_temperature below -- not a value captured once at
-        # setup. Patch order (inlet, outlet, walls, frontAndBack) is this case's own
-        # blockMeshDict order; asserted below rather than assumed silently, since it's
-        # this solver's one hardcoded, case-specific assumption (a general version would
-        # need to derive patch types from T's own per-patch BC types instead, which
-        # NeoFOAM doesn't currently expose a way to query).
-        assert rt.nf_mesh.n_boundaries() == 4, (
-            "he's patch-type list (fixedEnergy/gradientEnergy/gradientEnergy/empty) "
-            "assumes this case's exact 4-patch (inlet, outlet, walls, frontAndBack) "
-            "blockMeshDict order; a different mesh needs this list reworked, not just "
-            "run through unchanged"
-        )
-        he_raw = nfb.create_scalar_field_with_boundary_types(
-            rt,
-            "he",
-            ["fixedEnergy", "gradientEnergy", "gradientEnergy", "empty"],
+        # energy's (he for sensibleInternalEnergy, h for sensibleEnthalpy) patches are
+        # real FixedEnergy/GradientEnergy BC objects (feat/he-temperature-boundary-mapping),
+        # externally-pushed and refreshed from T's current boundary every outer iteration
+        # via map_energy_boundary_from_temperature below -- not a value captured once at
+        # setup. Patch types are derived from T's own literal per-patch BC types (see
+        # _energy_patch_types), not a hardcoded list, so this works for any patch count/order.
+        energy_name = gas.energy_field_name
+        energy_patch_types = _energy_patch_types(nfb.read_patch_types(rt, "T"))
+        energy_raw = nfb.create_scalar_field_with_boundary_types(
+            rt, energy_name, energy_patch_types
         )
         # Register in the field database (same as psi/rho/K below) -- required for
-        # nn.old_time()/imp.ddt() to find he's old-time slot; a bare VolumeField
+        # nn.old_time()/imp.ddt() to find energy's old-time slot; a bare VolumeField
         # constructed directly isn't database-backed.
-        he = nfb.register_computed_scalar_field(rt, he_raw, "he")
-        he.assign(gas.Cv * (T - _TSTD))  # internal values; boundary set properly below
-        nfb.map_energy_boundary_from_temperature(T, he, gas.Cv, _TSTD)
-        he.correct_boundary_conditions()
-        nn.old_time(he)
+        energy = nfb.register_computed_scalar_field(rt, energy_raw, energy_name)
+        energy.assign(gas.energy_coeff * (T - _TSTD))  # internal values; boundary set below
+        nfb.map_energy_boundary_from_temperature(T, energy, gas.energy_coeff, _TSTD)
+        energy.correct_boundary_conditions()
+        nn.old_time(energy)
 
         psi_seed = nfb.create_uniform_volume_field(rt, "psi", 0.0)
         psi_seed.assign(gas.psi(T))
@@ -153,13 +175,17 @@ class NeoRhoPimpleFoam:
         nn.old_time(rho)
         nn.old_time(K)
 
-        mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu)
+        # mu_vol/alpha_energy_vol are recomputed from T every outer iteration for
+        # sutherland transport (see the UEqn/EEqn assembly below); for const transport
+        # gas.mu(T)/gas.alphaEnergy(T) don't actually depend on T, so this initial fill
+        # is also the value they keep for the whole run.
+        mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu(T))
         zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
-        # he (internal energy) is being diffused here, not T, so this needs
-        # kappa/Cv (gas.alphaHe), not kappa/Cp (gas.alpha) -- see gas.alphaHe's
-        # definition for the derivation; matches OpenFOAM's own
-        # heThermo::alphahe() exactly for this thermo type.
-        alphaEff = nfb.create_uniform_surface_field(rt, "alphaEff", gas.alphaHe)
+        # The energy variable being diffused (he or h) needs kappa/Cv or kappa/Cp
+        # respectively, not the Pr-based kappa/Cp const transport uses for *temperature*
+        # diffusion -- see gas.alphaEnergy's definition for the derivation; matches
+        # OpenFOAM's own heThermo::alphahe()/alpha() exactly for this thermo type.
+        alpha_energy_vol = nfb.create_uniform_volume_field(rt, "alphaEnergy", gas.alphaEnergy(T))
         # Feature-for-feature port of literal rhoPimpleFoam's `psip0 = psi*p` /
         # `thermo.correctRho(psi*p - psip0, rhoMin, rhoMax)` -- captured once per PISO
         # pass, used to replace the plain EOS rho.assign() with literal's incremental
@@ -230,6 +256,13 @@ class NeoRhoPimpleFoam:
 
                 grad_u = grad_op.grad_tensor(U)
 
+                # Sutherland transport depends on T, so mu/alphaEnergy are refreshed from
+                # the current T every outer iteration; const transport leaves them at
+                # their initial, never-changing fill (see their creation above).
+                if gas.transport_type == "sutherland":
+                    mu_vol.assign(gas.mu(T))
+                    alpha_energy_vol.assign(gas.alphaEnergy(T))
+
                 # Literal's divDevRhoReff coefficient is alpha*rho*nuEff(), and for this
                 # laminar (Stokes) model nuEff()==nu()==mu/rho, so the coefficient
                 # collapses to mu -- NOT rho*mu -- for *both* the implicit laplacian and
@@ -238,7 +271,9 @@ class NeoRhoPimpleFoam:
                 mu_face.name = "mu"
 
                 ueqn_expr = (
-                    nn.imp.ddt(rho, U) + nn.imp.div(phi, U) - nn.imp.laplacian(mu_face, U)
+                    nn.imp.ddt(rho, U)
+                    + nn.imp.div(phi, U)
+                    - nn.imp.laplacian(mu_face, U)
                     + nfb.viscous_stress(mu_vol, zero_nut, grad_u)
                 )
 
@@ -264,27 +299,40 @@ class NeoRhoPimpleFoam:
                 else:
                     UEqn.assemble_and_relax()
 
-                prev_T = nfb.field_relaxation_snapshot(he)
+                prev_T = nfb.field_relaxation_snapshot(energy)
 
                 # Live per-outer-iteration refresh, matching literal's actual
                 # fixedEnergy/gradientEnergy mechanism (recomputed every call, not
-                # captured once) -- push T's current boundary state onto he's
-                # refValue/refGrad, then materialise he's value() from it.
+                # captured once) -- push T's current boundary state onto energy's
+                # refValue/refGrad, then materialise energy's value() from it.
                 T.correct_boundary_conditions()
-                nfb.map_energy_boundary_from_temperature(T, he, gas.Cv, _TSTD)
-                he.correct_boundary_conditions()
+                nfb.map_energy_boundary_from_temperature(T, energy, gas.energy_coeff, _TSTD)
+                energy.correct_boundary_conditions()
 
+                alphaEff = surf_interp.interpolate(alpha_energy_vol)
+                alphaEff.name = "alphaEff"
+
+                # sensibleInternalEnergy (he): +div(phiv,p). sensibleEnthalpy (h): -dpdt
+                # instead (thermo.dpdt() defaults true) -- literal rhoPimpleFoam's own
+                # EEqn.H branch on he.name()=="e". phiv = phi/rho is only needed by the
+                # he-space branch, but it's cheap enough to compute unconditionally.
                 phiv = phi / surf_interp.interpolate(rho)
                 phiv.name = "phiv"
+                energy_pressure_term = (
+                    -1.0 * nn.exp.ddt(p) if gas.is_enthalpy else nn.exp.div(phiv, p)
+                )
 
                 eeqn_expr = (
-                    nn.imp.ddt(rho, he) + nn.imp.div(phi, he) - nn.imp.laplacian(alphaEff, he)
-                    + nn.exp.ddt(rho, K) + nn.exp.div(phi, K)
-                    + nn.exp.div(phiv, p)
+                    nn.imp.ddt(rho, energy)
+                    + nn.imp.div(phi, energy)
+                    - nn.imp.laplacian(alphaEff, energy)
+                    + nn.exp.ddt(rho, K)
+                    + nn.exp.div(phi, K)
+                    + energy_pressure_term
                 )
                 EEqn = nfb.PDESolverScalar(
                     eeqn_expr,
-                    he,
+                    energy,
                     rt,
                 )
                 EEqn.set_final_iter(final_iter)
@@ -296,17 +344,17 @@ class NeoRhoPimpleFoam:
                     stats_t.entries[0].final_residual,
                 )
                 nfb.apply_field_relaxation(
-                    he,
+                    energy,
                     prev_T,
-                    nfb.lookup_field_relaxation(rt.fv_solution_dict, he.name, final_iter),
+                    nfb.lookup_field_relaxation(rt.fv_solution_dict, energy.name, final_iter),
                 )
-                he.correct_boundary_conditions()
-                # Convert he back to T for the EOS/reporting -- a plain affine field
+                energy.correct_boundary_conditions()
+                # Convert energy back to T for the EOS/reporting -- a plain affine field
                 # expression, so it updates internal AND boundary values consistently in
                 # one shot (elementwise field arithmetic already applies to both,
                 # confirmed in volumeField.cpp's mulFieldField/addFieldField), with no
                 # separate boundary-write call needed.
-                T.assign((1.0 / gas.Cv) * he + _TSTD)
+                T.assign((1.0 / gas.energy_coeff) * energy + _TSTD)
                 psi.assign(gas.psi(T))
                 rho.assign(gas.rho(psi, p))
 
@@ -336,7 +384,8 @@ class NeoRhoPimpleFoam:
 
                     while piso.correct_non_orthogonal():
                         pEqn = nfb.PDESolverScalar(
-                            nn.imp.ddt(psi, p) - nn.exp.source(p_ddt_psi)
+                            nn.imp.ddt(psi, p)
+                            - nn.exp.source(p_ddt_psi)
                             + nn.exp.div(phiHbyA)
                             - nn.imp.laplacian(rhorAUf, p),
                             p,
