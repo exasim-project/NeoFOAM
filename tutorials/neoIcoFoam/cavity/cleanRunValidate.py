@@ -26,6 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# The CI exports MPIEXEC, the launcher matching the libmpi the solver links.
+MPIEXEC = os.environ.get("MPIEXEC") or "mpirun"
+
 
 # =========================================================
 #  Utility: locate the repository root
@@ -127,12 +130,14 @@ def log_gpu_mapping(n_ranks: int) -> None:
     # Kokkos maps each rank to device (local rank % device count)
     probe = subprocess.run(
         [
-            "mpirun",
+            MPIEXEC,
             "-n",
             str(n_ranks),
             "sh",
             "-c",
-            "echo $OMPI_COMM_WORLD_RANK $OMPI_COMM_WORLD_LOCAL_RANK",
+            # OpenMPI and MPICH (hydra) name the rank variables differently.
+            "echo ${OMPI_COMM_WORLD_RANK:-$PMI_RANK}"
+            " ${OMPI_COMM_WORLD_LOCAL_RANK:-$MPI_LOCALRANKID}",
         ],
         capture_output=True,
         text=True,
@@ -192,9 +197,7 @@ def run_case(
     try:
         if mode == "parallel":
             log_gpu_mapping(n_ranks)
-            # The CI exports MPIEXEC, the launcher matching the libmpi the solver links.
-            mpiexec = os.environ.get("MPIEXEC") or "mpirun"
-            run_args = [mpiexec, "-n", str(n_ranks), str(solver), "-parallel"]
+            run_args = [MPIEXEC, "-n", str(n_ranks), str(solver), "-parallel"]
         else:
             run_args = [str(solver)]
 
