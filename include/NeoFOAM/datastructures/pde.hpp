@@ -134,9 +134,24 @@ public:
 
     const VolumeField& getField() const { return *psi_; }
 
-    [[nodiscard]] LinearSystem& linearSystem() { return *ls_; }
+    // An expression-only PDE has no linear system until its first assemble or solve.
+    [[nodiscard]] LinearSystem& linearSystem()
+    {
+        NF_ASSERT(
+            ls_ != nullptr,
+            "PDE has no linear system yet: construct it with field and RunTime"
+        );
+        return *ls_;
+    }
 
-    [[nodiscard]] const LinearSystem& linearSystem() const { return *ls_; }
+    [[nodiscard]] const LinearSystem& linearSystem() const
+    {
+        NF_ASSERT(
+            ls_ != nullptr,
+            "PDE has no linear system yet: construct it with field and RunTime"
+        );
+        return *ls_;
+    }
 
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
