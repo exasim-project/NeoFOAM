@@ -45,6 +45,7 @@ from neofoam.solver.neon_runtime import (  # noqa: F401
     ensure_neon_initialized as _ensure_neon_initialized,
 )
 from neofoam.solver.neon_runtime import requested_executor
+from neofoam.solver.neon_fv_options import NeonFvOptions
 from neofoam.solver.pisoControl import PisoControl
 from neofoam.thermo.perfectGas import PerfectGasTransport
 
@@ -220,6 +221,9 @@ class NeoRhoPimpleFoam:
         phi = nfb.register_computed_surface_field(rt, phi_seed, "phi")
         nn.old_time(phi)
 
+        # UEqn's `== fvOptions(rho, U)`; raises on option types not implemented for NeoN.
+        fv_options = NeonFvOptions.from_case(rt, U)
+
         p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
 
@@ -310,6 +314,7 @@ class NeoRhoPimpleFoam:
                     - nn.imp.laplacian(mu_face, U)
                     + nfb.viscous_stress(mu_vol, zero_nut, grad_u)
                 )
+                ueqn_expr = fv_options.add_momentum_sources(ueqn_expr, rho, U, runTime.value())
 
                 UEqn = nfb.PDESolverVec3(
                     ueqn_expr,
@@ -476,6 +481,8 @@ class NeoRhoPimpleFoam:
 
                 if have_p_res:
                     residuals["p"] = p_res
+
+            fv_options.end_of_time_step(rt.dt)
 
             if runTime.outputTime():
                 print("Writing fields")
