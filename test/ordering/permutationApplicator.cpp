@@ -24,25 +24,27 @@ TEST_CASE("Reorder cell-associated data")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-    SECTION("Applying permutation reorders cell centers " + execName)
+    SECTION("Applying permutation reorders scalar cell data " + execName)
     {
         // Arrange
-        // Prepare a permutation on the given executor
-        // Create a permutation applicator
-        // Create a 1D uniform mesh
-        // constexpr sizeType size = 4; 
-        // const Permutation permutation = Permutation::identity(size);
-        // const PreparedPermutation prepared(permutation, exec);
-        // NeoN::UnstructuredMesh mesh = NeoN::create1DUniformMesh(exec, size);
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared{permutation, exec};
 
+        const std::vector<NeoN::scalar> data {1.0, 2.1, 3.3, 4.5};
+        NeoN::scalarVector cellData (exec, data);
+
+        const std::vector<NeoN::scalar> expectedData {2.1, 4.5, 1.0, 3.3};
+        const NeoN::scalarVector expectedCellData (exec, expectedData);
+
+        const PermutationApplicator applicator(exec);
+        
         // Act
-        // Apply the permutation to the cell centers of the mesh
-        // PermutationApplicator applicator{exec};
+        applicator.reorderCellData(cellData, prepared);
 
         // Assert
-        // Verify the reordered cell centers
-        // REQUIRE(applicator.exec() == exec);
-        // REQUIRE_THAT(result, Equals(expected, EqualInt{}));
+        REQUIRE(applicator.exec() == exec);
+        REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt{}));
     }
 }
 
