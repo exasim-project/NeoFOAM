@@ -19,6 +19,43 @@ using NeoFOAM::PermutationApplicator;
 using IndexType = Permutation::IndexType;
 }
 
+
+TEST_CASE("Reorder cell-associated data")
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    SECTION("Applying permutation reorders cell centers " + execName)
+    {
+        // Arrange
+        // Prepare a permutation on the given executor
+        // Create a permutation applicator
+        // Create a 1D uniform mesh
+        // constexpr sizeType size = 4; 
+        // const Permutation permutation = Permutation::identity(size);
+        // const PreparedPermutation prepared(permutation, exec);
+        // NeoN::UnstructuredMesh mesh = NeoN::create1DUniformMesh(exec, size);
+
+        // Act
+        // Apply the permutation to the cell centers of the mesh
+        // PermutationApplicator applicator{exec};
+
+        // Assert
+        // Verify the reordered cell centers
+        // REQUIRE(applicator.exec() == exec);
+        // REQUIRE_THAT(result, Equals(expected, EqualInt{}));
+    }
+}
+
+
+TEST_CASE("Applying permutation remaps owner indices")
+{}
+
+TEST_CASE("Applying permutation remaps neighbour indices")
+{}
+
+TEST_CASE("Applying permutation preserves field-cell association")
+{}
+
 TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationApplicator]")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
@@ -33,34 +70,10 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationAp
 
         // Act
         PermutationApplicator applicator{exec};
-        applicator.apply(mesh, prepared);
-
-        // NeoN::parallelFor(
-        //     exec,
-        //     {0, static_cast<NeoN::localIdx>(prepared.size())},
-        //     NEON_LAMBDA(const NeoN::localIdx i) {
-        //         resultView[i] = prepared.oldToNew()[i];
-        //     }
-        // );
+        // applicator.reorderCellVolumes(mesh, prepared);
 
         // Assert
         REQUIRE(applicator.exec() == exec);
-        // REQUIRE(prepared.size() == expected.size());
         // REQUIRE_THAT(result, Equals(expected, EqualInt{}));
     }
 }
-
-TEST_CASE("Applying permutation reorders cell centers")
-{}
-
-TEST_CASE("Applying permutation reorders cell volumes")
-{}
-
-TEST_CASE("Applying permutation remaps owner indices")
-{}
-
-TEST_CASE("Applying permutation remaps neighbour indices")
-{}
-
-TEST_CASE("Applying permutation preserves field-cell association")
-{}

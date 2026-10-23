@@ -28,6 +28,7 @@ void PermutationApplicator::apply(
     // remap face neighbors
 }
 
+// template<typename T>
 // void PermutationApplicator::apply(
 //     NeoN::Field<T>& field,
 //     const PreparedPermutation& permutation) const
@@ -36,6 +37,37 @@ void PermutationApplicator::apply(
 
 //     // reorder field values
 // }
+
+// new cell volumes [oldToNew[old index i]] = old cell volumes [old index i] 
+void PermutationApplicator::reorderCellData(
+    NeoN::scalarVector& data,
+    const PreparedPermutation& permutation) const
+{
+    const NeoN::sizeType permutationSize = permutation.size();
+
+    // Create a copy of the data with the name old data
+    auto oldData = data.makeCopy();
+
+    // Prepare a View of permutation for parallel construct
+    const auto oldToNew = permutation.oldToNew(); 
+
+    // Prepare a View of data for parallel construct
+    auto oldDataView = oldData.view();
+    auto dataView = data.view();
+
+    // for each old index i, 
+    // get the new index j
+    // data[j] = old data[i]
+    NeoN::parallelFor(
+        exec_,
+        {0, NeoN::toLocalIdx(permutationSize)},
+        NEON_LAMBDA(NeoN::localIdx i){
+            auto j = oldToNew[i];
+            dataView[j] = oldDataView[i];
+        },
+        "reorder cell-associated data"
+    );
+}
 
 void PermutationApplicator::validate(
     const NeoN::UnstructuredMesh& mesh,
@@ -49,27 +81,6 @@ void PermutationApplicator::validate(
 }
 
 
-// new cell volumes [oldToNew[old index i]] = old cell volumes [old index i] 
-// void PermutationApplicator::reorderCellVolumes(
-//     const NeoN::UnstructuredMesh& mesh,
-//     const PreparedPermutation& permutation) const
-// {
-//     const NeoN::Executor exec = this->exec();
-//     const NeoN::sizeType permutationSize = permutation.size();
-//     NeoN::scalarVector reorderedCellVolumes(exec, permutationSize, 0.0);
-//     // auto reorderedCellVolumesView = reorderedCellVolumes.view();
-//     // auto originalCellVolumesView = mesh.cellVolumes().view();
-
-//     // NeoN::parallelFor(
-//     //     exec,
-//     //     {0, NeoN::toLocalIdx(permutationSize)},
-//     //     NEON_LAMBDA(const NeoN::localIdx i){
-
-//     //         // reorderCellVolumes[permutation.oldToNew()[i]] = mesh.cellVolumes()[i];
-//     //     },
-//     //     "reorder cell volumes"
-//     // );
-// }
 } // namespace NeoFOAM
 
 
