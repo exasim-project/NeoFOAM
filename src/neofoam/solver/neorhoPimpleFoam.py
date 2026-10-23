@@ -23,14 +23,10 @@ types (any patch count/order) rather than a hardcoded list.
 The pressure equation uses fvm::ddt(psi, p) in place of literal
 rhoPimpleFoam's fvc::ddt(rho) + psi*correction(fvm::ddt(p)): NeoN's DSL has
 no fvm::correction() equivalent. imp.ddt(psi, p) discretizes the full
-conservative d(psi*p)/dt directly (psi_new weighting the diagonal), which
-already carries the psi-sensitivity that rhoPimpleFoam's explicit
-p*fvc::ddt(psi) term supplies on top of its psi-frozen implicit part; adding
-that term here would double-count it, so it is subtracted instead to cancel
-the redundant implicit contribution. Getting this sign right (rather than
-masking the resulting instability with field relaxation on T) is what lets
-this solver match classic rhoPimpleFoam's robustness on the duct test case
-with no relaxation of any kind. phiHbyA also includes the density-weighted
+conservative d(psi*p)/dt directly (psi_new weighting the diagonal), which is
+algebraically the same as literal's (psi*p_new - rho_old)/dt, so no extra
+p*ddt(psi) term is added or subtracted. (Subtracting one cancels the psi
+change from T, which turns the acoustics isothermal.) phiHbyA also includes the density-weighted
 ddtFluxCorr term (rho_f^0 * uf^0), matching rhoPimpleFoam's own phiHbyA
 correction. The bounded thermo.correctRho() increment is dropped for this
 first version in favor of directly reassigning rho from the current psi/p.
@@ -250,6 +246,7 @@ class NeoRhoPimpleFoam:
 
             nn.rotate_old_times(U)
             nn.rotate_old_times(T)
+            nn.rotate_old_times(energy)
             nn.rotate_old_times(p)
             nn.rotate_old_times(rho)
             nn.rotate_old_times(psi)
@@ -401,21 +398,17 @@ class NeoRhoPimpleFoam:
                     rhorAUf.name = "rhorAUf"
                     phiHbyA = rho_face * nfb.flux(hByA)
 
-                    # imp.ddt(psi, p) discretizes the FULL conservative d(rho)/dt =
-                    # d(psi*p)/dt directly (psi_new on the diagonal, psi_old*p_old on the
-                    # rhs) -- unlike literal rhoPimpleFoam's fvc::ddt(rho) +
-                    # psi*correction(fvm::ddt(p)), which holds psi frozen for the implicit
-                    # part and adds back p*fvc::ddt(psi) explicitly. Our imp.ddt(psi, p)
-                    # already carries that psi-sensitivity implicitly, so adding
-                    # p*fvc::ddt(psi) on top would double-count it; it is subtracted
-                    # instead, to remove the redundant implicit-psi contribution.
-                    ddt_psi = (psi - nn.old_time(psi)) / rt.dt
-                    p_ddt_psi = p * ddt_psi
-
+                    # imp.ddt(psi, p) discretizes the full conservative d(psi*p)/dt
+                    # (psi_new*p_new on the diagonal, psi_old*p_old on the rhs). That is
+                    # literal rhoPimpleFoam's fvc::ddt(rho) + psi*correction(fvm::ddt(p))
+                    # = (psi*p_new - rho_old)/dt with rho = psi*p, so no extra
+                    # p*ddt(psi) term is needed. The psi change from the just-solved T
+                    # must stay in this term: it is what makes the effective
+                    # compressibility 1/(gamma*R*T) (isentropic sound speed) instead of
+                    # 1/(R*T) (isothermal).
                     while piso.correct_non_orthogonal():
                         pEqn = nfb.PDESolverScalar(
                             nn.imp.ddt(psi, p)
-                            - nn.exp.source(p_ddt_psi)
                             + nn.exp.div(phiHbyA)
                             - nn.imp.laplacian(rhorAUf, p),
                             p,

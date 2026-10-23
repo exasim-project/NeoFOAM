@@ -272,29 +272,6 @@ void incrementRho(
     );
 }
 
-// ddt_psi = (psi - oldTime(psi))/dt, then p_ddt_psi = p*ddt_psi, internal values only --
-// pEqn's explicit source(p_ddt_psi) term that cancels the redundant implicit-psi
-// contribution imp.ddt(psi,p) already carries (see the Python port's module docstring).
-void computePDdtPsi(
-    const NeoN::Executor& exec,
-    const fvcc::VolumeField<NeoN::scalar>& psi,
-    const fvcc::VolumeField<NeoN::scalar>& p,
-    NeoN::scalar dt,
-    fvcc::VolumeField<NeoN::scalar>& pDdtPsi
-)
-{
-    const auto& psi0 = fvcc::oldTime(psi);
-    const auto [psiV, psi0V, pV] =
-        NeoN::views(psi.internalVector(), psi0.internalVector(), p.internalVector());
-    auto outV = pDdtPsi.internalVector().view();
-    NeoN::parallelFor(
-        exec,
-        {0, psi.internalVector().size()},
-        NEON_LAMBDA(const NeoN::localIdx i) { outV[i] = pV[i] * (psiV[i] - psi0V[i]) / dt; },
-        "computePDdtPsi"
-    );
-}
-
 } // namespace
 
 int main(int argc, char* argv[])
@@ -387,8 +364,6 @@ int main(int argc, char* argv[])
         // Feature-for-feature port of literal rhoPimpleFoam's psip0 = psi*p / incremental
         // thermo.correctRho() update -- captured once per PISO pass.
         auto psip0 = createUniformVolumeScalar(rt, "psip0", 0.0);
-        // Scratch buffer reused by computePDdtPsi, allocated once rather than per PISO pass.
-        auto pDdtPsi = createUniformVolumeScalar(rt, "p_ddt_psi", 0.0);
         // Scratch buffer for rho*rAU (VolumeField<scalar> has no native operator* either --
         // only SurfaceField does), interpolated to faces as rhorAUf below.
         auto rhoCrAU = createUniformVolumeScalar(rt, "rho_crAU", 0.0);
@@ -431,6 +406,7 @@ int main(int argc, char* argv[])
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(T);
+            fvcc::rotateOldTimes(he);
             fvcc::rotateOldTimes(p);
             fvcc::rotateOldTimes(rho);
             fvcc::rotateOldTimes(psi);
@@ -570,8 +546,6 @@ int main(int argc, char* argv[])
                     rhorAUf.name = "rhorAUf";
                     auto phiHbyA = rhoFace * nf::flux(hByA);
 
-                    computePDdtPsi(rt.exec, psi, p, rt.dt, pDdtPsi);
-
                     while (piso.correctNonOrthogonal())
                     {
                         // pEqn built as +ddt(psi,p) + div(phiHbyA) - laplacian(rhorAUf,p)
@@ -583,8 +557,8 @@ int main(int argc, char* argv[])
                         // (calibrated for the incompressible convention) would reconstruct
                         // phi with the wrong sign.
                         nf::PDESolver<NeoN::scalar> pEqn(
-                            dsl::imp::ddt(psi, p) - dsl::exp::source<NeoN::scalar>(pDdtPsi)
-                                + dsl::exp::div(phiHbyA) - dsl::imp::laplacian(rhorAUf, p),
+                            dsl::imp::ddt(psi, p) + dsl::exp::div(phiHbyA)
+                                - dsl::imp::laplacian(rhorAUf, p),
                             p,
                             rt
                         );
