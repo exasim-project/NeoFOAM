@@ -10,6 +10,9 @@
 #include "NeoN/NeoN.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/volume/processor.hpp"
 #include "NeoN/finiteVolume/cellCentred/boundary/surface/processor.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/waveTransmissive.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/pressureInletOutletVelocity.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/sineFixedValue.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
@@ -63,6 +66,16 @@ using ScalarSurfBCFactory = NeoN::finiteVolume::cellCentred::SurfaceBoundaryFact
     &ScalarVolBCFactory::Register<vb::Processor<NeoN::scalar>>::REGISTERED,
     &VectorVolBCFactory::Register<vb::Processor<NeoN::Vec3>>::REGISTERED,
     &ScalarSurfBCFactory::Register<sb::Processor<NeoN::scalar>>::REGISTERED,
+};
+
+// Same workaround again for the compressible-outlet/time-varying BCs used by the
+// sineWaveDamping-style tutorials (waveTransmissive, pressureInletOutletVelocity,
+// sineFixedValue): none of them are templated, so there is no explicit
+// `template class ...<scalar>;` elsewhere in this binary to ODR-use them either.
+[[maybe_unused]] const bool* const registerCompressibleOutletBCs[] = {
+    &ScalarVolBCFactory::Register<vb::WaveTransmissive>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::SineFixedValue>::REGISTERED,
+    &VectorVolBCFactory::Register<vb::PressureInletOutletVelocity>::REGISTERED,
 };
 } // namespace
 
@@ -244,6 +257,57 @@ void registerFieldFactories(nb::module_& m)
         "name"_a,
         "value"_a,
         "Create a uniform scalar volume field (e.g. nu or nut=0)"
+    );
+
+    m.def(
+        "register_computed_scalar_field",
+        [](nf::RunTime& rt, const fvcc::VolumeField<NeoN::scalar>& field, const std::string& name
+        ) -> fvcc::VolumeField<NeoN::scalar>&
+        {
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            return vc.registerVector<fvcc::VolumeField<NeoN::scalar>>(
+                fvcc::CreateFromExistingVector<fvcc::VolumeField<NeoN::scalar>> {
+                    .name = name,
+                    .field = field,
+                    .timeIndex = 0,
+                    .iterationIndex = 0,
+                    .subCycleIndex = 0
+                }
+            );
+        },
+        "runtime"_a,
+        "field"_a,
+        "name"_a,
+        nb::rv_policy::reference,
+        "Register a Python-computed scalar VolumeField (e.g. rho, psi) into the VectorCollection "
+        "so it gains old-time storage (rotate_old_times / oldTime)"
+    );
+
+    m.def(
+        "register_computed_surface_field",
+        [](nf::RunTime& rt, const fvcc::SurfaceField<NeoN::scalar>& field, const std::string& name
+        ) -> fvcc::SurfaceField<NeoN::scalar>&
+        {
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            return vc.registerVector<fvcc::SurfaceField<NeoN::scalar>>(
+                fvcc::CreateFromExistingVector<fvcc::SurfaceField<NeoN::scalar>> {
+                    .name = name,
+                    .field = field,
+                    .timeIndex = 0,
+                    .iterationIndex = 0,
+                    .subCycleIndex = 0
+                }
+            );
+        },
+        "runtime"_a,
+        "field"_a,
+        "name"_a,
+        nb::rv_policy::reference,
+        "Register a Python-computed scalar SurfaceField (e.g. a mass flux phi built from "
+        "rho_f * flux(U)) into the VectorCollection so it gains old-time storage "
+        "(rotate_old_times / oldTime)"
     );
 
     // Overwrite a scalar field's internal values from a host array (the closure's
