@@ -342,8 +342,14 @@ public:
         NeoN::la::SolverStats stats;
         if (useFinal)
         {
-            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
-            stats = finalSolver.solve(*ls_, psi.internalVector());
+            // The caller caches only the non-final solver; keep the final one in the RunTime like
+            // solveImpl, so it is not rebuilt in the final iteration of every time step.
+            auto& finalSolver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+                rt,
+                "solver:" + finalKey,
+                [&] { return std::make_shared<NeoN::la::Solver>(psi.exec(), fieldSolverDict); }
+            );
+            stats = finalSolver->solve(*ls_, psi.internalVector());
         }
         else
         {
@@ -387,8 +393,14 @@ public:
         NeoN::la::SolverStats stats;
         if (useFinal)
         {
-            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
-            stats = finalSolver.solve(*ls_, psi.internalVector());
+            // The caller caches only the non-final solver; keep the final one in the RunTime like
+            // solveImpl, so it is not rebuilt in the final iteration of every time step.
+            auto& finalSolver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+                rt,
+                "solver:" + finalKey,
+                [&] { return std::make_shared<NeoN::la::Solver>(psi.exec(), fieldSolverDict); }
+            );
+            stats = finalSolver->solve(*ls_, psi.internalVector());
         }
         else
         {
