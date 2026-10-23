@@ -202,6 +202,12 @@ class NeoRhoPimpleFoam:
         # update. rhoMin=0/rhoMax=GREAT defaults (unset in this case's PIMPLE dict) make
         # the bound inactive, so the clamp itself is omitted.
         psip0 = nfb.create_uniform_volume_field(rt, "psip0", 0.0)
+        # Literal rhoPimpleFoam's dpdt: zero-initialised, recomputed as fvc::ddt(p) at the
+        # end of every pEqn and consumed by the NEXT EEqn (pressure work for the enthalpy
+        # form). Evaluating ddt(p) inside EEqn instead would see p == p^n on the first
+        # outer iteration, where BDF2 gives a spurious -0.5*(p^n - p^{n-1})/dt.
+        dpdt = nfb.create_uniform_volume_field(rt, "dpdt", 0.0)
+        n_steps = 0
 
         grad_op = nfb.GaussGreenGrad(rt)
         surf_interp = nn.SurfaceInterpolationScalar(
@@ -252,6 +258,7 @@ class NeoRhoPimpleFoam:
             nn.rotate_old_times(psi)
             nn.rotate_old_times(K)
             nn.rotate_old_times(phi)
+            n_steps += 1
 
             max_co, mean_co = nn.compute_co_num(phi, rt.dt)
             print(f"Courant Number mean: {mean_co:.6f} max: {max_co:.6f}")
@@ -346,7 +353,7 @@ class NeoRhoPimpleFoam:
                 phiv = phi / surf_interp.interpolate(rho)
                 phiv.name = "phiv"
                 energy_pressure_term = (
-                    -1.0 * nn.exp.ddt(p) if gas.is_enthalpy else nn.exp.div(phiv, p)
+                    -1.0 * nn.exp.source(dpdt) if gas.is_enthalpy else nn.exp.div(phiv, p)
                 )
 
                 eeqn_expr = (
@@ -456,6 +463,16 @@ class NeoRhoPimpleFoam:
                     # iteration using pre-pressure-correction U.
                     K.assign(0.5 * nn.mag_sqr(U))
                     rho.assign(rho + psi * p - psip0)
+
+                    # literal pEqn.H: dpdt = fvc::ddt(p), same BDF order as the implicit
+                    # ddt terms (BDF1 until p^{n-1} exists)
+                    if gas.is_enthalpy:
+                        p0 = nn.old_time(p)
+                        if ddt_scheme == nfb.DdtScheme.BDF2 and n_steps >= 2:
+                            p00 = nn.old_time(p0)
+                            dpdt.assign((1.5 / rt.dt) * p - (2.0 / rt.dt) * p0 + (0.5 / rt.dt) * p00)
+                        else:
+                            dpdt.assign((1.0 / rt.dt) * (p - p0))
 
                 if have_p_res:
                     residuals["p"] = p_res
