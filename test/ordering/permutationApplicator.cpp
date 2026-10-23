@@ -29,7 +29,7 @@ TEST_CASE("Reorder cell-associated data")
         // Arrange
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
         const Permutation permutation {oldToNew};
-        const PreparedPermutation prepared{permutation, exec};
+        const PreparedPermutation prepared{exec, permutation};
 
         const std::vector<NeoN::scalar> data {1.0, 2.1, 3.3, 4.5};
         NeoN::scalarVector cellData (exec, data);
@@ -67,7 +67,7 @@ TEST_CASE("Applying identity permutation leaves mesh unchanged", "[permutationAp
         // Arrange
         constexpr sizeType size = 4; 
         const Permutation permutation = Permutation::identity(size);
-        const PreparedPermutation prepared(permutation, exec);
+        const PreparedPermutation prepared(exec, permutation);
         NeoN::UnstructuredMesh mesh = NeoN::create1DUniformMesh(exec, size);
 
         // Act

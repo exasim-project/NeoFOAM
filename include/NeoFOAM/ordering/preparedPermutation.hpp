@@ -19,8 +19,20 @@ public:
      * @param exec Executor whose memory space will store the mappings.
      */
     explicit PreparedPermutation(
-        const Permutation& permutation,
-        const NeoN::Executor& exec);
+        const NeoN::Executor& exec,
+        const Permutation& permutation
+    )
+        : oldToNew_(
+            exec, 
+            permutation.oldToNew().data(),
+            permutation.size()
+        ),
+        newToOld_(
+            exec,
+            permutation.newToOld().data(),
+            permutation.size()
+        )
+    {}
     
     /**
      * @brief Return the old-to-new mapping.

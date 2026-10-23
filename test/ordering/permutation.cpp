@@ -206,7 +206,7 @@ TEST_CASE("PreparedPermutation provides executor-accessible permutation mappings
         const Permutation permutation {expectedOldToNew};
 
         // Act
-        const PreparedPermutation prepared{permutation, exec};
+        const PreparedPermutation prepared{exec, permutation};
         const auto oldToNewView = prepared.oldToNew();
         const auto newToOldView = prepared.newToOld();
 
@@ -242,7 +242,7 @@ TEST_CASE("PreparedPermutation provides identity mappings", "[preparedPermutatio
         auto resultView = result.view();
 
         // Act
-        const PreparedPermutation prepared{permutation, exec};
+        const PreparedPermutation prepared{exec, permutation};
         const auto oldToNewView = prepared.oldToNew();
 
         NeoN::parallelFor(
