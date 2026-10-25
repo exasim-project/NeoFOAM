@@ -293,14 +293,6 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  // other Function1 sub-types (table, square, ramps, ...) fall through to the
                  // same zero-gradient approximation freestream/uniformTotalPressure use for an
                  // unmodelled time dependence.
-                 //
-                 // The two supported forms parse differently: "constant <value>" carries its
-                 // value inline, so it arrives as a multi-token TokenList ([word "constant",
-                 // value...]); "sine" has no inline value at all (its parameters live in the
-                 // separate uniformValueCoeffs sub-dict below), so a bare single-word entry
-                 // parses as a plain string instead -- checking which one first, rather than
-                 // assuming a TokenList unconditionally, is what this needs over the old
-                 // constant-only code.
                  std::string waveType;
                  NeoN::TokenList tokenList;
                  if (dict.template isType<std::string>("uniformValue"))
