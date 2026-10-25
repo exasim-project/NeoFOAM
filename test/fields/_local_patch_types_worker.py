@@ -12,6 +12,9 @@ Roles (``python _local_patch_types_worker.py <role> <case_dir>``):
 * ``fields`` — read ``0/U`` and ``0/p`` through the NeoN field reader and save the
   boundary values, split per patch, to ``U_boundary.npz`` / ``p_boundary.npz``.
   An unsupported patch type aborts here instead.
+* ``fields_at_time <t>`` — read ``0/p``, evaluate its boundary conditions against a
+  context that carries only the time ``t`` and save the patch values to
+  ``p_boundary_t.npz``. Only the time-forced BCs can evaluate from that context.
 """
 
 from __future__ import annotations
@@ -72,7 +75,24 @@ def role_fields(case: Path) -> None:
         np.savez(case / f"{name}_boundary.npz", **_per_patch(rt, host))
 
 
-_ROLES = {"mesh": role_mesh, "fields": role_fields}
+def role_fields_at_time(case: Path) -> None:
+    """Read ``p`` and evaluate its boundary conditions at the time in ``argv[3]``."""
+    nn.initialize(["neon"])
+
+    arg_list = pyf.argList(["local_patch_types", "-case", str(case)])
+    neon_time = pyf.Time(arg_list)
+    rt = nfb.create_adapter_run_time(neon_time)
+    rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
+
+    pressure = nfb.read_scalar_volume_field(rt, "p")
+    context = nn.BoundaryContext()
+    context.insert_value("time", float(sys.argv[3]))
+    pressure.correct_boundary_conditions(context)
+    host = np.asarray(pressure.boundary_data_value().copy_to_host())
+    np.savez(case / "p_boundary_t.npz", **_per_patch(rt, host))
+
+
+_ROLES = {"mesh": role_mesh, "fields": role_fields, "fields_at_time": role_fields_at_time}
 
 
 def main() -> None:
