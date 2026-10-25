@@ -44,6 +44,24 @@ inline NeoN::scalar tokenAsScalar(NeoN::TokenList& tokenList, std::size_t idx)
 }
 
 /**
+ * @brief Read a plain (non-stream) numeric dictionary entry as a NeoN::scalar.
+ *
+ * Mirrors tokenAsScalar's reasoning for an entry that is not wrapped in a TokenList at all —
+ * e.g. waveTransmissive's bare `gamma 1.4;`/`fieldInf 101325;` entries, written directly by
+ * writeEntry() rather than through a `uniform <value>`-style stream. A literal with no decimal
+ * point (e.g. `101325`) tokenizes as a label, so `convert()` stores it as NeoN::label rather
+ * than NeoN::scalar; this promotes either representation to NeoN::scalar.
+ */
+inline NeoN::scalar dictEntryAsScalar(const NeoN::Dictionary& dict, const std::string& key)
+{
+    if (dict.isType<NeoN::scalar>(key))
+    {
+        return dict.get<NeoN::scalar>(key);
+    }
+    return NeoN::scalar(dict.get<NeoN::label>(key));
+}
+
+/**
  * @brief Mean unit normal of an OpenFOAM patch and how far its faces deviate from it.
  *
  * NeoN's fixedValue carries a single value for the whole patch, so a boundary condition
@@ -267,26 +285,89 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  }
              }},
             {"uniformFixedValue",
-             [](auto& dict)
+             [&](auto& dict)
              {
-                 // uniformFixedValue stores its value as a Function1. We only support
-                 // the (by far most common) `constant <value>` form, which converts to
-                 // a TokenList of [word "constant", value...]; the value therefore
-                 // starts at index 1, exactly like the `value uniform ...` case above.
-                 dict.insert("type", std::string("fixedValue"));
-                 NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("uniformValue");
-                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 // uniformFixedValue stores its value as a Function1. We support `constant
+                 // <value>` (by far the most common form) and `sine` (needed by cases such as
+                 // rhoPimpleFoam's sineWaveDamping, which forces its inlet pressure this way);
+                 // other Function1 sub-types (table, square, ramps, ...) fall through to the
+                 // same zero-gradient approximation freestream/uniformTotalPressure use for an
+                 // unmodelled time dependence.
+                 //
+                 // The two supported forms parse differently: "constant <value>" carries its
+                 // value inline, so it arrives as a multi-token TokenList ([word "constant",
+                 // value...]); "sine" has no inline value at all (its parameters live in the
+                 // separate uniformValueCoeffs sub-dict below), so a bare single-word entry
+                 // parses as a plain string instead -- checking which one first, rather than
+                 // assuming a TokenList unconditionally, is what this needs over the old
+                 // constant-only code.
+                 std::string waveType;
+                 NeoN::TokenList tokenList;
+                 if (dict.template isType<std::string>("uniformValue"))
                  {
-                     NeoN::Vec3 tmpFixedValue {};
-                     tmpFixedValue[0] = detail::tokenAsScalar(tokenList, 1);
-                     tmpFixedValue[1] = detail::tokenAsScalar(tokenList, 2);
-                     tmpFixedValue[2] = detail::tokenAsScalar(tokenList, 3);
-                     dict.insert("fixedValue", tmpFixedValue);
+                     waveType = dict.template get<std::string>("uniformValue");
                  }
                  else
                  {
-                     dict.insert("fixedValue", detail::tokenAsScalar(tokenList, 1));
+                     tokenList = dict.template get<NeoN::TokenList>("uniformValue");
+                     waveType = tokenList.template get<std::string>(0);
                  }
+
+                 if (waveType == "constant")
+                 {
+                     dict.insert("type", std::string("fixedValue"));
+                     if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                     {
+                         NeoN::Vec3 tmpFixedValue {};
+                         tmpFixedValue[0] = detail::tokenAsScalar(tokenList, 1);
+                         tmpFixedValue[1] = detail::tokenAsScalar(tokenList, 2);
+                         tmpFixedValue[2] = detail::tokenAsScalar(tokenList, 3);
+                         dict.insert("fixedValue", tmpFixedValue);
+                     }
+                     else
+                     {
+                         dict.insert("fixedValue", detail::tokenAsScalar(tokenList, 1));
+                     }
+                     return;
+                 }
+
+                 if (waveType == "sine" && std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     // Sine's own sub-parameters (frequency/scale/level, optionally
+                     // amplitude/t0) are themselves Function1 entries, almost always
+                     // `constant <value>` -- same TokenList shape and the same tokenAsScalar
+                     // extraction as above.
+                     dict.insert("type", std::string("sineFixedValue"));
+                     const NeoN::Dictionary& coeffs = dict.subDict("uniformValueCoeffs");
+                     auto readCoeff = [](const NeoN::Dictionary& d, const std::string& key)
+                     {
+                         NeoN::TokenList t = d.template get<NeoN::TokenList>(key);
+                         return detail::tokenAsScalar(t, 1);
+                     };
+                     dict.insert("frequency", readCoeff(coeffs, "frequency"));
+                     dict.insert("scale", readCoeff(coeffs, "scale"));
+                     dict.insert("level", readCoeff(coeffs, "level"));
+                     if (coeffs.contains("amplitude"))
+                     {
+                         dict.insert("amplitude", readCoeff(coeffs, "amplitude"));
+                     }
+                     if (coeffs.contains("t0"))
+                     {
+                         dict.insert("t0", readCoeff(coeffs, "t0"));
+                     }
+                     return;
+                 }
+
+                 WarningInFunction
+                     << "uniformFixedValue on patch '" << activePatchName.c_str()
+                     << "' uses an unsupported Function1 ('" << waveType.c_str() << "' on a "
+                     << (std::is_same<type_primitive_t, NeoN::Vec3>::value ? "vector" : "scalar")
+                     << " field) and is approximated as zero-gradient.\n"
+                        "    Only 'constant' and scalar 'sine' are modelled; the time/field"
+                        " dependence this patch would otherwise carry is lost."
+                     << Foam::endl;
+                 dict.insert("type", std::string("fixedGradient"));
+                 dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
              }},
             {"noSlip", // TODO specialize for vector
              [](auto& dict)
@@ -405,17 +486,61 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  dict.insert("type", std::string("fixedGradient"));
                  dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
              }},
-            // Two-phase VoF outlet/pressure conditions from the damBreak case. These
-            // are outflow-dominant and are approximated here as zeroGradient so the
-            // fields can be read; a faithful treatment lands with the VoF solve.
             {"pressureInletOutletVelocity",
              [&](auto& dict)
              {
-                 // Outflow-side zeroGradient with an inflow value tied to the flux; NeoN's
-                 // no-context correction cannot see phi, so take the zeroGradient branch, which
-                 // is what the patch does wherever the flow leaves the domain.
-                 dict.insert("type", std::string("fixedGradient"));
-                 dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 // NeoN now models this patch faithfully (PressureInletOutletVelocity): the
+                 // normal component always zero-gradients, letting the pressure equation set
+                 // it, while the tangential components switch between a specified
+                 // tangentialVelocity (inflow) and zero-gradient (outflow) -- see that BC's own
+                 // header for the derivation showing this is exactly equivalent to OpenFOAM's
+                 // tensor-valued directionMixed blend, not an approximation.
+                 //
+                 // tangentialVelocity itself is read here only as a per-case constant; literal
+                 // OpenFOAM stores it as a per-face vectorField (settable at runtime via
+                 // setTangentialVelocity(), e.g. from a rotating-frame BC), which this
+                 // translator does not reconstruct. Every case in this sweep leaves it unset
+                 // (defaulting to zero both here and in literal), so this is not yet exercised;
+                 // a case that sets a uniform tangentialVelocity would need
+                 // detail::insertUniformValue added here, same as the freestream family.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     dict.insert("type", std::string("pressureInletOutletVelocity"));
+                 }
+                 else
+                 {
+                     dict.insert("type", std::string("fixedGradient"));
+                     dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 }
+             }},
+            {"waveTransmissive",
+             [&](auto& dict)
+             {
+                 // NeoN now models this patch faithfully (WaveTransmissive): a non-reflecting
+                 // compressible outflow that relaxes toward fieldInf over length lInf (or holds
+                 // its own old-time value if lInf is unset), at a rate set by the local wave
+                 // speed. gamma/fieldInf/lInf are written as bare scalar entries by
+                 // waveTransmissiveFvPatchField::write() (not wrapped in a `uniform <value>`
+                 // stream, unlike inletValue/p0 above), so they need dictEntryAsScalar's
+                 // label-vs-scalar promotion rather than tokenAsScalar's TokenList one.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     dict.insert("type", std::string("waveTransmissive"));
+                     dict.insert("gamma", detail::dictEntryAsScalar(dict, "gamma"));
+                     if (dict.contains("fieldInf"))
+                     {
+                         dict.insert("fieldInf", detail::dictEntryAsScalar(dict, "fieldInf"));
+                     }
+                     if (dict.contains("lInf"))
+                     {
+                         dict.insert("lInf", detail::dictEntryAsScalar(dict, "lInf"));
+                     }
+                 }
+                 else
+                 {
+                     dict.insert("type", std::string("fixedGradient"));
+                     dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 }
              }},
             {"fixedFluxPressure",
              [&](auto& dict)
