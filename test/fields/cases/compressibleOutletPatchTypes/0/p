@@ -1,0 +1,74 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 5;
+
+boundaryField
+{
+    // sineWaveDamping's forced inlet: a sine Function1,
+    //     p(t) = level + scale*sin(2*pi*frequency*t),
+    // with its sub-parameters written as in the tutorial (`constant <value>`).
+    // The read leaves the internal value; the BC evaluates against a time context.
+    xMin
+    {
+        type            uniformFixedValue;
+        uniformValue    sine;
+        uniformValueCoeffs
+        {
+            frequency   constant 3000;
+            scale       constant 2;
+            level       constant 7;
+        }
+    }
+
+    // sineWaveDamping's outlet. gamma/fieldInf/lInf are bare scalar entries, and
+    // fieldInf has no decimal point on purpose (it can tokenize as a label). It needs
+    // a flux context to evaluate, so the read leaves the internal value.
+    xMax
+    {
+        type            waveTransmissive;
+        field           p;
+        psi             thermo:psi;
+        gamma           1.4;
+        fieldInf        101325;
+        lInf            3;
+        value           uniform 9;
+    }
+
+    // Any other Function1 is approximated as zeroGradient, with a warning.
+    yMin
+    {
+        type            uniformFixedValue;
+        uniformValue    table ((0 1) (1 2));
+    }
+
+    // The other supported Function1: a constant.
+    yMax
+    {
+        type            uniformFixedValue;
+        uniformValue    constant 13;
+    }
+
+    "(zMin|zMax)"
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //

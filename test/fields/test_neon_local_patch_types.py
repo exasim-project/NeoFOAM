@@ -53,6 +53,7 @@ _HERE = Path(__file__).parent
 _WORKER = _HERE / "_local_patch_types_worker.py"
 _CASE = _HERE / "cases" / "localPatchTypes"
 _FREESTREAM_CASE = _HERE / "cases" / "freestreamPatchTypes"
+_COMPRESSIBLE_OUTLET_CASE = _HERE / "cases" / "compressibleOutletPatchTypes"
 
 #: ``0/U`` internal field — every expectation below is derived from it.
 INTERNAL_U = (1.0, 2.0, 3.0)
@@ -119,6 +120,45 @@ FREESTREAM_EXPECTED_P = {
     "zMax": 5.0,
 }
 
+#: The sineWaveDamping-style patch types of ``cases/compressibleOutletPatchTypes``
+#: (internal ``U`` = :data:`INTERNAL_U`, internal ``p`` = 5), as read -- before any
+#: boundary evaluation.
+#:
+#: * ``xMin`` U: pressureInletOutletVelocity; ``xMax`` U: zeroGradient (the control).
+#:   Both hold the internal value: the BC needs a flux to evaluate, and the case's
+#:   ``value`` entry is not used.
+#: * ``xMin`` p: sine ``uniformFixedValue``; ``xMax`` p: waveTransmissive. Both hold the
+#:   internal value until evaluated (see
+#:   :func:`test_sine_uniform_fixed_value_follows_its_function1_in_time` for the sine).
+#:   The case reads at all -- ``waveTransmissive`` used to be rejected as an
+#:   unsupported type, and ``uniformValue sine;`` (a bare word, not a token list) used
+#:   to crash the reader.
+#: * ``yMin`` p: a ``table`` Function1, approximated as zeroGradient (internal value).
+#: * ``yMax`` p: a ``constant`` Function1, exactly 13.
+COMPRESSIBLE_OUTLET_EXPECTED_U = {
+    "xMin": INTERNAL_U,
+    "xMax": INTERNAL_U,
+    "yMin": (0.0, 0.0, 0.0),
+    "yMax": (0.0, 0.0, 0.0),
+    "zMin": (0.0, 0.0, 0.0),
+    "zMax": (0.0, 0.0, 0.0),
+}
+
+COMPRESSIBLE_OUTLET_EXPECTED_P = {
+    "xMin": 5.0,
+    "xMax": 5.0,
+    "yMin": 5.0,
+    "yMax": 13.0,
+    "zMin": 5.0,
+    "zMax": 5.0,
+}
+
+COMPRESSIBLE_OUTLET_NOTICES = (
+    "uniformFixedValue on patch 'yMin'",
+    "unsupported Function1 ('table'",
+    "approximated as zero-gradient",
+)
+
 #: Substrings every approximated translation of a case must print — the patch it hit
 #: and what it dropped.
 LOCAL_NOTICES = (
@@ -148,6 +188,13 @@ CASES = [
         FREESTREAM_NOTICES,
         id="freestreamPatchTypes",
     ),
+    pytest.param(
+        _COMPRESSIBLE_OUTLET_CASE,
+        COMPRESSIBLE_OUTLET_EXPECTED_U,
+        COMPRESSIBLE_OUTLET_EXPECTED_P,
+        COMPRESSIBLE_OUTLET_NOTICES,
+        id="compressibleOutletPatchTypes",
+    ),
 ]
 
 #: Field values are read and copied, never solved for, so they must be exact to
@@ -155,10 +202,10 @@ CASES = [
 TOLERANCE = 1e-12
 
 
-def _run_worker(role: str, case: Path) -> subprocess.CompletedProcess[str]:
+def _run_worker(role: str, case: Path, *args: str) -> subprocess.CompletedProcess[str]:
     """Run one worker role in a fresh process (one ``Foam::Time`` per process)."""
     return subprocess.run(
-        [sys.executable, str(_WORKER), role, str(case)],
+        [sys.executable, str(_WORKER), role, str(case), *args],
         cwd=str(case.parent),
         capture_output=True,
         text=True,
@@ -251,3 +298,33 @@ def test_untranslated_patch_type_still_fails_naming_the_type_and_patch(tmp_path:
     output = result.stdout + result.stderr
     assert "Unsupported boundary condition type 'pressureInletVelocity' on patch 'yMax'" in output
     assert "Supported types:" in output
+
+
+def test_sine_uniform_fixed_value_follows_its_function1_in_time(tmp_path: Path) -> None:
+    """``uniformValue sine`` reads as NeoN's sineFixedValue with the case's coefficients.
+
+    The inlet of ``cases/compressibleOutletPatchTypes`` is
+    ``level + scale*sin(2*pi*frequency*t)`` with level 7, scale 2 and frequency 3000.
+    Evaluated against a context that carries only the time, it must land on that
+    function; the other patches hold the internal value. waveTransmissive needs a flux
+    context to evaluate, so it is turned into zeroGradient for this check.
+    """
+    level, scale, frequency, time = 7.0, 2.0, 3000.0, 1.0e-4
+    case = (
+        from_template(_COMPRESSIBLE_OUTLET_CASE)
+        | patch("0/p", **{"boundaryField.xMax.type": "zeroGradient"})
+    ).build_at(tmp_path / "sinePatchType")
+    meshing = _run_worker("mesh", case.path)
+    assert meshing.returncode == 0, f"blockMesh failed:\n{meshing.stdout}\n{meshing.stderr}"
+
+    result = _run_worker("fields_at_time", case.path, repr(time))
+
+    assert result.returncode == 0, f"evaluation failed:\n{result.stdout}\n{result.stderr}"
+    pressure = np.load(case.path / "p_boundary_t.npz")
+    expected = level + scale * np.sin(2.0 * np.pi * frequency * time)
+    np.testing.assert_allclose(
+        pressure["xMin"], expected, rtol=TOLERANCE, atol=TOLERANCE, err_msg="sine inlet p(t)"
+    )
+    # the constant patch keeps its value, an untouched patch keeps the internal one
+    np.testing.assert_allclose(pressure["yMax"], 13.0, rtol=TOLERANCE, atol=TOLERANCE)
+    np.testing.assert_allclose(pressure["zMin"], 5.0, rtol=TOLERANCE, atol=TOLERANCE)
