@@ -8,6 +8,7 @@
 - Add extension points to the pressure-velocity algorithms so models (MRF, fvOptions) contribute momentum terms and pressure constraints declaratively; migrate incompressibleVoF to the same mechanism [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
 - Add framework-discoverable typed configs: PIMPLE/PISO/SIMPLE algorithm controls, dynamic-mesh controls and turbulence model coefficients, all visible to `list_configs`/`config_schema` on the MCP server [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
 - Add neoSimpleFoam steady-state incompressible SIMPLE/SIMPLEC solver with motorBike tutorial, SIMPLEC rAtU/flux corrections, inletOutlet BC parsing, bounded-scheme prefix stripping, and CI smoke test [#362](https://github.com/exasim-project/NeoFOAM/pull/362)
+- Add a Python port of the neoSimpleFoam steady-state SIMPLE/SIMPLEC solver (`neofoam solver neosimplefoam`) with a pure-Python `SimpleControl` and a lid-driven-cavity test case [#436](https://github.com/exasim-project/NeoFOAM/pull/436)
 - Add kEpsilon and kOmegaSST turbulence models [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Add neoPimpleFoam solver with PIMPLE outer-loop control and SA-DDES turbulence support [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Wire equation and field under-relaxation (URF) into PDESolver [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
