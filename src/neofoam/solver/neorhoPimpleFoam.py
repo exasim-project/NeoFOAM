@@ -26,10 +26,14 @@ no fvm::correction() equivalent. imp.ddt(psi, p) discretizes the full
 conservative d(psi*p)/dt directly (psi_new weighting the diagonal), which is
 algebraically the same as literal's (psi*p_new - rho_old)/dt, so no extra
 p*ddt(psi) term is added or subtracted. (Subtracting one cancels the psi
-change from T, which turns the acoustics isothermal.) phiHbyA also includes the density-weighted
-ddtFluxCorr term (rho_f^0 * uf^0), matching rhoPimpleFoam's own phiHbyA
-correction. The bounded thermo.correctRho() increment is dropped for this
-first version in favor of directly reassigning rho from the current psi/p.
+change from T, which turns the acoustics isothermal.) phiHbyA also includes
+rhorAUf * ddtFluxCorr(rho, U, phi), the counterpart of rhoPimpleFoam's
+rhorAUf*fvc::ddtCorr(rho, U, phi). Without it the acoustic phase speed is about 0.2 % too low
+and the numerical damping of a resolved wave is wrong (sineWaveDamping). rho follows
+thermo.correctRho(): rho += psi*p - psip0 per pressure corrector, without the rhoMin/rhoMax clamp.
+
+The first time step uses BDF1 for every ddt term, as OpenFOAM's backward scheme does: no field gets
+an old-time slot before the time loop, so the first rotate_old_times() creates level 1 only.
 """
 
 from __future__ import annotations
@@ -157,7 +161,11 @@ class NeoRhoPimpleFoam:
         energy.assign(gas.energy_coeff * (T - _TSTD))  # internal values; boundary set below
         nfb.map_energy_boundary_from_temperature(T, energy, gas.energy_coeff, _TSTD)
         energy.correct_boundary_conditions()
-        nn.old_time(energy)
+        # No nn.old_time() here, nor for psi, rho, K and phi below: the first rotate_old_times()
+        # in the time loop creates level 1 (BDF1 on the first step, like OpenFOAM's backward scheme,
+        # which uses Euler while timeIndex < 2). An old-time slot created here would make that first
+        # rotation create level 2 as well, so BDF2 would run on step 1 with a constant history
+        # (the energy equation then heats only 2/3 as much in the first step).
 
         psi_seed = nfb.create_uniform_volume_field(rt, "psi", 0.0)
         psi_seed.assign(gas.psi(T))
@@ -170,10 +178,6 @@ class NeoRhoPimpleFoam:
         K_seed = nfb.create_uniform_volume_field(rt, "K", 0.0)
         K_seed.assign(0.5 * nn.mag_sqr(U))
         K = nfb.register_computed_scalar_field(rt, K_seed, "K")
-
-        nn.old_time(psi)
-        nn.old_time(rho)
-        nn.old_time(K)
 
         # mu_vol/alpha_energy_vol are recomputed from T every outer iteration for
         # sutherland transport (see the UEqn/EEqn assembly below); for const transport
@@ -219,7 +223,6 @@ class NeoRhoPimpleFoam:
         phi_seed = rho_face * nfb.flux(U)
         phi_seed.name = "phi"
         phi = nfb.register_computed_surface_field(rt, phi_seed, "phi")
-        nn.old_time(phi)
 
         # UEqn's `== fvOptions(rho, U)`; raises on option types not implemented for NeoN.
         fv_options = NeonFvOptions.from_case(rt, U)
@@ -408,7 +411,10 @@ class NeoRhoPimpleFoam:
                     rho_face = surf_interp.interpolate(rho)
                     rhorAUf = surf_interp.interpolate(rho * rAU)
                     rhorAUf.name = "rhorAUf"
-                    phiHbyA = rho_face * nfb.flux(hByA)
+                    # rhoPimpleFoam: interpolate(rho)*flux(HbyA) + rhorAUf*ddtCorr(rho, U, phi)
+                    phiHbyA = rho_face * nfb.flux(hByA) + rhorAUf * nfb.ddt_flux_corr(
+                        rho, U, phi, rt.dt, ddt_scheme
+                    )
 
                     # imp.ddt(psi, p) discretizes the full conservative d(psi*p)/dt
                     # (psi_new*p_new on the diagonal, psi_old*p_old on the rhs). That is
@@ -419,6 +425,10 @@ class NeoRhoPimpleFoam:
                     # compressibility 1/(gamma*R*T) (isentropic sound speed) instead of
                     # 1/(R*T) (isothermal).
                     while piso.correct_non_orthogonal():
+                        # OpenFOAM's fvMatrix constructor calls updateCoeffs() on p's patches, so a
+                        # time-dependent BC (the sine inlet of sineWaveDamping) is at the new time
+                        # level when the pEqn is assembled and solved.
+                        p.correct_boundary_conditions(boundary_context())
                         pEqn = nfb.PDESolverScalar(
                             nn.imp.ddt(psi, p)
                             + nn.exp.div(phiHbyA)
