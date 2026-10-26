@@ -639,8 +639,8 @@ TEST_CASE("PressureVelocityCoupling")
     // style pEqn.H (used by NeoFOAM's compressible solver to keep its pEqn positive-definite
     // for DIC/IC preconditioning of p). Catches the two conventions needing opposite-signed
     // flux reconstruction, which the "compute flux" case alone cannot: both the owner/
-    // neighbour coefficient swap bug (5612661cd) and the follow-up convention conflict
-    // (23770adfd) only ever surfaced in one convention at a time.
+    // neighbour coefficient swap and the pEqn sign convention only ever surfaced in one
+    // convention at a time.
     SECTION("compute flux (DivMinusLaplacian convention)")
     {
         auto forAUf =
