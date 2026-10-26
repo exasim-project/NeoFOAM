@@ -61,4 +61,5 @@ def test_neoSimpleFoam_runs_and_develops_cavity_flow(tmp_path: Path) -> None:
     # something rather than leaving U at its zero initial condition.
     max_ux = float(np.max(U[:, 0]))
     assert max_ux > 0.05, f"cavity flow did not develop (max Ux = {max_ux:.3e})"
-    print(f"neoSimpleFoam converged: max Ux = {max_ux:.3e}, max |p| = {float(np.max(np.abs(p))):.3e}")
+    max_abs_p = float(np.max(np.abs(p)))
+    print(f"neoSimpleFoam converged: max Ux = {max_ux:.3e}, max |p| = {max_abs_p:.3e}")
