@@ -11,6 +11,7 @@
 - Add a Python port of the neoSimpleFoam steady-state SIMPLE/SIMPLEC solver (`neofoam solver neosimplefoam`) with a pure-Python `SimpleControl` and a lid-driven-cavity test case [#436](https://github.com/exasim-project/NeoFOAM/pull/436)
 - Add kEpsilon and kOmegaSST turbulence models [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Add neoPimpleFoam solver with PIMPLE outer-loop control and SA-DDES turbulence support [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
+- Add the compressible solvers neorhoPimpleFoam (transient PIMPLE) and neorhoSimpleFoam (steady SIMPLE) as Python solvers and C++ examples: perfect-gas thermo with `he`-space energy equation, Sutherland transport (neorhoPimpleFoam), `waveTransmissive`/`pressureInletOutletVelocity`/sine `uniformFixedValue` boundary conditions and NeoN-native fvOptions with `acousticDampingSource` [#437](https://github.com/exasim-project/NeoFOAM/pull/437)
 - Wire equation and field under-relaxation (URF) into PDESolver [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Enable mempool via controlDict [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
 - Add SpalartAllmarasDDES turbulence model and integration test [#233](https://github.com/exasim-project/NeoFOAM/pull/233)
