@@ -97,6 +97,15 @@ class NeoRhoSimpleFoam:
                 solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
 
         gas = PerfectGasTransport(rt)
+        # The energy equation below diffuses the internal energy with a constant
+        # kappa/Cv; Sutherland transport (T-dependent mu, kappa) and sensibleEnthalpy are
+        # only wired up in neorhoPimpleFoam.py so far.
+        if gas.transport_type != "const" or gas.is_enthalpy:
+            raise NotImplementedError(
+                "neorhoSimpleFoam supports only `transport const` with "
+                "`energy sensibleInternalEnergy` (case has "
+                f"`transport {gas.transport_type}`, `energy {gas.energy_type}`)"
+            )
 
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
@@ -132,7 +141,7 @@ class NeoRhoSimpleFoam:
         K_seed.assign(0.5 * nn.mag_sqr(U))
         K = nfb.register_computed_scalar_field(rt, K_seed, "K")
 
-        mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu)
+        mu_vol = nfb.create_uniform_volume_field(rt, "mu", gas.mu(T))
         zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
         # he (internal energy) is diffused here, not T — kappa/Cv (gas.alphaHe), not
         # kappa/Cp (gas.alpha); see neorhoPimpleFoam.py's identical field for the
