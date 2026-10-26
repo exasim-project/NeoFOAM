@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 // NeoN headers
 #include "NeoN/NeoN.hpp"
@@ -82,6 +84,52 @@ void registerPDESolver(nb::module_& m)
             "on"_a = true,
             "Request relaxationFactors.equations relaxation (fvMatrix::relax(); off by default)"
         );
+
+    m.def(
+        "create_scalar_field_with_boundary_types",
+        [](nf::RunTime& rt, std::string name, std::vector<std::string> patchTypes)
+        {
+            const NeoN::Executor& exec = rt.exec;
+            const NeoN::UnstructuredMesh& mesh = rt.nfMesh;
+            std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
+            bcs.reserve(patchTypes.size());
+            for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(patchTypes.size());
+                 ++patchID)
+            {
+                NeoN::Dictionary patchDict(
+                    {{"type", patchTypes[static_cast<size_t>(patchID)]}}
+                );
+                bcs.emplace_back(mesh, patchDict, patchID);
+            }
+            return fvcc::VolumeField<NeoN::scalar>(exec, std::move(name), mesh, bcs);
+        },
+        "rt"_a,
+        "name"_a,
+        "patch_types"_a,
+        "Create a scalar VolumeField whose patches are the given BC type names, one per "
+        "boundary patch in patch order (e.g. [\"fixedEnergy\", \"gradientEnergy\", "
+        "\"gradientEnergy\", \"empty\"])"
+    );
+
+    m.def(
+        "map_energy_boundary_from_temperature",
+        [](const fvcc::VolumeField<NeoN::scalar>& temperature,
+           fvcc::VolumeField<NeoN::scalar>& energy,
+           NeoN::scalar Cv,
+           NeoN::scalar Tref)
+        {
+            fvcc::mapEnergyBoundaryFromTemperature(
+                temperature.boundaryData(), energy.boundaryData(), Cv, Tref
+            );
+        },
+        "temperature"_a,
+        "energy"_a,
+        "Cv"_a,
+        "Tref"_a,
+        "Map a temperature field's boundary (refValue/refGrad/valueFraction) onto an energy "
+        "field's boundary via he = Cv*(T - Tref); call energy.correct_boundary_conditions() "
+        "afterward to materialise the values"
+    );
 
     // -------------------------------------------------------------------
     // PDE<Vec3>
