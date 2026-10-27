@@ -69,6 +69,13 @@ def _read_int(d: Any, key: str, default: int) -> int:
     return int(d.get_int(key)) if d.contains(key) else default
 
 
+def _pressure_limits_active(d: Any) -> bool:
+    """OpenFOAM's pressureControl limits p when any of these PIMPLE entries is present."""
+    return any(
+        d.contains(k) for k in ("pMax", "pMin", "pMaxFactor", "pMinFactor", "rhoMax", "rhoMin")
+    )
+
+
 def _read_switch(d: Any, key: str, default: bool) -> bool:
     if not d.contains(key):
         return default
@@ -116,6 +123,8 @@ class NeoRhoPimpleFoam:
             n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
+
+        pressure_limits = _pressure_limits_active(pimple_dict)
 
         gas = PerfectGasTransport(rt)
 
@@ -236,14 +245,17 @@ class NeoRhoPimpleFoam:
             # per timestep. Covers every context-aware BC this solver's fields can carry:
             # inletOutlet/totalPressure (phi), waveTransmissive (phi, rho, psi, p's own
             # old-time, deltaT), pressureInletOutletVelocity (phi), a sine-forced fixedValue
-            # (time). A BC that doesn't need a given key simply never looks it up.
+            # (time), plenumPressure (phi, U, p's own old-time, deltaT, timeIndex). A BC that doesn't
+            # need a given key simply never looks it up.
             ctx = nn.BoundaryContext()
             ctx.insert("phi", phi)
             ctx.insert("rho", rho)
             ctx.insert("psi", psi)
             ctx.insert("p", p)
+            ctx.insert("U", U)
             ctx.insert_value("deltaT", rt.dt)
             ctx.insert_value("time", runTime.value())
+            ctx.insert_value("timeIndex", float(n_steps))
             ctx.insert_value("evaluateOnly", 1.0 if evaluate_only else 0.0)
             return ctx
 
@@ -439,9 +451,7 @@ class NeoRhoPimpleFoam:
                         # level when the pEqn is assembled and solved.
                         p.correct_boundary_conditions(boundary_context())
                         pEqn = nfb.PDESolverScalar(
-                            nn.imp.ddt(psi, p)
-                            + nn.exp.div(phiHbyA)
-                            - nn.imp.laplacian(rhorAUf, p),
+                            nn.imp.ddt(psi, p) + nn.exp.div(phiHbyA) - nn.imp.laplacian(rhorAUf, p),
                             p,
                             rt,
                         )
@@ -493,6 +503,15 @@ class NeoRhoPimpleFoam:
                     # this outer iteration and feeds EEqn's explicit K terms next outer
                     # iteration using pre-pressure-correction U.
                     K.assign(0.5 * nn.mag_sqr(U))
+                    # literal pEqn.H: `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
+                    # limit() is true whenever pMin/pMax (or a factor) is set, even if no cell is
+                    # clipped, so p's patches are evaluated once more here -- and this evaluation,
+                    # the first since the one that ends the solve, does recompute the Dirichlet
+                    # patches that update only in updateCoeffs (fixedMean, plenumPressure) from the
+                    # final flux and cells of the corrector. The clipping itself is not ported
+                    # (p never leaves [pMin, pMax] in the cases run so far).
+                    if pressure_limits:
+                        p.correct_boundary_conditions(boundary_context())
                     rho.assign(rho + psi * p - psip0)
 
                     # literal pEqn.H: dpdt = fvc::ddt(p), same BDF order as the implicit
@@ -501,7 +520,9 @@ class NeoRhoPimpleFoam:
                         p0 = nn.old_time(p)
                         if ddt_scheme == nfb.DdtScheme.BDF2 and n_steps >= 2:
                             p00 = nn.old_time(p0)
-                            dpdt.assign((1.5 / rt.dt) * p - (2.0 / rt.dt) * p0 + (0.5 / rt.dt) * p00)
+                            dpdt.assign(
+                                (1.5 / rt.dt) * p - (2.0 / rt.dt) * p0 + (0.5 / rt.dt) * p00
+                            )
                         else:
                             dpdt.assign((1.0 / rt.dt) * (p - p0))
 
