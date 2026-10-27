@@ -459,7 +459,7 @@ int main(int argc, char* argv[])
 
                 nf::PDESolver<NeoN::Vec3> UEqn(
                     dsl::imp::ddt(rho, U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(muFace, U)
-                        + dsl::exp::viscousStress(muVol, zeroNut, gradU),
+                        + dsl::exp::viscousStress(muVol, zeroNut, gradU, true),
                     U,
                     rt
                 );
