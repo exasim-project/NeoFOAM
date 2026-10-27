@@ -437,6 +437,9 @@ class NeoRhoPimpleFoam:
                             rt,
                         )
                         pEqn.set_final_iter(final_iter)
+                        # update_face_velocity adds the non-orthogonal flux correction of a
+                        # corrected laplacian back to phi; the system must keep it.
+                        pEqn.keep_face_flux_correction()
 
                         if needs_ref:
                             pEqn.set_reference(p_ref_cell, p_ref_value)
