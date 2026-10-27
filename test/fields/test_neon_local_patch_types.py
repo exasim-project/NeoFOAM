@@ -53,6 +53,7 @@ _HERE = Path(__file__).parent
 _WORKER = _HERE / "_local_patch_types_worker.py"
 _CASE = _HERE / "cases" / "localPatchTypes"
 _FREESTREAM_CASE = _HERE / "cases" / "freestreamPatchTypes"
+_FLOW_RATE_CASE = _HERE / "cases" / "flowRatePatchTypes"
 
 #: ``0/U`` internal field — every expectation below is derived from it.
 INTERNAL_U = (1.0, 2.0, 3.0)
@@ -119,6 +120,34 @@ FREESTREAM_EXPECTED_P = {
     "zMax": 5.0,
 }
 
+#: The inlet/outlet pair of ``cases/flowRatePatchTypes`` (internal field :data:`INTERNAL_U` and
+#: 5), written as ``laminar/helmholtzResonance`` writes them: Function1 entries ``constant X``.
+#:
+#: * ``xMin``: flowRateInletVelocity with ``volumetricFlowRate constant 0.2`` through a unit
+#:   area, along the inward normal (+x).
+#: * ``yMin``: ``massFlowRate 0.4`` (a bare number) with ``rhoInlet 2``: 0.4 / (2 * 1) along +y.
+#: * ``yMax``: fixedMean on a *vector* field, which NeoN does not have: zeroGradient, announced.
+#: * ``xMax``: zeroGradient, the control.
+FLOW_RATE_EXPECTED_U = {
+    "xMin": (0.2, 0.0, 0.0),
+    "yMin": (0.0, 0.2, 0.0),
+    "xMax": INTERNAL_U,
+    "yMax": INTERNAL_U,
+    "zMin": (0.0, 0.0, 0.0),
+    "zMax": (0.0, 0.0, 0.0),
+}
+
+#: ``xMax``: fixedMean ``constant 100`` on an internal 5 (below half the mean, so shifted onto
+#: 100); ``yMin``: fixedMean with a bare ``80``; the rest zeroGradient.
+FLOW_RATE_EXPECTED_P = {
+    "xMin": 5.0,
+    "xMax": 100.0,
+    "yMin": 80.0,
+    "yMax": 5.0,
+    "zMin": 5.0,
+    "zMax": 5.0,
+}
+
 #: Substrings every approximated translation of a case must print — the patch it hit
 #: and what it dropped.
 LOCAL_NOTICES = (
@@ -137,6 +166,11 @@ FREESTREAM_NOTICES = (
     "freestream on patch 'yMin'",
 )
 
+FLOW_RATE_NOTICES = (
+    "fixedMean on patch 'yMax'",
+    "scalar fields only",
+)
+
 #: One entry per case: the case directory, its two expectation tables and the notices
 #: its approximations owe the user.
 CASES = [
@@ -147,6 +181,13 @@ CASES = [
         FREESTREAM_EXPECTED_P,
         FREESTREAM_NOTICES,
         id="freestreamPatchTypes",
+    ),
+    pytest.param(
+        _FLOW_RATE_CASE,
+        FLOW_RATE_EXPECTED_U,
+        FLOW_RATE_EXPECTED_P,
+        FLOW_RATE_NOTICES,
+        id="flowRatePatchTypes",
     ),
 ]
 
@@ -232,6 +273,23 @@ def test_approximated_patch_types_announce_the_approximation(
     output = result.stdout + result.stderr
     for notice in expected_notices:
         assert notice in output, f"{staged_case.name}: missing notice {notice!r}"
+
+
+def test_time_dependent_function1_flow_rate_is_rejected(tmp_path: Path) -> None:
+    """A flow rate that is not a constant fails instead of being read as one.
+
+    ``table`` is a valid OpenFOAM Function1 but NeoN's flowRateInletVelocity has no time
+    dependence; taking its first entry would silently prescribe the wrong flow.
+    """
+    case = (
+        from_template(_FLOW_RATE_CASE)
+        | patch("0/U", **{"boundaryField.xMin.volumetricFlowRate": "table ((0 0.2) (1 0.4))"})
+    ).build_at(tmp_path / "timeDependentFlowRate")
+
+    result = _read_fields(case.path)
+
+    assert result.returncode != 0, f"read unexpectedly succeeded:\n{result.stdout}"
+    assert "is not a constant" in result.stdout + result.stderr
 
 
 def test_untranslated_patch_type_still_fails_naming_the_type_and_patch(tmp_path: Path) -> None:

@@ -62,6 +62,59 @@ inline NeoN::scalar dictEntryAsScalar(const NeoN::Dictionary& dict, const std::s
 }
 
 /**
+ * @brief Read an OpenFOAM Function1<scalar> entry that is a constant, as a NeoN::scalar.
+ *
+ * A constant Function1 is written as `<key> constant <value>;` (OpenFOAM's own write()) and may
+ * be given as a bare `<key> <value>;`. Any other Function1 (table, sine, ramp, ...) depends on
+ * time, which the boundary conditions this is used for (fixedMean's meanValue,
+ * flowRateInletVelocity's flow rate) do not model. Taking such an entry as a constant would
+ * silently prescribe the wrong flow, so it is an error.
+ */
+inline NeoN::scalar constantFunction1AsScalar(const NeoN::Dictionary& dict, const std::string& key)
+{
+    if (dict.isType<NeoN::scalar>(key) || dict.isType<NeoN::label>(key))
+    {
+        return dictEntryAsScalar(dict, key);
+    }
+    if (dict.isType<NeoN::TokenList>(key))
+    {
+        NeoN::TokenList tokens = dict.get<NeoN::TokenList>(key);
+        auto& raw = tokens.tokens();
+        if (raw.size() == 2)
+        {
+            const std::string* word = std::any_cast<std::string>(&raw[0]);
+            if (word != nullptr && *word == "constant")
+            {
+                return tokenAsScalar(tokens, 1);
+            }
+        }
+    }
+    throw std::runtime_error(
+        "The entry '" + key
+        + "' is not a constant: only `constant <value>` or a plain number is supported, a "
+          "Function1 that depends on time is not modelled."
+    );
+}
+
+/**
+ * @brief Read an OpenFOAM Switch entry (yes/no, true/false, on/off, 1/0) as a bool.
+ */
+inline bool switchEntryAsBool(const NeoN::Dictionary& dict, const std::string& key)
+{
+    if (dict.isType<bool>(key))
+    {
+        return dict.get<bool>(key);
+    }
+    if (dict.isType<NeoN::label>(key))
+    {
+        return dict.get<NeoN::label>(key) != 0;
+    }
+    const std::string word = dict.get<std::string>(key);
+    return word == "yes" || word == "true" || word == "on" || word == "y" || word == "t"
+        || word == "1";
+}
+
+/**
  * @brief Mean unit normal of an OpenFOAM patch and how far its faces deviate from it.
  *
  * NeoN's fixedValue carries a single value for the whole patch, so a boundary condition
@@ -530,6 +583,77 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  }
                  else
                  {
+                     dict.insert("type", std::string("fixedGradient"));
+                     dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 }
+             }},
+            {"fixedMean",
+             [&](auto& dict)
+             {
+                 // NeoN's FixedMean: the adjacent cell values, scaled or shifted so that the
+                 // area-weighted patch mean is meanValue. Scalar fields only (p in the
+                 // compressible tutorials); meanValue is a Function1, taken when it is a constant.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     dict.insert("type", std::string("fixedMean"));
+                     dict.insert("meanValue", detail::constantFunction1AsScalar(dict, "meanValue"));
+                 }
+                 else
+                 {
+                     WarningInFunction
+                         << "fixedMean on patch '" << activePatchName.c_str()
+                         << "' is approximated as zero-gradient: NeoN's fixedMean is for scalar"
+                            " fields only."
+                         << Foam::endl;
+                     dict.insert("type", std::string("fixedGradient"));
+                     dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 }
+             }},
+            {"flowRateInletVelocity",
+             [&](auto& dict)
+             {
+                 // NeoN's FlowRateInletVelocity: a uniform velocity along the inward normal that
+                 // carries volumetricFlowRate (which wins, as in OpenFOAM) or massFlowRate through
+                 // the patch. Both are Function1 entries, taken when they are constants. For a
+                 // mass flow rate the density is the boundary value of the field `rho` (name from
+                 // the optional `rho` entry) that a solver puts in the BoundaryContext, else
+                 // rhoInlet.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     dict.insert("type", std::string("flowRateInletVelocity"));
+                     if (dict.contains("volumetricFlowRate"))
+                     {
+                         dict.insert(
+                             "volumetricFlowRate",
+                             detail::constantFunction1AsScalar(dict, "volumetricFlowRate")
+                         );
+                     }
+                     else
+                     {
+                         dict.insert(
+                             "massFlowRate",
+                             detail::constantFunction1AsScalar(dict, "massFlowRate")
+                         );
+                     }
+                     if (dict.contains("rhoInlet"))
+                     {
+                         dict.insert("rhoInlet", detail::dictEntryAsScalar(dict, "rhoInlet"));
+                     }
+                     if (dict.contains("extrapolateProfile"))
+                     {
+                         dict.insert(
+                             "extrapolateProfile",
+                             detail::switchEntryAsBool(dict, "extrapolateProfile")
+                         );
+                     }
+                 }
+                 else
+                 {
+                     WarningInFunction
+                         << "flowRateInletVelocity on patch '" << activePatchName.c_str()
+                         << "' is approximated as zero-gradient: it is a velocity (vector)"
+                            " boundary condition."
+                         << Foam::endl;
                      dict.insert("type", std::string("fixedGradient"));
                      dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
                  }
