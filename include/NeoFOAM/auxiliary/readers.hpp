@@ -658,6 +658,82 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                      dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
                  }
              }},
+            {"plenumPressure",
+             [&](auto& dict)
+             {
+                 // NeoN's PlenumPressure: the lumped plenum of OpenFOAM's plenumPressure. Every
+                 // parameter is a bare scalar entry (see waveTransmissive); phi, U and rho are
+                 // word entries NeoN reads itself (a `rho`, i.e. a volumetric flux, is rejected
+                 // there). The written `value` (uniform) is the initial patch value; a
+                 // nonuniform one, as a restart file holds, is dropped and the patch starts from
+                 // the adjacent cells.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     dict.insert("type", std::string("plenumPressure"));
+                     for (const char* key :
+                          {"gamma",
+                           "R",
+                           "supplyMassFlowRate",
+                           "supplyTotalTemperature",
+                           "plenumVolume",
+                           "plenumDensity",
+                           "plenumTemperature",
+                           "inletAreaRatio",
+                           "inletDischargeCoefficient"})
+                     {
+                         dict.insert(key, detail::dictEntryAsScalar(dict, key));
+                     }
+                     if (dict.contains("timeScale"))
+                     {
+                         dict.insert("timeScale", detail::dictEntryAsScalar(dict, "timeScale"));
+                     }
+                     if (dict.contains("value"))
+                     {
+                         NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
+                         const std::string* kind =
+                             std::any_cast<std::string>(&tokenList.tokens()[0]);
+                         if (kind != nullptr && *kind == "uniform")
+                         {
+                             dict.insert("value", detail::tokenAsScalar(tokenList, 1));
+                         }
+                         else
+                         {
+                             dict.remove("value");
+                         }
+                     }
+                 }
+                 else
+                 {
+                     WarningInFunction
+                         << "plenumPressure on patch '" << activePatchName.c_str()
+                         << "' is approximated as zero-gradient: it is a pressure (scalar)"
+                            " boundary condition."
+                         << Foam::endl;
+                     dict.insert("type", std::string("fixedGradient"));
+                     dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 }
+             }},
+            {"pressureInletVelocity",
+             [&](auto& dict)
+             {
+                 // NeoN's PressureInletVelocity: the patch velocity follows the face flux. The
+                 // optional phi and rho names are word entries NeoN reads itself; the written
+                 // `value` is recomputed from the flux.
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     dict.insert("type", std::string("pressureInletVelocity"));
+                 }
+                 else
+                 {
+                     WarningInFunction
+                         << "pressureInletVelocity on patch '" << activePatchName.c_str()
+                         << "' is approximated as zero-gradient: it is a velocity (vector)"
+                            " boundary condition."
+                         << Foam::endl;
+                     dict.insert("type", std::string("fixedGradient"));
+                     dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+                 }
+             }},
             {"fixedFluxPressure",
              [&](auto& dict)
              {

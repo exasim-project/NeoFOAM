@@ -128,6 +128,8 @@ FREESTREAM_EXPECTED_P = {
 #: * ``yMin``: ``massFlowRate 0.4`` (a bare number) with ``rhoInlet 2``: 0.4 / (2 * 1) along +y.
 #: * ``yMax``: fixedMean on a *vector* field, which NeoN does not have: zeroGradient, announced.
 #: * ``xMax``: zeroGradient, the control.
+#: * ``zMax``: pressureInletVelocity, which follows the face flux: at rest without one, not its
+#:   written ``value`` (3 0 0).
 FLOW_RATE_EXPECTED_U = {
     "xMin": (0.2, 0.0, 0.0),
     "yMin": (0.0, 0.2, 0.0),
@@ -138,14 +140,15 @@ FLOW_RATE_EXPECTED_U = {
 }
 
 #: ``xMax``: fixedMean ``constant 100`` on an internal 5 (below half the mean, so shifted onto
-#: 100); ``yMin``: fixedMean with a bare ``80``; the rest zeroGradient.
+#: 100); ``yMin``: fixedMean with a bare ``80``; ``zMax``: plenumPressure, which without a
+#: flux holds its written ``value`` of 7; the rest zeroGradient.
 FLOW_RATE_EXPECTED_P = {
     "xMin": 5.0,
     "xMax": 100.0,
     "yMin": 80.0,
     "yMax": 5.0,
     "zMin": 5.0,
-    "zMax": 5.0,
+    "zMax": 7.0,
 }
 
 #: Substrings every approximated translation of a case must print — the patch it hit
@@ -292,20 +295,39 @@ def test_time_dependent_function1_flow_rate_is_rejected(tmp_path: Path) -> None:
     assert "is not a constant" in result.stdout + result.stderr
 
 
+def test_plenum_pressure_with_a_volumetric_flux_is_rejected(tmp_path: Path) -> None:
+    """A ``rho`` entry means a volumetric flux, which NeoN's plenumPressure does not model."""
+    case = (
+        from_template(_FLOW_RATE_CASE) | patch("0/p", **{"boundaryField.zMax.rho": "1.2"})
+    ).build_at(tmp_path / "plenumVolumetricFlux")
+
+    result = _read_fields(case.path)
+
+    assert result.returncode != 0, f"read unexpectedly succeeded:\n{result.stdout}"
+    assert "volumetric flux" in result.stdout + result.stderr
+
+
 def test_untranslated_patch_type_still_fails_naming_the_type_and_patch(tmp_path: Path) -> None:
     """A type outside the table keeps failing with the supported-type list.
 
-    ``pressureInletVelocity`` is an OpenFOAM patch type the table does not carry (and
-    a near-miss for the ``pressureInletOutletVelocity`` it does), so the read gets
+    ``flowRateOutletVelocity`` is an OpenFOAM patch type the table does not carry (and
+    a near-miss for the ``flowRateInletVelocity`` it does), so the read gets
     past OpenFOAM's own run-time selection and reaches the translation gate.
     """
     case = (
-        from_template(_CASE) | patch("0/U", **{"boundaryField.yMax.type": "pressureInletVelocity"})
+        from_template(_CASE)
+        | patch(
+            "0/U",
+            **{
+                "boundaryField.yMax.type": "flowRateOutletVelocity",
+                "boundaryField.yMax.volumetricFlowRate": "constant 0.2",
+            },
+        )
     ).build_at(tmp_path / "untranslatedPatchType")
 
     result = _read_fields(case.path)
 
     assert result.returncode != 0, f"read unexpectedly succeeded:\n{result.stdout}"
     output = result.stdout + result.stderr
-    assert "Unsupported boundary condition type 'pressureInletVelocity' on patch 'yMax'" in output
+    assert "Unsupported boundary condition type 'flowRateOutletVelocity' on patch 'yMax'" in output
     assert "Supported types:" in output

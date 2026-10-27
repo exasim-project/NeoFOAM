@@ -49,9 +49,15 @@ boundaryField
         meanValue       constant (0 0 0);
         value           uniform (3 0 0);
     }
-    "(zMin|zMax)"
+    zMin
     {
         type            noSlip;
+    }
+    // follows the face flux; a flux-less read leaves it at rest
+    zMax
+    {
+        type            pressureInletVelocity;
+        value           uniform (3 0 0);
     }
 }
 
