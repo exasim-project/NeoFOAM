@@ -315,7 +315,7 @@ class NeoRhoPimpleFoam:
                     nn.imp.ddt(rho, U)
                     + nn.imp.div(phi, U)
                     - nn.imp.laplacian(mu_face, U)
-                    + nfb.viscous_stress(mu_vol, zero_nut, grad_u)
+                    + nfb.viscous_stress(mu_vol, zero_nut, grad_u, compressible=True)
                 )
                 ueqn_expr = fv_options.add_momentum_sources(ueqn_expr, rho, U, runTime.value())
 

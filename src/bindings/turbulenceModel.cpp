@@ -514,15 +514,19 @@ void registerTurbulenceModel(nb::module_& m)
         "viscous_stress",
         [](const fvcc::VolumeField<NeoN::scalar>& nu,
            const fvcc::VolumeField<NeoN::scalar>& nut,
-           const fvcc::VolumeField<NeoN::Tensor>& gradU)
-        { return nf::makeViscousStress(nu, nut, gradU); },
+           const fvcc::VolumeField<NeoN::Tensor>& gradU,
+           bool compressible)
+        { return nf::makeViscousStress(nu, nut, gradU, compressible); },
         "nu"_a,
         "nut"_a,
         "grad_u"_a,
+        "compressible"_a = false,
         nb::keep_alive<0, 1>(),
         nb::keep_alive<0, 2>(),
         nb::keep_alive<0, 3>(),
-        "Explicit viscous stress div(nuEff*dev2(T(grad(U)))) for laminar/RAS momentum"
+        "Explicit viscous stress div(nuEff*dev2(T(grad(U)))) for laminar/RAS momentum. With "
+        "compressible=True the scheme is read from the divSchemes key of the compressible "
+        "solvers, div(((rho*nuEff)*dev2(T(grad(U))))), instead of div((nuEff*dev2(T(grad(U)))))"
     );
 
     // -------------------------------------------------------------------

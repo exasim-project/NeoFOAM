@@ -173,7 +173,7 @@ class NeoRhoSimpleFoam:
             UEqn = nfb.PDESolverVec3(
                 nn.imp.div(phi, U)
                 - nn.imp.laplacian(mu_face, U)
-                + nfb.viscous_stress(mu_vol, zero_nut, grad_u),
+                + nfb.viscous_stress(mu_vol, zero_nut, grad_u, compressible=True),
                 U,
                 rt,
             )

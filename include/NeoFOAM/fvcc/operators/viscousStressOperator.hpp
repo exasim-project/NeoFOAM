@@ -11,6 +11,18 @@
 namespace NeoN::finiteVolume::cellCentred
 {
 
+/**
+ * @brief The divSchemes key of the explicit viscous stress term, as OpenFOAM names it.
+ *
+ * OpenFOAM derives the key from the expression it discretises: the incompressible solvers have
+ * div((nuEff*dev2(T(grad(U))))) and the compressible ones, whose coefficient is rho*nuEff,
+ * div(((rho*nuEff)*dev2(T(grad(U))))).
+ */
+inline std::string viscousStressSchemeKey(bool compressible = false)
+{
+    return compressible ? "div(((rho*nuEff)*dev2(T(grad(U)))))" : "div((nuEff*dev2(T(grad(U)))))";
+}
+
 // ----------------------------
 // Operator runtime selection
 // ----------------------------
@@ -22,13 +34,15 @@ class ViscousStressOperatorFactory :
 {
 public:
 
-    static std::unique_ptr<ViscousStressOperatorFactory>
-    create(const Executor& exec, const UnstructuredMesh& mesh, const Input& inputs)
+    static std::unique_ptr<ViscousStressOperatorFactory> create(
+        const Executor& exec,
+        const UnstructuredMesh& mesh,
+        const Input& inputs,
+        const std::string& schemeKey = viscousStressSchemeKey()
+    )
     {
         std::string key = (std::holds_alternative<NeoN::Dictionary>(inputs))
-                            ? std::get<NeoN::Dictionary>(inputs).get<std::string>(
-                                "div((nuEff*dev2(T(grad(U)))))"
-                            )
+                            ? std::get<NeoN::Dictionary>(inputs).get<std::string>(schemeKey)
                             : std::get<NeoN::TokenList>(inputs).next<std::string>();
 
         ViscousStressOperatorFactory::keyExistsOrError(key);
@@ -81,6 +95,7 @@ public:
         , nu_(other.nu_)
         , nut_(other.nut_)
         , gradUTensor_(other.gradUTensor_)
+        , schemeKey_(other.schemeKey_)
         , viscousOp_(other.viscousOp_ ? other.viscousOp_->clone() : nullptr)
     {}
 
@@ -89,7 +104,8 @@ public:
         const VolumeField<scalar>& nu,
         const VolumeField<scalar>& nut,
         const VolumeField<Tensor>& gradU,
-        Input input
+        Input input,
+        std::string schemeKey = viscousStressSchemeKey()
     )
         : dsl::OperatorMixin<VolumeField<Vec3>, VolumeField<scalar>>(
             nut.exec(),
@@ -100,7 +116,8 @@ public:
         , nu_(nu)
         , nut_(nut)
         , gradUTensor_(&gradU)
-        , viscousOp_(ViscousStressOperatorFactory::create(this->exec_, nut.mesh(), input))
+        , schemeKey_(std::move(schemeKey))
+        , viscousOp_(ViscousStressOperatorFactory::create(this->exec_, nut.mesh(), input, schemeKey_))
     {}
 
     ViscousStressOperator(
@@ -108,7 +125,8 @@ public:
         const VolumeField<scalar>& nu,
         const VolumeField<scalar>& nut,
         const VolumeField<Tensor>& gradU,
-        std::unique_ptr<ViscousStressOperatorFactory> viscousOp
+        std::unique_ptr<ViscousStressOperatorFactory> viscousOp,
+        std::string schemeKey = viscousStressSchemeKey()
     )
         : dsl::OperatorMixin<VolumeField<Vec3>, VolumeField<scalar>>(
             nut.exec(),
@@ -119,6 +137,7 @@ public:
         , nu_(nu)
         , nut_(nut)
         , gradUTensor_(&gradU)
+        , schemeKey_(std::move(schemeKey))
         , viscousOp_(std::move(viscousOp))
     {}
 
@@ -126,7 +145,8 @@ public:
         dsl::Operator::Type termType,
         const VolumeField<scalar>& nu,
         const VolumeField<scalar>& nut,
-        const VolumeField<Tensor>& gradU
+        const VolumeField<Tensor>& gradU,
+        std::string schemeKey = viscousStressSchemeKey()
     )
         : dsl::OperatorMixin<VolumeField<Vec3>, VolumeField<scalar>>(
             nut.exec(),
@@ -137,6 +157,7 @@ public:
         , nu_(nu)
         , nut_(nut)
         , gradUTensor_(&gradU)
+        , schemeKey_(std::move(schemeKey))
         , viscousOp_(nullptr)
     {}
 
@@ -158,8 +179,7 @@ public:
         if (std::holds_alternative<NeoN::Dictionary>(input))
         {
             auto dict = std::get<NeoN::Dictionary>(input);
-            auto tokens =
-                dict.subDict("divSchemes").get<NeoN::TokenList>("div((nuEff*dev2(T(grad(U)))))");
+            auto tokens = dict.subDict("divSchemes").get<NeoN::TokenList>(schemeKey_);
             viscousOp_ = ViscousStressOperatorFactory::create(this->exec(), mesh, tokens);
         }
         else
@@ -171,13 +191,21 @@ public:
 
     std::string getName() const { return "ViscousStressOperator"; }
 
-    Dictionary getConfig() const { return {}; }
+    // The divSchemes key the operator reads its scheme from, for the scheme defaults the
+    // compatibility layer fills in
+    Dictionary getConfig() const
+    {
+        Dictionary config;
+        config.insert("schemeKey", schemeKey_);
+        return config;
+    }
 
 private:
 
     const VolumeField<scalar>& nu_;
     const VolumeField<scalar>& nut_;
     const VolumeField<Tensor>* gradUTensor_;
+    std::string schemeKey_;
     std::unique_ptr<ViscousStressOperatorFactory> viscousOp_;
 };
 
@@ -258,15 +286,18 @@ namespace NeoN::dsl::exp
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
+/// compressible: take the scheme from the divSchemes key of the compressible solvers,
+/// div(((rho*nuEff)*dev2(T(grad(U))))), instead of the incompressible div((nuEff*dev2(T(grad(U)))))
 inline SpatialOperator<Vec3> viscousStress(
     const fvcc::VolumeField<scalar>& nu,
     const fvcc::VolumeField<scalar>& nut,
-    const fvcc::VolumeField<Tensor>& gradU
+    const fvcc::VolumeField<Tensor>& gradU,
+    bool compressible = false
 )
 {
-    return SpatialOperator<Vec3>(
-        fvcc::ViscousStressOperator(dsl::Operator::Type::Explicit, nu, nut, gradU)
-    );
+    return SpatialOperator<Vec3>(fvcc::ViscousStressOperator(
+        dsl::Operator::Type::Explicit, nu, nut, gradU, fvcc::viscousStressSchemeKey(compressible)
+    ));
 }
 
 } // namespace NeoN::dsl::exp
@@ -289,7 +320,8 @@ namespace NeoFOAM
 NeoN::dsl::SpatialOperator<NeoN::Vec3> makeViscousStress(
     const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nu,
     const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nut,
-    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU,
+    bool compressible = false
 );
 
 } // namespace NeoFOAM
