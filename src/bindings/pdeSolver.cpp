@@ -82,6 +82,16 @@ void registerPDESolver(nb::module_& m)
             "Select the <field>Final solver subdict / relaxation on the final outer pass"
         )
         .def(
+            "keep_face_flux_correction",
+            [](nf::PDE<NeoN::scalar>& self, bool keep)
+            { self.linearSystem().keepFaceFluxCorrection(keep); },
+            "keep"_a = true,
+            "Keep the non-orthogonal face flux correction of the assembled Laplacian, which "
+            "update_face_velocity adds back to the reconstructed flux. A pressure equation "
+            "with a corrected laplacian needs this before solve(); without it div(phi) is "
+            "not closed on a non-orthogonal mesh and the run diverges."
+        )
+        .def(
             "relax",
             &nf::PDE<NeoN::scalar>::relax,
             "on"_a = true,
