@@ -92,7 +92,7 @@ class NeoRhoSimpleFoam:
 
         rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
         solvers = rt.fv_solution_dict.subDict("solvers")
-        for name in ("p", "U", "rho", "T", "he"):
+        for name in ("p", "U", "rho", "T", "e"):  # "e": OpenFOAM's name of the internal energy
             if solvers.contains(name):
                 solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
 
@@ -121,10 +121,10 @@ class NeoRhoSimpleFoam:
         )
         he_raw = nfb.create_scalar_field_with_boundary_types(
             rt,
-            "he",
+            "e",
             ["fixedEnergy", "gradientEnergy", "gradientEnergy", "empty"],
         )
-        he = nfb.register_computed_scalar_field(rt, he_raw, "he")
+        he = nfb.register_computed_scalar_field(rt, he_raw, "e")
         he.assign(gas.Cv * (T - _TSTD))
         nfb.map_energy_boundary_from_temperature(T, he, gas.Cv, _TSTD)
         he.correct_boundary_conditions()
