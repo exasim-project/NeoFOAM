@@ -1,0 +1,45 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 2 -2 0 0 0 0];
+
+internalField   uniform 5;
+
+boundaryField
+{
+    // meanValue as a constant Function1, as the helmholtzResonance outlet writes it. The
+    // internal field of 5 is far below it, so the patch is shifted onto 100.
+    xMax
+    {
+        type            fixedMean;
+        meanValue       constant 100;
+        value           uniform 5;
+    }
+    // A bare number is a valid Function1 too.
+    yMin
+    {
+        type            fixedMean;
+        meanValue       80;
+        value           uniform 5;
+    }
+    ".*"
+    {
+        type            zeroGradient;
+    }
+}
+
+
+// ************************************************************************* //
