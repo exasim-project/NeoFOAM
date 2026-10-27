@@ -230,7 +230,7 @@ class NeoRhoPimpleFoam:
         p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
 
-        def boundary_context() -> Any:
+        def boundary_context(evaluate_only: bool = False) -> Any:
             # Built fresh at each call site from whatever phi/rho/psi/p currently hold --
             # matches literal OpenFOAM's own per-call BC evaluation, not a value cached once
             # per timestep. Covers every context-aware BC this solver's fields can carry:
@@ -244,6 +244,7 @@ class NeoRhoPimpleFoam:
             ctx.insert("p", p)
             ctx.insert_value("deltaT", rt.dt)
             ctx.insert_value("time", runTime.value())
+            ctx.insert_value("evaluateOnly", 1.0 if evaluate_only else 0.0)
             return ctx
 
         def reduce_u(stats: Any) -> tuple[float, float]:
@@ -452,12 +453,16 @@ class NeoRhoPimpleFoam:
                         if needs_ref:
                             pEqn.set_reference(p_ref_cell, p_ref_value)
 
+                        # OpenFOAM updates fixedMean-type patches once, when pEqn is built; the
+                        # evaluations after the solve (the end of fvMatrix::solve, the relaxation)
+                        # keep those values, so U is corrected with the patch values of the cells
+                        # before the solve.
                         stats_p = pEqn.solve()
                         if not have_p_res:
                             entry = stats_p.entries[0]
                             p_res = (entry.initial_residual, entry.final_residual)
                             have_p_res = True
-                        p.correct_boundary_conditions(boundary_context())
+                        p.correct_boundary_conditions(boundary_context(evaluate_only=True))
 
                         if piso.final_non_orthogonal_iter():
                             # pEqn above is assembled +ddt(psi,p) + div(phiHbyA) -
@@ -478,7 +483,7 @@ class NeoRhoPimpleFoam:
                         prev_p,
                         nfb.lookup_field_relaxation(rt.fv_solution_dict, p.name, final_iter),
                     )
-                    p.correct_boundary_conditions(boundary_context())
+                    p.correct_boundary_conditions(boundary_context(evaluate_only=True))
 
                     nfb.update_velocity(hByA, rAU, p, U, rt)
                     U.correct_boundary_conditions(boundary_context())
