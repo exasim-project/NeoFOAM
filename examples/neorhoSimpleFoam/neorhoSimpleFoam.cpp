@@ -261,7 +261,7 @@ int main(int argc, char* argv[])
 #include "createFields.H"
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        for (const std::string& name : {"p", "U", "rho", "T", "he"})
+        for (const std::string& name : {"p", "U", "rho", "T", "e"})
         {
             if (solverDict.contains(name))
             {
@@ -302,9 +302,9 @@ int main(int argc, char* argv[])
             NeoN::Dictionary patchDict({{"type", hePatchTypes[static_cast<std::size_t>(patchID)]}});
             heBcs.emplace_back(rt.nfMesh, patchDict, patchID);
         }
-        fvcc::VolumeField<NeoN::scalar> heSeed(rt.exec, "he", rt.nfMesh, heBcs);
+        fvcc::VolumeField<NeoN::scalar> heSeed(rt.exec, "e", rt.nfMesh, heBcs);
         heFromT(rt.exec, T, gas.Cv, heSeed);
-        auto& he = registerComputedScalar(vectorCollection, heSeed, "he");
+        auto& he = registerComputedScalar(vectorCollection, heSeed, "e");
         fvcc::mapEnergyBoundaryFromTemperature(T.boundaryData(), he.boundaryData(), gas.Cv, TStd);
         he.correctBoundaryConditions();
 

@@ -34,7 +34,8 @@ class PerfectGasTransport:
         # sensibleEnthalpy -- OpenFOAM's eConst/hConst thermo both reduce to this exact
         # affine form for perfectGas (H(p,T) = 0, Hsref = 0 by default).
         self.is_enthalpy = self.energy_type == "sensibleEnthalpy"
-        self.energy_field_name = "h" if self.is_enthalpy else "he"
+        # OpenFOAM names the energy variable h (sensibleEnthalpy) or e (sensibleInternalEnergy)
+        self.energy_field_name = "h" if self.is_enthalpy else "e"
 
         self.R = UNIVERSAL_GAS_CONSTANT / props["molWeight"]
         self.Cv = props["Cv"] if "Cv" in props else props["Cp"] - self.R
