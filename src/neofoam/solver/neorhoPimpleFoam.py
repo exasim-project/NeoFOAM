@@ -295,6 +295,14 @@ class NeoRhoPimpleFoam:
 
                 prev_p = nfb.field_relaxation_snapshot(p)
 
+                # OpenFOAM builds the momentum matrix with fvm::ddt(rho, U), whose fvMatrix
+                # constructor updates U's patch coefficients (flowRateInletVelocity re-evaluates
+                # its velocity from the current rho) before the matrix and grad(U) are used.
+                # Without this the first outer iteration of the first step sees the written
+                # initial patch values -- an inlet at rest -- and the whole sequence lags by one
+                # corrector.
+                U.correct_boundary_conditions(boundary_context())
+
                 grad_u = grad_op.grad_tensor(U)
 
                 # Sutherland transport depends on T, so mu/alphaEnergy are refreshed from
