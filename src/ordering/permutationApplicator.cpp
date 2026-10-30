@@ -19,7 +19,6 @@ void PermutationApplicator::apply(
     validate(mesh, permutation);
 
     // reorder cell volumes
-    // reorderCellVolumes(mesh, permutation);
 
     // reorder cell centers
 
