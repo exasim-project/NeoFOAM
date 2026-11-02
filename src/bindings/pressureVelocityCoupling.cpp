@@ -30,6 +30,16 @@ namespace NeoFOAM::bindings
 
 void registerPressureVelocityCoupling(nb::module_& m)
 {
+    nb::enum_<nf::PEqnConvention>(
+        m,
+        "PEqnConvention",
+        "Overall sign convention a pEqn was assembled with; must match for "
+        "update_face_velocity to reconstruct the correctly-signed flux. See the C++ "
+        "PEqnConvention doc (pressureVelocityCoupling.hpp) for the full rationale."
+    )
+        .value("LaplacianMinusDiv", nf::PEqnConvention::LaplacianMinusDiv)
+        .value("DivMinusLaplacian", nf::PEqnConvention::DivMinusLaplacian);
+
     // -------------------------------------------------------------------
     // Pressure-velocity coupling helpers (free functions)
     // -------------------------------------------------------------------
@@ -103,11 +113,18 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const nf::PDE<NeoN::scalar>& pEqn,
-           fvcc::SurfaceField<NeoN::scalar>& phi) { nf::updateFaceVelocity(phiHbyA, pEqn, phi); },
+           fvcc::SurfaceField<NeoN::scalar>& phi,
+           nf::PEqnConvention convention)
+        { nf::updateFaceVelocity(phiHbyA, pEqn, phi, convention); },
         "phi_hbya"_a,
         "pEqn"_a,
         "phi"_a,
-        "Update face velocity (phi) after pressure correction"
+        "convention"_a = nf::PEqnConvention::LaplacianMinusDiv,
+        "Update face velocity (phi) after pressure correction. `convention` must match "
+        "how pEqn was assembled -- LaplacianMinusDiv (+laplacian(...) - div(...), the "
+        "default, used by NeoFOAM's incompressible solvers) or DivMinusLaplacian "
+        "(+div(...) - laplacian(...), used by the compressible solver to keep its pEqn "
+        "positive-definite for DIC/IC preconditioning)."
     );
 
     m.def(
@@ -137,6 +154,22 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "dt"_a,
         "scheme"_a,
         "Compute ddt flux correction for PISO loop (BDF1/BDF2)"
+    );
+
+    m.def(
+        "ddt_flux_corr",
+        [](const fvcc::VolumeField<NeoN::scalar>& rho,
+           const fvcc::VolumeField<NeoN::Vec3>& U,
+           const fvcc::SurfaceField<NeoN::scalar>& phi,
+           double dt,
+           fvcc::DdtScheme scheme)
+        { return fvcc::ddtFluxCorr(rho, U, phi, static_cast<NeoN::scalar>(dt), scheme); },
+        "rho"_a,
+        "U"_a,
+        "phi"_a,
+        "dt"_a,
+        "scheme"_a,
+        "Density-weighted ddt flux correction for compressible PISO loop (BDF1/BDF2)"
     );
 
     // -------------------------------------------------------------------
@@ -174,6 +207,24 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "phi"_a,
         "runtime"_a,
         "Return (sum_local, global) time-step continuity errors from the face flux"
+    );
+
+    // -------------------------------------------------------------------
+    // Per-cell div(phi), for spatially localizing continuity imbalance
+    // (debugging helper, mirrors computeContinuityError's internal evaluation).
+    // -------------------------------------------------------------------
+    m.def(
+        "compute_div_phi",
+        [](const fvcc::SurfaceField<NeoN::scalar>& phi, const nf::RunTime& rt)
+        {
+            const auto nCells = static_cast<NeoN::localIdx>(rt.nfMesh.nCells());
+            NeoN::dsl::Expression<NeoN::scalar> divExpr(rt.exec);
+            divExpr.addOperator(NeoN::dsl::exp::div(phi));
+            return divExpr.explicitOperation(nCells);
+        },
+        "phi"_a,
+        "runtime"_a,
+        "Return the per-cell fvc::div(phi) field (debugging helper)"
     );
 }
 

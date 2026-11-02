@@ -1,0 +1,65 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (1 2 3);
+
+boundaryField
+{
+    // volumetricFlowRate as the helmholtzResonance resolved case writes it (Function1
+    // `constant`): 0.2 through the unit-area patch, along the inward normal (+x).
+    xMin
+    {
+        type            flowRateInletVelocity;
+        volumetricFlowRate constant 0.2;
+        value           uniform (3 0 0);
+    }
+    xMax
+    {
+        type            zeroGradient;
+    }
+    // massFlowRate with the fixed density rhoInlet: 0.4 / (2 * 1) = 0.2 along +y. A bare
+    // number is a valid Function1 too, and extrapolateProfile is a Switch.
+    yMin
+    {
+        type            flowRateInletVelocity;
+        massFlowRate    0.4;
+        rhoInlet        2.0;
+        extrapolateProfile no;
+        value           uniform (3 0 0);
+    }
+    // A vector patch cannot carry fixedMean: the translation must say so, and discard `value`.
+    yMax
+    {
+        type            fixedMean;
+        meanValue       constant (0 0 0);
+        value           uniform (3 0 0);
+    }
+    zMin
+    {
+        type            noSlip;
+    }
+    // follows the face flux; a flux-less read leaves it at rest
+    zMax
+    {
+        type            pressureInletVelocity;
+        value           uniform (3 0 0);
+    }
+}
+
+
+// ************************************************************************* //

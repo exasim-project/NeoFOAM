@@ -663,13 +663,31 @@ static std::optional<NeoN::scalar> lookupRelaxation(
     auto asScalar = [](const NeoN::Dictionary& d, const std::string& k) -> NeoN::scalar
     { return d.isType<int>(k) ? NeoN::scalar(d.get<int>(k)) : d.get<NeoN::scalar>(k); };
 
-    // Final-suffix selection: prefer <field>Final on the final iteration, then fall
-    // back to the base <field> key (matches OpenFOAM's *Final relaxation convention).
     // matchKey honours OpenFOAM regex keys, e.g. "(k|omega|epsilon).*" covering both
     // `epsilon` and `epsilonFinal`.
-    if (const auto finalKey = matchKey(sub, finalIter ? field + "Final" : field))
+    //
+    // On the final iteration, OpenFOAM's real convention (Foam::solution::relaxEquation,
+    // src/OpenFOAM/matrices/solution/solution.C) looks up ONLY "<field>Final", falling
+    // back to a literal "default" wildcard entry if present -- it does NOT fall back to
+    // the base "<field>" key. If neither "<field>Final" nor "default" is found, relaxation
+    // is skipped entirely (alpha=1) for that solve. See
+    // neorhoPimpleFoam_investigation_summary.md §4.7: this fix reproduces OpenFOAM's exact
+    // rAU/rhorAUf final-iteration jump (verified to 0.006%) and is kept in place as part of
+    // the feature-for-feature reimplementation effort, even though in isolation it moved
+    // the duct-case T-spread further from OpenFOAM's (0.514K -> 0.669K) rather than closer --
+    // the working premise is that matching OpenFOAM's actual algorithm piece by piece is the
+    // goal, not optimizing any one intermediate metric.
+    if (finalIter)
     {
-        return asScalar(sub, *finalKey);
+        if (const auto finalKey = matchKey(sub, field + "Final"))
+        {
+            return asScalar(sub, *finalKey);
+        }
+        if (sub.contains("default"))
+        {
+            return asScalar(sub, "default");
+        }
+        return std::nullopt;
     }
     if (const auto key = matchKey(sub, field))
     {

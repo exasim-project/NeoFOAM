@@ -328,9 +328,16 @@ void subtractConsistentHbyA(
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
     const PDE<scalar>& expr,
-    nnfvcc::SurfaceField<scalar>& phi
+    nnfvcc::SurfaceField<scalar>& phi,
+    PEqnConvention convention
 )
 {
+    // The two PEqnConvention forms assemble pEqn with exactly opposite-signed matrix
+    // coefficients for the same physical equation (see the enum's doc in the header), so
+    // every correction below -- internal faces, regular boundary faces, and processor-
+    // boundary faces alike -- is applied with this matching sign, not just the internal one.
+    const scalar sign = (convention == PEqnConvention::DivMinusLaplacian) ? scalar(1) : scalar(-1);
+
     const auto& mesh = phi.mesh();
     const auto& p = expr.getField();
     const auto nInternalFaces = mesh.nInternalFaces();
@@ -369,12 +376,13 @@ void updateFaceVelocity(
             auto rowNeiStart = rowPtrs[nei];
             auto rowOwnStart = rowPtrs[own];
 
-            auto upper = values[rowNeiStart + neiOffs[facei]];
-            auto lower = values[rowOwnStart + ownOffs[facei]];
+            auto A_own_nei = values[rowOwnStart + ownOffs[facei]];
+            auto A_nei_own = values[rowNeiStart + neiOffs[facei]];
 
             scalar corrFlux = hasCorrection ? ffc[facei] : scalar(0);
             iPhi[facei] =
-                iPredPhi[facei] - (upper * internalP[nei] - lower * internalP[own]) - corrFlux;
+                iPredPhi[facei]
+                + sign * (A_own_nei * internalP[nei] - A_nei_own * internalP[own] + corrFlux);
         }
     );
 
@@ -392,7 +400,7 @@ void updateFaceVelocity(
         NEON_LAMBDA(const NeoN::sizeType bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
-            bvalue[bfacei] = bPredValue[bfacei] - bflux;
+            bvalue[bfacei] = bPredValue[bfacei] + sign * bflux;
         }
     );
 
@@ -415,7 +423,7 @@ void updateFaceVelocity(
                 auto coupling = nlValues[rowOrderV[procFacei]];
                 auto pGhost = pBoundV[bfacei];
                 scalar pflux = coupling * (pGhost - internalP[own]);
-                bvalue[bfacei] = bPredValue[bfacei] - pflux;
+                bvalue[bfacei] = bPredValue[bfacei] + sign * pflux;
             }
         );
     }
