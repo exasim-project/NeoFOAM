@@ -10,17 +10,17 @@ namespace NeoFOAM
 {
 /**
  * @brief Applies cell permutations to mesh and cell-associated data.
- * 
+ *
  * PermutationApplicator applies a valid cell permutation to NeoN mesh data
  * while preserving the consistency of cell-associated data and references.
- * 
+ *
  * A cell permutation has two distinct effects:
- * 
+ *
  * - Cell-associated data, such as cell fields and cell geometry, is reordered
  *   according to the permutation.
- * - Cell references stored in mesh connectivity, such as face owner and 
+ * - Cell references stored in mesh connectivity, such as face owner and
  *   neighbor indices, are remapped according to the permutation.
- * 
+ *
  * @note The applicator does not:
  *       - compute permutations
  *       - modify permutation objects
@@ -56,14 +56,12 @@ public:
      *                    indices to new cell indices.
      *
      * @pre @p permutation is a valid permutation over the cells of @p mesh.
-     * 
+     *
      * @post Cell-associated mesh data and cell references are consistent with
      *       the new cell ordering.
      */
-    void apply(
-        NeoN::UnstructuredMesh& mesh,
-        const PreparedPermutation& permutation) const;
-     
+    void apply(NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
+
     /**
      * @brief Applies a cell permutation to a cell-associated physical field.
      *
@@ -105,18 +103,15 @@ public:
      * @post Each data value remains associated with the same cell as before
      *       the permutation was applied.
      */
-    template <typename T>
-    void reorderCellData(
-        NeoN::Vector<T>& data,
-        const PreparedPermutation& permutation) const;
+    template<typename T>
+    void reorderCellData(NeoN::Vector<T>& data, const PreparedPermutation& permutation) const;
 
 private:
+
     NeoN::Executor exec_;
 
     // check that permutation is valid for mesh (host side)
-    void validate(
-        const NeoN::UnstructuredMesh& mesh,
-        const PreparedPermutation& permutation) const;
+    void validate(const NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
 
     // void remapCellReferences(
     //     NeoN::UnstructuredMesh& mesh,

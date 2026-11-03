@@ -13,19 +13,19 @@ namespace NeoFOAM
 {
 /**
  * @brief Represents a bijective mapping between an old and a new index space.
- * 
- * A Permutation is an immutable valule type that describes how a set of entities
+ *
+ * A Permutation is an immutable value type that describes how a set of entities
  * is renumbered without modifying or reordering the associated data.
- * 
+ *
  * For a permutation of size @c N:
- * 
+ *
  * - Every old index in [0, N) maps to exactly one new index in [0, N).
  * - Every new index in [0, N) maps to exactly one old index in [0, N).
  * - @c oldToNew and @c newToOld are inverse mappings.
- * 
+ *
  * The class provides both mapping directions so that it can be used fo
- * both reordering entitiy-associated data and remapping entity references.
- * 
+ * both reordering entity-associated data and remapping entity references.
+ *
  * @note Permutation only represents a mapping. It does not compute an ordering
  *       and does not apply the mapping to mesh, field, or other CFD data. Ordering
  *       algorithms produce Permutation objects, while permutation application is
@@ -70,17 +70,12 @@ public:
      *
      * @return An identity permutation of size @p size.
      */
-    [[nodiscard]]
-    static Permutation identity(const NeoN::sizeType size);
+    [[nodiscard]] static Permutation identity(const NeoN::sizeType size);
 
     /**
      * @brief Returns the number of indices represented by the permutation.
      */
-    [[nodiscard]]
-    NeoN::sizeType size() const noexcept
-    {
-        return oldToNew_.size();
-    }
+    [[nodiscard]] NeoN::sizeType size() const noexcept { return oldToNew_.size(); }
 
     /**
      * @brief Returns the new index corresponding to an old index.
@@ -91,8 +86,7 @@ public:
      *
      * @pre @p oldIndex is in the range [0, size()).
      */
-    [[nodiscard]]
-    IndexType oldToNew(const IndexType oldIndex) const;
+    [[nodiscard]] IndexType oldToNew(const IndexType oldIndex) const;
 
     /**
      * @brief Returns the old index corresponding to a new index.
@@ -103,8 +97,7 @@ public:
      *
      * @pre @p newIndex is in the range [0, size()).
      */
-    [[nodiscard]]
-    IndexType newToOld(const IndexType newIndex) const;
+    [[nodiscard]] IndexType newToOld(const IndexType newIndex) const;
 
     /**
      * @brief Returns a read-only view of the old-to-new mapping.
@@ -117,8 +110,7 @@ public:
      * @note The returned view refers to storage owned by this Permutation
      *       and is valid only while that storage remains valid.
      */
-    [[nodiscard]]
-    std::span<const IndexType> oldToNew() const noexcept { return oldToNew_; }
+    [[nodiscard]] std::span<const IndexType> oldToNew() const noexcept { return oldToNew_; }
 
     /**
      * @brief Returns a read-only view of the new-to-old mapping.
@@ -131,8 +123,7 @@ public:
      * @note The returned view refers to storage owned by this Permutation
      *       and is valid only while that storage remains valid.
      */
-    [[nodiscard]]
-    std::span<const IndexType> newToOld() const noexcept { return newToOld_; }
+    [[nodiscard]] std::span<const IndexType> newToOld() const noexcept { return newToOld_; }
 
     /**
      * @brief Returns the inverse permutation.
@@ -147,8 +138,7 @@ public:
      *
      * @return The inverse of this permutation.
      */
-    [[nodiscard]]
-    Permutation inverse() const { return Permutation {newToOld_}; }
+    [[nodiscard]] Permutation inverse() const { return Permutation {newToOld_}; }
 
     // [[nodiscard]]
     // Permutation compose(
@@ -164,8 +154,7 @@ public:
      * @return @c true if the permutation is an identity permutation;
      *         otherwise, @c false.
      */
-    [[nodiscard]]
-    bool isIdentity() const noexcept;
+    [[nodiscard]] bool isIdentity() const noexcept;
 
 private:
 

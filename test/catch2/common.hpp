@@ -82,7 +82,9 @@ struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
      * @param expected Container holding the expected values.
      * @param pred     Predicate used for element-wise comparison.
      */
-    EqualsMatcher(Expected expected, Predicate pred) : expected_(std::move(expected)), pred_(pred)
+    EqualsMatcher(Expected expected, Predicate pred)
+        : expected_(std::move(expected))
+        , pred_(pred)
     {}
 
     /**
