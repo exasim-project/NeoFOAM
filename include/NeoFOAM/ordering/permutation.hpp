@@ -23,7 +23,7 @@ namespace NeoFOAM
  * - Every new index in [0, N) maps to exactly one old index in [0, N).
  * - @c oldToNew and @c newToOld are inverse mappings.
  *
- * The class provides both mapping directions so that it can be used fo
+ * The class provides both mapping directions so that it can be used to
  * both reordering entity-associated data and remapping entity references.
  *
  * @note Permutation only represents a mapping. It does not compute an ordering
