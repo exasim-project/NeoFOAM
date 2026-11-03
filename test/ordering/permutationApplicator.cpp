@@ -31,11 +31,36 @@ TEST_CASE("Reorder cell-associated data")
         const Permutation permutation {oldToNew};
         const PreparedPermutation prepared{exec, permutation};
 
-        const std::vector<NeoN::scalar> data {1.0, 2.1, 3.3, 4.5};
+        const std::vector<NeoN::scalar> data {1.0, 2.0, 3.0, 4.0};
         NeoN::scalarVector cellData (exec, data);
 
-        const std::vector<NeoN::scalar> expectedData {2.1, 4.5, 1.0, 3.3};
+        const std::vector<NeoN::scalar> expectedData {2.0, 4.0, 1.0, 3.0};
         const NeoN::scalarVector expectedCellData (exec, expectedData);
+
+        const PermutationApplicator applicator(exec);
+        
+        // Act
+        applicator.reorderCellData(cellData, prepared);
+
+        // Assert
+        REQUIRE(applicator.exec() == exec);
+        REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt{}));
+    }
+
+    SECTION("Applying permutation reorders Vec3 cell data " + execName)
+    {
+        // Arrange
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared{exec, permutation};
+
+        const std::vector<NeoN::Vec3> data {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0},
+                                            {7.0, 8.0, 9.0}, {10.0, 11.0, 12.0}};
+        NeoN::vectorVector cellData (exec, data);
+
+        const std::vector<NeoN::Vec3> expectedData {{4.0, 5.0, 6.0}, {10.0, 11.0, 12.0},
+                                            {1.0, 2.0, 3.0}, {7.0, 8.0, 9.0}};
+        const NeoN::vectorVector expectedCellData (exec, expectedData);
 
         const PermutationApplicator applicator(exec);
         

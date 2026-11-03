@@ -105,8 +105,9 @@ public:
      * @post Each data value remains associated with the same cell as before
      *       the permutation was applied.
      */
+    template <typename T>
     void reorderCellData(
-        NeoN::scalarVector& data,
+        NeoN::Vector<T>& data,
         const PreparedPermutation& permutation) const;
 
 private:
@@ -121,4 +122,5 @@ private:
     //     NeoN::UnstructuredMesh& mesh,
     //     const PreparedPermutation& permutation) const;
 };
+
 } // namespace NeoFOAM

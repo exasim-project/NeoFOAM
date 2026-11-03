@@ -38,8 +38,9 @@ void PermutationApplicator::apply(
 // }
 
 // new cell volumes [oldToNew[old index i]] = old cell volumes [old index i] 
+template <typename T>
 void PermutationApplicator::reorderCellData(
-    NeoN::scalarVector& data,
+    NeoN::Vector<T>& data,
     const PreparedPermutation& permutation) const
 {
     const NeoN::sizeType permutationSize = permutation.size();
@@ -67,6 +68,14 @@ void PermutationApplicator::reorderCellData(
         "reorder cell-associated data"
     );
 }
+
+// Explicit instantiation of reorderCellData template function
+template void PermutationApplicator::reorderCellData<NeoN::scalar>(
+    NeoN::Vector<NeoN::scalar>&, const PreparedPermutation&) const;
+
+template void PermutationApplicator::reorderCellData<NeoN::Vec3>(
+    NeoN::Vector<NeoN::Vec3>&, const PreparedPermutation&) const;
+
 
 void PermutationApplicator::validate(
     const NeoN::UnstructuredMesh& mesh,
