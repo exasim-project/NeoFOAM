@@ -36,6 +36,7 @@ nanobind_add_module(
   explicitOperators.cpp
   turbulenceModel.cpp
   wallFunctions.cpp
+  pressureControl.cpp
   fieldRelaxation.cpp
   mrf.cpp
   postprocess.cpp)
