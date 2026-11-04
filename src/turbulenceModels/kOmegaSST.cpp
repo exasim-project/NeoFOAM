@@ -289,8 +289,8 @@ void KOmegaSST::validate(
 
     gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
-    gradOp_.grad(k, gradKTmp_);
-    gradOp_.grad(omega, gradOmegaTmp_);
+    gradScalar(gradKOp_, k, gradKTmp_);
+    gradScalar(gradOmegaOp_, omega, gradOmegaTmp_);
 
     computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
 
@@ -382,8 +382,8 @@ void KOmegaSST::correctImpl(
     // Compute gradients once — reused for production, CDkOmega, and correctNut
     gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
     gradUTmp_.correctBoundaryConditions();
-    gradOp_.grad(k, gradKTmp_);
-    gradOp_.grad(omega, gradOmegaTmp_);
+    gradScalar(gradKOp_, k, gradKTmp_);
+    gradScalar(gradOmegaOp_, omega, gradOmegaTmp_);
 
     // Compute F1, sources, and sp coefficients using OLD nut
     computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
@@ -643,6 +643,22 @@ nnfvcc::SurfaceField<scalar>& KOmegaSST::dkEff() { return dkEffFTmp_; }
 nnfvcc::SurfaceField<scalar>& KOmegaSST::domegaEff() { return domegaEffFTmp_; }
 
 const nnfvcc::VolumeField<Tensor>& KOmegaSST::gradU() const { return gradUTmp_; }
+
+void KOmegaSST::gradScalar(
+    const std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>>& op,
+    const nnfvcc::VolumeField<scalar>& field,
+    nnfvcc::VolumeField<Vec3>& grad
+)
+{
+    if (op)
+    {
+        op->grad(field, NeoN::dsl::Coeff {}, grad.internalVector());
+    }
+    else
+    {
+        gradOp_.grad(field, grad);
+    }
+}
 
 void KOmegaSST::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
 {
@@ -1082,6 +1098,7 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
     // grad(U) honours the configured gradSchemes; the operator is shared with the
     // solver's other grad(U) call sites via RunTime's cache.
     model_.setGradUOperator(gradSchemePtr(rt, "grad(U)"));
+    model_.setScalarGradOperators(gradSchemePtr(rt, "grad(k)"), gradSchemePtr(rt, "grad(omega)"));
 
     auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
