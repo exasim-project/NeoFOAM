@@ -652,6 +652,9 @@ void KOmegaSST::gradScalar(
 {
     if (op)
     {
+        // the Gauss operators accumulate into their output vector (the tensor gradient zeroes it
+        // first for the same reason), so start from zero
+        NeoN::fill(grad.internalVector(), NeoN::zero<Vec3>());
         op->grad(field, NeoN::dsl::Coeff {}, grad.internalVector());
     }
     else
