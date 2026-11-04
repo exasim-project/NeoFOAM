@@ -67,6 +67,12 @@ TEST_CASE("pressureControl")
         return rho;
     };
     auto internal = [](fvcc::VolumeField<NeoN::scalar>& f) { return f.internalVector().copyToHost(); };
+    // View() on the temporary copyToHost() returns is deleted, so read the first cell via a named copy.
+    auto first = [](fvcc::VolumeField<NeoN::scalar>& f)
+    {
+        auto host = f.internalVector().copyToHost();
+        return host.view()[0];
+    };
 
     const auto n = static_cast<std::size_t>(nCells);
     auto rho = makeRho(1.0);
@@ -77,7 +83,7 @@ TEST_CASE("pressureControl")
         NeoFOAM::PressureControl pc(p, rho, {});
         REQUIRE(pc.active() == false);
         REQUIRE(pc.limit(p) == false);
-        REQUIRE(internal(p).view()[0] == 5.0);
+        REQUIRE(first(p) == 5.0);
     }
 
     SECTION("absolute pMin/pMax clip the cells that leave the range")
@@ -107,7 +113,7 @@ TEST_CASE("pressureControl")
         s.pMax = 200.0;
         NeoFOAM::PressureControl pc(p, rho, s);
         REQUIRE(pc.limit(p) == true);
-        REQUIRE(internal(p).view()[0] == Catch::Approx(100.0));
+        REQUIRE(first(p) == Catch::Approx(100.0));
     }
 
     SECTION("only one absolute limit set still limits that side")
@@ -186,7 +192,7 @@ TEST_CASE("pressureControl")
         s.pMax = 200.0;
         NeoFOAM::PressureControl pc(p, rho, s);
         REQUIRE(pc.limit(p) == true);
-        REQUIRE(internal(p).view()[0] == Catch::Approx(100.0));
+        REQUIRE(first(p) == Catch::Approx(100.0));
         auto b = p.boundaryData().value().copyToHost();
         REQUIRE(b.view()[0] == Catch::Approx(500.0)); // the caller re-evaluates the BCs
     }
