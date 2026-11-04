@@ -82,6 +82,15 @@ def _read_int(d: Any, key: str, default: int) -> int:
     return int(d.get_int(key)) if d.contains(key) else default
 
 
+def _read_scalar(d: Any, key: str) -> float:
+    """A scalar entry; a literal without a decimal point or exponent (``pMax 101350;``) is stored as an
+    integer, which ``get_double`` rejects, while OpenFOAM reads it as a scalar."""
+    try:
+        return float(d.get_double(key))
+    except RuntimeError:
+        return float(d.get_int(key))
+
+
 def _pressure_limit_entries(d: Any) -> dict[str, float]:
     """The pressureControl entries of the PIMPLE dictionary, as PressureControl keyword arguments."""
     keys = {
@@ -92,7 +101,7 @@ def _pressure_limit_entries(d: Any) -> dict[str, float]:
         "rhoMin": "rho_min",
         "rhoMax": "rho_max",
     }
-    return {kw: float(d.get_double(key)) for key, kw in keys.items() if d.contains(key)}
+    return {kw: _read_scalar(d, key) for key, kw in keys.items() if d.contains(key)}
 
 
 def _read_switch(d: Any, key: str, default: bool) -> bool:
