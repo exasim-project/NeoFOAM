@@ -209,6 +209,19 @@ public:
         gradUOp_ = std::move(op);
     }
 
+    /** @brief Use the gradSchemes-configured operators for grad(k) and grad(omega), which feed
+     *  CDkOmega and hence F1 and the cross-diffusion source. OpenFOAM evaluates them with
+     *  fvc::grad(k_) / fvc::grad(omega_), i.e. with the scheme the case names for them (e.g.
+     *  cellLimited Gauss linear 1). Without this the model keeps the plain Gauss gradient. */
+    void setScalarGradOperators(
+        std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradK,
+        std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradOmega
+    )
+    {
+        gradKOp_ = std::move(gradK);
+        gradOmegaOp_ = std::move(gradOmega);
+    }
+
 private:
 
     /// Shared body of both correct() overloads; rho == nullptr is the incompressible path.
@@ -249,6 +262,13 @@ private:
         const nnfvcc::VolumeField<scalar>& k,
         nnfvcc::VolumeField<scalar>& omega,
         fvcc::BoundaryContext& ctx
+    );
+
+    /// grad of a scalar with the configured operator, or plain Gauss when none was set.
+    void gradScalar(
+        const std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>>& op,
+        const nnfvcc::VolumeField<scalar>& field,
+        nnfvcc::VolumeField<Vec3>& grad
     );
 
     void reserveScratch();
@@ -305,6 +325,9 @@ private:
     nnfvcc::GaussGreenGrad gradOp_;
     // gradSchemes-configured tensor-gradient operator, shared with RunTime's gradScheme cache
     std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradUOp_;
+    // Optional gradSchemes operators for grad(k) / grad(omega); null means plain Gauss (gradOp_).
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradKOp_;
+    std::shared_ptr<nnfvcc::GradOperatorFactory<Vec3>> gradOmegaOp_;
     nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
     // Model coefficients
