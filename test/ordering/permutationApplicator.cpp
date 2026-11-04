@@ -109,7 +109,6 @@ TEST_CASE("Reorder cell-associated data")
         // REQUIRE(applicator.exec() == exec);
         // REQUIRE_THAT(cellData, Equals(expectedCellData, EqualInt {}));
     }
-
 }
 
 
