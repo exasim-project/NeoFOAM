@@ -272,6 +272,45 @@ void kernelCalcDiffusivities(
     );
 }
 
+// Cell-level k and omega diffusivities, as OpenFOAM forms them: DkEff(F1) = alphaK(F1)*nut + nu
+// and DomegaEff(F1) = alphaOmega(F1)*nut + nu per cell, times rho for the compressible equations.
+// The laplacian then interpolates this product to the faces, which is not the same as blending
+// face-interpolated F1 and nut where F1 varies strongly between neighbours (the first rows off a
+// wall). rhoVec is only read when hasRho is set.
+void kernelCellDiffusivities(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& nuVec,
+    const NeoN::Vector<scalar>& nutVec,
+    const NeoN::Vector<scalar>& f1Vec,
+    const NeoN::Vector<scalar>& rhoVec,
+    bool hasRho,
+    NeoN::Vector<scalar>& dkVec,
+    NeoN::Vector<scalar>& domegaVec,
+    scalar alphaK1,
+    scalar alphaK2,
+    scalar alphaOmega1,
+    scalar alphaOmega2,
+    std::string label
+)
+{
+    const auto [nuV, nutV, f1V, rhoV, dkV, domV] =
+        NeoN::views(nuVec, nutVec, f1Vec, rhoVec, dkVec, domegaVec);
+
+    NeoN::parallelFor(
+        exec,
+        {0, static_cast<localIdx>(dkVec.size())},
+        NEON_LAMBDA(const localIdx i) {
+            const scalar alphaK = f1V[i] * (alphaK1 - alphaK2) + alphaK2;
+            const scalar alphaOmega = f1V[i] * (alphaOmega1 - alphaOmega2) + alphaOmega2;
+            const scalar rho = hasRho ? rhoV[i] : scalar(1);
+
+            dkV[i] = rho * (alphaK * nutV[i] + nuV[i]);
+            domV[i] = rho * (alphaOmega * nutV[i] + nuV[i]);
+        },
+        std::move(label)
+    );
+}
+
 void kernelDevRhoReff(
     const NeoN::Executor& exec,
     const NeoN::Vector<Tensor>& gradUB,
