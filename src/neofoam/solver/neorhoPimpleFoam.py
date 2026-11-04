@@ -254,7 +254,11 @@ class NeoRhoPimpleFoam:
         # UEqn's `== fvOptions(rho, U)`; raises on option types not implemented for NeoN.
         fv_options = NeonFvOptions.from_case(rt, U)
 
-        p_ref_cell, p_ref_value, needs_ref = nfb.set_ref_cell(rt, "p", "PIMPLE")
+        # rhoPimpleFoam only builds a pressure reference for an incompressible thermo (rhoConst),
+        # `pressureReference(p, pimple.dict(), thermo.incompressible())`. With perfectGas the
+        # ddt(psi, p) term keeps the pressure matrix non-singular even when every p patch is
+        # zeroGradient (a closed cavity), and set_ref_cell would raise "supply pRefCell" there.
+        p_ref_cell, p_ref_value, needs_ref = 0, 0.0, False
         pimple_loop = nfb.PimpleControl(rt.fv_solution_dict)
 
         def boundary_context(evaluate_only: bool = False) -> Any:
