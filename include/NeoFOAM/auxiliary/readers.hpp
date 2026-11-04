@@ -22,6 +22,18 @@ namespace detail
 {
 
 /**
+ * @brief Whether the far-field family is translated faithfully instead of approximated.
+ *
+ * Off by default: the approximations below (freestreamVelocity as a fixedValue, freestreamPressure
+ * as zeroGradient) keep the pressure problem well posed for solvers that hand the boundary
+ * conditions no flux or velocity context, which is what the incompressible solvers do. A solver
+ * that passes `U` in its BoundaryContext (neorhoPimpleFoam) switches this on and gets NeoN's
+ * freestreamVelocity / freestreamPressure, which follow OpenFOAM's flow-direction blend.
+ */
+bool& faithfulFreestream(); // defined once in libNeoFOAM (auxiliary/setup.cpp)
+
+
+/**
  * @brief Promote a single TokenList entry to a NeoN::scalar regardless of
  * whether OpenFOAM's lexer classified it as a SCALAR (double) or a LABEL (int).
  *
@@ -493,6 +505,20 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
             {"freestreamVelocity",
              [&](auto& dict)
              {
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     if (detail::faithfulFreestream())
+                     {
+                         // NeoN's freestreamVelocity is OpenFOAM's blend of the freestream value
+                         // with zeroGradient from the patch's own velocity direction; it needs no
+                         // flux, so the context-less path handles it too.
+                         dict.insert("type", std::string("freestreamVelocity"));
+                         detail::insertUniformValue<type_primitive_t>(
+                             dict, "freestreamValue", "freestreamValue", activePatchName, activeFoamPatch
+                         );
+                         return;
+                     }
+                 }
                  WarningInFunction
                      << "freestreamVelocity on patch '" << activePatchName.c_str()
                      << "' is approximated as a fixedValue at the freestreamValue.\n"
@@ -519,6 +545,20 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
             {"freestreamPressure",
              [&](auto& dict)
              {
+                 if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+                 {
+                     if (detail::faithfulFreestream())
+                     {
+                         // NeoN's freestreamPressure fixes the freestream pressure on outflow and
+                         // is zeroGradient on inflow, from the velocity `U` in the
+                         // BoundaryContext (without it, zeroGradient).
+                         dict.insert("type", std::string("freestreamPressure"));
+                         detail::insertUniformValue<type_primitive_t>(
+                             dict, "freestreamValue", "freestreamValue", activePatchName, activeFoamPatch
+                         );
+                         return;
+                     }
+                 }
                  WarningInFunction
                      << "freestreamPressure on patch '" << activePatchName.c_str()
                      << "' is approximated as zeroGradient.\n"
