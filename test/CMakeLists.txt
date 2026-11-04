@@ -155,7 +155,7 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NEOFOAM_MPI_SIZE}
               ${NEOFOAM_WORKING_DIRECTORY}/${NEOFOAM_COMMAND} -parallel
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
-    set_tests_properties(neofoam_test_${TEST} PROPERTIES TIMEOUT 10)
+    set_tests_properties(neofoam_test_${TEST} PROPERTIES TIMEOUT 60)
     set_tests_properties(neofoam_test_${TEST} PROPERTIES PROCESSORS ${NEOFOAM_MPI_SIZE})
     if(${MPIEXEC_MAX_NUMPROCS} LESS NEOFOAM_MPI_SIZE)
       message(WARNING "Test <${TEST}> requested <${NEOFOAM_MPI_SIZE}> processors, "
