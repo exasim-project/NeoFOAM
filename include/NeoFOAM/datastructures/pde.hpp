@@ -75,7 +75,7 @@ public:
         : psi_(&psi)
         , expr_(expr)
         , runTime_(&runTime)
-        , ls_(readOrCreate<LinearSystem>(
+        , ls_(&readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
               // FIXME find a proper place
@@ -119,7 +119,7 @@ public:
         : psi_(nullptr)
         , expr_(std::move(expr))
         , runTime_(nullptr)
-        , ls_(std::nullopt)
+        , ls_(nullptr)
     {}
 
     PDE(const PDE& expr)
@@ -134,9 +134,24 @@ public:
 
     const VolumeField& getField() const { return *psi_; }
 
-    [[nodiscard]] LinearSystem& linearSystem() { return *ls_; }
+    // An expression-only PDE has no linear system until its first assemble or solve.
+    [[nodiscard]] LinearSystem& linearSystem()
+    {
+        NF_ASSERT(
+            ls_ != nullptr,
+            "PDE has no linear system yet: construct it with field and RunTime"
+        );
+        return *ls_;
+    }
 
-    [[nodiscard]] const LinearSystem& linearSystem() const { return *ls_; }
+    [[nodiscard]] const LinearSystem& linearSystem() const
+    {
+        NF_ASSERT(
+            ls_ != nullptr,
+            "PDE has no linear system yet: construct it with field and RunTime"
+        );
+        return *ls_;
+    }
 
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
@@ -288,16 +303,22 @@ public:
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fvSolution = (finalIter_ && NeoFOAM::hasSolverSettings(solverDict, finalKey))
-                            ? NeoFOAM::solverSettings(solverDict, finalKey)
-                            : NeoFOAM::solverSettings(solverDict, psi_->name);
+        const bool useFinal = finalIter_ && NeoFOAM::hasSolverSettings(solverDict, finalKey);
+        auto fvSolution = useFinal ? NeoFOAM::solverSettings(solverDict, finalKey)
+                                   : NeoFOAM::solverSettings(solverDict, psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fvSolution);
-        auto solver = NeoN::la::Solver(psi_->exec(), fvSolution);
+        // Persist the solver across iterations, as solveImpl does, so its setup and caches survive.
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fvSolution); }
+        );
         // Do some sanity checks before trying to solve
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
-        auto stats = solver.solve(*ls_, psi_->internalVector());
+        auto stats = solver->solve(*ls_, psi_->internalVector());
 
         ls_->rhs() = savedRhs;
 
@@ -336,8 +357,14 @@ public:
         NeoN::la::SolverStats stats;
         if (useFinal)
         {
-            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
-            stats = finalSolver.solve(*ls_, psi.internalVector());
+            // The caller caches only the non-final solver; keep the final one in the RunTime like
+            // solveImpl, so it is not rebuilt in the final iteration of every time step.
+            auto& finalSolver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+                rt,
+                "solver:" + finalKey,
+                [&] { return std::make_shared<NeoN::la::Solver>(psi.exec(), fieldSolverDict); }
+            );
+            stats = finalSolver->solve(*ls_, psi.internalVector());
         }
         else
         {
@@ -381,8 +408,14 @@ public:
         NeoN::la::SolverStats stats;
         if (useFinal)
         {
-            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
-            stats = finalSolver.solve(*ls_, psi.internalVector());
+            // The caller caches only the non-final solver; keep the final one in the RunTime like
+            // solveImpl, so it is not rebuilt in the final iteration of every time step.
+            auto& finalSolver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+                rt,
+                "solver:" + finalKey,
+                [&] { return std::make_shared<NeoN::la::Solver>(psi.exec(), fieldSolverDict); }
+            );
+            stats = finalSolver->solve(*ls_, psi.internalVector());
         }
         else
         {
@@ -523,7 +556,7 @@ private:
         }
         expr_.read(NeoFOAM::expandSchemeDefaults(rt.fvSchemesDict, expr_, psi.name));
 
-        ls_.emplace(readOrCreate<LinearSystem>(
+        ls_ = &readOrCreate<LinearSystem>(
             rt,
             "linearSystem" + psi.name,
             [&psi, &rt]()
@@ -544,7 +577,7 @@ private:
                     );
                 }
             }
-        ));
+        );
     }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
@@ -587,7 +620,10 @@ private:
     VolumeField* psi_;
     dsl::Expression<ValueType> expr_;
     RunTime* runTime_;
-    std::optional<LinearSystem> ls_;
+    // The linear system stored in the RunTime controlDict under "linearSystem<field>". Held by
+    // pointer, not copied: a PDE is typically constructed every time step, and a copy would
+    // reallocate the matrix each step, defeating the solver's caches keyed on its storage.
+    LinearSystem* ls_;
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
