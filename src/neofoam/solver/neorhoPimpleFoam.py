@@ -42,6 +42,7 @@ an old-time slot before the time loop, so the first rotate_old_times() creates l
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import Any
 
 import neon._neon as nn
@@ -72,6 +73,9 @@ _TSTD = 298.15
 # alphat = rho*nut/Prt on every patch the compressible::alphatWallFunction value is the
 # same expression evaluated at the wall face, so alphat needs no boundary condition of its own.
 _PRT = 0.85
+
+# The file the turbulence model factory reads (relative to the case, like the fvOptions paths).
+_TURBULENCE_PROPERTIES = "constant/turbulenceProperties"
 
 
 def _read_int(d: Any, key: str, default: int) -> int:
@@ -231,10 +235,18 @@ class NeoRhoPimpleFoam:
         # is therefore refreshed in place to mu/rho wherever mu or rho changed (see below), the
         # counterpart of OpenFOAM's live thermo.mu()/rho. nut stays kinematic; the dynamic
         # coefficients mu + rho*nut are assembled here.
-        nu_vol = nfb.create_uniform_volume_field(rt, "nu", 0.0)
-        nu_vol.assign(mu_vol / rho)
-        turb = nfb.create_turbulence_model(rt, nu_vol)
-        turb.validate(U)
+        #
+        # A case without constant/turbulenceProperties (the solver ran such cases before
+        # turbulence was wired in) stays laminar: no model, and nut is a zero field.
+        zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
+        if Path(_TURBULENCE_PROPERTIES).is_file():
+            nu_vol = nfb.create_uniform_volume_field(rt, "nu", 0.0)
+            nu_vol.assign(mu_vol / rho)
+            turb = nfb.create_turbulence_model(rt, nu_vol)
+            turb.validate(U)
+        else:
+            nu_vol = None
+            turb = None
 
         # Feature-for-feature port of literal rhoPimpleFoam's `psip0 = psi*p` /
         # `thermo.correctRho(psi*p - psip0, rhoMin, rhoMax)` -- captured once per PISO
@@ -308,7 +320,8 @@ class NeoRhoPimpleFoam:
             nn.rotate_old_times(psi)
             nn.rotate_old_times(K)
             nn.rotate_old_times(phi)
-            turb.rotate_old_times()
+            if turb is not None:
+                turb.rotate_old_times()
             n_steps += 1
 
             max_co, mean_co = nn.compute_co_num(phi, rt.dt)
@@ -362,7 +375,7 @@ class NeoRhoPimpleFoam:
                 # laminar model nut is zero and this collapses to mu. nut is the turbulence
                 # model's kinematic value from its last correct() (fixed across the PIMPLE
                 # loop, as in OpenFOAM, where the model is corrected once per step).
-                rho_nut = rho * turb.nut()
+                rho_nut = rho * (turb.nut() if turb is not None else zero_nut)
                 mu_face = surf_interp.interpolate(mu_vol + rho_nut)
                 mu_face.name = "mu"
 
@@ -570,8 +583,9 @@ class NeoRhoPimpleFoam:
             # literal rhoPimpleFoam: `if (pimple.turbCorr()) { turbulence->correct(); }`, which
             # with the default turbOnFinalIterOnly is the last outer iteration, i.e. once per
             # step after the loop. The model reads nu, so bring it to the step's final mu/rho.
-            nu_vol.assign(mu_vol / rho)
-            turb.correct_compressible(U, phi, rho, rt)
+            if turb is not None:
+                nu_vol.assign(mu_vol / rho)
+                turb.correct_compressible(U, phi, rho, rt)
 
             fv_options.end_of_time_step(rt.dt)
 
@@ -581,7 +595,8 @@ class NeoRhoPimpleFoam:
                 nfb.write_scalar_field(T, rt)
                 nfb.write_scalar_field(rho, rt)
                 nfb.write_vector_field(U, rt)
-                turb.write(rt.mesh)
+                if turb is not None:
+                    turb.write(rt.mesh)
 
             runTime.printExecutionTime()
 
