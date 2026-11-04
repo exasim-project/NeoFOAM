@@ -174,6 +174,11 @@ class NeoRhoPimpleFoam:
             # as the raw OpenFOAM name the Ginkgo factory doesn't recognise.
             nfb.map_solver_settings(solvers, name)
 
+        # This solver passes U (and phi) in the BoundaryContext when it evaluates the patch values, so the
+        # far-field family can be translated faithfully: freestreamVelocity / freestreamPressure follow
+        # OpenFOAM's flow-direction blends instead of the fixedValue / zeroGradient approximations.
+        nfb.set_faithful_freestream(True)
+
         p = nfb.read_scalar_volume_field(rt, "p")
         T = nfb.read_scalar_volume_field(rt, "T")
         U = nfb.read_vector_volume_field(rt, "U")
@@ -472,6 +477,9 @@ class NeoRhoPimpleFoam:
                     prev_T,
                     nfb.lookup_field_relaxation(rt.fv_solution_dict, energy.name, final_iter),
                 )
+                # literal EEqn: `fvOptions.correct(he)`, e.g. limitTemperature; it re-evaluates he's
+                # boundary conditions afterwards, which the call below does.
+                fv_options.limit_energy(energy, gas.energy_coeff, _TSTD, runTime.value())
                 energy.correct_boundary_conditions()
                 # Convert energy back to T for the EOS/reporting -- a plain affine field
                 # expression, so it updates internal AND boundary values consistently in

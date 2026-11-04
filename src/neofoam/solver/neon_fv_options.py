@@ -18,6 +18,11 @@ Supported:
   fieldAverage's running time mean (window none, base time), because OpenFOAM's
   fieldAverage function object cannot see the NeoN-side U.
 
+- ``limitTemperature`` (OpenFOAM ``src/fvOptions/sources/derived/limitTemperature``): after the
+  energy solve, clips the energy to the energy of ``[min, max]`` (OpenFOAM clips ``he`` to
+  ``he(p, Tmin)`` / ``he(p, Tmax)``, then re-evaluates its boundary conditions), so the
+  temperature derived from it stays inside the limits. Only ``selectionMode all``.
+
 Host-side numpy is used for the blend factor and the vector arithmetic (the Vec3 volume
 fields have no arithmetic bindings), so this currently needs a CPU executor.
 
@@ -41,7 +46,7 @@ import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
 
-__all__ = ["NeonFvOptions", "AcousticDampingSource"]
+__all__ = ["NeonFvOptions", "AcousticDampingSource", "LimitTemperature"]
 
 # OpenFOAM's own search order (``fv::options::createIOobject``), case-relative.
 _FV_OPTIONS_PATHS = ("constant/fvOptions", "system/fvOptions")
@@ -93,6 +98,8 @@ class _RunningMean:
 
 class AcousticDampingSource:
     """``acousticDampingSource`` on U, for ``fvOptions(rho, U)`` (compressible UEqn)."""
+
+    kind = "momentum"
 
     def __init__(self, name: str, d: Any, rt: Any, U: Any, means: dict[str, _RunningMean]):
         model_type = "acousticDampingSource"
@@ -160,7 +167,47 @@ class AcousticDampingSource:
         return nn.imp.source(self._rho_coeff, U) - nn.exp.source(self._su)
 
 
-_TYPES = {"acousticDampingSource": AcousticDampingSource}
+class LimitTemperature:
+    """``limitTemperature``: ``fvOptions.correct(he)`` after the energy solve."""
+
+    kind = "energy"
+
+    def __init__(self, name: str, d: Any, rt: Any, U: Any, means: dict[str, _RunningMean]):
+        model_type = "limitTemperature"
+        coeffs = d.subDict(model_type + "Coeffs") if d.isDict(model_type + "Coeffs") else d
+
+        self.name = name
+        self.active = _switch(str(d.get_word("active"))) if d.found("active") else True
+        self.time_start = coeffs.get_scalar("timeStart") if coeffs.found("timeStart") else -1.0
+        self.duration = coeffs.get_scalar("duration") if self.time_start >= 0 else 0.0
+
+        selection = str(coeffs.get_word("selectionMode")) if coeffs.found("selectionMode") else "all"
+        if selection != "all":
+            raise NotImplementedError(f"{name}: selectionMode {selection!r} (only 'all')")
+
+        self.t_min = coeffs.get_scalar("min")
+        self.t_max = coeffs.get_scalar("max")
+
+    def is_active(self, time_value: float) -> bool:
+        # fv::option::isActive() && cellSetOption::inTimeLimits()
+        if not self.active:
+            return False
+        return self.time_start < 0 or (
+            self.time_start <= time_value <= self.time_start + self.duration
+        )
+
+    def limit_energy(self, energy: Any, coeff: float, t_std: float) -> int:
+        """Clip the internal energy to ``coeff*([min, max] - t_std)``; returns the cells clipped."""
+        e = _host_view(energy.internal_vector())
+        e_min = coeff * (self.t_min - t_std)
+        e_max = coeff * (self.t_max - t_std)
+        clipped = int(np.count_nonzero((e < e_min) | (e > e_max)))
+        if clipped:
+            np.clip(e, e_min, e_max, out=e)
+        return clipped
+
+
+_TYPES = {"acousticDampingSource": AcousticDampingSource, "limitTemperature": LimitTemperature}
 
 
 class NeonFvOptions:
@@ -196,9 +243,19 @@ class NeonFvOptions:
 
     def add_momentum_sources(self, ueqn_expr: Any, rho: Any, U: Any, time_value: float) -> Any:
         for source in self.sources:
-            if source.is_active(time_value):
+            if source.kind == "momentum" and source.is_active(time_value):
                 ueqn_expr = ueqn_expr + source.momentum_source(rho, U)
         return ueqn_expr
+
+    def limit_energy(self, energy: Any, coeff: float, t_std: float, time_value: float) -> int:
+        """``fvOptions.correct(he)`` after the energy solve; returns the cells clipped."""
+        clipped = 0
+        for source in self.sources:
+            if source.kind == "energy" and source.is_active(time_value):
+                clipped += source.limit_energy(energy, coeff, t_std)
+        if clipped:
+            print(f"fvOptions: limitTemperature clipped the energy in {clipped} cells")
+        return clipped
 
     def end_of_time_step(self, dt: float) -> None:
         """What the function objects do between time steps (fieldAverage means)."""
