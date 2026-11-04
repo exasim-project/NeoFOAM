@@ -78,11 +78,17 @@ def _read_int(d: Any, key: str, default: int) -> int:
     return int(d.get_int(key)) if d.contains(key) else default
 
 
-def _pressure_limits_active(d: Any) -> bool:
-    """OpenFOAM's pressureControl limits p when any of these PIMPLE entries is present."""
-    return any(
-        d.contains(k) for k in ("pMax", "pMin", "pMaxFactor", "pMinFactor", "rhoMax", "rhoMin")
-    )
+def _pressure_limit_entries(d: Any) -> dict[str, float]:
+    """The pressureControl entries of the PIMPLE dictionary, as PressureControl keyword arguments."""
+    keys = {
+        "pMin": "p_min",
+        "pMax": "p_max",
+        "pMinFactor": "p_min_factor",
+        "pMaxFactor": "p_max_factor",
+        "rhoMin": "rho_min",
+        "rhoMax": "rho_max",
+    }
+    return {kw: float(d.get_double(key)) for key, kw in keys.items() if d.contains(key)}
 
 
 def _read_switch(d: Any, key: str, default: bool) -> bool:
@@ -132,8 +138,6 @@ class NeoRhoPimpleFoam:
             n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
-
-        pressure_limits = _pressure_limits_active(pimple_dict)
 
         gas = PerfectGasTransport(rt)
 
@@ -192,6 +196,10 @@ class NeoRhoPimpleFoam:
         rho_seed = nfb.create_uniform_volume_field(rt, "rho", 0.0)
         rho_seed.assign(gas.rho(psi, p))
         rho = nfb.register_computed_scalar_field(rt, rho_seed, "rho")
+
+        # rhoPimpleFoam's `pressureControl pressureControl(p, rho, pimple.dict(), false)`; limit()
+        # is applied at the end of every pressure corrector (see below).
+        pressure_control = nfb.PressureControl(p, rho, **_pressure_limit_entries(pimple_dict))
 
         K_seed = nfb.create_uniform_volume_field(rt, "K", 0.0)
         K_seed.assign(0.5 * nn.mag_sqr(U))
@@ -535,13 +543,12 @@ class NeoRhoPimpleFoam:
                     # iteration using pre-pressure-correction U.
                     K.assign(0.5 * nn.mag_sqr(U))
                     # literal pEqn.H: `if (pressureControl.limit(p)) p.correctBoundaryConditions();`.
-                    # limit() is true whenever pMin/pMax (or a factor) is set, even if no cell is
-                    # clipped, so p's patches are evaluated once more here -- and this evaluation,
-                    # the first since the one that ends the solve, does recompute the Dirichlet
-                    # patches that update only in updateCoeffs (fixedMean, plenumPressure) from the
-                    # final flux and cells of the corrector. The clipping itself is not ported
-                    # (p never leaves [pMin, pMax] in the cases run so far).
-                    if pressure_limits:
+                    # limit() clips p to [pMin, pMax] and is true whenever a limit is set, even if
+                    # no cell is clipped, so p's patches are evaluated once more here -- and this
+                    # evaluation, the first since the one that ends the solve, does recompute the
+                    # Dirichlet patches that update only in updateCoeffs (fixedMean,
+                    # plenumPressure) from the final flux and cells of the corrector.
+                    if pressure_control.limit(p):
                         p.correct_boundary_conditions(boundary_context())
                     rho.assign(rho + psi * p - psip0)
 
