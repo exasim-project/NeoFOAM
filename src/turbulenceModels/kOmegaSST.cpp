@@ -353,18 +353,23 @@ void KOmegaSST::correctImpl(
 {
     reserveScratch();
 
-    // Compute gradients once — reused for production, CDkOmega, and correctNut
-    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
-    gradUTmp_.correctBoundaryConditions();
-    gradOp_.grad(k, gradKTmp_);
-    gradOp_.grad(omega, gradOmegaTmp_);
-
     fvcc::BoundaryContext ctx;
     ctx.insert("U", U);
     ctx.insert("phi", phi);
     ctx.insert("k", k);
     ctx.insert("nu", nu_);
     ctx.insert("nearWallDist", nearWallDistTmp_);
+
+    // omegaWallFunction::updateCoeffs() runs before CDkOmega/F1 in OpenFOAM's correct() and
+    // rewrites the wall-cell omega from the current k; refresh it first so the gradients and
+    // F1 below read it rather than last step's pin (the wall omega rises with k every step).
+    refreshOmegaWallCells(k, omega, ctx);
+
+    // Compute gradients once — reused for production, CDkOmega, and correctNut
+    gradUOp_->gradTensor(U, gradUTmp_, NeoN::dsl::Coeff {});
+    gradUTmp_.correctBoundaryConditions();
+    gradOp_.grad(k, gradKTmp_);
+    gradOp_.grad(omega, gradOmegaTmp_);
 
     // Compute F1, sources, and sp coefficients using OLD nut
     computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
@@ -390,38 +395,7 @@ void KOmegaSST::correctImpl(
         auto pkInternalV = PkTmp_.internalVector().view();
         const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
 
-        // One-time: build cornerWeightTmp_[c] = 1/(number of omegaWallFunction faces touching cell
-        // c), 0 for non-wall cells. The wall topology is static so this is computed once. Mirrors
-        // OpenFOAM omegaWallFunction::createAveragingWeights (omega.C:71-126).
-        if (!cornerWeightsBuilt_)
-        {
-            NeoN::fill(cornerWeightTmp_, scalar(0));
-            auto cwBuild = cornerWeightTmp_.view();
-            for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(omegaBCs.size());
-                 ++patchID)
-            {
-                if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction")
-                    continue;
-                const auto [start, end] = omega.boundaryData().range(patchID);
-                NeoN::parallelFor(
-                    exec_,
-                    {start, end},
-                    NEON_LAMBDA(const NeoN::localIdx i) {
-                        Kokkos::atomic_add(&cwBuild[faceOwnersV[i]], scalar(1));
-                    },
-                    "kOmegaSST::omegaWFCountFaces"
-                );
-            }
-            NeoN::parallelFor(
-                exec_,
-                {0, nCells},
-                NEON_LAMBDA(const NeoN::localIdx c) {
-                    if (cwBuild[c] > scalar(0)) cwBuild[c] = scalar(1) / cwBuild[c];
-                },
-                "kOmegaSST::omegaWFInvertCount"
-            );
-            cornerWeightsBuilt_ = true;
-        }
+        buildCornerWeights(omega);
         const auto cornerWeightV = cornerWeightTmp_.view();
 
         // Per-step reset of the accumulators: the pin mask, the pinned value (now ACCUMULATED, so
@@ -868,6 +842,111 @@ void KOmegaSST::calcDiffusivities(
 
     freeVecs(surfNutTmp_.internalVector(), surfF1Tmp_.internalVector());
     NeoN::fence(exec_);
+}
+
+void KOmegaSST::buildCornerWeights(const nnfvcc::VolumeField<scalar>& omega)
+{
+    // One-time: build cornerWeightTmp_[c] = 1/(number of omegaWallFunction faces touching cell
+    // c), 0 for non-wall cells. The wall topology is static so this is computed once. Mirrors
+    // OpenFOAM omegaWallFunction::createAveragingWeights (omega.C:71-126).
+    if (cornerWeightsBuilt_) return;
+    const auto& omegaBCs = omega.boundaryConditions();
+    const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
+    const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
+    NeoN::fill(cornerWeightTmp_, scalar(0));
+    auto cwBuild = cornerWeightTmp_.view();
+    for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(omegaBCs.size());
+         ++patchID)
+    {
+        if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+        const auto [start, end] = omega.boundaryData().range(patchID);
+        NeoN::parallelFor(
+            exec_,
+            {start, end},
+            NEON_LAMBDA(const NeoN::localIdx i) {
+                Kokkos::atomic_add(&cwBuild[faceOwnersV[i]], scalar(1));
+            },
+            "kOmegaSST::omegaWFCountFaces"
+        );
+    }
+    NeoN::parallelFor(
+        exec_,
+        {0, nCells},
+        NEON_LAMBDA(const NeoN::localIdx c) {
+            if (cwBuild[c] > scalar(0)) cwBuild[c] = scalar(1) / cwBuild[c];
+        },
+        "kOmegaSST::omegaWFInvertCount"
+    );
+    cornerWeightsBuilt_ = true;
+}
+
+void KOmegaSST::refreshOmegaWallCells(
+    const nnfvcc::VolumeField<scalar>& k,
+    nnfvcc::VolumeField<scalar>& omega,
+    fvcc::BoundaryContext& ctx
+)
+{
+    const auto& omegaBCs = omega.boundaryConditions();
+    bool anyOmegaWF = false;
+    for (std::size_t p = 0; p < omegaBCs.size(); ++p)
+    {
+        if (omegaBCs[p].name() == "omegaWallFunction") anyOmegaWF = true;
+    }
+    if (!anyOmegaWF) return;
+
+    buildCornerWeights(omega);
+
+    const scalar Cmu25 = Kokkos::pow(coeffs_.betaStar, scalar(0.25));
+    const scalar kappa = scalar(0.41); // matches omegaWallFunction default
+    const scalar beta1 = coeffs_.beta1;
+    const scalar omegaWallMax = KOSST_OMEGA_WALL_MAX; // device-capture copy
+    const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
+    const auto nuBoundaryV = nu_.boundaryData().value().view();
+    const auto yBoundaryV = nearWallDistTmp_.boundaryData().value().view();
+    const auto kInternalV = k.internalVector().view();
+    const auto cornerWeightV = cornerWeightTmp_.view();
+    auto omegaV = omega.internalVector().view();
+    const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
+
+    NeoN::fill(omegaWallMaskTmp_, scalar(0));
+    NeoN::fill(omegaWallValueTmp_, scalar(0));
+    auto valueV = omegaWallValueTmp_.view();
+    auto maskV = omegaWallMaskTmp_.view();
+    for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(omegaBCs.size());
+         ++patchID)
+    {
+        if (omegaBCs[static_cast<NeoN::sizeType>(patchID)].name() != "omegaWallFunction") continue;
+        const auto [start, end] = omega.boundaryData().range(patchID);
+        NeoN::parallelFor(
+            exec_,
+            {start, end},
+            NEON_LAMBDA(const NeoN::localIdx i) {
+                const auto owner = faceOwnersV[i];
+                const scalar nuw = nuBoundaryV[i];
+                const scalar y = yBoundaryV[i];
+                const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
+                const scalar ySafe = Kokkos::max(y, scalar(1e-30));
+                const scalar wVis = scalar(6) * nuw / (beta1 * ySafe * ySafe);
+                const scalar wLog = Kokkos::sqrt(kc) / (Cmu25 * kappa * ySafe);
+                const scalar wOmega =
+                    Kokkos::min(Kokkos::sqrt(wVis * wVis + wLog * wLog), omegaWallMax);
+                Kokkos::atomic_add(&valueV[owner], cornerWeightV[owner] * wOmega);
+                maskV[owner] = scalar(1);
+            },
+            "kOmegaSST::omegaWFRefreshValue"
+        );
+    }
+    NeoN::fence(exec_); // the atomic accumulation must finish before the cells are overwritten
+    NeoN::parallelFor(
+        exec_,
+        {0, nCells},
+        NEON_LAMBDA(const NeoN::localIdx c) {
+            if (maskV[c] > scalar(0)) omegaV[c] = valueV[c];
+        },
+        "kOmegaSST::omegaWFRefreshCells"
+    );
+    NeoN::fence(exec_);
+    omega.correctBoundaryConditions(ctx);
 }
 
 void KOmegaSST::reserveScratch()
