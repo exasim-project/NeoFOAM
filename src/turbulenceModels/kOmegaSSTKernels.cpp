@@ -33,6 +33,7 @@ void kernelComputeF1AndSources(
     const NeoN::Vector<Tensor>& gradUVec,
     NeoN::Vector<scalar>& f1Vec,
     NeoN::Vector<scalar>& pkVec,
+    NeoN::Vector<scalar>& gRawVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
@@ -61,6 +62,7 @@ void kernelComputeF1AndSources(
          gradUV,
          f1V,
          pkV,
+         gRawV,
          spKV,
          omegaSourceV,
          spOmegaV] =
@@ -75,6 +77,7 @@ void kernelComputeF1AndSources(
                 gradUVec,
                 f1Vec,
                 pkVec,
+                gRawVec,
                 spKVec,
                 omegaSourceVec,
                 spOmegaVec
@@ -154,6 +157,7 @@ void kernelComputeF1AndSources(
 
             const scalar gI = nutI * gbyNu0I;
             pkV[i] = Kokkos::min(gI, c1 * betaStar * kSafe * omegaSafe);
+            gRawV[i] = gI; // OpenFOAM caps Pk(G) later, with the omega of the new solve
 
             spKV[i] = betaStar * omegaSafe;
 
@@ -389,15 +393,14 @@ void kernelApplyDensity(
     const NeoN::Vector<scalar>& kVec,
     const NeoN::Vector<scalar>& omegaVec,
     const NeoN::Vector<scalar>& f1Vec,
-    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
     scalar gamma1,
     scalar gamma2
 )
 {
-    const auto [rhoV, divUV, kV, omegaV, f1V, pkV, omegaSourceV, spOmegaV] =
-        NeoN::views(rhoVec, divUVec, kVec, omegaVec, f1Vec, pkVec, omegaSourceVec, spOmegaVec);
+    const auto [rhoV, divUV, kV, omegaV, f1V, omegaSourceV, spOmegaV] =
+        NeoN::views(rhoVec, divUVec, kVec, omegaVec, f1Vec, omegaSourceVec, spOmegaVec);
     const scalar omegaMin = KOSST_OMEGA_MIN;
 
     NeoN::parallelFor(
@@ -413,15 +416,51 @@ void kernelApplyDensity(
             // part goes on the diagonal, the negative part moves to the explicit source.
             const scalar divU = divUV[i];
             const scalar gammaI = f1V[i] * (gamma1 - gamma2) + gamma2;
-            const scalar cK = (scalar(2) / scalar(3)) * rho * divU;
             const scalar cOmega = (scalar(2) / scalar(3)) * rho * gammaI * divU;
 
-            pkV[i] = rho * pkV[i] + Kokkos::max(-cK, scalar(0)) * kSafe;
             omegaSourceV[i] =
                 rho * omegaSourceV[i] + Kokkos::max(-cOmega, scalar(0)) * omegaSafe;
             spOmegaV[i] = rho * spOmegaV[i] + Kokkos::max(cOmega, scalar(0));
         },
         "kOmegaSST::applyDensity"
+    );
+}
+
+// Pk(G) = min(G, c1*betaStar*k*omega) as kOmegaSSTBase evaluates it when it assembles the k
+// equation: AFTER the omega solve (so with the new omega) and on the G that includes the
+// wall-function override. The compressible form then multiplies by rho and adds the explicit part
+// of -SuSp((2/3) rho divU, k), which is positive where divU < 0. rhoVec/divUVec are only read when
+// hasRho is set.
+void kernelFinalizePk(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& gRawVec,
+    const NeoN::Vector<scalar>& kVec,
+    const NeoN::Vector<scalar>& omegaVec,
+    const NeoN::Vector<scalar>& rhoVec,
+    const NeoN::Vector<scalar>& divUVec,
+    bool hasRho,
+    NeoN::Vector<scalar>& pkVec,
+    scalar c1,
+    scalar betaStar
+)
+{
+    const auto [gV, kV, omegaV, rhoV, divUV, pkV] =
+        NeoN::views(gRawVec, kVec, omegaVec, rhoVec, divUVec, pkVec);
+    NeoN::parallelFor(
+        exec,
+        {0, static_cast<localIdx>(pkVec.size())},
+        NEON_LAMBDA(const localIdx i) {
+            const scalar kSafe = Kokkos::max(kV[i], scalar(0));
+            scalar pk = Kokkos::min(gV[i], c1 * betaStar * kSafe * omegaV[i]);
+            if (hasRho)
+            {
+                const scalar rho = rhoV[i];
+                const scalar cK = (scalar(2) / scalar(3)) * rho * divUV[i];
+                pk = rho * pk + Kokkos::max(-cK, scalar(0)) * kSafe;
+            }
+            pkV[i] = pk;
+        },
+        "kOmegaSST::finalizePk"
     );
 }
 
