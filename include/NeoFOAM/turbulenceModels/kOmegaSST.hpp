@@ -102,7 +102,32 @@ public:
         RunTime& rt
     );
 
-    /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian)
+    /**
+     * @brief Compressible update: the density-weighted k and omega transport equations.
+     *
+     * Equivalent to OpenFOAM's compressible kOmegaSSTBase::correct() with alpha = 1:
+     * ddt(rho, psi) + div(phi, psi) - laplacian(rho*DpsiEff, psi) = rho*(sources) with the
+     * dilatation terms -SuSp((2/3) rho divU, k) and -SuSp((2/3) rho gamma divU, omega).
+     * divU is the divergence of the volumetric flux phi/interpolate(rho). nut stays kinematic.
+     *
+     * The kinematic viscosity passed to the constructor must hold mu/rho at the current
+     * state; the caller refreshes it (in place) before every call.
+     *
+     * @param phi Face MASS flux (kg/s)
+     * @param rho Density (internal and boundary values current)
+     */
+    void correct(
+        const nnfvcc::VolumeField<Vec3>& U,
+        nnfvcc::SurfaceField<scalar>& phi,
+        nnfvcc::VolumeField<scalar>& rho,
+        nnfvcc::VolumeField<scalar>& k,
+        nnfvcc::VolumeField<scalar>& omega,
+        nnfvcc::VolumeField<scalar>& nut,
+        RunTime& rt
+    );
+
+    /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian).
+    /// After the compressible correct() it is the dynamic mu + rho*nut instead.
     nnfvcc::SurfaceField<scalar>& nuEff();
 
     /// @brief Effective k diffusion coefficient on faces: alphaK(F1)*nut + nu
@@ -167,8 +192,14 @@ public:
      *
      * Interpolates nut → surfNutTmp_, F1Tmp_ → surfF1Tmp_, then fills
      * dkEffFTmp_, domegaEffFTmp_, nuEffTmp_.
+     *
+     * With a non-null rho the diffusivities are density-weighted: rho*nut and rho*nu are
+     * interpolated (instead of nut and the cached nu), as the compressible equations need.
      */
-    void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
+    void calcDiffusivities(
+        const nnfvcc::VolumeField<scalar>& nut,
+        const nnfvcc::VolumeField<scalar>* rho = nullptr
+    );
 
     /** @brief Replace the default Gauss-Green tensor-gradient operator with the
      *  gradSchemes-configured one, so grad(U) honours e.g. cellLimited. Used by the
@@ -179,6 +210,29 @@ public:
     }
 
 private:
+
+    /// Shared body of both correct() overloads; rho == nullptr is the incompressible path.
+    void correctImpl(
+        const nnfvcc::VolumeField<Vec3>& U,
+        nnfvcc::SurfaceField<scalar>& phi,
+        nnfvcc::VolumeField<scalar>* rho,
+        nnfvcc::VolumeField<scalar>& k,
+        nnfvcc::VolumeField<scalar>& omega,
+        nnfvcc::VolumeField<scalar>& nut,
+        RunTime& rt
+    );
+
+    /// Fields only the compressible path needs; allocated on its first use.
+    struct CompressibleScratch
+    {
+        CompressibleScratch(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh);
+
+        nnfvcc::SurfaceField<scalar> rhoF;   ///< interpolated density
+        nnfvcc::SurfaceField<scalar> phiv;   ///< volumetric flux phi/rhoF
+        nnfvcc::VolumeField<scalar> divU;    ///< div(phiv)
+        nnfvcc::VolumeField<scalar> mu;      ///< rho*nu
+        nnfvcc::VolumeField<scalar> rhoNut;  ///< rho*nut
+    };
 
     void reserveScratch();
     void releaseScratch();
@@ -252,6 +306,8 @@ private:
 
     // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
     mutable BoundCache boundCache_;
+
+    std::unique_ptr<CompressibleScratch> compressible_;
 };
 
 /**
@@ -279,6 +335,14 @@ public:
     /** @brief Solve the k and omega PDEs and update nut. */
     void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
         override;
+
+    /** @brief Compressible variant: density-weighted k and omega equations (see KOmegaSST). */
+    void correctCompressible(
+        const nnfvcc::VolumeField<Vec3>& U,
+        nnfvcc::SurfaceField<scalar>& phi,
+        nnfvcc::VolumeField<scalar>& rho,
+        RunTime& rt
+    ) override;
 
     /** @brief Surface effective viscosity (ν + ν_t). */
     nnfvcc::SurfaceField<scalar>& nuEff() override;

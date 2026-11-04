@@ -311,4 +311,100 @@ void initNearWallDistBoundary(
     );
 }
 
+void kernelMultiply(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& aVec,
+    const NeoN::Vector<scalar>& bVec,
+    NeoN::Vector<scalar>& outVec
+)
+{
+    const auto [aV, bV, outV] = NeoN::views(aVec, bVec, outVec);
+    NeoN::parallelFor(
+        exec,
+        {0, static_cast<localIdx>(outVec.size())},
+        NEON_LAMBDA(const localIdx i) { outV[i] = aV[i] * bV[i]; },
+        "kOmegaSST::multiply"
+    );
+}
+
+void kernelDivide(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& aVec,
+    const NeoN::Vector<scalar>& bVec,
+    NeoN::Vector<scalar>& outVec
+)
+{
+    const auto [aV, bV, outV] = NeoN::views(aVec, bVec, outVec);
+    NeoN::parallelFor(
+        exec,
+        {0, static_cast<localIdx>(outVec.size())},
+        NEON_LAMBDA(const localIdx i) { outV[i] = aV[i] / bV[i]; },
+        "kOmegaSST::divide"
+    );
+}
+
+void kernelApplyDensity(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& rhoVec,
+    const NeoN::Vector<scalar>& divUVec,
+    const NeoN::Vector<scalar>& kVec,
+    const NeoN::Vector<scalar>& omegaVec,
+    const NeoN::Vector<scalar>& f1Vec,
+    NeoN::Vector<scalar>& pkVec,
+    NeoN::Vector<scalar>& omegaSourceVec,
+    NeoN::Vector<scalar>& spOmegaVec,
+    scalar gamma1,
+    scalar gamma2
+)
+{
+    const auto [rhoV, divUV, kV, omegaV, f1V, pkV, omegaSourceV, spOmegaV] =
+        NeoN::views(rhoVec, divUVec, kVec, omegaVec, f1Vec, pkVec, omegaSourceVec, spOmegaVec);
+    const scalar omegaMin = KOSST_OMEGA_MIN;
+
+    NeoN::parallelFor(
+        exec,
+        {0, static_cast<localIdx>(kVec.size())},
+        NEON_LAMBDA(const localIdx i) {
+            const scalar rho = rhoV[i];
+            const scalar kSafe = Kokkos::max(kV[i], scalar(0));
+            const scalar omegaSafe = Kokkos::max(omegaV[i], omegaMin);
+
+            // Both equations carry -fvm::SuSp(c, psi) on the RHS (kOmegaSSTBase.C), with
+            // c = (2/3) rho divU for k and (2/3) rho gamma(F1) divU for omega: the positive
+            // part goes on the diagonal, the negative part moves to the explicit source.
+            const scalar divU = divUV[i];
+            const scalar gammaI = f1V[i] * (gamma1 - gamma2) + gamma2;
+            const scalar cK = (scalar(2) / scalar(3)) * rho * divU;
+            const scalar cOmega = (scalar(2) / scalar(3)) * rho * gammaI * divU;
+
+            pkV[i] = rho * pkV[i] + Kokkos::max(-cK, scalar(0)) * kSafe;
+            omegaSourceV[i] =
+                rho * omegaSourceV[i] + Kokkos::max(-cOmega, scalar(0)) * omegaSafe;
+            spOmegaV[i] = rho * spOmegaV[i] + Kokkos::max(cOmega, scalar(0));
+        },
+        "kOmegaSST::applyDensity"
+    );
+}
+
+void kernelUpdateSpKCompressible(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& rhoVec,
+    const NeoN::Vector<scalar>& divUVec,
+    const NeoN::Vector<scalar>& omegaVec,
+    NeoN::Vector<scalar>& spKVec,
+    scalar betaStar
+)
+{
+    const auto [rhoV, divUV, omegaV, spKV] = NeoN::views(rhoVec, divUVec, omegaVec, spKVec);
+    NeoN::parallelFor(
+        exec,
+        {0, static_cast<localIdx>(omegaVec.size())},
+        NEON_LAMBDA(const localIdx i) {
+            const scalar cK = (scalar(2) / scalar(3)) * rhoV[i] * divUV[i];
+            spKV[i] = rhoV[i] * betaStar * omegaV[i] + Kokkos::max(cK, scalar(0));
+        },
+        "kOmegaSST::updateSpKCompressible"
+    );
+}
+
 } // namespace NeoFOAM::kOmegaSSTDetail
