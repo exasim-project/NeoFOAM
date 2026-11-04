@@ -184,6 +184,35 @@ TEST_CASE("pressureControl")
         REQUIRE_THROWS(NeoFOAM::PressureControl(p, rho, t));
     }
 
+    // Mixed patches (inletOutlet, freestream*, waveTransmissive) count as value-fixing in OpenFOAM
+    // although NeoN keeps fixesValue = false for them. Only meaningful with a NeoN that has the
+    // `mixed` attribute.
+    if constexpr (requires(fvcc::BoundaryAttributes attributes) { attributes.mixed; })
+    {
+        SECTION("a mixed patch counts as value-fixing for the factors")
+        {
+            std::vector<fvcc::VolumeBoundary<NeoN::scalar>> bcs;
+            for (NeoN::localIdx patchi = 0; patchi < static_cast<NeoN::localIdx>(mesh.nBoundaries());
+                 ++patchi)
+            {
+                NeoN::Dictionary dict;
+                dict.insert("type", std::string("inletOutlet"));
+                dict.insert("inletValue", NeoN::scalar(100.0));
+                bcs.push_back(fvcc::VolumeBoundary<NeoN::scalar>(mesh, dict, patchi));
+            }
+            REQUIRE(bcs[0].attributes().fixesValue == false);
+            fvcc::VolumeField<NeoN::scalar> p(exec, "p", mesh, bcs);
+            NeoN::fill(p.internalVector(), NeoN::scalar(100.0));
+            NeoN::fill(p.boundaryData().value(), NeoN::scalar(100.0));
+            NeoFOAM::PressureLimitSettings s;
+            s.pMinFactor = 0.5;
+            s.pMaxFactor = 2.0;
+            NeoFOAM::PressureControl pc(p, rho, s);
+            REQUIRE(pc.pMin() == Catch::Approx(50.0));
+            REQUIRE(pc.pMax() == Catch::Approx(200.0));
+        }
+    }
+
     SECTION("a boundary value beyond the limit clips nothing inside and keeps the boundary")
     {
         auto p = makeP(std::vector<NeoN::scalar>(n, 100.0), false, 500.0); // boundary above pMax
