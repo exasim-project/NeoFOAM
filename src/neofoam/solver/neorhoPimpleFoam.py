@@ -5,8 +5,11 @@
 neorhoPimpleFoam.py — Transient compressible PIMPLE solver using NeoN +
 NeoFOAM bindings.
 
-Minimal first version: laminar only, subsonic (no transonic pEqn branch), no
-SIMPLEC/consistent variant. perfectGas equation of state, constant Cv-or-Cp,
+Minimal first version: laminar or RAS (any runtime-selected turbulence model with a
+compressible formulation, today kOmegaSST), subsonic (no transonic pEqn branch), no
+SIMPLEC/consistent variant. With a RAS model the momentum diffusion coefficient is
+mu + rho*nut and the energy diffusivity gains alphat = rho*nut/Prt (times gamma for the
+internal-energy form, as heThermo::alphaEff does), see _PRT. perfectGas equation of state, constant Cv-or-Cp,
 const-or-sutherland transport, read from constant/thermophysicalProperties
 (see neofoam.thermo.perfectGas.PerfectGasTransport). Energy equation is
 solved for he = Cv*(T - Tstd) (sensibleInternalEnergy) or h = Cp*(T - Tstd)
@@ -63,6 +66,12 @@ from neofoam.thermo.perfectGas import PerfectGasTransport
 # exactly, mapped from T's current boundary via
 # map_energy_boundary_from_temperature rather than derived from scratch.
 _TSTD = 298.15
+
+# Turbulent Prandtl number of the eddyDiffusivity thermophysical transport model, which
+# OpenFOAM defaults to 0.85. Used instead of reading alphat from the case: with
+# alphat = rho*nut/Prt on every patch the compressible::alphatWallFunction value is the
+# same expression evaluated at the wall face, so alphat needs no boundary condition of its own.
+_PRT = 0.85
 
 
 def _read_int(d: Any, key: str, default: int) -> int:
@@ -195,7 +204,6 @@ class NeoRhoPimpleFoam:
         # per-cell field (not a plain float, which create_uniform_volume_field needs) for
         # sutherland, since they're evaluated from the current T there -- seed at 0 and
         # .assign() the real (possibly spatially-varying) value instead in that case.
-        zero_nut = nfb.create_uniform_volume_field(rt, "nut0", 0.0)
         if gas.transport_type == "sutherland":
             mu_vol = nfb.create_uniform_volume_field(rt, "mu", 0.0)
             mu_vol.assign(gas.mu(T))
@@ -210,6 +218,16 @@ class NeoRhoPimpleFoam:
             alpha_energy_vol = nfb.create_uniform_volume_field(
                 rt, "alphaEnergy", gas.alphaEnergy(T)
             )
+        # Runtime-selected turbulence model (laminar or RAS, per constant/turbulenceProperties).
+        # It owns nut and, for RAS, k/omega; it reads the KINEMATIC viscosity from nu_vol, which
+        # is therefore refreshed in place to mu/rho wherever mu or rho changed (see below), the
+        # counterpart of OpenFOAM's live thermo.mu()/rho. nut stays kinematic; the dynamic
+        # coefficients mu + rho*nut are assembled here.
+        nu_vol = nfb.create_uniform_volume_field(rt, "nu", 0.0)
+        nu_vol.assign(mu_vol / rho)
+        turb = nfb.create_turbulence_model(rt, nu_vol)
+        turb.validate(U)
+
         # Feature-for-feature port of literal rhoPimpleFoam's `psip0 = psi*p` /
         # `thermo.correctRho(psi*p - psip0, rhoMin, rhoMax)` -- captured once per PISO
         # pass, used to replace the plain EOS rho.assign() with literal's incremental
@@ -278,6 +296,7 @@ class NeoRhoPimpleFoam:
             nn.rotate_old_times(psi)
             nn.rotate_old_times(K)
             nn.rotate_old_times(phi)
+            turb.rotate_old_times()
             n_steps += 1
 
             max_co, mean_co = nn.compute_co_num(phi, rt.dt)
@@ -325,18 +344,21 @@ class NeoRhoPimpleFoam:
                     mu_vol.assign(gas.mu(T))
                     alpha_energy_vol.assign(gas.alphaEnergy(T))
 
-                # Literal's divDevRhoReff coefficient is alpha*rho*nuEff(), and for this
-                # laminar (Stokes) model nuEff()==nu()==mu/rho, so the coefficient
-                # collapses to mu -- NOT rho*mu -- for *both* the implicit laplacian and
-                # the explicit dev2 correction below.
-                mu_face = surf_interp.interpolate(mu_vol)
+                # Literal's divDevRhoReff coefficient is alpha*rho*nuEff() with nuEff() =
+                # nu + nut and nu = mu/rho, so it is mu + rho*nut -- NOT rho*mu -- for *both*
+                # the implicit laplacian and the explicit dev2 correction below. For the
+                # laminar model nut is zero and this collapses to mu. nut is the turbulence
+                # model's kinematic value from its last correct() (fixed across the PIMPLE
+                # loop, as in OpenFOAM, where the model is corrected once per step).
+                rho_nut = rho * turb.nut()
+                mu_face = surf_interp.interpolate(mu_vol + rho_nut)
                 mu_face.name = "mu"
 
                 ueqn_expr = (
                     nn.imp.ddt(rho, U)
                     + nn.imp.div(phi, U)
                     - nn.imp.laplacian(mu_face, U)
-                    + nfb.viscous_stress(mu_vol, zero_nut, grad_u, compressible=True)
+                    + nfb.viscous_stress(mu_vol, rho_nut, grad_u, compressible=True)
                 )
                 ueqn_expr = fv_options.add_momentum_sources(ueqn_expr, rho, U, runTime.value())
 
@@ -372,7 +394,12 @@ class NeoRhoPimpleFoam:
                 nfb.map_energy_boundary_from_temperature(T, energy, gas.energy_coeff, _TSTD)
                 energy.correct_boundary_conditions()
 
-                alphaEff = surf_interp.interpolate(alpha_energy_vol)
+                # eddyDiffusivity: alphaEff = CpByCpv*(alpha + alphat) (heThermo::alphaEff),
+                # alphat = rho*nut/Prt; CpByCpv is 1 for the enthalpy form and gamma for the
+                # internal-energy form, and alpha_energy_vol already carries it for the
+                # laminar part (gas.alphaEnergy).
+                alphat_factor = (1.0 if gas.is_enthalpy else gas.gamma) / _PRT
+                alphaEff = surf_interp.interpolate(alpha_energy_vol + alphat_factor * rho_nut)
                 alphaEff.name = "alphaEff"
 
                 # sensibleInternalEnergy (he): +div(phiv,p). sensibleEnthalpy (h): -dpdt
@@ -529,6 +556,12 @@ class NeoRhoPimpleFoam:
                 if have_p_res:
                     residuals["p"] = p_res
 
+            # literal rhoPimpleFoam: `if (pimple.turbCorr()) { turbulence->correct(); }`, which
+            # with the default turbOnFinalIterOnly is the last outer iteration, i.e. once per
+            # step after the loop. The model reads nu, so bring it to the step's final mu/rho.
+            nu_vol.assign(mu_vol / rho)
+            turb.correct_compressible(U, phi, rho, rt)
+
             fv_options.end_of_time_step(rt.dt)
 
             if runTime.outputTime():
@@ -537,6 +570,7 @@ class NeoRhoPimpleFoam:
                 nfb.write_scalar_field(T, rt)
                 nfb.write_scalar_field(rho, rt)
                 nfb.write_vector_field(U, rt)
+                turb.write(rt.mesh)
 
             runTime.printExecutionTime()
 
