@@ -534,6 +534,11 @@ void KOmegaSST::correctImpl(
     {
         omegaEqn.setConstraints(omegaWallMaskTmp_, omegaWallValueTmp_);
     }
+    // The compressible update runs once per step after the PIMPLE loop, i.e. on the final outer
+    // iteration, where OpenFOAM solves with the omegaFinal/kFinal settings (typically relTol 0).
+    // Without them the loose omega/k settings stop after a few sweeps and a wall value reaches
+    // only the first cells. The incompressible path keeps its validated behaviour.
+    omegaEqn.setFinalIter(rho != nullptr);
     omegaEqn.relax(); // OpenFOAM kOmegaSSTBase.C: omegaEqn.ref().relax()
     omegaEqn.solve();
 
@@ -580,6 +585,7 @@ void KOmegaSST::correctImpl(
         k,
         rt
     );
+    kEqn.setFinalIter(rho != nullptr);
     kEqn.relax(); // OpenFOAM kOmegaSSTBase.C: kEqn.ref().relax()
     kEqn.solve();
 
