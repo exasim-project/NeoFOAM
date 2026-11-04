@@ -316,6 +316,10 @@ private:
 
     // 1/(N wall faces touching cell) for corner averaging; 0 for non-wall cells.
     NeoN::Vector<scalar> cornerWeightTmp_;
+
+    // G = nut*GbyNu0 with the wall-function override, uncapped: Pk(G) is capped after the omega
+    // solve, with the new omega, as OpenFOAM does when it assembles the k equation.
+    NeoN::Vector<scalar> gRawTmp_;
     bool cornerWeightsBuilt_ = false;
 
     // Lower bound applied to k after each solve, as OpenFOAM's kMin_.
