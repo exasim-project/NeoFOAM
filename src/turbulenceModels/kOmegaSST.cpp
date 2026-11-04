@@ -39,6 +39,7 @@ void kernelComputeF1AndSources(
     const NeoN::Vector<Tensor>& gradUVec,
     NeoN::Vector<scalar>& f1Vec,
     NeoN::Vector<scalar>& pkVec,
+    NeoN::Vector<scalar>& gRawVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
@@ -130,11 +131,23 @@ void kernelApplyDensity(
     const NeoN::Vector<scalar>& kVec,
     const NeoN::Vector<scalar>& omegaVec,
     const NeoN::Vector<scalar>& f1Vec,
-    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
     scalar gamma1,
     scalar gamma2
+);
+
+void kernelFinalizePk(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& gRawVec,
+    const NeoN::Vector<scalar>& kVec,
+    const NeoN::Vector<scalar>& omegaVec,
+    const NeoN::Vector<scalar>& rhoVec,
+    const NeoN::Vector<scalar>& divUVec,
+    bool hasRho,
+    NeoN::Vector<scalar>& pkVec,
+    scalar c1,
+    scalar betaStar
 );
 
 void kernelUpdateSpKCompressible(
@@ -252,6 +265,7 @@ KOmegaSST::KOmegaSST(
     , omegaWallValueTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , omegaWallMaskTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , cornerWeightTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , gRawTmp_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
 {
     surfInterp_.interpolate(nu_, surfNuTmp_);
 
@@ -393,6 +407,7 @@ void KOmegaSST::correctImpl(
         const auto yBoundaryV = nearWallDistTmp_.boundaryData().value().view();
         const auto kInternalV = k.internalVector().view();
         auto pkInternalV = PkTmp_.internalVector().view();
+        auto gRawV = gRawTmp_.view();
         const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
 
         buildCornerWeights(omega);
@@ -409,7 +424,11 @@ void KOmegaSST::correctImpl(
             exec_,
             {0, nCells},
             NEON_LAMBDA(const NeoN::localIdx c) {
-                if (cornerWeightV[c] > scalar(0)) pkInternalV[c] = scalar(0);
+                if (cornerWeightV[c] > scalar(0))
+                {
+                    pkInternalV[c] = scalar(0);
+                    gRawV[c] = scalar(0);
+                }
             },
             "kOmegaSST::omegaWFZeroWallPk"
         );
@@ -451,6 +470,7 @@ void KOmegaSST::correctImpl(
                         Kokkos::min(Kokkos::sqrt(wVis * wVis + wLog * wLog), omegaWallMax);
 
                     Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
+                    Kokkos::atomic_add(&gRawV[owner], cw * gWall);
                     Kokkos::atomic_add(&omegaWallValueV[owner], cw * wOmega);
                     omegaWallMaskV[owner] = scalar(1);
                 },
@@ -508,7 +528,6 @@ void KOmegaSST::correctImpl(
             k.internalVector(),
             omega.internalVector(),
             F1Tmp_.internalVector(),
-            PkTmp_.internalVector(),
             omegaSourceTmp_.internalVector(),
             spOmegaTmp_.internalVector(),
             coeffs_.gamma1,
@@ -574,6 +593,22 @@ void KOmegaSST::correctImpl(
         );
     }
 
+    // Pk(G) = min(G, c1*betaStar*k*omega): kOmegaSSTBase evaluates it when it assembles the k
+    // equation, i.e. with the omega of the solve above, on the G that carries the wall-function
+    // override. The compressible form also multiplies by rho and adds the explicit dilatation part.
+    kOmegaSSTDetail::kernelFinalizePk(
+        exec_,
+        gRawTmp_,
+        k.internalVector(),
+        omega.internalVector(),
+        rho ? rho->internalVector() : k.internalVector(),
+        rho ? scratch_->divU.internalVector() : k.internalVector(),
+        rho != nullptr,
+        PkTmp_.internalVector(),
+        coeffs_.c1,
+        coeffs_.betaStar
+    );
+
     // ----- k equation -----
     PDESolver<scalar> kEqn(
         (rho ? dsl::imp::ddt(*rho, k) : dsl::imp::ddt(k)) + dsl::imp::div(phi, k)
@@ -589,7 +624,9 @@ void KOmegaSST::correctImpl(
     bound(k, kMin_, boundCache_);
     k.correctBoundaryConditions(ctx);
 
-    freeVecs(PkTmp_.internalVector(), spKTmp_.internalVector(), dkEffFTmp_.internalVector());
+    freeVecs(
+        PkTmp_.internalVector(), gRawTmp_, spKTmp_.internalVector(), dkEffFTmp_.internalVector()
+    );
     correctNutInternal(k, omega, nut);
     nut.correctBoundaryConditions(ctx);
 
@@ -651,6 +688,7 @@ void KOmegaSST::computeF1AndSources(
         gradU.internalVector(),
         F1Tmp_.internalVector(),
         PkTmp_.internalVector(),
+        gRawTmp_,
         spKTmp_.internalVector(),
         omegaSourceTmp_.internalVector(),
         spOmegaTmp_.internalVector(),
@@ -964,6 +1002,7 @@ void KOmegaSST::reserveScratch()
     ensure(omegaSourceTmp_.internalVector(), nc);
     ensure(spOmegaTmp_.internalVector(), nc);
     // plain per-cell Vectors, rebuilt (filled) every correct()
+    ensure(gRawTmp_, nc);
     ensure(omegaWallValueTmp_, nc);
     ensure(omegaWallMaskTmp_, nc);
 }
@@ -996,6 +1035,7 @@ void KOmegaSST::releaseScratch()
         gradOmegaTmp_.internalVector(),
         F1Tmp_.internalVector(),
         PkTmp_.internalVector(),
+        gRawTmp_,
         spKTmp_.internalVector(),
         omegaSourceTmp_.internalVector(),
         spOmegaTmp_.internalVector(),
