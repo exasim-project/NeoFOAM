@@ -93,6 +93,43 @@ void initNearWallDistBoundary(
     const NeoN::UnstructuredMesh& mesh,
     nnfvcc::VolumeField<scalar>& nearWallDist
 );
+void kernelMultiply(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& aVec,
+    const NeoN::Vector<scalar>& bVec,
+    NeoN::Vector<scalar>& outVec
+);
+
+void kernelDivide(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& aVec,
+    const NeoN::Vector<scalar>& bVec,
+    NeoN::Vector<scalar>& outVec
+);
+
+void kernelApplyDensity(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& rhoVec,
+    const NeoN::Vector<scalar>& divUVec,
+    const NeoN::Vector<scalar>& kVec,
+    const NeoN::Vector<scalar>& omegaVec,
+    const NeoN::Vector<scalar>& f1Vec,
+    NeoN::Vector<scalar>& pkVec,
+    NeoN::Vector<scalar>& omegaSourceVec,
+    NeoN::Vector<scalar>& spOmegaVec,
+    scalar gamma1,
+    scalar gamma2
+);
+
+void kernelUpdateSpKCompressible(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& rhoVec,
+    const NeoN::Vector<scalar>& divUVec,
+    const NeoN::Vector<scalar>& omegaVec,
+    NeoN::Vector<scalar>& spKVec,
+    scalar betaStar
+);
+
 } // namespace kOmegaSSTDetail
 
 namespace
@@ -249,6 +286,48 @@ void KOmegaSST::correct(
     RunTime& rt
 )
 {
+    correctImpl(U, phi, nullptr, k, omega, nut, rt);
+}
+
+void KOmegaSST::correct(
+    const nnfvcc::VolumeField<Vec3>& U,
+    nnfvcc::SurfaceField<scalar>& phi,
+    nnfvcc::VolumeField<scalar>& rho,
+    nnfvcc::VolumeField<scalar>& k,
+    nnfvcc::VolumeField<scalar>& omega,
+    nnfvcc::VolumeField<scalar>& nut,
+    RunTime& rt
+)
+{
+    correctImpl(U, phi, &rho, k, omega, nut, rt);
+}
+
+KOmegaSST::CompressibleScratch::CompressibleScratch(
+    const NeoN::Executor& exec,
+    const NeoN::UnstructuredMesh& mesh
+)
+    : rhoF(exec, "rhoF", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
+    , phiv(exec, "phiv", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
+    , divU(exec, "divU", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
+    , mu(exec, "muSST", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
+    , rhoNut(
+          exec,
+          "rhoNut",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+      )
+{}
+
+void KOmegaSST::correctImpl(
+    const nnfvcc::VolumeField<Vec3>& U,
+    nnfvcc::SurfaceField<scalar>& phi,
+    nnfvcc::VolumeField<scalar>* rho,
+    nnfvcc::VolumeField<scalar>& k,
+    nnfvcc::VolumeField<scalar>& omega,
+    nnfvcc::VolumeField<scalar>& nut,
+    RunTime& rt
+)
+{
     reserveScratch();
 
     // Compute gradients once — reused for production, CDkOmega, and correctNut
@@ -268,7 +347,7 @@ void KOmegaSST::correct(
     computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
 
     freeVecs(gradKTmp_.internalVector(), gradOmegaTmp_.internalVector());
-    calcDiffusivities(nut);
+    calcDiffusivities(nut, rho);
 
     bool anyOmegaWF = false;
     {
@@ -383,9 +462,67 @@ void KOmegaSST::correct(
         }
     }
 
+    // Compressible path: everything above is per unit mass. Scale it by rho and add the
+    // dilatation sinks, which need divU = div(phi/interpolate(rho)) -- the divergence of the
+    // volumetric flux (kOmegaSSTBase.C: fvc::div(fvc::absolute(this->phi(), U))), not the trace
+    // of grad(U). This runs after the wall-function block so the SuSp terms survive the Pk
+    // overwrite at wall cells.
+    if (rho)
+    {
+        if (!compressible_)
+        {
+            compressible_ = std::make_unique<CompressibleScratch>(exec_, mesh_);
+        }
+        auto& cs = *compressible_;
+
+        surfInterp_.interpolate(*rho, cs.rhoF);
+        kOmegaSSTDetail::kernelDivide(
+            exec_,
+            phi.internalVector(),
+            cs.rhoF.internalVector(),
+            cs.phiv.internalVector()
+        );
+        kOmegaSSTDetail::kernelDivide(
+            exec_,
+            phi.boundaryData().value(),
+            cs.rhoF.boundaryData().value(),
+            cs.phiv.boundaryData().value()
+        );
+
+        // surfaceIntegrate ACCUMULATES into its target, so it must start at zero.
+        NeoN::fill(cs.divU.internalVector(), scalar(0));
+        nnfvcc::surfaceIntegrate<scalar>(
+            exec_,
+            mesh_.nInternalFaces(),
+            mesh_.faceNeighbors().view(),
+            mesh_.faceOwners().view(),
+            mesh_.boundaryMesh().faceOwners().view(),
+            cs.phiv.internalVector().view(),
+            cs.phiv.boundaryData().value().view(),
+            mesh_.cellVolumes().view(),
+            cs.divU.internalVector().view(),
+            NeoN::dsl::Coeff(1.0)
+        );
+
+        kOmegaSSTDetail::kernelApplyDensity(
+            exec_,
+            rho->internalVector(),
+            cs.divU.internalVector(),
+            k.internalVector(),
+            omega.internalVector(),
+            F1Tmp_.internalVector(),
+            PkTmp_.internalVector(),
+            omegaSourceTmp_.internalVector(),
+            spOmegaTmp_.internalVector(),
+            coeffs_.gamma1,
+            coeffs_.gamma2
+        );
+        NeoN::fence(exec_);
+    }
+
     // ----- omega equation -----
     PDESolver<scalar> omegaEqn(
-        dsl::imp::ddt(omega) + dsl::imp::div(phi, omega)
+        (rho ? dsl::imp::ddt(*rho, omega) : dsl::imp::ddt(omega)) + dsl::imp::div(phi, omega)
             - dsl::imp::laplacian(domegaEffFTmp_, omega) + dsl::imp::source(spOmegaTmp_, omega)
             - dsl::exp::source(omegaSourceTmp_),
         omega,
@@ -411,6 +548,18 @@ void KOmegaSST::correct(
         omegaWallMaskTmp_
     );
 
+    if (rho)
+    {
+        kOmegaSSTDetail::kernelUpdateSpKCompressible(
+            exec_,
+            rho->internalVector(),
+            compressible_->divU.internalVector(),
+            omega.internalVector(),
+            spKTmp_.internalVector(),
+            coeffs_.betaStar
+        );
+    }
+    else
     {
         const scalar betaStar = coeffs_.betaStar;
         auto omegaView = omega.internalVector().view();
@@ -425,7 +574,8 @@ void KOmegaSST::correct(
 
     // ----- k equation -----
     PDESolver<scalar> kEqn(
-        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(dkEffFTmp_, k)
+        (rho ? dsl::imp::ddt(*rho, k) : dsl::imp::ddt(k)) + dsl::imp::div(phi, k)
+            - dsl::imp::laplacian(dkEffFTmp_, k)
             + dsl::imp::source(spKTmp_, k) - dsl::exp::source(PkTmp_),
         k,
         rt
@@ -441,7 +591,7 @@ void KOmegaSST::correct(
     nut.correctBoundaryConditions(ctx);
 
     // Refresh surface diffusivities with new nut
-    calcDiffusivities(nut);
+    calcDiffusivities(nut, rho);
 
     releaseScratch();
 }
@@ -551,7 +701,10 @@ void KOmegaSST::correctNutInternal(
     );
 }
 
-void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
+void KOmegaSST::calcDiffusivities(
+    const nnfvcc::VolumeField<scalar>& nut,
+    const nnfvcc::VolumeField<scalar>* rho
+)
 {
     const auto nsf = surfNuTmp_.internalVector().size();
     auto ensure = [](auto& v, NeoN::localIdx n)
@@ -564,7 +717,47 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
     ensure(dkEffFTmp_.internalVector(), nsf);
     ensure(domegaEffFTmp_.internalVector(), nsf);
 
-    surfInterp_.interpolate(nut, surfNutTmp_);
+    if (rho)
+    {
+        // rho*DEff = alpha(F1)*rho*nut + rho*nu: interpolate the two density-weighted fields so
+        // surfNut/surfNu carry the rho and the kernel below needs no change. nu_ is mu/rho at
+        // the current state, so rho*nu is the dynamic viscosity.
+        if (!compressible_)
+        {
+            compressible_ = std::make_unique<CompressibleScratch>(exec_, mesh_);
+        }
+        auto& cs = *compressible_;
+        kOmegaSSTDetail::kernelMultiply(
+            exec_,
+            rho->internalVector(),
+            nu_.internalVector(),
+            cs.mu.internalVector()
+        );
+        kOmegaSSTDetail::kernelMultiply(
+            exec_,
+            rho->boundaryData().value(),
+            nu_.boundaryData().value(),
+            cs.mu.boundaryData().value()
+        );
+        kOmegaSSTDetail::kernelMultiply(
+            exec_,
+            rho->internalVector(),
+            nut.internalVector(),
+            cs.rhoNut.internalVector()
+        );
+        kOmegaSSTDetail::kernelMultiply(
+            exec_,
+            rho->boundaryData().value(),
+            nut.boundaryData().value(),
+            cs.rhoNut.boundaryData().value()
+        );
+        surfInterp_.interpolate(cs.mu, surfNuTmp_);
+        surfInterp_.interpolate(cs.rhoNut, surfNutTmp_);
+    }
+    else
+    {
+        surfInterp_.interpolate(nut, surfNutTmp_);
+    }
     surfInterp_.interpolate(F1Tmp_, surfF1Tmp_);
 
     kOmegaSSTDetail::kernelCalcDiffusivities(
@@ -719,6 +912,16 @@ void KOmegaSSTModel::correct(
 )
 {
     model_.correct(U, phi, *k_, *omega_, *nut_, rt);
+}
+
+void KOmegaSSTModel::correctCompressible(
+    const nnfvcc::VolumeField<Vec3>& U,
+    nnfvcc::SurfaceField<scalar>& phi,
+    nnfvcc::VolumeField<scalar>& rho,
+    RunTime& rt
+)
+{
+    model_.correct(U, phi, rho, *k_, *omega_, *nut_, rt);
 }
 
 nnfvcc::SurfaceField<scalar>& KOmegaSSTModel::nuEff() { return model_.nuEff(); }
