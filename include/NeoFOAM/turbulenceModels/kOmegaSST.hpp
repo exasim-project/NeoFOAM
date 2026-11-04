@@ -237,6 +237,20 @@ private:
         nnfvcc::VolumeField<scalar> domegaCell; ///< rho*(alphaOmega(F1)*nut + nu)
     };
 
+    /// Build cornerWeightTmp_ (1/number of omegaWallFunction faces on a cell) once.
+    void buildCornerWeights(const nnfvcc::VolumeField<scalar>& omega);
+
+    /**
+     * Rewrite omega in the cells next to an omegaWallFunction patch from the CURRENT k, like
+     * omegaWallFunction::updateCoeffs(), which OpenFOAM's kOmegaSSTBase::correct() calls before
+     * CDkOmega and F1 (so those read the refreshed wall-cell omega, not last step's pin).
+     */
+    void refreshOmegaWallCells(
+        const nnfvcc::VolumeField<scalar>& k,
+        nnfvcc::VolumeField<scalar>& omega,
+        fvcc::BoundaryContext& ctx
+    );
+
     void reserveScratch();
     void releaseScratch();
     static bool devicePoolActive();
