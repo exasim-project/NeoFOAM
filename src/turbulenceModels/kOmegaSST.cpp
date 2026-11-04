@@ -93,6 +93,22 @@ void initNearWallDistBoundary(
     const NeoN::UnstructuredMesh& mesh,
     nnfvcc::VolumeField<scalar>& nearWallDist
 );
+void kernelCellDiffusivities(
+    const NeoN::Executor& exec,
+    const NeoN::Vector<scalar>& nuVec,
+    const NeoN::Vector<scalar>& nutVec,
+    const NeoN::Vector<scalar>& f1Vec,
+    const NeoN::Vector<scalar>& rhoVec,
+    bool hasRho,
+    NeoN::Vector<scalar>& dkVec,
+    NeoN::Vector<scalar>& domegaVec,
+    scalar alphaK1,
+    scalar alphaK2,
+    scalar alphaOmega1,
+    scalar alphaOmega2,
+    std::string label
+);
+
 void kernelMultiply(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& aVec,
@@ -302,7 +318,7 @@ void KOmegaSST::correct(
     correctImpl(U, phi, &rho, k, omega, nut, rt);
 }
 
-KOmegaSST::CompressibleScratch::CompressibleScratch(
+KOmegaSST::Scratch::Scratch(
     const NeoN::Executor& exec,
     const NeoN::UnstructuredMesh& mesh
 )
@@ -313,6 +329,13 @@ KOmegaSST::CompressibleScratch::CompressibleScratch(
     , rhoNut(
           exec,
           "rhoNut",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+      )
+    , dkCell(exec, "DkCell", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
+    , domegaCell(
+          exec,
+          "DomegaCell",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
       )
@@ -469,11 +492,11 @@ void KOmegaSST::correctImpl(
     // overwrite at wall cells.
     if (rho)
     {
-        if (!compressible_)
+        if (!scratch_)
         {
-            compressible_ = std::make_unique<CompressibleScratch>(exec_, mesh_);
+            scratch_ = std::make_unique<Scratch>(exec_, mesh_);
         }
-        auto& cs = *compressible_;
+        auto& cs = *scratch_;
 
         surfInterp_.interpolate(*rho, cs.rhoF);
         kOmegaSSTDetail::kernelDivide(
@@ -558,7 +581,7 @@ void KOmegaSST::correctImpl(
         kOmegaSSTDetail::kernelUpdateSpKCompressible(
             exec_,
             rho->internalVector(),
-            compressible_->divU.internalVector(),
+            scratch_->divU.internalVector(),
             omega.internalVector(),
             spKTmp_.internalVector(),
             coeffs_.betaStar
@@ -728,11 +751,11 @@ void KOmegaSST::calcDiffusivities(
         // rho*DEff = alpha(F1)*rho*nut + rho*nu: interpolate the two density-weighted fields so
         // surfNut/surfNu carry the rho and the kernel below needs no change. nu_ is mu/rho at
         // the current state, so rho*nu is the dynamic viscosity.
-        if (!compressible_)
+        if (!scratch_)
         {
-            compressible_ = std::make_unique<CompressibleScratch>(exec_, mesh_);
+            scratch_ = std::make_unique<Scratch>(exec_, mesh_);
         }
-        auto& cs = *compressible_;
+        auto& cs = *scratch_;
         kOmegaSSTDetail::kernelMultiply(
             exec_,
             rho->internalVector(),
@@ -794,6 +817,54 @@ void KOmegaSST::calcDiffusivities(
         coeffs_.alphaOmega2,
         "kOmegaSST::calcDiffusivities::boundary"
     );
+
+    // OpenFOAM forms DkEff(F1) = alphaK(F1)*nut + nu and DomegaEff(F1) per CELL (times rho when
+    // compressible) and the laplacian interpolates that product linearly to the faces. Blending
+    // face-interpolated F1 and nut, as the kernels above do, differs wherever F1 varies strongly
+    // between neighbours -- the first rows off a wall -- by about 10 % in the face coefficient,
+    // so dkEff/domegaEff are overwritten with the cell-level form. nuEff is linear in nut and
+    // does not change.
+    {
+        if (!scratch_)
+        {
+            scratch_ = std::make_unique<Scratch>(exec_, mesh_);
+        }
+        auto& cs = *scratch_;
+        const auto& rhoI = rho ? rho->internalVector() : nu_.internalVector();
+        const auto& rhoB = rho ? rho->boundaryData().value() : nu_.boundaryData().value();
+        kOmegaSSTDetail::kernelCellDiffusivities(
+            exec_,
+            nu_.internalVector(),
+            nut.internalVector(),
+            F1Tmp_.internalVector(),
+            rhoI,
+            rho != nullptr,
+            cs.dkCell.internalVector(),
+            cs.domegaCell.internalVector(),
+            coeffs_.alphaK1,
+            coeffs_.alphaK2,
+            coeffs_.alphaOmega1,
+            coeffs_.alphaOmega2,
+            "kOmegaSST::cellDiffusivities::internal"
+        );
+        kOmegaSSTDetail::kernelCellDiffusivities(
+            exec_,
+            nu_.boundaryData().value(),
+            nut.boundaryData().value(),
+            F1Tmp_.boundaryData().value(),
+            rhoB,
+            rho != nullptr,
+            cs.dkCell.boundaryData().value(),
+            cs.domegaCell.boundaryData().value(),
+            coeffs_.alphaK1,
+            coeffs_.alphaK2,
+            coeffs_.alphaOmega1,
+            coeffs_.alphaOmega2,
+            "kOmegaSST::cellDiffusivities::boundary"
+        );
+        surfInterp_.interpolate(cs.dkCell, dkEffFTmp_);
+        surfInterp_.interpolate(cs.domegaCell, domegaEffFTmp_);
+    }
 
     freeVecs(surfNutTmp_.internalVector(), surfF1Tmp_.internalVector());
     NeoN::fence(exec_);

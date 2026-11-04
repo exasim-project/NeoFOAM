@@ -222,16 +222,19 @@ private:
         RunTime& rt
     );
 
-    /// Fields only the compressible path needs; allocated on its first use.
-    struct CompressibleScratch
+    /// Per-cell scratch allocated on first use: the cell-level k/omega diffusivities (both paths)
+    /// and the fields only the compressible path needs.
+    struct Scratch
     {
-        CompressibleScratch(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh);
+        Scratch(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh);
 
         nnfvcc::SurfaceField<scalar> rhoF;   ///< interpolated density
         nnfvcc::SurfaceField<scalar> phiv;   ///< volumetric flux phi/rhoF
         nnfvcc::VolumeField<scalar> divU;    ///< div(phiv)
         nnfvcc::VolumeField<scalar> mu;      ///< rho*nu
         nnfvcc::VolumeField<scalar> rhoNut;  ///< rho*nut
+        nnfvcc::VolumeField<scalar> dkCell;     ///< rho*(alphaK(F1)*nut + nu)
+        nnfvcc::VolumeField<scalar> domegaCell; ///< rho*(alphaOmega(F1)*nut + nu)
     };
 
     void reserveScratch();
@@ -307,7 +310,7 @@ private:
     // Mesh-derived scratch shared by both bound() calls (it depends only on the mesh).
     mutable BoundCache boundCache_;
 
-    std::unique_ptr<CompressibleScratch> compressible_;
+    std::unique_ptr<Scratch> scratch_;
 };
 
 /**
