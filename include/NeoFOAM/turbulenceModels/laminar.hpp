@@ -35,6 +35,16 @@ public:
         RunTime& rt
     ) override;
 
+    /** @brief No-op: nut stays zero for any density, so a compressible solver can treat
+     *  laminar like any other model. */
+    void correctCompressible(
+        const nnfvcc::VolumeField<NeoN::Vec3>&,
+        nnfvcc::SurfaceField<NeoN::scalar>&,
+        nnfvcc::VolumeField<NeoN::scalar>&,
+        RunTime&
+    ) override
+    {}
+
     /** @brief Returns the face-interpolated laminar ν (ν_t = 0). */
     nnfvcc::SurfaceField<NeoN::scalar>& nuEff() override;
 

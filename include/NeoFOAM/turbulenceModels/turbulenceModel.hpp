@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <stdexcept>
+
 #include "NeoN/NeoN.hpp"
 #include "NeoFOAM/datastructures/runTime.hpp"
 
@@ -67,6 +69,27 @@ public:
         nnfvcc::SurfaceField<NeoN::scalar>& phi,
         RunTime& rt
     ) = 0;
+
+    /**
+     * @brief Compressible variant of correct(): phi is the MASS flux and rho the density.
+     *
+     * The kinematic viscosity handed to create() must hold mu/rho at the current state (the
+     * caller refreshes it in place); nut stays kinematic and nuEff() becomes mu + rho*nut.
+     * Optional; the default rejects models without a compressible formulation.
+     */
+    virtual void correctCompressible(
+        const nnfvcc::VolumeField<NeoN::Vec3>& U,
+        nnfvcc::SurfaceField<NeoN::scalar>& phi,
+        nnfvcc::VolumeField<NeoN::scalar>& rho,
+        RunTime& rt
+    )
+    {
+        (void)U;
+        (void)phi;
+        (void)rho;
+        (void)rt;
+        throw std::runtime_error("TurbulenceModel: this model has no compressible formulation");
+    }
 
     /** @brief Surface effective viscosity (ν + ν_t) for the momentum laplacian. */
     virtual nnfvcc::SurfaceField<NeoN::scalar>& nuEff() = 0;
