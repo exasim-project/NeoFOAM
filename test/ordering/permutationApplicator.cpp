@@ -25,6 +25,17 @@ TEST_CASE("Reorder cell-associated data")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
+        // Set up a mesh
+        Foam::Time& runTime = *timePtr;
+        auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
+        Foam::scalar startTime = 0.0;
+        Foam::label startTimeIndex = 0;
+        runTime.setTime(startTime, startTimeIndex);
+
+        std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+        NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+        NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+
     SECTION("Applying permutation reorders scalar cell data " + execName)
     {
         // --- Arrange ---
@@ -76,17 +87,6 @@ TEST_CASE("Reorder cell-associated data")
     SECTION("Applying permutation reorders cell volumes " + execName)
     {
         // --- Arrange ---
-        // Set up a mesh
-        Foam::Time& runTime = *timePtr;
-        auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-        Foam::scalar startTime = 0.0;
-        Foam::label startTimeIndex = 0;
-        runTime.setTime(startTime, startTimeIndex);
-
-        std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-        NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
-        NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
-
         // Prepare a permutation and the applicator
         const std::vector<IndexType> oldToNew {2, 0, 3, 1};
         const Permutation permutation {oldToNew};
@@ -102,6 +102,32 @@ TEST_CASE("Reorder cell-associated data")
 
         // --- Act ---
         applicator.reorderCellData(nfMesh.cellVolumes(), prepared);
+
+        // --- Assert ---
+        REQUIRE(nfMesh.nCells() == 4);
+        REQUIRE_THAT(nfMesh.cellVolumes(), Equals(expectedCellVolumes, ApproxScalar{1e-12}));
+    }
+
+    SECTION("Applying permutation reorders cell centers " + execName)
+    {
+        // --- Arrange ---
+        // Prepare a permutation and the applicator
+        // const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        // const Permutation permutation {oldToNew};
+        // const PreparedPermutation prepared {exec, permutation};
+        // const PermutationApplicator applicator(exec);
+
+        // Prepare expected results
+        // original cell volumes of cell 0, 1, 2, 3
+        // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
+        const std::vector<NeoN::scalar> expectedCellData 
+        {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444};
+        // {0.0222222222222222, 0.0444444444444444, 
+        //                                             0.0111111111111111, 0.0222222222222222};
+        const NeoN::scalarVector expectedCellVolumes(exec, expectedCellData);
+
+        // --- Act ---
+        // applicator.reorderCellData(nfMesh.cellVolumes(), prepared);
 
         // --- Assert ---
         REQUIRE(nfMesh.nCells() == 4);
