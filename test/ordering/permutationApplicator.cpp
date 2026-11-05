@@ -94,7 +94,7 @@ TEST_CASE("Reorder cell-associated data")
         const PermutationApplicator applicator(exec);
 
         // Prepare expected results
-        // original cell volumes of cell 0, 1, 2, 3
+        // The original cell volumes of cell 0, 1, 2, 3
         // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
         const std::vector<NeoN::scalar> expectedCellData {0.0222222222222222, 0.0444444444444444, 
                                                     0.0111111111111111, 0.0222222222222222};
@@ -112,26 +112,32 @@ TEST_CASE("Reorder cell-associated data")
     {
         // --- Arrange ---
         // Prepare a permutation and the applicator
-        // const std::vector<IndexType> oldToNew {2, 0, 3, 1};
-        // const Permutation permutation {oldToNew};
-        // const PreparedPermutation prepared {exec, permutation};
-        // const PermutationApplicator applicator(exec);
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+        const PermutationApplicator applicator(exec);
 
         // Prepare expected results
-        // original cell volumes of cell 0, 1, 2, 3
-        // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
-        const std::vector<NeoN::scalar> expectedCellData 
-        {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444};
-        // {0.0222222222222222, 0.0444444444444444, 
-        //                                             0.0111111111111111, 0.0222222222222222};
-        const NeoN::scalarVector expectedCellVolumes(exec, expectedCellData);
+        // The original cell centers of cell 0, 1, 2, 3
+        // cell 0: {0.166666666666667, 0.166666666666667, 0.05},
+        // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
+        // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
+        // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
+        const std::vector<NeoN::Vec3> expectedCellData 
+        {
+        {0.666666666666667, 0.166666666666667, 0.05},
+        {0.666666666666667, 0.666666666666667, 0.05},
+        {0.166666666666667, 0.166666666666667, 0.05},
+        {0.166666666666667, 0.666666666666667, 0.05}
+        };
+        const NeoN::vectorVector expectedCellCenters(exec, expectedCellData);
 
         // --- Act ---
-        // applicator.reorderCellData(nfMesh.cellVolumes(), prepared);
+        applicator.reorderCellData(nfMesh.cellCenters(), prepared);
 
         // --- Assert ---
         REQUIRE(nfMesh.nCells() == 4);
-        REQUIRE_THAT(nfMesh.cellVolumes(), Equals(expectedCellVolumes, ApproxScalar{1e-12}));
+        REQUIRE_THAT(nfMesh.cellCenters(), Equals(expectedCellCenters, ApproxVector{1e-12}));
     }
 }
 
