@@ -307,6 +307,50 @@ def test_plenum_pressure_with_a_volumetric_flux_is_rejected(tmp_path: Path) -> N
     assert "volumetric flux" in result.stdout + result.stderr
 
 
+def test_faithful_freestream_blends_the_freestream_value_with_zero_gradient(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``set_faithful_freestream(True)`` reads freestreamVelocity as OpenFOAM's flow blend.
+
+    NeoN's freestreamVelocity weights the freestream value by
+    ``0.5 - 0.5 (U.n) / |U|`` (``U`` the patch's own velocity, here its
+    ``freestreamValue``) and the zero-gradient value by the rest, instead of the
+    default's fixedValue at the freestream value. ``xMin`` is an inflow face
+    (``n = -x``, ``U.n < 0``), so the blend is almost, but not exactly, the freestream
+    value, and the internal field's share is visible in every component.
+    """
+    monkeypatch.setenv("NEOFOAM_FAITHFUL_FREESTREAM", "1")
+    case = from_template(_FREESTREAM_CASE).build_at(tmp_path / "faithfulFreestream").path
+
+    result = _read_fields(case)
+
+    assert result.returncode == 0, f"field read failed:\n{result.stdout}\n{result.stderr}"
+    freestream = np.array((25.75, 3.62, 0.0))
+    inflow_fraction = 0.5 - 0.5 * (-freestream[0]) / np.linalg.norm(freestream)
+    expected = inflow_fraction * freestream + (1.0 - inflow_fraction) * np.array(INTERNAL_U)
+    velocity = np.load(case / "U_boundary.npz")
+    np.testing.assert_allclose(
+        velocity["xMin"], np.broadcast_to(expected, velocity["xMin"].shape), rtol=TOLERANCE
+    )
+    assert not np.allclose(expected, freestream), "the blend must differ from the fixedValue"
+    # The other patches are untouched by the flag.
+    for name in ("xMax", "yMin", "yMax", "zMin", "zMax"):
+        np.testing.assert_allclose(
+            velocity[name],
+            np.broadcast_to(FREESTREAM_EXPECTED_U[name], velocity[name].shape),
+            rtol=TOLERANCE,
+            atol=TOLERANCE,
+            err_msg=f"U on patch {name}",
+        )
+    # freestreamPressure without a velocity context is zeroGradient, as in the default.
+    pressure = np.load(case / "p_boundary.npz")
+    for name, value in FREESTREAM_EXPECTED_P.items():
+        np.testing.assert_allclose(pressure[name], value, rtol=TOLERANCE, atol=TOLERANCE)
+    # The faithful translation is exact, so it owes no approximation notice for U.
+    output = result.stdout + result.stderr
+    assert "freestreamVelocity on patch 'xMin'" not in output
+
+
 def test_untranslated_patch_type_still_fails_naming_the_type_and_patch(tmp_path: Path) -> None:
     """A type outside the table keeps failing with the supported-type list.
 
