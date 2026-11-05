@@ -68,11 +68,12 @@ from neofoam.thermo.perfectGas import PerfectGasTransport
 # map_energy_boundary_from_temperature rather than derived from scratch.
 _TSTD = 298.15
 
-# Turbulent Prandtl number of the eddyDiffusivity thermophysical transport model, which
-# OpenFOAM defaults to 0.85. Used instead of reading alphat from the case: with
+# Turbulent Prandtl number of OpenFOAM's EddyDiffusivity (compressible turbulence models), which
+# reads "Prt" from the model coefficients and defaults to 1.0 (the 0.85 default belongs to the
+# separate thermophysicalTransport models). Used instead of reading alphat from the case: with
 # alphat = rho*nut/Prt on every patch the compressible::alphatWallFunction value is the
 # same expression evaluated at the wall face, so alphat needs no boundary condition of its own.
-_PRT = 0.85
+_PRT = 1.0
 
 # The file the turbulence model factory reads (relative to the case, like the fvOptions paths).
 _TURBULENCE_PROPERTIES = "constant/turbulenceProperties"
@@ -113,18 +114,27 @@ def _read_switch(d: Any, key: str, default: bool) -> bool:
         return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
+# Temperature patch types that are mixed (derived from mixedFvPatchField) in OpenFOAM.
+_MIXED_T_TYPES = frozenset(
+    {"inletOutlet", "outletInlet", "mixed", "freestream", "advective", "waveTransmissive"}
+)
+
+
 def _energy_patch_types(t_patch_types: list[str]) -> list[str]:
     """Derive the energy field's per-patch BC types from T's literal ones, mirroring
     OpenFOAM's own fixedEnergyFvPatchScalarField/gradientEnergyFvPatchScalarField
-    derivation: fixedValue -> fixedEnergy, empty -> empty, anything else (zeroGradient,
-    inletOutlet, ...) -> gradientEnergy. General over patch count/order (reads T's own
-    case-file types rather than assuming a fixed layout)."""
+    derivation (heThermo::heBoundaryTypes): fixedValue -> fixedEnergy, empty -> empty, a mixed
+    type (inletOutlet, ...) -> mixedEnergy, anything else (zeroGradient, ...) -> gradientEnergy.
+    General over patch count/order (reads T's own case-file types rather than assuming a fixed
+    layout)."""
     mapped = []
     for t in t_patch_types:
         if t == "fixedValue":
             mapped.append("fixedEnergy")
         elif t == "empty":
             mapped.append("empty")
+        elif t in _MIXED_T_TYPES:
+            mapped.append("mixedEnergy")
         else:
             mapped.append("gradientEnergy")
     return mapped
@@ -323,6 +333,11 @@ class NeoRhoPimpleFoam:
                 mf = max(mf, e.final_residual)
             return (mi, mf)
 
+        # OpenFOAM's eddyDiffusivity stores alphat = rho*nut/Prt when the turbulence is corrected,
+        # so the energy equation sees the rho of that moment (the construction, then the end of the
+        # previous step), not the live rho of the current outer iteration.
+        alphat_rho_nut = rho * (turb.nut() if turb is not None else zero_nut)
+
         while runTime.loop():
             print(f"Time = {runTime.timeName()}")
 
@@ -438,7 +453,7 @@ class NeoRhoPimpleFoam:
                 # internal-energy form, and alpha_energy_vol already carries it for the
                 # laminar part (gas.alphaEnergy).
                 alphat_factor = (1.0 if gas.is_enthalpy else gas.gamma) / _PRT
-                alphaEff = surf_interp.interpolate(alpha_energy_vol + alphat_factor * rho_nut)
+                alphaEff = surf_interp.interpolate(alpha_energy_vol + alphat_factor * alphat_rho_nut)
                 alphaEff.name = "alphaEff"
 
                 # sensibleInternalEnergy (he): +div(phiv,p). sensibleEnthalpy (h): -dpdt
@@ -603,6 +618,7 @@ class NeoRhoPimpleFoam:
             if turb is not None:
                 nu_vol.assign(mu_vol / rho)
                 turb.correct_compressible(U, phi, rho, rt)
+                alphat_rho_nut = rho * turb.nut()
 
             fv_options.end_of_time_step(rt.dt)
 
