@@ -445,3 +445,137 @@ TEST_CASE("kOmegaSST: NeoFOAM wrapper validate()+correct() matches OpenFOAM")
     REQUIRE_THAT(nfNut, EqualsInternal(nutFoam, ApproxScalar(5e-7)));
     REQUIRE_THAT(nfNut.boundaryData(), EqualsBoundary(nutFoam, ApproxScalar(5e-7)));
 }
+
+// ============================================================
+// Compressible correct(): density invariance.
+//
+// With a uniform density c, the mass flux c*phi and nu = mu/c unchanged, the compressible
+// transport equations ddt(rho, psi) + div(phi, psi) - laplacian(rho*DpsiEff, psi) = rho*(...)
+// are the c = 1 equations multiplied by c, and divU = div(phi/rho) is unchanged. So the k, omega
+// and nut of one step must not depend on c. A term that misses its density factor (a source, the
+// dilatation SuSp terms, the diffusivity) breaks this, whatever OpenFOAM does. The result must
+// also stay close to the incompressible step, which differs only where the compressible path
+// follows OpenFOAM more closely (per-cell DkEff/DomegaEff, wall-cell omega refresh, Pk cap).
+// ============================================================
+struct CorrectedFields
+{
+    std::vector<Scalar> k, omega, nut;
+};
+
+static CorrectedFields correctOnce(bool compressible, Scalar rhoValue, const NeoN::Executor& exec)
+{
+    Foam::Time& runTime = *timePtr;
+
+    NeoN::Database db;
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
+
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto foamMeshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *foamMeshPtr;
+
+    auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+    solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+    solverDict.subDict("k") = nf::mapFvSolution(solverDict.subDict("k"));
+    solverDict.subDict("omega") = nf::mapFvSolution(solverDict.subDict("omega"));
+    // the compressible equations are solved with the Final settings on the final iteration
+    solverDict.subDict("kFinal") = nf::mapFvSolution(solverDict.subDict("kFinal"));
+    solverDict.subDict("omegaFinal") = nf::mapFvSolution(solverDict.subDict("omegaFinal"));
+    rt.fvSchemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
+    const NeoN::Dictionary controlDict = nf::convert(runTime.controlDict());
+    runTime.setDeltaT(controlDict.get<Foam::scalar>("deltaT"));
+
+    Foam::volVectorField U(
+        Foam::IOobject("U", runTime.timeName(), mesh, Foam::IOobject::MUST_READ),
+        mesh
+    );
+    // The registered "phi" is the volumetric flux of the incompressible run and, scaled by the
+    // density, the face mass flux of the compressible one (the schemes are looked up as
+    // div(phi,k) for both, as in OpenFOAM).
+    Foam::surfaceScalarField phi(
+        Foam::IOobject(
+            "phi",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::READ_IF_PRESENT,
+            Foam::IOobject::NO_WRITE
+        ),
+        (compressible ? rhoValue : 1.0) * fvc::flux(U)
+    );
+    Foam::volScalarField ofRho(
+        Foam::IOobject("rho", runTime.timeName(), mesh, Foam::IOobject::NO_READ),
+        mesh,
+        Foam::dimensionedScalar("rho", Foam::dimDensity, compressible ? rhoValue : 1.0)
+    );
+
+    Foam::singlePhaseTransportModel transport(U, phi);
+    auto tnu = transport.nu();
+    Foam::autoPtr<Foam::incompressible::turbulenceModel> foamTurb(
+        Foam::incompressible::turbulenceModel::New(U, phi, transport)
+    );
+    foamTurb->validate();
+
+    const Foam::volScalarField& ofK = mesh.lookupObject<Foam::volScalarField>("k");
+    const Foam::volScalarField& ofOmega = mesh.lookupObject<Foam::volScalarField>("omega");
+    const Foam::volScalarField& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
+    Foam::wallDist wd(mesh);
+
+    auto& nfU = NeoFOAM::constructAndRegister(fieldCollection, rt, U, false);
+    auto& nfPhi = NeoFOAM::constructAndRegister(fieldCollection, rt, phi, false);
+    auto& nfK = NeoFOAM::constructAndRegister(fieldCollection, rt, ofK, false);
+    auto& nfOmega = NeoFOAM::constructAndRegister(fieldCollection, rt, ofOmega, false);
+    auto [nfWallDist, nfNu, nfNut] =
+        NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wd.y(), tnu(), ofNut);
+
+    nf::KOmegaSST turbNF(rt.exec, rt.nfMesh, nfNu, nfWallDist);
+    turbNF.validate(nfU, nfK, nfOmega, nfNut);
+    fvcc::rotateOldTimes(nfK);
+    fvcc::rotateOldTimes(nfOmega);
+
+    if (!compressible)
+    {
+        turbNF.correct(nfU, nfPhi, nfK, nfOmega, nfNut, rt);
+    }
+    else
+    {
+        auto& nfRho = NeoFOAM::constructAndRegister(fieldCollection, rt, ofRho, false);
+        turbNF.correct(nfU, nfPhi, nfRho, nfK, nfOmega, nfNut, rt);
+    }
+
+    auto toStd = [](const NeoN::Vector<Scalar>& v)
+    {
+        auto host = v.copyToHost();
+        return std::vector<Scalar>(host.view().begin(), host.view().end());
+    };
+    return {toStd(nfK.internalVector()), toStd(nfOmega.internalVector()), toStd(nfNut.internalVector())};
+}
+
+TEST_CASE("kOmegaSST: compressible correct() does not depend on a uniform density")
+{
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+    INFO("executor: " << execName);
+
+    const auto incompressible = correctOnce(false, 1.0, exec);
+    const auto reference = correctOnce(true, 1.0, exec);
+    REQUIRE(reference.k.size() == incompressible.k.size());
+
+    for (std::size_t i = 0; i < reference.k.size(); ++i)
+    {
+        // same model, different discretisation details: a loose bound that still catches a
+        // missing or doubled density factor (a factor of rho = 1.7 is far outside it)
+        REQUIRE(reference.k[i] == Approx(incompressible.k[i]).epsilon(2e-2));
+        REQUIRE(reference.omega[i] == Approx(incompressible.omega[i]).epsilon(2e-2));
+        REQUIRE(reference.nut[i] == Approx(incompressible.nut[i]).epsilon(2e-2));
+    }
+
+    for (const Scalar rhoValue : {1.7, 3.0})
+    {
+        INFO("rho = " << rhoValue);
+        const auto scaled = correctOnce(true, rhoValue, exec);
+        for (std::size_t i = 0; i < reference.k.size(); ++i)
+        {
+            REQUIRE(scaled.k[i] == Approx(reference.k[i]).epsilon(1e-6));
+            REQUIRE(scaled.omega[i] == Approx(reference.omega[i]).epsilon(1e-6));
+            REQUIRE(scaled.nut[i] == Approx(reference.nut[i]).epsilon(1e-6));
+        }
+    }
+}
