@@ -22,6 +22,7 @@ void PermutationApplicator::apply(
     reorderCellData(mesh.cellVolumes(), permutation);
 
     // reorder cell centers
+    reorderCellData(mesh.cellCenters(), permutation);
 
     // remap face owners
 

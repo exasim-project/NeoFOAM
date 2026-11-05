@@ -142,6 +142,41 @@ TEST_CASE("Reorder cell-associated data")
         REQUIRE(nfMesh.nCells() == 4);
         REQUIRE_THAT(nfMesh.cellCenters(), Equals(expectedCellCenters, ApproxVector {1e-12}));
     }
+
+    SECTION("Applying permutation reorders a mesh " + execName)
+    {
+        // --- Arrange ---
+        // Prepare a permutation and the applicator
+        const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+        const Permutation permutation {oldToNew};
+        const PreparedPermutation prepared {exec, permutation};
+        const PermutationApplicator applicator(exec);
+
+        // Prepare expected results
+        const std::vector<NeoN::scalar> cellVolumes {
+            0.0222222222222222,
+            0.0444444444444444,
+            0.0111111111111111,
+            0.0222222222222222
+        };
+        const NeoN::scalarVector expectedCellVolumes(exec, cellVolumes);
+
+        const std::vector<NeoN::Vec3> cellCenters {
+            {0.666666666666667, 0.166666666666667, 0.05},
+            {0.666666666666667, 0.666666666666667, 0.05},
+            {0.166666666666667, 0.166666666666667, 0.05},
+            {0.166666666666667, 0.666666666666667, 0.05}
+        };
+        const NeoN::vectorVector expectedCellCenters(exec, cellCenters);
+
+        // --- Act ---
+        applicator.apply(nfMesh, prepared);
+
+        // --- Assert ---
+        REQUIRE(nfMesh.nCells() == 4);
+        REQUIRE_THAT(nfMesh.cellVolumes(), Equals(expectedCellVolumes, ApproxScalar {1e-12}));
+        REQUIRE_THAT(nfMesh.cellCenters(), Equals(expectedCellCenters, ApproxVector {1e-12}));
+    }
 }
 
 
