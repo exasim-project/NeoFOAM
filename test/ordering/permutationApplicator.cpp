@@ -25,16 +25,16 @@ TEST_CASE("Reorder cell-associated data")
 {
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
-        // Set up a mesh
-        Foam::Time& runTime = *timePtr;
-        auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
-        Foam::scalar startTime = 0.0;
-        Foam::label startTimeIndex = 0;
-        runTime.setTime(startTime, startTimeIndex);
+    // Set up a mesh
+    Foam::Time& runTime = *timePtr;
+    auto rt = NeoFOAM::createAdapterRunTime(runTime, exec);
+    Foam::scalar startTime = 0.0;
+    Foam::label startTimeIndex = 0;
+    runTime.setTime(startTime, startTimeIndex);
 
-        std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
-        NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
-        NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
+    std::unique_ptr<NeoFOAM::MeshAdapter> meshAdapterPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshAdapterPtr;
+    NeoN::UnstructuredMesh& nfMesh = mesh.nfMesh();
 
     SECTION("Applying permutation reorders scalar cell data " + execName)
     {
@@ -96,8 +96,12 @@ TEST_CASE("Reorder cell-associated data")
         // Prepare expected results
         // The original cell volumes of cell 0, 1, 2, 3
         // {0.0111111111111111, 0.0222222222222222, 0.0222222222222222, 0.0444444444444444}
-        const std::vector<NeoN::scalar> expectedCellData {0.0222222222222222, 0.0444444444444444, 
-                                                    0.0111111111111111, 0.0222222222222222};
+        const std::vector<NeoN::scalar> expectedCellData {
+            0.0222222222222222,
+            0.0444444444444444,
+            0.0111111111111111,
+            0.0222222222222222
+        };
         const NeoN::scalarVector expectedCellVolumes(exec, expectedCellData);
 
         // --- Act ---
@@ -105,7 +109,7 @@ TEST_CASE("Reorder cell-associated data")
 
         // --- Assert ---
         REQUIRE(nfMesh.nCells() == 4);
-        REQUIRE_THAT(nfMesh.cellVolumes(), Equals(expectedCellVolumes, ApproxScalar{1e-12}));
+        REQUIRE_THAT(nfMesh.cellVolumes(), Equals(expectedCellVolumes, ApproxScalar {1e-12}));
     }
 
     SECTION("Applying permutation reorders cell centers " + execName)
@@ -123,12 +127,11 @@ TEST_CASE("Reorder cell-associated data")
         // cell 1: {0.666666666666667, 0.166666666666667, 0.05},
         // cell 2: {0.166666666666667, 0.666666666666667, 0.05},
         // cell 3: {0.666666666666667, 0.666666666666667, 0.05}
-        const std::vector<NeoN::Vec3> expectedCellData 
-        {
-        {0.666666666666667, 0.166666666666667, 0.05},
-        {0.666666666666667, 0.666666666666667, 0.05},
-        {0.166666666666667, 0.166666666666667, 0.05},
-        {0.166666666666667, 0.666666666666667, 0.05}
+        const std::vector<NeoN::Vec3> expectedCellData {
+            {0.666666666666667, 0.166666666666667, 0.05},
+            {0.666666666666667, 0.666666666666667, 0.05},
+            {0.166666666666667, 0.166666666666667, 0.05},
+            {0.166666666666667, 0.666666666666667, 0.05}
         };
         const NeoN::vectorVector expectedCellCenters(exec, expectedCellData);
 
@@ -137,7 +140,7 @@ TEST_CASE("Reorder cell-associated data")
 
         // --- Assert ---
         REQUIRE(nfMesh.nCells() == 4);
-        REQUIRE_THAT(nfMesh.cellCenters(), Equals(expectedCellCenters, ApproxVector{1e-12}));
+        REQUIRE_THAT(nfMesh.cellCenters(), Equals(expectedCellCenters, ApproxVector {1e-12}));
     }
 }
 
