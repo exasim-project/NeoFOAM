@@ -51,9 +51,9 @@ public:
     [[nodiscard]] const NeoN::Executor& exec() const noexcept { return oldToNew_.exec(); }
 
     /**
-     * @brief Return the boolean value of whether the permutation is identity 
+     * @brief Return the boolean value of whether the permutation is identity
      */
-    [[nodiscard]] bool isIdentity() const noexcept {return isIdentity_; }
+    [[nodiscard]] bool isIdentity() const noexcept { return isIdentity_; }
 
 private:
 
