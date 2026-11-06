@@ -668,6 +668,11 @@
 
 <span class="sd">No observer is installed by default; the hooks then cost one ``None`` check.</span>
 
+<span class="sd">The observer is per thread (a :class:`~contextvars.ContextVar`): a run observed</span>
+<span class="sd">in one thread does not report to, or block in, a run in another thread, and</span>
+<span class="sd">overlapping ``observe()`` scopes in different threads cannot undo each other.</span>
+<span class="sd">Threads started by an observed run do not inherit the observer.</span>
+
 <span class="sd">Example::</span>
 
 <span class="sd">    class Printer(ExecutionObserver):</span>
@@ -681,6 +686,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextVar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -746,23 +752,25 @@
 
 
 
-<span class="n">_observer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_observer</span><span class="p">:</span> <span class="n">ContextVar</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ContextVar</span><span class="p">(</span>
+    <span class="s2">"neofoam_execution_observer"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="current">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.current">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">current</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The installed observer, or ``None``."""</span>
-    <span class="k">return</span> <span class="n">_observer</span></div>
+<span class="w">    </span><span class="sd">"""The observer installed in this thread, or ``None``."""</span>
+    <span class="k">return</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
 
 
 
 <div class="viewcode-block" id="set_observer">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.set_observer">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">set_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Install ``observer`` (``None`` removes it) and return the previous one."""</span>
-    <span class="k">global</span> <span class="n">_observer</span>
-    <span class="n">previous</span><span class="p">,</span> <span class="n">_observer</span> <span class="o">=</span> <span class="n">_observer</span><span class="p">,</span> <span class="n">observer</span>
+<span class="w">    </span><span class="sd">"""Install ``observer`` in this thread (``None`` removes it) and return the previous one."""</span>
+    <span class="n">previous</span> <span class="o">=</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="n">_observer</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">previous</span></div>
 
 
@@ -771,12 +779,12 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.observe">[docs]</a>
 <span class="nd">@contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">observe</span><span class="p">(</span><span class="n">observer</span><span class="p">:</span> <span class="n">ExecutionObserver</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Install ``observer`` for the duration of the ``with`` block."""</span>
-    <span class="n">previous</span> <span class="o">=</span> <span class="n">set_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Install ``observer`` in this thread for the duration of the ``with`` block."""</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">_observer</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">yield</span> <span class="n">observer</span>
     <span class="k">finally</span><span class="p">:</span>
-        <span class="n">set_observer</span><span class="p">(</span><span class="n">previous</span><span class="p">)</span></div>
+        <span class="n">_observer</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">token</span><span class="p">)</span></div>
 
 </pre></div>
         </article>
