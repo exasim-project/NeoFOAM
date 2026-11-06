@@ -22,7 +22,9 @@ public:
     explicit PreparedPermutation(const NeoN::Executor& exec, const Permutation& permutation)
         : oldToNew_(exec, permutation.oldToNew().data(), permutation.size())
         , newToOld_(exec, permutation.newToOld().data(), permutation.size())
-    {}
+    {
+        isIdentity_ = permutation.isIdentity();
+    }
 
     /**
      * @brief Return the old-to-new mapping.
@@ -48,9 +50,15 @@ public:
      */
     [[nodiscard]] const NeoN::Executor& exec() const noexcept { return oldToNew_.exec(); }
 
+    /**
+     * @brief Return the boolean value of whether the permutation is identity 
+     */
+    [[nodiscard]] bool isIdentity() const noexcept {return isIdentity_; }
+
 private:
 
     NeoN::Array<IndexType> oldToNew_;
     NeoN::Array<IndexType> newToOld_;
+    bool isIdentity_;
 };
 } // namespace NeoFOAM

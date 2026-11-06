@@ -258,6 +258,7 @@ TEST_CASE("PreparedPermutation provides identity mappings", "[preparedPermutatio
 
         // Assert
         REQUIRE(prepared.size() == expected.size());
+        REQUIRE(prepared.isIdentity() == true);
         REQUIRE_THAT(result, Equals(expected, EqualInt {}));
     }
 }
