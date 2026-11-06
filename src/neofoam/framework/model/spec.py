@@ -10,6 +10,7 @@ callables; all mutable state lives on ModelRuntime created per instantiate().
 
 from __future__ import annotations
 
+import inspect
 import re
 from pathlib import Path
 from types import SimpleNamespace
@@ -377,11 +378,11 @@ class ModelSpec:
         """
         if self._operation_collection_func is not None:
             result = self._operation_collection_func(runtime)
-            if isinstance(result, Operations):
-                return list(result)
-            return result  # type: ignore[no-any-return]
+            collected = list(result) if isinstance(result, Operations) else result
+            return self._describe(collected, {})
 
         ops: list[Operation] = []
+        docs: dict[int, Optional[str]] = {}
         for func, metadata in self._operations:
             discovered = _discover_configs_from_signature(func)
             if discovered:
@@ -405,7 +406,23 @@ class ModelSpec:
                     fallback=metadata.get("fallback", False),
                 ),
             )
+            docs[id(op)] = func.__doc__
             ops.append(op)
+        return self._describe(ops, docs)
+
+    def _describe(self, ops: list[Operation], docs: dict[int, Optional[str]]) -> list[Operation]:
+        """Label ops with this model as their domain and their docstring summary.
+
+        Only fills what the op left unset. The resolver matches on
+        ``operation_name``, so the domain changes no scheduling; it groups the
+        op in graph views, telemetry spans and tools such as a DAG stepper.
+        """
+        for op in ops:
+            meta = op.metadata
+            if meta.domain_name is None:
+                meta.domain_name = self.name
+            if not meta.description:
+                meta.description = _summary(docs.get(id(op)) or _func_doc(op))
         return ops
 
     # ------------------------------------------------------------------
@@ -491,3 +508,16 @@ class ModelSpec:
 def Model(name: str) -> ModelSpec:
     """Factory: create a named ModelSpec."""
     return ModelSpec(name)
+
+
+def _func_doc(op: Operation) -> Optional[str]:
+    func = getattr(op.func, "func", None)
+    return getattr(func, "__doc__", None) if func is not None else None
+
+
+def _summary(doc: Optional[str]) -> str:
+    """The first paragraph of a docstring, on one line."""
+    if not doc:
+        return ""
+    first = inspect.cleandoc(doc).split("\n\n", 1)[0]
+    return " ".join(first.split())
