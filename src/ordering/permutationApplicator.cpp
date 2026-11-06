@@ -18,15 +18,19 @@ void PermutationApplicator::apply(
     // validate permutation
     validate(mesh, permutation);
 
-    // reorder cell volumes
-    reorderCellData(mesh.cellVolumes(), permutation);
+    // Check if the permutation is identity
+    if (!permutation.isIdentity())
+    {
+        // reorder cell volumes
+        reorderCellData(mesh.cellVolumes(), permutation);
 
-    // reorder cell centers
-    reorderCellData(mesh.cellCenters(), permutation);
+        // reorder cell centers
+        reorderCellData(mesh.cellCenters(), permutation);
 
-    // remap face owners
+        // remap face owners
 
-    // remap face neighbors
+        // remap face neighbors
+    }
 }
 
 // template<typename T>

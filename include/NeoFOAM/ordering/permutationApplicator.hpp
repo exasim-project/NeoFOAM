@@ -106,6 +106,27 @@ public:
     template<typename T>
     void reorderCellData(NeoN::Vector<T>& data, const PreparedPermutation& permutation) const;
 
+    /**
+     * @brief Remaps cell indices in the mesh connectivity according to a cell permutation.
+     *
+     * The cell indices stored in the mesh connectivity are remapped according to
+     * @p permutation so that they refer to the same physical cells after the cell
+     * ordering changes. The connectivity itself is preserved; only the cell
+     * indices are updated.
+     *
+     * @param mesh Mesh whose cell connectivity is to be remapped.
+     * @param permutation Permutation defining the mapping from old cell
+     *                    indices to new cell indices.
+     *
+     * @pre @p permutation is a valid permutation over the cells represented
+     *      by @p mesh.
+     *
+     * @post All cell indices in the mesh connectivity refer to the same
+     *       physical cells as before the permutation was applied.
+     */
+    void
+    remapConnectivity(NeoN::UnstructuredMesh& mesh, const PreparedPermutation& permutation) const;
+
 private:
 
     NeoN::Executor exec_;
