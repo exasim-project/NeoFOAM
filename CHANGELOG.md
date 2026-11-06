@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Add the execution observer (`neofoam.framework.execution_observer`): hooks around every init step, operation and loop test let a tool watch or pause an unmodified solver run (e.g. a step-by-step debugger); add `SolverRuntime.resolve_operations` [#463](https://github.com/exasim-project/NeoFOAM/pull/463)
 - Fix the segfault when a solver is instantiated with an empty argv: OpenFOAM's argList needs a program name, so `SolverSpec.instantiate` now defaults to `["neofoam"]` [#462](https://github.com/exasim-project/NeoFOAM/pull/462)
 - Add the `neofoam.plugins` and `neofoam.solvers` entry-point groups: separately installed packages can register plugins (models, post-processing nodes, ...) and add `neofoam solver <name>` commands [#461](https://github.com/exasim-project/NeoFOAM/pull/461)
 - Keep the linear system and momentum solver across time steps, so NeoN's solver caches (e.g. the distributed matrix cache) can hit [#448](https://github.com/exasim-project/NeoFOAM/pull/448)
