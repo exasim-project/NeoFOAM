@@ -57,3 +57,11 @@ def test_load_plugins_names_the_failing_plugin(monkeypatch: pytest.MonkeyPatch) 
 
     with pytest.raises(RuntimeError, match="neofoam plugin 'broken'"):
         entry_points.load_plugins()
+
+
+def test_a_failed_plugin_fails_again_on_retry(monkeypatch: pytest.MonkeyPatch) -> None:
+    _install(monkeypatch, _plugin("broken", "entry_point_broken_plugin"))
+
+    for _ in range(2):
+        with pytest.raises(RuntimeError, match="neofoam plugin 'broken'"):
+            entry_points.load_plugins()

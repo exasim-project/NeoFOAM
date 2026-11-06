@@ -48,6 +48,7 @@ def load_plugins() -> list[str]:
         try:
             entry_point.load()
         except Exception as exc:
+            _loaded.discard(entry_point.name)  # a retry must fail again, not skip it
             raise RuntimeError(
                 f"neofoam plugin {entry_point.name!r} ({entry_point.value}) failed to load: {exc}"
             ) from exc
