@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Fix the segfault when a solver is instantiated with an empty argv: OpenFOAM's argList needs a program name, so `SolverSpec.instantiate` now defaults to `["neofoam"]` [#462](https://github.com/exasim-project/NeoFOAM/pull/462)
 - Add the `neofoam.plugins` and `neofoam.solvers` entry-point groups: separately installed packages can register plugins (models, post-processing nodes, ...) and add `neofoam solver <name>` commands [#461](https://github.com/exasim-project/NeoFOAM/pull/461)
 - Keep the linear system and momentum solver across time steps, so NeoN's solver caches (e.g. the distributed matrix cache) can hit [#448](https://github.com/exasim-project/NeoFOAM/pull/448)
 - Fix the SIGSEGV during field construction in Release CUDA builds (both executors): link libNeoFOAM with `-Bsymbolic-functions` and bump NeoN for its executor dispatch fix ([NeoN#609](https://github.com/exasim-project/NeoN/pull/609)) [#410](https://github.com/exasim-project/NeoFOAM/issues/410)
