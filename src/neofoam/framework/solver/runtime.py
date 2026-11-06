@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
-    from neofoam.framework.operations import OperationCollection, StepBuilder
+    from neofoam.framework.operations import OperationCollection, Operations, StepBuilder
 
     from .spec import SolverSpec
 
@@ -95,6 +95,22 @@ class SolverRuntime:
         transiently, never stored on the runtime.
         """
         return self.spec._run_execution_graph(self, domain_name, ctx)
+
+    def resolve_operations(self, ctx: "Context") -> "Operations":
+        """The runnable execution graph: ``execution_graph`` with the optional-model
+        operations merged in by :class:`~neofoam.framework.graph.DAGResolver`.
+
+        Reported to the installed execution observer before it is returned.
+        """
+        from neofoam.framework import execution_observer  # noqa: PLC0415
+        from neofoam.framework.graph import DAGResolver  # noqa: PLC0415
+
+        builder, model_ops = self.execution_graph(ctx=ctx)
+        operations = DAGResolver().resolve(builder, model_ops).operations
+        observer = execution_observer.current()
+        if observer is not None:
+            observer.operations(operations)
+        return operations
 
     @property
     def operations(self) -> "OperationCollection":
