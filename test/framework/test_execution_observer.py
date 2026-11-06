@@ -3,6 +3,7 @@
 
 """The execution observer sees init steps, operations and loop tests in order."""
 
+import threading
 from typing import Any
 
 from framework.conftest import MaxIterations
@@ -120,3 +121,27 @@ def test_no_observer_runs_unchanged() -> None:
     )
     op.run(_ctx())
     assert count == [1]
+
+
+def test_observer_is_per_thread() -> None:
+    """Overlapping scopes in two threads neither leak into nor undo each other."""
+    first, second = Recorder(), Recorder()
+    entered, release = threading.Event(), threading.Event()
+    seen: dict[str, Any] = {}
+
+    def other() -> None:
+        with observe(second):
+            entered.set()
+            release.wait(5)
+            seen["inside"] = current()
+        seen["after"] = current()
+
+    with observe(first):
+        thread = threading.Thread(target=other)
+        thread.start()
+        entered.wait(5)
+        assert current() is first  # the other thread's scope does not leak here
+    release.set()  # the first scope ended while the second is still open
+    thread.join(5)
+    assert seen == {"inside": second, "after": None}
+    assert current() is None

@@ -11,6 +11,11 @@ blocks pauses the run right there, which is how a step-by-step debugger UI
 
 No observer is installed by default; the hooks then cost one ``None`` check.
 
+The observer is per thread (a :class:`~contextvars.ContextVar`): a run observed
+in one thread does not report to, or block in, a run in another thread, and
+overlapping ``observe()`` scopes in different threads cannot undo each other.
+Threads started by an observed run do not inherit the observer.
+
 Example::
 
     class Printer(ExecutionObserver):
@@ -24,6 +29,7 @@ Example::
 from __future__ import annotations
 
 from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Iterator, Optional
 
 if TYPE_CHECKING:
@@ -62,26 +68,28 @@ class ExecutionObserver:
         """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
 
 
-_observer: Optional[ExecutionObserver] = None
+_observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(
+    "neofoam_execution_observer", default=None
+)
 
 
 def current() -> Optional[ExecutionObserver]:
-    """The installed observer, or ``None``."""
-    return _observer
+    """The observer installed in this thread, or ``None``."""
+    return _observer.get()
 
 
 def set_observer(observer: Optional[ExecutionObserver]) -> Optional[ExecutionObserver]:
-    """Install ``observer`` (``None`` removes it) and return the previous one."""
-    global _observer
-    previous, _observer = _observer, observer
+    """Install ``observer`` in this thread (``None`` removes it) and return the previous one."""
+    previous = _observer.get()
+    _observer.set(observer)
     return previous
 
 
 @contextmanager
 def observe(observer: ExecutionObserver) -> Iterator[ExecutionObserver]:
-    """Install ``observer`` for the duration of the ``with`` block."""
-    previous = set_observer(observer)
+    """Install ``observer`` in this thread for the duration of the ``with`` block."""
+    token = _observer.set(observer)
     try:
         yield observer
     finally:
-        set_observer(previous)
+        _observer.reset(token)
