@@ -264,6 +264,7 @@ _SCALAR_GRIDS = {
         "dict:DynamicMeshControls": [""],
     },
     "multiRun": {},
+    "heatConductionNeoN": {"dict:ThermalPropertiesConfig": [""]},
 }
 
 

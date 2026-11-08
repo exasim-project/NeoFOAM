@@ -1,0 +1,16 @@
+# Dirichlet-Neumann at x = 1: left (coupledHeatFlux) sends its wall temperature,
+# right (coupledTemperature) the heat flux into it. The interface faces do not
+# match (3 against 5): nearest-neighbor maps them.
+exchanges:
+  - name: interface
+    sides: {left: interface, right: interface}
+    mapping: nearest-neighbor
+scheme: serial
+acceleration:
+  type: aitken
+  relaxation: 0.5
+convergence:
+  - type: relative
+    data: T
+    limit: 1.0e-10
+maxIterations: 100

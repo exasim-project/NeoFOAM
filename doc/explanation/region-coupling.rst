@@ -197,6 +197,57 @@ thread (``coupling_exchanged``, ``coupling_finished``, its graph), so hooks
 must be thread safe; a hook that blocks pauses its region and those coupled
 with it.
 
+A NeoN solver: heatConductionNeoN
+---------------------------------
+
+``heatConductionNeoN`` solves ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``
+on NeoN (``constant/thermalProperties``: ``rho``, ``cp``, ``k``, ``heatSource``)
+and supports coupling: its init adds the coupling model, then the coupled
+patches of ``T``; ``solve_T`` is ``solves=["T"]``; it agrees on the time step
+(``agree_dt``). A patch of ``0/T`` is coupled when a ``coupled`` entry names its
+condition; it is ``calculated``, so NeoN leaves its values to the coupling:
+
+.. code-block:: c++
+
+    interface
+    {
+        type        calculated;
+        coupled     coupledTemperature;   // Dirichlet side; or coupledHeatFlux
+        value       uniform 350;
+    }
+
+.. list-table::
+   :header-rows: 1
+
+   * - ``coupled``
+     - receives
+     - sends
+     - on its NeoN patch
+   * - ``coupledTemperature``
+     - the wall temperature ``T``
+     - the heat flux ``q = k dT/dn`` into its region
+     - ``T.set_patch_fixed_values`` (Dirichlet)
+   * - ``coupledHeatFlux``
+     - that ``q``, which leaves its region
+     - its wall temperature ``T_cell + q_in / (k deltaCoeff)``
+     - an explicit source ``q_in A / (rho cp V)`` in the cells of its faces (Neumann)
+
+The points are the face centres, so the faces of the two sides need not match
+(``mapping: nearest-neighbor``). NeoFOAM's runtime reads the default region only
+(``constant/polyMesh``), so each region is an OpenFOAM case of its own, next to
+the case's ``system/controlDict.yaml``, whose times every region steps on, and
+``system/regionCoupling.yaml``::
+
+    system/controlDict.yaml        regionSolvers: {left: heatConductionNeoN, right: ...}
+    system/regionCoupling.yaml     exchanges: [{sides: {left: interface, right: interface}}]
+    left/{0/T, constant/{polyMesh,thermalProperties}, system/{controlDict,fvSchemes,fvSolution}}
+    right/...
+
+``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks of different
+``k`` and ``rho cp`` through 3 against 5 interface faces, serial with Aitken, and
+reaches the piecewise-linear steady profile
+(``test/solver/heatConductionNeoN/test_coupled_blocks.py``).
+
 Extension points
 ----------------
 
