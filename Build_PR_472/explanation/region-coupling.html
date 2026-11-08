@@ -908,6 +908,25 @@ threads of one process.</p></td>
 </tbody>
 </table>
 </div>
+<p>A package of its own, e.g. a <code class="docutils literal notranslate"><span class="pre">neofoam-precice</span></code> with preCICE’s RBF mapping and
+IQN-ILS acceleration, adds its kernels to the registries without NeoFOAM
+importing it: an entry point of the group <code class="docutils literal notranslate"><span class="pre">neofoam.coupling</span></code> names its
+<code class="docutils literal notranslate"><span class="pre">register(mappings,</span> <span class="pre">accelerations,</span> <span class="pre">convergences)</span></code>, which fills the three dicts
+it is given.</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"neofoam.coupling"</span><span class="k">]</span>
+<span class="n">precice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_precice:register"</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">mappings</span><span class="p">,</span> <span class="n">accelerations</span><span class="p">,</span> <span class="n">convergences</span><span class="p">):</span>
+    <span class="n">mappings</span><span class="p">[</span><span class="s2">"rbf"</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadialBasisMapping</span>            <span class="c1"># yaml mapping: rbf</span>
+    <span class="n">accelerations</span><span class="p">[</span><span class="s2">"iqn-ils"</span><span class="p">]</span> <span class="o">=</span> <span class="n">IQNILSAcceleration</span>   <span class="c1"># yaml acceleration.type: iqn-ils</span>
+</pre></div>
+</div>
+<p>The registries load every plugin once, on their first read, so before
+<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code> is checked against them. A name that is built in
+or that another plugin registers raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> naming both; a plugin
+that fails to load or to register raises an <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> naming it. Nothing
+is overridden.</p>
 <p>What is exchanged follows from the side’s <code class="docutils literal notranslate"><span class="pre">sends</span></code> / <code class="docutils literal notranslate"><span class="pre">receives</span></code> models:
 <code class="docutils literal notranslate"><span class="pre">Array</span></code> fields are mapped, relaxed and compared, plain fields handed over as
 they are.</p>

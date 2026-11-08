@@ -226,6 +226,29 @@ Extension points
        ``close(region)``; messages are plain data. ``InProcessTransport`` connects
        threads of one process.
 
+A package of its own, e.g. a ``neofoam-precice`` with preCICE's RBF mapping and
+IQN-ILS acceleration, adds its kernels to the registries without NeoFOAM
+importing it: an entry point of the group ``neofoam.coupling`` names its
+``register(mappings, accelerations, convergences)``, which fills the three dicts
+it is given.
+
+.. code-block:: toml
+
+    [project.entry-points."neofoam.coupling"]
+    precice = "neofoam_precice:register"
+
+.. code-block:: python
+
+    def register(mappings, accelerations, convergences):
+        mappings["rbf"] = RadialBasisMapping            # yaml mapping: rbf
+        accelerations["iqn-ils"] = IQNILSAcceleration   # yaml acceleration.type: iqn-ils
+
+The registries load every plugin once, on their first read, so before
+``system/regionCoupling.yaml`` is checked against them. A name that is built in
+or that another plugin registers raises a ``ValueError`` naming both; a plugin
+that fails to load or to register raises an ``ImportError`` naming it. Nothing
+is overridden.
+
 What is exchanged follows from the side's ``sends`` / ``receives`` models:
 ``Array`` fields are mapped, relaxed and compared, plain fields handed over as
 they are.

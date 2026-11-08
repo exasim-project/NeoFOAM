@@ -690,12 +690,24 @@
 
 <span class="sd">The registries :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES`</span>
 <span class="sd">name them for the case (``system/regionCoupling.yaml``); a kernel of one's own</span>
-<span class="sd">is added to its registry.</span>
+<span class="sd">is added to its registry. A package adds its kernels through the entry-point</span>
+<span class="sd">group ``neofoam.coupling`` (:data:`ENTRY_POINT_GROUP`): each entry point names a</span>
+<span class="sd">``register(mappings, accelerations, convergences)`` that fills the three dicts</span>
+<span class="sd">it is given; the registries take them in before they are first read</span>
+<span class="sd">(:func:`load_plugins`)::</span>
+
+<span class="sd">    # pyproject.toml of neofoam-precice:</span>
+<span class="sd">    #   [project.entry-points."neofoam.coupling"]</span>
+<span class="sd">    #   precice = "neofoam_precice:register"</span>
+<span class="sd">    def register(mappings, accelerations, convergences):</span>
+<span class="sd">        mappings["rbf"] = RadialBasisMapping</span>
+<span class="sd">        accelerations["iqn-ils"] = IQNILSAcceleration</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.metadata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -714,6 +726,67 @@
     <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">previous</span><span class="p">:</span> <span class="n">Data</span>
     <span class="n">current</span><span class="p">:</span> <span class="n">Data</span></div>
+
+
+
+<span class="n">V</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"V"</span><span class="p">)</span>
+<span class="c1">#: The entry-point group of the packages that add kernels to the registries.</span>
+<span class="n">ENTRY_POINT_GROUP</span> <span class="o">=</span> <span class="s2">"neofoam.coupling"</span>
+
+
+<div class="viewcode-block" id="Registry">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Registry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Registry</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">V</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""A registry of kernels by name: a dict that takes in the plugins' kernels before it is read.</span>
+
+<span class="sd">    Reading it (``[]``, ``in``, ``get``, iterating, ``len``, ``keys``, ``values``,</span>
+<span class="sd">    ``items``) loads the plugins of :data:`ENTRY_POINT_GROUP` first, once</span>
+<span class="sd">    (:func:`load_plugins`); writing to it does not.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">V</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Registry.get">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Registry.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Registry.keys">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Registry.keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Registry.values">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Registry.values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Registry.items">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Registry.items">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">load_plugins</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span></div>
+</div>
 
 
 
@@ -804,10 +877,12 @@
 
 
 <span class="c1">#: The mappings by their ``kind``: a new instance per exchange.</span>
-<span class="n">MAPPINGS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Mapping</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">Mapping</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span>
-    <span class="n">NearestNeighborMapping</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span> <span class="n">NearestNeighborMapping</span><span class="p">,</span>
-<span class="p">}</span>
+<span class="n">MAPPINGS</span><span class="p">:</span> <span class="n">Registry</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Mapping</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Registry</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">Mapping</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">,</span>
+        <span class="n">NearestNeighborMapping</span><span class="o">.</span><span class="n">kind</span><span class="p">:</span> <span class="n">NearestNeighborMapping</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="mapping">
@@ -893,10 +968,12 @@
 
 <span class="c1">#: The accelerations by their name (``system/regionCoupling.yaml``: ``acceleration.type``),</span>
 <span class="c1">#: built with the relaxation factor; a new instance per coupling, as it keeps its last passes.</span>
-<span class="n">ACCELERATIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Acceleration</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"constant"</span><span class="p">:</span> <span class="n">ConstantRelaxation</span><span class="p">,</span>
-    <span class="s2">"aitken"</span><span class="p">:</span> <span class="n">AitkenRelaxation</span><span class="p">,</span>
-<span class="p">}</span>
+<span class="n">ACCELERATIONS</span><span class="p">:</span> <span class="n">Registry</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Acceleration</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Registry</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"constant"</span><span class="p">:</span> <span class="n">ConstantRelaxation</span><span class="p">,</span>
+        <span class="s2">"aitken"</span><span class="p">:</span> <span class="n">AitkenRelaxation</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_flatten</span><span class="p">(</span><span class="n">sent</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -953,9 +1030,83 @@
 
 <span class="c1">#: The convergence measures by their name (``system/regionCoupling.yaml``:</span>
 <span class="c1">#: ``convergence[].type``), built with the field whose data they check and the limit.</span>
-<span class="n">CONVERGENCES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Convergence</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"relative"</span><span class="p">:</span> <span class="n">RelativeConvergence</span><span class="p">,</span>
-<span class="p">}</span>
+<span class="n">CONVERGENCES</span><span class="p">:</span> <span class="n">Registry</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">Convergence</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Registry</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"relative"</span><span class="p">:</span> <span class="n">RelativeConvergence</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># None: the plugins are not loaded yet; False: they are loading; True: loaded.</span>
+<span class="n">_plugins_loaded</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="load_plugins">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.load_plugins">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_plugins</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add the kernels of every plugin of :data:`ENTRY_POINT_GROUP` to the registries, once.</span>
+
+<span class="sd">    Each entry point names a callable ``register(mappings, accelerations,</span>
+<span class="sd">    convergences)`` that fills the three empty dicts it is given; they join</span>
+<span class="sd">    :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES` when every</span>
+<span class="sd">    plugin registered (a read of a registry while the plugins load sees the</span>
+<span class="sd">    built-in kernels only). The registries call it before they are read; a case</span>
+<span class="sd">    config that checks a name against a registry reads it.</span>
+
+<span class="sd">    Raises ``ImportError`` naming the plugin when it fails to load or to</span>
+<span class="sd">    register, ``ValueError`` naming both sides when a plugin registers a name</span>
+<span class="sd">    that is built in or registered by another plugin. Nothing is added then, and</span>
+<span class="sd">    the next read tries again.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_plugins_loaded</span>
+    <span class="k">if</span> <span class="n">_plugins_loaded</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_plugins_loaded</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">registries</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Registry</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"mapping"</span><span class="p">:</span> <span class="n">MAPPINGS</span><span class="p">,</span>
+            <span class="s2">"acceleration"</span><span class="p">:</span> <span class="n">ACCELERATIONS</span><span class="p">,</span>
+            <span class="s2">"convergence"</span><span class="p">:</span> <span class="n">CONVERGENCES</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="c1"># who registered every name, by registry: NeoFOAM or a plugin</span>
+        <span class="n">sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">what</span><span class="p">:</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">keys</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="s2">"NeoFOAM (built-in)"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">what</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">registries</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">added</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">what</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">what</span> <span class="ow">in</span> <span class="n">registries</span><span class="p">}</span>
+        <span class="n">entry_points</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">entry_points</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">ENTRY_POINT_GROUP</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entry_point</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">entry_points</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">plugin</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"plugin '</span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' (</span><span class="si">{</span><span class="n">entry_point</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">register</span> <span class="o">=</span> <span class="n">entry_point</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="n">plugin</span><span class="si">}</span><span class="s2"> of entry-point group '</span><span class="si">{</span><span class="n">ENTRY_POINT_GROUP</span><span class="si">}</span><span class="s2">' "</span>
+                    <span class="sa">f</span><span class="s2">"failed to load: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+            <span class="n">kernels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">what</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">what</span> <span class="ow">in</span> <span class="n">registries</span><span class="p">}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">register</span><span class="p">(</span><span class="n">kernels</span><span class="p">[</span><span class="s2">"mapping"</span><span class="p">],</span> <span class="n">kernels</span><span class="p">[</span><span class="s2">"acceleration"</span><span class="p">],</span> <span class="n">kernels</span><span class="p">[</span><span class="s2">"convergence"</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="n">plugin</span><span class="si">}</span><span class="s2"> of entry-point group '</span><span class="si">{</span><span class="n">ENTRY_POINT_GROUP</span><span class="si">}</span><span class="s2">' "</span>
+                    <span class="sa">f</span><span class="s2">"failed to register: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+            <span class="k">for</span> <span class="n">what</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">kernels</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">kernel</span> <span class="ow">in</span> <span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">[</span><span class="n">what</span><span class="p">]:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="n">plugin</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">sources</span><span class="p">[</span><span class="n">what</span><span class="p">][</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2"> both register the "</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'; a name is registered once"</span>
+                        <span class="p">)</span>
+                    <span class="n">sources</span><span class="p">[</span><span class="n">what</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">plugin</span>
+                    <span class="n">added</span><span class="p">[</span><span class="n">what</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">kernel</span>
+        <span class="k">for</span> <span class="n">what</span><span class="p">,</span> <span class="n">registry</span> <span class="ow">in</span> <span class="n">registries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">registry</span><span class="p">,</span> <span class="n">added</span><span class="p">[</span><span class="n">what</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+        <span class="n">_plugins_loaded</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">raise</span>
+    <span class="n">_plugins_loaded</span> <span class="o">=</span> <span class="kc">True</span></div>
+
 </pre></div>
         </article>
       </div>
