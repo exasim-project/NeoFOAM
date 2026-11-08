@@ -17,6 +17,16 @@ from neofoam.io.validation_types import (
 T = TypeVar("T", bound="BaseConfig")
 
 
+def _in_region(file: str, region: Optional[str]) -> str:
+    """The file's path in *region*: the region directory follows the top directory."""
+    if region is None:
+        return file
+    top, separator, rest = file.partition("/")
+    if not separator:
+        raise ValueError(f"{file!r} has no top directory to hold region {region!r}")
+    return f"{top}/{region}/{rest}"
+
+
 class BaseConfig(BaseModel):
     """Base class for configurations with reading/writing strategies.
 
@@ -46,19 +56,28 @@ class BaseConfig(BaseModel):
         return cls.io_config
 
     @classmethod
-    def get_default_path(cls, case_dir: Union[Path, str] = ".") -> Path:
-        """Get default file path from ``io_config.file``."""
-        return Path(case_dir) / cls._get_io().file
+    def get_default_path(
+        cls, case_dir: Union[Path, str] = ".", region: Optional[str] = None
+    ) -> Path:
+        """Get default file path from ``io_config.file``, inside *region* if given.
+
+        A region directory follows the top directory, as in a multi-region
+        OpenFOAM case: ``constant/thermalProperties.yaml`` in region ``left`` is
+        ``constant/left/thermalProperties.yaml``.
+        """
+        return Path(case_dir) / _in_region(cls._get_io().file, region)
 
     @classmethod
-    def _resolve_path(cls, case_dir: Union[Path, str], file: Optional[str]) -> Path:
+    def _resolve_path(
+        cls, case_dir: Union[Path, str], file: Optional[str], region: Optional[str]
+    ) -> Path:
         """Resolve the on-disk path: explicit file, *file* override, or default."""
         case_dir_path = Path(case_dir)
         if case_dir_path.is_file() or (not case_dir_path.exists() and case_dir_path.suffix):
             return case_dir_path  # case_dir is an explicit file path
         if file is not None:
-            return case_dir_path / file  # override filename, relative to case_dir
-        return cls.get_default_path(case_dir)
+            return case_dir_path / _in_region(file, region)  # relative to case_dir
+        return cls.get_default_path(case_dir, region)
 
     @classmethod
     def load(
@@ -68,6 +87,7 @@ class BaseConfig(BaseModel):
         file: Optional[str] = None,
         validate: bool = True,
         encoding: str = "utf-8",
+        region: Optional[str] = None,
     ) -> T:
         """Load configuration from file via :class:`~neofoam.io.DictFile`.
 
@@ -84,6 +104,8 @@ class BaseConfig(BaseModel):
                       ``pydantic.ValidationError`` on failure (default: True)
             file: Optional filename override. When provided, resolves relative
                   to ``case_dir`` instead of using the registered default path.
+            region: Optional region of a multi-region case; the file is read
+                    from the region directory (see :meth:`get_default_path`).
 
         Returns:
             Configuration instance loaded from file
@@ -93,7 +115,7 @@ class BaseConfig(BaseModel):
             KeyError: If a configured subdict path doesn't resolve
             pydantic.ValidationError: If validate=True and data has errors
         """
-        path = cls._resolve_path(case_dir, file)
+        path = cls._resolve_path(case_dir, file, region)
         return DictFile(path).fill(cls, validate=validate)
 
     @property
@@ -155,6 +177,7 @@ class BaseConfig(BaseModel):
         case_dir: Union[Path, str] = ".",
         encoding: str = "utf-8",
         file: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> None:
         """Save configuration to file via :class:`~neofoam.io.DictFile`.
 
@@ -167,14 +190,15 @@ class BaseConfig(BaseModel):
             encoding: Accepted for compatibility; ``DictFile`` writes UTF-8.
             file: Optional filename override. When provided, resolves relative
                   to ``case_dir`` instead of using the registered default path.
+            region: Optional region of a multi-region case (see :meth:`load`).
         """
         case_dir_path = Path(case_dir)
         if case_dir_path.suffix:  # Has file extension, treat as explicit path
             path = case_dir_path
         elif file is not None:
-            path = case_dir_path / file
+            path = case_dir_path / _in_region(file, region)
         else:
-            path = self.__class__.get_default_path(case_dir)
+            path = self.__class__.get_default_path(case_dir, region)
 
         DictFile.save(self, path)
 

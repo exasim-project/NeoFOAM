@@ -9,7 +9,7 @@ Provides the InitStep dataclass for deferred initialization with dependency trac
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 # ``InitCategory`` used to be a closed ``Literal``; routing is now extensible
 # via :class:`CategoryRouter` so categories are plain strings. The alias is
@@ -63,6 +63,9 @@ class InitStep:
     category: InitCategory = "resource"
     write: bool = False  # flag a field for persistence (auto-write)
     replaces: list[str] = field(default_factory=list)  # default step names this supersedes
+    # the region of a multi-region case the step initializes; set when it runs
+    # inside ``initializing_region`` (a region's ``SolverRuntime.initialize``)
+    region: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Validate InitStep after creation."""
