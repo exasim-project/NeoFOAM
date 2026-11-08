@@ -168,3 +168,85 @@ def test_a_loop_wrapping_fields_of_several_scopes_raises() -> None:
 
     with pytest.raises(ValueError, match="lie in more than one loop scope; couple wraps"):
         _resolve(builder, _loop("couple", ["T", "U"]))
+
+
+def _coupled_step(log: list[str], edge: str) -> StepBuilder:
+    """time_loop: start_step, solve_U, solve_T after solve_U (over ``edge``), update_rho, write."""
+    builder = StepBuilder()
+    with builder.loop(_loop("time_loop", [])) as time_builder:
+        time_builder.step(_op("start_step", log))
+        time_builder.step(
+            _op(
+                "solve_U",
+                log,
+                depends_on=["start_step"],
+                before=["solve_T"] if edge == "before" else None,
+                solves=["U"],
+            )
+        )
+        time_builder.step(
+            _op(
+                "solve_T",
+                log,
+                depends_on=["start_step", "solve_U"] if edge == "depends_on" else ["start_step"],
+                solves=["T"],
+            )
+        )
+        time_builder.step(_op("update_rho", log, depends_on=["solve_T"]))
+        time_builder.step(_op("write", log))
+    return builder
+
+
+_ORDERS = {"T then U": ["T", "U"], "U then T": ["U", "T"]}
+
+
+@pytest.mark.parametrize("order", list(_ORDERS))
+@pytest.mark.parametrize("edge", ["depends_on", "before"])
+def test_a_loop_wrapping_the_field_of_a_wrapped_loop_holds_that_loop(edge: str, order: str) -> None:
+    """T is solved after U: the U loop holds the T loop, whichever is wrapped first."""
+    loops = [_loop(f"{field}.couple", [field]) for field in _ORDERS[order]]
+    ops = _resolve(_coupled_step([], edge), *loops)
+
+    assert _tree(ops) == [
+        (
+            "time_loop",
+            [
+                "start_step",
+                ("U.couple", ["solve_U", ("T.couple", ["solve_T", "update_rho"])]),
+                "write",
+            ],
+        )
+    ]
+
+
+@pytest.mark.parametrize("order", list(_ORDERS))
+def test_a_loop_wrapping_the_field_of_a_wrapped_loop_repeats_it_each_pass(order: str) -> None:
+    """Each pass of the U loop runs every pass of the T loop."""
+    log: list[str] = []
+    loops = [_loop(f"{field}.couple", [field], count=2) for field in _ORDERS[order]]
+    ops = _resolve(_coupled_step(log, "depends_on"), *loops)
+
+    Operations(ops).run(Context(fields={}, models={}))
+
+    assert log == [
+        "start_step",
+        *["solve_U", *["solve_T", "update_rho"] * 2] * 2,
+        "write",
+    ]
+
+
+def test_an_operation_upstream_only_runs_before_the_loop() -> None:
+    """A does not depend on solve_T, so it runs before the loop; B depends on both."""
+    builder = StepBuilder()
+    with builder.loop(_loop("time_loop", [])) as time_builder:
+        time_builder.step(_op("start_step", []))
+        time_builder.step(_op("solve_T", [], depends_on=["start_step"], solves=["T"]))
+        time_builder.step(_op("A", [], depends_on=["start_step"]))
+        time_builder.step(_op("B", [], depends_on=["solve_T", "A"]))
+        time_builder.step(_op("write", []))
+
+    ops = _resolve(builder, _loop("T.couple", ["T"]))
+
+    assert _tree(ops) == [
+        ("time_loop", ["start_step", "A", ("T.couple", ["solve_T", "B"]), "write"])
+    ]
