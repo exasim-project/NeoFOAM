@@ -85,6 +85,11 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
+    # the fields the operation solves for; a loop that wraps a field holds them
+    solves: list[str] = field(default_factory=list)
+    # the fields a loop contributed by a model or boundary condition repeats: the
+    # resolver nests the operations solving them inside it (graph.wrapping)
+    wraps: list[str] = field(default_factory=list)
 
     # DAG visualization properties
     shape: str = "box"
@@ -105,6 +110,7 @@ class OperationMetadata:
 
     @property
     def name(self) -> str | None:
+        """``[<domain>.]<op>``: the op_name with its model domain."""
         if self.op_name is None:
             return None
         if self.domain_name:

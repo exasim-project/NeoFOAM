@@ -15,10 +15,12 @@ operations can run, the framework needs to:
    :mod:`~neofoam.framework.graph.resolver`. For the simpler
    ``{node: [deps]}`` case, :func:`topological_order` (see
    :mod:`~neofoam.framework.graph.ordering`) builds the graph and sorts it.
-3. Optionally render the resulting graph for diagnostics — see
+3. Nest the operations solving the fields a contributed loop wraps inside it
+   (``OperationMetadata.wraps``) — see :mod:`~neofoam.framework.graph.wrapping`.
+4. Optionally render the resulting graph for diagnostics — see
    :mod:`~neofoam.framework.graph.visualization`.
 
-The package exposes its public symbols across five modules:
+The package exposes its public symbols across six modules:
 
 - :class:`DAGResolver` — the main entry point; merges and orders
   operations across loop scopes.
