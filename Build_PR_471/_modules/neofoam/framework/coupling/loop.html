@@ -988,13 +988,18 @@
 <span class="sd">    (``coupling_finished``); ending at ``max_iterations`` unconverged also warns</span>
 <span class="sd">    (:class:`CouplingNotConvergedWarning`). Not thread safe.</span>
 
-<span class="sd">    The leader builds it with its coupling's ``controller`` factory, e.g. to set</span>
-<span class="sd">    the convergence and acceleration (one acceleration per controller: it keeps</span>
-<span class="sd">    the data of its last passes)::</span>
+<span class="sd">    The leader builds it with its coupling's ``controller`` factory, which it</span>
+<span class="sd">    hands the coupling's ``parallel``, e.g. to set the convergence and</span>
+<span class="sd">    acceleration (one acceleration per controller: it keeps the data of its last</span>
+<span class="sd">    passes)::</span>
 
-<span class="sd">        def controller(sides, label):</span>
+<span class="sd">        def controller(sides, label, parallel):</span>
 <span class="sd">            return CouplingController(</span>
-<span class="sd">                sides, label, max_iterations=50, acceleration=AitkenRelaxation(initial=0.5)</span>
+<span class="sd">                sides,</span>
+<span class="sd">                label,</span>
+<span class="sd">                max_iterations=50,</span>
+<span class="sd">                parallel=parallel,</span>
+<span class="sd">                acceleration=AitkenRelaxation(initial=0.5),</span>
 <span class="sd">            )</span>
 <span class="sd">    """</span>
 
@@ -1114,8 +1119,8 @@
 
 
 <span class="c1"># The leader's decision for one region: another pass?, and what each of its sides</span>
-<span class="c1"># that receives carried data receives, by patch.</span>
-<span class="n">_Decision</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Data</span><span class="p">]]</span>
+<span class="c1"># receives, by patch: the carried data, or None: what its partner sends in this pass.</span>
+<span class="n">_Decision</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]]]</span>
 
 
 <div class="viewcode-block" id="CouplingOp">
@@ -1231,13 +1236,13 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="n">time</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">go_on</span><span class="p">,</span> <span class="n">carried</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decide</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">time</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">go_on</span><span class="p">,</span> <span class="n">decided</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decide</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">time</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">go_on</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_hand_over</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="n">carried</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hand_over</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="n">decided</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1272,7 +1277,9 @@
             <span class="n">exchange</span><span class="o">.</span><span class="n">mapping</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">announced</span><span class="p">[</span><span class="s2">"points"</span><span class="p">],</span> <span class="n">side</span><span class="o">.</span><span class="n">side</span><span class="o">.</span><span class="n">coordinates</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_partner_points</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span> <span class="o">=</span> <span class="n">announced</span><span class="p">[</span><span class="s2">"points"</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leader</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">(</span><span class="n">sides</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_group</span><span class="p">(</span><span class="n">sides</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">parallel</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">own</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">]:</span>
@@ -1323,10 +1330,12 @@
         <span class="n">decisions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_Decision</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">patches</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_patches</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">received</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">received</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="n">patches</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="o">.</span><span class="n">fresh</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
-                    <span class="n">received</span><span class="p">[</span><span class="n">patch</span><span class="p">]</span> <span class="o">=</span> <span class="n">carried</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="o">.</span><span class="n">sides</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">partner</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">fresh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="o">.</span><span class="n">fresh</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+                    <span class="n">partner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="o">.</span><span class="n">sides</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">partner</span>
+                    <span class="n">received</span><span class="p">[</span><span class="n">patch</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">fresh</span> <span class="k">else</span> <span class="n">carried</span><span class="p">[</span><span class="n">partner</span><span class="p">]</span>
                 <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">decisions</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">received</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">decision</span> <span class="ow">in</span> <span class="n">decisions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1334,18 +1343,16 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="s2">"decision"</span><span class="p">,</span> <span class="n">decision</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">decisions</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_fresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether ``side`` receives what its partner sent in this pass (serial, steps earlier)."""</span>
-        <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">parallel</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hand_over</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">decided</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Map what the partner of ``side`` sent onto its points and hand it over.</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_hand_over</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">carried</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Data</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Map what the partner of ``side`` sent onto its points and hand it over."""</span>
+<span class="sd">        ``decided`` is the leader's decision: the carried data by patch, or</span>
+<span class="sd">        ``None`` where the partner's data of this pass is to be received.</span>
+<span class="sd">        """</span>
         <span class="n">exchange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">(</span><span class="n">side</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">decided</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_receive</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">carried</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">]</span>
         <span class="n">mapped</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">mapping</span><span class="p">(</span>
             <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">mapped</span><span class="p">,</span> <span class="n">data</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_partner_points</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="p">],</span> <span class="n">side</span><span class="o">.</span><span class="n">side</span><span class="o">.</span><span class="n">coordinates</span>
         <span class="p">)</span>
