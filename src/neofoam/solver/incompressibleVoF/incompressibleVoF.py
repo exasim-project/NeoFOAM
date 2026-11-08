@@ -29,7 +29,6 @@ from pybFoam import (
 )
 
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
     IterativeOp,
@@ -229,11 +228,7 @@ def run(
 
         Info("Starting time loop")
 
-        builder, model_ops = solver.execution_graph(ctx=ctx)
-
-        resolver = DAGResolver()
-        resolved = resolver.resolve(builder, model_ops)
-        resolved.operations.run(ctx)
+        solver.resolve_operations(ctx).run(ctx)
 
         Info("End")
         return ctx
