@@ -44,6 +44,8 @@ class SolverRuntime:
     spec: "SolverSpec"
     name: str
     argv: list[Any] = field(default_factory=list)
+    # the region of a multi-region case this runtime solves; None for a single region
+    region: Optional[str] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
@@ -114,6 +116,10 @@ class SolverRuntime:
         if observer is not None:
             observer.operations(operations, ctx)
         return operations
+
+    def finalize(self, ctx: "Context") -> None:
+        """Run the registered end-of-run step (if any)."""
+        self.spec._run_finalize(self, ctx)
 
     @property
     def operations(self) -> "OperationCollection":

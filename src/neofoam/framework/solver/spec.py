@@ -20,7 +20,7 @@ from neofoam.framework.config_injection import (
     _discover_configs_from_signature,
     _find_config_by_type,
 )
-from neofoam.framework.context import Context
+from neofoam.framework.context import Context, initializing_region
 from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
@@ -52,6 +52,7 @@ class SolverSpec:
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
+        self._finalize_func: Optional[Callable[..., None]] = None
 
     @property
     def _config_class(self) -> Optional[type]:
@@ -198,6 +199,11 @@ class SolverSpec:
         self._execution_graph_func = func
         return func
 
+    def finalizer(self, func: Callable[..., None]) -> Callable[..., None]:
+        """Decorator to register the end-of-run step ``(self, ctx)`` (close files, ...)."""
+        self._finalize_func = func
+        return func
+
     def operation(
         self,
         operation_number: Optional[str] = None,
@@ -235,12 +241,25 @@ class SolverSpec:
     # Instantiation
     # ------------------------------------------------------------------
 
-    def instantiate(self, argv: Optional[list[Any]] = None) -> SolverRuntime:
-        """Create a fresh SolverRuntime for one run of this solver."""
+    def instantiate(
+        self,
+        argv: Optional[list[Any]] = None,
+        region: Optional[str] = None,
+    ) -> SolverRuntime:
+        """Create a fresh SolverRuntime for one run of this solver.
+
+        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads
+        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.
+        ``run()`` called from Python without arguments).
+
+        ``region`` names the region of a multi-region case the runtime solves;
+        ``None`` (the default) is a single-region case.
+        """
         return SolverRuntime(
             spec=self,
             name=self.name,
-            argv=argv or [],
+            argv=argv or ["neofoam"],
+            region=region,
         )
 
     # ------------------------------------------------------------------
@@ -262,7 +281,8 @@ class SolverSpec:
         if first_param is not None and hasattr(first_param, "argv"):
             first_param.argv = runtime.argv
 
-        ctx = self._initialize_func(**kwargs)
+        with initializing_region(runtime.region):
+            ctx = self._initialize_func(**kwargs)
 
         if first_param is not None:
             inj_state = getattr(first_param, "state", None)
@@ -317,6 +337,11 @@ class SolverSpec:
             )
 
         return self._execution_graph_func(**kwargs)
+
+    def _run_finalize(self, runtime: SolverRuntime, ctx: Context) -> None:
+        """Run the registered end-of-run step, if any."""
+        if self._finalize_func is not None:
+            self._finalize_func(self=runtime, ctx=ctx)
 
     # ------------------------------------------------------------------
     # Operation building (called by SolverRuntime.operations)

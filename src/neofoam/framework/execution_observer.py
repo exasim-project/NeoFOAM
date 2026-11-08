@@ -40,7 +40,10 @@ class ExecutionObserver:
     """Base class: every hook is a no-op, override the ones you need."""
 
     def init_steps(self, steps: list[InitStep]) -> None:
-        """The init steps in execution order, before the first one runs."""
+        """The init steps in execution order, before the first one runs.
+
+        A region's steps carry its name in ``InitStep.region``.
+        """
 
     def before_init_step(self, step: InitStep, context: dict[str, Any]) -> None:
         """``step`` is about to run; ``context`` holds the results so far."""
@@ -49,10 +52,17 @@ class ExecutionObserver:
         """``step`` produced ``value`` (not yet stored in ``context``)."""
 
     def operations(self, operations: Operations, ctx: Context) -> None:
-        """The resolved execution graph of ``ctx``, before the time loop starts."""
+        """The resolved execution graph of ``ctx``, before the time loop starts.
+
+        Every region of a multi-region case reports its own graph, from its own
+        thread; ``ctx.region`` names it.
+        """
 
     def before_operation(self, op: Operation, ctx: Context) -> None:
-        """A sequential or conditional ``op`` is about to run on ``ctx``."""
+        """A sequential or conditional ``op`` is about to run on ``ctx``.
+
+        ``ctx`` is the context the operation runs on (``ctx.region`` names its region).
+        """
 
     def after_operation(self, op: Operation, ctx: Context) -> None:
         """A sequential or conditional ``op`` finished."""
