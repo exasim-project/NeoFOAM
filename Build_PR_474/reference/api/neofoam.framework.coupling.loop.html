@@ -756,12 +756,17 @@ the pass before. Only the carried data is relaxed.</p>
 <a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.outcomes" title="neofoam.framework.coupling.loop.CouplingController.outcomes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">outcomes</span></code></a> and hands it to the execution observer
 (<code class="docutils literal notranslate"><span class="pre">coupling_finished</span></code>); ending at <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> unconverged also warns
 (<a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingNotConvergedWarning" title="neofoam.framework.coupling.loop.CouplingNotConvergedWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code></a>). Not thread safe.</p>
-<p>The leader builds it with its coupling’s <code class="docutils literal notranslate"><span class="pre">controller</span></code> factory, e.g. to set
-the convergence and acceleration (one acceleration per controller: it keeps
-the data of its last passes):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">controller</span><span class="p">(</span><span class="n">sides</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+<p>The leader builds it with its coupling’s <code class="docutils literal notranslate"><span class="pre">controller</span></code> factory, which it
+hands the coupling’s <code class="docutils literal notranslate"><span class="pre">parallel</span></code>, e.g. to set the convergence and
+acceleration (one acceleration per controller: it keeps the data of its last
+passes):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">controller</span><span class="p">(</span><span class="n">sides</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">parallel</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">CouplingController</span><span class="p">(</span>
-        <span class="n">sides</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">acceleration</span><span class="o">=</span><span class="n">AitkenRelaxation</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">sides</span><span class="p">,</span>
+        <span class="n">label</span><span class="p">,</span>
+        <span class="n">max_iterations</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">,</span>
+        <span class="n">acceleration</span><span class="o">=</span><span class="n">AitkenRelaxation</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
     <span class="p">)</span>
 </pre></div>
 </div>

@@ -691,10 +691,11 @@
 convergence belong to the leader’s
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code>, which a region’s
 coupling builds with its <code class="docutils literal notranslate"><span class="pre">controller</span></code> factory:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">controller</span><span class="p">(</span><span class="n">sides</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">controller</span><span class="p">(</span><span class="n">sides</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">parallel</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">CouplingController</span><span class="p">(</span>
         <span class="n">sides</span><span class="p">,</span>
         <span class="n">label</span><span class="p">,</span>
+        <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">,</span>
         <span class="n">converged</span><span class="o">=</span><span class="n">RelativeConvergence</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">),</span>
         <span class="n">acceleration</span><span class="o">=</span><span class="n">AitkenRelaxation</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span>
     <span class="p">)</span>
