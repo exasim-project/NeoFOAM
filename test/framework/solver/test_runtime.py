@@ -4,26 +4,28 @@
 # NB: no ``from __future__ import annotations`` — the dependency resolver matches
 # ``param.annotation is Context``.
 
-"""Two runtimes of one solver spec share no run state, as two regions run them.
+"""Two regions that run one solver spec share no run state, as multiRun runs them.
 
-``shared`` records the value of a cached ``Depends`` (the label of the context)
-in its one operation. Each run instantiates the spec, initializes and runs it
-on a thread of its own, one after the other: a cache on the spec would hand
-the second run the first run's value.
+``shared`` records the value of a cached ``Depends`` (the region of the context)
+in its one operation. Each region instantiates the spec, initializes and runs
+it on a thread of its own, one after the other: a cache on the spec would hand
+the second region the first region's value.
 """
 
 import threading
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
+import pytest
+
+from framework.solver.region_counter import counter
 from neofoam.framework.context import Context
-from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization.depends import Depends
 from neofoam.framework.operations import Operations, StepBuilder
 from neofoam.framework.solver import Solver
 
 
-def label_of(ctx: Context) -> Any:
-    return ctx.models["label"]
+def region_of(ctx: Context) -> Any:
+    return ctx.region
 
 
 shared = Solver("shared_by_regions")
@@ -42,20 +44,18 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
 
 
 @shared.operation()
-def record(self: Any, ctx: Context, region: Annotated[Any, Depends(label_of)]) -> None:
+def record(self: Any, ctx: Context, region: Annotated[Any, Depends(region_of)]) -> None:
     ctx.models["seen"].append(region)
 
 
-def _run(label: str, contexts: dict[str, Context]) -> None:
-    runtime = shared.instantiate()
+def _run(region: str, contexts: dict[str, Context]) -> None:
+    runtime = shared.instantiate(region=region)
     ctx = runtime.initialize()
-    ctx.models["label"] = label
-    builder, model_ops = runtime.execution_graph(ctx=ctx)
-    DAGResolver().resolve(builder, model_ops).operations.run(ctx)
-    contexts[label] = ctx
+    runtime.resolve_operations(ctx).run(ctx)
+    contexts[region] = ctx
 
 
-def test_two_runtimes_of_one_solver_spec_resolve_their_own_cached_dependency() -> None:
+def test_two_regions_of_one_solver_spec_resolve_their_own_cached_dependency() -> None:
     contexts: dict[str, Context] = {}
     for region in ("left", "right"):
         thread = threading.Thread(target=_run, args=(region, contexts))
@@ -66,3 +66,19 @@ def test_two_runtimes_of_one_solver_spec_resolve_their_own_cached_dependency() -
         "left": ["left"],
         "right": ["right"],
     }
+
+
+@pytest.mark.parametrize(("region", "expected"), [("left", 2.0), ("right", 3.0), (None, 1.0)])
+def test_runtime_region_selects_the_region_configs(region: Optional[str], expected: float) -> None:
+    ctx = counter.instantiate(region=region).initialize()
+
+    assert ctx.models["increment"] == expected
+
+
+def test_runtime_finalize_runs_the_registered_finalizer() -> None:
+    runtime = counter.instantiate(region="left")
+    ctx = runtime.initialize()
+
+    runtime.finalize(ctx)
+
+    assert ctx.models["finalized"] is True

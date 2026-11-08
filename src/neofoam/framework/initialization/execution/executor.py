@@ -8,6 +8,7 @@ from typing import Any
 
 from neofoam import telemetry
 from neofoam.framework import execution_observer
+from neofoam.framework.context import initializing
 
 from ..init_step import InitStep, InitStepExecutionError
 from .init_result import InitResult
@@ -44,6 +45,11 @@ def execute_lazy_inits(
 ) -> list[InitResult]:
     """Execute ``lazy_inits`` in dependency order and collect their results."""
     sorted_inits = _topological_sort(lazy_inits, validate_graph=not assume_validated)
+    region = initializing()
+    if region is not None:
+        for step in sorted_inits:
+            if step.region is None:
+                step.region = region
     observer = execution_observer.current()
     if observer is not None:
         observer.init_steps(sorted_inits)
