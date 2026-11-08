@@ -90,7 +90,7 @@ def _controller(config: RegionCouplingConfig) -> Any:
     group sends (by the field the side couples).
     """
 
-    def controller(sides: list[GroupSide], label: str) -> CouplingController:
+    def controller(sides: list[GroupSide], label: str, *, parallel: bool) -> CouplingController:
         sent = {side.field for side in sides}
         unknown = sorted({entry.data for entry in config.convergence} - sent)
         if unknown:
@@ -104,7 +104,7 @@ def _controller(config: RegionCouplingConfig) -> Any:
             label,
             converged=lambda changes: all(measure(changes) for measure in measures),
             max_iterations=config.maxIterations,
-            parallel=config.scheme == "parallel",
+            parallel=parallel,
             acceleration=ACCELERATIONS[config.acceleration.type](config.acceleration.relaxation),
         )
 
