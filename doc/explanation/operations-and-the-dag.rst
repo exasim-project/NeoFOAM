@@ -237,6 +237,35 @@ plus ``operation_number=2.5``; the turbulence update lands after
 ``continuity`` because of its ``depends_on=continuity``. The solver
 itself never named the model operations.
 
+Contributed loops: ``wraps``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Some changes to the graph are known only once the case is read: a
+boundary condition that needs the solution of its field repeated inside a
+loop, for example. The solver cannot name those, but it declares which
+fields its operations solve (``@solver.operation(solves=["T"])``). The
+model (e.g. a region's coupling model) returns a loop operation that declares
+the fields it wraps (``OperationMetadata(wraps=["T"])``) among its model
+operations, which the runtime resolves with the solver's graph:
+
+.. code-block:: python
+
+    ctx = runtime.initialize()                       # state only
+    builder, model_ops = runtime.execution_graph(ctx=ctx)
+    operations = DAGResolver().resolve(builder, model_ops).operations
+
+The resolver picks, in the scope holding them, the operations that solve a
+wrapped field and everything downstream of them over ``depends_on`` /
+``before``, and moves them into the loop, which takes the place of the last of
+them; the other operations of the scope stay outside, so an operation such as
+the old-time rotation at the start of the step runs once. Operations of a loop's
+fields in more than one scope raise ``ValueError``.
+
+A coupled boundary condition (``@coupled``) adds itself to its region's
+coupling model, whose coupling op (``CouplingOp``, one per region) is such a
+loop around the coupled fields; its loop test exchanges the sides' data with the other regions
+(see :doc:`region-coupling`).
+
 Trade-offs
 ----------
 

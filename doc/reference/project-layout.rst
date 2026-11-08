@@ -9,7 +9,8 @@ the linked reference pages for the full API.
 ``io/``
     Binds config classes to files (``BaseConfig`` + ``@IOStrategy``), writes and
     deep-merges case files, and exposes the frontend-agnostic config-introspection
-    surface (``schema.py``).
+    surface (``schema.py``). ``load``/``save`` take an optional ``region``, which
+    reads a multi-region case's ``constant/<region>/...`` (OpenFOAM.org layout).
 
 ``fields/``
     Boundary-condition types, ``FieldValue`` scalar/vector values, and the
@@ -25,11 +26,19 @@ the linked reference pages for the full API.
     - ``model/`` — ``ModelSpec``/``Model``, the decorator-driven model definition
       and its runtime. See :mod:`neofoam.framework.model`.
     - ``solver/`` — ``SolverSpec``/``Solver``, core/optional model selection and
-      the case-free config schema. See :mod:`neofoam.framework.solver`.
+      the case-free config schema; a runtime of a region solves that region
+      (``instantiate(region=..., coupling=...)``). See :mod:`neofoam.framework.solver`.
     - ``initialization/`` — staged init (load → resolve → build) via ``InitStep``
       and ``InitializerBuilder``. See :mod:`neofoam.framework.initialization`.
     - ``graph/`` — operation-graph sort, resolution, validation, and
-      visualization. See :mod:`neofoam.framework.graph`.
+      visualization, and the loops that wrap fields (``wrapping``). See
+      :mod:`neofoam.framework.graph`.
+    - ``coupling/`` — ``@coupled`` boundary conditions, the ``Exchange`` of a
+      side with its ``Mapping`` (identity, nearest-neighbor), a ``CouplingOp`` per
+      region, the leader's ``CouplingController``, the point-to-point
+      ``CommChannel`` between regions, a thread per region (``run_regions``),
+      and numpy kernels (constant/Aitken relaxation, relative
+      convergence) with their registries. See :mod:`neofoam.framework.coupling`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 
@@ -40,6 +49,13 @@ the linked reference pages for the full API.
 ``solver/incompressibleFluid/``
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
+
+``solver/multiRun/``
+    Several solvers, one per region, in one case (OpenFOAM.org ``foamMultiRun``
+    layout): ``system/controlDict.yaml`` lists ``regionSolvers`` and each region
+    reads ``constant/<region>/``, ``0/<region>/``. A launcher: every region runs
+    its own graph and time loop on its own thread; ``system/regionCoupling.yaml``
+    lists the ``exchanges`` between patches, whose data goes through a comm channel.
 
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and
