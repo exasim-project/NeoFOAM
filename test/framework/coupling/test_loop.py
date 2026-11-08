@@ -30,10 +30,12 @@ from neofoam.framework.coupling import (
     CouplingNotConvergedWarning,
     CouplingOp,
     CouplingOutcome,
+    InProcessTransport,
     Link,
     Mapping,
     SideChange,
     TransportClosed,
+    region_couplings,
     relative_changes,
     run_regions,
 )
@@ -117,6 +119,26 @@ def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_befo
 
     assert a.log == ["receive_a 0.0", "solve_a", "receive_a 1.0", "solve_a"]
     assert b.log == ["receive_b 0.0", "solve_b", "receive_b 1.0", "solve_b"]
+
+
+@pytest.mark.parametrize("parallel", [False, True], ids=["serial", "parallel"])
+def test_coupling_op_default_controller_takes_the_scheme_of_the_coupling(parallel: bool) -> None:
+    log: list[str] = []
+    a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
+    couplings = region_couplings(["a", "b"], [LINK], InProcessTransport(), parallel=parallel)
+    regions = {
+        name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
+        for name in ("a", "b")
+    }
+    for side in (a, b):
+        add_coupled(regions[side.name], "p", "x", side.side())
+
+    run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
+
+    controller = _controller({name: couple(ctx) for name, ctx in regions.items()})
+    assert controller.parallel is parallel
+    assert controller.outcomes[-1].converged
+    assert ("receive_b 0.0" in log) is parallel
 
 
 @pytest.mark.parametrize(

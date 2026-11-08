@@ -8,10 +8,11 @@ convergence belong to the leader's
 :class:`~neofoam.framework.coupling.CouplingController`, which a region's
 coupling builds with its ``controller`` factory::
 
-    def controller(sides, label):
+    def controller(sides, label, parallel):
         return CouplingController(
             sides,
             label,
+            parallel=parallel,
             converged=RelativeConvergence(data="T", limit=1e-5),
             acceleration=AitkenRelaxation(initial=0.5),
         )

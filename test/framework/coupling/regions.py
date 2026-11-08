@@ -41,7 +41,7 @@ def contexts(
         links,
         InProcessTransport(),
         parallel=parallel,
-        controller=partial(CouplingController, parallel=parallel, **controller),
+        controller=partial(CouplingController, **controller),
     )
     return {
         region: Context(

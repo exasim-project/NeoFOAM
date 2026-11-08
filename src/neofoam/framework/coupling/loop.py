@@ -296,13 +296,18 @@ class CouplingController:
     (``coupling_finished``); ending at ``max_iterations`` unconverged also warns
     (:class:`CouplingNotConvergedWarning`). Not thread safe.
 
-    The leader builds it with its coupling's ``controller`` factory, e.g. to set
-    the convergence and acceleration (one acceleration per controller: it keeps
-    the data of its last passes)::
+    The leader builds it with its coupling's ``controller`` factory, which it
+    hands the coupling's ``parallel``, e.g. to set the convergence and
+    acceleration (one acceleration per controller: it keeps the data of its last
+    passes)::
 
-        def controller(sides, label):
+        def controller(sides, label, parallel):
             return CouplingController(
-                sides, label, max_iterations=50, acceleration=AitkenRelaxation(initial=0.5)
+                sides,
+                label,
+                max_iterations=50,
+                parallel=parallel,
+                acceleration=AitkenRelaxation(initial=0.5),
             )
     """
 
@@ -415,8 +420,8 @@ class CouplingController:
 
 
 # The leader's decision for one region: another pass?, and what each of its sides
-# that receives carried data receives, by patch.
-_Decision = tuple[bool, dict[str, Data]]
+# receives, by patch: the carried data, or None: what its partner sends in this pass.
+_Decision = tuple[bool, dict[str, Optional[Data]]]
 
 
 class CouplingOp(IterativeOp):
@@ -524,13 +529,13 @@ class CouplingOp(IterativeOp):
                 if self._rank[region] > self._rank[self.region]:
                     self._send(region, f"data:{self.exchange_of(side).name}", data)
         time = getattr(ctx.time, "value", None)
-        go_on, carried = self._decide(current, time if self._iteration == 0 else None)
+        go_on, decided = self._decide(current, time if self._iteration == 0 else None)
         if not go_on:
             self._iteration = 0
             return False
         self._iteration += 1
         for side in self._sides:
-            self._hand_over(side, carried)
+            self._hand_over(side, decided)
         return True
 
     def _send(self, target: str, tag: str, message: Any) -> None:
@@ -565,7 +570,9 @@ class CouplingOp(IterativeOp):
             exchange.mapping.check(announced["points"], side.side.coordinates)
             self._partner_points[side.patch] = announced["points"]
         if self.is_leader:
-            self._controller = self._coupling.controller(self._group(sides), self.label)
+            self._controller = self._coupling.controller(
+                self._group(sides), self.label, parallel=self._coupling.parallel
+            )
         self._connected = True
 
     def _group(self, own: list[tuple[str, str, tuple[str, ...]]]) -> list[GroupSide]:
@@ -616,10 +623,12 @@ class CouplingOp(IterativeOp):
         decisions: dict[str, _Decision] = {}
         index = 0
         for region, patches in self._patches.items():
-            received: dict[str, Data] = {}
+            received: dict[str, Optional[Data]] = {}
             for patch in patches:
-                if carried is not None and not self._controller.fresh(index):
-                    received[patch] = carried[self._controller.sides[index].partner]
+                if carried is not None:
+                    fresh = self._controller.fresh(index)
+                    partner = self._controller.sides[index].partner
+                    received[patch] = None if fresh else carried[partner]
                 index += 1
             decisions[region] = (carried is not None, received)
         for region, decision in decisions.items():
@@ -627,18 +636,16 @@ class CouplingOp(IterativeOp):
                 self._send(region, "decision", decision)
         return decisions[self.region]
 
-    def _fresh(self, side: ExchangeSide) -> bool:
-        """Whether ``side`` receives what its partner sent in this pass (serial, steps earlier)."""
-        region = self.exchange_of(side).partner[0]
-        return not self._coupling.parallel and self._rank[region] < self._rank[self.region]
+    def _hand_over(self, side: ExchangeSide, decided: dict[str, Optional[Data]]) -> None:
+        """Map what the partner of ``side`` sent onto its points and hand it over.
 
-    def _hand_over(self, side: ExchangeSide, carried: dict[str, Data]) -> None:
-        """Map what the partner of ``side`` sent onto its points and hand it over."""
+        ``decided`` is the leader's decision: the carried data by patch, or
+        ``None`` where the partner's data of this pass is to be received.
+        """
         exchange = self.exchange_of(side)
-        if self._fresh(side):
+        data = decided[side.patch]
+        if data is None:
             data = self._receive(exchange.partner[0], f"data:{exchange.name}")
-        else:
-            data = carried[side.patch]
         mapped = exchange.mapping(
             _arrays(side.mapped, data), self._partner_points[side.patch], side.side.coordinates
         )
