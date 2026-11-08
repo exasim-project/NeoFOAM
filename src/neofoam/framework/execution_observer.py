@@ -10,7 +10,7 @@ step-by-step debugger UI drives an unmodified solver. Without an observer the
 hooks cost one ``None`` check.
 
 The observer is per thread (a :class:`~contextvars.ContextVar`); threads started
-by an observed run do not inherit it.
+by an observed run do not inherit it, except the region threads of a coupled run.
 
 Example::
 
@@ -29,7 +29,15 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any, Iterator, Optional
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel
+
     from neofoam.framework.context import Context
+    from neofoam.framework.coupling import (
+        CouplingController,
+        CouplingOp,
+        CouplingOutcome,
+        ExchangeSide,
+    )
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
 
@@ -62,6 +70,22 @@ class ExecutionObserver:
 
     def after_loop_test(self, op: Operation, ctx: Context, iteration: int, result: bool) -> None:
         """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
+
+    def coupling_finished(self, coupling: CouplingController, outcome: CouplingOutcome) -> None:
+        """The coupling of a time step ended, as ``coupling`` (its group's controller) decided.
+
+        ``outcome`` holds its passes, whether it converged and the residuals;
+        reported from the leader's thread, in its coupling op's last loop test.
+        """
+
+    def coupling_exchanged(self, coupling: CouplingOp, side: ExchangeSide, data: BaseModel) -> None:
+        """The region's ``coupling`` op is about to hand ``side`` its mapped ``data``.
+
+        ``coupling.exchange_of(side)`` is its exchange, ``.partner(side)`` the label
+        ``<region>.<patch>`` of the sender.
+        Reported from the op's loop test, between ``before_loop_test`` and
+        ``after_loop_test``.
+        """
 
 
 _observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(

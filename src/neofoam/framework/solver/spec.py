@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import re
 from types import SimpleNamespace
-from typing import Any, Callable, Optional, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, cast
 
 from neofoam.framework.config_injection import (
     _create_runtime_config_wrapper,
@@ -21,13 +21,22 @@ from neofoam.framework.config_injection import (
     _find_config_by_type,
 )
 from neofoam.framework.context import Context
+from neofoam.framework.coupling import Coupling
 from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.operations import Operation, OperationCollection, SequentialOp
+from neofoam.framework.operations import (
+    Operation,
+    OperationCollection,
+    Operations,
+    SequentialOp,
+)
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import SolverRuntime
+
+if TYPE_CHECKING:
+    from neofoam.framework.coupling.region import RegionCoupling
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 
@@ -239,16 +248,19 @@ class SolverSpec:
         self,
         argv: Optional[list[Any]] = None,
         region: Optional[str] = None,
+        coupling: Optional[RegionCoupling] = None,
     ) -> SolverRuntime:
         """Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.
 
         An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.
+        ``coupling`` is the region's part of the case's coupling, ``None`` when uncoupled.
         """
         return SolverRuntime(
             spec=self,
             name=self.name,
             argv=argv or ["neofoam"],
             region=region,
+            coupling=coupling,
         )
 
     # ------------------------------------------------------------------
@@ -303,6 +315,9 @@ class SolverSpec:
         type-injected from ``runtime.config``; a ``Context``-annotated parameter
         is injected with the live ``ctx`` (so the step can reach the built models
         without the runtime holding a long-lived reference to the context).
+
+        With ``ctx`` whose solver added a coupling model (``ctx.models["coupling"]``),
+        the model operations it returns also hold its operations.
         """
         if self._execution_graph_func is None:
             raise RuntimeError(f"No execution_graph function registered for solver {self.name}")
@@ -324,7 +339,11 @@ class SolverSpec:
                 runtime.config, cfg_meta["config_type"]
             )
 
-        return self._execution_graph_func(**kwargs)
+        builder, model_ops = self._execution_graph_func(**kwargs)
+        coupling = None if ctx is None else ctx.models.get("coupling")
+        if not isinstance(coupling, Coupling):
+            return builder, model_ops
+        return builder, Operations([*model_ops, *coupling.operations()])
 
     # ------------------------------------------------------------------
     # Operation building (called by SolverRuntime.operations)
