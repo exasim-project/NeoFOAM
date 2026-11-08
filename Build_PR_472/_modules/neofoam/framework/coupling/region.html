@@ -698,7 +698,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextvars</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingController</span><span class="p">,</span> <span class="n">GroupSide</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transport</span>
@@ -706,8 +706,21 @@
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
 <span class="c1"># The end of an exchange: (region, patch).</span>
 <span class="n">End</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-<span class="c1"># Builds the leader's controller from the group's sides and the leader's label.</span>
-<span class="n">ControllerFactory</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">CouplingController</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ControllerFactory">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.ControllerFactory">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ControllerFactory</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Builds the leader's controller from the group's sides, the leader's label and the scheme.</span>
+
+<span class="sd">    ``parallel`` is the coupling's (:attr:`RegionCoupling.parallel`); the</span>
+<span class="sd">    controller decides with it which sides receive fresh or carried data.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CouplingController</span><span class="p">:</span> <span class="o">...</span></div>
+
 
 
 <div class="viewcode-block" id="Link">
@@ -743,7 +756,8 @@
 <span class="sd">    order; ``links`` the exchanges of the group. ``parallel`` says whether a side</span>
 <span class="sd">    always receives what its partner sent in the pass before (else serial: from a</span>
 <span class="sd">    region that steps earlier, what it sent in the same pass). The leader builds</span>
-<span class="sd">    its controller with ``controller`` (convergence, acceleration, max_iterations).</span>
+<span class="sd">    its controller with ``controller`` (convergence, acceleration, max_iterations),</span>
+<span class="sd">    handing it ``parallel``.</span>
 <span class="sd">    """</span>
 
     <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
