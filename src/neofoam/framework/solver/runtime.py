@@ -46,6 +46,9 @@ class SolverRuntime:
     argv: list[Any] = field(default_factory=list)
     # None for a single-region case
     region: Optional[str] = None
+    # what the region knows of the case's coupling (a RegionCoupling); a solver that
+    # supports coupling makes its coupling model from it. None: not coupled
+    coupling: Any = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
