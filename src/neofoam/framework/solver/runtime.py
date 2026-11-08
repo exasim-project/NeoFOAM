@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional
 
+from neofoam.framework.dependency_resolver import DependencyResolver
+
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
     from neofoam.framework.operations import OperationCollection, StepBuilder
@@ -45,6 +47,9 @@ class SolverRuntime:
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
+    # resolves the Depends() of this run's initializer and operations, with this
+    # run's cache: two runtimes of one spec (e.g. two regions) share none
+    dependency_resolver: DependencyResolver = field(default_factory=DependencyResolver, repr=False)
 
     # ------------------------------------------------------------------
     # State proxy properties

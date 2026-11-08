@@ -56,7 +56,6 @@ from neofoam.fields import (
 )
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
@@ -445,18 +444,10 @@ def collected_operations(self: Any) -> Operations:
         )
     )
 
-    wrapped_rotate = wrap_with_dependency_resolution(
-        rotate_and_report, self, simpleNeoN._dependency_resolver
-    )
-    wrapped_momentum = wrap_with_dependency_resolution(
-        momentum, self, simpleNeoN._dependency_resolver
-    )
-    wrapped_continuity = wrap_with_dependency_resolution(
-        continuity, self, simpleNeoN._dependency_resolver
-    )
-    wrapped_turbulence = wrap_with_dependency_resolution(
-        turbulence_correct, self, simpleNeoN._dependency_resolver
-    )
+    wrapped_rotate = simpleNeoN.wrap_operation(rotate_and_report, self)
+    wrapped_momentum = simpleNeoN.wrap_operation(momentum, self)
+    wrapped_continuity = simpleNeoN.wrap_operation(continuity, self)
+    wrapped_turbulence = simpleNeoN.wrap_operation(turbulence_correct, self)
 
     model_ops.add(
         _alias_operation(wrapped_rotate, operation_name="rotate_and_report", depends_on=[])

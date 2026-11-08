@@ -14,7 +14,6 @@ from typing import Any, Optional
 import pybFoam as pyf
 from pybFoam.turbulence import singlePhaseTransportModel
 
-from neofoam.fields.synthesis import synthesize_init_step
 from neofoam.foam.initialization import new_mesh, refuse_mesh_refinement
 from neofoam.framework.initialization import (
     ConfigContext,
@@ -172,7 +171,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # part of the schema set. Their instances are not loaded here: the
         # OpenFOAM reader does not yet parse the typed scheme values
         # (``DivScheme`` …) / ``dict`` solver entries those slices carry.
-        core_models = [
+        core_models: list[Any] = [
             pressure_model,
             solution_loop_model,
             field_writer_model,
@@ -267,15 +266,10 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         builder.extend(writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir)))
 
         # PIMPLE is passed to add_core_models so it lands in models.pressure_velocity.
-        # Its lazy field/model InitSteps come straight from the ModelSpec (used here
-        # as both spec and "runtime", no instantiate). Mirror ModelRuntime.run_build:
-        # synthesise the ``pimple.field(...)`` declarations (``U`` / ``p``) *first*,
-        # then the ``@build`` steps (``phi``, pimpleControl, …) which depend on them.
+        # Its runtime's run_build synthesises the ``pimple.field(...)`` declarations
+        # (``U`` / ``p``) *first*, then the ``@build`` steps (``phi``, pimpleControl,
+        # …) which depend on them.
         builder.add_core_models([("pressure_velocity", pressure_model)])
-        for decl in pressure_model.field_decls:
-            builder.add(synthesize_init_step(decl))
-        if pressure_model._build_func is not None:
-            builder.extend(pressure_model._build_func(pressure_model))
 
         builder.add(
             init_model(
