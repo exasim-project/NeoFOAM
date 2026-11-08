@@ -89,3 +89,13 @@ def test_operation_metadata() -> None:
     assert node_no_color.shape == "square"
     assert node_no_color.color is None
     assert node_no_color.operation_number == OperationNumber("1.0.1")
+
+
+@pytest.mark.parametrize(
+    ("op_name", "domain", "name"),
+    [("solve", None, "solve"), ("solve", "model", "model.solve")],
+)
+def test_name_is_domain_and_operation(op_name: str, domain: str | None, name: str) -> None:
+    metadata = OperationMetadata(op_name=op_name, domain_name=domain)
+
+    assert metadata.name == name
