@@ -26,7 +26,7 @@ from __future__ import annotations
 import contextvars
 import threading
 from dataclasses import dataclass
-from typing import Callable, Mapping, Sequence, TypeVar
+from typing import Callable, Mapping, Protocol, Sequence, TypeVar
 
 from .loop import CouplingController, GroupSide
 from .transport import Transport
@@ -34,8 +34,18 @@ from .transport import Transport
 T = TypeVar("T")
 # The end of an exchange: (region, patch).
 End = tuple[str, str]
-# Builds the leader's controller from the group's sides and the leader's label.
-ControllerFactory = Callable[[Sequence[GroupSide], str], CouplingController]
+
+
+class ControllerFactory(Protocol):
+    """Builds the leader's controller from the group's sides, the leader's label and the scheme.
+
+    ``parallel`` is the coupling's (:attr:`RegionCoupling.parallel`); the
+    controller decides with it which sides receive fresh or carried data.
+    """
+
+    def __call__(
+        self, sides: Sequence[GroupSide], label: str, /, *, parallel: bool
+    ) -> CouplingController: ...
 
 
 @dataclass(frozen=True)
@@ -63,7 +73,8 @@ class RegionCoupling:
     order; ``links`` the exchanges of the group. ``parallel`` says whether a side
     always receives what its partner sent in the pass before (else serial: from a
     region that steps earlier, what it sent in the same pass). The leader builds
-    its controller with ``controller`` (convergence, acceleration, max_iterations).
+    its controller with ``controller`` (convergence, acceleration, max_iterations),
+    handing it ``parallel``.
     """
 
     region: str
