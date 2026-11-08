@@ -1,0 +1,231 @@
+Region coupling
+===============
+
+A multi-region case (``multiRun``) runs one solver per region. Every region is
+an independent solver: it builds its own graph, runs its own time loop on its
+own thread and shares nothing with the other regions but a **transport**, a
+point-to-point channel. Regions exchange data over *exchanges*. Who does what:
+
+.. list-table::
+   :header-rows: 1
+
+   * - part
+     - owns
+   * - boundary condition (``@coupled``)
+     - its side: the field it couples, what it sends and receives (one pydantic
+       model per direction), its points. It adds itself to its region's
+       **coupling model** (``Coupling.of(ctx).add(self)``).
+   * - case (``system/regionCoupling.yaml``)
+     - which patches are paired (``exchanges``), the **mapping** of each pair, the
+       scheme, acceleration, convergence and ``maxIterations`` of the couplings.
+   * - solver
+     - if it supports coupling, its **coupling model** (``Coupling``,
+       ``ctx.models["coupling"] = Coupling(self.coupling)``), added in its init
+       before its boundary conditions.
+   * - framework
+     - adds the coupling model's operations to the region's graph: the
+       region's **coupling op** (``CouplingOp``), placed by the resolver
+       around the operations that solve the coupled fields. The **leader** of a group of coupled regions owns
+       its **controller** (``CouplingController``).
+   * - ``multiRun``
+     - a launcher: reads ``regionSolvers`` and the case file, creates the
+       transport, runs every region on its own thread.
+
+Vocabulary: a **region** is one solver; an **exchange** is one line between two
+patches of two regions; the **mapping** (``Mapping``, with a ``kind``) maps point
+data of the partner onto a side's own points; a region's **coupling op** is a
+loop around its solving operations whose test exchanges its sides' data; regions
+connected by exchanges form a **group**, whose last region in ``regionSolvers``
+order is its **leader**: its controller decides when the group's data converged;
+a side is keyed by ``(region, patch, field)``.
+
+The coupled boundary condition
+------------------------------
+
+.. code-block:: python
+
+    from pydantic import BaseModel
+
+    from neofoam.framework.coupling import Array, coupled
+
+
+    class WallTemperature(BaseModel):
+        T: Array             # one value per point: mapped
+
+
+    class WallHeatFlux(BaseModel):
+        q: Array
+        h: float             # one value for the interface: handed over as it is
+
+
+    @coupled                 # declares only: what it sends and receives, its points
+    class CoupledHeatFlux(Patch):        # sets self.field and self.patch
+        def __init__(self, ctx, field, patch):
+            super().__init__(ctx, field, patch)
+            Coupling.of(ctx).add(self)   # its region's coupling op wraps self.field
+
+        @coupled.coordinates
+        def points(self) -> Array: ...
+
+        @coupled.sends
+        def send(self) -> WallTemperature: ...
+
+        @coupled.receives
+        def receive(self, data: WallHeatFlux) -> None: ...   # already mapped
+
+The annotations are the declaration. One model per direction; the same model
+both ways is the special case of a symmetric exchange. ``@coupled`` only
+declares (``__coupled__`` on the class). The instance adds itself to its
+region's coupling model: ``Coupling.of(ctx)`` raises ``ValueError`` when the
+region's solver added none (it does not support coupling), ``add`` when the
+instance sets no ``field`` or ``patch`` or no exchange connects its patch (also
+when the case does not couple the region). Any ``@coupled`` model, not only a boundary
+condition, couples this way. It names no partner, no loop and no mapping. The example
+``test/solver/multiRun/cases/dirichlet_neumann_slabs`` couples two slabs
+Dirichlet-Neumann with ``coupledTemperature`` and ``coupledHeatFlux``
+(``test/solver/multiRun/slab_solver.py``).
+
+The case file
+-------------
+
+.. code-block:: yaml
+
+    exchanges:
+      - sides: {fluid: wall, solid: right}
+        mapping: nearest-neighbor    # or identity (default nearest-neighbor)
+        name: cht                    # optional, default "<region>-<region>"
+      - sides: {solid: left, air: top}
+    scheme: serial                   # serial (Gauss-Seidel) | parallel (Jacobi)
+    acceleration: {type: aitken, relaxation: 0.5}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-6}
+    maxIterations: 100
+
+``mapping``, ``acceleration.type`` and ``convergence[].type`` name entries of
+the registries ``MAPPINGS``, ``ACCELERATIONS`` and ``CONVERGENCES``; the file is
+checked against them. ``scheme``, ``acceleration``, ``convergence`` and
+``maxIterations`` apply to every group of the case. A patch is in at most one
+exchange and carries one coupled side.
+
+Architecture
+------------
+
+.. code-block:: text
+
+    multiRun.run()                          main thread
+      reads regionSolvers + regionCoupling.yaml
+      region_couplings(...) -> RegionCoupling per coupled region
+      run_regions: one thread per region, joined; the first error is raised
+        |
+        +-- thread "a":  instantiate(region="a", coupling=...)
+        |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
+        |                        then its BCs; a @coupled BC adds itself
+        |     execution_graph    model ops += ctx.models["coupling"].operations()
+        |     resolve_operations DAGResolver nests solve_x inside a.couple
+        |     run()              time_loop { set_time_step, agree_dt,
+        |                                    increment_time, a.couple { solve_x } }
+        |
+        +-- thread "b" (leader): the same, its coupling op owns the controller
+                     ^
+                     |   Transport: send / receive (source, target, tag)
+                     v
+
+**Where the op goes.** A model's loop declares the fields it wraps
+(``OperationMetadata.wraps``). The resolver moves the operations that solve them,
+and every operation downstream of them (over ``depends_on`` / ``before``), into
+the loop, which takes the place of the last of them. The operations must lie in
+one scope; else it raises ``ValueError``.
+
+**The coupling model** builds its operations once, after init, from all sides:
+the ``CouplingOp`` (``wraps`` = the sides' fields); none when the case does not
+couple the region. It raises ``ValueError`` when an exchange of the region has
+no side (also when the region has none at all), or a patch two sides.
+
+**Agreeing on a value.** ``Coupling.of(ctx).agree(value, how=min)``: every
+region of the group sends its value to the leader, which reduces them with
+``how`` and sends the result to all; every region gets the same result. Each call
+has its own tag (the regions call it in the same order); a region the case does
+not couple gets its value back.
+
+- A **transient** solver agrees on its time step where it sets it, right after
+  ``set_time_step`` (the test solvers' ``agree_dt``)::
+
+      loop.set_delta_t(Coupling.of(ctx).agree(loop.current_delta_t()), adjust=False)
+
+  so the coupled regions step the smallest time step any of them asks for.
+- A **steady** solver (outer iterations, no time step) calls nothing; neither
+  the coupling nor ``agree`` needs a solution loop
+  (``test/solver/multiRun/steady_solver.py``).
+
+As a time step's coupling starts, the leader compares the regions' time
+(``ctx.time.value``) and raises when they differ; regions without a time
+(``ctx.time`` is ``None``, steady) compare equal, so the check passes.
+
+**What a region knows.** Its ``RegionCoupling`` (``Coupling.coupling``): its name,
+its group (in stepping order), the group's exchanges (``Link``: name, two ends
+``(region, patch)``, mapping kind), the scheme, the controller factory and the
+transport. No region reads another region's objects.
+
+**A run of a coupling op.** Its first loop test sends every partner what its
+side sends and receives (the models' field kinds) and its points, and the leader
+which sides it has; each region then checks that its side receives what the
+partner sends and that its mapping can map the partner's points onto its own,
+and the leader builds its controller. Each loop test then:
+
+1. computes what every side of the region sends now;
+2. after a pass, serial: sends it to every partner that steps later, which
+   receives it in the same pass;
+3. sends it to the leader and waits for its decision. The leader checks the
+   regions started the time step at the same time (if they have one), runs convergence and
+   acceleration (on what the partners receive as carried), and sends every region
+   to go on (with the carried data its sides receive) or to stop;
+4. on another pass, hands every side what its partner sent (fresh from a region
+   that stepped before its own, serial; else carried by the leader), mapped onto
+   its points, validated as its ``receives`` model and reported to the observer.
+
+All regions leave the loop on the same pass. Receives block; a region that fails
+closes the transport, so no region waits for it forever.
+
+**Read API** of a ``CouplingOp``: ``region``, ``label``, ``sides``
+(``ExchangeSide``: ``region``, ``patch``, ``field``, ``key``, ``sends``,
+``receives``, ``mapped``, ``points``), ``exchange_of(side)`` (``Exchange``:
+``name``, ``partner`` ``(region, patch)``, ``mapping``), ``partner(side)``
+(``"<region>.<patch>"``), ``is_leader`` and ``controller`` (the leader's, built at
+its first loop test: ``label``, ``parallel``, ``sides``, ``iteration``,
+``outcomes``, ``residuals``).
+
+**Report.** At the end of each time step the leader's controller records a
+``CouplingOutcome`` and calls the observer's ``coupling_finished(controller,
+outcome)``; it warns (``CouplingNotConvergedWarning``) when ``maxIterations``
+stopped it. Each coupling op calls ``coupling_exchanged(coupling, side, data)``
+from its loop test with the data it hands over. Every region reports to the
+observer from its own thread; its graph with ``operations(operations, ctx)``,
+``ctx.region`` naming it.
+
+Extension points
+----------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - to change
+     - extend
+   * - Mapping
+     - a ``Mapping`` subclass with a ``kind``: ``check(source, target)`` and
+       ``__call__(data, source, target)`` on the partner's and the side's points;
+       added to ``MAPPINGS`` (yaml ``mapping:``).
+   * - Acceleration
+     - a callable ``(carried Array data, iteration) -> data``, added to
+       ``ACCELERATIONS`` (yaml ``acceleration.type``).
+   * - Convergence
+     - a callable ``(list of SideChange) -> bool``, added to ``CONVERGENCES``
+       (yaml ``convergence[].type``).
+   * - Transport
+     - a ``Transport``: ``send(source, target, tag, message)`` (never blocks),
+       ``receive(source, target, tag)`` (blocks; in order per tag) and
+       ``close(region)``; messages are plain data. ``InProcessTransport`` connects
+       threads of one process.
+
+What is exchanged follows from the side's ``sends`` / ``receives`` models:
+``Array`` fields are mapped, relaxed and compared, plain fields handed over as
+they are.
