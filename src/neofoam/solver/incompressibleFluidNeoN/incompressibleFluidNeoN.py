@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import (
@@ -183,11 +182,7 @@ def run(
         solver = incompressibleFluidNeoN.instantiate(argv=argv or [])
         ctx = solver.initialize()
 
-        builder, model_ops = solver.execution_graph(ctx=ctx)
-
-        resolver = DAGResolver()
-        resolved = resolver.resolve(builder, model_ops)
-        resolved.operations.run(ctx)
+        solver.resolve_operations(ctx).run(ctx)
 
         print("End")
         return ctx

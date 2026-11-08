@@ -7,6 +7,7 @@
 from typing import Any
 
 from neofoam import telemetry
+from neofoam.framework import execution_observer
 
 from ..init_step import InitStep, InitStepExecutionError
 from .init_result import InitResult
@@ -23,13 +24,19 @@ def execute_step(step: InitStep, context: dict[str, Any]) -> Any:
     if step.initializer is None:
         raise ValueError(f"InitStep '{step.name}' has no initializer function")
 
+    observer = execution_observer.current()
+    if observer is not None:
+        observer.before_init_step(step, context)
     try:
         with telemetry.span(f"init.{step.name}", category=step.category):
-            return step.initializer(context)
+            value = step.initializer(context)
     except (ValueError, TypeError):
         raise
     except Exception as exc:
         raise InitStepExecutionError(step.name, step.depends_on, exc) from exc
+    if observer is not None:
+        observer.after_init_step(step, context, value)
+    return value
 
 
 def execute_lazy_inits(
@@ -37,6 +44,9 @@ def execute_lazy_inits(
 ) -> list[InitResult]:
     """Execute ``lazy_inits`` in dependency order and collect their results."""
     sorted_inits = _topological_sort(lazy_inits, validate_graph=not assume_validated)
+    observer = execution_observer.current()
+    if observer is not None:
+        observer.init_steps(sorted_inits)
     context: dict[str, Any] = {}
     results: list[InitResult] = []
 
