@@ -148,7 +148,7 @@ def _reject_fixed_flux_pressure() -> None:
 
 def _reject_transient_algorithm() -> None:
     """Raise unless the case runs the steady SIMPLE algorithm."""
-    if PressureVelocityAlgorithmNeoN.detect_and_create() is simpleNeoN:
+    if PressureVelocityAlgorithmNeoN.detect_and_create().spec is simpleNeoN:
         return
     raise ValueError(
         "MRF: incompressibleFluidNeoN supports rotating zones only for the steady "
