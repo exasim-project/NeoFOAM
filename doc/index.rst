@@ -75,6 +75,7 @@ what you're trying to do:
    explanation/spec-runtime
    explanation/three-stage-init
    explanation/operations-and-the-dag
+   explanation/region-coupling
    explanation/parameter-injection
    explanation/discriminated-unions
    explanation/discovery-mechanisms
