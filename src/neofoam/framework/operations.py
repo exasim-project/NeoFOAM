@@ -105,9 +105,14 @@ class Operation:
         """Run the operation on ``ctx``.
 
         An operation marked ``first`` (``OperationMetadata.first``) is skipped
-        unless every wrapping loop running around it is in its first pass.
+        unless every wrapping loop running around it is in its first pass; one
+        marked ``final`` (``OperationMetadata.final``) unless every one is in its
+        final pass, or ``ctx.run_every_pass`` names it. Raises ``ValueError`` when
+        ``ctx.run_every_pass`` names an operation not marked ``final``.
         """
-        if self.metadata.first and not all(entry.first for entry in ctx.loops if entry.wrapping):
+        if (self.metadata.first or self.metadata.final or ctx.run_every_pass) and self._skipped(
+            ctx
+        ):
             return None
         if not telemetry.is_active():
             return self._execute(ctx)
@@ -117,6 +122,18 @@ class Operation:
             domain=self.metadata.domain_name,
         ):
             return self._execute(ctx)
+
+    def _skipped(self, ctx: Context) -> bool:
+        """Whether the pass of the wrapping loops around the operation skips it."""
+        every_pass = self.name in ctx.run_every_pass
+        if every_pass and not self.metadata.final:
+            raise ValueError(_not_final(self))
+        wrapping = [entry for entry in ctx.loops if entry.wrapping]
+        if self.metadata.first:
+            return not all(entry.first for entry in wrapping)
+        if self.metadata.final and not every_pass:
+            return not all(entry.final for entry in wrapping)
+        return False
 
     def _execute(self, ctx: Context) -> Any:
         op_type = self.operation_type
@@ -144,6 +161,40 @@ class Operation:
                 loops[index] = LoopEntry(self.name, iteration, False, wrapping)
         finally:
             del loops[index:]
+
+
+def _not_final(op: Operation) -> str:
+    kind = "first" if op.metadata.first else "not marked final"
+    return (
+        f"run_every_pass names {op.name}, which is {kind}; only an operation marked final "
+        "can run in every pass of its wrapping loops"
+    )
+
+
+def check_run_every_pass(ops: list[Operation], names: set[str]) -> None:
+    """Raise ``ValueError`` unless every name of ``names`` is an operation of ``ops`` marked final.
+
+    ``ops`` is a graph (loops with the operations inside them), ``names`` a
+    ``Context.run_every_pass``.
+    """
+    found: dict[str, Operation] = {}
+
+    def walk(scope: list[Operation]) -> None:
+        for op in scope:
+            if op.name is not None:
+                found[op.name] = op
+            walk(op.sub_operations)
+
+    walk(ops)
+    for name in sorted(names):
+        if name not in found:
+            final = sorted(other for other, op in found.items() if op.metadata.final)
+            raise ValueError(
+                f"run_every_pass names {name}, which is no operation of the graph; "
+                f"its operations marked final: {final}"
+            )
+        if not found[name].metadata.final:
+            raise ValueError(_not_final(found[name]))
 
 
 class Operations:
@@ -193,6 +244,14 @@ class Operations:
         return iter(self.ops)
 
     def run(self, ctx: Context) -> None:
+        """Run the operations on ``ctx``.
+
+        Raises ``ValueError`` first when ``ctx.run_every_pass`` names an operation
+        that is not one of them, or not marked ``final``
+        (:func:`check_run_every_pass`).
+        """
+        if ctx.run_every_pass:
+            check_run_every_pass(self.ops, ctx.run_every_pass)
         for operation in self.ops:
             operation.run(ctx)
 

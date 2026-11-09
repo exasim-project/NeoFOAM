@@ -37,7 +37,9 @@ placed before raises.
 An operation marked ``first`` (``OperationMetadata.first``, e.g. the start of a
 time step) runs only in the first pass of the wrapping loops around it; it may
 not depend on an operation that runs in every pass of one of them
-(:func:`check_first`).
+(:func:`check_first`). One marked ``final`` (``OperationMetadata.final``, e.g.
+writing the results) runs only in their final pass; no operation that runs in
+an other pass of one of them may depend on it (:func:`check_final`).
 """
 
 from __future__ import annotations
@@ -89,14 +91,8 @@ def wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
     return _in_scope(ops, path, lambda scope: _wrapped(scope, picked, loop))
 
 
-def check_first(ops: list[Operation]) -> None:
-    """Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.
-
-    An operation marked ``first`` (``OperationMetadata.first``) runs only in the
-    first pass of the wrapping loops around it; one it depends on (its
-    ``depends_on``, or the other's ``before``) that runs in every pass of a
-    wrapping loop around both would leave it on stale data.
-    """
+def _around(ops: list[Operation]) -> dict[str, tuple[Operation, tuple[str, ...]]]:
+    """Every named operation of ``ops`` with the wrapping loops around it, outer first."""
     located: dict[str, tuple[Operation, tuple[str, ...]]] = {}
 
     def walk(scope: list[Operation], around: tuple[str, ...]) -> None:
@@ -108,12 +104,54 @@ def check_first(ops: list[Operation]) -> None:
                 located[op.operation_name] = (op, around)
 
     walk(ops, ())
+    return located
+
+
+def _upstream(
+    name: str, op: Operation, located: dict[str, tuple[Operation, tuple[str, ...]]]
+) -> list[str]:
+    """The operations ``op`` depends on: its ``depends_on``, and those naming it ``before``."""
+    return [*op.depends_on, *(other for other, (o, _) in located.items() if name in o.before)]
+
+
+def check_final(ops: list[Operation]) -> None:
+    """Raise ``ValueError`` when an operation not marked ``final`` depends on one that is.
+
+    An operation marked ``final`` (``OperationMetadata.final``) runs only in the
+    final pass of the wrapping loops around it; one that depends on it (its
+    ``depends_on``, or the final one's ``before``) and runs in the other passes of
+    a wrapping loop around both would run before it, or on stale data.
+    """
+    located = _around(ops)
+    for name, (op, around) in located.items():
+        if op.metadata.final or not around:
+            continue
+        for dependency in _upstream(name, op, located):
+            if dependency not in located:
+                continue
+            dependency_op, dependency_around = located[dependency]
+            shared = [loop for loop in around if loop in dependency_around]
+            if shared and dependency_op.metadata.final:
+                raise ValueError(
+                    f"{name} runs in every pass of the wrapping loop {shared[-1]}, but depends "
+                    f"on {dependency}, which runs only in its final pass (final); mark {name} "
+                    f"final too or place the loop so that {name} is outside it"
+                )
+
+
+def check_first(ops: list[Operation]) -> None:
+    """Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.
+
+    An operation marked ``first`` (``OperationMetadata.first``) runs only in the
+    first pass of the wrapping loops around it; one it depends on (its
+    ``depends_on``, or the other's ``before``) that runs in every pass of a
+    wrapping loop around both would leave it on stale data.
+    """
+    located = _around(ops)
     for name, (op, around) in located.items():
         if not op.metadata.first or not around:
             continue
-        upstream = [*op.depends_on]
-        upstream += [other for other, (before, _) in located.items() if name in before.before]
-        for dependency in upstream:
+        for dependency in _upstream(name, op, located):
             if dependency not in located:
                 continue
             dependency_op, dependency_around = located[dependency]

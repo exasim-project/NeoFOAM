@@ -205,11 +205,13 @@ class SolverSpec:
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
         first: bool = False,
+        final: bool = False,
     ) -> Callable[..., Any]:
         """Decorator to register a solver operation.
 
         ``first=True`` runs it only in the first pass of the wrapping loops around
-        it (``OperationMetadata.first``).
+        it (``OperationMetadata.first``), ``final=True`` only in their final pass
+        (``OperationMetadata.final``).
         """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -222,6 +224,7 @@ class SolverSpec:
                         "before": before,
                         "name": name or func.__name__,
                         "first": first,
+                        "final": final,
                     },
                 )
             )
@@ -346,6 +349,7 @@ class SolverSpec:
                     depends_on=metadata["depends_on"] or [],
                     before=metadata["before"] or [],
                     first=metadata["first"],
+                    final=metadata["final"],
                 ),
             )
             ops.add(op)

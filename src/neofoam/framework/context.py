@@ -25,13 +25,16 @@ class LoopEntry(NamedTuple):
     ``iteration`` counts the loop's passes from 0 (the time loop: its time
     steps); ``first`` is whether it is in its first pass. ``wrapping`` is whether
     the loop is a wrapping loop (``OperationMetadata.wraps``, e.g. a coupling
-    node), placed around operations of the time step.
+    node), placed around operations of the time step. ``final`` is whether the
+    pass is the loop's last one: its loop test says so (:meth:`Context.mark_final`,
+    e.g. a coupling node's leader); ``False`` for a loop whose test does not.
     """
 
     name: Optional[str]
     iteration: int
     first: bool
     wrapping: bool
+    final: bool = False
 
 
 class Context(BaseModel):
@@ -55,3 +58,15 @@ class Context(BaseModel):
     # the loops running now, outermost first: each loop op adds its entry while it
     # runs and updates it before each pass (``Operation``)
     loops: list[LoopEntry] = Field(default_factory=list)
+    # names (``Operation.name``) of operations marked ``final`` to run in every pass
+    # of their wrapping loops instead, e.g. to watch them while debugging
+    run_every_pass: set[str] = Field(default_factory=set)
+
+    def mark_final(self, final: bool = True) -> None:
+        """Mark the pass the innermost running loop is about to run as its last one.
+
+        Called by a loop's test before the pass (it sets ``final`` of the loop's
+        entry on :attr:`loops`); the entry of the next pass is not final again
+        until the test marks it.
+        """
+        self.loops[-1] = self.loops[-1]._replace(final=final)
