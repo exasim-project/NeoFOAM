@@ -17,7 +17,7 @@ import math
 import os
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
@@ -25,13 +25,10 @@ from neofoam.framework.coupling import (
     CONVERGENCES,
     DEFAULT_TIMEOUT,
     CommChannel,
-    CouplingController,
     CouplingNode,
-    GroupSide,
     InProcessCommChannel,
     Link,
     RegionCoupling,
-    node_controller,
     region_couplings,
     run_regions,
 )
@@ -107,7 +104,6 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
         regions,
         links,
         comm_channel,
-        controller=_controller(config),
         nodes=nodes,
     )
 
@@ -134,27 +130,6 @@ def _node(config: CouplingNodeConfig) -> CouplingNode:
             for region, wraps in config.wraps.items()
         },
     )
-
-
-def _controller(config: RegionCouplingConfig) -> Any:
-    """Builds the leader's controller as the node describes, once per node and group.
-
-    Raises ``ValueError`` when a ``convergence`` entry of the node names data no
-    side of the node sends (by the field the side couples).
-    """
-    checked = {node.name: {entry.data for entry in node.convergence} for node in config.nodes()}
-
-    def controller(sides: list[GroupSide], label: str, *, node: CouplingNode) -> CouplingController:
-        sent = {side.field for side in sides}
-        unknown = sorted(checked.get(node.name, set()) - sent)
-        if unknown:
-            raise ValueError(
-                f"system/regionCoupling.yaml: convergence on {unknown}, which no side of the "
-                f"group of {label} sends (its sides solve {sorted(sent)})"
-            )
-        return node_controller(sides, label, node=node)
-
-    return controller
 
 
 def run_region(runtime: SolverRuntime) -> Context:

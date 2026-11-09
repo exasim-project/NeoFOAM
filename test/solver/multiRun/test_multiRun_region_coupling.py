@@ -126,7 +126,9 @@ def test_multiRun_region_coupling_convergence_on_data_no_side_sends_raises(
     convergence = [*config.convergence, config.convergence[0].model_copy(update={"data": "U"})]
     _case(tmp_path, monkeypatch, convergence=convergence)
 
-    with pytest.raises(ValueError, match=r"convergence on \['U'\], which no side of the group"):
+    with pytest.raises(
+        ValueError, match=r"convergence RelativeConvergence on U, which no side of the node sends"
+    ):
         run()
 
 
