@@ -716,7 +716,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">kernels</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingController</span><span class="p">,</span> <span class="n">GroupSide</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Acceleration</span><span class="p">,</span> <span class="n">Convergence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingAcceleration</span><span class="p">,</span> <span class="n">CouplingConvergence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transport</span><span class="p">,</span> <span class="n">TransportClosed</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">)</span>
@@ -728,13 +728,13 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Link</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping.</span>
 
-<span class="sd">    ``mapping`` is a :class:`~neofoam.framework.coupling.Mapping` (by default</span>
+<span class="sd">    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping` (by default</span>
 <span class="sd">    :class:`~neofoam.framework.coupling.IdentityMapping`).</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">ends</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">End</span><span class="p">]</span>
-    <span class="n">mapping</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">Mapping</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">kernels</span><span class="o">.</span><span class="n">IdentityMapping</span><span class="p">)</span>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">CouplingMapping</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">kernels</span><span class="o">.</span><span class="n">IdentityMapping</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Link.partner">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Link.partner">[docs]</a>
@@ -754,7 +754,7 @@
 
 <span class="sd">    Each region the node's ``exchanges`` (names of :class:`Link` s) touch gets</span>
 <span class="sd">    one coupling op ``&lt;region&gt;.&lt;name&gt;`` for it. Once every measure of</span>
-<span class="sd">    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.unchanged`)</span>
+<span class="sd">    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.controller.unchanged`)</span>
 <span class="sd">    the node's leader runs one more pass, the final one, and stops after it; the</span>
 <span class="sd">    last of ``max_iterations`` passes is final regardless (an operation marked</span>
 <span class="sd">    ``final`` runs in the final pass only). ``acceleration`` relaxes the data</span>
@@ -773,8 +773,8 @@
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">exchanges</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
-    <span class="n">convergence</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Convergence</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
-    <span class="n">acceleration</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Acceleration</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">convergence</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CouplingConvergence</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CouplingAcceleration</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">placement</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Placement</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">scheme</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"serial"</span><span class="p">,</span> <span class="s2">"parallel"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"parallel"</span>
 

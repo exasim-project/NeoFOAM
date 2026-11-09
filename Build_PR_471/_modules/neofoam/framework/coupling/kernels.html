@@ -674,11 +674,11 @@
 <span class="sd">Each is a family of NeoFOAM's :class:`~neofoam.core.plugin_system.PluginSystem`:</span>
 <span class="sd">a pydantic model per strategy, selected by its ``type``, its options its</span>
 <span class="sd">fields (an unknown option is an error). The mapping is per exchange and</span>
-<span class="sd">receiving side (:class:`Mapping`); relaxation and convergence belong to a</span>
+<span class="sd">receiving side (:class:`CouplingMapping`); relaxation and convergence belong to a</span>
 <span class="sd">coupling node (its leader's</span>
-<span class="sd">:class:`~neofoam.framework.coupling.CouplingController`): a list of convergence</span>
-<span class="sd">measures (:class:`Convergence`), all of which must hold, and at most one</span>
-<span class="sd">acceleration (:class:`Acceleration`) per exchange::</span>
+<span class="sd">:class:`~neofoam.framework.coupling.controller.CouplingController`): a list of convergence</span>
+<span class="sd">measures (:class:`CouplingConvergence`), all of which must hold, and at most one</span>
+<span class="sd">acceleration (:class:`CouplingAcceleration`) per exchange::</span>
 
 <span class="sd">    CouplingNode(</span>
 <span class="sd">        "thermal",</span>
@@ -690,7 +690,7 @@
 <span class="sd">The case names them by ``type`` (``system/regionCoupling.yaml``;</span>
 <span class="sd">:func:`strategy` builds one from its options). A strategy of one's own</span>
 <span class="sd">subclasses its family with a ``type: Literal[...]`` and registers with it</span>
-<span class="sd">(``@Mapping.register``). A package adds its strategies through the entry-point</span>
+<span class="sd">(``@CouplingMapping.register``). A package adds its strategies through the entry-point</span>
 <span class="sd">group ``neofoam.coupling`` (:data:`ENTRY_POINT_GROUP`): each entry point names</span>
 <span class="sd">a module that registers them as it is imported; :func:`load_plugins` imports</span>
 <span class="sd">them, once, before the regions start::</span>
@@ -698,8 +698,8 @@
 <span class="sd">    # pyproject.toml of neofoam-precice:</span>
 <span class="sd">    #   [project.entry-points."neofoam.coupling"]</span>
 <span class="sd">    #   precice = "neofoam_precice.coupling"</span>
-<span class="sd">    @Mapping.register</span>
-<span class="sd">    class RadialBasisMapping(Mapping):</span>
+<span class="sd">    @CouplingMapping.register</span>
+<span class="sd">    class RadialBasisMapping(CouplingMapping):</span>
 <span class="sd">        type: Literal["rbf"] = "rbf"</span>
 <span class="sd">        support_radius: float</span>
 <span class="sd">"""</span>
@@ -742,8 +742,9 @@
 <div class="viewcode-block" id="strategy">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.strategy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">strategy</span><span class="p">(</span><span class="n">family</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">S</span><span class="p">],</span> <span class="n">options</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">S</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The strategy of ``family`` (:class:`Mapping`, :class:`Acceleration`, :class:`Convergence`)</span>
-<span class="sd">    that ``options`` describe: ``{type: ..., &lt;option&gt;: ...}``, or the ``type`` alone.</span>
+<span class="w">    </span><span class="sd">"""The strategy of ``family`` (:class:`CouplingMapping`, :class:`CouplingAcceleration`,</span>
+<span class="sd">    :class:`CouplingConvergence`) that ``options`` describe: ``{type: ..., &lt;option&gt;: ...}``, or</span>
+<span class="sd">    the ``type`` alone.</span>
 
 <span class="sd">    Raises ``ValueError`` listing the registered types when ``type`` is missing</span>
 <span class="sd">    or none of them, and naming the strategy's options when one is unknown,</span>
@@ -751,12 +752,12 @@
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        strategy(Acceleration, {"type": "aitken", "relaxation": 0.5})</span>
-<span class="sd">        strategy(Mapping, "nearest-neighbor")</span>
+<span class="sd">        strategy(CouplingAcceleration, {"type": "aitken", "relaxation": 0.5})</span>
+<span class="sd">        strategy(CouplingMapping, "nearest-neighbor")</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">family</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">options</span>
-    <span class="n">what</span> <span class="o">=</span> <span class="n">family</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">what</span> <span class="o">=</span> <span class="n">family</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"Coupling"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">options</span><span class="p">}</span>
     <span class="n">members</span> <span class="o">=</span> <span class="n">_members</span><span class="p">(</span><span class="n">family</span><span class="p">)</span>
@@ -869,20 +870,20 @@
 <span class="n">BoundMapping</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Data</span><span class="p">],</span> <span class="n">Data</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="Mapping">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Mapping">[docs]</a>
+<div class="viewcode-block" id="CouplingMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping">[docs]</a>
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"mapping"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Mapping</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CouplingMapping</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Maps the :data:`~neofoam.framework.coupling.Array` data a side sends onto the other side.</span>
 
-<span class="sd">    The mapping of an :class:`~neofoam.framework.coupling.Exchange`, a plugin</span>
+<span class="sd">    The mapping of an :class:`~neofoam.framework.coupling.data.Exchange`, a plugin</span>
 <span class="sd">    family (``system/regionCoupling.yaml``: ``mapping:``, its ``type`` and</span>
 <span class="sd">    options). The receiving side's coupling op binds it once, when it connects,</span>
 <span class="sd">    to the partner's points (``source``) and the side's own (``target``; each a</span>
 <span class="sd">    ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the</span>
 <span class="sd">    data of every pass with the bound mapping. A mapping of one's own subclasses</span>
 <span class="sd">    it with a ``type: Literal[...]``, its options as fields, overrides</span>
-<span class="sd">    :meth:`bind` and registers (``@Mapping.register``).</span>
+<span class="sd">    :meth:`bind` and registers (``@CouplingMapping.register``).</span>
 
 <span class="sd">    Example::</span>
 
@@ -892,8 +893,8 @@
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Mapping.bind">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Mapping.bind">[docs]</a>
+<div class="viewcode-block" id="CouplingMapping.bind">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping.bind">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The mapping from the points ``source`` onto ``target``.</span>
 
@@ -906,8 +907,8 @@
 
 <div class="viewcode-block" id="IdentityMapping">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.IdentityMapping">[docs]</a>
-<span class="nd">@Mapping</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">IdentityMapping</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IdentityMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Hands the data over unchanged: the sides share their points."""</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"identity"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"identity"</span>
@@ -932,8 +933,8 @@
 
 <div class="viewcode-block" id="NearestNeighborMapping">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.NearestNeighborMapping">[docs]</a>
-<span class="nd">@Mapping</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">NearestNeighborMapping</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NearestNeighborMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Maps every point of the receiving side to the nearest point of the sending side.</span>
 
 <span class="sd">    Both sides need coordinates. :meth:`bind` finds the nearest points</span>
@@ -957,10 +958,10 @@
 
 
 
-<div class="viewcode-block" id="Acceleration">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Acceleration">[docs]</a>
+<div class="viewcode-block" id="CouplingAcceleration">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingAcceleration">[docs]</a>
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"acceleration"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Acceleration</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CouplingAcceleration</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Relaxes the Array data carried into a pass: (data of the carried sides, iteration) -&gt; data.</span>
 
 <span class="sd">    The acceleration of an exchange of a</span>
@@ -969,7 +970,7 @@
 <span class="sd">    options). It keeps the data of its last passes in private attributes: give</span>
 <span class="sd">    each exchange its own. An acceleration of one's own subclasses it with a</span>
 <span class="sd">    ``type: Literal[...]``, its options as fields, overrides :meth:`__call__`</span>
-<span class="sd">    and registers (``@Acceleration.register``).</span>
+<span class="sd">    and registers (``@CouplingAcceleration.register``).</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -982,8 +983,8 @@
 
 <div class="viewcode-block" id="ConstantRelaxation">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.ConstantRelaxation">[docs]</a>
-<span class="nd">@Acceleration</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ConstantRelaxation</span><span class="p">(</span><span class="n">Acceleration</span><span class="p">):</span>
+<span class="nd">@CouplingAcceleration</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstantRelaxation</span><span class="p">(</span><span class="n">CouplingAcceleration</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Under-relaxes the data carried into a pass by a fixed factor, ``relaxation``.</span>
 
 <span class="sd">    ``x = x_last + relaxation * (sent - x_last)`` for all carried :data:`Array`</span>
@@ -1017,7 +1018,7 @@
 
 <div class="viewcode-block" id="AitkenRelaxation">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.AitkenRelaxation">[docs]</a>
-<span class="nd">@Acceleration</span><span class="o">.</span><span class="n">register</span>
+<span class="nd">@CouplingAcceleration</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AitkenRelaxation</span><span class="p">(</span><span class="n">ConstantRelaxation</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Under-relaxes the data carried into a pass by Aitken's dynamic factor.</span>
 
@@ -1075,10 +1076,10 @@
     <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="Convergence">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Convergence">[docs]</a>
+<div class="viewcode-block" id="CouplingConvergence">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingConvergence">[docs]</a>
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"convergence"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Convergence</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CouplingConvergence</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Whether the coupling has converged, from the change of every side's data in the last pass.</span>
 
 <span class="sd">    A convergence measure of a :class:`~neofoam.framework.coupling.CouplingNode`,</span>
@@ -1086,7 +1087,7 @@
 <span class="sd">    ``type`` and options). A measure on the data of one field names it in its</span>
 <span class="sd">    ``data`` option. A measure of one's own subclasses it with a</span>
 <span class="sd">    ``type: Literal[...]``, its options as fields, overrides :meth:`__call__` and</span>
-<span class="sd">    registers (``@Convergence.register``).</span>
+<span class="sd">    registers (``@CouplingConvergence.register``).</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -1099,8 +1100,8 @@
 
 <div class="viewcode-block" id="RelativeConvergence">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.RelativeConvergence">[docs]</a>
-<span class="nd">@Convergence</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">RelativeConvergence</span><span class="p">(</span><span class="n">Convergence</span><span class="p">):</span>
+<span class="nd">@CouplingConvergence</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RelativeConvergence</span><span class="p">(</span><span class="n">CouplingConvergence</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Converged once the data of field ``data`` changes by less than ``limit`` relative to it.</span>
 
 <span class="sd">    It checks every array sent by a side of the field ``data`` (2-norm of the</span>
