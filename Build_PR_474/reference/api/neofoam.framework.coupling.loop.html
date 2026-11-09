@@ -870,6 +870,10 @@ as the node’s placement for the region says (<code class="docutils literal not
 is <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code>; its messages to other regions are tagged by node
 (<code class="docutils literal notranslate"><span class="pre">&lt;node&gt;/sides</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;node&gt;/pass</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;node&gt;/decision</span></code>) or by exchange
 (<code class="docutils literal notranslate"><span class="pre">side:&lt;exchange&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">data:&lt;exchange&gt;</span></code>).</p>
+<p>A node runs equally often in all its regions, so it sits in the same loops
+in each: the first test tells the leader the names of the loops enclosing
+the op (<code class="docutils literal notranslate"><span class="pre">Context.loops</span></code>, a coupling op by its node’s name), and every
+test their passes; the leader raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when they differ.</p>
 <p>Its loop test runs before each pass. The first test ever exchanges the
 sides’ models and points with the partner regions and checks each exchange.
 Each test then sends what every side sends now: to the partner that steps
