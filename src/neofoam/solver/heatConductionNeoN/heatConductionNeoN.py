@@ -16,9 +16,9 @@ the NeoN time sync) and ``fieldWriter`` (with the NeoN write hook) around one
 ``solve_T`` per time step.
 
 It supports region coupling (``multiRun``): its init adds the coupling model,
-then the coupled patches of ``T`` (:mod:`.coupled_patches`); it agrees on the
-time step with the regions it is coupled with. A region is a case directory of
-its own (:func:`~.create_fields.region_case_dir`).
+then the coupled patches of ``T`` (:mod:`.coupled_patches`); the framework's
+time-step op agrees on the time step with the regions it is coupled with. A
+region is a case directory of its own (:func:`~.create_fields.region_case_dir`).
 """
 
 from typing import Any, Optional
@@ -91,7 +91,7 @@ def execution_graph(
     """One time step::
 
     set_time_step     # the controlDict deltaT
-    agree_dt          # the smallest of the coupled regions
+    <region>.time_step  # if coupled: the smallest of the coupled regions (framework)
     increment_time
     start_step        # the old time level of T, once per time step
     solve_T           # inside the region's coupling op, if coupled
@@ -107,7 +107,6 @@ def execution_graph(
     )
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(loop_ops["set_time_step"])
-        time_builder.step(self.operations["agree_dt"])
         time_builder.step(loop_ops["increment_time"])
         time_builder.step(self.operations["start_step"])
         time_builder.step(self.operations["solve_T"])
@@ -115,16 +114,12 @@ def execution_graph(
     return builder, Operations()
 
 
-@heatConductionNeoN.operation()
-def agree_dt(self: Any, ctx: Context) -> None:
-    """The coupled regions step the smallest time step any of them asks for."""
-    loop = ctx.models["solution_loop"]
-    loop.set_delta_t(Coupling.of(ctx).agree(loop.current_delta_t()), adjust=False)
-
-
-@heatConductionNeoN.operation()
+@heatConductionNeoN.operation(first=True)
 def start_step(self: Any, ctx: Context) -> None:
-    """Make the current T the old time; a coupling op solves from it again each pass."""
+    """Make the current T the old time; a coupling op solves from it again each pass.
+
+    Marked ``first``: inside a coupling loop it runs once per time step.
+    """
     ctx.models["conduction"].start_step()
 
 

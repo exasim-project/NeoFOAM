@@ -125,10 +125,18 @@ class CoupledHeatFlux(NeoNPatch):
         rt = ctx.models["neon_runtime"]
         # dT/dt gains q A / (rho cp V) in a cell from the heat flux q through its face
         self.capacities = ctx.models["conduction"].rho_cp * _host(rt.nf_mesh.cell_volumes)
-        # the heat flux through each face into the region; its source in the cells
-        self.heat_in = np.zeros(len(self.owners))
+        # the heat flux through each face into the region; its source in the cells.
+        # It starts as the flux its value in 0/T gives: the wall temperature it sends
+        # until the partner's heat flux arrives is that value.
         self.source = nfb.create_uniform_volume_field(rt, f"heatIn({patch})", 0.0)
+        self._set_heat_in(self.h * (super().wall_T() - self.cell_T()))
         Coupling.of(ctx).add(self)
+
+    def _set_heat_in(self, heat_in: Any) -> None:
+        self.heat_in = np.asarray(heat_in, dtype=float)
+        source = np.zeros(len(self.capacities))
+        np.add.at(source, self.owners, self.heat_in * self.areas)
+        nfb.copy_from_host(self.source, source / self.capacities)
 
     def wall_T(self) -> Any:
         return self.cell_T() + self.heat_in / self.h
@@ -146,10 +154,7 @@ class CoupledHeatFlux(NeoNPatch):
 
     @coupled.receives
     def receive(self, data: WallHeatFlux) -> None:
-        self.heat_in = -np.asarray(data.q, dtype=float)
-        source = np.zeros(len(self.capacities))
-        np.add.at(source, self.owners, self.heat_in * self.areas)
-        nfb.copy_from_host(self.source, source / self.capacities)
+        self._set_heat_in(-np.asarray(data.q, dtype=float))
 
 
 COUPLED_PATCHES: dict[str, type[NeoNPatch]] = {
