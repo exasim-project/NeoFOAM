@@ -26,7 +26,7 @@ from neofoam.framework.operations import (
     SequentialOp,
     StepBuilder,
 )
-from neofoam.framework.types import OperationMetadata, Placement
+from neofoam.framework.types import OperationMetadata, OperationNumber, Placement
 
 Tree = list[Union[str, tuple[str, "Tree"]]]
 
@@ -183,9 +183,147 @@ def test_a_loop_around_an_unknown_operation_raises_with_the_names() -> None:
         _resolve(_time_step([]), _loop("couple", _around("solve_T", "solve_h")))
 
 
-def test_a_loop_around_a_loop_raises() -> None:
-    with pytest.raises(ValueError, match=r"couple wraps \['time_loop'\], which are loops"):
+def test_a_loop_around_the_outermost_loop_raises() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"couple wraps \['time_loop'\], the outermost loop; it wraps operations or "
+        r"loops inside it",
+    ):
         _resolve(_time_step([]), _loop("couple", _around("time_loop")))
+
+
+def _pimple_step(log: list[str], time_step: bool = False) -> StepBuilder:
+    """time_loop: set_time_step, increment_time, inner_loop [solve_U, solve_p], update_T, write.
+
+    With ``time_step`` a coupled region's time-step op runs between
+    set_time_step and increment_time (numbered, as the coupling model adds it).
+    """
+    builder = StepBuilder()
+    with builder.loop(_loop("time_loop")) as time_builder:
+        time_builder.step(_op("set_time_step", log))
+        time_builder.step(_op("increment_time", log, depends_on=["set_time_step"]))
+        with time_builder.loop(_loop("inner_loop", count=2)) as inner_builder:
+            inner_builder.step(_op("solve_U", log))
+            inner_builder.step(_op("solve_p", log, depends_on=["solve_U"]))
+        time_builder.step(_op("update_T", log, depends_on=["solve_p"]))
+        time_builder.step(_op("write", log))
+    return builder
+
+
+def _time_step_op(log: list[str]) -> Operation:
+    op = _op("fluid.time_step", log, depends_on=["set_time_step"], before=["increment_time"])
+    op.metadata.operation_number = OperationNumber(0)
+    return op
+
+
+_INNER = ("inner_loop", ["solve_U", "solve_p"])
+
+
+def test_a_loop_around_a_loop_holds_it_whole_and_what_is_downstream() -> None:
+    """update_T depends on solve_p inside inner_loop: it is downstream of the loop."""
+    ops = _resolve(_pimple_step([]), _loop("couple", _around("inner_loop")))
+
+    assert _tree(ops) == [
+        (
+            "time_loop",
+            ["set_time_step", "increment_time", ("couple", [_INNER, "update_T"]), "write"],
+        )
+    ]
+
+
+def test_a_loop_around_a_loop_without_downstream_holds_it_alone() -> None:
+    ops = _resolve(_pimple_step([]), _loop("couple", _around("inner_loop", downstream=False)))
+
+    assert _tree(ops) == [
+        (
+            "time_loop",
+            ["set_time_step", "increment_time", ("couple", [_INNER]), "update_T", "write"],
+        )
+    ]
+
+
+def test_a_loop_around_a_loop_leaves_the_time_step_before_it() -> None:
+    """The time-step op stays between set_time_step and increment_time, outside the loop."""
+    ops = DAGResolver().resolve(
+        _pimple_step([]),
+        Operations([_time_step_op([]), _loop("couple", _around("inner_loop"))]),
+    )
+
+    assert _tree(ops.operations.ops) == [
+        (
+            "time_loop",
+            [
+                "set_time_step",
+                "fluid.time_step",
+                "increment_time",
+                ("couple", [_INNER, "update_T"]),
+                "write",
+            ],
+        )
+    ]
+
+
+def test_a_loop_around_a_loop_repeats_it_whole() -> None:
+    """Each pass of the loop runs every pass of inner_loop."""
+    log: list[str] = []
+    ops = _resolve(_pimple_step(log), _loop("couple", _around("inner_loop"), count=2))
+
+    Operations(ops).run(Context(fields={}, models={}))
+
+    assert log == [
+        "set_time_step",
+        "increment_time",
+        *[*["solve_U", "solve_p"] * 2, "update_T"] * 2,
+        "write",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("inner", "expected"),
+    [
+        ("solve_p", [("inner_loop", ["solve_U", ("T.couple", ["solve_p"])]), "update_T"]),
+        ("inner_loop", [("T.couple", [_INNER, "update_T"])]),
+    ],
+)
+def test_a_loop_inside_a_loop_around_a_loop_nests_inside_it(inner: str, expected: Tree) -> None:
+    ops = _resolve(
+        _pimple_step([]),
+        _loop("U.couple", _around("inner_loop")),
+        _loop("T.couple", _around(inner)),
+    )
+
+    assert _tree(ops) == [
+        (
+            "time_loop",
+            ["set_time_step", "increment_time", ("U.couple", expected), "write"],
+        )
+    ]
+
+
+def test_a_loop_around_a_loop_that_holds_a_placed_loop_raises() -> None:
+    """The loop around solve_p is listed first: the loop around inner_loop would hold it."""
+    with pytest.raises(
+        ValueError, match=r"U.couple would hold the coupling loop \['T.couple'\] placed before"
+    ):
+        _resolve(
+            _pimple_step([]),
+            _loop("T.couple", _around("solve_p")),
+            _loop("U.couple", _around("inner_loop")),
+        )
+
+
+def test_a_loop_around_a_loop_and_an_operation_inside_it_raises() -> None:
+    with pytest.raises(ValueError, match="lie in more than one loop scope; couple wraps"):
+        _resolve(_pimple_step([]), _loop("couple", _around("inner_loop", "solve_p")))
+
+
+def test_a_loop_around_an_unknown_name_lists_the_loops_inside_too() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"the operations are \['increment_time', 'inner_loop', 'set_time_step', "
+        r"'solve_U', 'solve_p', 'update_T', 'write'\]",
+    ):
+        _resolve(_pimple_step([]), _loop("couple", _around("solve_h")))
 
 
 def test_a_loop_around_operations_of_several_scopes_raises() -> None:

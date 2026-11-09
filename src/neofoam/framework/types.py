@@ -71,7 +71,8 @@ class Placement:
     Without ``operations`` the loop wraps the whole body of the top scope: the body
     of the outermost loop, or of the innermost wrapping loop placed there before.
     With them it wraps the operations of that name and, if ``downstream``, every
-    operation downstream of them in their scope.
+    operation downstream of them in their scope. A name may be a loop inside the
+    outermost one (e.g. ``inner_loop``), which the loop then holds whole.
     """
 
     operations: tuple[str, ...] | None = None

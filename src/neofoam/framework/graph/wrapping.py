@@ -30,6 +30,19 @@ the solver's time step. Its ``OperationMetadata.wraps``
         write                               update_rho
                                         write
 
+  A name may be a loop inside the outermost one (e.g. a PIMPLE ``inner_loop``):
+  the wrapping loop holds it whole, as one operation, and downstream of it is
+  downstream of anything inside it::
+
+    time_loop                       time_loop
+        set_time_step                   set_time_step
+        increment_time                  increment_time
+        inner_loop   ("inner_loop",)    couple
+            solve_U  -------------->        inner_loop
+            solve_p                             solve_U
+        write                                   solve_p
+                                            write
+
 Loops are placed in the order given, outer first: a loop whose operations lie
 inside one placed before nests inside it; one that would have to hold a loop
 placed before raises.
@@ -78,9 +91,10 @@ def downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list[
 def wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
     """The resolved ``ops`` with ``loop`` placed as ``loop.metadata.wraps`` says.
 
-    Raises ``ValueError`` when an operation name is unknown or names a loop, when
-    the named operations lie in more than one scope, when the loop would have to
-    hold a wrapping loop placed before it, or when no top scope can be told.
+    Raises ``ValueError`` when an operation name is unknown or names the
+    outermost loop, when the named operations lie in more than one scope, when
+    the loop would have to hold a wrapping loop placed before it, or when no top
+    scope can be told.
     """
     placement = loop.metadata.wraps
     assert placement is not None
@@ -196,17 +210,20 @@ def _selected(
     """The scope of the operations ``placement`` names, and what the loop takes there."""
     names = list(placement.operations or ())
     located = _located(ops, ())
+    # A loop of the top scope (the time loop) cannot be repeated by one inside it.
+    outermost = {name for name, (path, op) in located.items() if not path and _is_loop(op)}
     unknown = [name for name in names if name not in located]
     if unknown:
-        available = sorted({name for name, (_path, op) in located.items() if not _is_loop(op)})
+        available = sorted(name for name in located if name not in outermost)
         raise ValueError(
             f"{loop.operation_name} wraps {unknown}, which name no operation; "
             f"the operations are {available}"
         )
-    loops = [name for name in names if _is_loop(located[name][1])]
+    loops = [name for name in names if name in outermost]
     if loops:
         raise ValueError(
-            f"{loop.operation_name} wraps {loops}, which are loops; it wraps operations"
+            f"{loop.operation_name} wraps {loops}, the outermost loop; it wraps operations "
+            "or loops inside it"
         )
     paths = {located[name][0] for name in names}
     if len(paths) > 1:
@@ -221,13 +238,24 @@ def _selected(
         picked = downstream(scope, lambda op: id(op) in seeds)
     else:
         picked = [op for op in scope if id(op) in seeds]
-    held = [op.operation_name for op in picked if _is_wrapping(op)]
+    held = _wrapping_in(picked)
     if held:
         raise ValueError(
             f"{loop.operation_name} would hold the coupling loop {held} placed before it; "
             "list the outer coupling first"
         )
     return path, picked
+
+
+def _wrapping_in(ops: list[Operation]) -> list[str | None]:
+    """The names of the wrapping loops among ``ops`` and inside their loops."""
+    held: list[str | None] = []
+    for op in ops:
+        if _is_wrapping(op):
+            held.append(op.operation_name)
+        elif _is_loop(op):
+            held.extend(_wrapping_in(op.sub_operations))
+    return held
 
 
 def _located(ops: list[Operation], path: Path) -> dict[str, tuple[Path, Operation]]:
