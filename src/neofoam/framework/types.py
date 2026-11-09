@@ -106,11 +106,22 @@ class OperationMetadata:
     # wrapping loop around it is in its first pass (``Context.loops``), e.g. the
     # start of a time step inside a coupling loop
     first: bool = False
+    # runs once per pass of the loop that holds the wrapping loops, in their last
+    # pass: only while every wrapping loop around it is in its final pass
+    # (``Context.loops``), e.g. writing the results of a coupled time step
+    final: bool = False
 
     # DAG visualization properties
     shape: str = "box"
     color: str | None = None
     used_by: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if self.first and self.final:
+            raise ValueError(
+                f"operation {self.op_name} is marked first and final; an operation runs "
+                "in the first or in the final pass of its wrapping loops, not both"
+            )
 
     @property
     def is_operation(self) -> bool:
