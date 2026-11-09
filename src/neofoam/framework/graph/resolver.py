@@ -176,6 +176,7 @@ def _sort_global(
     op_map: dict[str, tuple[str, Operation]],
     tagged: list[tuple[str, Operation]],
     sorter: TopologicalSorter,
+    stepped: int | None = None,
 ) -> dict[str, list[Operation]]:
     """Topologically sort the global graph, grouping results back by scope.
 
@@ -194,6 +195,13 @@ def _sort_global(
     relative to the surrounding ops; ops may therefore precede **and** follow a
     loop in the same scope. Loops carry no edges, so interleaving them by builder
     index is always dependency-safe.
+
+    The first ``stepped`` entries of ``tagged`` are the builder's (default: all);
+    the rest, the model ops, have no place of their own beside a loop. A loop
+    goes after the last op of its scope stepped before it, unless one stepped
+    after it sorts earlier, in which case it goes ahead of that one. A model op
+    that sorts ahead of an op stepped before the loop therefore stays ahead of
+    the loop; one that sorts after them all follows it.
     """
     # Builder insertion order: position in the pre-order ``tagged`` list.
     order: dict[int, int] = {id(op): i for i, (_, op) in enumerate(tagged)}
@@ -224,21 +232,28 @@ def _sort_global(
             loops_by_scope[scope].append(op)
 
     # Merge loops into each scope's sequential ops by builder order. The
-    # sequential ops keep their topological order; each loop is inserted ahead of
-    # the first sequential op stepped after it.
+    # sequential ops keep their topological order; each loop is inserted after
+    # the last op stepped before it, or ahead of the first op stepped after it
+    # if that sorts earlier. Model ops (index ``stepped`` and up) do not move it.
+    n_stepped = len(tagged) if stepped is None else stepped
     by_scope: dict[str, list[Operation]] = {}
     for scope in set(seq_by_scope) | set(loops_by_scope):
         seq = seq_by_scope[scope]
-        loops = sorted(loops_by_scope[scope], key=lambda op: order[id(op)])
+        builder_idx = [order.get(id(op), len(order)) for op in seq]
+        at: list[tuple[int, Operation]] = []
+        for loop in sorted(loops_by_scope[scope], key=lambda op: order[id(op)]):
+            loop_idx = order[id(loop)]
+            after = [i for i, idx in enumerate(builder_idx) if idx < loop_idx]
+            ahead = [i for i, idx in enumerate(builder_idx) if loop_idx < idx < n_stepped]
+            at.append((min(after[-1] + 1 if after else 0, ahead[0] if ahead else len(seq)), loop))
         merged: list[Operation] = []
         next_loop = 0
-        for seq_op in seq:
-            seq_idx = order.get(id(seq_op), len(order))
-            while next_loop < len(loops) and order[id(loops[next_loop])] < seq_idx:
-                merged.append(loops[next_loop])
+        for i, seq_op in enumerate(seq):
+            while next_loop < len(at) and at[next_loop][0] <= i:
+                merged.append(at[next_loop][1])
                 next_loop += 1
             merged.append(seq_op)
-        merged.extend(loops[next_loop:])
+        merged.extend(loop for _, loop in at[next_loop:])
         by_scope[scope] = merged
 
     return by_scope
@@ -296,7 +311,9 @@ class DAGResolver:
         rest = Operations([op for op in additional_ops if op.metadata.wraps is None])
         tagged = _collect_tagged_ops(builder, rest)
         graph, op_map = _build_global_graph(tagged)
-        sorted_scopes = _sort_global(graph, op_map, tagged, sorter=self._sorter)
+        sorted_scopes = _sort_global(
+            graph, op_map, tagged, sorter=self._sorter, stepped=len(tagged) - len(rest)
+        )
         ops = _rebuild_builder(sorted_scopes).operations.ops
         for loop in wrapping:
             ops = wrap(ops, loop)

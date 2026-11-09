@@ -621,6 +621,77 @@ def test_resolve_keeps_root_level_ops_beside_a_loop() -> None:
     assert _names_in(result, path=[1]) == ["step1"]
 
 
+def _build_pimple_like(with_tail: bool = True) -> StepBuilder:
+    """incompressibleFluid's step: set_time_step, increment_time, the PIMPLE loop, writing."""
+    builder = StepBuilder()
+    with builder.loop(_loop_op("time_loop")) as time_builder:
+        time_builder.step(_seq("set_time_step"))
+        time_builder.step(_seq("increment_time"))
+        with time_builder.loop(_loop_op("inner_loop")) as inner_builder:
+            inner_builder.step(_seq("momentum"))
+            inner_builder.step(_seq("continuity", depends_on=["momentum"]))
+        if with_tail:
+            time_builder.step(_seq("write_output"))
+            time_builder.step(_seq("post_process"))
+    return builder
+
+
+def _time_step_op() -> Operation:
+    """The coupling's time-step op: numbered, between set_time_step and increment_time."""
+    return _seq(
+        "fluid.time_step", number="0", depends_on=["set_time_step"], before=["increment_time"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("with_tail", "expected"),
+    [
+        (
+            True,
+            [
+                "set_time_step",
+                "fluid.time_step",
+                "increment_time",
+                "inner_loop",
+                "write_output",
+                "post_process",
+            ],
+        ),
+        (False, ["set_time_step", "fluid.time_step", "increment_time", "inner_loop"]),
+    ],
+)
+def test_resolve_model_op_before_a_builder_op_keeps_the_loop_after_it(
+    with_tail: bool, expected: list[str]
+) -> None:
+    """A model op placed ahead of an op stepped before a loop does not pull the loop ahead.
+
+    The loop stays after every op stepped before it (increment_time): the
+    coupling's time-step op changes the order only by its own insertion.
+    """
+    builder = _build_pimple_like(with_tail)
+    uncoupled = DAGResolver().resolve(builder, Operations())
+    coupled = DAGResolver().resolve(builder, Operations([_time_step_op()]))
+
+    assert _names_in(coupled, path=[0]) == expected
+    assert [name for name in expected if name != "fluid.time_step"] == _names_in(
+        uncoupled, path=[0]
+    )
+    assert _names_in(coupled, path=[0, expected.index("inner_loop")]) == ["momentum", "continuity"]
+
+
+def test_resolve_model_op_after_the_ops_before_a_loop_follows_the_loop() -> None:
+    """A model op that only depends on an op stepped before a loop still sorts after the loop."""
+    builder = StepBuilder()
+    with builder.loop(_loop_op("time_loop")) as time_builder:
+        time_builder.step(_seq("start"))
+        with time_builder.loop(_loop_op("inner_loop")) as inner_builder:
+            inner_builder.step(_seq("solve"))
+
+    result = DAGResolver().resolve(builder, Operations([_seq("M", depends_on=["start"])]))
+
+    assert _names_in(result, path=[0]) == ["start", "inner_loop", "M"]
+
+
 # ===========================================================================
 # 6. Integration tests — DAGResolver.resolve()
 # ===========================================================================
