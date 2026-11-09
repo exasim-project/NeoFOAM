@@ -735,9 +735,12 @@
 <span class="c1"># writer must not name a specific solver's correction op.</span>
 <div class="viewcode-block" id="write_output">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.field_writer.html#neofoam.algorithms.field_writer.field_writer.write_output">[docs]</a>
-<span class="nd">@fieldWriter</span><span class="o">.</span><span class="n">operation</span><span class="p">()</span>
+<span class="nd">@fieldWriter</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_output</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write the flagged fields on write steps; optionally report step timing.</span>
+
+<span class="sd">    Marked ``final``: inside a coupling loop it runs in its final pass only, once</span>
+<span class="sd">    per time step.</span>
 
 <span class="sd">    The decision reads the loop state (``ctx.time``, with the Python-computed</span>
 <span class="sd">    ``write_time`` flag); the action writes through the injected backend hook.</span>
