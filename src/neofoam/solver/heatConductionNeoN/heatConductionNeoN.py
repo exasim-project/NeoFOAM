@@ -128,7 +128,7 @@ def start_step(self: Any, ctx: Context) -> None:
     ctx.models["conduction"].start_step()
 
 
-@heatConductionNeoN.operation(solves=["T"], depends_on=["start_step"])
+@heatConductionNeoN.operation(depends_on=["start_step"])
 def solve_T(self: Any, ctx: Context) -> None:
     """Solve the temperature at the end of the loop's current time step."""
     ctx.models["conduction"].solve()
