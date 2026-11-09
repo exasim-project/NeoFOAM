@@ -717,6 +717,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -933,7 +934,7 @@
 <span class="sd">    ``converged`` whether the convergence check held (``False``:</span>
 <span class="sd">    ``max_iterations`` stopped it), and ``residuals`` the relative change of</span>
 <span class="sd">    every field's exchanged :data:`Array` data in the last pass (largest over its</span>
-<span class="sd">    sides and arrays).</span>
+<span class="sd">    sides and arrays; ``inf`` for a field no pass measured).</span>
 <span class="sd">    """</span>
 
     <span class="n">passes</span><span class="p">:</span> <span class="nb">int</span>
@@ -954,7 +955,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The relative change of each field's data: ``|current - previous| / |current|``.</span>
 
-<span class="sd">    Largest over the sides and arrays of the field; the absolute change where</span>
+<span class="sd">    Largest over the sides and arrays of the field (no floor: a field's value</span>
+<span class="sd">    is its largest measured change; a NaN stays NaN); the absolute change where</span>
 <span class="sd">    the current data is zero.</span>
 <span class="sd">    """</span>
     <span class="n">residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -964,7 +966,7 @@
             <span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">current</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">previous</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)))</span>
             <span class="n">norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">current</span><span class="p">))</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">norm</span> <span class="k">if</span> <span class="n">norm</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">delta</span>
-            <span class="n">residuals</span><span class="p">[</span><span class="n">change</span><span class="o">.</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="n">change</span><span class="o">.</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">residuals</span></div>
 
 
@@ -1018,6 +1020,11 @@
 <span class="sd">    (``coupling_finished``); ending at ``max_iterations`` unconverged also warns</span>
 <span class="sd">    (:class:`CouplingNotConvergedWarning`). Not thread safe.</span>
 
+<span class="sd">    Raises ``ValueError`` when a measure of ``convergence`` on a field's data</span>
+<span class="sd">    (``data``) has none to compare: no side of the field, or its sides send no</span>
+<span class="sd">    :data:`Array` data; :meth:`decide` raises ``FloatingPointError`` when the</span>
+<span class="sd">    change of a side is not finite.</span>
+
 <span class="sd">    The leader builds it with its coupling's ``controller`` factory, which it</span>
 <span class="sd">    hands the node (by default :func:`~neofoam.framework.coupling.node_controller`:</span>
 <span class="sd">    the node's scheme, convergence, acceleration and max_iterations; one</span>
@@ -1050,6 +1057,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">convergence</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">=</span> <span class="n">max_iterations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">acceleration</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_convergence</span><span class="p">()</span>
         <span class="n">rank</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
             <span class="n">rank</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rank</span><span class="p">))</span>
@@ -1058,7 +1066,10 @@
             <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span>
         <span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CouplingOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># inf for every field with Array data until a pass measured its change:</span>
+        <span class="c1"># nothing counts as converged before it was measured</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span> <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
         <span class="c1"># the pass of the current time step; 0 between time steps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="c1"># whether the pass started last is the final one, and whether it is final</span>
@@ -1067,6 +1078,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="c1"># what each side carries into the pass (relaxed), in the order of _sides</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_convergence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when a measure of the convergence has no data to compare.</span>
+
+<span class="sd">        A measure on the data of a field (its ``data``, e.g. :class:`RelativeConvergence`)</span>
+<span class="sd">        compares the :data:`Array` data the node's sides of that field send (plain</span>
+<span class="sd">        fields are not compared); with none it would hold over nothing.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">measure</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">of_field</span> <span class="o">=</span> <span class="p">[</span><span class="n">side</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span> <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="n">data</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">of_field</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: convergence </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"which no side of the node sends (its sides couple "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">({</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">side</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">})</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">of_field</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: convergence </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"has no Array data to compare: the sides of </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2"> send plain fields "</span>
+                    <span class="s2">"only, which no convergence compares"</span>
+                <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sides</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -1090,7 +1126,10 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The relative change of each field's :data:`Array` data in the last pass."""</span>
+<span class="w">        </span><span class="sd">"""The relative change of each field's :data:`Array` data in the last pass.</span>
+
+<span class="sd">        ``inf`` for a field no pass of the time step's coupling measured yet.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CouplingController.fresh">
@@ -1116,7 +1155,7 @@
             <span class="n">SideChange</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="n">previous</span><span class="p">),</span> <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="n">now</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">side</span><span class="p">,</span> <span class="n">previous</span><span class="p">,</span> <span class="n">now</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span>
         <span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="n">relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">)}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final</span><span class="p">:</span>
             <span class="n">converged</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged</span><span class="p">(</span><span class="n">changes</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_finish</span><span class="p">(</span><span class="n">converged</span><span class="p">)</span>
@@ -1127,6 +1166,22 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span><span class="p">)</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_relative_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">""":func:`relative_changes` of ``changes`` (in the order of ``sides``).</span>
+
+<span class="sd">        Raises ``FloatingPointError`` when the change of a side is not finite.</span>
+<span class="sd">        """</span>
+        <span class="n">residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">side</span><span class="p">,</span> <span class="n">change</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">,</span> <span class="n">changes</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">relative_changes</span><span class="p">([</span><span class="n">change</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">FloatingPointError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: the relative change of the </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> of region "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> patch </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="si">}</span><span class="s2"> is not finite in pass </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                <span class="n">residuals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">residuals</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_converged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Whether every measure of the convergence holds (none: :func:`unchanged`)."""</span>
@@ -1156,7 +1211,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_start_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="n">final</span>
         <span class="k">for</span> <span class="n">exchange</span><span class="p">,</span> <span class="n">acceleration</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1312,13 +1367,13 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="p">[</span><span class="n">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">)</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">]</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="p">[</span><span class="n">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">parallel</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">side</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">,</span> <span class="n">current</span><span class="p">):</span>
                 <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-        <span class="n">time</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">go_on</span><span class="p">,</span> <span class="n">final</span><span class="p">,</span> <span class="n">decided</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decide</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">time</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">go_on</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1460,18 +1515,31 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""What ``side`` sends now, as named copies."""</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">:</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What ``side`` sends now, as named copies.</span>
+
+<span class="sd">    Raises ``FloatingPointError`` when an :data:`Array` of it is not finite (in</span>
+<span class="sd">    coupling node ``node``, after pass ``iteration``, at ``time``).</span>
+<span class="sd">    """</span>
     <span class="n">sent</span> <span class="o">=</span> <span class="n">side</span><span class="o">.</span><span class="n">side</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"the coupled side </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> declares it sends </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, "</span>
             <span class="sa">f</span><span class="s2">"but its send() returned </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"Array"</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">_kinds</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="p">}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_array_names</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">sends</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">])):</span>
+            <span class="n">when</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"after pass </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">iteration</span> <span class="k">else</span> <span class="s2">"before the first pass"</span>
+            <span class="n">at</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">" (t=</span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">raise</span> <span class="ne">FloatingPointError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"coupling '</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">': the </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> of region </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> patch </span><span class="si">{</span><span class="n">side</span><span class="o">.</span><span class="n">patch</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"is not finite </span><span class="si">{</span><span class="n">when</span><span class="si">}{</span><span class="n">at</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span>
 </pre></div>
         </article>
       </div>
