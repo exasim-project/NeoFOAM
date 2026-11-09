@@ -15,7 +15,7 @@ operations can run, the framework needs to:
    :mod:`~neofoam.framework.graph.resolver`. For the simpler
    ``{node: [deps]}`` case, :func:`topological_order` (see
    :mod:`~neofoam.framework.graph.ordering`) builds the graph and sorts it.
-3. Nest the operations solving the fields a contributed loop wraps inside it
+3. Place a contributed wrapping loop around the operations it repeats
    (``OperationMetadata.wraps``) — see :mod:`~neofoam.framework.graph.wrapping`.
 4. Optionally render the resulting graph for diagnostics — see
    :mod:`~neofoam.framework.graph.visualization`.
