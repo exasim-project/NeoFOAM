@@ -12,7 +12,7 @@ per coupling node), which the resolver wraps around them.
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, Literal, Optional, Sequence
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
@@ -35,20 +35,19 @@ from neofoam.framework.types import OperationMetadata
 def contexts(
     regions: list[str],
     links: list[Link],
-    parallel: bool = False,
+    scheme: Literal["serial", "parallel"] = "serial",
     nodes: Optional[Sequence[CouplingNode]] = None,
     **node: Any,
 ) -> dict[str, Context]:
     """A context per region, coupled over ``links`` in ``nodes``.
 
-    Without ``nodes`` one node ``coupling`` holds every link; ``node`` sets its
-    max_iterations, convergence and acceleration.
+    Without ``nodes`` one node ``coupling`` of ``scheme`` holds every link;
+    ``node`` sets its max_iterations, convergence and acceleration.
     """
     if nodes is None:
-        nodes = [CouplingNode("coupling", tuple(link.name for link in links), **node)]
-    couplings = region_couplings(
-        regions, links, InProcessTransport(), parallel=parallel, nodes=nodes
-    )
+        names = tuple(link.name for link in links)
+        nodes = [CouplingNode("coupling", names, scheme=scheme, **node)]
+    couplings = region_couplings(regions, links, InProcessTransport(), nodes=nodes)
     return {
         region: Context(
             fields={},

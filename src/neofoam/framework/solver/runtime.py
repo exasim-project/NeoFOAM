@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional
 
+from neofoam.framework.coupling import Coupling
 from neofoam.framework.dependency_resolver import DependencyResolver
 
 if TYPE_CHECKING:
@@ -110,6 +111,8 @@ class SolverRuntime:
     def resolve_operations(self, ctx: "Context") -> "Operations":
         """The runnable execution graph: ``execution_graph`` resolved with its model operations.
 
+        Raises ``ValueError`` when the region's coupling model rejects the graph
+        (``Coupling.check``: the time step inside a serial coupling node).
         Reported to the installed execution observer before it is returned.
         """
         from neofoam.framework import execution_observer  # noqa: PLC0415
@@ -117,6 +120,9 @@ class SolverRuntime:
 
         builder, model_ops = self.execution_graph(ctx=ctx)
         operations = DAGResolver().resolve(builder, model_ops).operations
+        coupling = None if ctx is None else ctx.models.get("coupling")
+        if isinstance(coupling, Coupling):
+            coupling.check(operations)
         observer = execution_observer.current()
         if observer is not None:
             observer.operations(operations, ctx)

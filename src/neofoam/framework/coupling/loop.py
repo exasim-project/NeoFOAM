@@ -306,17 +306,16 @@ class CouplingController:
     (:class:`CouplingNotConvergedWarning`). Not thread safe.
 
     The leader builds it with its coupling's ``controller`` factory, which it
-    hands the coupling's ``parallel`` and the node (by default
-    :func:`~neofoam.framework.coupling.node_controller`: the node's convergence,
-    acceleration and max_iterations; one acceleration per exchange: it keeps the
-    data of its last passes)::
+    hands the node (by default :func:`~neofoam.framework.coupling.node_controller`:
+    the node's scheme, convergence, acceleration and max_iterations; one
+    acceleration per exchange: it keeps the data of its last passes)::
 
-        def controller(sides, label, *, parallel, node):
+        def controller(sides, label, *, node):
             return CouplingController(
                 sides,
                 label,
                 max_iterations=50,
-                parallel=parallel,
+                parallel=node.parallel,
                 acceleration={"interface": AitkenRelaxation(initial=0.5)},
             )
     """
@@ -567,7 +566,7 @@ class CouplingOp(IterativeOp):
         if not self._connected:
             self._connect()
         current = [_sent(side) for side in self._sides]
-        if self._iteration > 0 and not self._coupling.parallel:
+        if self._iteration > 0 and not self.node.parallel:
             for side, data in zip(self._sides, current):
                 region = self.exchange_of(side).partner[0]
                 if self._rank[region] > self._rank[self.region]:
@@ -617,7 +616,6 @@ class CouplingOp(IterativeOp):
             self._controller = self._coupling.controller(
                 self._node_sides(sides),
                 self.label,
-                parallel=self._coupling.parallel,
                 node=self.node,
             )
         self._connected = True

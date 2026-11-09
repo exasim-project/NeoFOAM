@@ -28,7 +28,9 @@ region's time-step op ``<region>.time_step`` (:meth:`Coupling.time_step`): the
 regions of the group step the smallest time step any of them asks for. It runs
 after the solutionLoop's ``set_time_step`` and before its ``increment_time``,
 once per time step (``first``), and reads and writes the time step in the
-region's context (``ctx.time.delta_t``).
+region's context (``ctx.time.delta_t``). It must not end up inside a serial
+coupling op: :meth:`Coupling.check` raises for the resolved graph (the
+runtime's ``resolve_operations`` calls it).
 """
 
 from __future__ import annotations
@@ -180,6 +182,29 @@ class Coupling:
             ),
         )
 
+    def check(self, graph: Iterable[Operation]) -> None:
+        """Raise ``ValueError`` when the resolved ``graph`` holds the time step in a serial node.
+
+        A serial pass of a region waits for its partner's whole pass; when that
+        holds the time-step op, which waits for the region, neither comes back.
+        """
+        coupling = self.coupling
+        if coupling is None:
+            return
+        # the labels of the region's serial coupling ops, and their nodes' names
+        serial = {
+            f"{coupling.region}.{node.name}": node.name
+            for node in coupling.nodes
+            if not node.parallel
+        }
+        holder = _holder(graph, f"{coupling.region}.time_step", serial)
+        if holder is not None:
+            raise ValueError(
+                f"coupling '{holder}' is serial but holds the time step of its regions; make it "
+                f"parallel or place it around named operations "
+                f"(wraps.{coupling.region}.operations)"
+            )
+
 
 # The solutionLoop operations the time-step op runs between.
 SET_TIME_STEP = "set_time_step"
@@ -195,6 +220,18 @@ def _names(ops: Iterable[Operation]) -> set[str]:
         if isinstance(op.func, IterativeOp):
             names |= _names(op.sub_operations)
     return names
+
+
+def _holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -> Optional[str]:
+    """The node of the outermost loop of ``serial`` (by label) holding operation ``name``."""
+    for op in ops:
+        if isinstance(op.func, IterativeOp):
+            if op.operation_name in serial and name in _names(op.sub_operations):
+                return serial[op.operation_name]
+            inside = _holder(op.sub_operations, name, serial)
+            if inside is not None:
+                return inside
+    return None
 
 
 class _TimeStep:
