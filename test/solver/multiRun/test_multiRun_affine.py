@@ -228,14 +228,14 @@ def test_multiRun_affine_execution_observer_sees_each_region_s_graph(
         ["a"],
         ["b"],
     ]
-    # a graph per region: its own time loop, the agreed deltaT, its solve in its coupling op
+    # a graph per region: its own time loop, its time-step op, its solve in its coupling op
     assert {region: _tree(graph.ops) for region, graph in recorder.graphs.items()} == {
         region: [
             (
                 "time_loop",
                 [
                     "set_time_step",
-                    "agree_dt",
+                    f"{region}.time_step",
                     "increment_time",
                     (f"{region}.coupling", ["solve_x"]),
                 ],
@@ -249,7 +249,7 @@ def test_multiRun_affine_execution_observer_sees_each_region_s_graph(
         for region in ("a", "b")
         for name in (
             "set_time_step",
-            "agree_dt",
+            f"{region}.time_step",
             "increment_time",
             "solve_x",
         )
@@ -275,7 +275,7 @@ def test_multiRun_affine_execution_observer_sees_each_region_s_graph(
 def test_multiRun_affine_regions_step_the_smallest_time_step_any_asks_for(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """a asks for deltaT 0.5, b for the controlDict's 1.0: both step 0.5 (``agree_dt``)."""
+    """a asks for deltaT 0.5, b for the controlDict's 1.0: both step 0.5 (the time-step op)."""
     _case(tmp_path, monkeypatch)
     affine_a = Path("constant/a/affine.yaml")
     affine_a.write_text(affine_a.read_text() + "deltaT: 0.5\n")

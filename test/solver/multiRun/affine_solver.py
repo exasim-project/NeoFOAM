@@ -143,7 +143,10 @@ def _initialize(self: Any) -> Context:
 
 @affine.execution_graph_step
 def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
-    """The time loop: set the time step, agree on it, advance the time, solve x."""
+    """The time loop: set the time step, advance the time, solve x.
+
+    A coupled region's time-step op agrees the time step in between.
+    """
     loop_ops = Operations(ctx.models["solutionLoop"].operations)
     builder = StepBuilder()
     time_loop = Operation(
@@ -151,7 +154,6 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     )
     with builder.loop(time_loop) as time_builder:
         time_builder.step(loop_ops["set_time_step"])
-        time_builder.step(self.operations["agree_dt"])
         time_builder.step(loop_ops["increment_time"])
         time_builder.step(self.operations["solve_x"])
     return builder, Operations()
@@ -164,10 +166,3 @@ def solve_x(self: Any, ctx: Context) -> None:
     x_other = ctx.models["interface"].x_other
     ctx.fields["x"] = coefficients.gain * x_other + coefficients.offset
     ctx.models["history"].append((ctx.time.index, float(ctx.fields["x"][0])))
-
-
-@affine.operation()
-def agree_dt(self: Any, ctx: Context) -> None:
-    """The coupled regions step the smallest time step any of them asks for."""
-    loop = ctx.models["solution_loop"]
-    loop.set_delta_t(Coupling.of(ctx).agree(loop.current_delta_t()), adjust=False)

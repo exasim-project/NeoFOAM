@@ -162,7 +162,10 @@ def _initialize(self: Any) -> Context:
 
 @probe.execution_graph_step
 def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
-    """The time loop: set the time step, agree on it, advance the time, solve the field."""
+    """The time loop: set the time step, advance the time, solve the field.
+
+    A coupled region's time-step op agrees the time step in between.
+    """
     loop_ops = Operations(ctx.models["solutionLoop"].operations)
     builder = StepBuilder()
     time_loop = Operation(
@@ -170,7 +173,6 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     )
     with builder.loop(time_loop) as time_builder:
         time_builder.step(loop_ops["set_time_step"])
-        time_builder.step(self.operations["agree_dt"])
         time_builder.step(loop_ops["increment_time"])
         time_builder.step(self.operations[f"solve_{ctx.models['probe'].field}"])
     return builder, Operations()
@@ -194,10 +196,3 @@ def solve_x(self: Any, ctx: Context) -> None:
 def solve_y(self: Any, ctx: Context) -> None:
     """``y = offset + sum(gain * received)``."""
     _solve(ctx)
-
-
-@probe.operation()
-def agree_dt(self: Any, ctx: Context) -> None:
-    """The coupled regions step the smallest time step any of them asks for."""
-    loop = ctx.models["solution_loop"]
-    loop.set_delta_t(Coupling.of(ctx).agree(loop.current_delta_t()), adjust=False)
