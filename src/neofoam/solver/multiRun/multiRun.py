@@ -140,8 +140,9 @@ def run() -> dict[str, Context]:
     """Run the multi-region case in the working directory; return each region's final Context.
 
     The coupling plugins are loaded first, before any region starts
-    (:func:`~neofoam.framework.coupling.load_plugins`), so the case's
-    ``system/regionCoupling.yaml`` may name their strategies.
+    (:func:`~neofoam.framework.coupling.load_plugins`; reading
+    ``system/regionCoupling.yaml`` loads them too, once), so the case's file may
+    name their strategies.
 
     Example::
 

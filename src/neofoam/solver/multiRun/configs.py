@@ -23,22 +23,34 @@ from neofoam.framework.coupling import (
     CouplingConvergence,
     CouplingMapping,
     NearestNeighborMapping,
+    load_plugins,
     strategy,
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
+def _with_plugins(family: type[BaseModel], options: Any) -> Any:
+    """The strategy of ``family`` that ``options`` describe, the coupling plugins loaded first.
+
+    :func:`~neofoam.framework.coupling.load_plugins` imports them once (locked), so
+    reading ``system/regionCoupling.yaml`` anywhere (a tool, the UI, ``multiRun``)
+    selects a plugin's strategy by its type.
+    """
+    load_plugins()
+    return strategy(family, options)
+
+
 def _selected(family: type[BaseModel], what: str) -> Any:
     """A field holding a strategy of ``family``, selected by its ``type`` as it is validated.
 
-    Validated against the family as it stands then, so a plugin's strategy
-    (:func:`~neofoam.framework.coupling.load_plugins`) is selected too; the
-    JSON Schema is an open object for the same reason.
+    The coupling plugins are loaded before the first strategy is selected
+    (:func:`_with_plugins`), so a plugin's strategy is selected too; the JSON
+    Schema is an open object, as plugins add their own options.
     """
     return Annotated[
         SerializeAsAny[family],  # type: ignore[valid-type]
-        BeforeValidator(partial(strategy, family)),
+        BeforeValidator(partial(_with_plugins, family)),
         WithJsonSchema(
             {
                 "type": "object",
