@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NamedTuple, Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,6 +17,21 @@ class FieldUpdates(dict[str, Any]):
     """
 
     pass
+
+
+class LoopEntry(NamedTuple):
+    """A running loop, an entry of :attr:`Context.loops`.
+
+    ``iteration`` counts the loop's passes from 0 (the time loop: its time
+    steps); ``first`` is whether it is in its first pass. ``wrapping`` is whether
+    the loop is a wrapping loop (``OperationMetadata.wraps``, e.g. a coupling
+    node), placed around operations of the time step.
+    """
+
+    name: Optional[str]
+    iteration: int
+    first: bool
+    wrapping: bool
 
 
 class Context(BaseModel):
@@ -37,3 +52,6 @@ class Context(BaseModel):
     # names of fields (keys of ``fields``) flagged for persistence via
     # ``field(..., write=True)``; a per-field write backend writes exactly these.
     write_fields: set[str] = Field(default_factory=set)
+    # the loops running now, outermost first: each loop op adds its entry while it
+    # runs and updates it before each pass (``Operation``)
+    loops: list[LoopEntry] = Field(default_factory=list)

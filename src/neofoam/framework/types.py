@@ -102,6 +102,10 @@ class OperationMetadata:
     # set on a loop contributed by a model or boundary condition: a wrapping loop,
     # which the resolver places around operations of the graph (graph.wrapping)
     wraps: Placement | None = None
+    # runs once per pass of the loop that holds the wrapping loops: only while every
+    # wrapping loop around it is in its first pass (``Context.loops``), e.g. the
+    # start of a time step inside a coupling loop
+    first: bool = False
 
     # DAG visualization properties
     shape: str = "box"
