@@ -131,12 +131,16 @@ whole time step of each region. ``couplings`` places the nodes instead:
           - {type: relative, data: T, limit: 1.0e-6}
         wraps:                       # per region of the node; default: the whole time step
           fluid: {operations: [solve_T], downstream: true}
+          pipe: {operations: [inner_loop]}   # a loop, held whole (e.g. PIMPLE's)
 
 The nodes are listed outer to inner: a node's op without ``operations`` wraps the
 body of the op of the node before it (or the whole time step). ``wraps`` follows
 ``Placement``: with ``operations`` it wraps those operations and, if
 ``downstream`` (the default), every operation downstream of them; an operation
-name the region's graph lacks is reported when the graph is built. With
+name the region's graph lacks is reported when the graph is built. A name may be
+a loop inside the time loop, such as the PIMPLE ``inner_loop``: the op holds it
+whole, with what is downstream of anything inside it, and repeats the loop in
+each pass; the time loop itself cannot be named. With
 ``couplings`` the top-level ``acceleration``, ``convergence`` and
 ``maxIterations`` are an error; the top-level ``scheme`` is the scheme of every
 node that names none.
@@ -153,7 +157,8 @@ anything runs (``ValueError``):
   (``region_couplings``);
 - a serial node does not hold the time step of its regions (the time-step op
   waits for the leader, which waits for the partner's pass): place it around
-  named operations (``wraps.<region>.operations``) or make it parallel
+  named operations or a loop (``wraps.<region>.operations``, e.g.
+  ``[inner_loop]`` for a PIMPLE solver) or make it parallel
   (``Coupling.check``, as the region's graph is resolved). A steady region has
   no time step, so a serial node may wrap it whole.
 
@@ -197,8 +202,9 @@ Architecture
 (``OperationMetadata.wraps``, a ``Placement``). Without operation names it wraps
 the whole body of the time loop; with them the resolver moves those operations,
 and every operation downstream of them (over ``depends_on`` / ``before``), into
-the loop, which takes the place of the last of them. The operations must lie in
-one scope; else it raises ``ValueError``.
+the loop, which takes the place of the last of them. A named loop moves whole,
+as one operation with the edges of everything inside it. The operations must lie
+in one scope, and none may be the time loop; else it raises ``ValueError``.
 
 **The coupling model** builds its operations once, after init: one
 ``CouplingOp`` per node of the region, outer to inner, from the sides of the

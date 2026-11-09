@@ -130,7 +130,8 @@ class PlacementConfig(BaseModel):
 
     Without ``operations`` it wraps the whole time step (the body of the top
     scope, or of the node before); with them those operations and, if
-    ``downstream``, every operation downstream of them.
+    ``downstream``, every operation downstream of them. A name may be a loop
+    inside the time loop (``operations: [inner_loop]``), which it holds whole.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -228,6 +229,7 @@ class RegionCouplingConfig(BaseConfig):
               - {type: relative, data: T, limit: 1.0e-5}
             wraps:
               fluid: {operations: [solve_T], downstream: true}
+              pipe: {operations: [inner_loop]}  # a loop, held whole
     """
 
     model_config = ConfigDict(extra="forbid")
