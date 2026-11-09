@@ -35,7 +35,9 @@ point-to-point channel. Regions exchange data over *exchanges*. Who does what:
 
 Vocabulary: a **region** is one solver; an **exchange** is one line between two
 patches of two regions; the **mapping** (a ``CouplingMapping``, by its ``type``) maps point
-data of the partner onto a side's own points; a region's **coupling op** is a
+data of the partner onto a side's own points (``nearest-neighbor`` by default, for a ``Link``
+as in the case file: both patches need coordinates; ``identity`` for patches that share their
+points); a region's **coupling op** is a
 loop around its solving operations whose test exchanges its sides' data; regions
 connected by exchanges form a **group**, whose last region in ``regionSolvers``
 order leads it in agreeing the time step; a **coupling node** is a named coupling loop over
@@ -246,14 +248,15 @@ As a time step's coupling starts, the leader compares the regions' time
 
 **What a region knows.** Its ``RegionCoupling`` (``Coupling.coupling``): its name,
 its group (in stepping order), the group's exchanges (``Link``: name, two ends
-``(region, patch)``, its mapping), its nodes (each with its scheme), the controller
+``(region, patch)``, its mapping, ``NearestNeighborMapping()`` by default), its nodes (each with its scheme), the controller
 factory (``node_controller`` by default) and the comm channel. No region reads another region's objects.
 
 **A run of a coupling op.** Its first loop test sends every partner what its
 side sends and receives (the models' field kinds) and its points, and the leader
 which sides it has; each region then checks that its side receives what the
 partner sends and binds its mapping to the partner's points and its own, once
-(which fails when it cannot map between them; every pass then maps with the
+(which fails, naming the exchange and its patches, when it cannot map between them,
+e.g. ``nearest-neighbor`` on a patch without coordinates; every pass then maps with the
 bound mapping), and the leader builds its controller. Each loop test then:
 
 1. computes what every side of the region sends now;

@@ -22,11 +22,11 @@ from neofoam.framework.coupling import (
     CouplingAcceleration,
     CouplingConvergence,
     CouplingMapping,
-    NearestNeighborMapping,
     load_plugins,
     strategy,
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
+from neofoam.framework.coupling.kernels import default_mapping
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
@@ -102,14 +102,15 @@ class ExchangeConfig(BaseModel):
 
     ``sides`` maps each region to its patch; ``name`` defaults to the regions
     joined by ``-``. ``mapping`` maps the point data of one side onto the other's
-    points (:data:`MappingConfig`), by default ``nearest-neighbor``.
+    points (:data:`MappingConfig`), by default ``nearest-neighbor``
+    (:func:`~neofoam.framework.coupling.kernels.default_mapping`, as a ``Link``'s).
     """
 
     model_config = ConfigDict(extra="forbid")
 
     name: Optional[str] = None
     sides: dict[str, str] = Field(min_length=2, max_length=2)
-    mapping: MappingConfig = Field(default_factory=NearestNeighborMapping)
+    mapping: MappingConfig = Field(default_factory=default_mapping)
 
 
 class NodeExchangeConfig(BaseModel):
