@@ -13,17 +13,16 @@ from __future__ import annotations
 
 import math
 from functools import partial
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import numpy as np
 import pytest
 from framework.coupling.regions import Side, add_coupled, contexts, couple, graph, run, solve
 from framework.coupling.regions import transport as transport_of
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    MAPPINGS,
     Array,
     BoundMapping,
     Coupling,
@@ -334,7 +333,7 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
         False,
     )
     exchange = op.exchange_of(side)
-    assert (exchange.name, exchange.partner, exchange.mapping.kind) == (
+    assert (exchange.name, exchange.partner, exchange.mapping.type) == (
         "a-b",
         ("b", "p"),
         "identity",
@@ -462,10 +461,8 @@ class _Mixed(BaseModel):
 
 
 class _Reversed(Mapping):
-    kind = "reversed"
-
-    def __init__(self) -> None:
-        self.mapped: list[dict[str, Any]] = []
+    type: Literal["reversed"] = "reversed"
+    mapped: list[dict[str, Any]] = Field(default_factory=list)
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
         def mapper(data: dict[str, Any]) -> dict[str, Any]:
@@ -476,13 +473,10 @@ class _Reversed(Mapping):
 
 
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
-def test_coupling_op_maps_the_arrays_and_hands_plain_values_over_as_they_are(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_coupling_op_maps_the_arrays_and_hands_plain_values_over_as_they_are() -> None:
     received: list[_Mixed] = []
     mapping = _Reversed()
-    monkeypatch.setitem(MAPPINGS, "reversed", lambda: mapping)
-    regions = contexts(["a", "b"], [Link("a-b", (("a", "p"), ("b", "p")), "reversed")])
+    regions = contexts(["a", "b"], [Link("a-b", (("a", "p"), ("b", "p")), mapping)])
     for ctx in regions.values():
         side = Side(_Mixed, _Mixed, lambda: _Mixed(T=[1.0, 2.0], q=3.0), received.append)
         add_coupled(ctx, "p", "x", side)
@@ -634,7 +628,7 @@ def test_a_convergence_over_no_data_raises_as_the_controller_is_built(
 ) -> None:
     with pytest.raises(ValueError, match=error):
         CouplingController(
-            _group(arrays), "b.coupling", convergence=[RelativeConvergence(data, 1e-5)]
+            _group(arrays), "b.coupling", convergence=[RelativeConvergence(data=data, limit=1e-5)]
         )
 
 

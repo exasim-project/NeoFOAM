@@ -18,13 +18,14 @@ import pytest
 from neofoam.framework.coupling import (
     AitkenRelaxation,
     ConstantRelaxation,
+    IdentityMapping,
     Mapping,
     NearestNeighborMapping,
     RelativeConvergence,
     SideChange,
     kernels,
-    mapping,
     nearest_neighbor,
+    strategy,
 )
 
 
@@ -49,19 +50,19 @@ def test_nearest_neighbor_picks_the_closest_source_point() -> None:
 
 
 def test_constant_relaxation_moves_by_the_factor() -> None:
-    delivered = _passes(ConstantRelaxation(omega=0.5), 3)
+    delivered = _passes(ConstantRelaxation(relaxation=0.5), 3)
 
     np.testing.assert_allclose(delivered, [0.0, 0.5, 0.875], rtol=1e-15, err_msg="omega 0.5")
 
 
 def test_aitken_relaxation_reaches_the_fixed_point_of_a_linear_map() -> None:
-    delivered = _passes(AitkenRelaxation(initial=0.5), 3)
+    delivered = _passes(AitkenRelaxation(relaxation=0.5), 3)
 
     np.testing.assert_allclose(delivered, [0.0, 0.5, 2.0], rtol=1e-12, err_msg="Aitken")
 
 
 def test_aitken_relaxation_restarts_from_initial_each_time_step() -> None:
-    relaxation = AitkenRelaxation(initial=0.5)
+    relaxation = AitkenRelaxation(relaxation=0.5)
     _passes(relaxation, 3)
 
     first_pass = relaxation([{"x": np.full(1, 4.0)}], 1)[0]["x"]
@@ -70,7 +71,7 @@ def test_aitken_relaxation_restarts_from_initial_each_time_step() -> None:
 
 
 def test_aitken_relaxation_restarts_after_a_round_off_residual() -> None:
-    relaxation = AitkenRelaxation(initial=0.5)
+    relaxation = AitkenRelaxation(relaxation=0.5)
     relaxation([{"x": np.full(1, 2.0)}], 1)
     relaxation([{"x": np.full(1, 2.0)}], 2)
 
@@ -82,7 +83,7 @@ def test_aitken_relaxation_restarts_after_a_round_off_residual() -> None:
 def test_relaxation_keeps_the_names_and_shapes_of_the_data() -> None:
     sent = [{"T_sink": np.zeros(2), "h": np.ones(2)}, {"T_sink": np.full(2, 3.0)}]
 
-    relaxed = ConstantRelaxation(omega=0.5)(sent, 1)
+    relaxed = ConstantRelaxation(relaxation=0.5)(sent, 1)
 
     assert [{name: values.tolist() for name, values in data.items()} for data in relaxed] == [
         {"T_sink": [0.0, 0.0], "h": [1.0, 1.0]},
@@ -172,26 +173,30 @@ def test_nearest_neighbor_mapping_needs_the_points_of_both_sides() -> None:
         NearestNeighborMapping().bind(_points([[0.0]]), _points(None))
 
 
-def test_mapping_of_a_kind_is_a_new_instance_of_it() -> None:
-    assert type(mapping("identity")) is Mapping
-    assert mapping("nearest-neighbor").kind == "nearest-neighbor"
-    assert mapping("nearest-neighbor") is not mapping("nearest-neighbor")
-    with pytest.raises(ValueError, match="unknown mapping 'rbf'"):
-        mapping("rbf")
+def test_a_mapping_of_a_type_is_a_new_instance_of_it() -> None:
+    assert type(strategy(Mapping, "identity")) is IdentityMapping
+    assert strategy(Mapping, {"type": "nearest-neighbor"}).type == "nearest-neighbor"
+    assert strategy(Mapping, "nearest-neighbor") is not strategy(Mapping, "nearest-neighbor")
+    with pytest.raises(
+        ValueError,
+        match=r"unknown mapping type 'rbf'; registered mapping types: "
+        r"\['identity', 'nearest-neighbor'\]",
+    ):
+        strategy(Mapping, "rbf")
 
 
 def test_identity_mapping_hands_the_data_over_unchanged() -> None:
     data = {"T": np.array([1.0, 2.0])}
 
-    assert Mapping().bind(_points(None), _points(None))(data) is data
-    assert Mapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0]]))(data) is data
+    assert IdentityMapping().bind(_points(None), _points(None))(data) is data
+    assert IdentityMapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0]]))(data) is data
 
 
 def test_identity_mapping_needs_as_many_points_on_both_sides() -> None:
     with pytest.raises(
         ValueError, match="'identity' needs as many points on both sides: 2 sent, 3"
     ):
-        Mapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0], [2.0]]))
+        IdentityMapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0], [2.0]]))
 
 
 @pytest.mark.parametrize(

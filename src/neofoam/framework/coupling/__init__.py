@@ -36,11 +36,14 @@
   no region sent, and :class:`CouplingTimeout` after its ``timeout`` (both
   :class:`CouplingTransportError`, as :class:`TransportClosed`); :class:`Tag`
   builds the tags of the messages.
-- numpy kernels: :func:`nearest_neighbor`, :class:`ConstantRelaxation`,
-  :class:`AitkenRelaxation`, :class:`RelativeConvergence`; the registries
-  :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES` name them for
-  the case; a package adds its own through the entry-point group
-  ``neofoam.coupling`` (:func:`load_plugins`).
+- strategies, each a :class:`~neofoam.core.plugin_system.PluginSystem` family
+  selected by ``type`` (:func:`strategy`): :class:`Mapping`
+  (:class:`IdentityMapping`, :class:`NearestNeighborMapping`, by
+  :func:`nearest_neighbor`), :class:`Acceleration` (:class:`ConstantRelaxation`,
+  :class:`AitkenRelaxation`) and :class:`Convergence`
+  (:class:`RelativeConvergence`); a package adds its own through the
+  entry-point group ``neofoam.coupling``, imported once before the regions
+  start (:func:`load_plugins`).
 """
 
 from .controller import (
@@ -54,21 +57,20 @@ from .controller import (
 from .coupled import coupled
 from .data import Array, Exchange, ExchangeSide
 from .kernels import (
-    ACCELERATIONS,
-    CONVERGENCES,
     ENTRY_POINT_GROUP,
-    MAPPINGS,
+    Acceleration,
     AitkenRelaxation,
     BoundMapping,
     ConstantRelaxation,
+    Convergence,
+    IdentityMapping,
     Mapping,
     NearestNeighborMapping,
-    Registry,
     RelativeConvergence,
     SideChange,
     load_plugins,
-    mapping,
     nearest_neighbor,
+    strategy,
 )
 from .loop import CouplingOp
 from .model import Coupling
@@ -93,16 +95,15 @@ from .transport import (
 )
 
 __all__ = [
-    "ACCELERATIONS",
-    "CONVERGENCES",
     "DEFAULT_TIMEOUT",
     "ENTRY_POINT_GROUP",
-    "MAPPINGS",
+    "Acceleration",
     "AitkenRelaxation",
     "Array",
     "BoundMapping",
     "ConstantRelaxation",
     "ControllerFactory",
+    "Convergence",
     "Coupling",
     "CouplingController",
     "CouplingDeadlock",
@@ -115,12 +116,12 @@ __all__ = [
     "Exchange",
     "ExchangeSide",
     "GroupSide",
+    "IdentityMapping",
     "InProcessTransport",
     "Link",
     "Mapping",
     "NearestNeighborMapping",
     "RegionCoupling",
-    "Registry",
     "RelativeConvergence",
     "SideChange",
     "Tag",
@@ -128,11 +129,11 @@ __all__ = [
     "TransportClosed",
     "coupled",
     "load_plugins",
-    "mapping",
     "nearest_neighbor",
     "node_controller",
     "region_couplings",
     "relative_changes",
     "run_regions",
+    "strategy",
     "unchanged",
 ]

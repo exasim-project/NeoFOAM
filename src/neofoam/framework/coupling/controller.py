@@ -142,7 +142,7 @@ class CouplingController:
                 label,
                 max_iterations=50,
                 parallel=node.parallel,
-                acceleration={"interface": AitkenRelaxation(initial=0.5)},
+                acceleration={"interface": AitkenRelaxation(relaxation=0.5)},
             )
     """
 
