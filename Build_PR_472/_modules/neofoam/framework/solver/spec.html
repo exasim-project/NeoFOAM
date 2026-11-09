@@ -693,7 +693,6 @@
     <span class="n">_find_config_by_type</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">initializing_region</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coupling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">wrap_with_dependency_resolution</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1032,9 +1031,11 @@
 <span class="sd">        is injected with the live ``ctx`` (so the step can reach the built models</span>
 <span class="sd">        without the runtime holding a long-lived reference to the context).</span>
 
-<span class="sd">        With ``ctx`` whose solver added a coupling model (``ctx.models["coupling"]``),</span>
-<span class="sd">        the model operations it returns also hold its operations: the coupling ops</span>
-<span class="sd">        and, in a transient case, the time-step op (``Coupling.time_step``).</span>
+<span class="sd">        With ``ctx`` of a coupled region, the model operations it returns also hold</span>
+<span class="sd">        the operations of the coupling model its solver added</span>
+<span class="sd">        (``ctx.models["coupling"]``): the coupling ops and, in a transient case, the</span>
+<span class="sd">        time-step op (``Coupling.time_step``). A coupled region whose solver added</span>
+<span class="sd">        no coupling model raises ``RuntimeError`` (``SolverRuntime.coupling_model``).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1057,8 +1058,8 @@
             <span class="p">)</span>
 
         <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">coupling</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coupling"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
+        <span class="n">coupling</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">coupling_model</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span>
         <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">model_ops</span><span class="p">,</span> <span class="o">*</span><span class="n">coupling</span><span class="o">.</span><span class="n">operations</span><span class="p">()]</span>
         <span class="n">time_step</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">time_step</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="p">,</span> <span class="o">*</span><span class="n">model_ops</span><span class="p">])</span>
