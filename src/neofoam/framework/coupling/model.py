@@ -33,7 +33,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from neofoam.framework.operations import Operation, Operations
-from neofoam.framework.types import OperationMetadata
+from neofoam.framework.types import OperationMetadata, Placement
 
 from .loop import CouplingOp, ExchangeSide
 
@@ -118,8 +118,7 @@ class Coupling:
                 self._operations = Operations()
             else:
                 couple = CouplingOp(self.coupling, self._sides)
-                wraps = list(dict.fromkeys(side.field for side in self._sides))
-                metadata = OperationMetadata(op_name=couple.label, wraps=wraps)
+                metadata = OperationMetadata(op_name=couple.label, wraps=Placement())
                 self._operations = Operations([Operation(func=couple, metadata=metadata)])
         return self._operations
 

@@ -40,6 +40,7 @@ from neofoam.framework.coupling import (
     run_regions,
 )
 from neofoam.framework.execution_observer import ExecutionObserver, observe
+from neofoam.framework.types import Placement
 
 LINK = Link("a-b", (("a", "p"), ("b", "p")))
 
@@ -240,11 +241,7 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
 
     op = loop.func
     assert op is couple(regions["a"]) and isinstance(op, CouplingOp)
-    assert (loop.operation_name, loop.metadata.wraps, loop.metadata.solves) == (
-        "a.couple",
-        ["x"],
-        ["x"],
-    )
+    assert (loop.operation_name, loop.metadata.wraps) == ("a.couple", Placement())
     assert [sub.operation_name for sub in loop.sub_operations] == ["solve_x"]
     (side,) = op.sides
     assert (side.key, op.partner(side), op.is_leader) == (("a", "p", "x"), "b.p", False)
@@ -267,7 +264,7 @@ def test_the_coupling_model_builds_one_coupling_op_once() -> None:
 
     assert model.operations() is model.operations()
     assert isinstance(couple_op.func, CouplingOp)
-    assert couple_op.metadata.wraps == ["x", "y"]
+    assert couple_op.metadata.wraps == Placement()
     assert [side.patch for side in couple_op.func.sides] == ["p", "q"]
     with pytest.raises(ValueError, match="a.p is added after the region's graph was built"):
         add_coupled(regions["a"], "p", "x", _Side("a", []).side())

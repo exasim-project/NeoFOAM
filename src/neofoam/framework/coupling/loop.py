@@ -432,7 +432,7 @@ class CouplingOp(IterativeOp):
     ``sides`` (the region's :class:`~neofoam.framework.coupling.Coupling` builds
     it); raises ``ValueError`` when a side has no
     exchange, a patch two sides, or an exchange of the region no side. The
-    resolver nests the operations that solve their fields inside it
+    resolver places it around the whole body of the top scope
     (``metadata.wraps``).
 
     Its loop test runs before each pass. The first test ever exchanges the

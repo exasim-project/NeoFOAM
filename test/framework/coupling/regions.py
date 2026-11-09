@@ -5,8 +5,8 @@
 
 Every region's context holds its coupling model (``ctx.models["coupling"]``), as
 a solver that supports coupling adds it. A region's graph is one operation
-``solve_<field>`` (``solves=[field]``) per field its sides couple, and the
-region's coupling op, which the resolver wraps around them.
+``solve_<field>`` per field its sides couple, and the region's coupling op,
+which the resolver wraps around them.
 """
 
 from __future__ import annotations
@@ -94,7 +94,7 @@ def couple(ctx: Context) -> CouplingOp:
 def solve(field: str, func: Callable[[Context], None]) -> Operation:
     return Operation(
         func=SequentialOp(func),
-        metadata=OperationMetadata(op_name=f"solve_{field}", solves=[field]),
+        metadata=OperationMetadata(op_name=f"solve_{field}"),
     )
 
 
