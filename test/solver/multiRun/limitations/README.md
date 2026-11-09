@@ -5,7 +5,7 @@ region solves one number, `field = offset + sum(gain * received)`, and couples
 the patches named in its `gains` with `@coupled` boundary conditions (it sends its
 field as the pydantic model `X` or `Y` and receives the partner's). Every region
 runs its own graph on its own thread; its `solve_<field>` runs inside its coupling op
-`<region>.couple`, whose loop test hands the region's sides the partner's data,
+`<region>.coupling`, whose loop test hands the region's sides the partner's data,
 mapped. `system/regionCoupling.yaml` lists the `exchanges`; exchanges that share a
 region form one group, led by its last region. No mesh, no physics.
 

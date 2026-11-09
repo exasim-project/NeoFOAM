@@ -5,7 +5,7 @@
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.framework.coupling import ACCELERATIONS, CONVERGENCES, MAPPINGS
@@ -47,6 +47,8 @@ class ConvergenceConfig(BaseModel):
     (``relative``: the data changes by less than ``limit`` relative to it).
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     type: str
     data: str
     limit: float = Field(gt=0)
@@ -63,6 +65,8 @@ class AccelerationConfig(BaseModel):
     ``type`` names it in :data:`~neofoam.framework.coupling.ACCELERATIONS`
     (``constant`` factor, or ``aitken`` starting from it).
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     type: str
     relaxation: float = Field(gt=0, le=1)
@@ -83,6 +87,8 @@ class ExchangeConfig(BaseModel):
     patches share their points).
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     name: Optional[str] = None
     sides: dict[str, str] = Field(min_length=2, max_length=2)
     mapping: str = "nearest-neighbor"
@@ -91,6 +97,60 @@ class ExchangeConfig(BaseModel):
     @classmethod
     def _registered(cls, value: str) -> str:
         return _known(value, MAPPINGS, "mapping")
+
+
+class NodeExchangeConfig(BaseModel):
+    """An exchange of a coupling node, by its ``name``, and the ``acceleration`` of its data.
+
+    In the yaml a plain name stands for an exchange without acceleration.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    acceleration: Optional[AccelerationConfig] = None
+
+
+class PlacementConfig(BaseModel):
+    """Where a coupling node's op sits in a region's graph (a ``Placement``).
+
+    Without ``operations`` it wraps the whole time step (the body of the top
+    scope, or of the node before); with them those operations and, if
+    ``downstream``, every operation downstream of them.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    operations: Optional[list[str]] = None
+    downstream: bool = True
+
+
+class CouplingNodeConfig(BaseModel):
+    """One coupling node: a named coupling loop over some ``exchanges``.
+
+    Its leader repeats the loop until every ``convergence`` measure holds, or
+    ``maxIterations`` passes; ``wraps`` places its op per region (a region it
+    does not name: the whole time step).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    maxIterations: int = Field(default=100, gt=0)
+    exchanges: list[NodeExchangeConfig] = Field(min_length=1)
+    convergence: list[ConvergenceConfig] = Field(min_length=1)
+    wraps: dict[str, PlacementConfig] = Field(default_factory=dict)
+
+    @field_validator("exchanges", mode="before")
+    @classmethod
+    def _plain_names(cls, value: Any) -> Any:
+        if isinstance(value, list):
+            return [{"name": entry} if isinstance(entry, str) else entry for entry in value]
+        return value
+
+
+#: The name of the one coupling node of a file without ``couplings``.
+DEFAULT_NODE = "coupling"
 
 
 @IOStrategy(YAML("system/regionCoupling.yaml"))
@@ -105,6 +165,13 @@ class RegionCouplingConfig(BaseConfig):
     what it sent in the previous one. Without the file the
     regions are not coupled.
 
+    ``couplings`` lists the coupling nodes, outer to inner: each names its
+    exchanges (each in exactly one node), its convergence, maxIterations, an
+    acceleration per exchange and where its op wraps each region. Without it one
+    node ``coupling`` holds every exchange, with the top-level
+    ``acceleration`` (of every exchange), ``convergence`` and ``maxIterations``;
+    with it those top-level entries are an error. ``scheme`` is the case's.
+
     Example::
 
         exchanges:
@@ -118,10 +185,129 @@ class RegionCouplingConfig(BaseConfig):
           - type: relative
             data: T
             limit: 1.0e-5
+
+    or, with the nodes::
+
+        exchanges:
+          - {name: wall-T, sides: {fluid: wall, solid: right}}
+          - {name: wall-p, sides: {fluid: inlet, pipe: outlet}}
+        couplings:
+          - name: wall
+            maxIterations: 50
+            exchanges:
+              - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}
+              - wall-p
+            convergence:
+              - {type: relative, data: T, limit: 1.0e-5}
+            wraps:
+              fluid: {operations: [solve_T], downstream: true}
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     exchanges: list[ExchangeConfig] = Field(min_length=1)
     scheme: Literal["serial", "parallel"] = "serial"
-    acceleration: AccelerationConfig = AccelerationConfig(type="constant", relaxation=1.0)
-    convergence: list[ConvergenceConfig] = Field(min_length=1)
-    maxIterations: int = Field(default=100, gt=0)
+    acceleration: Optional[AccelerationConfig] = None
+    convergence: Optional[list[ConvergenceConfig]] = Field(default=None, min_length=1)
+    maxIterations: Optional[int] = Field(default=None, gt=0)
+    couplings: Optional[list[CouplingNodeConfig]] = Field(default=None, min_length=1)
+
+    def exchange_names(self) -> list[str]:
+        """Every exchange's name, in order: its ``name``, by default its regions joined by ``-``.
+
+        A default name another exchange has is numbered (``a-b-2``). Raises
+        ``ValueError`` when two exchanges are named alike.
+        """
+        names: list[str] = []
+        for exchange in self.exchanges:
+            name = exchange.name or _free("-".join(exchange.sides), names)
+            if name in names:
+                raise ValueError(f"two exchanges are named '{name}'")
+            names.append(name)
+        return names
+
+    def nodes(self) -> list[CouplingNodeConfig]:
+        """The coupling nodes, outer to inner: ``couplings``, or the one default node."""
+        if self.couplings is not None:
+            return self.couplings
+        return [
+            CouplingNodeConfig(
+                name=DEFAULT_NODE,
+                maxIterations=100 if self.maxIterations is None else self.maxIterations,
+                exchanges=[
+                    NodeExchangeConfig(name=name, acceleration=self.acceleration)
+                    for name in self.exchange_names()
+                ],
+                convergence=self.convergence or [],
+            )
+        ]
+
+    @model_validator(mode="after")
+    def _nodes_place_every_exchange_once(self) -> "RegionCouplingConfig":
+        names = self.exchange_names()
+        if self.couplings is None:
+            if self.convergence is None:
+                raise ValueError(
+                    "convergence: required without couplings (the convergence of the one "
+                    "coupling node)"
+                )
+            return self
+        top = [
+            key
+            for key in ("acceleration", "convergence", "maxIterations")
+            if getattr(self, key) is not None
+        ]
+        if top:
+            raise ValueError(
+                f"couplings: with couplings the nodes set {top}; remove the top-level {top} "
+                "(they set the one default node of a file without couplings)"
+            )
+        seen: dict[str, str] = {}
+        nodes: list[str] = []
+        for node in self.couplings:
+            if node.name in nodes:
+                raise ValueError(f"couplings: two coupling nodes are named '{node.name}'")
+            nodes.append(node.name)
+            for exchange in node.exchanges:
+                if exchange.name not in names:
+                    raise ValueError(
+                        f"couplings: node '{node.name}' names the exchange '{exchange.name}', "
+                        f"which does not exist; the exchanges are {names}"
+                    )
+                if exchange.name in seen:
+                    raise ValueError(
+                        f"couplings: exchange '{exchange.name}' is in the nodes "
+                        f"'{seen[exchange.name]}' and '{node.name}'; an exchange is in exactly "
+                        "one node"
+                    )
+                seen[exchange.name] = node.name
+            regions = sorted(
+                {
+                    region
+                    for name, exchange in zip(names, self.exchanges)
+                    if name in seen and seen[name] == node.name
+                    for region in exchange.sides
+                }
+            )
+            foreign = sorted(set(node.wraps) - set(regions))
+            if foreign:
+                raise ValueError(
+                    f"couplings: node '{node.name}' wraps the regions {foreign}, which it does "
+                    f"not couple; its regions are {regions}"
+                )
+        missing = [name for name in names if name not in seen]
+        if missing:
+            raise ValueError(
+                f"couplings: the exchanges {missing} are in no coupling node; each exchange is "
+                f"in exactly one node (the nodes: {nodes})"
+            )
+        return self
+
+
+def _free(name: str, taken: list[str]) -> str:
+    """``name``, numbered if ``taken`` has it."""
+    free, number = name, 1
+    while free in taken:
+        number += 1
+        free = f"{name}-{number}"
+    return free

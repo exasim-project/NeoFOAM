@@ -81,9 +81,9 @@ def test_chain_reaches_the_fixed_point_in_one_coupling_loop(
         (op.label, [(s.patch, op.exchange_of(s).name) for s in op.sides], op.is_leader)
         for op in couplings.values()
     ] == [
-        ("a.couple", [("to_b", "a-b")], False),
-        ("b.couple", [("to_a", "a-b"), ("to_c", "b-c")], False),
-        ("c.couple", [("to_b", "b-c")], True),
+        ("a.coupling", [("to_b", "a-b")], False),
+        ("b.coupling", [("to_a", "a-b"), ("to_c", "b-c")], False),
+        ("c.coupling", [("to_b", "b-c")], True),
     ]
 
 

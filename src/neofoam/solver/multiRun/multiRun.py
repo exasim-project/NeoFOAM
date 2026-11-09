@@ -34,24 +34,24 @@ from neofoam.framework.coupling import (
 )
 from neofoam.framework.solver import Solver, SolverRuntime
 from neofoam.framework.solver.registry import resolve_solver
+from neofoam.framework.types import Placement
 
-from .configs import ControlDictConfig, RegionCouplingConfig
+from .configs import ControlDictConfig, CouplingNodeConfig, RegionCouplingConfig
 
 multiRun = Solver("multiRun")
 
 multiRun.config(ControlDictConfig)
 
-#: The coupling node of every exchange of ``system/regionCoupling.yaml``.
-NODE = "couple"
-
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
     """The coupling of every coupled region, as ``system/regionCoupling.yaml`` lists it.
 
-    One link per entry of ``exchanges``, all in one coupling node ``couple``
-    (the ops ``<region>.couple``); the file's convergence and maxIterations are
-    the node's, its acceleration that of every exchange (an instance each), its
-    scheme the coupling's. Without the file no region is coupled.
+    One link per entry of ``exchanges``; one coupling node per entry of
+    ``couplings``, outer to inner (the ops ``<region>.<node>``), each with its
+    convergence, maxIterations, an acceleration per exchange that names one (an
+    instance each) and its placement per region. Without ``couplings`` one node
+    ``coupling`` holds every exchange (see :meth:`RegionCouplingConfig.nodes`).
+    The scheme is the coupling's. Without the file no region is coupled.
     """
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
@@ -64,54 +64,56 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
             f"which are not in regionSolvers {regions}"
         )
     links: list[Link] = []
-    for exchange in config.exchanges:
-        ends = tuple(exchange.sides.items())
-        name = exchange.name or _free("-".join(region for region, _patch in ends), links)
-        if any(link.name == name for link in links):
-            raise ValueError(f"system/regionCoupling.yaml: two exchanges are named '{name}'")
-        links.append(Link(name, (ends[0], ends[1]), exchange.mapping))
-    node = CouplingNode(
-        NODE,
-        tuple(link.name for link in links),
-        max_iterations=config.maxIterations,
-        convergence=tuple(CONVERGENCES[e.type](e.data, e.limit) for e in config.convergence),
-        acceleration={
-            link.name: ACCELERATIONS[config.acceleration.type](config.acceleration.relaxation)
-            for link in links
-        },
-    )
+    for name, exchange in zip(config.exchange_names(), config.exchanges):
+        first, second = exchange.sides.items()
+        links.append(Link(name, (first, second), exchange.mapping))
+    nodes = [_node(node) for node in config.nodes()]
     return region_couplings(
         regions,
         links,
         comm_channel,
         parallel=config.scheme == "parallel",
         controller=_controller(config),
-        nodes=[node],
+        nodes=nodes,
     )
 
 
-def _free(name: str, links: list[Link]) -> str:
-    """``name``, numbered if a link has it."""
-    taken = {link.name for link in links}
-    free, number = name, 1
-    while free in taken:
-        number += 1
-        free = f"{name}-{number}"
-    return free
+def _node(config: CouplingNodeConfig) -> CouplingNode:
+    """The coupling node ``config`` describes."""
+    return CouplingNode(
+        config.name,
+        tuple(exchange.name for exchange in config.exchanges),
+        max_iterations=config.maxIterations,
+        convergence=tuple(CONVERGENCES[e.type](e.data, e.limit) for e in config.convergence),
+        acceleration={
+            exchange.name: ACCELERATIONS[exchange.acceleration.type](
+                exchange.acceleration.relaxation
+            )
+            for exchange in config.exchanges
+            if exchange.acceleration is not None
+        },
+        placement={
+            region: Placement(
+                None if wraps.operations is None else tuple(wraps.operations), wraps.downstream
+            )
+            for region, wraps in config.wraps.items()
+        },
+    )
 
 
 def _controller(config: RegionCouplingConfig) -> Any:
-    """Builds the leader's controller as the node describes, once per group.
+    """Builds the leader's controller as the node describes, once per node and group.
 
-    Raises ``ValueError`` when a ``convergence`` entry names data no side of the
-    group sends (by the field the side couples).
+    Raises ``ValueError`` when a ``convergence`` entry of the node names data no
+    side of the node sends (by the field the side couples).
     """
+    checked = {node.name: {entry.data for entry in node.convergence} for node in config.nodes()}
 
     def controller(
         sides: list[GroupSide], label: str, *, parallel: bool, node: CouplingNode
     ) -> CouplingController:
         sent = {side.field for side in sides}
-        unknown = sorted({entry.data for entry in config.convergence} - sent)
+        unknown = sorted(checked.get(node.name, set()) - sent)
         if unknown:
             raise ValueError(
                 f"system/regionCoupling.yaml: convergence on {unknown}, which no side of the "
