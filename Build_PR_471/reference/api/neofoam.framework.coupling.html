@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.coupled" href="neofoam.framework.coupling.coupled.html"><link rel="prev" title="neofoam.framework.context" href="neofoam.framework.context.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.controller" href="neofoam.framework.coupling.controller.html"><link rel="prev" title="neofoam.framework.context" href="neofoam.framework.context.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.framework.coupling.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -297,7 +297,9 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 current has-children current-page"><a class="current reference internal" href="#">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" checked="" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
@@ -704,7 +706,8 @@ factory); <code class="xref py py-class docutils literal notranslate"><span clas
 (send, receive, close); <code class="xref py py-class docutils literal notranslate"><span class="pre">InProcessTransport</span></code> between threads, which
 raises <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code> when every running region waits for a message
 no region sent, and <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTimeout</span></code> after its <code class="docutils literal notranslate"><span class="pre">timeout</span></code> (both
-<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code>, as <code class="xref py py-class docutils literal notranslate"><span class="pre">TransportClosed</span></code>).</p></li>
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code>, as <code class="xref py py-class docutils literal notranslate"><span class="pre">TransportClosed</span></code>); <code class="xref py py-class docutils literal notranslate"><span class="pre">Tag</span></code>
+builds the tags of the messages.</p></li>
 <li><p>numpy kernels: <code class="xref py py-func docutils literal notranslate"><span class="pre">nearest_neighbor()</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantRelaxation</span></code>,
 <code class="xref py py-class docutils literal notranslate"><span class="pre">AitkenRelaxation</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">RelativeConvergence</span></code>; the registries
 <code class="xref py py-data docutils literal notranslate"><span class="pre">MAPPINGS</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">ACCELERATIONS</span></code> and <code class="xref py py-data docutils literal notranslate"><span class="pre">CONVERGENCES</span></code> name them for
@@ -715,14 +718,20 @@ the case; a package adds its own through the entry-point group
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.coupled.html#neofoam.framework.coupling.coupled" title="neofoam.framework.coupling.coupled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coupled</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.controller.html#module-neofoam.framework.coupling.controller" title="neofoam.framework.coupling.controller"><code class="xref py py-obj docutils literal notranslate"><span class="pre">controller</span></code></a></p></td>
+<td><p>The leader's part of a coupling node: its <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.coupled.html#neofoam.framework.coupling.coupled" title="neofoam.framework.coupling.coupled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coupled</span></code></a></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> on a boundary condition class, and its method markers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.data.html#module-neofoam.framework.coupling.data" title="neofoam.framework.coupling.data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">data</span></code></a></p></td>
+<td><p>What a coupled side exchanges: <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code>, the side, and what it sends.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.kernels.html#module-neofoam.framework.coupling.kernels" title="neofoam.framework.coupling.kernels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernels</span></code></a></p></td>
 <td><p>numpy kernels of a coupling: mapping, relaxation and convergence of the exchanged data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.loop.html#module-neofoam.framework.coupling.loop" title="neofoam.framework.coupling.loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loop</span></code></a></p></td>
-<td><p>The coupling of a region: its coupling op and, in the group's leader, the controller.</p></td>
+<td><p>The coupling of a region: its coupling op.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.model.html#module-neofoam.framework.coupling.model" title="neofoam.framework.coupling.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a></p></td>
 <td><p>The coupling of one region as a model: <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>, a <code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code>.</p></td>
@@ -743,12 +752,12 @@ the case; a package adds its own through the entry-point group
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="neofoam.framework.coupling.coupled.html">
+          <a class="next-page" href="neofoam.framework.coupling.controller.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam.framework.coupling.coupled</div>
+                <div class="title">neofoam.framework.coupling.controller</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
