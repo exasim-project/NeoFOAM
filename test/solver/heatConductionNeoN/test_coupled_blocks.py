@@ -8,7 +8,8 @@
 ``rho cp = 0.5``, 6 x 5 cells, 300 K at x = 2), adiabatic walls. At x = 1 left is the Neumann side
 (``coupledHeatFlux``), right the Dirichlet side (``coupledTemperature``); the
 interface has 3 faces on the left and 5 on the right, mapped
-``nearest-neighbor``; serial, Aitken. Each time step (1e6, long against the
+``nearest-neighbor``; serial, Aitken, in one coupling node around each region's
+``solve_T`` (a serial node leaves the time step outside). Each time step (1e6, long against the
 diffusion time) is a steady solve: linear in each block, the interface at the
 temperature the heat flux continuity gives,
 
