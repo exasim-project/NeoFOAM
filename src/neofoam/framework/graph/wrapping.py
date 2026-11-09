@@ -2,23 +2,37 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A loop that wraps fields: the resolver nests their solution inside it.
+"""A wrapping loop: the resolver places it around operations of the graph.
 
-A model or boundary condition contributes a loop operation that declares the
-fields it repeats (``OperationMetadata.wraps``), not the operations: it does not
-know the solver's names. :func:`wrap` moves the operations that solve those
-fields, and every operation downstream of them, into the loop, which takes the
-place of the last of them::
+A model or boundary condition contributes a loop operation that repeats part of
+the solver's time step. Its ``OperationMetadata.wraps``
+(:class:`~neofoam.framework.types.Placement`) says which part:
+
+- no operations: the whole body of the top scope, the body of the outermost loop
+  (the time loop). Once a wrapping loop sits there, the next one wraps the whole
+  body of the innermost of them::
+
+    time_loop                       time_loop
+        start_step                      couple
+        solve_T      Placement()            start_step
+        update_rho   ---------->            solve_T
+        write                               update_rho
+                                            write
+
+- named operations: those and, with ``downstream``, every operation downstream of
+  them over ``depends_on`` / ``before`` within their scope (the time-step body or
+  a loop body). The loop takes the place of the last of them::
 
     time_loop                       time_loop
         start_step                      start_step
-        solve_T          wraps T        left.couple
-        update_rho       ------->           solve_T
+        solve_T      ("solve_T",)       couple
+        update_rho   ----------->           solve_T
         write                               update_rho
                                         write
 
-Downstream means reachable over ``depends_on`` / ``before`` within the scope (the
-time-step body or a loop body) that holds the solving operations.
+Loops are placed in the order given, outer first: a loop whose operations lie
+inside one placed before nests inside it; one that would have to hold a loop
+placed before raises.
 """
 
 from __future__ import annotations
@@ -27,6 +41,7 @@ import dataclasses
 from typing import Callable
 
 from neofoam.framework.operations import IterativeOp, Operation
+from neofoam.framework.types import Placement
 
 # The path to a scope: the index of each loop on the way down from the root.
 Path = tuple[int, ...]
@@ -35,7 +50,8 @@ Path = tuple[int, ...]
 def downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list[Operation]:
     """The operations of one resolved scope that ``seed`` picks and every one downstream of them.
 
-    The result keeps the order of ``ops``.
+    A loop counts with the edges and names of everything inside it. The result
+    keeps the order of ``ops``.
     """
     selected: list[Operation] = []
     names: set[str] = set()
@@ -43,59 +59,133 @@ def downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list[
     # A resolved scope is in dependency order, so one forward pass sees every
     # operation after the ones it depends on.
     for op in ops:
-        if not (
-            seed(op) or names.intersection(op.depends_on) or op.operation_name in before_targets
-        ):
+        depends_on, before, own = _edges(op)
+        if not (seed(op) or names.intersection(depends_on) or before_targets.intersection(own)):
             continue
         selected.append(op)
-        if op.operation_name:
-            names.add(op.operation_name)
-        before_targets.update(op.before)
+        names |= own
+        before_targets.update(before)
     return selected
 
 
 def wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
-    """The resolved ``ops`` with the fields ``loop.metadata.wraps`` names solved inside ``loop``.
+    """The resolved ``ops`` with ``loop`` placed as ``loop.metadata.wraps`` says.
 
-    The loop takes the place of the last selected operation; the other operations
-    of its scope keep their order. It solves what its body solves, so a second
-    loop that wraps one of the fields wraps the first.
-
-    Raises ``ValueError`` when no operation solves one of the fields, or when the
-    selected operations lie in more than one scope.
+    Raises ``ValueError`` when an operation name is unknown or names a loop, when
+    the named operations lie in more than one scope, when the loop would have to
+    hold a wrapping loop placed before it, or when no top scope can be told.
     """
-    fields = sorted(loop.metadata.wraps)
-    found = _found(ops, lambda op: bool(set(fields).intersection(op.metadata.solves)), ())
-    solved = {field for _path, picked in found for op in picked for field in op.metadata.solves}
-    missing = [field for field in fields if field not in solved]
-    if missing:
-        raise ValueError(
-            f"{loop.operation_name} wraps {missing}, which no operation solves; it needs "
-            "an operation declared with solves=[...] for each field"
-        )
-    if len(found) > 1:
-        raise ValueError(
-            f"the operations solving {fields} lie in more than one loop scope; "
-            f"{loop.operation_name} wraps operations of one scope"
-        )
-    ((path, picked),) = found
+    placement = loop.metadata.wraps
+    assert placement is not None
+    if placement.operations is None:
+        path = _top(ops, loop)
+        return _in_scope(ops, path, lambda scope: [_filled(loop, scope)])
+    path, picked = _selected(ops, loop, placement)
     return _in_scope(ops, path, lambda scope: _wrapped(scope, picked, loop))
 
 
-def _found(
-    ops: list[Operation], seed: Callable[[Operation], bool], path: Path
-) -> list[tuple[Path, list[Operation]]]:
-    """Every scope where ``seed`` picks operations, and what it selects there.
+def _top(ops: list[Operation], loop: Operation) -> Path:
+    """The path to the scope a loop without operations wraps whole."""
+    path: Path = ()
+    scope = ops
+    outer = [index for index, op in enumerate(scope) if isinstance(op.func, IterativeOp)]
+    if len(outer) > 1:
+        raise ValueError(
+            f"{loop.operation_name} wraps the body of the outermost loop, but the graph "
+            "has several; name its operations"
+        )
+    if outer:
+        path = (outer[0],)
+        scope = scope[outer[0]].sub_operations
+    while True:
+        wrapping = [index for index, op in enumerate(scope) if _is_wrapping(op)]
+        if not wrapping:
+            return path
+        if len(wrapping) > 1:
+            raise ValueError(
+                f"{loop.operation_name} wraps the body of the innermost wrapping loop, "
+                "but a scope holds several; name its operations"
+            )
+        path = (*path, wrapping[0])
+        scope = scope[wrapping[0]].sub_operations
 
-    A selected loop is taken whole: the scopes inside it are not searched.
-    """
-    picked = downstream(ops, seed)
-    found = [(path, picked)] if picked else []
-    taken = {id(op) for op in picked}
+
+def _selected(
+    ops: list[Operation], loop: Operation, placement: Placement
+) -> tuple[Path, list[Operation]]:
+    """The scope of the operations ``placement`` names, and what the loop takes there."""
+    names = list(placement.operations or ())
+    located = _located(ops, ())
+    unknown = [name for name in names if name not in located]
+    if unknown:
+        available = sorted({name for name, (_path, op) in located.items() if not _is_loop(op)})
+        raise ValueError(
+            f"{loop.operation_name} wraps {unknown}, which name no operation; "
+            f"the operations are {available}"
+        )
+    loops = [name for name in names if _is_loop(located[name][1])]
+    if loops:
+        raise ValueError(
+            f"{loop.operation_name} wraps {loops}, which are loops; it wraps operations"
+        )
+    paths = {located[name][0] for name in names}
+    if len(paths) > 1:
+        raise ValueError(
+            f"the operations {names} lie in more than one loop scope; "
+            f"{loop.operation_name} wraps operations of one scope"
+        )
+    (path,) = paths
+    scope = _scope(ops, path)
+    seeds = {id(located[name][1]) for name in names}
+    if placement.downstream:
+        picked = downstream(scope, lambda op: id(op) in seeds)
+    else:
+        picked = [op for op in scope if id(op) in seeds]
+    held = [op.operation_name for op in picked if _is_wrapping(op)]
+    if held:
+        raise ValueError(
+            f"{loop.operation_name} would hold the coupling loop {held} placed before it; "
+            "list the outer coupling first"
+        )
+    return path, picked
+
+
+def _located(ops: list[Operation], path: Path) -> dict[str, tuple[Path, Operation]]:
+    """Every named operation in ``ops`` and below, with the path to its scope."""
+    located: dict[str, tuple[Path, Operation]] = {}
     for index, op in enumerate(ops):
-        if isinstance(op.func, IterativeOp) and id(op) not in taken:
-            found += _found(op.sub_operations, seed, (*path, index))
-    return found
+        if op.operation_name:
+            located[op.operation_name] = (path, op)
+        if _is_loop(op):
+            located.update(_located(op.sub_operations, (*path, index)))
+    return located
+
+
+def _edges(op: Operation) -> tuple[set[str], set[str], set[str]]:
+    """``depends_on``, ``before`` and names of ``op`` and everything inside it."""
+    depends_on, before = set(op.depends_on), set(op.before)
+    own = {op.operation_name} if op.operation_name else set()
+    if _is_loop(op):
+        for inner in op.sub_operations:
+            inner_depends, inner_before, inner_own = _edges(inner)
+            depends_on |= inner_depends
+            before |= inner_before
+            own |= inner_own
+    return depends_on - own, before - own, own
+
+
+def _is_loop(op: Operation) -> bool:
+    return isinstance(op.func, IterativeOp)
+
+
+def _is_wrapping(op: Operation) -> bool:
+    return _is_loop(op) and op.metadata.wraps is not None
+
+
+def _scope(ops: list[Operation], path: Path) -> list[Operation]:
+    for index in path:
+        ops = ops[index].sub_operations
+    return ops
 
 
 def _in_scope(
@@ -111,17 +201,25 @@ def _in_scope(
     return [*ops[:index], loop, *ops[index + 1 :]]
 
 
+def _filled(loop: Operation, body: list[Operation]) -> Operation:
+    return dataclasses.replace(loop, sub_operations=list(body))
+
+
 def _wrapped(scope: list[Operation], selected: list[Operation], loop: Operation) -> list[Operation]:
-    """``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place."""
+    """``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place.
+
+    Raises ``ValueError`` when an operation left before the loop depends on one in it.
+    """
     member_ids = {id(op) for op in selected}
     last = max(index for index, op in enumerate(scope) if id(op) in member_ids)
-    solves = sorted({field for op in selected for field in op.metadata.solves})
-    filled = dataclasses.replace(
-        loop,
-        metadata=dataclasses.replace(loop.metadata, solves=solves),
-        sub_operations=list(selected),
-    )
-    # Operations before the last member that are not members do not depend on one
-    # (they would be downstream), so running them before the loop keeps every edge.
     earlier = [op for op in scope[:last] if id(op) not in member_ids]
-    return [*earlier, filled, *scope[last + 1 :]]
+    # Without downstream an operation between the members may depend on one of
+    # them; running it before the loop would break that edge.
+    after = {id(op) for op in downstream(scope[:last], lambda op: id(op) in member_ids)}
+    broken = [op.operation_name for op in earlier if id(op) in after]
+    if broken:
+        raise ValueError(
+            f"{broken} depend on operations {loop.operation_name} wraps but run before "
+            "it; wrap them too"
+        )
+    return [*earlier, _filled(loop, selected), *scope[last + 1 :]]
