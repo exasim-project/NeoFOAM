@@ -8,7 +8,7 @@ from typing import Any, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
-from neofoam.framework.coupling import ACCELERATIONS, CONVERGENCES, MAPPINGS
+from neofoam.framework.coupling import ACCELERATIONS, CONVERGENCES, DEFAULT_TIMEOUT, MAPPINGS
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
@@ -180,6 +180,11 @@ class RegionCouplingConfig(BaseConfig):
     with it those top-level entries are an error. ``scheme`` is the scheme of
     every node that names none.
 
+    ``transportTimeout`` (seconds, default 600) bounds how long a region waits
+    for a message, in case the comm channel does not tell a deadlock at once;
+    ``0`` or ``null`` waits without end. The environment variable
+    ``NEOFOAM_COUPLING_TIMEOUT`` overrides it.
+
     Example::
 
         exchanges:
@@ -219,6 +224,7 @@ class RegionCouplingConfig(BaseConfig):
     convergence: Optional[list[ConvergenceConfig]] = Field(default=None, min_length=1)
     maxIterations: Optional[int] = Field(default=None, gt=0)
     couplings: Optional[list[CouplingNodeConfig]] = Field(default=None, min_length=1)
+    transportTimeout: Optional[float] = Field(default=DEFAULT_TIMEOUT, ge=0, allow_inf_nan=False)
 
     def exchange_names(self) -> list[str]:
         """Every exchange's name, in order: its ``name``, by default its regions joined by ``-``.

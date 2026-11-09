@@ -13,14 +13,17 @@ regions exchange their data through it as ``system/regionCoupling.yaml`` lists
 (:func:`couplings`).
 """
 
+import math
+import os
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     ACCELERATIONS,
     CONVERGENCES,
+    DEFAULT_TIMEOUT,
     CommChannel,
     CouplingController,
     CouplingNode,
@@ -41,6 +44,36 @@ from .configs import ControlDictConfig, CouplingNodeConfig, RegionCouplingConfig
 multiRun = Solver("multiRun")
 
 multiRun.config(ControlDictConfig)
+
+
+#: The environment variable that sets the comm channel timeout, in seconds, over the case's.
+TIMEOUT_VARIABLE = "NEOFOAM_COUPLING_TIMEOUT"
+
+
+def transport_timeout() -> Optional[float]:
+    """How long a region waits for a message, in seconds; ``None``: without end.
+
+    ``NEOFOAM_COUPLING_TIMEOUT`` if it is set, else ``transportTimeout`` of
+    ``system/regionCoupling.yaml``, else 600 seconds; ``0`` waits without end.
+    Raises ``ValueError`` when the variable holds no number of seconds of at least 0.
+    """
+    value = os.environ.get(TIMEOUT_VARIABLE)
+    if value is not None:
+        try:
+            seconds = float(value)
+            if not (math.isfinite(seconds) and seconds >= 0):
+                raise ValueError(value)
+        except ValueError:
+            raise ValueError(
+                f"{TIMEOUT_VARIABLE}={value!r}: the comm channel timeout is a number of "
+                "seconds, at least 0 (0: no timeout)"
+            ) from None
+    elif RegionCouplingConfig.get_default_path().exists():
+        configured = RegionCouplingConfig.load().transportTimeout
+        seconds = 0.0 if configured is None else configured
+    else:
+        seconds = DEFAULT_TIMEOUT
+    return seconds or None
 
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
@@ -142,7 +175,7 @@ def run() -> dict[str, Context]:
     """
     config = ControlDictConfig.load(case_dir=Path("."))
     regions = list(config.regionSolvers)
-    comm_channel = InProcessCommChannel()
+    comm_channel = InProcessCommChannel(timeout=transport_timeout())
     coupling = couplings(regions, comm_channel)
     runtimes = {
         region: resolve_solver(name).instantiate(region=region, coupling=coupling.get(region))
