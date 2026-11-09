@@ -24,7 +24,8 @@ from typing import Any
 import numpy as np
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, CouplingOp, InProcessCommChannel
+from neofoam.framework.coupling import Coupling, InProcessCommChannel
+from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.solver.heatConductionNeoN import run as run_single
 from neofoam.solver.multiRun import run as run_multi
 
