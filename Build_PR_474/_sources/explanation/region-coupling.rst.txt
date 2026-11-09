@@ -38,7 +38,7 @@ patches of two regions; the **mapping** (``Mapping``, with a ``kind``) maps poin
 data of the partner onto a side's own points; a region's **coupling op** is a
 loop around its solving operations whose test exchanges its sides' data; regions
 connected by exchanges form a **group**, whose last region in ``regionSolvers``
-order leads it in ``agree``; a **coupling node** is a named coupling loop over
+order leads it in agreeing the time step; a **coupling node** is a named coupling loop over
 some exchanges (its convergence, ``maxIterations``, an acceleration per exchange,
 its placement per region; nodes are listed outer to inner), whose last region in
 stepping order is the node's **leader**: its controller decides when the node's
@@ -157,10 +157,11 @@ Architecture
         +-- thread "a":  instantiate(region="a", coupling=...)
         |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
         |                        then its BCs; a @coupled BC adds itself
-        |     execution_graph    model ops += ctx.models["coupling"].operations()
+        |     execution_graph    model ops += ctx.models["coupling"].operations(),
+        |                        the time-step op a.time_step (transient)
         |     resolve_operations DAGResolver places a.coupling around the time step
-        |     run()              time_loop { a.coupling { set_time_step, agree_dt,
-        |                                               increment_time, solve_x } }
+        |     run()              time_loop { set_time_step, a.time_step,
+        |                                    increment_time, a.coupling { solve_x } }
         |
         +-- thread "b" (leader): the same, its coupling op owns the controller
                      ^
@@ -181,21 +182,23 @@ node's exchanges (``wraps=`` the node's placement for the region, by default
 ``ValueError`` when an exchange of the region has no side (also when the region
 has none at all), a patch two sides, or one field has sides in two nodes.
 
-**Agreeing on a value.** ``Coupling.of(ctx).agree(value, how=min)``: every
-region of the group sends its value to the leader, which reduces them with
-``how`` and sends the result to all; every region gets the same result. Each call
-has its own tag (the regions call it in the same order); a region the case does
-not couple gets its value back.
+**The time step.** In a transient coupled region (``ctx.time`` is set) the
+framework adds the time-step op ``<region>.time_step`` (``Coupling.time_step``)
+to the region's graph, after the solutionLoop's ``set_time_step`` and before its
+``increment_time``; a region without them raises ``ValueError``. Every region of
+the group sends the time step it asks for (``ctx.time.delta_t``) to the leader,
+which sends back the smallest (tag ``time/dt``); each region writes it into its
+``ctx.time.delta_t``, which ``increment_time`` advances by. So the coupled
+regions step the smallest time step any of them asks for. The op is marked
+``first`` (``OperationMetadata.first``), as are ``set_time_step`` and
+``increment_time``: inside a coupling loop (the default placement around the
+whole time step) they run in its first pass only, once per time step; an op
+marked ``first`` runs while every wrapping loop around it is in its first pass
+(``ctx.loops``). A solver's own start of a time step (storing the old time
+level) is marked ``first`` the same way.
 
-- A **transient** solver agrees on its time step where it sets it, right after
-  ``set_time_step`` (the test solvers' ``agree_dt``)::
-
-      loop.set_delta_t(Coupling.of(ctx).agree(loop.current_delta_t()), adjust=False)
-
-  so the coupled regions step the smallest time step any of them asks for.
-- A **steady** solver (outer iterations, no time step) calls nothing; neither
-  the coupling nor ``agree`` needs a solution loop
-  (``test/solver/multiRun/steady_solver.py``).
+A **steady** solver (outer iterations, no time step) gets no time-step op; the
+coupling needs no solution loop (``test/solver/multiRun/steady_solver.py``).
 
 As a time step's coupling starts, the leader compares the regions' time
 (``ctx.time.value``) and raises when they differ; regions without a time
@@ -248,9 +251,10 @@ A NeoN solver: heatConductionNeoN
 ``heatConductionNeoN`` solves ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``
 on NeoN (``constant/thermalProperties``: ``rho``, ``cp``, ``k``, ``heatSource``)
 and supports coupling: its init adds the coupling model, then the coupled
-patches of ``T``; it agrees on the time step (``agree_dt``). A patch of ``0/T``
-is coupled when a ``coupled`` entry names its condition; it is ``calculated``, so
-NeoN leaves its values to the coupling:
+patches of ``T``; its time-step op agrees on the time step, and ``start_step``
+(the old time level of ``T``) is marked ``first``. A patch of ``0/T`` is coupled
+when a ``coupled`` entry names its condition; it is ``calculated``, so NeoN
+leaves its values to the coupling:
 
 .. code-block:: c++
 

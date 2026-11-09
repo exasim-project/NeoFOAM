@@ -1038,7 +1038,8 @@
 <span class="sd">        without the runtime holding a long-lived reference to the context).</span>
 
 <span class="sd">        With ``ctx`` whose solver added a coupling model (``ctx.models["coupling"]``),</span>
-<span class="sd">        the model operations it returns also hold its operations.</span>
+<span class="sd">        the model operations it returns also hold its operations: the coupling ops</span>
+<span class="sd">        and, in a transient case, the time-step op (``Coupling.time_step``).</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1062,9 +1063,13 @@
 
         <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">coupling</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coupling"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span>
-        <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">([</span><span class="o">*</span><span class="n">model_ops</span><span class="p">,</span> <span class="o">*</span><span class="n">coupling</span><span class="o">.</span><span class="n">operations</span><span class="p">()])</span>
+        <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">model_ops</span><span class="p">,</span> <span class="o">*</span><span class="n">coupling</span><span class="o">.</span><span class="n">operations</span><span class="p">()]</span>
+        <span class="n">time_step</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">time_step</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="p">[</span><span class="o">*</span><span class="n">builder</span><span class="o">.</span><span class="n">operations</span><span class="p">,</span> <span class="o">*</span><span class="n">model_ops</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">time_step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_step</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Run the registered end-of-run step, if any."""</span>
