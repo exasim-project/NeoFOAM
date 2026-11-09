@@ -32,6 +32,7 @@ from neofoam.framework.coupling import (
     region_couplings,
 )
 from neofoam.framework.operations import IterativeOp, Operation
+from neofoam.framework.types import Placement
 
 
 class WallTemperature(BaseModel):
@@ -125,7 +126,7 @@ def test_a_coupled_boundary_condition_adds_its_side_to_its_region_s_coupling() -
 
     (operation,) = Coupling.of(region).operations()
     assert isinstance(operation.func, CouplingOp)
-    assert (operation.operation_name, operation.metadata.wraps) == ("solid.couple", ["T"])
+    assert (operation.operation_name, operation.metadata.wraps) == ("solid.couple", Placement())
     (exchange_side,) = operation.func.sides
     side = exchange_side.side
     assert exchange_side.key == ("solid", "right", "T")
@@ -188,7 +189,7 @@ def test_coupled_couples_the_field_of_each_instance() -> None:
     _Wall(region, "left", field="U")
 
     (operation,) = Coupling.of(region).operations()
-    assert operation.metadata.wraps == ["T", "U"]
+    assert operation.metadata.wraps == Placement()
     assert [side.key for side in couple(region).sides] == [
         ("solid", "right", "T"),
         ("solid", "left", "U"),
