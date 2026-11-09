@@ -686,8 +686,11 @@
 <span class="sd">Point to point, as MPI: a region sends a message to another region under a tag</span>
 <span class="sd">and the other receives it. A send never blocks; a receive blocks until the</span>
 <span class="sd">message is there. Messages of one ``(source, target, tag)`` arrive in the order</span>
-<span class="sd">they were sent. Messages are plain data (dicts of numpy arrays and numbers,</span>
-<span class="sd">points), so a transport between processes can pickle them.</span>
+<span class="sd">they were sent; that is the whole order contract (a transport may keep more).</span>
+<span class="sd">Messages are plain data (builtins, tuples, lists and dicts of them, numpy</span>
+<span class="sd">arrays), so a transport between processes can pickle them; an</span>
+<span class="sd">``InProcessTransport(pickle=True)`` pickles each message to prove it. The tags</span>
+<span class="sd">are strings, built by :class:`Tag` alone.</span>
 
 <span class="sd">:class:`InProcessTransport` connects regions that run in threads of one process.</span>
 <span class="sd">A transport between processes (e.g. MPI, one rank group per region) implements</span>
@@ -709,11 +712,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pickling</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="c1"># What a side sends, by name: arrays with one entry per point of its patch, or one</span>
 <span class="c1"># value for the whole interface.</span>
@@ -723,6 +727,50 @@
 
 <span class="c1"># How long a receive of an InProcessTransport waits by default, in seconds: 10 minutes.</span>
 <span class="n">DEFAULT_TIMEOUT</span> <span class="o">=</span> <span class="mf">600.0</span>
+
+
+<div class="viewcode-block" id="Tag">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Tag</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The tags of the coupling's messages, the one place that builds them.</span>
+
+<span class="sd">    ``Tag.data(exchange)`` (``data:&lt;exchange&gt;``): what a side sends, each pass;</span>
+<span class="sd">    ``Tag.side(exchange)`` (``side:&lt;exchange&gt;``): a side tells its partner its</span>
+<span class="sd">    models and points, once; ``Tag.node(node, what)`` (``&lt;node&gt;/&lt;what&gt;``): a</span>
+<span class="sd">    region and the leader of coupling node ``node`` exchange its ``sides``</span>
+<span class="sd">    (once), each ``pass`` and the leader's ``decision``; ``Tag.TIME_DT``</span>
+<span class="sd">    (``time/dt``): the group agrees on its time step.</span>
+<span class="sd">    """</span>
+
+    <span class="n">TIME_DT</span> <span class="o">=</span> <span class="s2">"time/dt"</span>
+    <span class="n">NODE</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sides"</span><span class="p">,</span> <span class="s2">"pass"</span><span class="p">,</span> <span class="s2">"decision"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Tag.data">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag.data">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``data:&lt;exchange&gt;``."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="n">exchange</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+<div class="viewcode-block" id="Tag.side">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag.side">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">side</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``side:&lt;exchange&gt;``."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"side:</span><span class="si">{</span><span class="n">exchange</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+<div class="viewcode-block" id="Tag.node">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag.node">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sides"</span><span class="p">,</span> <span class="s2">"pass"</span><span class="p">,</span> <span class="s2">"decision"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``&lt;node&gt;/&lt;what&gt;``; raises ``ValueError`` for a ``what`` not in :attr:`NODE`."""</span>
+        <span class="k">if</span> <span class="n">what</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Tag</span><span class="o">.</span><span class="n">NODE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a coupling node sends </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Tag</span><span class="o">.</span><span class="n">NODE</span><span class="p">)</span><span class="si">}</span><span class="s2">, not </span><span class="si">{</span><span class="n">what</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">"</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="CouplingTransportError">
@@ -809,7 +857,10 @@
 <span class="w">    </span><span class="sd">"""A transport between regions running in threads of one process: a mailbox per tag.</span>
 
 <span class="sd">    Sends a copy, as a message would: a receiver that changes its data in place</span>
-<span class="sd">    changes no one else's.</span>
+<span class="sd">    changes no one else's. With ``pickle`` the copy is a pickle round trip, as</span>
+<span class="sd">    between processes: a send of a message that does not pickle raises</span>
+<span class="sd">    ``TypeError`` (off by default; the tests turn it on). ``pickle`` ``None``</span>
+<span class="sd">    takes the class default :attr:`PICKLE`.</span>
 
 <span class="sd">    Once :meth:`start` named the running regions (as</span>
 <span class="sd">    :func:`~neofoam.framework.coupling.run_regions` does), a receive raises</span>
@@ -823,10 +874,16 @@
 <span class="sd">    Raises ``ValueError`` for a negative ``timeout``.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># whether a transport built with ``pickle=None`` pickles its messages</span>
+    <span class="n">PICKLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span> <span class="n">pickle</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timeout</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a transport timeout is at least 0 seconds, not </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pickle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PICKLE</span> <span class="k">if</span> <span class="n">pickle</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pickle</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">deque</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">deque</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aborted</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -846,10 +903,23 @@
 <div class="viewcode-block" id="InProcessTransport.send">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.InProcessTransport.send">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_copy</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="o">.</span><span class="n">notify_all</span><span class="p">()</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The copy of ``message`` that arrives; with :attr:`pickle`, a pickle round trip."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pickle</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pickling</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickling</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"the message '</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">' from region </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> to region </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> is not plain "</span>
+                <span class="sa">f</span><span class="s2">"data, it does not pickle: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
 
 <div class="viewcode-block" id="InProcessTransport.receive">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.InProcessTransport.receive">[docs]</a>

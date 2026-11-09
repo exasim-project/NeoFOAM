@@ -728,7 +728,11 @@ fields (one value for the interface, handed over as they are). The same model
 both ways is the special case of a symmetric exchange. <code class="docutils literal notranslate"><span class="pre">send()</span></code> returns an
 instance of <code class="docutils literal notranslate"><span class="pre">sends</span></code>; <code class="docutils literal notranslate"><span class="pre">receive(data)</span></code> takes an instance of <code class="docutils literal notranslate"><span class="pre">receives</span></code>,
 already mapped onto this side’s points. <code class="docutils literal notranslate"><span class="pre">coordinates</span></code> holds one row per
-point of the patch, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+point of the patch, or <code class="docutils literal notranslate"><span class="pre">None</span></code>; it is kept as a float numpy array.</p>
+<p>What travels between regions is plain data (it pickles): the plain fields
+are <code class="docutils literal notranslate"><span class="pre">float</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">bool</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code> (or a union of them),
+or a pydantic model of such fields, sent as its <code class="docutils literal notranslate"><span class="pre">model_dump()</span></code>. Raises
+<code class="docutils literal notranslate"><span class="pre">TypeError</span></code> for another field type.</p>
 <p>A boundary condition usually declares it with
 <a class="reference internal" href="neofoam.framework.coupling.coupled.html#neofoam.framework.coupling.coupled" title="neofoam.framework.coupling.coupled"><code class="xref py py-func docutils literal notranslate"><span class="pre">coupled()</span></code></a> instead of building it.</p>
 <p>Example:</p>
