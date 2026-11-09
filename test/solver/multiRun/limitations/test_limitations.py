@@ -60,7 +60,8 @@ def test_pair_reaches_the_fixed_point(monkeypatch: pytest.MonkeyPatch) -> None:
     regions = _run("pair", monkeypatch)
 
     assert _final(regions) == pytest.approx({"a": 2.0, "b": 1.0}, rel=1e-5)
-    assert _solves(regions) == {"a": 20, "b": 20}
+    # parallel (the default): each side receives what the other sent the pass before
+    assert _solves(regions) == {"a": 39, "b": 39}
 
 
 # --- chain a <-> b <-> c: two exchanges -------------------------------------------------------
@@ -69,12 +70,12 @@ def test_pair_reaches_the_fixed_point(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_chain_reaches_the_fixed_point_in_one_coupling_loop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Both exchanges share region b: one group over a, b and c (block Gauss-Seidel), led by
-    c, not two nested loops (which took a and b 122 solves, c 11)."""
+    """Both exchanges share region b: one group over a, b and c (block Jacobi: parallel, the
+    default), led by c, not two nested loops (which took a and b 122 solves, c 11)."""
     regions = _run("chain", monkeypatch)
 
     assert _final(regions) == pytest.approx({"a": 3.0, "b": 2.0, "c": 2.0}, rel=1e-5)
-    assert _solves(regions) == {"a": 29, "b": 29, "c": 29}
+    assert _solves(regions) == {"a": 57, "b": 57, "c": 57}
     couplings = {region: _coupling(ctx) for region, ctx in regions.items()}
     # b's coupling op hands both its sides their data
     assert [
@@ -95,7 +96,7 @@ def test_two_interfaces_reach_the_fixed_point_in_one_loop(monkeypatch: pytest.Mo
 
     assert _final(regions) == pytest.approx({"a": 2.0, "b": 1.0}, rel=1e-5)
     # one loop of both exchanges (nested loops took 113)
-    assert _solves(regions) == {"a": 20, "b": 20}
+    assert _solves(regions) == {"a": 39, "b": 39}
     a = _coupling(regions["a"])
     assert [a.exchange_of(side).name for side in a.sides] == ["a-b", "a-b-2"]
 

@@ -8,8 +8,9 @@ at x = 0) and the slab ``right`` (x in [1, 2], conductivity 3, 300 K at x = 2)
 meet at x = 1, where left's patch ``right`` and right's patch ``left`` are
 ``coupledConduction``. The test couples the patches (multiRun's ``couplings``) in
 place of the case's ``system/regionCoupling.yaml``: one exchange with the
-``identity`` mapping (both patches lie at x = 1) and the default ``CouplingController``,
-which stops once the data changes by round-off only.
+``identity`` mapping (both patches lie at x = 1), the default scheme (parallel)
+and the default ``CouplingController``, which stops once the data changes by
+round-off only.
 
 The time step (1e6) is long against the diffusion time (1), so each
 backward-Euler step is a steady solve: the first leaves ~6e-6 K of the initial
@@ -120,19 +121,25 @@ def test_multiRun_coupled_regions_reach_the_steady_profile(
 def test_multiRun_each_region_wraps_its_solution_in_its_coupling_op(
     observed: tuple[dict[str, Context], _Graphs], region: str
 ) -> None:
-    """The regions agree on deltaT before the time advances (the time-step op); the old
-    time is stored once per time step, outside the coupling loop."""
+    """The coupling op (parallel, at the top by default) wraps the whole time step; the
+    regions agree on deltaT before the time advances (the time-step op) and the old time
+    is stored, each once per time step (``first``)."""
     _regions, graphs = observed
 
     assert graphs.trees[region] == [
         (
             "time_loop",
             [
-                "set_time_step",
-                f"{region}.time_step",
-                "increment_time",
-                "store_old_time",
-                (f"{region}.coupling", ["solve_T"]),
+                (
+                    f"{region}.coupling",
+                    [
+                        "set_time_step",
+                        f"{region}.time_step",
+                        "increment_time",
+                        "store_old_time",
+                        "solve_T",
+                    ],
+                )
             ],
         )
     ]

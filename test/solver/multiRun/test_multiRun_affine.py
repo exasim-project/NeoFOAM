@@ -9,9 +9,11 @@ the regions ``a`` and ``b``, each with its own ``constant/<region>/affine.yaml``
     a = 1.0 * b_from_b + 1.0        b = 0.5 * a_from_a + 0.0
 
 ``system/regionCoupling.yaml`` couples their patches ``interface`` (serial,
-relaxation 1, relative change of ``x`` < 1e-6): each region runs on its own
-thread and repeats its ``solve_x`` in its coupling op ``<region>.coupling`` to the
-fixed point ``a = 2``, ``b = 1``, as b (the leader) decides. Both start at 0.
+relaxation 1, relative change of ``x`` < 1e-6) in one node that wraps each
+region's ``solve_x`` (a serial node leaves the time step outside): each region
+runs on its own thread and repeats its ``solve_x`` in its coupling op
+``<region>.coupling`` to the fixed point ``a = 2``, ``b = 1``, as b (the leader)
+decides. Both start at 0.
 Serial, b receives what a sent in the same pass (Gauss-Seidel), so pass k gives
 ``a_k = 2 - 2**(1 - k)`` and ``b_k = 1 - 2**-k``: the error halves every pass.
 Before pass k + 1 the leader checks the relative change of what both sides sent in pass k,
@@ -22,7 +24,7 @@ time steps; the second starts converged and stops after one pass.
 import importlib
 import shutil
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 import pytest
@@ -52,12 +54,27 @@ def _with_affine(name: str) -> Any:
     return affine if name == "affine" else resolve_solver(name)
 
 
-def _case(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **update: Any) -> None:
-    """The case in ``tmp_path`` as the working directory, its coupling config updated."""
+def _case(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    acceleration: Optional[AccelerationConfig] = None,
+    **update: Any,
+) -> None:
+    """The case in ``tmp_path`` as the working directory, its coupling node updated.
+
+    ``update`` sets entries of the node (``scheme``, ``maxIterations``),
+    ``acceleration`` that of its exchange.
+    """
     shutil.copytree(CASE, tmp_path / "case")
-    if update:
+    if update or acceleration:
         config = RegionCouplingConfig.load(case_dir=tmp_path / "case")
-        config.model_copy(update=update).save(case_dir=tmp_path / "case")
+        assert config.couplings is not None
+        (node,) = config.couplings
+        if acceleration is not None:
+            (exchange,) = node.exchanges
+            update["exchanges"] = [exchange.model_copy(update={"acceleration": acceleration})]
+        node = node.model_copy(update=update)
+        config.model_copy(update={"couplings": [node]}).save(case_dir=tmp_path / "case")
     monkeypatch.setattr(MULTI_RUN_MODULE, "resolve_solver", _with_affine)
     monkeypatch.chdir(tmp_path / "case")
 
@@ -180,6 +197,20 @@ def test_multiRun_affine_stops_at_max_iterations(
     # unconverged after 5 passes, the time step goes on with a_5
     assert len(_history(ctx, "a", 1)) == 5
     assert _history(ctx, "a", 1)[-1] == 2 - 2.0**-4
+
+
+def test_multiRun_affine_a_serial_node_around_the_time_step_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Without ``wraps`` the serial node would wrap the whole time step: it raises, not hangs."""
+    _case(tmp_path, monkeypatch, wraps={})
+
+    with pytest.raises(
+        ValueError,
+        match=r"coupling 'coupling' is serial but holds the time step of its regions; make it "
+        r"parallel or place it around named operations \(wraps\.[ab]\.operations\)",
+    ):
+        run()
 
 
 class _Recorder(ExecutionObserver):

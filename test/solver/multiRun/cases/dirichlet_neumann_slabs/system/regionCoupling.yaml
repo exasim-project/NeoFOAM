@@ -1,14 +1,17 @@
 # Dirichlet-Neumann: left sends its wall temperature, right its wall heat flux.
+# Serial: the node wraps each region's solve_T, so the time step stays outside it.
 exchanges:
   - name: interface
     sides: {left: right, right: left}
     mapping: nearest-neighbor
-scheme: serial
-acceleration:
-  type: aitken
-  relaxation: 0.5
-convergence:
-  - type: relative
-    data: T
-    limit: 1.0e-12
-maxIterations: 100
+couplings:
+  - name: coupling
+    scheme: serial
+    maxIterations: 100
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-12}
+    wraps:
+      left: {operations: [solve_T]}
+      right: {operations: [solve_T]}
