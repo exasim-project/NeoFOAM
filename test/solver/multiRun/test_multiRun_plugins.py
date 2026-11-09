@@ -51,13 +51,13 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from neofoam.framework.coupling import Acceleration, ConstantRelaxation, Mapping
+from neofoam.framework.coupling import ConstantRelaxation, CouplingAcceleration, CouplingMapping
 
 calls = {"fake-rbf": 0, "fake-iqn": 0}
 
 
-@Mapping.register
-class RadialBasis(Mapping):
+@CouplingMapping.register
+class RadialBasis(CouplingMapping):
     type: Literal["fake-rbf"] = "fake-rbf"
     radius: float = Field(gt=0)
 
@@ -69,7 +69,7 @@ class RadialBasis(Mapping):
         return mapper
 
 
-@Acceleration.register
+@CouplingAcceleration.register
 class QuasiNewton(ConstantRelaxation):
     type: Literal["fake-iqn"] = "fake-iqn"
     columns: int = Field(gt=0)

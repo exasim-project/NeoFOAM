@@ -21,16 +21,15 @@ from typing import Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    DEFAULT_TIMEOUT,
     CommChannel,
     CouplingNode,
     InProcessCommChannel,
     Link,
     RegionCoupling,
     load_plugins,
-    region_couplings,
-    run_regions,
 )
+from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
+from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.solver import Solver, SolverRuntime
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.types import Placement
@@ -82,7 +81,7 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
     ``couplings`` one node ``coupling`` holds every exchange (see
     :meth:`RegionCouplingConfig.nodes`). Without the file no region is coupled.
     Raises ``ValueError`` when a serial node encloses a node coupling two of its
-    regions as well (:func:`~neofoam.framework.coupling.region_couplings`).
+    regions as well (:func:`~neofoam.framework.coupling.region.region_couplings`).
     """
     if not RegionCouplingConfig.get_default_path().exists():
         return {}

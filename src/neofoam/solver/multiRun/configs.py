@@ -19,13 +19,13 @@ from pydantic import (
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.framework.coupling import (
-    DEFAULT_TIMEOUT,
-    Acceleration,
-    Convergence,
-    Mapping,
+    CouplingAcceleration,
+    CouplingConvergence,
+    CouplingMapping,
     NearestNeighborMapping,
     strategy,
 )
+from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
@@ -49,18 +49,18 @@ def _selected(family: type[BaseModel], what: str) -> Any:
 
 
 #: A convergence measure: ``{type: relative, data: T, limit: 1.0e-5}``
-#: (:class:`~neofoam.framework.coupling.Convergence`; ``relative``: the data of
+#: (:class:`~neofoam.framework.coupling.CouplingConvergence`; ``relative``: the data of
 #: field ``data`` changes by less than ``limit`` relative to it).
-ConvergenceConfig = _selected(Convergence, "convergence measure")
+ConvergenceConfig = _selected(CouplingConvergence, "convergence measure")
 #: How the leader relaxes the data carried into a pass: ``{type: aitken, relaxation: 0.5}``
-#: (:class:`~neofoam.framework.coupling.Acceleration`; ``constant`` factor
+#: (:class:`~neofoam.framework.coupling.CouplingAcceleration`; ``constant`` factor
 #: ``relaxation``, or ``aitken`` starting from it).
-AccelerationConfig = _selected(Acceleration, "acceleration")
+AccelerationConfig = _selected(CouplingAcceleration, "acceleration")
 #: How the point data of one side is mapped onto the other's points:
 #: ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both
 #: patches share their points); a type alone, or ``{type: ..., <option>: ...}``
-#: (:class:`~neofoam.framework.coupling.Mapping`).
-MappingConfig = _selected(Mapping, "mapping")
+#: (:class:`~neofoam.framework.coupling.CouplingMapping`).
+MappingConfig = _selected(CouplingMapping, "mapping")
 
 
 @IOStrategy(YAML("system/controlDict.yaml"))
