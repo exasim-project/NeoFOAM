@@ -1,0 +1,12 @@
+# Flow over a heated plate (after preCICE's flow-over-heated-plate): the times
+# every region steps on. Each region is a case of its own: fluid/
+# (incompressibleFluid on OpenFOAM, Boussinesq with gravity) and solid/
+# (heatConductionNeoN, the plate). Their system/controlDict holds the same times
+# for OpenFOAM's Time.
+endTime: 1.0
+deltaT: 0.01
+writeControl: timeStep
+writeInterval: 20
+regionSolvers:
+  fluid: incompressibleFluid
+  solid: heatConductionNeoN

@@ -1,0 +1,16 @@
+#!/bin/bash
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+# Every region is an OpenFOAM case of its own: fluid/ and solid/
+for region in fluid solid
+do
+    runApplication -s "$region" blockMesh -case "$region"
+done
+
+# incompressibleFluid (fluid) and heatConductionNeoN (solid), system/controlDict.yaml,
+# coupled at the plate's top (system/regionCoupling.yaml); about 2 min
+runApplication python -m neofoam.solver.multiRun
+
+#------------------------------------------------------------------------------

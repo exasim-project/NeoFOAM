@@ -1,0 +1,27 @@
+# Dirichlet-Neumann at the plate's top, as the patches of 0/T declare: the fluid's
+# interface (coupledTemperature) receives the wall temperature and sends the heat
+# flux into the fluid; the plate's top (coupledHeatFlux) receives it and sends its
+# wall temperature. The 161 graded fluid faces and the plate's 100 do not match:
+# nearest-neighbor maps them. Serial, the fluid first; the node wraps the fluid's
+# PIMPLE loop and the plate's solve_T, so the time step stays outside it and each
+# pass repeats the fluid's whole PIMPLE step (T drives the flow).
+#
+# The fluid as the Dirichlet side is the less stable direction (the plate's
+# effusivity is the smaller): without relaxation the passes diverge, Aitken
+# converges each window in about 12 passes. The convergence of data T checks
+# every array of field T the sides send: the wall temperature and the heat flux.
+exchanges:
+  - name: interface
+    sides: {fluid: interface, solid: top}
+    mapping: nearest-neighbor
+couplings:
+  - name: cht
+    scheme: serial
+    maxIterations: 30
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.1}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}
+    wraps:
+      fluid: {operations: [inner_loop]}
+      solid: {operations: [solve_T]}

@@ -15,6 +15,8 @@ the plate's ``solve_T``. deltaT 0.01 s to 0.03 s.
 The reference is the monkeypatched probe the coupled patch was built from
 (``build/heated_plate/probe4_coupled`` of the coupling-heat worktree, same case
 to 1 s): its passes per time step and its fluid wall temperature at 0.03 s.
+The case is the tutorial ``tutorials/flowOverHeatedPlate`` but for its end time
+and write interval (the tutorial runs to 1 s).
 """
 
 import json
@@ -27,6 +29,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+import yaml
 from foamlib import FoamFile
 
 from neofoam.solver.incompressibleFluid.coupled_patches import coupled_entries
@@ -35,6 +38,9 @@ HERE = Path(__file__).parent
 CASE = HERE / "cases" / "heatedPlate"
 WORKER = HERE / "cht_worker.py"
 RESULT_PREFIX = "#RESULT "
+TUTORIAL = HERE.parents[2] / "tutorials" / "flowOverHeatedPlate"
+#: the files of the case whose times differ from the tutorial's
+CONTROL_DICTS = ("system/controlDict.yaml", "fluid/system/controlDict", "solid/system/controlDict")
 
 #: the probe at 0.03 s: passes per time step, the fluid's wall temperature (mean, min, max)
 PROBE_PASSES = [15, 16, 15]
@@ -114,3 +120,23 @@ def test_the_written_temperature_restarts_coupled(plate: dict[str, Any]) -> None
 
 def _patch_values(path: Path, patch: str) -> Any:
     return np.asarray(FoamFile(path)["boundaryField"][patch]["value"], dtype=float)
+
+
+def test_the_tutorial_is_this_case_run_to_1_s() -> None:
+    files = sorted(path.relative_to(CASE) for path in CASE.rglob("*") if path.is_file())
+    assert files and all(
+        (TUTORIAL / name).read_bytes() == (CASE / name).read_bytes()
+        for name in files
+        if str(name) not in CONTROL_DICTS
+    )
+    for name in CONTROL_DICTS:
+        tutorial, case = (_times(root / name) for root in (TUTORIAL, CASE))
+        assert (tutorial.pop("endTime"), tutorial.pop("writeInterval")) == (1, 20)
+        assert (case.pop("endTime"), case.pop("writeInterval")) == (0.03, 3)
+        assert tutorial == case
+
+
+def _times(path: Path) -> dict[str, Any]:
+    if path.suffix == ".yaml":
+        return dict(yaml.safe_load(path.read_text()))
+    return {key: value for key, value in FoamFile(path).as_dict().items() if key != "FoamFile"}

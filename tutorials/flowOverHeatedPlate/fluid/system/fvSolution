@@ -1,0 +1,7 @@
+FoamFile { version 2.0; format ascii; class dictionary; object fvSolution; }
+solvers {
+ "(p_rgh|p_rghFinal)" { solver PCG; preconditioner DIC; tolerance 1e-8; relTol 0; maxIter 5000; }
+ "(U|UFinal)" { solver PBiCGStab; preconditioner DILU; tolerance 1e-8; relTol 0; }
+ "(T|TFinal)" { solver PBiCGStab; preconditioner DILU; tolerance 1e-12; relTol 0; maxIter 1000; }
+}
+PIMPLE { momentumPredictor yes; nOuterCorrectors 1; nCorrectors 2; nNonOrthogonalCorrectors 0; pRefCell 0; pRefValue 0; }
