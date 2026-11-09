@@ -173,8 +173,8 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
 def test_the_controller_tells_which_pass_is_final() -> None:
     controller = CouplingController([], "c.coupling", convergence=[_never], max_iterations=2)
 
-    assert controller.decide({}) == {} and not controller.final
-    assert controller.decide({}) == {} and controller.final
+    assert controller.decide({}, 0) == {} and not controller.final
+    assert controller.decide({}, 1) == {} and controller.final
     with pytest.warns(CouplingNotConvergedWarning):
-        assert controller.decide({}) is None
+        assert controller.decide({}, 2) is None
     assert not controller.final
