@@ -32,6 +32,7 @@ import pytest
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     CommChannel,
+    CouplingNode,
     Link,
     RegionCoupling,
     region_couplings,
@@ -56,7 +57,9 @@ def _with_slab(name: str) -> Any:
 def _interface(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
     """Left's patch ``right`` and right's patch ``left`` in one exchange."""
     link = Link("interface", (("left", "right"), ("right", "left")))
-    return region_couplings(regions, [link], comm_channel)
+    return region_couplings(
+        regions, [link], comm_channel, nodes=[CouplingNode("couple", ("interface",))]
+    )
 
 
 def _case(run_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
