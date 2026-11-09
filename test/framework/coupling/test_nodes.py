@@ -146,7 +146,8 @@ def test_the_messages_of_each_node_are_tagged_by_node() -> None:
 
 def test_each_node_has_its_own_leader() -> None:
     links = [X, Link("z", (("b", "q"), ("c", "q")))]
-    nodes = [CouplingNode("ab", ("x",)), CouplingNode("bc", ("z",))]
+    # bc nests inside ab in b, but not in c: one pass of ab, so that b runs bc once too
+    nodes = [CouplingNode("ab", ("x",), max_iterations=1), CouplingNode("bc", ("z",))]
     regions = _contexts(["a", "b", "c"], links, nodes)
     add_coupled(regions["a"], "p", "x", _side(1.0, []))
     add_coupled(regions["b"], "p", "x", _side(2.0, []))
@@ -255,6 +256,9 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
 
     verdicts["second"] = True
 
+    # converged: the final pass, then the end
+    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is not None
+    assert controller.final
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is None
     assert controller.outcomes[-1].converged
 
@@ -264,6 +268,8 @@ def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> No
 
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 5.0)) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0)) is not None
+    assert controller.final
     assert controller.decide(_data(1.0, 2.0, 3.0, 5.0)) is None
 
 

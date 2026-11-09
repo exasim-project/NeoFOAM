@@ -69,7 +69,12 @@ class ExecutionObserver:
         """The predicate of loop ``op`` is about to decide on ``iteration`` (1-based)."""
 
     def after_loop_test(self, op: Operation, ctx: Context, iteration: int, result: bool) -> None:
-        """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
+        """The predicate of loop ``op`` returned ``result`` for ``iteration``.
+
+        ``ctx.loops[-1]`` is the loop's entry for the pass it decided on: its
+        ``final`` tells whether the pass is the loop's final one (a coupling node's
+        leader decides it).
+        """
 
     def coupling_finished(self, coupling: CouplingController, outcome: CouplingOutcome) -> None:
         """The coupling of a time step ended, as ``coupling`` (its group's controller) decided.

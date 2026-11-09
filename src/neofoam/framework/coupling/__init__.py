@@ -24,8 +24,9 @@
   exchanges the node's sides' data with the partner regions, mapped onto the
   sides' points (:class:`Exchange`, :class:`Mapping`).
 - :class:`CouplingController` — the leader's part, in the coupling op of the
-  node's last region: decides when the node's data converged and relaxes it,
-  per exchange (built by :func:`node_controller` unless the case gives its own
+  node's last region: decides when the node's data converged, which pass is
+  the final one (one more after converging, or the last of max_iterations), and
+  relaxes the data, per exchange (built by :func:`node_controller` unless the case gives its own
   factory); :class:`CouplingOutcome` per time step,
   :class:`CouplingNotConvergedWarning` when ``max_iterations`` ends it.
 - :class:`Transport` — all data between regions goes through it, point to point
