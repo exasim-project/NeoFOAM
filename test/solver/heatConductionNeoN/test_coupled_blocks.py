@@ -24,7 +24,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from neofoam.framework.coupling import nearest_neighbor
+from neofoam.framework.coupling.kernels import nearest_neighbor
 from solver.heatConductionNeoN._run_case import cell_centres, mesh_copy, result
 
 T_LEFT, T_RIGHT, K_LEFT, K_RIGHT = 400.0, 300.0, 1.0, 3.0
