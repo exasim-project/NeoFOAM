@@ -59,3 +59,5 @@ class ConductionProblem:
         # does not: without it a zeroGradient patch keeps the old face value. A coupled
         # patch is ``calculated``: its values stay.
         self.T.correct_boundary_conditions()
+        for patch in self.patches:
+            patch.solved()

@@ -6,8 +6,9 @@
 ``python heat_worker.py single`` runs the single-region case, ``python
 heat_worker.py multi`` the ``multiRun`` case. The answer is the single stdout
 line prefixed ``#RESULT`` (OpenFOAM and NeoN write freely to stdout): per region
-``T``, its time (value, index, deltaT), each coupled patch's face centres and
-wall temperature, and the passes of the leader's coupling per time step.
+``T``, its time (value, index, deltaT), each coupled patch's face centres,
+wall temperature and face values of ``T``, and the passes of the leader's
+coupling per time step.
 
 Every message of the multiRun comm_channel is pickled, as between processes
 (``InProcessCommChannel.PICKLE``), so a message that is not plain data fails.
@@ -45,6 +46,7 @@ def _region(ctx: Context) -> dict[str, Any]:
                 "type": type(patch).__name__,
                 "points": np.asarray(patch.points()).tolist(),
                 "wall_T": np.asarray(patch.wall_T()).tolist(),
+                "face_T": _host(ctx.fields["T"].boundary_data_value())[patch.faces],
             }
             for patch in ctx.models["conduction"].patches
         },
