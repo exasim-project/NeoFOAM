@@ -23,10 +23,12 @@ from neofoam.framework.coupling import (
     CONVERGENCES,
     CommChannel,
     CouplingController,
+    CouplingNode,
     GroupSide,
     InProcessCommChannel,
     Link,
     RegionCoupling,
+    node_controller,
     region_couplings,
     run_regions,
 )
@@ -39,13 +41,17 @@ multiRun = Solver("multiRun")
 
 multiRun.config(ControlDictConfig)
 
+#: The coupling node of every exchange of ``system/regionCoupling.yaml``.
+NODE = "couple"
+
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
     """The coupling of every coupled region, as ``system/regionCoupling.yaml`` lists it.
 
-    One link per entry of ``exchanges``; the file's scheme, acceleration,
-    convergence and maxIterations go to every group's controller. Without the
-    file no region is coupled.
+    One link per entry of ``exchanges``, all in one coupling node ``couple``
+    (the ops ``<region>.couple``); the file's convergence and maxIterations are
+    the node's, its acceleration that of every exchange (an instance each), its
+    scheme the coupling's. Without the file no region is coupled.
     """
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
@@ -64,12 +70,23 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
         if any(link.name == name for link in links):
             raise ValueError(f"system/regionCoupling.yaml: two exchanges are named '{name}'")
         links.append(Link(name, (ends[0], ends[1]), exchange.mapping))
+    node = CouplingNode(
+        NODE,
+        tuple(link.name for link in links),
+        max_iterations=config.maxIterations,
+        convergence=tuple(CONVERGENCES[e.type](e.data, e.limit) for e in config.convergence),
+        acceleration={
+            link.name: ACCELERATIONS[config.acceleration.type](config.acceleration.relaxation)
+            for link in links
+        },
+    )
     return region_couplings(
         regions,
         links,
         comm_channel,
         parallel=config.scheme == "parallel",
         controller=_controller(config),
+        nodes=[node],
     )
 
 
@@ -84,13 +101,15 @@ def _free(name: str, links: list[Link]) -> str:
 
 
 def _controller(config: RegionCouplingConfig) -> Any:
-    """Builds the leader's controller as the config describes, once per group.
+    """Builds the leader's controller as the node describes, once per group.
 
     Raises ``ValueError`` when a ``convergence`` entry names data no side of the
     group sends (by the field the side couples).
     """
 
-    def controller(sides: list[GroupSide], label: str, *, parallel: bool) -> CouplingController:
+    def controller(
+        sides: list[GroupSide], label: str, *, parallel: bool, node: CouplingNode
+    ) -> CouplingController:
         sent = {side.field for side in sides}
         unknown = sorted({entry.data for entry in config.convergence} - sent)
         if unknown:
@@ -98,15 +117,7 @@ def _controller(config: RegionCouplingConfig) -> Any:
                 f"system/regionCoupling.yaml: convergence on {unknown}, which no side of the "
                 f"group of {label} sends (its sides solve {sorted(sent)})"
             )
-        measures = [CONVERGENCES[e.type](e.data, e.limit) for e in config.convergence]
-        return CouplingController(
-            sides,
-            label,
-            converged=lambda changes: all(measure(changes) for measure in measures),
-            max_iterations=config.maxIterations,
-            parallel=parallel,
-            acceleration=ACCELERATIONS[config.acceleration.type](config.acceleration.relaxation),
-        )
+        return node_controller(sides, label, parallel=parallel, node=node)
 
     return controller
 
