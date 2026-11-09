@@ -696,10 +696,10 @@
     <span class="n">CouplingAcceleration</span><span class="p">,</span>
     <span class="n">CouplingConvergence</span><span class="p">,</span>
     <span class="n">CouplingMapping</span><span class="p">,</span>
-    <span class="n">NearestNeighborMapping</span><span class="p">,</span>
     <span class="n">load_plugins</span><span class="p">,</span>
     <span class="n">strategy</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TIMEOUT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">YAML</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
@@ -781,14 +781,15 @@
 
 <span class="sd">    ``sides`` maps each region to its patch; ``name`` defaults to the regions</span>
 <span class="sd">    joined by ``-``. ``mapping`` maps the point data of one side onto the other's</span>
-<span class="sd">    points (:data:`MappingConfig`), by default ``nearest-neighbor``.</span>
+<span class="sd">    points (:data:`MappingConfig`), by default ``nearest-neighbor``</span>
+<span class="sd">    (:func:`~neofoam.framework.coupling.kernels.default_mapping`, as a ``Link``'s).</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sides</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">mapping</span><span class="p">:</span> <span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">NearestNeighborMapping</span><span class="p">)</span></div>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">default_mapping</span><span class="p">)</span></div>
 
 
 
