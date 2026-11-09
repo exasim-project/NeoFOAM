@@ -6,8 +6,8 @@
 ``python heat_worker.py single`` runs the single-region case, ``python
 heat_worker.py multi`` the ``multiRun`` case. The answer is the single stdout
 line prefixed ``#RESULT`` (OpenFOAM and NeoN write freely to stdout): per region
-``T``, each coupled patch's face centres and wall
-temperature, and the passes of the leader's coupling per time step.
+``T``, its time (value, index, deltaT), each coupled patch's face centres and
+wall temperature, and the passes of the leader's coupling per time step.
 
 A subprocess: Kokkos and ``Foam::Time`` are per-process, and NeoN must be
 finalized after every NeoN object is gone, so the contexts never outlive
@@ -35,6 +35,7 @@ def _host(vector: Any) -> list[Any]:
 def _region(ctx: Context) -> dict[str, Any]:
     return {
         "T": _host(ctx.fields["T"].internal_vector()),
+        "time": {"value": ctx.time.value, "index": ctx.time.index, "deltaT": ctx.time.delta_t},
         "patches": {
             patch.patch: {
                 "type": type(patch).__name__,
