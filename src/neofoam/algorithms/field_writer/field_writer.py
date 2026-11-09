@@ -67,9 +67,12 @@ def build(config: WriteControlConfig) -> list[InitStep]:
 # places it after every field-mutating op (pressure-velocity, viscosity and
 # turbulence correction); no explicit ``depends_on`` is needed and a generic
 # writer must not name a specific solver's correction op.
-@fieldWriter.operation()
+@fieldWriter.operation(final=True)
 def write_output(self: Any, ctx: Context) -> None:
     """Write the flagged fields on write steps; optionally report step timing.
+
+    Marked ``final``: inside a coupling loop it runs in its final pass only, once
+    per time step.
 
     The decision reads the loop state (``ctx.time``, with the Python-computed
     ``write_time`` flag); the action writes through the injected backend hook.
