@@ -17,8 +17,8 @@ coupling model (``ctx.models["coupling"]``, a
 per node of the region.
 
 Regions that exchanges connect, directly or over other regions, form a group;
-they agree on values (``Coupling.agree``) and its last region in stepping order
-leads that. The regions a node's exchanges connect form the node's group; its
+they agree on the time step (``Coupling.time_step``) and its last region in
+stepping order leads that. The regions a node's exchanges connect form the node's group; its
 last region in stepping order leads the node (decides when it converged).
 
 Example::
@@ -143,12 +143,12 @@ class RegionCoupling:
 
     @property
     def leader(self) -> str:
-        """The region of the group that agrees values: the last in stepping order."""
+        """The region of the group that agrees the time step: the last in stepping order."""
         return self.group[-1]
 
     @property
     def is_leader(self) -> bool:
-        """Whether this region leads its group (in ``Coupling.agree``)."""
+        """Whether this region leads its group (in ``Coupling.time_step``)."""
         return self.region == self.leader
 
     @property

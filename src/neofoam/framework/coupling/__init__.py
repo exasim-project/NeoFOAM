@@ -8,8 +8,9 @@
   plain fields) and its points; an instance adds itself to its region's
   :class:`Coupling` model (``Coupling.of(ctx).add(self)``).
 - :class:`Coupling` — the coupling of one region, ``ctx.models["coupling"]``:
-  its sides, the operations of the region's graph (one coupling op per node),
-  and ``agree`` (the regions of a group agree on a value, e.g. a time step).
+  its sides, the operations of the region's graph (one coupling op per node)
+  and, in a transient case, its time-step op (the group steps the smallest time
+  step any region asks for).
 - :class:`CouplingNode` — a named coupling loop: its exchanges, max_iterations,
   convergence measures, an acceleration per exchange and its placement per
   region; nodes are listed outer to inner.

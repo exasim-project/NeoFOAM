@@ -37,7 +37,6 @@ from neofoam.framework.coupling import (
     TransportClosed,
     region_couplings,
     relative_changes,
-    run_regions,
 )
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
@@ -275,38 +274,6 @@ def test_the_coupling_model_builds_one_coupling_op_once() -> None:
     assert [side.patch for side in couple_op.func.sides] == ["p", "q"]
     with pytest.raises(ValueError, match="a.p is added after the region's graph was built"):
         add_coupled(regions["a"], "p", "x", _Side("a", []).side())
-
-
-def _agree(values: dict[str, list[float]], **how: Any) -> dict[str, list[float]]:
-    """Every region of a chain a - b - c agrees on each of its values in turn."""
-    links = [Link("a-b", (("a", "p"), ("b", "p"))), Link("b-c", (("b", "q"), ("c", "p")))]
-    regions = contexts(list(values), links)
-
-    def agree(region: str) -> list[float]:
-        model = Coupling.of(regions[region])
-        return [model.agree(value, **how) for value in values[region]]
-
-    return run_regions(
-        {region: partial(agree, region) for region in values}, transport_of(regions["a"])
-    )
-
-
-def test_the_regions_of_a_group_agree_on_the_smallest_value() -> None:
-    values = {"a": [1.0, 5.0], "b": [0.5, 6.0], "c": [2.0, 4.0]}
-
-    assert _agree(values) == {region: [0.5, 4.0] for region in values}
-
-
-def test_the_regions_agree_as_how_reduces_their_values() -> None:
-    values = {"a": [1.0], "b": [2.0], "c": [4.0]}
-
-    assert _agree(values, how=sum) == {region: [7.0] for region in values}
-
-
-def test_a_region_the_case_does_not_couple_agrees_with_itself() -> None:
-    regions = contexts(["a", "b", "c"], [LINK])
-
-    assert Coupling.of(regions["c"]).agree(0.25) == 0.25
 
 
 def test_a_region_whose_solver_added_no_coupling_model_cannot_couple() -> None:

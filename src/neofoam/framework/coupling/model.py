@@ -23,18 +23,20 @@ The region's execution graph then gets the model's operations: one
 (``<region>.<node>``, outer to inner), built once from the sides of the node's
 exchanges; none in a region the case does not couple.
 
-:meth:`Coupling.agree` makes the regions of a group agree on a value, e.g. a
-transient solver on its next time step::
-
-    dt = Coupling.of(ctx).agree(dt)          # the smallest of the group
+In a transient case (the region's ``ctx.time`` is set) the graph also gets the
+region's time-step op ``<region>.time_step`` (:meth:`Coupling.time_step`): the
+regions of the group step the smallest time step any of them asks for. It runs
+after the solutionLoop's ``set_time_step`` and before its ``increment_time``,
+once per time step (``first``), and reads and writes the time step in the
+region's context (``ctx.time.delta_t``).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional
 
-from neofoam.framework.operations import Operation, Operations
-from neofoam.framework.types import OperationMetadata
+from neofoam.framework.operations import IterativeOp, Operation, Operations, SequentialOp
+from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .loop import CouplingOp, ExchangeSide
 
@@ -55,8 +57,6 @@ class Coupling:
         self.coupling = coupling
         self._sides: list[ExchangeSide] = []
         self._operations: Optional[Operations] = None
-        # the agreements so far: each gets its own tag, the same in every region
-        self._agreements = 0
 
     @staticmethod
     def of(ctx: Context) -> Coupling:
@@ -142,28 +142,82 @@ class Coupling:
                 self._operations = Operations(ops)
         return self._operations
 
-    def agree(self, value: Any, how: Callable[[list[Any]], Any] = min) -> Any:
-        """The value the regions of the group agree on: ``how`` of all their ``value`` s.
+    def time_step(self, ctx: Context, graph: Iterable[Operation]) -> Optional[Operation]:
+        """The region's time-step op ``<region>.time_step``, or ``None``.
 
-        Every region of the group calls it, in the same order: each sends its
-        value to the leader, which reduces them with ``how`` and sends the result
-        to all. Blocks until the leader's result is there. A region the case does
-        not couple gets its ``value`` back.
+        ``None`` when the case does not couple the region or the region does not
+        step in time (``ctx.time`` is ``None``, e.g. a steady region). The op
+        sends the time step the region asks for (``ctx.time.delta_t``) to the
+        group's leader, which takes the smallest of the group and sends it back
+        (tag ``time/dt``); each region writes it into ``ctx.time.delta_t``, where
+        ``increment_time`` takes it from. It runs after ``set_time_step`` and
+        before ``increment_time``, once per time step (``first``).
+
+        Raises ``ValueError`` when ``graph`` (the region's operations, loops with
+        what they hold) has no ``set_time_step`` or ``increment_time``.
         """
         coupling = self.coupling
-        if coupling is None:
-            return value
-        self._agreements += 1
-        tag = f"agree:{self._agreements}"
+        if coupling is None or len(coupling.group) < 2 or ctx.time is None:
+            return None
+        names = _names(graph)
+        missing = [name for name in (SET_TIME_STEP, INCREMENT_TIME) if name not in names]
+        if missing:
+            raise ValueError(
+                f"region {coupling.region} steps in time coupled with {list(coupling.group)}, "
+                f"but its graph has no {missing}; the coupled regions agree on the time step "
+                f"between the solutionLoop's {SET_TIME_STEP} and {INCREMENT_TIME}"
+            )
+        return Operation(
+            func=SequentialOp(_TimeStep(coupling)),
+            metadata=OperationMetadata(
+                op_name=f"{coupling.region}.time_step",
+                depends_on=[SET_TIME_STEP],
+                before=[INCREMENT_TIME],
+                # numbered: the resolver runs it right after set_time_step, before
+                # the operations stepped after increment_time
+                operation_number=OperationNumber(0),
+                first=True,
+            ),
+        )
+
+
+# The solutionLoop operations the time-step op runs between.
+SET_TIME_STEP = "set_time_step"
+INCREMENT_TIME = "increment_time"
+
+
+def _names(ops: Iterable[Operation]) -> set[str]:
+    """The names of ``ops`` and of every operation inside their loops."""
+    names: set[str] = set()
+    for op in ops:
+        if op.operation_name:
+            names.add(op.operation_name)
+        if isinstance(op.func, IterativeOp):
+            names |= _names(op.sub_operations)
+    return names
+
+
+class _TimeStep:
+    """The time-step op of a region: its group steps the smallest time step any region asks for."""
+
+    TAG = "time/dt"
+
+    def __init__(self, coupling: RegionCoupling) -> None:
+        self._coupling = coupling
+
+    def __call__(self, ctx: Context) -> None:
+        coupling = self._coupling
         region, leader, transport = coupling.region, coupling.leader, coupling.transport
+        asked = ctx.time.delta_t
         if region != leader:
-            transport.send(region, leader, tag, value)
-            return transport.receive(leader, region, tag)
-        values = [
-            value if r == region else transport.receive(r, region, tag) for r in coupling.group
-        ]
-        agreed = how(values)
-        for other in coupling.group:
-            if other != region:
-                transport.send(region, other, tag, agreed)
-        return agreed
+            transport.send(region, leader, self.TAG, asked)
+            agreed = transport.receive(leader, region, self.TAG)
+        else:
+            agreed = min(
+                asked if other == region else transport.receive(other, region, self.TAG)
+                for other in coupling.group
+            )
+            for other in coupling.group:
+                if other != region:
+                    transport.send(region, other, self.TAG, agreed)
+        ctx.time.delta_t = agreed
