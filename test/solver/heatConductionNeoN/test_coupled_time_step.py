@@ -8,8 +8,9 @@ parallel: each region's coupling loop wraps its whole time step,
 ``set_time_step``, the time-step op, ``increment_time`` and ``start_step``
 included; they are marked ``first`` and run in the loop's first pass only. So
 with ``maxIterations: 3`` the time still advances once per time step, and on the
-converged state one pass or three give the same temperature. A serial loop may
-not wrap the time step: the case raises before it runs.
+converged state one pass or three give the same temperature. ``write_output`` is
+marked ``final``: it writes in the loop's last pass only, once per time step. A
+serial loop may not wrap the time step: the case raises before it runs.
 """
 
 from pathlib import Path
@@ -77,6 +78,20 @@ def test_the_time_advances_once_per_time_step_however_many_passes(tmp_path: Path
     for region in ("left", "right"):
         time = computed["regions"][region]["time"]
         assert (time["value"], time["index"], time["deltaT"]) == (END_TIME, 2, DELTA_T)
+
+
+def test_the_fields_are_written_once_per_time_step_however_many_passes(tmp_path: Path) -> None:
+    case_dir = _case(tmp_path, "parallel", max_iterations=3)
+
+    done = run_worker(case_dir, "multi")
+
+    assert done.returncode == 0, done.stderr[-3000:]
+    # write_output reports the execution time each time it runs: once per region and step
+    assert done.stdout.count("ExecutionTime =") == 2 * 2
+    for region in ("left", "right"):
+        written = sorted(float(path.name) for path in (case_dir / region).glob("[1-9]*"))
+        assert written == [DELTA_T, END_TIME]
+        assert (case_dir / region / f"{END_TIME:g}" / "T").is_file()
 
 
 def test_more_passes_on_the_converged_state_change_nothing(tmp_path: Path) -> None:

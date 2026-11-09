@@ -95,7 +95,7 @@ def execution_graph(
     increment_time
     start_step        # the old time level of T, once per time step
     solve_T           # inside the region's coupling op, if coupled
-    write_output
+    write_output      # final: inside a coupling op in its final pass only
     """
     _ = domain_name
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
