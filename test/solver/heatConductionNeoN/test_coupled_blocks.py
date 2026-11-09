@@ -85,8 +85,8 @@ def test_the_interface_faces_do_not_match_and_are_mapped(blocks: dict[str, Any])
 
 
 def test_aitken_converges_each_time_step_in_a_few_passes(blocks: dict[str, Any]) -> None:
-    # right steps last: it leads the group and owns the controller
-    assert blocks["passes"] == {"right": [4, 5]}
+    # right steps last: it leads the group and owns the controller; the final pass included
+    assert blocks["passes"] == {"right": [5, 6]}
 
 
 def test_the_tutorial_is_this_case() -> None:
