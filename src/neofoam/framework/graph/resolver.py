@@ -21,7 +21,7 @@ from neofoam.framework.operations import (
 )
 
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter
-from .wrapping import wrap
+from .wrapping import check_first, wrap
 
 
 class CyclicDependencyError(Exception):
@@ -286,7 +286,9 @@ class DAGResolver:
 
         An additional wrapping loop (``metadata.wraps``) is placed afterwards,
         in the order given, around the whole body of the top scope or the
-        operations it names (:func:`~.wrapping.wrap`).
+        operations it names (:func:`~.wrapping.wrap`). Raises ``ValueError`` when
+        an operation marked ``first`` then depends on one in a wrapping loop
+        around both that is not (:func:`~.wrapping.check_first`).
         """
         wrapping = [op for op in additional_ops if op.metadata.wraps is not None]
         rest = Operations([op for op in additional_ops if op.metadata.wraps is None])
@@ -296,4 +298,5 @@ class DAGResolver:
         ops = _rebuild_builder(sorted_scopes).operations.ops
         for loop in wrapping:
             ops = wrap(ops, loop)
+        check_first(ops)
         return StepBuilder(ops)
