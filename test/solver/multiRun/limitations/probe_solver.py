@@ -6,8 +6,7 @@
 
 """``probe`` — a test-only region solver to probe the coupling design with trivial math.
 
-Each region solves one field, ``x`` or ``y`` (``solve_x`` / ``solve_y``, declared
-with ``solves=``), as::
+Each region solves one field, ``x`` or ``y`` (``solve_x`` / ``solve_y``), as::
 
     field = offset + sum(gain * received)
 
@@ -185,13 +184,13 @@ def _solve(ctx: Context) -> None:
     ctx.models["history"].append(value)
 
 
-@probe.operation(solves=["x"])
+@probe.operation()
 def solve_x(self: Any, ctx: Context) -> None:
     """``x = offset + sum(gain * received)``."""
     _solve(ctx)
 
 
-@probe.operation(solves=["y"])
+@probe.operation()
 def solve_y(self: Any, ctx: Context) -> None:
     """``y = offset + sum(gain * received)``."""
     _solve(ctx)

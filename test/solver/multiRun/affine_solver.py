@@ -9,7 +9,7 @@
 It exists to test the multi-region framework, not physics. Each region reads
 ``constant/<region>/affine.yaml`` (``gain``, ``offset``, ``initial``, and
 optionally ``deltaT``, the time step the region asks for); its one
-operation ``solve_x`` (``solves=["x"]``) sets the region's field ``x`` from
+operation ``solve_x`` sets the region's field ``x`` from
 ``x_other``, the value the region last received over its patch ``interface``.
 The patch is ``@coupled`` and exchanges :class:`AffineData` (``x``) both ways:
 it sends its ``x`` and keeps the partner's as ``x_other``, so two regions
@@ -157,7 +157,7 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     return builder, Operations()
 
 
-@affine.operation(solves=["x"])
+@affine.operation()
 def solve_x(self: Any, ctx: Context) -> None:
     """``x = gain * x_other + offset``."""
     coefficients = ctx.models["affine"]

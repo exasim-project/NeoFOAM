@@ -295,7 +295,7 @@ def store_old_time(self: Any, ctx: Context) -> None:
     ctx.fields["T_old"] = ctx.fields["T"].copy()
 
 
-@slab.operation(solves=["T"], depends_on=["store_old_time"])
+@slab.operation(depends_on=["store_old_time"])
 def solve_T(self: Any, ctx: Context) -> None:
     """One backward-Euler step from the old time; each patch adds its conductance."""
     geometry = ctx.models["slab"]
