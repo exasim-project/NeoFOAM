@@ -11,14 +11,18 @@ Vocabulary:
   region (its partner); the case configures it per patch pair; its **mapping**
   (:class:`~neofoam.framework.coupling.kernels.Mapping`) maps the :data:`Array`
   data the partner sends onto the side's points;
-- a region's **coupling op** (:class:`CouplingOp`, ``<region>.couple``) is a loop
-  that wraps the region's coupled fields: the resolver nests the operations that
+- a **coupling node** (:class:`~neofoam.framework.coupling.CouplingNode`) is a
+  named coupling loop over some exchanges; a region's **coupling op**
+  (:class:`CouplingOp`, ``<region>.<node>``) is the node's loop in the region:
+  it wraps where the node's placement says (by default the whole body of the
+  top scope, or of the node before), and the resolver nests the operations that
   solve them inside it. At the start of each pass its loop test hands every side
-  of the region what its partner sent, mapped onto the side's points;
-- the **leader** of a connected group of regions, its last region in stepping
-  order, owns the group's **controller** (:class:`CouplingController`), which
-  decides after each pass whether the group's data converged, and relaxes the
-  data carried into the next pass. Every region leaves the loop on the same pass;
+  of the region in the node what its partner sent, mapped onto the side's points;
+- the **leader** of a node, the last region in stepping order of the regions
+  the node's exchanges connect, owns the node's **controller**
+  (:class:`CouplingController`), which decides after each pass whether the
+  node's data converged, and relaxes the data carried into the next pass, per
+  exchange. Every region leaves the node's loop on the same pass;
 - all data between regions goes through the region's
   :class:`~neofoam.framework.coupling.transport.Transport`: no region reads
   another region's objects.
@@ -46,7 +50,7 @@ from .transport import Data, SideKey
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .region import End, RegionCoupling
+    from .region import CouplingNode, End, RegionCoupling
 
 
 @dataclass(frozen=True)
@@ -263,10 +267,11 @@ def relative_changes(changes: list[SideChange]) -> dict[str, float]:
 
 @dataclass(frozen=True)
 class GroupSide:
-    """A side of the leader's group, as its region told the leader at startup.
+    """A side of the leader's node, as its region told the leader at startup.
 
     ``arrays`` are the :data:`Array` fields of what it sends; ``partner`` is the
-    index of its partner among the group's sides.
+    index of its partner among the node's sides; ``exchange`` the name of its
+    exchange.
     """
 
     region: str
@@ -274,17 +279,21 @@ class GroupSide:
     field: str
     arrays: tuple[str, ...]
     partner: int
+    exchange: str = ""
 
 
 class CouplingController:
-    """The leader's part of a coupling: decides for a connected group of regions, per pass.
+    """The leader's part of a coupling node: decides for the node's regions, per pass.
 
-    ``sides`` are the sides of the group, its regions in stepping order; ``label``
+    ``sides`` are the sides of the node, its regions in stepping order; ``label``
     names the leader's coupling op. After each pass (:meth:`decide`) it gets what
-    every side sent, checks ``converged`` on the change of its :data:`Array`
-    data since the pass before and stops after ``max_iterations`` passes
-    regardless; then it relaxes the :data:`Array` data carried into the next
-    pass with ``acceleration`` (plain fields pass through as they are).
+    every side sent and checks every measure of ``convergence`` on the change of
+    its :data:`Array` data since the pass before (all must hold; none:
+    :func:`unchanged`); it stops after ``max_iterations`` passes regardless. Then
+    it relaxes the :data:`Array` data carried into the next pass with the
+    ``acceleration`` of the side's exchange (by exchange name; at most one per
+    exchange, an exchange without one is not relaxed; plain fields pass through
+    as they are).
 
     A side receives what its partner sent in this pass when the scheme is serial
     (the default) and the partner's region steps before its own; else
@@ -297,17 +306,18 @@ class CouplingController:
     (:class:`CouplingNotConvergedWarning`). Not thread safe.
 
     The leader builds it with its coupling's ``controller`` factory, which it
-    hands the coupling's ``parallel``, e.g. to set the convergence and
-    acceleration (one acceleration per controller: it keeps the data of its last
-    passes)::
+    hands the coupling's ``parallel`` and the node (by default
+    :func:`~neofoam.framework.coupling.node_controller`: the node's convergence,
+    acceleration and max_iterations; one acceleration per exchange: it keeps the
+    data of its last passes)::
 
-        def controller(sides, label, parallel):
+        def controller(sides, label, *, parallel, node):
             return CouplingController(
                 sides,
                 label,
                 max_iterations=50,
                 parallel=parallel,
-                acceleration=AitkenRelaxation(initial=0.5),
+                acceleration={"interface": AitkenRelaxation(initial=0.5)},
             )
     """
 
@@ -315,19 +325,19 @@ class CouplingController:
         self,
         sides: Sequence[GroupSide],
         label: str,
-        converged: Convergence = unchanged,
+        convergence: Sequence[Convergence] = (),
         max_iterations: int = 100,
         parallel: bool = False,
-        acceleration: Optional[Acceleration] = None,
+        acceleration: Optional[dict[str, Acceleration]] = None,
     ) -> None:
         #: The name of the leader, the coupling op that owns the controller.
         self.label = label
         #: Whether a side always receives what its partner sent in the pass before.
         self.parallel = parallel
         self._sides = tuple(sides)
-        self._converged = converged
+        self._convergence = tuple(convergence)
         self._max_iterations = max_iterations
-        self._acceleration = acceleration
+        self._acceleration = dict(acceleration or {})
         rank: dict[str, int] = {}
         for side in self._sides:
             rank.setdefault(side.region, len(rank))
@@ -380,12 +390,18 @@ class CouplingController:
             for side, previous, now in zip(self._sides, self._carried, current)
         ]
         self._residuals = relative_changes(changes)
-        converged = bool(self._converged(changes))
+        converged = self._converged(changes)
         if converged or self._iteration >= self._max_iterations:
             self._finish(converged)
             return None
         self._carried = list(current)
         return self._start_pass()
+
+    def _converged(self, changes: list[SideChange]) -> bool:
+        """Whether every measure of the convergence holds (none: :func:`unchanged`)."""
+        if not self._convergence:
+            return bool(unchanged(changes))
+        return all(bool(measure(changes)) for measure in self._convergence)
 
     def _finish(self, converged: bool) -> None:
         outcome = CouplingOutcome(self._iteration, converged, dict(self._residuals))
@@ -409,11 +425,17 @@ class CouplingController:
         if self._iteration == 0:
             self._residuals = {}
         self._iteration += 1
-        if self._acceleration is not None:
-            # the sides whose partner receives their data as carried
-            carried = [i for i, side in enumerate(self._sides) if not self._fresh[side.partner]]
+        for exchange, acceleration in self._acceleration.items():
+            # the sides of the exchange whose partner receives their data as carried
+            carried = [
+                i
+                for i, side in enumerate(self._sides)
+                if side.exchange == exchange and not self._fresh[side.partner]
+            ]
+            if not carried:
+                continue
             arrays = [_arrays(self._sides[i].arrays, self._carried[i]) for i in carried]
-            relaxed = self._acceleration(arrays, self._iteration)
+            relaxed = acceleration(arrays, self._iteration)
             for index, data in zip(carried, relaxed):
                 self._carried[index] = {**self._carried[index], **data}
         return list(self._carried)
@@ -425,45 +447,56 @@ _Decision = tuple[bool, dict[str, Optional[Data]]]
 
 
 class CouplingOp(IterativeOp):
-    """A region's coupling: a loop whose test exchanges the region's sides' data, per pass.
+    """A region's coupling node: a loop whose test exchanges the node's sides' data, per pass.
 
     Built from what the region knows of the case's coupling (``coupling``: its
-    exchanges, the group's regions, its transport) and the region's coupled
-    ``sides`` (the region's :class:`~neofoam.framework.coupling.Coupling` builds
-    it); raises ``ValueError`` when a side has no
-    exchange, a patch two sides, or an exchange of the region no side. The
-    resolver places it around the whole body of the top scope
-    (``metadata.wraps``).
+    exchanges, the group's regions, its transport), the ``node`` (its exchanges)
+    and the region's coupled ``sides`` of the node (the region's
+    :class:`~neofoam.framework.coupling.Coupling` builds it); raises
+    ``ValueError`` when a side has no exchange of the node, a patch two sides,
+    or an exchange of the node in the region no side. The resolver places it
+    as the node's placement for the region says (``metadata.wraps``). Its label
+    is ``<region>.<node>``; its messages to other regions are tagged by node
+    (``<node>/sides``, ``<node>/pass``, ``<node>/decision``) or by exchange
+    (``side:<exchange>``, ``data:<exchange>``).
 
     Its loop test runs before each pass. The first test ever exchanges the
     sides' models and points with the partner regions and checks each exchange.
     Each test then sends what every side sends now: to the partner that steps
-    later (serial: it receives it in the same pass) and to the leader; the
-    leader decides for the group and tells every region to go on or stop. On
+    later (serial: it receives it in the same pass) and to the node's leader;
+    the leader decides for the node and tells every region to go on or stop. On
     another pass every side gets what its partner sent (fresh, or carried by the
     leader), mapped onto its points with the exchange's mapping, validated as
     its ``receives`` model, reported to the execution observer
     (``coupling_exchanged``) and handed to its ``receive``. Not thread safe.
     """
 
-    def __init__(self, coupling: RegionCoupling, sides: Sequence[ExchangeSide]) -> None:
+    def __init__(
+        self, coupling: RegionCoupling, node: CouplingNode, sides: Sequence[ExchangeSide]
+    ) -> None:
         super().__init__(self._test)
         #: The region of the op.
         self.region = coupling.region
-        #: The name of the operation.
-        self.label = f"{coupling.region}.couple"
+        #: The coupling node of the op.
+        self.node = node
+        #: The name of the operation: ``<region>.<node>``.
+        self.label = f"{coupling.region}.{node.name}"
         self._coupling = coupling
         self._transport = coupling.transport
+        self._links = coupling.node_links(node)
+        # the regions of the node, in stepping order; the last one leads it
+        self._group = coupling.node_group(node)
+        self._leader = self._group[-1]
         self._exchanges = {
             dict(link.ends)[self.region]: Exchange(
                 link.name, link.partner(self.region), mapping(link.mapping)
             )
-            for link in coupling.links
+            for link in self._links
             if self.region in dict(link.ends)
         }
         self._sides = tuple(sides)
         self._check()
-        self._rank = {region: index for index, region in enumerate(coupling.group)}
+        self._rank = {region: index for index, region in enumerate(self._group)}
         # set at the first test: the partner's points per patch, and the leader's controller
         self._connected = False
         self._partner_points: dict[str, Any] = {}
@@ -478,8 +511,9 @@ class CouplingOp(IterativeOp):
         for side in self._sides:
             if side.patch not in self._exchanges:
                 raise ValueError(
-                    f"no exchange connects the coupled side of {side.label}; a coupled boundary "
-                    "condition needs its exchange (system/regionCoupling.yaml: exchanges)"
+                    f"no exchange of coupling node '{self.node.name}' connects the coupled side "
+                    f"of {side.label}; a coupled boundary condition needs its exchange "
+                    "(system/regionCoupling.yaml: exchanges)"
                 )
             if patches.count(side.patch) > 1:
                 raise ValueError(
@@ -500,8 +534,18 @@ class CouplingOp(IterativeOp):
 
     @property
     def is_leader(self) -> bool:
-        """Whether this coupling op decides for its group (its region steps last)."""
-        return self._coupling.is_leader
+        """Whether this coupling op decides for its node (its region steps last of the node's)."""
+        return self.region == self._leader
+
+    @property
+    def leader(self) -> str:
+        """The region that decides for the node: the last of its regions in stepping order."""
+        return self._leader
+
+    @property
+    def group(self) -> tuple[str, ...]:
+        """The regions the node's exchanges connect with this region, in stepping order."""
+        return self._group
 
     @property
     def controller(self) -> Optional[CouplingController]:
@@ -562,7 +606,7 @@ class CouplingOp(IterativeOp):
             self._send(exchange.partner[0], f"side:{exchange.name}", announced)
         sides = [(side.patch, side.field, _array_names(side.sends)) for side in self._sides]
         if not self.is_leader:
-            self._send(self._coupling.leader, "sides", sides)
+            self._send(self._leader, self._tag("sides"), sides)
         for side in self._sides:
             exchange = self.exchange_of(side)
             announced = self._receive(exchange.partner[0], f"side:{exchange.name}")
@@ -571,45 +615,58 @@ class CouplingOp(IterativeOp):
             self._partner_points[side.patch] = announced["points"]
         if self.is_leader:
             self._controller = self._coupling.controller(
-                self._group(sides), self.label, parallel=self._coupling.parallel
+                self._node_sides(sides),
+                self.label,
+                parallel=self._coupling.parallel,
+                node=self.node,
             )
         self._connected = True
 
-    def _group(self, own: list[tuple[str, str, tuple[str, ...]]]) -> list[GroupSide]:
-        """The leader: the sides of every region of the group, as the regions told it."""
+    def _tag(self, what: str) -> str:
+        """The transport tag ``<node>/<what>`` of the node's messages."""
+        return f"{self.node.name}/{what}"
+
+    def _node_sides(self, own: list[tuple[str, str, tuple[str, ...]]]) -> list[GroupSide]:
+        """The leader: the sides of every region of the node, as the regions told it."""
         told = {
-            region: own if region == self.region else self._receive(region, "sides")
-            for region in self._coupling.group
+            region: own if region == self.region else self._receive(region, self._tag("sides"))
+            for region in self._group
         }
         ends = [(region, *side) for region, sides in told.items() for side in sides]
         self._patches = {
             region: [patch for patch, *_rest in sides] for region, sides in told.items()
         }
         index = {(region, patch): i for i, (region, patch, *_rest) in enumerate(ends)}
-        other = {
-            end: link.ends[1 - k]
-            for link in self._coupling.links
-            for k, end in enumerate(link.ends)
-        }
+        other = {end: link.ends[1 - k] for link in self._links for k, end in enumerate(link.ends)}
+        exchange = {end: link.name for link in self._links for end in link.ends}
         return [
-            GroupSide(region, patch, field, arrays, index[other[(region, patch)]])
+            GroupSide(
+                region,
+                patch,
+                field,
+                arrays,
+                index[other[(region, patch)]],
+                exchange[(region, patch)],
+            )
             for region, patch, field, arrays in ends
         ]
 
     def _decide(self, current: list[Data], time: Any) -> _Decision:
-        """The leader's decision for this region, from what its sides send now.
+        """The node leader's decision for this region, from what its sides send now.
 
         ``time`` is the region's time as a time step's coupling starts, else ``None``.
         """
-        leader = self._coupling.leader
+        leader = self._leader
         if not self.is_leader:
-            self._send(leader, "pass", (time, current))
-            decision: _Decision = self._receive(leader, "decision")
+            self._send(leader, self._tag("pass"), (time, current))
+            decision: _Decision = self._receive(leader, self._tag("decision"))
             return decision
         assert self._controller is not None
         sent = {
-            region: (time, current) if region == self.region else self._receive(region, "pass")
-            for region in self._coupling.group
+            region: (time, current)
+            if region == self.region
+            else self._receive(region, self._tag("pass"))
+            for region in self._group
         }
         times = {region: when for region, (when, _data) in sent.items()}
         if len(set(times.values())) > 1:
@@ -633,7 +690,7 @@ class CouplingOp(IterativeOp):
             decisions[region] = (carried is not None, received)
         for region, decision in decisions.items():
             if region != self.region:
-                self._send(region, "decision", decision)
+                self._send(region, self._tag("decision"), decision)
         return decisions[self.region]
 
     def _hand_over(self, side: ExchangeSide, decided: dict[str, Optional[Data]]) -> None:

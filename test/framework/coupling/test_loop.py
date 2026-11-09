@@ -98,7 +98,7 @@ def test_coupling_op_serial_side_receives_what_the_other_sent_in_the_same_pass()
     log: list[str] = []
     a, b = _Side("a", log), _Side("b", log)
 
-    _couple(a, b, converged=_never, max_iterations=2)
+    _couple(a, b, convergence=[_never], max_iterations=2)
 
     assert log == [
         "receive_a 0.0",
@@ -116,7 +116,7 @@ def test_coupling_op_serial_side_receives_what_the_other_sent_in_the_same_pass()
 def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_before() -> None:
     a, b = _Side("a", []), _Side("b", [])
 
-    _couple(a, b, converged=_never, max_iterations=2, parallel=True)
+    _couple(a, b, convergence=[_never], max_iterations=2, parallel=True)
 
     assert a.log == ["receive_a 0.0", "solve_a", "receive_a 1.0", "solve_a"]
     assert b.log == ["receive_b 0.0", "solve_b", "receive_b 1.0", "solve_b"]
@@ -158,7 +158,14 @@ def test_coupling_op_accelerates_the_data_carried_into_a_pass(
         return sent
 
     a, b = _Side("a", [], fixed=1.0), _Side("b", [], fixed=2.0)
-    _couple(a, b, converged=_never, max_iterations=2, parallel=parallel, acceleration=acceleration)
+    _couple(
+        a,
+        b,
+        convergence=[_never],
+        max_iterations=2,
+        parallel=parallel,
+        acceleration={"a-b": acceleration},
+    )
 
     assert relaxed == carried
 
@@ -175,7 +182,7 @@ def test_coupling_op_stops_once_the_sent_data_is_unchanged() -> None:
 def test_every_region_stops_at_max_iterations() -> None:
     a, b = _Side("a", []), _Side("b", [])
 
-    _couple(a, b, converged=_never, max_iterations=3)
+    _couple(a, b, convergence=[_never], max_iterations=3)
 
     assert (a.solves, b.solves) == (3, 3)
 
@@ -185,13 +192,13 @@ def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
 
     controller = _controller(ops)
     assert controller.outcomes == (CouplingOutcome(passes=2, converged=True, residuals={"x": 0.0}),)
-    assert controller.label == "b.couple"
+    assert controller.label == "b.coupling"
     assert ops["a"].controller is None
 
 
 def test_the_leader_warns_and_records_when_max_iterations_ends_the_loop() -> None:
     with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
-        ops = _couple(_Side("a", []), _Side("b", []), converged=_never, max_iterations=3)
+        ops = _couple(_Side("a", []), _Side("b", []), convergence=[_never], max_iterations=3)
 
     # the last pass took both sides from 2 to 3
     assert _controller(ops).outcomes == (
@@ -213,13 +220,13 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
     with observe(_Observer()):
         ops = _couple(_Side("a", [], fixed=1.0), _Side("b", [], fixed=2.0), max_iterations=10)
 
-    assert finished == [("b.couple", _controller(ops).outcomes[0])]
+    assert finished == [("b.coupling", _controller(ops).outcomes[0])]
     # serial: a gets b's carried value (0, then 2), b gets a's fresh one
     assert exchanged == [
-        ("a.couple", "b.p", 0.0),
-        ("b.couple", "a.p", 1.0),
-        ("a.couple", "b.p", 2.0),
-        ("b.couple", "a.p", 1.0),
+        ("a.coupling", "b.p", 0.0),
+        ("b.coupling", "a.p", 1.0),
+        ("a.coupling", "b.p", 2.0),
+        ("b.coupling", "a.p", 1.0),
     ]
 
 
@@ -241,7 +248,7 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
 
     op = loop.func
     assert op is couple(regions["a"]) and isinstance(op, CouplingOp)
-    assert (loop.operation_name, loop.metadata.wraps) == ("a.couple", Placement())
+    assert (loop.operation_name, loop.metadata.wraps) == ("a.coupling", Placement())
     assert [sub.operation_name for sub in loop.sub_operations] == ["solve_x"]
     (side,) = op.sides
     assert (side.key, op.partner(side), op.is_leader) == (("a", "p", "x"), "b.p", False)
@@ -386,7 +393,7 @@ def test_a_failing_region_ends_every_region_with_its_error() -> None:
     b.solve = failing  # type: ignore[method-assign]
 
     with pytest.raises(RuntimeError, match="b failed"):
-        _couple(a, b, converged=_never, max_iterations=10)
+        _couple(a, b, convergence=[_never], max_iterations=10)
 
     assert a.solves == 3
 
@@ -482,7 +489,7 @@ def test_coupling_op_passes_plain_fields_through_unrelaxed_and_uncompared() -> N
         relaxed.append(sorted(name for data in sent for name in data))
         return sent
 
-    regions = contexts(["a", "b"], [LINK], max_iterations=10, acceleration=acceleration)
+    regions = contexts(["a", "b"], [LINK], max_iterations=10, acceleration={"a-b": acceleration})
     for name, ctx in regions.items():
         side = CoupledSide(
             _Tagged, _Tagged, partial(_Tagged, x=[1.0], tag=f"from {name}"), received.append

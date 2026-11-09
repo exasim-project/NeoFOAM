@@ -18,9 +18,10 @@ A ``@coupled`` boundary condition, or any other ``@coupled`` model, adds itself:
             super().__init__(field, patch, ctx)
             Coupling.of(ctx).add(self)
 
-The region's execution graph then gets the model's operations: the region's
-:class:`~neofoam.framework.coupling.CouplingOp`, built once from all sides; none
-in a region the case does not couple.
+The region's execution graph then gets the model's operations: one
+:class:`~neofoam.framework.coupling.CouplingOp` per coupling node of the region
+(``<region>.<node>``, outer to inner), built once from the sides of the node's
+exchanges; none in a region the case does not couple.
 
 :meth:`Coupling.agree` makes the regions of a group agree on a value, e.g. a
 transient solver on its next time step::
@@ -33,7 +34,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Optional
 
 from neofoam.framework.operations import Operation, Operations
-from neofoam.framework.types import OperationMetadata, Placement
+from neofoam.framework.types import OperationMetadata
 
 from .loop import CouplingOp, ExchangeSide
 
@@ -107,19 +108,38 @@ class Coupling:
         self._sides.append(side)
 
     def operations(self) -> Operations:
-        """The region's coupling op; built once, from all sides.
+        """The region's coupling ops, one per coupling node, outer to inner; built once.
 
-        None when the case does not couple the region. Raises ``ValueError`` when
-        an exchange of the region has no side (also when the region has none at
-        all), or a patch two.
+        Each from the sides on the patches of its node's exchanges, placed as the
+        node's placement for the region says. None when the case does not couple
+        the region. Raises ``ValueError`` when an exchange of the region has no
+        side (also when the region has none at all), a patch two, or the sides of
+        one field are in two nodes.
         """
         if self._operations is None:
-            if self.coupling is None:
+            coupling = self.coupling
+            if coupling is None:
                 self._operations = Operations()
             else:
-                couple = CouplingOp(self.coupling, self._sides)
-                metadata = OperationMetadata(op_name=couple.label, wraps=Placement())
-                self._operations = Operations([Operation(func=couple, metadata=metadata)])
+                by_node: dict[str, list[ExchangeSide]] = {node.name: [] for node in coupling.nodes}
+                in_node: dict[str, str] = {}
+                for side in self._sides:
+                    name = coupling.node_of(side.patch).name
+                    if in_node.setdefault(side.field, name) != name:
+                        raise ValueError(
+                            f"field {side.field} of region {coupling.region} is coupled in the "
+                            f"nodes '{in_node[side.field]}' and '{name}' ({side.label}); a "
+                            "region's field is in at most one coupling node"
+                        )
+                    by_node[name].append(side)
+                ops: list[Operation] = []
+                for node in coupling.nodes:
+                    couple = CouplingOp(coupling, node, by_node[node.name])
+                    metadata = OperationMetadata(
+                        op_name=couple.label, wraps=node.placement_of(coupling.region)
+                    )
+                    ops.append(Operation(func=couple, metadata=metadata))
+                self._operations = Operations(ops)
         return self._operations
 
     def agree(self, value: Any, how: Callable[[list[Any]], Any] = min) -> Any:
