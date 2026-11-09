@@ -6,11 +6,11 @@
 Each is a family of NeoFOAM's :class:`~neofoam.core.plugin_system.PluginSystem`:
 a pydantic model per strategy, selected by its ``type``, its options its
 fields (an unknown option is an error). The mapping is per exchange and
-receiving side (:class:`Mapping`); relaxation and convergence belong to a
+receiving side (:class:`CouplingMapping`); relaxation and convergence belong to a
 coupling node (its leader's
-:class:`~neofoam.framework.coupling.CouplingController`): a list of convergence
-measures (:class:`Convergence`), all of which must hold, and at most one
-acceleration (:class:`Acceleration`) per exchange::
+:class:`~neofoam.framework.coupling.controller.CouplingController`): a list of convergence
+measures (:class:`CouplingConvergence`), all of which must hold, and at most one
+acceleration (:class:`CouplingAcceleration`) per exchange::
 
     CouplingNode(
         "thermal",
@@ -22,7 +22,7 @@ acceleration (:class:`Acceleration`) per exchange::
 The case names them by ``type`` (``system/regionCoupling.yaml``;
 :func:`strategy` builds one from its options). A strategy of one's own
 subclasses its family with a ``type: Literal[...]`` and registers with it
-(``@Mapping.register``). A package adds its strategies through the entry-point
+(``@CouplingMapping.register``). A package adds its strategies through the entry-point
 group ``neofoam.coupling`` (:data:`ENTRY_POINT_GROUP`): each entry point names
 a module that registers them as it is imported; :func:`load_plugins` imports
 them, once, before the regions start::
@@ -30,8 +30,8 @@ them, once, before the regions start::
     # pyproject.toml of neofoam-precice:
     #   [project.entry-points."neofoam.coupling"]
     #   precice = "neofoam_precice.coupling"
-    @Mapping.register
-    class RadialBasisMapping(Mapping):
+    @CouplingMapping.register
+    class RadialBasisMapping(CouplingMapping):
         type: Literal["rbf"] = "rbf"
         support_radius: float
 """
@@ -69,8 +69,9 @@ S = TypeVar("S", bound=BaseModel)
 
 
 def strategy(family: type[S], options: Any) -> S:
-    """The strategy of ``family`` (:class:`Mapping`, :class:`Acceleration`, :class:`Convergence`)
-    that ``options`` describe: ``{type: ..., <option>: ...}``, or the ``type`` alone.
+    """The strategy of ``family`` (:class:`CouplingMapping`, :class:`CouplingAcceleration`,
+    :class:`CouplingConvergence`) that ``options`` describe: ``{type: ..., <option>: ...}``, or
+    the ``type`` alone.
 
     Raises ``ValueError`` listing the registered types when ``type`` is missing
     or none of them, and naming the strategy's options when one is unknown,
@@ -78,12 +79,12 @@ def strategy(family: type[S], options: Any) -> S:
 
     Example::
 
-        strategy(Acceleration, {"type": "aitken", "relaxation": 0.5})
-        strategy(Mapping, "nearest-neighbor")
+        strategy(CouplingAcceleration, {"type": "aitken", "relaxation": 0.5})
+        strategy(CouplingMapping, "nearest-neighbor")
     """
     if isinstance(options, family):
         return options
-    what = family.__name__.lower()
+    what = family.__name__.removeprefix("Coupling").lower()
     if isinstance(options, str):
         options = {"type": options}
     members = _members(family)
@@ -190,17 +191,17 @@ BoundMapping = Callable[[Data], Data]
 
 
 @PluginSystem.register(discriminator_variable="mapping", discriminator="type")
-class Mapping(BaseModel):
+class CouplingMapping(BaseModel):
     """Maps the :data:`~neofoam.framework.coupling.Array` data a side sends onto the other side.
 
-    The mapping of an :class:`~neofoam.framework.coupling.Exchange`, a plugin
+    The mapping of an :class:`~neofoam.framework.coupling.data.Exchange`, a plugin
     family (``system/regionCoupling.yaml``: ``mapping:``, its ``type`` and
     options). The receiving side's coupling op binds it once, when it connects,
     to the partner's points (``source``) and the side's own (``target``; each a
     ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the
     data of every pass with the bound mapping. A mapping of one's own subclasses
     it with a ``type: Literal[...]``, its options as fields, overrides
-    :meth:`bind` and registers (``@Mapping.register``).
+    :meth:`bind` and registers (``@CouplingMapping.register``).
 
     Example::
 
@@ -218,8 +219,8 @@ class Mapping(BaseModel):
         raise NotImplementedError
 
 
-@Mapping.register
-class IdentityMapping(Mapping):
+@CouplingMapping.register
+class IdentityMapping(CouplingMapping):
     """Hands the data over unchanged: the sides share their points."""
 
     type: Literal["identity"] = "identity"
@@ -238,8 +239,8 @@ def _unchanged(data: Data) -> Data:
     return data
 
 
-@Mapping.register
-class NearestNeighborMapping(Mapping):
+@CouplingMapping.register
+class NearestNeighborMapping(CouplingMapping):
     """Maps every point of the receiving side to the nearest point of the sending side.
 
     Both sides need coordinates. :meth:`bind` finds the nearest points
@@ -260,7 +261,7 @@ class NearestNeighborMapping(Mapping):
 
 
 @PluginSystem.register(discriminator_variable="acceleration", discriminator="type")
-class Acceleration(BaseModel):
+class CouplingAcceleration(BaseModel):
     """Relaxes the Array data carried into a pass: (data of the carried sides, iteration) -> data.
 
     The acceleration of an exchange of a
@@ -269,7 +270,7 @@ class Acceleration(BaseModel):
     options). It keeps the data of its last passes in private attributes: give
     each exchange its own. An acceleration of one's own subclasses it with a
     ``type: Literal[...]``, its options as fields, overrides :meth:`__call__`
-    and registers (``@Acceleration.register``).
+    and registers (``@CouplingAcceleration.register``).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -279,8 +280,8 @@ class Acceleration(BaseModel):
         raise NotImplementedError
 
 
-@Acceleration.register
-class ConstantRelaxation(Acceleration):
+@CouplingAcceleration.register
+class ConstantRelaxation(CouplingAcceleration):
     """Under-relaxes the data carried into a pass by a fixed factor, ``relaxation``.
 
     ``x = x_last + relaxation * (sent - x_last)`` for all carried :data:`Array`
@@ -311,7 +312,7 @@ class ConstantRelaxation(Acceleration):
         return self.relaxation
 
 
-@Acceleration.register
+@CouplingAcceleration.register
 class AitkenRelaxation(ConstantRelaxation):
     """Under-relaxes the data carried into a pass by Aitken's dynamic factor.
 
@@ -369,7 +370,7 @@ def _unflatten(values: Any, like: list[Data]) -> list[Data]:
 
 
 @PluginSystem.register(discriminator_variable="convergence", discriminator="type")
-class Convergence(BaseModel):
+class CouplingConvergence(BaseModel):
     """Whether the coupling has converged, from the change of every side's data in the last pass.
 
     A convergence measure of a :class:`~neofoam.framework.coupling.CouplingNode`,
@@ -377,7 +378,7 @@ class Convergence(BaseModel):
     ``type`` and options). A measure on the data of one field names it in its
     ``data`` option. A measure of one's own subclasses it with a
     ``type: Literal[...]``, its options as fields, overrides :meth:`__call__` and
-    registers (``@Convergence.register``).
+    registers (``@CouplingConvergence.register``).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -387,8 +388,8 @@ class Convergence(BaseModel):
         raise NotImplementedError
 
 
-@Convergence.register
-class RelativeConvergence(Convergence):
+@CouplingConvergence.register
+class RelativeConvergence(CouplingConvergence):
     """Converged once the data of field ``data`` changes by less than ``limit`` relative to it.
 
     It checks every array sent by a side of the field ``data`` (2-norm of the

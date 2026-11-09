@@ -23,15 +23,15 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     Coupling,
-    CouplingOp,
-    ExchangeSide,
     InProcessTransport,
     Link,
     NearestNeighborMapping,
     RegionCoupling,
     coupled,
-    region_couplings,
 )
+from neofoam.framework.coupling.data import ExchangeSide
+from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.operations import IterativeOp, Operation
 from neofoam.framework.types import Placement
 

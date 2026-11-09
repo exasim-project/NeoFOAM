@@ -12,7 +12,7 @@
   points; an **end** (:data:`End`) is its ``(region, patch)``;
 - an **exchange** (:class:`Exchange`) joins a side with the side of another
   region (its partner); the case configures it per patch pair; its **mapping**
-  (:class:`~neofoam.framework.coupling.kernels.Mapping`) maps the :data:`Array`
+  (:class:`~neofoam.framework.coupling.kernels.CouplingMapping`) maps the :data:`Array`
   data the partner sends onto the side's points;
 - :func:`_sent` takes what a side sends now as plain data and checks that its
   :data:`Array` data is finite; :func:`_check_received` that a side receives
@@ -29,7 +29,7 @@ from typing import Annotated, Any, Callable, Optional, Sequence
 import numpy as np
 from pydantic import BaseModel, PlainValidator
 
-from .kernels import Mapping
+from .kernels import CouplingMapping
 from .transport import Data
 
 # The end of an exchange: (region, patch).
@@ -190,7 +190,7 @@ class Exchange:
 
     name: str
     partner: End
-    mapping: Mapping
+    mapping: CouplingMapping
 
 
 def _check_received(name: str, announced: dict[str, Any], side: ExchangeSide) -> None:

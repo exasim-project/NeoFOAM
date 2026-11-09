@@ -19,7 +19,7 @@ A ``@coupled`` boundary condition, or any other ``@coupled`` model, adds itself:
             Coupling.of(ctx).add(self)
 
 The region's execution graph then gets the model's operations: one
-:class:`~neofoam.framework.coupling.CouplingOp` per coupling node of the region
+:class:`~neofoam.framework.coupling.loop.CouplingOp` per coupling node of the region
 (``<region>.<node>``, outer to inner), built once from the sides of the node's
 exchanges; none in a region the case does not couple.
 

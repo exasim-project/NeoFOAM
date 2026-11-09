@@ -21,7 +21,8 @@ from framework.coupling.regions import contexts
 from framework.coupling.regions import transport as transport_of
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, Link, run_regions
+from neofoam.framework.coupling import Coupling, Link
+from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
     IterativeOp,

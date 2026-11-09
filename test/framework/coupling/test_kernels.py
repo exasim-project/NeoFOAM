@@ -18,15 +18,15 @@ import pytest
 from neofoam.framework.coupling import (
     AitkenRelaxation,
     ConstantRelaxation,
+    CouplingMapping,
     IdentityMapping,
-    Mapping,
     NearestNeighborMapping,
     RelativeConvergence,
     SideChange,
     kernels,
-    nearest_neighbor,
     strategy,
 )
+from neofoam.framework.coupling.kernels import nearest_neighbor
 
 
 def _points(coordinates: Any) -> Any:
@@ -174,15 +174,17 @@ def test_nearest_neighbor_mapping_needs_the_points_of_both_sides() -> None:
 
 
 def test_a_mapping_of_a_type_is_a_new_instance_of_it() -> None:
-    assert type(strategy(Mapping, "identity")) is IdentityMapping
-    assert strategy(Mapping, {"type": "nearest-neighbor"}).type == "nearest-neighbor"
-    assert strategy(Mapping, "nearest-neighbor") is not strategy(Mapping, "nearest-neighbor")
+    assert type(strategy(CouplingMapping, "identity")) is IdentityMapping
+    assert strategy(CouplingMapping, {"type": "nearest-neighbor"}).type == "nearest-neighbor"
+    assert strategy(CouplingMapping, "nearest-neighbor") is not strategy(
+        CouplingMapping, "nearest-neighbor"
+    )
     with pytest.raises(
         ValueError,
         match=r"unknown mapping type 'rbf'; registered mapping types: "
         r"\['identity', 'nearest-neighbor'\]",
     ):
-        strategy(Mapping, "rbf")
+        strategy(CouplingMapping, "rbf")
 
 
 def test_identity_mapping_hands_the_data_over_unchanged() -> None:

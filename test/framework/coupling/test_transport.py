@@ -22,10 +22,10 @@ from neofoam.framework.coupling import (
     CouplingTimeout,
     CouplingTransportError,
     InProcessTransport,
-    Tag,
     TransportClosed,
-    run_regions,
 )
+from neofoam.framework.coupling.region import run_regions
+from neofoam.framework.coupling.transport import Tag
 
 
 def _waits(lines: str) -> list[str]:

@@ -16,7 +16,8 @@ from typing import Any
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import InProcessTransport, Link, region_couplings
+from neofoam.framework.coupling import InProcessTransport, Link
+from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.operations import Operations, StepBuilder
 from neofoam.framework.solver import Solver
 

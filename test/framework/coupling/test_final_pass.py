@@ -23,14 +23,13 @@ from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
     Coupling,
-    CouplingController,
     CouplingNotConvergedWarning,
-    CouplingOutcome,
     InProcessTransport,
     Link,
     SideChange,
-    region_couplings,
 )
+from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
+from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
 
