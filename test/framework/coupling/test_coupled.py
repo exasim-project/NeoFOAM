@@ -323,8 +323,21 @@ def test_exchange_with_nearest_neighbor_needs_coordinates() -> None:
     _Wall(regions["solid"], "right")
     _Pointless(regions["fluid"], "wall")
 
-    with pytest.raises(ValueError, match="'nearest-neighbor' needs the coordinates of both sides"):
+    with pytest.raises(ValueError) as error:
         _run(regions)
+
+    # the region that checked first raises: fluid receives, solid sends to the side without
+    hint = "give its patch coordinates (@coupled.coordinates) or choose mapping 'identity'"
+    assert str(error.value) in (
+        "exchange 'cht' (solid.right -> fluid.wall): mapping 'nearest-neighbor' needs the "
+        f"coordinates of both sides, but the receiving side has none: {hint}",
+        "exchange 'cht' (fluid.wall -> solid.right): mapping 'nearest-neighbor' needs the "
+        f"coordinates of both sides, but the sending side has none: {hint}",
+    )
+
+
+def test_an_exchange_maps_by_nearest_neighbor_by_default() -> None:
+    assert Link("x", (("a", "p"), ("b", "p"))).mapping == NearestNeighborMapping()
 
 
 @coupled

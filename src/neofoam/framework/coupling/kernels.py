@@ -250,14 +250,32 @@ class NearestNeighborMapping(CouplingMapping):
     type: Literal["nearest-neighbor"] = "nearest-neighbor"
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
+        """Raises ``ValueError`` naming the side without coordinates."""
         if source is None or target is None:
-            raise ValueError(f"mapping '{self.type}' needs the coordinates of both sides")
+            if source is None and target is None:
+                missing = "neither side has any: give both patches"
+            else:
+                side = "sending" if source is None else "receiving"
+                missing = f"the {side} side has none: give its patch"
+            raise ValueError(
+                f"mapping '{self.type}' needs the coordinates of both sides, but {missing} "
+                "coordinates (@coupled.coordinates) or choose mapping 'identity'"
+            )
         indices = nearest_neighbor(source, target)
 
         def mapper(data: Data) -> Data:
             return {name: np.asarray(values)[indices] for name, values in data.items()}
 
         return mapper
+
+
+def default_mapping() -> CouplingMapping:
+    """The mapping of an exchange that names none: :class:`NearestNeighborMapping`.
+
+    The one default of both a :class:`~neofoam.framework.coupling.region.Link`
+    and an exchange of ``system/regionCoupling.yaml``.
+    """
+    return NearestNeighborMapping()
 
 
 @PluginSystem.register(discriminator_variable="acceleration", discriminator="type")

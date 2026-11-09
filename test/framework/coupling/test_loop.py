@@ -29,6 +29,7 @@ from neofoam.framework.coupling import (
     CouplingMapping,
     CouplingNode,
     CouplingNotConvergedWarning,
+    IdentityMapping,
     InProcessTransport,
     Link,
     RelativeConvergence,
@@ -46,7 +47,8 @@ from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
 
-LINK = Link("a-b", (("a", "p"), ("b", "p")))
+# The sides of these tests have no coordinates: identity, not the default nearest-neighbor.
+LINK = Link("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
 
 
 class _Data(BaseModel):
@@ -342,7 +344,7 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
 
 
 def test_the_coupling_model_builds_one_coupling_op_once() -> None:
-    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")))]
+    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
     regions = contexts(["a", "b"], links)
     add_coupled(regions["a"], "p", "x", _Side("a", []).side())
     add_coupled(regions["a"], "q", "y", _Side("a", []).side())
@@ -402,7 +404,7 @@ def test_two_sides_on_one_patch_raise() -> None:
 
 
 def test_an_exchange_without_a_side_raises() -> None:
-    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")))]
+    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
     regions = contexts(["a", "b"], links)
     add_coupled(regions["a"], "p", "x", _Side("a", []).side())
 

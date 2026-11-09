@@ -58,13 +58,15 @@ T = TypeVar("T")
 class Link:
     """One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping.
 
-    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping` (by default
-    :class:`~neofoam.framework.coupling.IdentityMapping`).
+    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping`, by default
+    :func:`~neofoam.framework.coupling.kernels.default_mapping` (nearest-neighbor: both
+    patches need coordinates; :class:`~neofoam.framework.coupling.IdentityMapping` for
+    patches that share their points).
     """
 
     name: str
     ends: tuple[End, End]
-    mapping: kernels.CouplingMapping = field(default_factory=kernels.IdentityMapping)
+    mapping: kernels.CouplingMapping = field(default_factory=kernels.default_mapping)
 
     def partner(self, region: str) -> End:
         """The end of the exchange that is not in ``region``."""
