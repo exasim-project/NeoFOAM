@@ -16,13 +16,12 @@ from typing import Any, Literal
 
 import numpy as np
 import pytest
-from framework.coupling.regions import add_coupled, contexts, couple, run, solve
+from framework.coupling.regions import Side, add_coupled, contexts, couple, run, solve
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
-    CoupledSide,
     Coupling,
     CouplingController,
     CouplingNotConvergedWarning,
@@ -65,8 +64,8 @@ class _Region:
     def write(self, ctx: Context) -> None:
         self.writes += 1
 
-    def side(self) -> CoupledSide:
-        return CoupledSide(
+    def side(self) -> Side:
+        return Side(
             _Data, _Data, lambda: _Data(x=[self.value]), lambda data: None, np.zeros((1, 1))
         )
 
@@ -175,8 +174,8 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
 def test_the_controller_tells_which_pass_is_final() -> None:
     controller = CouplingController([], "c.coupling", convergence=[_never], max_iterations=2)
 
-    assert controller.decide([]) == [] and not controller.final
-    assert controller.decide([]) == [] and controller.final
+    assert controller.decide({}) == {} and not controller.final
+    assert controller.decide({}) == {} and controller.final
     with pytest.warns(CouplingNotConvergedWarning):
-        assert controller.decide([]) is None
+        assert controller.decide({}) is None
     assert not controller.final

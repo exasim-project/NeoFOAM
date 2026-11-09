@@ -42,7 +42,16 @@
   ``neofoam.coupling`` (:func:`load_plugins`).
 """
 
+from .controller import (
+    CouplingController,
+    CouplingNotConvergedWarning,
+    CouplingOutcome,
+    GroupSide,
+    relative_changes,
+    unchanged,
+)
 from .coupled import coupled
+from .data import Array, Exchange, ExchangeSide
 from .kernels import (
     ACCELERATIONS,
     CONVERGENCES,
@@ -59,19 +68,7 @@ from .kernels import (
     mapping,
     nearest_neighbor,
 )
-from .loop import (
-    Array,
-    CoupledSide,
-    CouplingController,
-    CouplingNotConvergedWarning,
-    CouplingOp,
-    CouplingOutcome,
-    Exchange,
-    ExchangeSide,
-    GroupSide,
-    relative_changes,
-    unchanged,
-)
+from .loop import CouplingOp
 from .model import Coupling
 from .region import (
     ControllerFactory,
@@ -88,7 +85,6 @@ from .transport import (
     CouplingTimeout,
     CouplingTransportError,
     InProcessTransport,
-    SideKey,
     Tag,
     Transport,
     TransportClosed,
@@ -104,7 +100,6 @@ __all__ = [
     "Array",
     "ConstantRelaxation",
     "ControllerFactory",
-    "CoupledSide",
     "Coupling",
     "CouplingController",
     "CouplingDeadlock",
@@ -125,7 +120,6 @@ __all__ = [
     "Registry",
     "RelativeConvergence",
     "SideChange",
-    "SideKey",
     "Tag",
     "Transport",
     "TransportClosed",
