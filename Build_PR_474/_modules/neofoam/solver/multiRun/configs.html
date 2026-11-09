@@ -823,7 +823,8 @@
 
 <span class="sd">    Without ``operations`` it wraps the whole time step (the body of the top</span>
 <span class="sd">    scope, or of the node before); with them those operations and, if</span>
-<span class="sd">    ``downstream``, every operation downstream of them.</span>
+<span class="sd">    ``downstream``, every operation downstream of them. A name may be a loop</span>
+<span class="sd">    inside the time loop (``operations: [inner_loop]``), which it holds whole.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -927,6 +928,7 @@
 <span class="sd">              - {type: relative, data: T, limit: 1.0e-5}</span>
 <span class="sd">            wraps:</span>
 <span class="sd">              fluid: {operations: [solve_T], downstream: true}</span>
+<span class="sd">              pipe: {operations: [inner_loop]}  # a loop, held whole</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
