@@ -5,17 +5,21 @@
 
 The case is ``heatConductionNeoN``'s ``coupledBlocks`` without its coupling: the
 regions ``left`` (4 x 3 cells) and ``right`` (3 x 5), each an OpenFOAM case of
-its own, decomposed into two along y. Both run ``foamDiffusion``
-(``foam_solver.py``), explicit diffusion on OpenFOAM alone (NeoN cannot run on
-part of the MPI processes yet). ``mpi_worker.py`` runs the case and prints each
-region's cell centres and ``T`` per process; a run on processes must give the
-run on threads, cell by cell (matched by centre), up to round-off: the
-processor patches of a region exchange within the region's ``-world``.
+its own, decomposed into as many parts as it has processes (along y; one part:
+``processor0``, every region runs ``-parallel -world <region>``). They run
+``foamDiffusion`` (``foam_solver.py``), explicit diffusion on OpenFOAM alone,
+or ``heatConductionNeoN``, whose NeoN communicates on the region's world.
+``mpi_worker.py`` runs the case and prints each region's cell centres and ``T``
+per process; a run on processes must give the run on threads, cell by cell
+(matched by centre), up to round-off (OpenFOAM) or the linear solver's
+tolerance (NeoN): the processor patches of a region exchange within the
+region's world.
 
 Every case the run cannot take is refused before it starts, by rank 0, and the
-run aborts: too few processes, a region not decomposed, regions on one process
-next to regions on several (OpenFOAM's ``-world`` split would hang), a NeoN
-region, a coupled case. An error in one region aborts every process.
+run aborts: too few processes, a region not decomposed (also one on one
+process, without ``processor0``), a coupled case, and a NeoN region if this
+NeoN build communicates on MPI_COMM_WORLD only. An error in one region aborts
+every process.
 
 Each test runs ``mpirun`` in a subprocess with a timeout, so a hang fails it.
 The tests need mpi4py and an ``mpirun`` of the same MPI (the extra
@@ -44,13 +48,19 @@ RESULT_PREFIX = "#RESULT "
 TIMEOUT = 180
 
 DECOMPOSE_PAR_DICT = """FoamFile
-{
+{{
     version 2.0; format ascii; class dictionary; object decomposeParDict;
-}
-numberOfSubdomains 2;
+}}
+numberOfSubdomains {n};
 method simple;
-coeffs { n (1 2 1); }
+coeffs {{ n (1 {n} 1); }}
 """
+
+#: The initial temperature of both regions, in K.
+INITIAL_T = 350.0
+
+#: The numbers of processes a region of the tests runs on, each decomposed in advance.
+PARTS = (1, 2)
 
 
 def _mpirun() -> Optional[str]:
@@ -120,29 +130,48 @@ def _failure(run: subprocess.CompletedProcess) -> str:
     return re.sub(r"\s+", " ", run.stdout + run.stderr)
 
 
+def _neon_takes_a_communicator() -> bool:
+    """Whether the NeoN of the tests' interpreter runs a region on part of the processes."""
+    probe = "from neofoam.solver.neon_runtime import neon_takes_a_communicator as f; print(f())"
+    found = subprocess.run(
+        [sys.executable, "-c", probe], capture_output=True, text=True, timeout=TIMEOUT
+    )
+    return found.stdout.strip().endswith("True")
+
+
 @pytest.fixture(scope="module")
 def meshed(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """The two uncoupled regions, meshed and decomposed into two each."""
-    case = tmp_path_factory.mktemp("mpi") / "base"
-    for region in ("left", "right"):
-        shutil.copytree(REGIONS / region, case / region)
-        temperature = case / region / "0" / "T"
-        temperature.write_text(re.sub(r"\n\s*coupled\s+\w+;", "", temperature.read_text()))
-        (case / region / "system" / "decomposeParDict").write_text(DECOMPOSE_PAR_DICT)
-        for tool in ("blockMesh", "decomposePar"):
-            subprocess.run(
-                [tool, "-case", region],
-                cwd=case,
-                check=True,
-                capture_output=True,
-                timeout=TIMEOUT,
+    """The two uncoupled regions, meshed, in ``<n>/`` decomposed into n parts for each of PARTS."""
+    base = tmp_path_factory.mktemp("mpi") / "base"
+    for parts in PARTS:
+        case = base / str(parts)
+        for region in ("left", "right"):
+            shutil.copytree(REGIONS / region, case / region)
+            temperature = case / region / "0" / "T"
+            temperature.write_text(re.sub(r"\n\s*coupled\s+\w+;", "", temperature.read_text()))
+            (case / region / "system" / "decomposeParDict").write_text(
+                DECOMPOSE_PAR_DICT.format(n=parts)
             )
-    return case
+            for tool in ("blockMesh", "decomposePar"):
+                subprocess.run(
+                    [tool, "-case", region],
+                    cwd=case,
+                    check=True,
+                    capture_output=True,
+                    timeout=TIMEOUT,
+                )
+    return base
+
+
+def _processes_of(entry: Any) -> int:
+    return 1 if isinstance(entry, str) else entry.get("processes", 1)
 
 
 def _case(meshed: Path, tmp_path: Path, regions: dict[str, Any]) -> Path:
+    """The case of ``regions``: each region decomposed into its processes."""
     case = tmp_path / "case"
-    shutil.copytree(meshed, case)
+    for region, entry in regions.items():
+        shutil.copytree(meshed / str(_processes_of(entry)) / region, case / region)
     (case / "system").mkdir()
     (case / "system" / "controlDict.yaml").write_text(
         yaml.safe_dump({"endTime": 5.0, "deltaT": 1.0, "regionSolvers": regions})
@@ -154,21 +183,45 @@ def _foam(processes: int) -> dict[str, Any]:
     return {"solver": "foamDiffusion", "processes": processes}
 
 
-@pytest.mark.parametrize("processes", [1, 2], ids=["1+1", "2+2"])
-def test_mpi_regions_match_their_run_on_threads(
-    meshed: Path, tmp_path: Path, processes: int
+def _neon(processes: int) -> dict[str, Any]:
+    return {"solver": "heatConductionNeoN", "processes": processes}
+
+
+def _assert_matches(
+    mpi: dict[str, Any], threads: dict[str, Any], layout: dict[str, int], rtol: float
 ) -> None:
-    case = _case(meshed, tmp_path, {"left": _foam(processes), "right": _foam(processes)})
-
-    threads = _results(_threads(case))
-    mpi = _results(_processes(case, 2 * processes))
-
-    assert sorted(mpi) == ["left", "right"]
-    for region in ("left", "right"):
+    assert sorted(mpi) == sorted(layout)
+    for region, processes in layout.items():
         assert mpi[region]["index"] == [5] * processes
         np.testing.assert_allclose(mpi[region]["centres"], threads[region]["centres"], atol=1e-12)
-        np.testing.assert_allclose(mpi[region]["T"], threads[region]["T"], rtol=1e-12)
-        assert np.ptp(mpi[region]["T"]) > 1.0, f"{region}: T did not diffuse"
+        np.testing.assert_allclose(mpi[region]["T"], threads[region]["T"], rtol=rtol)
+        assert np.abs(mpi[region]["T"] - INITIAL_T).max() > 1.0, f"{region}: T did not change"
+
+
+@pytest.mark.parametrize(("left", "right"), [(1, 1), (1, 2), (2, 2)], ids=["1+1", "1+2", "2+2"])
+def test_mpi_regions_match_their_run_on_threads(
+    meshed: Path, tmp_path: Path, left: int, right: int
+) -> None:
+    case = _case(meshed, tmp_path, {"left": _foam(left), "right": _foam(right)})
+
+    threads = _results(_threads(case))
+    mpi = _results(_processes(case, left + right))
+
+    _assert_matches(mpi, threads, {"left": left, "right": right}, rtol=1e-12)
+
+
+@pytest.mark.parametrize(("left", "right"), [(1, 2), (2, 2)], ids=["1+2", "2+2"])
+def test_mpi_neon_regions_match_their_run_on_threads(
+    meshed: Path, tmp_path: Path, left: int, right: int
+) -> None:
+    if not _neon_takes_a_communicator():
+        pytest.skip("this NeoN build communicates on MPI_COMM_WORLD only")
+    case = _case(meshed, tmp_path, {"left": _neon(left), "right": _neon(right)})
+
+    threads = _results(_threads(case))
+    mpi = _results(_processes(case, left + right))
+
+    _assert_matches(mpi, threads, {"left": left, "right": right}, rtol=1e-9)
 
 
 def test_mpi_refuses_a_run_on_the_wrong_number_of_processes(meshed: Path, tmp_path: Path) -> None:
@@ -192,27 +245,29 @@ def test_mpi_refuses_a_region_that_is_not_decomposed(meshed: Path, tmp_path: Pat
     assert "region right runs on 2 processes, but right/ lacks processor0, processor1" in message
 
 
-def test_mpi_refuses_serial_regions_next_to_parallel_ones(meshed: Path, tmp_path: Path) -> None:
+def test_mpi_refuses_a_region_on_one_process_without_processor0(
+    meshed: Path, tmp_path: Path
+) -> None:
     case = _case(meshed, tmp_path, {"left": _foam(1), "right": _foam(2)})
+    shutil.rmtree(case / "left" / "processor0")
 
     message = _failure(_processes(case, 3))
 
-    assert "the regions ['right'] run on several MPI processes" in message
-    assert "the run would hang" in message
+    assert "region left runs on 1 process, but left/ lacks processor0" in message
 
 
-def test_mpi_refuses_a_neon_region(meshed: Path, tmp_path: Path) -> None:
-    case = _case(
-        meshed,
-        tmp_path,
-        {"left": {"solver": "heatConductionNeoN", "processes": 2}, "right": _foam(2)},
-    )
+def test_mpi_refuses_a_neon_region_if_neon_communicates_on_the_world(
+    meshed: Path, tmp_path: Path
+) -> None:
+    if _neon_takes_a_communicator():
+        pytest.skip("this NeoN build runs on the region's communicator")
+    case = _case(meshed, tmp_path, {"left": _neon(2), "right": _foam(2)})
 
     message = _failure(_processes(case, 4))
 
     assert (
         "region left runs on 2 of the 4 MPI processes, but its solver heatConductionNeoN "
-        "cannot run on part of them: NeoN communicates on MPI_COMM_WORLD"
+        "cannot run on part of them: this NeoN build communicates on MPI_COMM_WORLD"
     ) in message
 
 

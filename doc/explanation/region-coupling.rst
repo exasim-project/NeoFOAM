@@ -241,19 +241,24 @@ entry gives its number of processes, a plain name is one::
 
 The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in the order of
 ``participants`` (``left`` ranks 0-1, ``right`` 2-3), and each process runs
-only its region. A region on several processes runs OpenFOAM with ``-parallel
--world <region>``, on ``<region>/processor0`` .. ``processor<n-1>``
-(``decomposePar -case <region>``); OpenFOAM's world is the region's block of
-ranks. Before the run starts every process checks the case, and rank 0 says
+only its region. Every region runs OpenFOAM with ``-parallel -world <region>``,
+also a region on one process: OpenFOAM's world is the region's block of ranks,
+and the region's case is decomposed into its processes, ``<region>/processor0``
+.. ``processor<n-1>`` (``decomposePar -case <region>``; one part for one
+process). OpenFOAM's ``-world`` split is collective over all processes, so
+every region takes part in it. A NeoN region communicates on its world too:
+``create_adapter_run_time`` makes OpenFOAM's world NeoN's default communicator
+(``neon.set_default_communicator``, which also takes an mpi4py communicator
+from Python, set before), so the region's NeoN ranks are its OpenFOAM ranks,
+the numbers of its processor patches' neighbours, and the root of each region
+logs. Before the run starts every process checks the case, and rank 0 says
 what is wrong before the run aborts: the number of processes is not the sum of
-the regions', a region is not decomposed into its processes, some regions run
-on one process and others on several (OpenFOAM's ``-world`` split is collective
-over all processes, so it would hang), a region's solver cannot run on part of
-the processes (NeoN communicates on ``MPI_COMM_WORLD``: no ``heatConductionNeoN``
-region yet), or the case is coupled (no comm channel between processes yet). An
-error in a region prints its traceback and aborts every process
-(``MPI_Abort``). Without ``mpirun`` (or on one process) the regions run on
-threads, and ``processes`` is not used
+the regions', a region is not decomposed into its processes, a region's solver
+cannot run on part of the processes (a NeoN built without the default
+communicator communicates on ``MPI_COMM_WORLD``), or the case is coupled (no
+comm_channel between processes yet). An error in a region prints its traceback
+and aborts every process (``MPI_Abort``). Without ``mpirun`` (or on one
+process) the regions run on threads, and ``processes`` is not used
 (``test/solver/multiRun/test_multiRun_mpi.py``).
 
 Extension points

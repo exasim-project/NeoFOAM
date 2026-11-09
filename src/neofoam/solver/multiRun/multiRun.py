@@ -33,7 +33,6 @@ from .mpi import (
     check_size,
     check_sub_communicator,
     check_uncoupled,
-    check_uniform,
     check_world,
     failure,
     import_mpi,
@@ -85,8 +84,9 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
     """Run this process's region of the case, under MPI; return its final Context.
 
     Every process first checks the case against the run: the number of
-    processes, the decomposition of each region on several processes, that its
-    solver can run on part of the processes, and that no region is coupled (no
+    processes, the decomposition of each region into its processes (every
+    region runs ``-parallel -world <region>``), that its solver can run on part
+    of the processes, and that no region is coupled (no
     comm_channel between processes yet). If one fails, rank 0 prints why and the
     run aborts. Then MPI_COMM_WORLD is split into the regions
     (:class:`~neofoam.solver.multiRun.mpi.RegionLayout`), and each process runs
@@ -101,7 +101,6 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
     specs: dict[str, SolverSpec] = {}
     try:
         check_size(layout, world.size)
-        check_uniform(layout)
         check_decomposed(layout)
         check_uncoupled(list(config.participants))
         specs = {region: resolve_solver(name) for region, name in config.solvers().items()}

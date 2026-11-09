@@ -30,6 +30,7 @@ from neofoam.solver.neon_runtime import (
     NeoNGeometry,
     check_written_patches,
     ensure_neon_initialized,
+    neon_takes_a_communicator,
 )
 from neofoam.solver.regions import region_case_dir
 
@@ -41,7 +42,10 @@ heatConductionNeoN = Solver("heatConductionNeoN")
 # Kokkos is finalized on its initializing thread; multiRun instantiates on the main one
 heatConductionNeoN.on_instantiate = ensure_neon_initialized
 heatConductionNeoN.sub_communicator_limitation = (
-    "NeoN communicates on MPI_COMM_WORLD and cannot run on the region's sub-communicator yet"
+    None
+    if neon_takes_a_communicator()
+    else "this NeoN build communicates on MPI_COMM_WORLD (it has no "
+    "neon.set_default_communicator); rebuild NeoN to run a region on part of them"
 )
 
 heatConductionNeoN.config(ControlDictConfig)

@@ -28,11 +28,11 @@ from neofoam.solver.multiRun.mpi import (
     check_size,
     check_sub_communicator,
     check_uncoupled,
-    check_uniform,
     import_mpi,
     launched_size,
     under_mpi,
 )
+from neofoam.solver.neon_runtime import neon_takes_a_communicator
 from neofoam.solver.regions import ControlDictConfig
 
 CASES = Path(__file__).parent / "cases"
@@ -89,11 +89,11 @@ def test_region_layout_puts_the_regions_on_blocks_of_ranks_in_stepping_order() -
     assert str(layout) == "left: ranks 0-1, solo: rank 2, right: ranks 3-5"
 
 
-def test_region_layout_runs_a_region_on_several_processes_in_its_own_world() -> None:
+def test_region_layout_runs_every_region_in_its_own_world() -> None:
     layout = RegionLayout({"left": 2, "right": 1})
 
     assert layout.argv("left") == ["multiRun", "-parallel", "-world", "left"]
-    assert layout.argv("right") == ["multiRun"]
+    assert layout.argv("right") == ["multiRun", "-parallel", "-world", "right"]
 
 
 def test_region_layout_has_no_region_beyond_its_ranks() -> None:
@@ -112,14 +112,6 @@ def test_check_size_asks_for_the_processes_of_all_regions() -> None:
         "system/controlDict.yaml run on 2 (left) + 3 (right) = 5; start it with "
         "mpirun -np 5, or change the regions' processes"
     )
-
-
-def test_check_uniform_refuses_serial_regions_next_to_parallel_ones() -> None:
-    check_uniform(RegionLayout({"left": 1, "right": 1}))
-    check_uniform(RegionLayout({"left": 2, "right": 3}))
-
-    with pytest.raises(MpiSetupError, match=r"\['right'\] run on several .* \['left'\] on one"):
-        check_uniform(RegionLayout({"left": 1, "right": 2}))
 
 
 def test_check_decomposed_wants_a_processor_directory_per_process(tmp_path: Path) -> None:
@@ -145,7 +137,13 @@ def test_check_decomposed_refuses_more_processor_directories(tmp_path: Path) -> 
         check_decomposed(RegionLayout({"left": 2}), tmp_path)
 
 
-def test_check_decomposed_leaves_a_serial_region_alone(tmp_path: Path) -> None:
+def test_check_decomposed_wants_processor0_for_a_region_on_one_process(tmp_path: Path) -> None:
+    (tmp_path / "left").mkdir()
+
+    with pytest.raises(MpiSetupError, match="region left runs on 1 process, but left/ lacks"):
+        check_decomposed(RegionLayout({"left": 1}), tmp_path)
+
+    (tmp_path / "left" / "processor0").mkdir()
     check_decomposed(RegionLayout({"left": 1}), tmp_path)
 
 
@@ -164,8 +162,14 @@ def test_check_sub_communicator_refuses_a_solver_that_needs_every_process() -> N
     )
 
 
-def test_heat_conduction_neon_cannot_run_on_part_of_the_processes() -> None:
-    assert "NeoN communicates on MPI_COMM_WORLD" in heatConductionNeoN.sub_communicator_limitation
+def test_heat_conduction_neon_runs_on_part_of_the_processes_if_neon_can() -> None:
+    limitation = heatConductionNeoN.sub_communicator_limitation
+
+    if neon_takes_a_communicator():
+        assert limitation is None
+    else:
+        assert limitation is not None
+        assert "this NeoN build communicates on MPI_COMM_WORLD" in limitation
 
 
 def test_check_uncoupled_refuses_a_coupled_case(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -11,19 +11,16 @@ regions take the ranks of MPI_COMM_WORLD in blocks, in the order of the yaml
 ``left`` and ranks 2-4 ``right``. Each rank runs only its region, on its main
 thread.
 
-A region on several processes runs OpenFOAM with ``-parallel -world <region>``:
-OpenFOAM then splits MPI_COMM_WORLD by the world names, numbering the worlds
-and their ranks in the order of the global ranks. That is the split of
-:class:`RegionLayout` (MPI ``Split`` by the region's index, keyed by the global
-rank), so a region's ranks are the same in both. Its case ``<region>/`` is
-decomposed into ``<region>/processor0`` .. ``processor<n-1>``. A region on one
-process runs OpenFOAM serially, on ``<region>/``.
-
-OpenFOAM's ``-world`` split is collective over all of MPI_COMM_WORLD, so every
-process has to take part in it: a run that has regions on one process and
-regions on several is refused (it would hang). A solver that does not run
-OpenFOAM in parallel cannot share a run with a region on several processes for
-the same reason; that is not detected.
+Every region runs OpenFOAM with ``-parallel -world <region>``, also a region on
+one process: OpenFOAM then splits MPI_COMM_WORLD by the world names, numbering
+the worlds and their ranks in the order of the global ranks. That is the split
+of :class:`RegionLayout` (MPI ``Split`` by the region's index, keyed by the
+global rank), so a region's ranks are the same in both. The split is collective
+over all of MPI_COMM_WORLD, so every region has to take part in it, and its
+case ``<region>/`` is decomposed into ``<region>/processor0`` ..
+``processor<n-1>``, one directory for a region on one process. A NeoN region
+communicates on its world too: ``create_adapter_run_time`` hands it to NeoN as
+its default communicator.
 
 mpi4py (the extra ``neofoam[mpi]``) is imported only here, only under MPI: it
 initializes MPI before any OpenFOAM ``argList``. Without MPI (no ``mpirun``, or
@@ -31,6 +28,7 @@ one process) multiRun runs its regions on threads, as always.
 """
 
 import atexit
+import gc
 import os
 import sys
 import traceback
@@ -113,10 +111,8 @@ class RegionLayout:
         raise MpiSetupError(f"rank {rank} runs no region of {self}")
 
     def argv(self, region: str) -> list[str]:
-        """The arguments of ``region``'s solver: ``-parallel -world <region>`` if parallel."""
-        if self.processes[region] > 1:
-            return ["multiRun", "-parallel", "-world", region]
-        return ["multiRun"]
+        """The arguments of ``region``'s solver: ``-parallel -world <region>``, on any processes."""
+        return ["multiRun", "-parallel", "-world", region]
 
     def __str__(self) -> str:
         parts = []
@@ -138,48 +134,29 @@ def check_size(layout: RegionLayout, size: int) -> None:
         )
 
 
-def check_uniform(layout: RegionLayout) -> None:
-    """Raise ``MpiSetupError`` when some regions run on one process and others on several.
-
-    The regions on several processes run OpenFOAM with ``-world``, whose split is
-    collective over all of MPI_COMM_WORLD; a serial region never takes part in
-    it, and the run would hang.
-    """
-    single = [region for region, count in layout.processes.items() if count == 1]
-    several = [region for region, count in layout.processes.items() if count > 1]
-    if single and several:
-        raise MpiSetupError(
-            f"the regions {several} run on several MPI processes (OpenFOAM -parallel "
-            f"-world <region>) and {single} on one (serial OpenFOAM). OpenFOAM's -world "
-            "split is collective over all MPI processes, which a serial region never "
-            "joins, so the run would hang; give every region one process, or every "
-            "region several"
-        )
-
-
 def check_decomposed(layout: RegionLayout, case_dir: Path = Path(".")) -> None:
-    """Raise ``MpiSetupError`` unless each region on n > 1 processes has n processor directories.
+    """Raise ``MpiSetupError`` unless each region on n processes has n processor directories.
 
     That is ``<region>/processor0`` .. ``<region>/processor<n-1>``, and no
-    ``<region>/processor<n>``.
+    ``<region>/processor<n>``: a region on one process runs ``-parallel`` too,
+    on ``<region>/processor0``.
     """
     problems = []
     for region, count in layout.processes.items():
-        if count == 1:
-            continue
         directory = case_dir / region
+        on = f"{count} process" if count == 1 else f"{count} processes"
         missing = [
             f"processor{n}" for n in range(count) if not (directory / f"processor{n}").is_dir()
         ]
         if missing:
             problems.append(
-                f"region {region} runs on {count} processes, but {region}/ lacks "
+                f"region {region} runs on {on}, but {region}/ lacks "
                 f"{', '.join(missing)}; decompose it into {count} (numberOfSubdomains "
                 f"{count} in {region}/system/decomposeParDict, decomposePar -case {region})"
             )
         elif (directory / f"processor{count}").is_dir():
             problems.append(
-                f"region {region} runs on {count} processes, but {region}/ is decomposed "
+                f"region {region} runs on {on}, but {region}/ is decomposed "
                 f"into more ({region}/processor{count} exists); decompose it into {count}"
             )
     if problems:
@@ -192,8 +169,9 @@ def check_sub_communicator(layout: RegionLayout, specs: Mapping[str, SolverSpec]
     Under MPI every region runs on part of them, a sub-communicator of
     MPI_COMM_WORLD, one process or several. The solver's
     :attr:`~neofoam.framework.solver.SolverSpec.sub_communicator_limitation`
-    says why it cannot (NeoN: it communicates on MPI_COMM_WORLD, so even a
-    region on one process would take the other regions' processes for its own).
+    says why it cannot (a NeoN built without a default communicator
+    communicates on MPI_COMM_WORLD, so even a region on one process would take
+    the other regions' processes for its own).
     """
     problems = [
         f"region {region} runs on {count} of the {layout.total} MPI processes, but its solver "
@@ -227,21 +205,29 @@ def check_uncoupled(regions: list[str]) -> None:
 
 
 def check_world(region: str, comm: Any) -> None:
-    """Raise ``MpiSetupError`` unless OpenFOAM's world of a parallel region is ``comm``.
+    """Raise ``MpiSetupError`` unless OpenFOAM's and NeoN's world of a region is ``comm``.
 
     Checked once the region's ``argList`` exists: its ``Pstream`` numbers the
-    processes of OpenFOAM's ``worldComm``. A region without a parallel OpenFOAM
-    passes.
+    processes of OpenFOAM's ``worldComm``, and NeoN's default communicator
+    (set from it by ``create_adapter_run_time``) is checked the same way. A
+    region without a parallel OpenFOAM, or without NeoN, passes that part.
     """
     pybfoam = sys.modules.get("pybFoam")
-    if pybfoam is None or not pybfoam.Pstream.parRun():
-        return
-    world = (int(pybfoam.Pstream.myProcNo()), int(pybfoam.Pstream.nProcs()))
-    if world != (comm.rank, comm.size):
-        raise MpiSetupError(
-            f"region {region}: OpenFOAM's world is rank {world[0]} of {world[1]}, its MPI "
-            f"split rank {comm.rank} of {comm.size}"
-        )
+    if pybfoam is not None and pybfoam.Pstream.parRun():
+        world = (int(pybfoam.Pstream.myProcNo()), int(pybfoam.Pstream.nProcs()))
+        if world != (comm.rank, comm.size):
+            raise MpiSetupError(
+                f"region {region}: OpenFOAM's world is rank {world[0]} of {world[1]}, its MPI "
+                f"split rank {comm.rank} of {comm.size}"
+            )
+    neon = sys.modules.get("neon._neon")
+    if neon is not None and hasattr(neon, "default_communicator"):
+        default = type(comm).f2py(neon.default_communicator())
+        if (default.rank, default.size) != (comm.rank, comm.size):
+            raise MpiSetupError(
+                f"region {region}: NeoN's communicator is rank {default.rank} of "
+                f"{default.size}, its MPI split rank {comm.rank} of {comm.size}"
+            )
 
 
 def abort(world: Any, message: str) -> None:
@@ -275,7 +261,9 @@ def keep_alive(mpi: Any, value: Any) -> None:
 
     An OpenFOAM ``argList`` (held by a region's Context) finalizes MPI in its
     destructor, even an MPI it did not start; destroyed after MPI is finalized,
-    it leaves MPI alone.
+    it leaves MPI alone. ``value`` is released right after: before NeoN's
+    Kokkos is finalized (registered at exit before this, so run after it),
+    which a NeoN field must not outlive.
     """
     if not _ALIVE:
         atexit.register(_finalize, mpi)
@@ -286,3 +274,5 @@ def _finalize(mpi: Any) -> None:
     if not mpi.Is_finalized():
         mpi.COMM_WORLD.Barrier()
         mpi.Finalize()
+    _ALIVE.clear()
+    gc.collect()
