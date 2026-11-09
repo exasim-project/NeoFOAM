@@ -32,15 +32,14 @@ import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    Acceleration,
     AitkenRelaxation,
     ConstantRelaxation,
     Coupling,
-    CouplingController,
+    CouplingAcceleration,
     CouplingNotConvergedWarning,
-    CouplingOp,
-    CouplingOutcome,
 )
+from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
+from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.operations import Operation, Operations
 from neofoam.framework.solver.registry import resolve_solver
@@ -62,7 +61,7 @@ def _with_affine(name: str) -> Any:
 def _case(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    acceleration: Optional[Acceleration] = None,
+    acceleration: Optional[CouplingAcceleration] = None,
     **update: Any,
 ) -> None:
     """The case in ``tmp_path`` as the working directory, its coupling node updated.
@@ -170,7 +169,7 @@ def test_multiRun_affine_iteration_count(ctx: Regions) -> None:
 )
 def test_multiRun_affine_scheme_and_acceleration_change_only_the_passes(
     scheme: str,
-    acceleration: Acceleration,
+    acceleration: CouplingAcceleration,
     passes: int,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

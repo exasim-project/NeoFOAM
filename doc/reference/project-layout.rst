@@ -34,7 +34,7 @@ the linked reference pages for the full API.
       visualization, and the loops that wrap fields (``wrapping``). See
       :mod:`neofoam.framework.graph`.
     - ``coupling/`` — ``@coupled`` boundary conditions, the ``Exchange`` of a
-      side with its ``Mapping`` (identity, nearest-neighbor), a ``CouplingOp`` per
+      side with its ``CouplingMapping`` (identity, nearest-neighbor), a ``CouplingOp`` per
       region, the leader's ``CouplingController``, the point-to-point
       ``CommChannel`` between regions, a thread per region (``run_regions``),
       and the strategies (constant/Aitken relaxation, relative

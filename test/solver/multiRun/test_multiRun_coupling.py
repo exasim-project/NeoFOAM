@@ -31,13 +31,8 @@ import numpy as np
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import (
-    CommChannel,
-    CouplingNode,
-    Link,
-    RegionCoupling,
-    region_couplings,
-)
+from neofoam.framework.coupling import CommChannel, CouplingNode, Link, RegionCoupling
+from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.operations import IterativeOp, Operation, Operations
 from neofoam.framework.solver.registry import resolve_solver

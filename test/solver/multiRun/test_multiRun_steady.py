@@ -21,7 +21,8 @@ import numpy as np
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, CouplingOp
+from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from solver.multiRun.steady_solver import steady

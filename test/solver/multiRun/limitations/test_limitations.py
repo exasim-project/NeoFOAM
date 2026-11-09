@@ -16,7 +16,8 @@ from typing import Any
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, CouplingOp, IdentityMapping
+from neofoam.framework.coupling import Coupling, IdentityMapping
+from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
 from solver.multiRun.limitations.probe_solver import probe

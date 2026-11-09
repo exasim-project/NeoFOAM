@@ -27,7 +27,7 @@ import numpy as np
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Acceleration, AitkenRelaxation, ConstantRelaxation
+from neofoam.framework.coupling import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from neofoam.solver.multiRun.configs import (
@@ -62,7 +62,7 @@ def _case(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **update: Any) -> Non
     monkeypatch.chdir(tmp_path / "case")
 
 
-def _around_solve_T(scheme: Scheme, acceleration: Acceleration) -> dict[str, Any]:
+def _around_solve_T(scheme: Scheme, acceleration: CouplingAcceleration) -> dict[str, Any]:
     """The case's coupling as one node of ``scheme`` that wraps each region's ``solve_T``."""
     config = RegionCouplingConfig.load(case_dir=CASE)
     node = CouplingNodeConfig(
@@ -88,7 +88,7 @@ def _around_solve_T(scheme: Scheme, acceleration: Acceleration) -> dict[str, Any
 )
 def test_multiRun_region_coupling_reaches_the_steady_profile(
     scheme: Scheme,
-    acceleration: Acceleration,
+    acceleration: CouplingAcceleration,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
