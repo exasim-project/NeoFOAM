@@ -10,11 +10,12 @@ receives, so every node converges after its second pass.
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Any, Optional, Sequence
 
 import numpy as np
 import pytest
-from framework.coupling.regions import add_coupled, couple, graph, run, solve
+from framework.coupling.regions import add_coupled, couple, graph, run, solve, transport
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context
@@ -23,16 +24,17 @@ from neofoam.framework.coupling import (
     CoupledSide,
     Coupling,
     CouplingController,
-    CouplingDeadlock,
     CouplingNode,
     InProcessTransport,
     Link,
     SideChange,
     region_couplings,
+    run_regions,
 )
 from neofoam.framework.coupling.loop import GroupSide
-from neofoam.framework.operations import IterativeOp, Operation
-from neofoam.framework.types import Placement
+from neofoam.framework.graph import DAGResolver
+from neofoam.framework.operations import IterativeOp, Operation, StepBuilder
+from neofoam.framework.types import OperationMetadata, Placement
 
 X = Link("x", (("a", "p"), ("b", "p")))
 Y = Link("y", (("a", "q"), ("b", "q")))
@@ -147,8 +149,11 @@ def test_the_messages_of_each_node_are_tagged_by_node() -> None:
 
 def test_each_node_has_its_own_leader() -> None:
     links = [X, Link("z", (("b", "q"), ("c", "q")))]
-    # bc nests inside ab in b, but not in c: one pass of ab, so that b runs bc once too
-    nodes = [CouplingNode("ab", ("x",), max_iterations=1), CouplingNode("bc", ("z",))]
+    # in b, ab around solve_x and bc around solve_z: neither nests in the other
+    nodes = [
+        CouplingNode("ab", ("x",), placement={"b": Placement(("solve_x",))}),
+        CouplingNode("bc", ("z",), placement={"b": Placement(("solve_z",))}),
+    ]
     regions = _contexts(["a", "b", "c"], links, nodes)
     add_coupled(regions["a"], "p", "x", _side(1.0, []))
     add_coupled(regions["b"], "p", "x", _side(2.0, []))
@@ -181,9 +186,8 @@ def test_each_node_has_its_own_leader() -> None:
     assert coupling is not None and (coupling.group, coupling.leader) == (("a", "b", "c"), "c")
 
 
-def test_a_node_nested_in_one_region_only_deadlocks_in_its_second_pass() -> None:
-    # bc nests inside ab in b, but not in c: b's second ab pass runs bc again,
-    # which c, done with bc, never answers - the transport reports it at once
+def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
+    """a-b-c, ab over x and bc over z: by default bc nests inside ab in b, not in c."""
     links = [X, Link("z", (("b", "q"), ("c", "q")))]
     nodes = [
         CouplingNode("ab", ("x",), max_iterations=2),
@@ -196,15 +200,70 @@ def test_a_node_nested_in_one_region_only_deadlocks_in_its_second_pass() -> None
     add_coupled(regions["c"], "q", "z", _side(4.0, []))
 
     fields = {"a": ["x"], "b": ["x", "z"], "c": ["z"]}
+    return regions, {
+        name: [solve(field, lambda ctx: None) for field in fields[name]] for name in regions
+    }
+
+
+def test_a_node_nested_in_one_region_only_raises_at_its_first_pass() -> None:
+    # b's second ab pass would run bc again, which c, done with bc, never answers
+    regions, ops = _chain()
+
     with pytest.raises(
-        CouplingDeadlock, match=r"region b waits for 'bc/\w+' from region c, which finished"
+        ValueError,
+        match=r"coupling 'bc' sits in different loops in its regions: b: ab, c: top; a node "
+        r"must run equally often in all its regions . put the exchanges in one node or "
+        r"place it alike",
     ):
-        run(
-            {
-                name: (ctx, [solve(field, lambda ctx: None) for field in fields[name]])
-                for name, ctx in regions.items()
-            }
+        run({name: (ctx, ops[name]) for name, ctx in regions.items()})
+
+
+def _counting(name: str, passes: int, *ops: Operation) -> Operation:
+    """A loop ``name`` of ``passes`` passes around ``ops``."""
+    loop = Operation(
+        func=IterativeOp(lambda ctx: ctx.loops[-1].iteration < passes),
+        metadata=OperationMetadata(op_name=name),
+    )
+    loop.sub_operations.extend(ops)
+    return loop
+
+
+def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
+    """a and b, each node ``n`` around solve_x inside loop ``inner`` inside loop ``outer``.
+
+    ``passes`` are the passes of each region's (outer, inner) loops.
+    """
+    placement = Placement(("solve_x",))
+    nodes = [CouplingNode("n", ("x",), placement={"a": placement, "b": placement})]
+    regions = _contexts(["a", "b"], [X], nodes)
+    tasks = {}
+    for name, ctx in regions.items():
+        add_coupled(ctx, "p", "x", _side(1.0, []))
+        outer, inner = passes[name]
+        builder = StepBuilder(
+            [_counting("outer", outer, _counting("inner", inner, solve("x", lambda ctx: None)))]
         )
+        resolved = DAGResolver().resolve(builder, Coupling.of(ctx).operations()).operations
+        tasks[name] = partial(resolved.run, ctx)
+    run_regions(tasks, transport(regions["a"]))
+    return regions
+
+
+def test_a_node_placed_alike_runs_in_all_its_regions() -> None:
+    regions = _nested({"a": (2, 2), "b": (2, 2)})
+
+    controller = couple(regions["b"]).controller
+    assert controller is not None and len(controller.outcomes) == 4
+
+
+def test_a_node_entered_in_different_loop_states_raises() -> None:
+    # a node runs four times in both, but a in outer 1 inner 2 where b in outer 2 inner 1
+    with pytest.raises(
+        ValueError,
+        match=r"coupling 'n': its regions entered pass 1 in different loop states: "
+        r"a: outer#1 > inner#2, b: outer#2 > inner#1",
+    ):
+        _nested({"a": (1, 2), "b": (2, 1)})
 
 
 def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:
