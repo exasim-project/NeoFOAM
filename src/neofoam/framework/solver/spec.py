@@ -204,8 +204,13 @@ class SolverSpec:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
+        first: bool = False,
     ) -> Callable[..., Any]:
-        """Decorator to register a solver operation."""
+        """Decorator to register a solver operation.
+
+        ``first=True`` runs it only in the first pass of the wrapping loops around
+        it (``OperationMetadata.first``).
+        """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             self._operations.append(
@@ -216,6 +221,7 @@ class SolverSpec:
                         "depends_on": depends_on,
                         "before": before,
                         "name": name or func.__name__,
+                        "first": first,
                     },
                 )
             )
@@ -339,6 +345,7 @@ class SolverSpec:
                     ),
                     depends_on=metadata["depends_on"] or [],
                     before=metadata["before"] or [],
+                    first=metadata["first"],
                 ),
             )
             ops.add(op)

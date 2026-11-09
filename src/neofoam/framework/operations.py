@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterator, Union
 
 from neofoam import telemetry
-from neofoam.framework.context import Context
+from neofoam.framework.context import Context, LoopEntry
 
 from .types import OperationMetadata, OperationNumber
 
@@ -102,6 +102,13 @@ class Operation:
         return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
+        """Run the operation on ``ctx``.
+
+        An operation marked ``first`` (``OperationMetadata.first``) is skipped
+        unless every wrapping loop running around it is in its first pass.
+        """
+        if self.metadata.first and not all(entry.first for entry in ctx.loops if entry.wrapping):
+            return None
         if not telemetry.is_active():
             return self._execute(ctx)
         with telemetry.span(
@@ -116,13 +123,27 @@ class Operation:
         if op_type == "conditional":
             return self.func(ctx)
         elif op_type == "iterative":
-            while self.func(ctx):
-                for op in self.sub_operations:
-                    op.run(ctx)
+            self._loop(ctx)
         elif op_type == "sequential":
             self.func(ctx)
         else:
             raise ValueError("Unknown operation type")
+
+    def _loop(self, ctx: Context) -> None:
+        """Run the loop's passes, its entry on ``ctx.loops`` while it runs."""
+        wrapping = self.metadata.wraps is not None
+        loops = ctx.loops
+        index = len(loops)
+        loops.append(LoopEntry(self.name, 0, True, wrapping))
+        try:
+            iteration = 0
+            while self.func(ctx):
+                for op in self.sub_operations:
+                    op.run(ctx)
+                iteration += 1
+                loops[index] = LoopEntry(self.name, iteration, False, wrapping)
+        finally:
+            del loops[index:]
 
 
 class Operations:

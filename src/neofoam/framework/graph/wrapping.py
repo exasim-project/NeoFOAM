@@ -33,6 +33,11 @@ the solver's time step. Its ``OperationMetadata.wraps``
 Loops are placed in the order given, outer first: a loop whose operations lie
 inside one placed before nests inside it; one that would have to hold a loop
 placed before raises.
+
+An operation marked ``first`` (``OperationMetadata.first``, e.g. the start of a
+time step) runs only in the first pass of the wrapping loops around it; it may
+not depend on an operation that runs in every pass of one of them
+(:func:`check_first`).
 """
 
 from __future__ import annotations
@@ -82,6 +87,43 @@ def wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
         return _in_scope(ops, path, lambda scope: [_filled(loop, scope)])
     path, picked = _selected(ops, loop, placement)
     return _in_scope(ops, path, lambda scope: _wrapped(scope, picked, loop))
+
+
+def check_first(ops: list[Operation]) -> None:
+    """Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.
+
+    An operation marked ``first`` (``OperationMetadata.first``) runs only in the
+    first pass of the wrapping loops around it; one it depends on (its
+    ``depends_on``, or the other's ``before``) that runs in every pass of a
+    wrapping loop around both would leave it on stale data.
+    """
+    located: dict[str, tuple[Operation, tuple[str, ...]]] = {}
+
+    def walk(scope: list[Operation], around: tuple[str, ...]) -> None:
+        for op in scope:
+            if _is_loop(op):
+                inner = (*around, op.operation_name or "loop") if _is_wrapping(op) else around
+                walk(op.sub_operations, inner)
+            elif op.operation_name:
+                located[op.operation_name] = (op, around)
+
+    walk(ops, ())
+    for name, (op, around) in located.items():
+        if not op.metadata.first or not around:
+            continue
+        upstream = [*op.depends_on]
+        upstream += [other for other, (before, _) in located.items() if name in before.before]
+        for dependency in upstream:
+            if dependency not in located:
+                continue
+            dependency_op, dependency_around = located[dependency]
+            shared = [loop for loop in around if loop in dependency_around]
+            if shared and not dependency_op.metadata.first:
+                raise ValueError(
+                    f"{name} runs only in the first pass of the wrapping loop {shared[-1]} "
+                    f"(first), but depends on {dependency}, which runs in every pass of it; "
+                    f"mark {dependency} first too or place the loop around it"
+                )
 
 
 def _top(ops: list[Operation], loop: Operation) -> Path:

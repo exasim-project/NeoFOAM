@@ -244,12 +244,14 @@ class ModelSpec:
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
         fallback: bool = False,
+        first: bool = False,
     ) -> Callable[..., Any]:
         """Decorator to register a model operation.
 
         ``fallback=True`` marks the op as belonging to the model's *fallback*
         backend (partitioned by :meth:`ModelRuntime.fallback_operations`); by
-        default an op is native.
+        default an op is native. ``first=True`` runs it only in the first pass
+        of the wrapping loops around it (``OperationMetadata.first``).
         """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -262,6 +264,7 @@ class ModelSpec:
                         "before": before,
                         "name": name or func.__name__,
                         "fallback": fallback,
+                        "first": first,
                     },
                 )
             )
@@ -401,6 +404,7 @@ class ModelSpec:
                     depends_on=metadata["depends_on"] or [],
                     before=metadata["before"] or [],
                     fallback=metadata.get("fallback", False),
+                    first=metadata.get("first", False),
                 ),
             )
             ops.append(op)
