@@ -16,6 +16,8 @@ side's region told the leader (:class:`GroupSide`).
 from __future__ import annotations
 
 import math
+import os
+import sys
 import warnings
 from dataclasses import dataclass, field
 from typing import Optional, Sequence
@@ -55,7 +57,24 @@ class CouplingOutcome:
 
 
 class CouplingNotConvergedWarning(RuntimeWarning):
-    """A coupling loop reached ``max_iterations`` before its exchange converged."""
+    """A coupling loop reached ``max_iterations`` before its exchange converged.
+
+    It points at the code that ran the coupled solver: the first caller outside
+    the framework (:func:`_stacklevel`), e.g. the solver's ``run``.
+    """
+
+
+# The framework's directory: the frames a coupling warning passes over.
+_FRAMEWORK = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + os.sep
+
+
+def _stacklevel() -> int:
+    """The ``stacklevel`` of ``warnings.warn``, called by this function's caller, that
+    points at the first frame outside the framework (``neofoam.framework``)."""
+    level, frame = 1, sys._getframe(1)
+    while frame is not None and os.path.abspath(frame.f_code.co_filename).startswith(_FRAMEWORK):
+        level, frame = level + 1, frame.f_back
+    return level
 
 
 def relative_changes(changes: list[SideChange]) -> dict[str, float]:
@@ -309,7 +328,7 @@ class CouplingController:
                 f"coupling {self.label} did not converge in {outcome.passes} passes "
                 f"(max_iterations); relative change: {residuals or 'n/a'}",
                 CouplingNotConvergedWarning,
-                stacklevel=2,
+                stacklevel=_stacklevel(),
             )
 
     def _start_pass(self, number: int, final: bool) -> dict[End, Data]:
