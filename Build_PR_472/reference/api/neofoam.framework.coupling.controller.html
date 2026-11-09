@@ -710,7 +710,8 @@ as they are).</p>
 <p>A side receives what its partner sent in this pass when the scheme is serial
 (the default) and the partner’s region steps before its own; else
 (<code class="docutils literal notranslate"><span class="pre">parallel</span></code>, or the partner steps later) what the controller carried from
-the pass before. Only the carried data is relaxed.</p>
+the pass before. Only the carried data is relaxed. This is the only rule: the
+sending regions send their data fresh exactly where the leader decided it.</p>
 <p>When a time step’s coupling ends it appends its <a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingOutcome" title="neofoam.framework.coupling.controller.CouplingOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOutcome</span></code></a> to
 <a class="reference internal" href="#neofoam.framework.coupling.controller.CouplingController.outcomes" title="neofoam.framework.coupling.controller.CouplingController.outcomes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">outcomes</span></code></a> and hands it to the execution observer
 (<code class="docutils literal notranslate"><span class="pre">coupling_finished</span></code>); ending at <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> unconverged also warns
