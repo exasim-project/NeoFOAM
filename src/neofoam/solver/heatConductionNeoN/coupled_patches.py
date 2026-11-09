@@ -23,7 +23,8 @@ coupling (``correct_boundary_conditions`` keeps them)::
 - ``coupledHeatFlux`` (:class:`CoupledHeatFlux`), the Neumann side: the heat
   flux into the partner leaves its own region, as an explicit source in the
   cells next to its faces (NeoN sets no per-face gradient from Python); it sends
-  its wall temperature.
+  its wall temperature and, after each solve, stores it as the patch's values
+  (what is written).
 
 The heat flux is per face area, ``k dT/dn``. The points are the face centres:
 the partner's faces need not match.
@@ -92,6 +93,9 @@ class NeoNPatch:
         """What the patch adds to the right-hand side of the equation of its field."""
         return []
 
+    def solved(self) -> None:
+        """After its field is solved (and its boundary corrected)."""
+
 
 @coupled
 class CoupledTemperature(NeoNPatch):
@@ -143,6 +147,16 @@ class CoupledHeatFlux(NeoNPatch):
 
     def terms(self) -> list[Any]:
         return [nn.exp.source(self.source)]
+
+    def solved(self) -> None:
+        """Store the wall temperature it sends as the face values of the field, so the
+        written field holds it. Only the face values: the equation reads the patch from
+        the boundary's refValue / valueFraction / refGrad, which stay (the heat flux is
+        the source). Face by face: the only write into a part of the boundary values
+        NeoN binds, on any executor."""
+        values = self.ctx.fields[self.field].boundary_data_value()
+        for face, value in zip(range(self.faces.start, self.faces.stop), self.wall_T()):
+            nn.fill_range(values, float(value), face, face + 1)
 
     @coupled.coordinates
     def points(self) -> Any:

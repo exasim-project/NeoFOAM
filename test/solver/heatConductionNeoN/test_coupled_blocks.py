@@ -23,6 +23,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from foamlib import FoamFile
 
 from neofoam.framework.coupling.kernels import nearest_neighbor
 from solver.heatConductionNeoN._run_case import cell_centres, mesh_copy, result
@@ -43,6 +44,7 @@ def blocks(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
     computed = result(case_dir, "multi")
     for region, data in computed["regions"].items():
         data["x"] = cell_centres(case_dir / region)[:, 0]
+    computed["case_dir"] = case_dir
     return computed
 
 
@@ -82,6 +84,26 @@ def test_the_interface_faces_do_not_match_and_are_mapped(blocks: dict[str, Any])
     # what each side received has the size of its own patch
     assert len(blocks["regions"]["left"]["patches"]["interface"]["wall_T"]) == 3
     assert len(blocks["regions"]["right"]["patches"]["interface"]["wall_T"]) == 5
+
+
+def test_the_written_interface_temperature_is_the_exchanged_one(blocks: dict[str, Any]) -> None:
+    # the Neumann side (left) reconstructs its wall temperature from its heat flux;
+    # it stores it as T's face values, so the written T holds what it sends
+    left = blocks["regions"]["left"]["patches"]["interface"]
+    np.testing.assert_allclose(left["face_T"], left["wall_T"], rtol=0, atol=1e-9)
+    written = {
+        region: np.asarray(
+            FoamFile(blocks["case_dir"] / region / "2e+06" / "T")["boundaryField"]["interface"][
+                "value"
+            ],
+            dtype=float,
+        )
+        for region in ("left", "right")
+    }
+    np.testing.assert_allclose(written["left"], left["face_T"], rtol=0, atol=1e-6)
+    # converged, both sides write the interface temperature
+    np.testing.assert_allclose(written["left"], T_INTERFACE, rtol=0, atol=1e-6)
+    np.testing.assert_allclose(written["right"], T_INTERFACE, rtol=0, atol=1e-6)
 
 
 def test_aitken_converges_each_time_step_in_a_few_passes(blocks: dict[str, Any]) -> None:
