@@ -203,9 +203,9 @@ A NeoN solver: heatConductionNeoN
 ``heatConductionNeoN`` solves ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``
 on NeoN (``constant/thermalProperties``: ``rho``, ``cp``, ``k``, ``heatSource``)
 and supports coupling: its init adds the coupling model, then the coupled
-patches of ``T``; ``solve_T`` is ``solves=["T"]``; it agrees on the time step
-(``agree_dt``). A patch of ``0/T`` is coupled when a ``coupled`` entry names its
-condition; it is ``calculated``, so NeoN leaves its values to the coupling:
+patches of ``T``; it agrees on the time step (``agree_dt``). A patch of ``0/T``
+is coupled when a ``coupled`` entry names its condition; it is ``calculated``, so
+NeoN leaves its values to the coupling:
 
 .. code-block:: c++
 
