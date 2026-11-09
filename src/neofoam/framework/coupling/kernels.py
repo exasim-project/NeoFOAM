@@ -4,18 +4,16 @@
 """numpy kernels of a coupling: mapping, relaxation and convergence of the exchanged data.
 
 The mapping is per exchange and receiving side (:func:`mapping`); relaxation and
-convergence belong to the leader's
-:class:`~neofoam.framework.coupling.CouplingController`, which a region's
-coupling builds with its ``controller`` factory::
+convergence belong to a coupling node (its leader's
+:class:`~neofoam.framework.coupling.CouplingController`): a list of convergence
+measures, all of which must hold, and at most one acceleration per exchange::
 
-    def controller(sides, label, parallel):
-        return CouplingController(
-            sides,
-            label,
-            parallel=parallel,
-            converged=RelativeConvergence(data="T", limit=1e-5),
-            acceleration=AitkenRelaxation(initial=0.5),
-        )
+    CouplingNode(
+        "thermal",
+        ("interface",),
+        convergence=(RelativeConvergence(data="T", limit=1e-5),),
+        acceleration={"interface": AitkenRelaxation(initial=0.5)},
+    )
 
 The registries :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES`
 name them for the case (``system/regionCoupling.yaml``); a kernel of one's own
@@ -191,15 +189,15 @@ def mapping(kind: str) -> Mapping:
 class ConstantRelaxation:
     """Under-relaxes the data carried into a pass by a fixed factor.
 
-    Use it as the ``acceleration`` of a
-    :class:`~neofoam.framework.coupling.CouplingController`:
+    Use it as the ``acceleration`` of an exchange of a
+    :class:`~neofoam.framework.coupling.CouplingNode`:
     ``x = x_last + omega * (sent - x_last)`` for all carried :data:`Array` data at once, with
     ``x_last`` what the last pass received. ``omega = 1`` changes nothing; the
     first data passes unchanged. Not thread safe.
 
     Example::
 
-        CouplingController(**group, acceleration=ConstantRelaxation(omega=0.5))
+        CouplingNode("n", ("interface",), acceleration={"interface": ConstantRelaxation(0.5)})
     """
 
     def __init__(self, omega: float) -> None:
@@ -229,7 +227,7 @@ class AitkenRelaxation(ConstantRelaxation):
 
     Example::
 
-        CouplingController(**group, acceleration=AitkenRelaxation(initial=0.5))
+        CouplingNode("n", ("interface",), acceleration={"interface": AitkenRelaxation(0.5)})
     """
 
     def __init__(self, initial: float) -> None:
@@ -287,14 +285,14 @@ def _unflatten(values: Any, like: list[Data]) -> list[Data]:
 class RelativeConvergence:
     """Converged once the data of field ``data`` changes by less than ``limit`` relative to it.
 
-    Use it as the ``converged`` of a
-    :class:`~neofoam.framework.coupling.CouplingController`.
+    Use it in the ``convergence`` of a
+    :class:`~neofoam.framework.coupling.CouplingNode`.
     It checks every array sent by a side of the field ``data`` (2-norm of the
     change over the 2-norm of the array) and ignores the sides of other fields.
 
     Example::
 
-        CouplingController(**group, converged=RelativeConvergence(data="T", limit=1e-5))
+        CouplingNode("n", ("interface",), convergence=(RelativeConvergence("T", 1e-5),))
     """
 
     def __init__(self, data: str, limit: float) -> None:

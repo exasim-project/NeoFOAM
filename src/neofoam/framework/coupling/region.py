@@ -4,20 +4,28 @@
 """What one region knows of the coupling of a case: :class:`RegionCoupling`.
 
 A coupled case lists its exchanges (:class:`Link`, from
-``system/regionCoupling.yaml``) and its regions in stepping order (``regionSolvers``).
-:func:`region_couplings` turns them into one :class:`RegionCoupling` per coupled
-region, plain data plus the region's transport, handed to the region's runtime
-(``instantiate(region=..., coupling=...)``); a solver that supports coupling
-keeps it in the region's coupling model (``ctx.models["coupling"]``, a
-:class:`~neofoam.framework.coupling.Coupling`).
+``system/regionCoupling.yaml``), its coupling nodes (:class:`CouplingNode`) and
+its regions in stepping order (``regionSolvers``). A node is a named coupling
+loop: the exchanges it repeats, how it decides they converged, how it relaxes
+them and where it sits in each region's graph; every exchange is in one node,
+the nodes are listed outer to inner. :func:`region_couplings` turns them into
+one :class:`RegionCoupling` per coupled region, plain data plus the region's
+transport, handed to the region's runtime (``instantiate(region=...,
+coupling=...)``); a solver that supports coupling keeps it in the region's
+coupling model (``ctx.models["coupling"]``, a
+:class:`~neofoam.framework.coupling.Coupling`), which builds one coupling op
+per node of the region.
 
 Regions that exchanges connect, directly or over other regions, form a group;
-the group's last region in stepping order leads it.
+they agree on values (``Coupling.agree``) and its last region in stepping order
+leads that. The regions a node's exchanges connect form the node's group; its
+last region in stepping order leads the node (decides when it converged).
 
 Example::
 
     links = [Link("interface", (("left", "right"), ("right", "left")))]
-    couplings = region_couplings(["left", "right"], links, InProcessTransport())
+    nodes = [CouplingNode("thermal", ("interface",), max_iterations=20)]
+    couplings = region_couplings(["left", "right"], links, InProcessTransport(), nodes=nodes)
     couplings["right"].is_leader    # True
 """
 
@@ -25,27 +33,18 @@ from __future__ import annotations
 
 import contextvars
 import threading
-from dataclasses import dataclass
-from typing import Callable, Mapping, Protocol, Sequence, TypeVar
+from dataclasses import dataclass, field
+from typing import Callable, Mapping, Optional, Protocol, Sequence, TypeVar
 
+from neofoam.framework.types import Placement
+
+from .kernels import Acceleration, Convergence
 from .loop import CouplingController, GroupSide
 from .transport import Transport
 
 T = TypeVar("T")
 # The end of an exchange: (region, patch).
 End = tuple[str, str]
-
-
-class ControllerFactory(Protocol):
-    """Builds the leader's controller from the group's sides, the leader's label and the scheme.
-
-    ``parallel`` is the coupling's (:attr:`RegionCoupling.parallel`); the
-    controller decides with it which sides receive fresh or carried data.
-    """
-
-    def __call__(
-        self, sides: Sequence[GroupSide], label: str, /, *, parallel: bool
-    ) -> CouplingController: ...
 
 
 @dataclass(frozen=True)
@@ -66,15 +65,72 @@ class Link:
 
 
 @dataclass(frozen=True)
+class CouplingNode:
+    """A named coupling loop: its exchanges, its convergence and acceleration, its placement.
+
+    Each region the node's ``exchanges`` (names of :class:`Link` s) touch gets
+    one coupling op ``<region>.<name>`` for it. The node's leader stops the loop
+    once every measure of ``convergence`` holds (none:
+    :func:`~neofoam.framework.coupling.unchanged`) or after ``max_iterations``
+    passes; ``acceleration`` relaxes the data carried into a pass, at most one
+    per exchange (by its name; an exchange without one is not relaxed).
+    ``placement`` places the node's op in a region's graph (by region;
+    :class:`~neofoam.framework.types.Placement` ``()`` for a region it does not
+    name: around the whole body of the top scope, or of the node before).
+
+    An acceleration keeps the data of its last passes: give each node its own.
+    """
+
+    name: str
+    exchanges: tuple[str, ...]
+    max_iterations: int = 100
+    convergence: tuple[Convergence, ...] = ()
+    acceleration: Mapping[str, Acceleration] = field(default_factory=dict)
+    placement: Mapping[str, Placement] = field(default_factory=dict)
+
+    def placement_of(self, region: str) -> Placement:
+        """Where the node's op sits in the graph of ``region``."""
+        return self.placement.get(region, Placement())
+
+
+class ControllerFactory(Protocol):
+    """Builds a node leader's controller from the node's sides, the leader's label and the node.
+
+    ``parallel`` is the coupling's (:attr:`RegionCoupling.parallel`); the
+    controller decides with it which sides receive fresh or carried data.
+    ``node`` holds the node's convergence, acceleration and max_iterations.
+    """
+
+    def __call__(
+        self, sides: Sequence[GroupSide], label: str, /, *, parallel: bool, node: CouplingNode
+    ) -> CouplingController: ...
+
+
+def node_controller(
+    sides: Sequence[GroupSide], label: str, /, *, parallel: bool, node: CouplingNode
+) -> CouplingController:
+    """The default :class:`ControllerFactory`: a controller as ``node`` describes it."""
+    return CouplingController(
+        sides,
+        label,
+        convergence=node.convergence,
+        max_iterations=node.max_iterations,
+        parallel=parallel,
+        acceleration=dict(node.acceleration),
+    )
+
+
+@dataclass(frozen=True)
 class RegionCoupling:
     """What region ``region`` knows of the coupling of its case.
 
     ``group`` holds the regions coupled with it, itself included, in stepping
-    order; ``links`` the exchanges of the group. ``parallel`` says whether a side
-    always receives what its partner sent in the pass before (else serial: from a
-    region that steps earlier, what it sent in the same pass). The leader builds
-    its controller with ``controller`` (convergence, acceleration, max_iterations),
-    handing it ``parallel``.
+    order; ``links`` the exchanges of the group; ``nodes`` the nodes with an
+    exchange of this region, outer to inner. ``parallel`` says whether a side
+    always receives what its partner sent in the pass before (else serial: from
+    a region that steps earlier, what it sent in the same pass). The leader of
+    each node builds its controller with ``controller``, handing it
+    ``parallel`` and the node.
     """
 
     region: str
@@ -82,16 +138,17 @@ class RegionCoupling:
     links: tuple[Link, ...]
     transport: Transport
     parallel: bool = False
-    controller: ControllerFactory = CouplingController
+    controller: ControllerFactory = node_controller
+    nodes: tuple[CouplingNode, ...] = ()
 
     @property
     def leader(self) -> str:
-        """The region of the group that decides: the last in stepping order."""
+        """The region of the group that agrees values: the last in stepping order."""
         return self.group[-1]
 
     @property
     def is_leader(self) -> bool:
-        """Whether this region leads its group."""
+        """Whether this region leads its group (in ``Coupling.agree``)."""
         return self.region == self.leader
 
     @property
@@ -101,18 +158,52 @@ class RegionCoupling:
             dict(link.ends)[self.region] for link in self.links if self.region in dict(link.ends)
         )
 
+    def node(self, name: str) -> CouplingNode:
+        """The node ``name`` of this region."""
+        for node in self.nodes:
+            if node.name == name:
+                return node
+        raise KeyError(f"region {self.region} is in no coupling node '{name}'")
+
+    def node_links(self, node: CouplingNode) -> tuple[Link, ...]:
+        """The exchanges of ``node`` in this region's group."""
+        return tuple(link for link in self.links if link.name in node.exchanges)
+
+    def node_of(self, patch: str) -> CouplingNode:
+        """The node whose exchange connects ``patch`` of this region."""
+        for node in self.nodes:
+            for link in self.node_links(node):
+                if dict(link.ends).get(self.region) == patch:
+                    return node
+        raise KeyError(f"no coupling node has an exchange on {self.region}.{patch}")
+
+    def node_group(self, node: CouplingNode) -> tuple[str, ...]:
+        """The regions ``node`` connects with this region, itself included, in stepping order."""
+        return _group(self.region, self.group, self.node_links(node))
+
+    def node_leader(self, node: CouplingNode) -> str:
+        """The region that decides for ``node``: the last of its regions in stepping order."""
+        return self.node_group(node)[-1]
+
 
 def region_couplings(
     regions: Sequence[str],
     links: Sequence[Link],
     transport: Transport,
     parallel: bool = False,
-    controller: ControllerFactory = CouplingController,
+    controller: ControllerFactory = node_controller,
+    nodes: Optional[Sequence[CouplingNode]] = None,
 ) -> dict[str, RegionCoupling]:
     """The coupling of every region ``links`` connect, by region; ``regions`` in stepping order.
 
+    ``nodes`` lists the coupling nodes, outer to inner; without them one node
+    ``coupling`` holds every exchange, with the defaults of :class:`CouplingNode`.
+
     Raises ``ValueError`` when a link names a region not in ``regions``, joins
-    two patches of one region, or shares a patch with another link.
+    two patches of one region, or shares a patch with another link; when two
+    nodes have one name, an exchange is in no node or in two, a node names an
+    exchange that does not exist, or a node's placement or acceleration names a
+    region or exchange that is not the node's.
     """
     named = sorted({region for link in links for region, _patch in link.ends} - set(regions))
     if named:
@@ -131,6 +222,9 @@ def region_couplings(
                     f"'{link.name}'; a coupled patch is in one exchange"
                 )
             owner[(region, patch)] = link.name
+    if nodes is None:
+        nodes = [CouplingNode("coupling", tuple(link.name for link in links))]
+    _check_nodes(nodes, links)
     couplings: dict[str, RegionCoupling] = {}
     for region in regions:
         if region in couplings:
@@ -140,10 +234,58 @@ def region_couplings(
             continue
         group_links = tuple(link for link in links if link.ends[0][0] in group)
         for member in group:
+            touching = {link.name for link in group_links if member in dict(link.ends)}
+            member_nodes = tuple(node for node in nodes if touching & set(node.exchanges))
             couplings[member] = RegionCoupling(
-                member, group, group_links, transport, parallel, controller
+                member, group, group_links, transport, parallel, controller, member_nodes
             )
     return couplings
+
+
+def _check_nodes(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
+    """Raise ``ValueError`` unless ``nodes`` hold every exchange of ``links`` once, consistently."""
+    names = [link.name for link in links]
+    seen: list[str] = []
+    in_node: dict[str, str] = {}
+    for node in nodes:
+        if node.name in seen:
+            raise ValueError(f"two coupling nodes are named '{node.name}'; a node's name is unique")
+        seen.append(node.name)
+        if not node.exchanges:
+            raise ValueError(f"coupling node '{node.name}' has no exchange")
+        for exchange in node.exchanges:
+            if exchange not in names:
+                raise ValueError(
+                    f"coupling node '{node.name}' names the exchange '{exchange}', which does "
+                    f"not exist; the exchanges are {names}"
+                )
+            if exchange in in_node:
+                raise ValueError(
+                    f"exchange '{exchange}' is in the coupling nodes '{in_node[exchange]}' and "
+                    f"'{node.name}'; an exchange is in exactly one node"
+                )
+            in_node[exchange] = node.name
+        regions = sorted(
+            {region for link in links if link.name in node.exchanges for region, _ in link.ends}
+        )
+        unknown = sorted(set(node.placement) - set(regions))
+        if unknown:
+            raise ValueError(
+                f"coupling node '{node.name}' places its op in the regions {unknown}, which it "
+                f"does not couple; its regions are {regions}"
+            )
+        foreign = sorted(set(node.acceleration) - set(node.exchanges))
+        if foreign:
+            raise ValueError(
+                f"coupling node '{node.name}' accelerates the exchanges {foreign}, which are "
+                f"not its own; its exchanges are {list(node.exchanges)}"
+            )
+    missing = [name for name in names if name not in in_node]
+    if missing:
+        raise ValueError(
+            f"the exchanges {missing} are in no coupling node; each exchange is in exactly one "
+            f"node (the nodes: {seen})"
+        )
 
 
 def _group(region: str, regions: Sequence[str], links: Sequence[Link]) -> tuple[str, ...]:

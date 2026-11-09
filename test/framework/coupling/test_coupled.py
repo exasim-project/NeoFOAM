@@ -126,7 +126,7 @@ def test_a_coupled_boundary_condition_adds_its_side_to_its_region_s_coupling() -
 
     (operation,) = Coupling.of(region).operations()
     assert isinstance(operation.func, CouplingOp)
-    assert (operation.operation_name, operation.metadata.wraps) == ("solid.couple", Placement())
+    assert (operation.operation_name, operation.metadata.wraps) == ("solid.coupling", Placement())
     (exchange_side,) = operation.func.sides
     side = exchange_side.side
     assert exchange_side.key == ("solid", "right", "T")
@@ -221,8 +221,8 @@ def test_each_region_gets_its_own_graph_with_its_coupling_op() -> None:
     }
 
     assert trees == {
-        "solid": [("solid.couple", ["solve_T"])],
-        "fluid": [("fluid.couple", ["solve_T"])],
+        "solid": [("solid.coupling", ["solve_T"])],
+        "fluid": [("fluid.coupling", ["solve_T"])],
     }
 
 
@@ -234,8 +234,16 @@ def test_coupling_op_public_read_api() -> None:
     assert isinstance(solid_op, CouplingOp) and isinstance(fluid_op, CouplingOp)
 
     (solid_side,), (fluid_side,) = solid_op.sides, fluid_op.sides
-    assert (solid_op.label, solid_op.region, solid_op.is_leader) == ("solid.couple", "solid", False)
-    assert (fluid_op.label, fluid_op.region, fluid_op.is_leader) == ("fluid.couple", "fluid", True)
+    assert (solid_op.label, solid_op.region, solid_op.is_leader) == (
+        "solid.coupling",
+        "solid",
+        False,
+    )
+    assert (fluid_op.label, fluid_op.region, fluid_op.is_leader) == (
+        "fluid.coupling",
+        "fluid",
+        True,
+    )
     assert [
         (s.region, s.patch, s.field, s.sends, s.receives, s.points, s.mapped)
         for s in (solid_side, fluid_side)
@@ -258,7 +266,7 @@ def test_coupling_op_public_read_api() -> None:
     controller = fluid_op.controller
     assert solid_op.controller is None and controller is not None
     assert (controller.label, controller.parallel, controller.iteration) == (
-        "fluid.couple",
+        "fluid.coupling",
         False,
         0,
     )

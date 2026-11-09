@@ -8,20 +8,24 @@
   plain fields) and its points; an instance adds itself to its region's
   :class:`Coupling` model (``Coupling.of(ctx).add(self)``).
 - :class:`Coupling` — the coupling of one region, ``ctx.models["coupling"]``:
-  its sides, the operation of the region's graph (the coupling op), and
-  ``agree`` (the regions of a group agree on a value, e.g. a time step).
+  its sides, the operations of the region's graph (one coupling op per node),
+  and ``agree`` (the regions of a group agree on a value, e.g. a time step).
+- :class:`CouplingNode` — a named coupling loop: its exchanges, max_iterations,
+  convergence measures, an acceleration per exchange and its placement per
+  region; nodes are listed outer to inner.
 - :class:`RegionCoupling` — what a region knows of the case's coupling: its
-  group, the exchanges (:class:`Link`) and its transport; :func:`region_couplings`
-  builds it for every coupled region; :func:`run_regions` runs each region on its
-  own thread.
-- :class:`CouplingOp` — a region's coupling (its :class:`Coupling` builds it):
-  a loop that wraps the region's coupled fields; its loop test exchanges the
-  sides' data with the partner regions, mapped onto the sides' points
-  (:class:`Exchange`, :class:`Mapping`).
+  group, the exchanges (:class:`Link`), its nodes and its transport;
+  :func:`region_couplings` builds it for every coupled region; :func:`run_regions`
+  runs each region on its own thread.
+- :class:`CouplingOp` — a region's part of a node, ``<region>.<node>`` (its
+  :class:`Coupling` builds it): a loop placed as the node says; its loop test
+  exchanges the node's sides' data with the partner regions, mapped onto the
+  sides' points (:class:`Exchange`, :class:`Mapping`).
 - :class:`CouplingController` — the leader's part, in the coupling op of the
-  group's last region: decides when the data converged and relaxes it;
-  :class:`CouplingOutcome` per time step, :class:`CouplingNotConvergedWarning`
-  when ``max_iterations`` ends it.
+  node's last region: decides when the node's data converged and relaxes it,
+  per exchange (built by :func:`node_controller` unless the case gives its own
+  factory); :class:`CouplingOutcome` per time step,
+  :class:`CouplingNotConvergedWarning` when ``max_iterations`` ends it.
 - :class:`Transport` — all data between regions goes through it, point to point
   (send, receive, close); :class:`InProcessTransport` between threads.
 - numpy kernels: :func:`nearest_neighbor`, :class:`ConstantRelaxation`,
@@ -62,7 +66,15 @@ from .loop import (
     unchanged,
 )
 from .model import Coupling
-from .region import Link, RegionCoupling, region_couplings, run_regions
+from .region import (
+    ControllerFactory,
+    CouplingNode,
+    Link,
+    RegionCoupling,
+    node_controller,
+    region_couplings,
+    run_regions,
+)
 from .transport import InProcessTransport, SideKey, Transport, TransportClosed
 
 __all__ = [
@@ -73,9 +85,11 @@ __all__ = [
     "AitkenRelaxation",
     "Array",
     "ConstantRelaxation",
+    "ControllerFactory",
     "CoupledSide",
     "Coupling",
     "CouplingController",
+    "CouplingNode",
     "CouplingNotConvergedWarning",
     "CouplingOp",
     "CouplingOutcome",
@@ -97,6 +111,7 @@ __all__ = [
     "load_plugins",
     "mapping",
     "nearest_neighbor",
+    "node_controller",
     "region_couplings",
     "relative_changes",
     "run_regions",
