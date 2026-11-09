@@ -778,6 +778,12 @@ coupling model (<a class="reference internal" href="#neofoam.framework.solver.ru
 Reported to the installed execution observer before it is returned.</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.solver.runtime.SolverRuntime.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/runtime.html#SolverRuntime.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.runtime.SolverRuntime.run" title="Link to this definition">¶</a></dt>
+<dd><p>Solve the runtime’s region: initialize, resolve, run, finalize; return the context.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -785,6 +791,14 @@ Reported to the installed execution observer before it is returned.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.solver.runtime.</span></span><span class="sig-name descname"><span class="pre">SolverState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional_models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/solver/runtime.html#SolverState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.runtime.SolverState" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Mutable state container for a single solver run.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.solver.runtime.core_model">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.solver.runtime.</span></span><span class="sig-name descname"><span class="pre">core_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spec_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/runtime.html#core_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.runtime.core_model" title="Link to this definition">¶</a></dt>
+<dd><p>The instantiated core model (a <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code>) of <code class="docutils literal notranslate"><span class="pre">state</span></code> whose spec is <code class="docutils literal notranslate"><span class="pre">spec_name</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">state</span></code> holds the run’s <code class="docutils literal notranslate"><span class="pre">core_models</span></code> (a <a class="reference internal" href="#neofoam.framework.solver.runtime.SolverState" title="neofoam.framework.solver.runtime.SolverState"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverState</span></code></a>); a solver’s
+execution graph step takes its core models’ operations from it.</p>
 </dd></dl>
 
 </section>
@@ -856,9 +870,11 @@ Reported to the installed execution observer before it is returned.</p>
 <li><a class="reference internal" href="#neofoam.framework.solver.runtime.SolverRuntime.operations"><code class="docutils literal notranslate"><span class="pre">SolverRuntime.operations</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.runtime.SolverRuntime.optional_models"><code class="docutils literal notranslate"><span class="pre">SolverRuntime.optional_models</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.runtime.SolverRuntime.resolve_operations"><code class="docutils literal notranslate"><span class="pre">SolverRuntime.resolve_operations()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.solver.runtime.SolverRuntime.run"><code class="docutils literal notranslate"><span class="pre">SolverRuntime.run()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.framework.solver.runtime.SolverState"><code class="docutils literal notranslate"><span class="pre">SolverState</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.solver.runtime.core_model"><code class="docutils literal notranslate"><span class="pre">core_model()</span></code></a></li>
 </ul>
 </li>
 </ul>
