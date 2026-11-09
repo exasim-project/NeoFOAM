@@ -347,7 +347,7 @@ class SolutionLoopPredicate:
 
 
 # -- operations: the loop body --------------------------------------------
-@solutionLoop.operation()
+@solutionLoop.operation(first=True)
 def set_time_step(
     self: Any,
     ctx: Context,
@@ -367,6 +367,8 @@ def set_time_step(
 
     ``deltaT`` is re-published between the first step's two passes, mirroring the
     ``CourantNo.H`` pimpleFoam/interFoam re-run at the head of the loop.
+
+    Marked ``first``: inside a coupling loop it runs in its first pass only.
     """
     loop = _engine(ctx)
     ctx.fields["deltaT"] = loop.current_delta_t()
@@ -380,9 +382,12 @@ def set_time_step(
     loop.constrain_delta_t(limit, ceiling)
 
 
-@solutionLoop.operation()
+@solutionLoop.operation(first=True)
 def increment_time(self: Any, ctx: Context) -> None:
-    """Announce the current step and advance the loop one step."""
+    """Announce the current step and advance the loop one step.
+
+    Marked ``first``: inside a coupling loop the time advances once per step.
+    """
     loop = _engine(ctx)
     logger = ctx.models.get("loop_logger")
     (logger if logger is not None else print)(f"Time = {loop.timeName()}")
