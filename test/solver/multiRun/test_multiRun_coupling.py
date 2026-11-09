@@ -120,8 +120,8 @@ def test_multiRun_coupled_regions_reach_the_steady_profile(
 def test_multiRun_each_region_wraps_its_solution_in_its_coupling_op(
     observed: tuple[dict[str, Context], _Graphs], region: str
 ) -> None:
-    """The regions agree on deltaT before the time advances (agree_dt); the old time is
-    stored once per time step, outside the coupling loop."""
+    """The regions agree on deltaT before the time advances (the time-step op); the old
+    time is stored once per time step, outside the coupling loop."""
     _regions, graphs = observed
 
     assert graphs.trees[region] == [
@@ -129,7 +129,7 @@ def test_multiRun_each_region_wraps_its_solution_in_its_coupling_op(
             "time_loop",
             [
                 "set_time_step",
-                "agree_dt",
+                f"{region}.time_step",
                 "increment_time",
                 "store_old_time",
                 (f"{region}.coupling", ["solve_T"]),

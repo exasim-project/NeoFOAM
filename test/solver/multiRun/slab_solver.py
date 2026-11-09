@@ -282,16 +282,18 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     )
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(loop_ops["set_time_step"])
-        time_builder.step(self.operations["agree_dt"])
         time_builder.step(loop_ops["increment_time"])
         time_builder.step(self.operations["store_old_time"])
         time_builder.step(self.operations["solve_T"])
     return builder, Operations()
 
 
-@slab.operation()
+@slab.operation(first=True)
 def store_old_time(self: Any, ctx: Context) -> None:
-    """Keep the temperature of the last time step; a coupling loop solves from it again."""
+    """Keep the temperature of the last time step; a coupling loop solves from it again.
+
+    Marked ``first``: inside a coupling loop it runs once per time step.
+    """
     ctx.fields["T_old"] = ctx.fields["T"].copy()
 
 
@@ -321,10 +323,3 @@ def run_alone() -> Context:
     ctx = runtime.initialize()
     runtime.resolve_operations(ctx).run(ctx)
     return ctx
-
-
-@slab.operation()
-def agree_dt(self: Any, ctx: Context) -> None:
-    """The coupled regions step the smallest time step any of them asks for."""
-    loop = ctx.models["solution_loop"]
-    loop.set_delta_t(Coupling.of(ctx).agree(loop.current_delta_t()), adjust=False)
