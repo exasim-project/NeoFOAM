@@ -154,6 +154,6 @@ def test_renamed_fields_reach_the_fixed_point(monkeypatch: pytest.MonkeyPatch) -
 def test_convergence_on_unknown_data_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     """``data: T`` matches no side (both solve x): the leader raises as it builds its controller."""
     with pytest.raises(
-        ValueError, match=r"convergence on \['T'\], which no side of the group of .* sends"
+        ValueError, match=r"convergence RelativeConvergence on T, which no side of the node sends"
     ):
         _run("convergence_typo", monkeypatch)
