@@ -683,8 +683,8 @@
 <span class="sd">per node of the region.</span>
 
 <span class="sd">Regions that exchanges connect, directly or over other regions, form a group;</span>
-<span class="sd">they agree on values (``Coupling.agree``) and its last region in stepping order</span>
-<span class="sd">leads that. The regions a node's exchanges connect form the node's group; its</span>
+<span class="sd">they agree on the time step (``Coupling.time_step``) and its last region in</span>
+<span class="sd">stepping order leads that. The regions a node's exchanges connect form the node's group; its</span>
 <span class="sd">last region in stepping order leads the node (decides when it converged).</span>
 
 <span class="sd">Example::</span>
@@ -829,12 +829,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">leader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The region of the group that agrees values: the last in stepping order."""</span>
+<span class="w">        </span><span class="sd">"""The region of the group that agrees the time step: the last in stepping order."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_leader</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether this region leads its group (in ``Coupling.agree``)."""</span>
+<span class="w">        </span><span class="sd">"""Whether this region leads its group (in ``Coupling.time_step``)."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">leader</span>
 
     <span class="nd">@property</span>

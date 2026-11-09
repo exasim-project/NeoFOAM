@@ -679,8 +679,9 @@ what it sends and receives (one pydantic model each, of <code class="xref py py-
 plain fields) and its points; an instance adds itself to its region’s
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> model (<code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).add(self)</span></code>).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> — the coupling of one region, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>:
-its sides, the operations of the region’s graph (one coupling op per node),
-and <code class="docutils literal notranslate"><span class="pre">agree</span></code> (the regions of a group agree on a value, e.g. a time step).</p></li>
+its sides, the operations of the region’s graph (one coupling op per node)
+and, in a transient case, its time-step op (the group steps the smallest time
+step any region asks for).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNode</span></code> — a named coupling loop: its exchanges, max_iterations,
 convergence measures, an acceleration per exchange and its placement per
 region; nodes are listed outer to inner.</p></li>

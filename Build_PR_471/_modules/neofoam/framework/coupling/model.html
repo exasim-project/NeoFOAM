@@ -689,18 +689,20 @@
 <span class="sd">(``&lt;region&gt;.&lt;node&gt;``, outer to inner), built once from the sides of the node's</span>
 <span class="sd">exchanges; none in a region the case does not couple.</span>
 
-<span class="sd">:meth:`Coupling.agree` makes the regions of a group agree on a value, e.g. a</span>
-<span class="sd">transient solver on its next time step::</span>
-
-<span class="sd">    dt = Coupling.of(ctx).agree(dt)          # the smallest of the group</span>
+<span class="sd">In a transient case (the region's ``ctx.time`` is set) the graph also gets the</span>
+<span class="sd">region's time-step op ``&lt;region&gt;.time_step`` (:meth:`Coupling.time_step`): the</span>
+<span class="sd">regions of the group step the smallest time step any of them asks for. It runs</span>
+<span class="sd">after the solutionLoop's ``set_time_step`` and before its ``increment_time``,</span>
+<span class="sd">once per time step (``first``), and reads and writes the time step in the</span>
+<span class="sd">region's context (``ctx.time.delta_t``).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingOp</span><span class="p">,</span> <span class="n">ExchangeSide</span>
 
@@ -723,8 +725,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span> <span class="o">=</span> <span class="n">coupling</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExchangeSide</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Operations</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="c1"># the agreements so far: each gets its own tag, the same in every region</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_agreements</span> <span class="o">=</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="Coupling.of">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.of">[docs]</a>
@@ -819,35 +819,89 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span></div>
 
 
-<div class="viewcode-block" id="Coupling.agree">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.agree">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">agree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">how</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The value the regions of the group agree on: ``how`` of all their ``value`` s.</span>
+<div class="viewcode-block" id="Coupling.time_step">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.time_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">time_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The region's time-step op ``&lt;region&gt;.time_step``, or ``None``.</span>
 
-<span class="sd">        Every region of the group calls it, in the same order: each sends its</span>
-<span class="sd">        value to the leader, which reduces them with ``how`` and sends the result</span>
-<span class="sd">        to all. Blocks until the leader's result is there. A region the case does</span>
-<span class="sd">        not couple gets its ``value`` back.</span>
+<span class="sd">        ``None`` when the case does not couple the region or the region does not</span>
+<span class="sd">        step in time (``ctx.time`` is ``None``, e.g. a steady region). The op</span>
+<span class="sd">        sends the time step the region asks for (``ctx.time.delta_t``) to the</span>
+<span class="sd">        group's leader, which takes the smallest of the group and sends it back</span>
+<span class="sd">        (tag ``time/dt``); each region writes it into ``ctx.time.delta_t``, where</span>
+<span class="sd">        ``increment_time`` takes it from. It runs after ``set_time_step`` and</span>
+<span class="sd">        before ``increment_time``, once per time step (``first``).</span>
+
+<span class="sd">        Raises ``ValueError`` when ``graph`` (the region's operations, loops with</span>
+<span class="sd">        what they hold) has no ``set_time_step`` or ``increment_time``.</span>
 <span class="sd">        """</span>
         <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
-        <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_agreements</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">tag</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"agree:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_agreements</span><span class="si">}</span><span class="s2">"</span>
-        <span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="n">transport</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">coupling</span><span class="o">.</span><span class="n">leader</span><span class="p">,</span> <span class="n">coupling</span><span class="o">.</span><span class="n">transport</span>
-        <span class="k">if</span> <span class="n">region</span> <span class="o">!=</span> <span class="n">leader</span><span class="p">:</span>
-            <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">leader</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">value</span> <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="n">region</span> <span class="k">else</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">group</span>
-        <span class="p">]</span>
-        <span class="n">agreed</span> <span class="o">=</span> <span class="n">how</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">group</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">other</span> <span class="o">!=</span> <span class="n">region</span><span class="p">:</span>
-                <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">agreed</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">agreed</span></div>
+        <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">coupling</span><span class="o">.</span><span class="n">group</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">ctx</span><span class="o">.</span><span class="n">time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">_names</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SET_TIME_STEP</span><span class="p">,</span> <span class="n">INCREMENT_TIME</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"region </span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> steps in time coupled with </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">coupling</span><span class="o">.</span><span class="n">group</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"but its graph has no </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">; the coupled regions agree on the time step "</span>
+                <span class="sa">f</span><span class="s2">"between the solutionLoop's </span><span class="si">{</span><span class="n">SET_TIME_STEP</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">INCREMENT_TIME</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Operation</span><span class="p">(</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">_TimeStep</span><span class="p">(</span><span class="n">coupling</span><span class="p">)),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
+                <span class="n">op_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.time_step"</span><span class="p">,</span>
+                <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="n">SET_TIME_STEP</span><span class="p">],</span>
+                <span class="n">before</span><span class="o">=</span><span class="p">[</span><span class="n">INCREMENT_TIME</span><span class="p">],</span>
+                <span class="c1"># numbered: the resolver runs it right after set_time_step, before</span>
+                <span class="c1"># the operations stepped after increment_time</span>
+                <span class="n">operation_number</span><span class="o">=</span><span class="n">OperationNumber</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
 </div>
 
+
+
+<span class="c1"># The solutionLoop operations the time-step op runs between.</span>
+<span class="n">SET_TIME_STEP</span> <span class="o">=</span> <span class="s2">"set_time_step"</span>
+<span class="n">INCREMENT_TIME</span> <span class="o">=</span> <span class="s2">"increment_time"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_names</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The names of ``ops`` and of every operation inside their loops."""</span>
+    <span class="n">names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">:</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
+            <span class="n">names</span> <span class="o">|=</span> <span class="n">_names</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">names</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_TimeStep</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The time-step op of a region: its group steps the smallest time step any region asks for."""</span>
+
+    <span class="n">TAG</span> <span class="o">=</span> <span class="s2">"time/dt"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">RegionCoupling</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span> <span class="o">=</span> <span class="n">coupling</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span>
+        <span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="n">transport</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">coupling</span><span class="o">.</span><span class="n">leader</span><span class="p">,</span> <span class="n">coupling</span><span class="o">.</span><span class="n">transport</span>
+        <span class="n">asked</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">delta_t</span>
+        <span class="k">if</span> <span class="n">region</span> <span class="o">!=</span> <span class="n">leader</span><span class="p">:</span>
+            <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">,</span> <span class="n">asked</span><span class="p">)</span>
+            <span class="n">agreed</span> <span class="o">=</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">leader</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">agreed</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="n">asked</span> <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">region</span> <span class="k">else</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">group</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">group</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">other</span> <span class="o">!=</span> <span class="n">region</span><span class="p">:</span>
+                    <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">,</span> <span class="n">agreed</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">delta_t</span> <span class="o">=</span> <span class="n">agreed</span>
 </pre></div>
         </article>
       </div>
