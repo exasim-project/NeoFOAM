@@ -1074,7 +1074,7 @@
 <span class="c1"># -- operations: the loop body --------------------------------------------</span>
 <div class="viewcode-block" id="set_time_step">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.set_time_step">[docs]</a>
-<span class="nd">@solutionLoop</span><span class="o">.</span><span class="n">operation</span><span class="p">()</span>
+<span class="nd">@solutionLoop</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">set_time_step</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span>
@@ -1094,6 +1094,8 @@
 
 <span class="sd">    ``deltaT`` is re-published between the first step's two passes, mirroring the</span>
 <span class="sd">    ``CourantNo.H`` pimpleFoam/interFoam re-run at the head of the loop.</span>
+
+<span class="sd">    Marked ``first``: inside a coupling loop it runs in its first pass only.</span>
 <span class="sd">    """</span>
     <span class="n">loop</span> <span class="o">=</span> <span class="n">_engine</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
     <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">"deltaT"</span><span class="p">]</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">current_delta_t</span><span class="p">()</span>
@@ -1110,9 +1112,12 @@
 
 <div class="viewcode-block" id="increment_time">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html#neofoam.algorithms.solution_loop.solution_loop.increment_time">[docs]</a>
-<span class="nd">@solutionLoop</span><span class="o">.</span><span class="n">operation</span><span class="p">()</span>
+<span class="nd">@solutionLoop</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">increment_time</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Announce the current step and advance the loop one step."""</span>
+<span class="w">    </span><span class="sd">"""Announce the current step and advance the loop one step.</span>
+
+<span class="sd">    Marked ``first``: inside a coupling loop the time advances once per step.</span>
+<span class="sd">    """</span>
     <span class="n">loop</span> <span class="o">=</span> <span class="n">_engine</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"loop_logger"</span><span class="p">)</span>
     <span class="p">(</span><span class="n">logger</span> <span class="k">if</span> <span class="n">logger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">print</span><span class="p">)(</span><span class="sa">f</span><span class="s2">"Time = </span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
