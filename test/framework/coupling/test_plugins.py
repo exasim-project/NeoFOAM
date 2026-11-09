@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 from framework.coupling.plugins import installed
 
+from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.coupling import (
     ENTRY_POINT_GROUP,
     Acceleration,
@@ -165,10 +166,15 @@ class Other(Mapping):
         with pytest.raises(
             ImportError,
             match=r"coupling plugin 'precice' \(fake_coupling_plugin_precice\) of entry-point "
-            r"group 'neofoam.coupling' failed to load: Value 'identity' for discriminator "
-            r"'type' mapped to multiple choices",
+            r"group 'neofoam.coupling' failed to load: plugin family 'Mapping': "
+            r"type='identity' is already registered by "
+            r"neofoam.framework.coupling.kernels.IdentityMapping; "
+            r"fake_coupling_plugin_precice.Other cannot register the same type",
         ):
             load_plugins()
+        registry = PluginSystem.get_registered("Mapping")
+        assert registry is not None
+        assert "Other" not in registry.get_plugin_names()
 
 
 def test_a_plugin_that_fails_to_import_raises_with_its_name(
