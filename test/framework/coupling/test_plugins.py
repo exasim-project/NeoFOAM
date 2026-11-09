@@ -1,106 +1,184 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Coupling plugins add their kernels to the registries through the entry-point group.
+"""Coupling plugins add their strategies to the families through the entry-point group.
 
-Each plugin is a fake entry point of ``neofoam.coupling`` (:mod:`plugins`); the
-registries load them on their first read, once, next to the built-in kernels.
-A name registered twice, or a plugin that fails, raises naming the plugin.
+Each plugin is a fake entry point of ``neofoam.coupling`` (:mod:`plugins`) naming
+a module that registers its strategies as it is imported; :func:`load_plugins`
+imports them, once, next to the built-in strategies. A strategy is selected by
+its ``type``, its options validated; an unknown type or option raises listing
+what is registered. A type registered twice, or a plugin that fails, raises
+naming the plugin.
 """
 
-from typing import Any
+import threading
+from pathlib import Path
 
 import pytest
 from framework.coupling.plugins import installed
 
 from neofoam.framework.coupling import (
-    ACCELERATIONS,
-    CONVERGENCES,
     ENTRY_POINT_GROUP,
-    MAPPINGS,
-    ConstantRelaxation,
+    Acceleration,
+    Convergence,
     Mapping,
-    mapping,
+    load_plugins,
+    strategy,
 )
 
+PRECICE = """
+import time
+from typing import Literal
 
-class _RadialBasis(Mapping):
-    kind = "fake-rbf"
+from pydantic import Field
 
+from neofoam.framework.coupling import Acceleration, ConstantRelaxation, Mapping
 
-class _QuasiNewton(ConstantRelaxation):
-    pass
-
-
-def _precice(mappings: dict[str, Any], accelerations: dict[str, Any], _: dict[str, Any]) -> None:
-    mappings[_RadialBasis.kind] = _RadialBasis
-    accelerations["fake-iqn"] = _QuasiNewton
+time.sleep({delay})
 
 
-def test_plugin_kernels_join_the_registries_on_their_first_read(
-    monkeypatch: pytest.MonkeyPatch,
+@Mapping.register
+class RadialBasis(Mapping):
+    type: Literal["fake-rbf"] = "fake-rbf"
+    radius: float = Field(gt=0)
+    polynomial: bool = True
+
+
+@Acceleration.register
+class QuasiNewton(ConstantRelaxation):
+    type: Literal["fake-iqn"] = "fake-iqn"
+    columns: int = 10
+"""
+
+
+def _precice(delay: float = 0.0) -> str:
+    return PRECICE.format(delay=delay)
+
+
+def test_plugin_strategies_join_the_families_once_loaded(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    with installed(monkeypatch, precice=_precice) as asked:
-        assert asked == []
+    with installed(monkeypatch, tmp_path, precice=_precice()) as asked:
+        with pytest.raises(ValueError, match="unknown mapping type 'fake-rbf'"):
+            strategy(Mapping, {"type": "fake-rbf", "radius": 0.5})
 
-        assert isinstance(mapping("fake-rbf"), _RadialBasis)
-        assert isinstance(ACCELERATIONS["fake-iqn"](0.5), _QuasiNewton)
-        assert sorted(MAPPINGS) == ["fake-rbf", "identity", "nearest-neighbor"]
-        assert sorted(ACCELERATIONS) == ["aitken", "constant", "fake-iqn"]
-        assert sorted(CONVERGENCES) == ["relative"]
+        load_plugins()
+        load_plugins()
+
+        rbf = strategy(Mapping, {"type": "fake-rbf", "radius": 0.5, "polynomial": False})
+        assert (type(rbf).__name__, rbf.radius, rbf.polynomial) == ("RadialBasis", 0.5, False)
+        iqn = strategy(Acceleration, {"type": "fake-iqn", "relaxation": 0.3, "columns": 4})
+        assert (type(iqn).__name__, iqn.relaxation, iqn.columns) == ("QuasiNewton", 0.3, 4)
         assert asked == [ENTRY_POINT_GROUP]
 
-    assert "fake-rbf" not in MAPPINGS
+    with pytest.raises(ValueError, match="unknown mapping type 'fake-rbf'"):
+        strategy(Mapping, "fake-rbf")
 
 
-def test_a_plugin_that_registers_a_built_in_name_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    def register(mappings: dict[str, Any], *_: dict[str, Any]) -> None:
-        mappings["identity"] = _RadialBasis
-
-    with installed(monkeypatch, precice=register):
+def test_an_unknown_type_raises_listing_the_registered_types(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    with installed(monkeypatch, tmp_path, precice=_precice()):
+        load_plugins()
         with pytest.raises(
             ValueError,
-            match=r"plugin 'precice' \(fake_coupling_plugin_precice:register\) and NeoFOAM "
-            r"\(built-in\) both register the mapping 'identity'",
+            match=r"unknown acceleration type 'aitkn'; registered acceleration types: "
+            r"\['aitken', 'constant', 'fake-iqn'\]",
         ):
-            mapping("identity")
-
-
-def test_two_plugins_that_register_one_name_raise(monkeypatch: pytest.MonkeyPatch) -> None:
-    def register(_: dict[str, Any], accelerations: dict[str, Any], __: dict[str, Any]) -> None:
-        accelerations["iqn-ils"] = _QuasiNewton
-
-    with installed(monkeypatch, other=register, precice=_precice, second=register):
+            strategy(Acceleration, {"type": "aitkn", "relaxation": 0.5})
         with pytest.raises(
             ValueError,
-            match=r"plugin 'second' \(fake_coupling_plugin_second:register\) and plugin "
-            r"'other' \(fake_coupling_plugin_other:register\) both register the acceleration "
-            r"'iqn-ils'",
+            match=r"convergence \{'data': 'T'\} has no type; registered convergence types: "
+            r"\['relative'\]",
         ):
-            "iqn-ils" in ACCELERATIONS  # noqa: B015
-        # nothing of the plugins was added
-        assert "fake-rbf" not in dict.keys(MAPPINGS)
+            strategy(Convergence, {"data": "T"})
+
+
+@pytest.mark.parametrize(
+    ("options", "error"),
+    [
+        (
+            {"type": "fake-rbf", "radius": 0.5, "radios": 1.0},
+            r"mapping 'fake-rbf': unknown option 'radios'; its options: \['radius', 'polynomial'\]",
+        ),
+        (
+            {"type": "fake-rbf"},
+            r"mapping 'fake-rbf': missing option 'radius'; its options: \['radius', 'polynomial'\]",
+        ),
+        (
+            {"type": "fake-rbf", "radius": -1.0},
+            r"mapping 'fake-rbf': radius: Input should be greater than 0; its options",
+        ),
+    ],
+    ids=["unknown", "missing", "invalid"],
+)
+def test_a_wrong_option_raises_naming_the_options_of_the_strategy(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, options: dict[str, object], error: str
+) -> None:
+    with installed(monkeypatch, tmp_path, precice=_precice()):
+        load_plugins()
+        with pytest.raises(ValueError, match=error):
+            strategy(Mapping, options)
+
+
+def test_concurrent_first_loads_from_several_region_threads_see_every_plugin(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    results: dict[int, object] = {}
+    errors: list[BaseException] = []
+    start = threading.Barrier(8)
+
+    def region(index: int) -> None:
+        try:
+            start.wait()
+            load_plugins()
+            results[index] = strategy(Mapping, {"type": "fake-rbf", "radius": 1.0})
+        except BaseException as error:  # reported in the test thread
+            errors.append(error)
+
+    # the plugin takes a while to import: every other thread arrives while it loads
+    with installed(monkeypatch, tmp_path, precice=_precice(delay=0.2)) as asked:
+        threads = [threading.Thread(target=region, args=(index,)) for index in range(8)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert errors == []
+        assert sorted(results) == list(range(8))
+        assert {type(mapping).__name__ for mapping in results.values()} == {"RadialBasis"}
+        assert asked == [ENTRY_POINT_GROUP]
+
+
+def test_a_plugin_that_registers_a_built_in_type_raises(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    clash = """
+from typing import Literal
+from neofoam.framework.coupling import Mapping
+
+@Mapping.register
+class Other(Mapping):
+    type: Literal["identity"] = "identity"
+"""
+    with installed(monkeypatch, tmp_path, precice=clash):
+        with pytest.raises(
+            ImportError,
+            match=r"coupling plugin 'precice' \(fake_coupling_plugin_precice\) of entry-point "
+            r"group 'neofoam.coupling' failed to load: Value 'identity' for discriminator "
+            r"'type' mapped to multiple choices",
+        ):
+            load_plugins()
 
 
 def test_a_plugin_that_fails_to_import_raises_with_its_name(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    with installed(monkeypatch, broken="neofoam_no_such_plugin:register", precice=_precice):
-        for _ in range(2):  # not marked as loaded: every read raises
+    with installed(monkeypatch, tmp_path, broken="neofoam_no_such_plugin", precice=_precice()):
+        for _ in range(2):  # not marked as loaded: every call raises
             with pytest.raises(
                 ImportError,
-                match=r"coupling plugin 'broken' \(neofoam_no_such_plugin:register\) of "
+                match=r"coupling plugin 'broken' \(neofoam_no_such_plugin\) of "
                 "entry-point group 'neofoam.coupling' failed to load: No module named",
             ):
-                mapping("identity")
-
-
-def test_a_plugin_whose_register_fails_raises_with_its_name(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    def register(*_: dict[str, Any]) -> None:
-        raise RuntimeError("preCICE not found")
-
-    with installed(monkeypatch, precice=register):
-        with pytest.raises(ImportError, match="plugin 'precice' .* failed to register: preCICE"):
-            sorted(CONVERGENCES)
+                load_plugins()

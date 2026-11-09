@@ -43,7 +43,7 @@ from neofoam.framework.operations import IterativeOp
 
 from .controller import CouplingController, GroupSide
 from .data import End, Exchange, ExchangeSide, _array_names, _arrays, _check_received, _kinds, _sent
-from .kernels import BoundMapping, mapping
+from .kernels import BoundMapping
 from .transport import Data, Tag
 
 if TYPE_CHECKING:
@@ -126,7 +126,7 @@ class CouplingOp(IterativeOp):
         self._leader = self._group[-1]
         self._exchanges = {
             dict(link.ends)[self.region]: Exchange(
-                link.name, link.partner(self.region), mapping(link.mapping)
+                link.name, link.partner(self.region), link.mapping
             )
             for link in self._links
             if self.region in dict(link.ends)

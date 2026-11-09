@@ -45,6 +45,7 @@ from typing import Callable, Literal, Mapping, Optional, Protocol, Sequence, Typ
 
 from neofoam.framework.types import Placement
 
+from . import kernels
 from .controller import CouplingController, GroupSide
 from .data import End
 from .kernels import Acceleration, Convergence
@@ -55,14 +56,15 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class Link:
-    """One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping kind.
+    """One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping.
 
-    ``mapping`` is a kind of :data:`~neofoam.framework.coupling.MAPPINGS`.
+    ``mapping`` is a :class:`~neofoam.framework.coupling.Mapping` (by default
+    :class:`~neofoam.framework.coupling.IdentityMapping`).
     """
 
     name: str
     ends: tuple[End, End]
-    mapping: str = "identity"
+    mapping: kernels.Mapping = field(default_factory=kernels.IdentityMapping)
 
     def partner(self, region: str) -> End:
         """The end of the exchange that is not in ``region``."""

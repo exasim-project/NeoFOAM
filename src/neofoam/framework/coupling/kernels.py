@@ -1,42 +1,51 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""numpy kernels of a coupling: mapping, relaxation and convergence of the exchanged data.
+"""The strategies of a coupling: mapping, acceleration and convergence of the exchanged data.
 
-The mapping is per exchange and receiving side (:func:`mapping`); relaxation and
-convergence belong to a coupling node (its leader's
+Each is a family of NeoFOAM's :class:`~neofoam.core.plugin_system.PluginSystem`:
+a pydantic model per strategy, selected by its ``type``, its options its
+fields (an unknown option is an error). The mapping is per exchange and
+receiving side (:class:`Mapping`); relaxation and convergence belong to a
+coupling node (its leader's
 :class:`~neofoam.framework.coupling.CouplingController`): a list of convergence
-measures, all of which must hold, and at most one acceleration per exchange::
+measures (:class:`Convergence`), all of which must hold, and at most one
+acceleration (:class:`Acceleration`) per exchange::
 
     CouplingNode(
         "thermal",
         ("interface",),
         convergence=(RelativeConvergence(data="T", limit=1e-5),),
-        acceleration={"interface": AitkenRelaxation(initial=0.5)},
+        acceleration={"interface": AitkenRelaxation(relaxation=0.5)},
     )
 
-The registries :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES`
-name them for the case (``system/regionCoupling.yaml``); a kernel of one's own
-is added to its registry. A package adds its kernels through the entry-point
-group ``neofoam.coupling`` (:data:`ENTRY_POINT_GROUP`): each entry point names a
-``register(mappings, accelerations, convergences)`` that fills the three dicts
-it is given; the registries take them in before they are first read
-(:func:`load_plugins`)::
+The case names them by ``type`` (``system/regionCoupling.yaml``;
+:func:`strategy` builds one from its options). A strategy of one's own
+subclasses its family with a ``type: Literal[...]`` and registers with it
+(``@Mapping.register``). A package adds its strategies through the entry-point
+group ``neofoam.coupling`` (:data:`ENTRY_POINT_GROUP`): each entry point names
+a module that registers them as it is imported; :func:`load_plugins` imports
+them, once, before the regions start::
 
     # pyproject.toml of neofoam-precice:
     #   [project.entry-points."neofoam.coupling"]
-    #   precice = "neofoam_precice:register"
-    def register(mappings, accelerations, convergences):
-        mappings["rbf"] = RadialBasisMapping
-        accelerations["iqn-ils"] = IQNILSAcceleration
+    #   precice = "neofoam_precice.coupling"
+    @Mapping.register
+    class RadialBasisMapping(Mapping):
+        type: Literal["rbf"] = "rbf"
+        support_radius: float
 """
 
 from __future__ import annotations
 
 import importlib.metadata
-from typing import Any, Callable, Iterator, NamedTuple, Optional, TypeVar
+import threading
+from typing import Any, Callable, Literal, NamedTuple, Optional, TypeVar, cast
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
+
+from neofoam.core.plugin_system import PluginSystem
 
 from .transport import Data
 
@@ -53,56 +62,100 @@ class SideChange(NamedTuple):
     current: Data
 
 
-V = TypeVar("V")
-#: The entry-point group of the packages that add kernels to the registries.
+#: The entry-point group of the packages that add strategies to the families.
 ENTRY_POINT_GROUP = "neofoam.coupling"
 
+S = TypeVar("S", bound=BaseModel)
 
-class Registry(dict[str, V]):
-    """A registry of kernels by name: a dict that takes in the plugins' kernels before it is read.
 
-    Reading it (``[]``, ``in``, ``get``, iterating, ``len``, ``keys``, ``values``,
-    ``items``) loads the plugins of :data:`ENTRY_POINT_GROUP` first, once
-    (:func:`load_plugins`); writing to it does not.
+def strategy(family: type[S], options: Any) -> S:
+    """The strategy of ``family`` (:class:`Mapping`, :class:`Acceleration`, :class:`Convergence`)
+    that ``options`` describe: ``{type: ..., <option>: ...}``, or the ``type`` alone.
+
+    Raises ``ValueError`` listing the registered types when ``type`` is missing
+    or none of them, and naming the strategy's options when one is unknown,
+    missing or invalid. A strategy is passed through.
+
+    Example::
+
+        strategy(Acceleration, {"type": "aitken", "relaxation": 0.5})
+        strategy(Mapping, "nearest-neighbor")
     """
-
-    def __getitem__(self, name: str) -> V:
-        load_plugins()
-        return super().__getitem__(name)
-
-    def __contains__(self, name: object) -> bool:
-        load_plugins()
-        return super().__contains__(name)
-
-    def __iter__(self) -> Iterator[str]:
-        load_plugins()
-        return super().__iter__()
-
-    def __len__(self) -> int:
-        load_plugins()
-        return super().__len__()
-
-    def get(self, name: str, default: Any = None) -> Any:
-        load_plugins()
-        return super().get(name, default)
-
-    def keys(self) -> Any:
-        load_plugins()
-        return super().keys()
-
-    def values(self) -> Any:
-        load_plugins()
-        return super().values()
-
-    def items(self) -> Any:
-        load_plugins()
-        return super().items()
+    if isinstance(options, family):
+        return options
+    what = family.__name__.lower()
+    if isinstance(options, str):
+        options = {"type": options}
+    members = _members(family)
+    kind = options.get("type") if isinstance(options, dict) else None
+    if kind not in members:
+        problem = f"unknown {what} type {kind!r}" if kind else f"{what} {options!r} has no type"
+        raise ValueError(f"{problem}; registered {what} types: {sorted(members)}")
+    variable = _family(family).discriminator_variable
+    try:
+        built = cast(Any, family).create(**{variable: options})
+    except ValidationError as error:
+        problems = "; ".join(_problem(problem) for problem in error.errors())
+        names = [name for name in members[kind].model_fields if name != "type"]
+        raise ValueError(f"{what} {kind!r}: {problems}; its options: {names}") from None
+    return cast(S, getattr(built, variable))
 
 
-# Whether the coupling has converged, from the change of every side's data in the last pass.
-Convergence = Callable[[list[SideChange]], bool]
-# Relaxes the Array data carried into a pass: (data of the carried sides, iteration) -> data.
-Acceleration = Callable[[list[Data], int], list[Data]]
+def _family(family: type[BaseModel]) -> Any:
+    registry = PluginSystem.get_registered(family.__name__)
+    if registry is None:
+        raise TypeError(f"{family.__name__} is no plugin family")
+    return registry
+
+
+def _members(family: type[BaseModel]) -> dict[str, type[BaseModel]]:
+    """The registered strategies of ``family``, by type."""
+    return {
+        str(member.model_fields["type"].default): member
+        for member in _family(family).plugin_registry
+        if "type" in member.model_fields
+    }
+
+
+def _problem(error: Any) -> str:
+    """One pydantic error of a strategy's options, named by its option."""
+    option = ".".join(str(part) for part in error["loc"][2:])
+    if error["type"] == "extra_forbidden":
+        return f"unknown option '{option}'"
+    if error["type"] == "missing":
+        return f"missing option '{option}'"
+    return f"{option}: {error['msg']}"
+
+
+_load_lock = threading.Lock()
+_loaded = False
+
+
+def load_plugins() -> None:
+    """Import the module of every plugin of :data:`ENTRY_POINT_GROUP`, once; it registers its
+    strategies with their families as it is imported.
+
+    Call it before the regions start (``multiRun`` does): a case's config names
+    a plugin's strategies by their type only once they are registered. Safe to
+    call from several threads; the first call imports, the others wait for it.
+
+    Raises ``ImportError`` naming the plugin when it fails to import (e.g. it
+    registers a type that is registered already); the next call tries again.
+    """
+    global _loaded
+    with _load_lock:
+        if _loaded:
+            return
+        entry_points = importlib.metadata.entry_points(group=ENTRY_POINT_GROUP)
+        for entry_point in sorted(entry_points, key=lambda e: e.name):
+            try:
+                entry_point.load()
+            except Exception as error:
+                raise ImportError(
+                    f"coupling plugin '{entry_point.name}' ({entry_point.value}) of "
+                    f"entry-point group '{ENTRY_POINT_GROUP}' failed to load: {error}"
+                ) from error
+        _loaded = True
 
 
 # The elements of the target-by-source distance block :func:`nearest_neighbor` computes at once.
@@ -136,18 +189,18 @@ def nearest_neighbor(source: Any, target: Any) -> Any:
 BoundMapping = Callable[[Data], Data]
 
 
-class Mapping:
+@PluginSystem.register(discriminator_variable="mapping", discriminator="type")
+class Mapping(BaseModel):
     """Maps the :data:`~neofoam.framework.coupling.Array` data a side sends onto the other side.
 
-    The mapping of an :class:`~neofoam.framework.coupling.Exchange`. The
-    receiving side's coupling op binds it once, when it connects, to the
-    partner's points (``source``) and the side's own (``target``; each a
-    ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the data
-    of every pass with the bound mapping. ``kind`` names it
-    (``system/regionCoupling.yaml``: ``mapping:``); :data:`MAPPINGS` holds the
-    kinds the framework offers. This base class hands the data over unchanged
-    (kind ``identity``): the sides share their points. A mapping of one's own
-    subclasses it, sets ``kind`` and overrides :meth:`bind`.
+    The mapping of an :class:`~neofoam.framework.coupling.Exchange`, a plugin
+    family (``system/regionCoupling.yaml``: ``mapping:``, its ``type`` and
+    options). The receiving side's coupling op binds it once, when it connects,
+    to the partner's points (``source``) and the side's own (``target``; each a
+    ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the
+    data of every pass with the bound mapping. A mapping of one's own subclasses
+    it with a ``type: Literal[...]``, its options as fields, overrides
+    :meth:`bind` and registers (``@Mapping.register``).
 
     Example::
 
@@ -155,17 +208,27 @@ class Mapping:
         mapped = mapper({"T": values})
     """
 
-    kind = "identity"
+    model_config = ConfigDict(extra="forbid")
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
         """The mapping from the points ``source`` onto ``target``.
 
-        Raises ``ValueError`` when it cannot map between them: here, when both
-        sides have points and their numbers differ.
+        Raises ``ValueError`` when it cannot map between them.
         """
+        raise NotImplementedError
+
+
+@Mapping.register
+class IdentityMapping(Mapping):
+    """Hands the data over unchanged: the sides share their points."""
+
+    type: Literal["identity"] = "identity"
+
+    def bind(self, source: Any, target: Any) -> BoundMapping:
+        """Raises ``ValueError`` when both sides have points and their numbers differ."""
         if source is not None and target is not None and len(source) != len(target):
             raise ValueError(
-                f"mapping '{self.kind}' needs as many points on both sides: "
+                f"mapping '{self.type}' needs as many points on both sides: "
                 f"{len(source)} sent, {len(target)} received"
             )
         return _unchanged
@@ -175,6 +238,7 @@ def _unchanged(data: Data) -> Data:
     return data
 
 
+@Mapping.register
 class NearestNeighborMapping(Mapping):
     """Maps every point of the receiving side to the nearest point of the sending side.
 
@@ -182,11 +246,11 @@ class NearestNeighborMapping(Mapping):
     (:func:`nearest_neighbor`) once, so the points must not move.
     """
 
-    kind = "nearest-neighbor"
+    type: Literal["nearest-neighbor"] = "nearest-neighbor"
 
     def bind(self, source: Any, target: Any) -> BoundMapping:
         if source is None or target is None:
-            raise ValueError(f"mapping '{self.kind}' needs the coordinates of both sides")
+            raise ValueError(f"mapping '{self.type}' needs the coordinates of both sides")
         indices = nearest_neighbor(source, target)
 
         def mapper(data: Data) -> Data:
@@ -195,39 +259,44 @@ class NearestNeighborMapping(Mapping):
         return mapper
 
 
-#: The mappings by their ``kind``: a new instance per exchange.
-MAPPINGS: Registry[Callable[[], Mapping]] = Registry(
-    {
-        Mapping.kind: Mapping,
-        NearestNeighborMapping.kind: NearestNeighborMapping,
-    }
-)
+@PluginSystem.register(discriminator_variable="acceleration", discriminator="type")
+class Acceleration(BaseModel):
+    """Relaxes the Array data carried into a pass: (data of the carried sides, iteration) -> data.
+
+    The acceleration of an exchange of a
+    :class:`~neofoam.framework.coupling.CouplingNode`, a plugin family
+    (``system/regionCoupling.yaml``: ``acceleration:``, its ``type`` and
+    options). It keeps the data of its last passes in private attributes: give
+    each exchange its own. An acceleration of one's own subclasses it with a
+    ``type: Literal[...]``, its options as fields, overrides :meth:`__call__`
+    and registers (``@Acceleration.register``).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
+        """The relaxed ``sent`` for pass ``iteration``."""
+        raise NotImplementedError
 
 
-def mapping(kind: str) -> Mapping:
-    """A new mapping of ``kind`` (a key of :data:`MAPPINGS`)."""
-    if kind not in MAPPINGS:
-        raise ValueError(f"unknown mapping '{kind}'; known: {sorted(MAPPINGS)}")
-    return MAPPINGS[kind]()
+@Acceleration.register
+class ConstantRelaxation(Acceleration):
+    """Under-relaxes the data carried into a pass by a fixed factor, ``relaxation``.
 
-
-class ConstantRelaxation:
-    """Under-relaxes the data carried into a pass by a fixed factor.
-
-    Use it as the ``acceleration`` of an exchange of a
-    :class:`~neofoam.framework.coupling.CouplingNode`:
-    ``x = x_last + omega * (sent - x_last)`` for all carried :data:`Array` data at once, with
-    ``x_last`` what the last pass received. ``omega = 1`` changes nothing; the
-    first data passes unchanged. Not thread safe.
+    ``x = x_last + relaxation * (sent - x_last)`` for all carried :data:`Array`
+    data at once, with ``x_last`` what the last pass received. ``relaxation = 1``
+    changes nothing; the first data passes unchanged. Not thread safe.
 
     Example::
 
-        CouplingNode("n", ("interface",), acceleration={"interface": ConstantRelaxation(0.5)})
+        CouplingNode(
+            "n", ("interface",), acceleration={"interface": ConstantRelaxation(relaxation=0.5)}
+        )
     """
 
-    def __init__(self, omega: float) -> None:
-        self.omega = omega
-        self._last: Optional[Any] = None
+    type: Literal["constant"] = "constant"
+    relaxation: float = Field(gt=0, le=1)
+    _last: Optional[Any] = PrivateAttr(default=None)
 
     def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
         """The relaxed ``sent`` for pass ``iteration``."""
@@ -239,26 +308,28 @@ class ConstantRelaxation:
         return _unflatten(values, sent)
 
     def _factor(self, residual: Any, iteration: int) -> float:
-        return self.omega
+        return self.relaxation
 
 
+@Acceleration.register
 class AitkenRelaxation(ConstantRelaxation):
     """Under-relaxes the data carried into a pass by Aitken's dynamic factor.
 
     Use it instead of :class:`ConstantRelaxation` when a fixed factor converges
     slowly; on a linear fixed-point problem of one value it reaches the solution
     in the second relaxed pass. The factor follows from the residuals of the last
-    two passes; the first pass of a time step uses ``initial``. Not thread safe.
+    two passes; the first pass of a time step uses ``relaxation``. Not thread safe.
 
     Example::
 
-        CouplingNode("n", ("interface",), acceleration={"interface": AitkenRelaxation(0.5)})
+        CouplingNode(
+            "n", ("interface",), acceleration={"interface": AitkenRelaxation(relaxation=0.5)}
+        )
     """
 
-    def __init__(self, initial: float) -> None:
-        super().__init__(initial)
-        self._residual: Optional[Any] = None
-        self._omega = initial
+    type: Literal["aitken"] = "aitken"  # type: ignore[assignment]
+    _residual: Optional[Any] = PrivateAttr(default=None)
+    _omega: float = PrivateAttr(default=0.0)
 
     def _factor(self, residual: Any, iteration: int) -> float:
         previous = self._residual if iteration > 1 else None
@@ -267,23 +338,13 @@ class AitkenRelaxation(ConstantRelaxation):
         # that starts converged) would drive the factor to zero and stall the
         # loop: start over from the initial factor instead.
         if previous is None or np.linalg.norm(previous) <= 1e-6 * np.linalg.norm(residual):
-            self._omega = self.omega
+            self._omega = self.relaxation
             return self._omega
         change = residual - previous
         squared = float(change @ change)
         if squared > 0.0:
             self._omega *= -float(previous @ change) / squared
         return self._omega
-
-
-#: The accelerations by their name (``system/regionCoupling.yaml``: ``acceleration.type``),
-#: built with the relaxation factor; a new instance per coupling, as it keeps its last passes.
-ACCELERATIONS: Registry[Callable[[float], Acceleration]] = Registry(
-    {
-        "constant": ConstantRelaxation,
-        "aitken": AitkenRelaxation,
-    }
-)
 
 
 def _flatten(sent: list[Data]) -> Any:
@@ -307,22 +368,40 @@ def _unflatten(values: Any, like: list[Data]) -> list[Data]:
     return result
 
 
-class RelativeConvergence:
+@PluginSystem.register(discriminator_variable="convergence", discriminator="type")
+class Convergence(BaseModel):
+    """Whether the coupling has converged, from the change of every side's data in the last pass.
+
+    A convergence measure of a :class:`~neofoam.framework.coupling.CouplingNode`,
+    a plugin family (``system/regionCoupling.yaml``: ``convergence:``, a list of
+    ``type`` and options). A measure on the data of one field names it in its
+    ``data`` option. A measure of one's own subclasses it with a
+    ``type: Literal[...]``, its options as fields, overrides :meth:`__call__` and
+    registers (``@Convergence.register``).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    def __call__(self, changes: list[SideChange]) -> bool:
+        """Whether the data converged, from ``changes``."""
+        raise NotImplementedError
+
+
+@Convergence.register
+class RelativeConvergence(Convergence):
     """Converged once the data of field ``data`` changes by less than ``limit`` relative to it.
 
-    Use it in the ``convergence`` of a
-    :class:`~neofoam.framework.coupling.CouplingNode`.
     It checks every array sent by a side of the field ``data`` (2-norm of the
     change over the 2-norm of the array) and ignores the sides of other fields.
 
     Example::
 
-        CouplingNode("n", ("interface",), convergence=(RelativeConvergence("T", 1e-5),))
+        CouplingNode("n", ("interface",), convergence=(RelativeConvergence(data="T", limit=1e-5),))
     """
 
-    def __init__(self, data: str, limit: float) -> None:
-        self.data = data
-        self.limit = limit
+    type: Literal["relative"] = "relative"
+    data: str
+    limit: float = Field(gt=0)
 
     def __call__(self, changes: list[SideChange]) -> bool:
         """Whether every array of field ``data`` changed by less than ``limit`` in the last pass."""
@@ -333,81 +412,3 @@ class RelativeConvergence:
             if change.field == self.data
             for name in change.current
         )
-
-
-#: The convergence measures by their name (``system/regionCoupling.yaml``:
-#: ``convergence[].type``), built with the field whose data they check and the limit.
-CONVERGENCES: Registry[Callable[[str, float], Convergence]] = Registry(
-    {
-        "relative": RelativeConvergence,
-    }
-)
-
-# None: the plugins are not loaded yet; False: they are loading; True: loaded.
-_plugins_loaded: Optional[bool] = None
-
-
-def load_plugins() -> None:
-    """Add the kernels of every plugin of :data:`ENTRY_POINT_GROUP` to the registries, once.
-
-    Each entry point names a callable ``register(mappings, accelerations,
-    convergences)`` that fills the three empty dicts it is given; they join
-    :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES` when every
-    plugin registered (a read of a registry while the plugins load sees the
-    built-in kernels only). The registries call it before they are read; a case
-    config that checks a name against a registry reads it.
-
-    Raises ``ImportError`` naming the plugin when it fails to load or to
-    register, ``ValueError`` naming both sides when a plugin registers a name
-    that is built in or registered by another plugin. Nothing is added then, and
-    the next read tries again.
-    """
-    global _plugins_loaded
-    if _plugins_loaded is not None:
-        return
-    _plugins_loaded = False
-    try:
-        registries: dict[str, Registry[Any]] = {
-            "mapping": MAPPINGS,
-            "acceleration": ACCELERATIONS,
-            "convergence": CONVERGENCES,
-        }
-        # who registered every name, by registry: NeoFOAM or a plugin
-        sources: dict[str, dict[str, str]] = {
-            what: dict.fromkeys(dict.keys(r), "NeoFOAM (built-in)")
-            for what, r in registries.items()
-        }
-        added: dict[str, dict[str, Any]] = {what: {} for what in registries}
-        entry_points = importlib.metadata.entry_points(group=ENTRY_POINT_GROUP)
-        for entry_point in sorted(entry_points, key=lambda e: e.name):
-            plugin = f"plugin '{entry_point.name}' ({entry_point.value})"
-            try:
-                register = entry_point.load()
-            except Exception as error:
-                raise ImportError(
-                    f"coupling {plugin} of entry-point group '{ENTRY_POINT_GROUP}' "
-                    f"failed to load: {error}"
-                ) from error
-            kernels: dict[str, dict[str, Any]] = {what: {} for what in registries}
-            try:
-                register(kernels["mapping"], kernels["acceleration"], kernels["convergence"])
-            except Exception as error:
-                raise ImportError(
-                    f"coupling {plugin} of entry-point group '{ENTRY_POINT_GROUP}' "
-                    f"failed to register: {error}"
-                ) from error
-            for what, entries in kernels.items():
-                for name, kernel in entries.items():
-                    if name in sources[what]:
-                        raise ValueError(
-                            f"coupling {plugin} and {sources[what][name]} both register the "
-                            f"{what} '{name}'; a name is registered once"
-                        )
-                    sources[what][name] = plugin
-                    added[what][name] = kernel
-        for what, registry in registries.items():
-            dict.update(registry, added[what])
-    except BaseException:
-        _plugins_loaded = None
-        raise
-    _plugins_loaded = True

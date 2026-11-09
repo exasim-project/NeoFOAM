@@ -86,7 +86,7 @@ def _region(name: str) -> Context:
     return contexts([name, "other"], [Link("x", ((name, "right"), ("other", "p")))])[name]
 
 
-CHT = Link("cht", (("solid", "right"), ("fluid", "wall")), "nearest-neighbor")
+CHT = Link("cht", (("solid", "right"), ("fluid", "wall")), NearestNeighborMapping())
 
 
 def _pair(link: Link = CHT) -> dict[str, Context]:
