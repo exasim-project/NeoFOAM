@@ -685,6 +685,11 @@
 <span class="sd">Threads started by an observed run do not inherit the observer, except the</span>
 <span class="sd">region threads of multiRun: each region reports to it from its own thread.</span>
 
+<span class="sd">So one observer of a multi-region run is called from several threads at once:</span>
+<span class="sd">its hooks must be thread safe (e.g. guard what they record with a lock). A hook</span>
+<span class="sd">that blocks pauses its own region's thread; the regions coupled with it wait</span>
+<span class="sd">for it at their next exchange.</span>
+
 <span class="sd">Example::</span>
 
 <span class="sd">    class Printer(ExecutionObserver):</span>

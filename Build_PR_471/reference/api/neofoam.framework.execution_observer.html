@@ -686,6 +686,10 @@ in one thread does not report to, or block in, a run in another thread, and
 overlapping <code class="docutils literal notranslate"><span class="pre">observe()</span></code> scopes in different threads cannot undo each other.
 Threads started by an observed run do not inherit the observer, except the
 region threads of multiRun: each region reports to it from its own thread.</p>
+<p>So one observer of a multi-region run is called from several threads at once:
+its hooks must be thread safe (e.g. guard what they record with a lock). A hook
+that blocks pauses its own region’s thread; the regions coupled with it wait
+for it at their next exchange.</p>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Printer</span><span class="p">(</span><span class="n">ExecutionObserver</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">before_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>

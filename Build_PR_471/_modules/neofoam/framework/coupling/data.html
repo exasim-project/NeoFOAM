@@ -812,12 +812,8 @@
     <span class="n">coordinates</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># that both are pydantic models @coupled checked on the class</span>
         <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"sends"</span><span class="p">,</span> <span class="s2">"receives"</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_model</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">)):</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"a coupled side declares what it </span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2"> as a pydantic model, "</span>
-                    <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">role</span><span class="p">)</span><span class="si">!r}</span><span class="s2">"</span>
-                <span class="p">)</span>
             <span class="n">_check_plain</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"coordinates"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
