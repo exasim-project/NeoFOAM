@@ -21,6 +21,13 @@ they agree on the time step (``Coupling.time_step``) and its last region in
 stepping order leads that. The regions a node's exchanges connect form the node's group; its
 last region in stepping order leads the node (decides when it converged).
 
+Each node has its scheme (``CouplingNode.scheme``): ``parallel`` (the default)
+or ``serial``. A serial pass of a region waits for the whole pass of the regions
+that step before it, so a serial node may neither enclose a node coupling two of
+its regions as well (:func:`region_couplings` raises) nor hold the time step of
+its regions (``Coupling.check`` raises): both need the partner to come back
+inside the pass.
+
 Example::
 
     links = [Link("interface", (("left", "right"), ("right", "left")))]
@@ -34,7 +41,7 @@ from __future__ import annotations
 import contextvars
 import threading
 from dataclasses import dataclass, field
-from typing import Callable, Mapping, Optional, Protocol, Sequence, TypeVar
+from typing import Callable, Literal, Mapping, Optional, Protocol, Sequence, TypeVar
 
 from neofoam.framework.types import Placement
 
@@ -77,6 +84,9 @@ class CouplingNode:
     ``placement`` places the node's op in a region's graph (by region;
     :class:`~neofoam.framework.types.Placement` ``()`` for a region it does not
     name: around the whole body of the top scope, or of the node before).
+    ``scheme`` ``parallel``: a side receives what its partner sent in the pass
+    before; ``serial``: from a region that steps earlier, what it sent in the
+    same pass.
 
     An acceleration keeps the data of its last passes: give each node its own.
     """
@@ -87,6 +97,12 @@ class CouplingNode:
     convergence: tuple[Convergence, ...] = ()
     acceleration: Mapping[str, Acceleration] = field(default_factory=dict)
     placement: Mapping[str, Placement] = field(default_factory=dict)
+    scheme: Literal["serial", "parallel"] = "parallel"
+
+    @property
+    def parallel(self) -> bool:
+        """Whether the node's scheme is ``parallel``."""
+        return self.scheme == "parallel"
 
     def placement_of(self, region: str) -> Placement:
         """Where the node's op sits in the graph of ``region``."""
@@ -96,18 +112,17 @@ class CouplingNode:
 class ControllerFactory(Protocol):
     """Builds a node leader's controller from the node's sides, the leader's label and the node.
 
-    ``parallel`` is the coupling's (:attr:`RegionCoupling.parallel`); the
-    controller decides with it which sides receive fresh or carried data.
-    ``node`` holds the node's convergence, acceleration and max_iterations.
+    ``node`` holds the node's scheme (the controller decides with it which sides
+    receive fresh or carried data), convergence, acceleration and max_iterations.
     """
 
     def __call__(
-        self, sides: Sequence[GroupSide], label: str, /, *, parallel: bool, node: CouplingNode
+        self, sides: Sequence[GroupSide], label: str, /, *, node: CouplingNode
     ) -> CouplingController: ...
 
 
 def node_controller(
-    sides: Sequence[GroupSide], label: str, /, *, parallel: bool, node: CouplingNode
+    sides: Sequence[GroupSide], label: str, /, *, node: CouplingNode
 ) -> CouplingController:
     """The default :class:`ControllerFactory`: a controller as ``node`` describes it."""
     return CouplingController(
@@ -115,7 +130,7 @@ def node_controller(
         label,
         convergence=node.convergence,
         max_iterations=node.max_iterations,
-        parallel=parallel,
+        parallel=node.parallel,
         acceleration=dict(node.acceleration),
     )
 
@@ -126,18 +141,14 @@ class RegionCoupling:
 
     ``group`` holds the regions coupled with it, itself included, in stepping
     order; ``links`` the exchanges of the group; ``nodes`` the nodes with an
-    exchange of this region, outer to inner. ``parallel`` says whether a side
-    always receives what its partner sent in the pass before (else serial: from
-    a region that steps earlier, what it sent in the same pass). The leader of
-    each node builds its controller with ``controller``, handing it
-    ``parallel`` and the node.
+    exchange of this region, outer to inner. The leader of each node builds its
+    controller with ``controller``, handing it the node.
     """
 
     region: str
     group: tuple[str, ...]
     links: tuple[Link, ...]
     transport: Transport
-    parallel: bool = False
     controller: ControllerFactory = node_controller
     nodes: tuple[CouplingNode, ...] = ()
 
@@ -190,7 +201,6 @@ def region_couplings(
     regions: Sequence[str],
     links: Sequence[Link],
     transport: Transport,
-    parallel: bool = False,
     controller: ControllerFactory = node_controller,
     nodes: Optional[Sequence[CouplingNode]] = None,
 ) -> dict[str, RegionCoupling]:
@@ -203,7 +213,10 @@ def region_couplings(
     two patches of one region, or shares a patch with another link; when two
     nodes have one name, an exchange is in no node or in two, a node names an
     exchange that does not exist, or a node's placement or acceleration names a
-    region or exchange that is not the node's.
+    region or exchange that is not the node's; when a serial node encloses a
+    node (one listed after it) that couples two of its regions as well: a serial
+    pass of a region waits for its partner's whole pass, which needs the inner
+    node of both regions.
     """
     named = sorted({region for link in links for region, _patch in link.ends} - set(regions))
     if named:
@@ -237,7 +250,7 @@ def region_couplings(
             touching = {link.name for link in group_links if member in dict(link.ends)}
             member_nodes = tuple(node for node in nodes if touching & set(node.exchanges))
             couplings[member] = RegionCoupling(
-                member, group, group_links, transport, parallel, controller, member_nodes
+                member, group, group_links, transport, controller, member_nodes
             )
     return couplings
 
@@ -286,6 +299,27 @@ def _check_nodes(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
             f"the exchanges {missing} are in no coupling node; each exchange is in exactly one "
             f"node (the nodes: {seen})"
         )
+    _check_serial_nesting(nodes, links)
+
+
+def _check_serial_nesting(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
+    """Raise ``ValueError`` when a serial node encloses a node sharing two of its regions."""
+
+    def regions(node: CouplingNode) -> set[str]:
+        return {region for link in links if link.name in node.exchanges for region, _ in link.ends}
+
+    for index, outer in enumerate(nodes):
+        if outer.parallel:
+            continue
+        for inner in nodes[index + 1 :]:
+            shared = sorted(regions(outer) & regions(inner))
+            if len(shared) >= 2:
+                raise ValueError(
+                    f"coupling '{outer.name}' is serial but encloses '{inner.name}', which "
+                    f"couples {shared} as well; a serial outer pass waits for its partner's "
+                    "whole pass, which needs the inner coupling of both - make "
+                    f"'{outer.name}' parallel"
+                )
 
 
 def _group(region: str, regions: Sequence[str], links: Sequence[Link]) -> tuple[str, ...]:

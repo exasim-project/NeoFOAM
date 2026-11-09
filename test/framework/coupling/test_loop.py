@@ -27,6 +27,7 @@ from neofoam.framework.coupling import (
     CoupledSide,
     Coupling,
     CouplingController,
+    CouplingNode,
     CouplingNotConvergedWarning,
     CouplingOp,
     CouplingOutcome,
@@ -115,17 +116,18 @@ def test_coupling_op_serial_side_receives_what_the_other_sent_in_the_same_pass()
 def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_before() -> None:
     a, b = _Side("a", []), _Side("b", [])
 
-    _couple(a, b, convergence=[_never], max_iterations=2, parallel=True)
+    _couple(a, b, convergence=[_never], max_iterations=2, scheme="parallel")
 
     assert a.log == ["receive_a 0.0", "solve_a", "receive_a 1.0", "solve_a"]
     assert b.log == ["receive_b 0.0", "solve_b", "receive_b 1.0", "solve_b"]
 
 
 @pytest.mark.parametrize("parallel", [False, True], ids=["serial", "parallel"])
-def test_coupling_op_default_controller_takes_the_scheme_of_the_coupling(parallel: bool) -> None:
+def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: bool) -> None:
     log: list[str] = []
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
-    couplings = region_couplings(["a", "b"], [LINK], InProcessTransport(), parallel=parallel)
+    node = CouplingNode("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
+    couplings = region_couplings(["a", "b"], [LINK], InProcessTransport(), nodes=[node])
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
         for name in ("a", "b")
@@ -162,7 +164,7 @@ def test_coupling_op_accelerates_the_data_carried_into_a_pass(
         b,
         convergence=[_never],
         max_iterations=2,
-        parallel=parallel,
+        scheme="parallel" if parallel else "serial",
         acceleration={"a-b": acceleration},
     )
 

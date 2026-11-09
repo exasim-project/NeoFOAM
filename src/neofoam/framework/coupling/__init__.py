@@ -11,9 +11,10 @@
   its sides, the operations of the region's graph (one coupling op per node)
   and, in a transient case, its time-step op (the group steps the smallest time
   step any region asks for).
-- :class:`CouplingNode` — a named coupling loop: its exchanges, max_iterations,
-  convergence measures, an acceleration per exchange and its placement per
-  region; nodes are listed outer to inner.
+- :class:`CouplingNode` — a named coupling loop: its exchanges, its scheme
+  (``parallel``, the default, or ``serial``), max_iterations, convergence
+  measures, an acceleration per exchange and its placement per region; nodes
+  are listed outer to inner.
 - :class:`RegionCoupling` — what a region knows of the case's coupling: its
   group, the exchanges (:class:`Link`), its nodes and its transport;
   :func:`region_couplings` builds it for every coupled region; :func:`run_regions`

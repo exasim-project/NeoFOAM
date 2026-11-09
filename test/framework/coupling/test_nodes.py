@@ -68,11 +68,8 @@ def _contexts(
     links: list[Link],
     nodes: Sequence[CouplingNode],
     transport: Optional[InProcessTransport] = None,
-    parallel: bool = False,
 ) -> dict[str, Context]:
-    couplings = region_couplings(
-        regions, links, transport or InProcessTransport(), parallel=parallel, nodes=nodes
-    )
+    couplings = region_couplings(regions, links, transport or InProcessTransport(), nodes=nodes)
     return {
         region: Context(
             fields={}, models={"coupling": Coupling(couplings.get(region))}, region=region
@@ -90,10 +87,8 @@ def _tree(ops: list[Operation]) -> list[Any]:
     ]
 
 
-def _two_nodes(
-    transport: Optional[InProcessTransport] = None, parallel: bool = False
-) -> dict[str, Context]:
-    """a and b, coupled over x in the outer node and over y in the inner node."""
+def _two_nodes(transport: Optional[InProcessTransport] = None) -> dict[str, Context]:
+    """a and b, coupled over x in the outer node and over y in the inner node (parallel)."""
     nodes = [
         CouplingNode("outer", ("x",)),
         CouplingNode(
@@ -102,7 +97,7 @@ def _two_nodes(
             placement={"a": Placement(("solve_y",)), "b": Placement(("solve_y",))},
         ),
     ]
-    regions = _contexts(["a", "b"], [X, Y], nodes, transport, parallel)
+    regions = _contexts(["a", "b"], [X, Y], nodes, transport)
     for name, ctx in regions.items():
         add_coupled(ctx, "p", "x", _side(1.0, []))
         add_coupled(ctx, "q", "y", _side(2.0, []))
@@ -131,9 +126,7 @@ def test_an_inner_node_with_its_placement_nests_inside_the_outer_node() -> None:
 
 def test_the_messages_of_each_node_are_tagged_by_node() -> None:
     transport = _Recording()
-    # parallel: a serial outer node waits in b for what a sends at its next outer
-    # test, while a waits in its inner node for b
-    regions = _two_nodes(transport, parallel=True)
+    regions = _two_nodes(transport)
 
     run(
         {
@@ -184,6 +177,35 @@ def test_each_node_has_its_own_leader() -> None:
     # the group agrees as one: its last region leads it
     coupling = Coupling.of(regions["b"]).coupling
     assert coupling is not None and (coupling.group, coupling.leader) == (("a", "b", "c"), "c")
+
+
+def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:
+    # a serial outer pass of b waits for a's whole pass, which waits in its inner
+    # node for b
+    nodes = [CouplingNode("fsi", ("x",), scheme="serial"), CouplingNode("cht", ("y",))]
+
+    with pytest.raises(
+        ValueError,
+        match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
+        r"well; .* make 'fsi' parallel",
+    ):
+        region_couplings(["a", "b"], [X, Y], InProcessTransport(), nodes=nodes)
+
+
+def test_a_serial_node_may_enclose_a_node_sharing_one_region() -> None:
+    links = [X, Link("z", (("b", "q"), ("c", "q")))]
+    nodes = [CouplingNode("ab", ("x",), scheme="serial"), CouplingNode("bc", ("z",))]
+
+    couplings = region_couplings(["a", "b", "c"], links, InProcessTransport(), nodes=nodes)
+
+    assert [node.scheme for node in couplings["b"].nodes] == ["serial", "parallel"]
+
+
+def test_a_node_is_parallel_by_default() -> None:
+    couplings = region_couplings(["a", "b"], [X, Y], InProcessTransport())
+
+    (node,) = couplings["a"].nodes
+    assert (node.name, node.scheme, node.parallel) == ("coupling", "parallel", True)
 
 
 def _sides() -> list[GroupSide]:

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Optional
+from typing import Literal, Optional
 
 import pytest
 from framework.coupling.regions import contexts
@@ -184,3 +184,39 @@ def test_a_transient_coupled_region_without_the_solution_loop_ops_raises() -> No
         r"\['increment_time'\]",
     ):
         Coupling.of(ctx).time_step(ctx, builder.operations)
+
+
+def _coupling_loop(region: str, placement: Placement) -> Operation:
+    """A loop standing in for the coupling op of the region's node ``coupling``."""
+    return Operation(
+        func=IterativeOp(_Passes(1)),
+        metadata=OperationMetadata(op_name=f"{region}.coupling", wraps=placement),
+    )
+
+
+def test_a_serial_node_holding_the_time_step_raises() -> None:
+    ctx = contexts(["a", "b", "c"], CHAIN, scheme="serial")["a"]
+    ctx.time = _Time(1.0)
+    ops = _graph(ctx, _time_loop([1.0], [], []), _coupling_loop("a", Placement()))
+
+    with pytest.raises(
+        ValueError,
+        match=r"coupling 'coupling' is serial but holds the time step of its regions; make it "
+        r"parallel or place it around named operations \(wraps\.a\.operations\)",
+    ):
+        Coupling.of(ctx).check(ops)
+
+
+@pytest.mark.parametrize(
+    ("scheme", "placement"),
+    [("parallel", Placement()), ("serial", Placement(("solve",)))],
+    ids=["parallel at the top", "serial around solve"],
+)
+def test_a_parallel_node_or_one_around_named_operations_may_hold_the_time_step(
+    scheme: Literal["serial", "parallel"], placement: Placement
+) -> None:
+    ctx = contexts(["a", "b", "c"], CHAIN, scheme=scheme)["a"]
+    ctx.time = _Time(1.0)
+    ops = _graph(ctx, _time_loop([1.0], [], []), _coupling_loop("a", placement))
+
+    Coupling.of(ctx).check(ops)
