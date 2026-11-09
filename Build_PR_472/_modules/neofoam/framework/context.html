@@ -678,9 +678,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextVar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
@@ -693,38 +691,6 @@
 <span class="sd">    """</span>
 
     <span class="k">pass</span></div>
-
-
-
-<span class="n">_initializing</span><span class="p">:</span> <span class="n">ContextVar</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ContextVar</span><span class="p">(</span><span class="s2">"neofoam_initializing_region"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="initializing_region">
-<a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.initializing_region">[docs]</a>
-<span class="nd">@contextmanager</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">initializing_region</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Initialize the region ``region`` in the ``with`` block.</span>
-
-<span class="sd">    A region's ``SolverRuntime.initialize`` enters it: the init steps it runs</span>
-<span class="sd">    carry the region (``InitStep.region``), and a :class:`Context` built in it</span>
-<span class="sd">    gets ``region``. ``None`` keeps the enclosing region.</span>
-<span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">yield</span>
-        <span class="k">return</span>
-    <span class="n">token</span> <span class="o">=</span> <span class="n">_initializing</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">yield</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="n">_initializing</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">token</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="initializing">
-<a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.initializing">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">initializing</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The region being initialized in this thread (see :func:`initializing_region`)."""</span>
-    <span class="k">return</span> <span class="n">_initializing</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
 
 
 
@@ -775,8 +741,9 @@
     <span class="c1"># names (``Operation.name``) of operations marked ``final`` to run in every pass</span>
     <span class="c1"># of their wrapping loops instead, e.g. to watch them while debugging</span>
     <span class="n">run_every_pass</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
-    <span class="c1"># the region of a multi-region case this context belongs to; None for one region</span>
-    <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">initializing</span><span class="p">)</span>
+    <span class="c1"># the region of a multi-region case this context belongs to; None for one region.</span>
+    <span class="c1"># ``SolverRuntime.initialize`` sets it to the runtime's region</span>
+    <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="Context.mark_final">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context.mark_final">[docs]</a>

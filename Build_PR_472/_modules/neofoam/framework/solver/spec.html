@@ -692,7 +692,7 @@
     <span class="n">_discover_configs_from_signature</span><span class="p">,</span>
     <span class="n">_find_config_by_type</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">initializing_region</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">wrap_with_dependency_resolution</span><span class="p">,</span>
 <span class="p">)</span>
@@ -995,9 +995,11 @@
         <span class="n">first_param</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"argv"</span><span class="p">):</span>
             <span class="n">first_param</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">argv</span>
+            <span class="c1"># an injected StagedInitRunner initializes the runtime's region</span>
+            <span class="k">if</span> <span class="n">runtime</span><span class="o">.</span><span class="n">region</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"region"</span><span class="p">):</span>
+                <span class="n">first_param</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">region</span>
 
-        <span class="k">with</span> <span class="n">initializing_region</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">region</span><span class="p">):</span>
-            <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">inj_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
