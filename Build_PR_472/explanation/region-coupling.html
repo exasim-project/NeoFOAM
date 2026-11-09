@@ -811,13 +811,17 @@ whole time step of each region. <code class="docutils literal notranslate"><span
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">relative</span><span class="p p-Indicator">,</span><span class="nt"> data</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">,</span><span class="nt"> limit</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-6</span><span class="p p-Indicator">}</span>
 <span class="w">    </span><span class="nt">wraps</span><span class="p">:</span><span class="w">                       </span><span class="c1"># per region of the node; default: the whole time step</span>
 <span class="w">      </span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">solve_T</span><span class="p p-Indicator">],</span><span class="nt"> downstream</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">pipe</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">inner_loop</span><span class="p p-Indicator">]}</span><span class="w">   </span><span class="c1"># a loop, held whole (e.g. PIMPLE's)</span>
 </pre></div>
 </div>
 <p>The nodes are listed outer to inner: a node’s op without <code class="docutils literal notranslate"><span class="pre">operations</span></code> wraps the
 body of the op of the node before it (or the whole time step). <code class="docutils literal notranslate"><span class="pre">wraps</span></code> follows
 <code class="docutils literal notranslate"><span class="pre">Placement</span></code>: with <code class="docutils literal notranslate"><span class="pre">operations</span></code> it wraps those operations and, if
 <code class="docutils literal notranslate"><span class="pre">downstream</span></code> (the default), every operation downstream of them; an operation
-name the region’s graph lacks is reported when the graph is built. With
+name the region’s graph lacks is reported when the graph is built. A name may be
+a loop inside the time loop, such as the PIMPLE <code class="docutils literal notranslate"><span class="pre">inner_loop</span></code>: the op holds it
+whole, with what is downstream of anything inside it, and repeats the loop in
+each pass; the time loop itself cannot be named. With
 <code class="docutils literal notranslate"><span class="pre">couplings</span></code> the top-level <code class="docutils literal notranslate"><span class="pre">acceleration</span></code>, <code class="docutils literal notranslate"><span class="pre">convergence</span></code> and
 <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> are an error; the top-level <code class="docutils literal notranslate"><span class="pre">scheme</span></code> is the scheme of every
 node that names none.</p>
@@ -833,7 +837,8 @@ neither comes back. A chain (the inner node shares one region) is fine
 (<code class="docutils literal notranslate"><span class="pre">region_couplings</span></code>);</p></li>
 <li><p>a serial node does not hold the time step of its regions (the time-step op
 waits for the leader, which waits for the partner’s pass): place it around
-named operations (<code class="docutils literal notranslate"><span class="pre">wraps.&lt;region&gt;.operations</span></code>) or make it parallel
+named operations or a loop (<code class="docutils literal notranslate"><span class="pre">wraps.&lt;region&gt;.operations</span></code>, e.g.
+<code class="docutils literal notranslate"><span class="pre">[inner_loop]</span></code> for a PIMPLE solver) or make it parallel
 (<code class="docutils literal notranslate"><span class="pre">Coupling.check</span></code>, as the region’s graph is resolved). A steady region has
 no time step, so a serial node may wrap it whole.</p></li>
 </ul>
@@ -875,8 +880,9 @@ A patch is in at most one exchange and carries one coupled side.</p>
 (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>, a <code class="docutils literal notranslate"><span class="pre">Placement</span></code>). Without operation names it wraps
 the whole body of the time loop; with them the resolver moves those operations,
 and every operation downstream of them (over <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">before</span></code>), into
-the loop, which takes the place of the last of them. The operations must lie in
-one scope; else it raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+the loop, which takes the place of the last of them. A named loop moves whole,
+as one operation with the edges of everything inside it. The operations must lie
+in one scope, and none may be the time loop; else it raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
 <p><strong>The coupling model</strong> builds its operations once, after init: one
 <code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code> per node of the region, outer to inner, from the sides of the
 node’s exchanges (<code class="docutils literal notranslate"><span class="pre">wraps=</span></code> the node’s placement for the region, by default
