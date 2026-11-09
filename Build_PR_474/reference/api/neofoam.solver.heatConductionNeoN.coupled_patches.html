@@ -707,7 +707,8 @@ sends the heat flux through them into its own region.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">coupledHeatFlux</span></code> (<a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux" title="neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoupledHeatFlux</span></code></a>), the Neumann side: the heat
 flux into the partner leaves its own region, as an explicit source in the
 cells next to its faces (NeoN sets no per-face gradient from Python); it sends
-its wall temperature.</p></li>
+its wall temperature and, after each solve, stores it as the patch’s values
+(what is written).</p></li>
 </ul>
 <p>The heat flux is per face area, <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">dT/dn</span></code>. The points are the face centres:
 the partner’s faces need not match.</p>
@@ -717,6 +718,16 @@ the partner’s faces need not match.</p>
 <dd><p>Bases: <a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch" title="neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeoNPatch</span></code></a></p>
 <p>The Neumann side: the heat flux into the partner’s region leaves its own; it sends its wall
 temperature.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.solved">
+<span class="sig-name descname"><span class="pre">solved</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/coupled_patches.html#CoupledHeatFlux.solved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.solved" title="Link to this definition">¶</a></dt>
+<dd><p>Store the wall temperature it sends as the face values of the field, so the
+written field holds it. Only the face values: the equation reads the patch from
+the boundary’s refValue / valueFraction / refGrad, which stay (the heat flux is
+the source). Face by face: the only write into a part of the boundary values
+NeoN binds, on any executor.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.terms">
 <span class="sig-name descname"><span class="pre">terms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/coupled_patches.html#CoupledHeatFlux.terms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.terms" title="Link to this definition">¶</a></dt>
@@ -737,6 +748,12 @@ temperature.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.heatConductionNeoN.coupled_patches.</span></span><span class="sig-name descname"><span class="pre">NeoNPatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/coupled_patches.html#NeoNPatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A patch of the NeoN field <code class="docutils literal notranslate"><span class="pre">field</span></code>: its faces, their cells and the conductance between.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.solved">
+<span class="sig-name descname"><span class="pre">solved</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/coupled_patches.html#NeoNPatch.solved"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.solved" title="Link to this definition">¶</a></dt>
+<dd><p>After its field is solved (and its boundary corrected).</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.terms">
 <span class="sig-name descname"><span class="pre">terms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/heatConductionNeoN/coupled_patches.html#NeoNPatch.terms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.terms" title="Link to this definition">¶</a></dt>
@@ -839,11 +856,13 @@ from <code class="docutils literal notranslate"><span class="pre">Coupling.add</
             <ul>
 <li><a class="reference internal" href="#">neofoam.solver.heatConductionNeoN.coupled_patches</a><ul>
 <li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux"><code class="docutils literal notranslate"><span class="pre">CoupledHeatFlux</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.solved"><code class="docutils literal notranslate"><span class="pre">CoupledHeatFlux.solved()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.terms"><code class="docutils literal notranslate"><span class="pre">CoupledHeatFlux.terms()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledTemperature"><code class="docutils literal notranslate"><span class="pre">CoupledTemperature</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch"><code class="docutils literal notranslate"><span class="pre">NeoNPatch</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.solved"><code class="docutils literal notranslate"><span class="pre">NeoNPatch.solved()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.terms"><code class="docutils literal notranslate"><span class="pre">NeoNPatch.terms()</span></code></a></li>
 </ul>
 </li>

@@ -747,7 +747,9 @@
         <span class="c1"># OpenFOAM's fvMatrix::solve corrects the boundary of the solved field, NeoN's</span>
         <span class="c1"># does not: without it a zeroGradient patch keeps the old face value. A coupled</span>
         <span class="c1"># patch is ``calculated``: its values stay.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
+            <span class="n">patch</span><span class="o">.</span><span class="n">solved</span><span class="p">()</span></div>
 </div>
 
 </pre></div>

@@ -705,7 +705,8 @@
 <span class="sd">- ``coupledHeatFlux`` (:class:`CoupledHeatFlux`), the Neumann side: the heat</span>
 <span class="sd">  flux into the partner leaves its own region, as an explicit source in the</span>
 <span class="sd">  cells next to its faces (NeoN sets no per-face gradient from Python); it sends</span>
-<span class="sd">  its wall temperature.</span>
+<span class="sd">  its wall temperature and, after each solve, stores it as the patch's values</span>
+<span class="sd">  (what is written).</span>
 
 <span class="sd">The heat flux is per face area, ``k dT/dn``. The points are the face centres:</span>
 <span class="sd">the partner's faces need not match.</span>
@@ -783,6 +784,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">terms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""What the patch adds to the right-hand side of the equation of its field."""</span>
         <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="NeoNPatch.solved">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.NeoNPatch.solved">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""After its field is solved (and its boundary corrected)."""</span></div>
 </div>
 
 
@@ -844,6 +851,19 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.terms">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">terms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">exp</span><span class="o">.</span><span class="n">source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="CoupledHeatFlux.solved">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.heatConductionNeoN.coupled_patches.html#neofoam.solver.heatConductionNeoN.coupled_patches.CoupledHeatFlux.solved">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the wall temperature it sends as the face values of the field, so the</span>
+<span class="sd">        written field holds it. Only the face values: the equation reads the patch from</span>
+<span class="sd">        the boundary's refValue / valueFraction / refGrad, which stay (the heat flux is</span>
+<span class="sd">        the source). Face by face: the only write into a part of the boundary values</span>
+<span class="sd">        NeoN binds, on any executor."""</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="p">]</span><span class="o">.</span><span class="n">boundary_data_value</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">face</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">stop</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">wall_T</span><span class="p">()):</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">fill_range</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">face</span><span class="p">,</span> <span class="n">face</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">coordinates</span>
