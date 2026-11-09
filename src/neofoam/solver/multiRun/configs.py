@@ -130,12 +130,14 @@ class CouplingNodeConfig(BaseModel):
 
     Its leader repeats the loop until every ``convergence`` measure holds, or
     ``maxIterations`` passes; ``wraps`` places its op per region (a region it
-    does not name: the whole time step).
+    does not name: the whole time step). ``scheme`` is the node's (by default
+    the file's).
     """
 
     model_config = ConfigDict(extra="forbid")
 
     name: str
+    scheme: Optional[Literal["serial", "parallel"]] = None
     maxIterations: int = Field(default=100, gt=0)
     exchanges: list[NodeExchangeConfig] = Field(min_length=1)
     convergence: list[ConvergenceConfig] = Field(min_length=1)
@@ -162,22 +164,28 @@ class RegionCouplingConfig(BaseConfig):
     solution in its coupling loop until every ``convergence`` measure holds, or
     ``maxIterations`` passes, as the group's leader decides. ``serial`` lets a
     region receive what a region before it sent in the same pass, ``parallel``
-    what it sent in the previous one. Without the file the
+    (the default) what it sent in the previous one. Without the file the
     regions are not coupled.
+
+    A serial node waits in each pass for the whole pass of the regions that step
+    before it, so it holds the time step only around named operations
+    (``wraps.<region>.operations``) and encloses no node that couples two of its
+    regions as well; either raises ``ValueError`` as the case is run.
 
     ``couplings`` lists the coupling nodes, outer to inner: each names its
     exchanges (each in exactly one node), its convergence, maxIterations, an
     acceleration per exchange and where its op wraps each region. Without it one
     node ``coupling`` holds every exchange, with the top-level
     ``acceleration`` (of every exchange), ``convergence`` and ``maxIterations``;
-    with it those top-level entries are an error. ``scheme`` is the case's.
+    with it those top-level entries are an error. ``scheme`` is the scheme of
+    every node that names none.
 
     Example::
 
         exchanges:
           - sides: {fluid: wall, solid: right}
             mapping: nearest-neighbor
-        scheme: serial
+        scheme: parallel
         acceleration:
           type: aitken
           relaxation: 0.5
@@ -206,7 +214,7 @@ class RegionCouplingConfig(BaseConfig):
     model_config = ConfigDict(extra="forbid")
 
     exchanges: list[ExchangeConfig] = Field(min_length=1)
-    scheme: Literal["serial", "parallel"] = "serial"
+    scheme: Literal["serial", "parallel"] = "parallel"
     acceleration: Optional[AccelerationConfig] = None
     convergence: Optional[list[ConvergenceConfig]] = Field(default=None, min_length=1)
     maxIterations: Optional[int] = Field(default=None, gt=0)
@@ -227,12 +235,19 @@ class RegionCouplingConfig(BaseConfig):
         return names
 
     def nodes(self) -> list[CouplingNodeConfig]:
-        """The coupling nodes, outer to inner: ``couplings``, or the one default node."""
+        """The coupling nodes, outer to inner: ``couplings``, or the one default node.
+
+        A node that names no ``scheme`` gets the file's.
+        """
         if self.couplings is not None:
-            return self.couplings
+            return [
+                node if node.scheme else node.model_copy(update={"scheme": self.scheme})
+                for node in self.couplings
+            ]
         return [
             CouplingNodeConfig(
                 name=DEFAULT_NODE,
+                scheme=self.scheme,
                 maxIterations=100 if self.maxIterations is None else self.maxIterations,
                 exchanges=[
                     NodeExchangeConfig(name=name, acceleration=self.acceleration)

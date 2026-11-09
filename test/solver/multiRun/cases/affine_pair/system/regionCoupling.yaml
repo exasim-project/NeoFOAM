@@ -1,12 +1,15 @@
+# Serial: the node wraps each region's solve_x, so the time step stays outside it.
 exchanges:
   - sides: {a: interface, b: interface}
     mapping: nearest-neighbor
-scheme: serial
-acceleration:
-  type: constant
-  relaxation: 1.0
-convergence:
-  - type: relative
-    data: x
-    limit: 1.0e-6
-maxIterations: 50
+couplings:
+  - name: coupling
+    scheme: serial
+    maxIterations: 50
+    exchanges:
+      - {name: a-b, acceleration: {type: constant, relaxation: 1.0}}
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
+    wraps:
+      a: {operations: [solve_x]}
+      b: {operations: [solve_x]}

@@ -11,7 +11,8 @@ takes in, and sends its wall temperature. Slab ``right`` (conductivity 3,
 wall temperature, and sends the heat flux through its wall. One model each way
 (``WallTemperature``, ``WallHeatFlux``); Aitken relaxation of what right
 receives as carried (serial: left steps first, so right gets left's wall
-temperature of the same pass, left right's flux of the pass before).
+temperature of the same pass, left right's flux of the pass before). The serial
+node wraps each region's ``solve_T``, so the time step stays outside it.
 
 Each time step (1e6, long against the diffusion time) is a steady solve, so the
 result is the steady profile of ``test_multiRun_coupling``: linear in each slab,

@@ -33,7 +33,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
                 "mapping": "nearest-neighbor",
             }
         ],
-        "scheme": "serial",
+        "scheme": "parallel",
         "acceleration": {"type": "aitken", "relaxation": 0.5},
         "convergence": [{"type": "relative", "data": "T", "limit": 1e-12}],
         "maxIterations": 100,
@@ -52,7 +52,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
                 "mapping": "nearest-neighbor",
             }
         ],
-        "scheme": "serial",
+        "scheme": "parallel",
         "acceleration": None,
         "convergence": [{"type": "relative", "data": "T", "limit": 1e-5}],
         "maxIterations": None,

@@ -88,7 +88,7 @@ def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.M
     assert [node.name for node in couplings["b"].nodes] == ["outer", "inner"]
     assert [node.name for node in couplings["a"].nodes] == ["inner"]
     assert [node.name for node in couplings["c"].nodes] == ["outer"]
-    assert couplings["b"].parallel
+    assert [node.scheme for node in couplings["b"].nodes] == ["parallel", "parallel"]
     outer, inner = couplings["b"].nodes
     assert (outer.exchanges, outer.max_iterations) == (("b-c",), 7)
     assert isinstance(outer.acceleration["b-c"], AitkenRelaxation)
@@ -133,6 +133,77 @@ def test_couplings_without_nodes_and_acceleration_relaxes_nothing() -> None:
 
     assert (node.name, node.maxIterations) == ("coupling", 100)
     assert [(e.name, e.acceleration) for e in node.exchanges] == [("a-b", None), ("b-c", None)]
+
+
+def test_couplings_takes_the_scheme_per_node_by_default_the_file_s(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data = _broken("scheme", "serial")
+    data["couplings"][0]["scheme"] = "parallel"
+
+    couplings = _couplings(tmp_path, monkeypatch, data)
+
+    assert [(node.name, node.scheme) for node in couplings["b"].nodes] == [
+        ("outer", "parallel"),
+        ("inner", "serial"),
+    ]
+
+
+def test_couplings_are_parallel_by_default(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    data = {
+        "exchanges": EXCHANGES,
+        "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}],
+    }
+
+    couplings = _couplings(tmp_path, monkeypatch, data)
+
+    assert RegionCouplingConfig.model_validate(data).scheme == "parallel"
+    assert [node.scheme for node in couplings["a"].nodes] == ["parallel"]
+    nodes = {key: value for key, value in NODES.items() if key != "scheme"}
+    assert [node.scheme for node in RegionCouplingConfig.model_validate(nodes).nodes()] == [
+        "parallel",
+        "parallel",
+    ]
+
+
+def test_couplings_a_serial_node_may_enclose_a_chained_node(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # outer couples b and c, inner a and b: they share b only
+    couplings = _couplings(tmp_path, monkeypatch, _broken("couplings.0.scheme", "serial"))
+
+    assert [node.scheme for node in couplings["b"].nodes] == ["serial", "parallel"]
+
+
+def test_couplings_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data = {
+        "exchanges": [
+            {"name": "fsi-ab", "sides": {"a": "to_b", "b": "to_a"}},
+            {"name": "cht-ab", "sides": {"a": "wall", "b": "wall"}},
+        ],
+        "couplings": [
+            {
+                "name": "fsi",
+                "scheme": "serial",
+                "exchanges": ["fsi-ab"],
+                "convergence": [{"type": "relative", "data": "x", "limit": 1e-6}],
+            },
+            {
+                "name": "cht",
+                "exchanges": ["cht-ab"],
+                "convergence": [{"type": "relative", "data": "y", "limit": 1e-6}],
+            },
+        ],
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
+        r"well; .* make 'fsi' parallel",
+    ):
+        _couplings(tmp_path, monkeypatch, data)
 
 
 def _broken(path: str, value: Any) -> dict[str, Any]:

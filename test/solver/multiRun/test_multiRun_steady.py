@@ -8,7 +8,8 @@
 identity mapping until ``x`` changes by < 1e-6 relative: the same fixed point
 (a = 2, b = 1) and passes as ``affine_pair`` (``test_multiRun_affine``), with
 three outer iterations instead of time steps. Nothing agrees on a time step and
-the regions have no time: coupling needs no solution loop.
+the regions have no time: coupling needs no solution loop, and a serial node may
+wrap the whole outer iteration (there is no time step it could hold).
 """
 
 import importlib

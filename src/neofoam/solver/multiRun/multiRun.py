@@ -49,9 +49,11 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
     One link per entry of ``exchanges``; one coupling node per entry of
     ``couplings``, outer to inner (the ops ``<region>.<node>``), each with its
     convergence, maxIterations, an acceleration per exchange that names one (an
-    instance each) and its placement per region. Without ``couplings`` one node
-    ``coupling`` holds every exchange (see :meth:`RegionCouplingConfig.nodes`).
-    The scheme is the coupling's. Without the file no region is coupled.
+    instance each), its scheme and its placement per region. Without
+    ``couplings`` one node ``coupling`` holds every exchange (see
+    :meth:`RegionCouplingConfig.nodes`). Without the file no region is coupled.
+    Raises ``ValueError`` when a serial node encloses a node coupling two of its
+    regions as well (:func:`~neofoam.framework.coupling.region_couplings`).
     """
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
@@ -72,7 +74,6 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
         regions,
         links,
         comm_channel,
-        parallel=config.scheme == "parallel",
         controller=_controller(config),
         nodes=nodes,
     )
@@ -84,6 +85,7 @@ def _node(config: CouplingNodeConfig) -> CouplingNode:
         config.name,
         tuple(exchange.name for exchange in config.exchanges),
         max_iterations=config.maxIterations,
+        scheme=config.scheme or "parallel",
         convergence=tuple(CONVERGENCES[e.type](e.data, e.limit) for e in config.convergence),
         acceleration={
             exchange.name: ACCELERATIONS[exchange.acceleration.type](
@@ -109,9 +111,7 @@ def _controller(config: RegionCouplingConfig) -> Any:
     """
     checked = {node.name: {entry.data for entry in node.convergence} for node in config.nodes()}
 
-    def controller(
-        sides: list[GroupSide], label: str, *, parallel: bool, node: CouplingNode
-    ) -> CouplingController:
+    def controller(sides: list[GroupSide], label: str, *, node: CouplingNode) -> CouplingController:
         sent = {side.field for side in sides}
         unknown = sorted(checked.get(node.name, set()) - sent)
         if unknown:
@@ -119,7 +119,7 @@ def _controller(config: RegionCouplingConfig) -> Any:
                 f"system/regionCoupling.yaml: convergence on {unknown}, which no side of the "
                 f"group of {label} sends (its sides solve {sorted(sent)})"
             )
-        return node_controller(sides, label, parallel=parallel, node=node)
+        return node_controller(sides, label, node=node)
 
     return controller
 
