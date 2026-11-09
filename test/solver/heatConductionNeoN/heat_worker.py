@@ -9,6 +9,9 @@ line prefixed ``#RESULT`` (OpenFOAM and NeoN write freely to stdout): per region
 ``T``, its time (value, index, deltaT), each coupled patch's face centres and
 wall temperature, and the passes of the leader's coupling per time step.
 
+Every message of the multiRun comm_channel is pickled, as between processes
+(``InProcessCommChannel.PICKLE``), so a message that is not plain data fails.
+
 A subprocess: Kokkos and ``Foam::Time`` are per-process, and NeoN must be
 finalized after every NeoN object is gone, so the contexts never outlive
 :func:`main`.
@@ -21,7 +24,7 @@ from typing import Any
 import numpy as np
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, CouplingOp
+from neofoam.framework.coupling import Coupling, CouplingOp, InProcessCommChannel
 from neofoam.solver.heatConductionNeoN import run as run_single
 from neofoam.solver.multiRun import run as run_multi
 
@@ -50,6 +53,7 @@ def _region(ctx: Context) -> dict[str, Any]:
 def main(mode: str) -> dict[str, Any]:
     if mode == "single":
         return {"regions": {"case": _region(run_single(["heatConductionNeoN"]))}}
+    InProcessCommChannel.PICKLE = True
     regions = run_multi()
     passes: dict[str, list[int]] = {}
     for name, ctx in regions.items():
