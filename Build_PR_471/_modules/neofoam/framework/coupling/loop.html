@@ -998,17 +998,16 @@
 <span class="sd">    (:class:`CouplingNotConvergedWarning`). Not thread safe.</span>
 
 <span class="sd">    The leader builds it with its coupling's ``controller`` factory, which it</span>
-<span class="sd">    hands the coupling's ``parallel`` and the node (by default</span>
-<span class="sd">    :func:`~neofoam.framework.coupling.node_controller`: the node's convergence,</span>
-<span class="sd">    acceleration and max_iterations; one acceleration per exchange: it keeps the</span>
-<span class="sd">    data of its last passes)::</span>
+<span class="sd">    hands the node (by default :func:`~neofoam.framework.coupling.node_controller`:</span>
+<span class="sd">    the node's scheme, convergence, acceleration and max_iterations; one</span>
+<span class="sd">    acceleration per exchange: it keeps the data of its last passes)::</span>
 
-<span class="sd">        def controller(sides, label, *, parallel, node):</span>
+<span class="sd">        def controller(sides, label, *, node):</span>
 <span class="sd">            return CouplingController(</span>
 <span class="sd">                sides,</span>
 <span class="sd">                label,</span>
 <span class="sd">                max_iterations=50,</span>
-<span class="sd">                parallel=parallel,</span>
+<span class="sd">                parallel=node.parallel,</span>
 <span class="sd">                acceleration={"interface": AitkenRelaxation(initial=0.5)},</span>
 <span class="sd">            )</span>
 <span class="sd">    """</span>
@@ -1274,7 +1273,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_connect</span><span class="p">()</span>
         <span class="n">current</span> <span class="o">=</span> <span class="p">[</span><span class="n">_sent</span><span class="p">(</span><span class="n">side</span><span class="p">)</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">parallel</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">parallel</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">side</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">,</span> <span class="n">current</span><span class="p">):</span>
                 <span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]:</span>
@@ -1324,7 +1323,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_node_sides</span><span class="p">(</span><span class="n">sides</span><span class="p">),</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                <span class="n">parallel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span><span class="o">.</span><span class="n">parallel</span><span class="p">,</span>
                 <span class="n">node</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">True</span>

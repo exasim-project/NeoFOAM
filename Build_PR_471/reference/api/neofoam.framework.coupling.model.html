@@ -697,7 +697,9 @@ region’s time-step op <code class="docutils literal notranslate"><span class="
 regions of the group step the smallest time step any of them asks for. It runs
 after the solutionLoop’s <code class="docutils literal notranslate"><span class="pre">set_time_step</span></code> and before its <code class="docutils literal notranslate"><span class="pre">increment_time</span></code>,
 once per time step (<code class="docutils literal notranslate"><span class="pre">first</span></code>), and reads and writes the time step in the
-region’s context (<code class="docutils literal notranslate"><span class="pre">ctx.time.delta_t</span></code>).</p>
+region’s context (<code class="docutils literal notranslate"><span class="pre">ctx.time.delta_t</span></code>). It must not end up inside a serial
+coupling op: <a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.check" title="neofoam.framework.coupling.model.Coupling.check"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Coupling.check()</span></code></a> raises for the resolved graph (the
+runtime’s <code class="docutils literal notranslate"><span class="pre">resolve_operations</span></code> calls it).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.model.</span></span><span class="sig-name descname"><span class="pre">Coupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling" title="neofoam.framework.coupling.region.RegionCoupling"><span class="pre">RegionCoupling</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling" title="Link to this definition">¶</a></dt>
@@ -712,6 +714,14 @@ region’s context (<code class="docutils literal notranslate"><span class="pre"
 <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> when it is not <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> or lacks one of them,
 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when no exchange connects its patch (also when the case
 does not couple the region) or the graph is built.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.check">
+<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.check" title="Link to this definition">¶</a></dt>
+<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when the resolved <code class="docutils literal notranslate"><span class="pre">graph</span></code> holds the time step in a serial node.</p>
+<p>A serial pass of a region waits for its partner’s whole pass; when that
+holds the time-step op, which waits for the region, neither comes back.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -821,6 +831,7 @@ what they hold) has no <code class="docutils literal notranslate"><span class="p
 <li><a class="reference internal" href="#">neofoam.framework.coupling.model</a><ul>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling"><code class="docutils literal notranslate"><span class="pre">Coupling</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.add"><code class="docutils literal notranslate"><span class="pre">Coupling.add()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.check"><code class="docutils literal notranslate"><span class="pre">Coupling.check()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.coupling"><code class="docutils literal notranslate"><span class="pre">Coupling.coupling</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.of"><code class="docutils literal notranslate"><span class="pre">Coupling.of()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.operations"><code class="docutils literal notranslate"><span class="pre">Coupling.operations()</span></code></a></li>
