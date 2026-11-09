@@ -124,7 +124,7 @@ def _create_init(region: Optional[str]) -> StagedInitRunner:
         builder.add(field("x", lambda _ctx: np.full(1, coefficients.initial)))
         return builder.build()
 
-    return StagedInitRunner(spec_builder.finalize())
+    return StagedInitRunner(spec_builder.finalize(), region=region)
 
 
 @affine.initializer

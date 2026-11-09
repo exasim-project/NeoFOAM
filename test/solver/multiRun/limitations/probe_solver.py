@@ -21,7 +21,7 @@ solve appends the new value to ``ctx.models["history"]``.
 """
 
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Literal, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel
@@ -118,7 +118,7 @@ def patch_class(field: str, received: str) -> type[ProbePatch]:
 probe = Solver("probe")
 
 
-def _create_init() -> StagedInitRunner:
+def _create_init(region: Optional[str]) -> StagedInitRunner:
     spec = StagedInitSpec.build("probe")
 
     @spec.load
@@ -137,12 +137,12 @@ def _create_init() -> StagedInitRunner:
         )
         return builder.build()
 
-    return StagedInitRunner(spec.finalize())
+    return StagedInitRunner(spec.finalize(), region=region)
 
 
 @probe.initializer
 def _initialize(self: Any) -> Context:
-    init = _create_init()
+    init = _create_init(self.region)
     ctx = init.run()
     self.core_models = init.core_models
     config = ProbeConfig.load(case_dir=Path("."), region=self.region)

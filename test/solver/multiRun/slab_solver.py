@@ -253,7 +253,7 @@ def _create_init(region: Optional[str]) -> StagedInitRunner:
         builder.add(field("T", lambda _ctx: np.full(geometry.cells, temperature.internalField)))
         return builder.build()
 
-    return StagedInitRunner(spec_builder.finalize())
+    return StagedInitRunner(spec_builder.finalize(), region=region)
 
 
 @slab.initializer
