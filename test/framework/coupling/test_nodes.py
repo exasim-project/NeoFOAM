@@ -23,6 +23,7 @@ from neofoam.framework.coupling import (
     CoupledSide,
     Coupling,
     CouplingController,
+    CouplingDeadlock,
     CouplingNode,
     InProcessTransport,
     Link,
@@ -178,6 +179,32 @@ def test_each_node_has_its_own_leader() -> None:
     # the group agrees as one: its last region leads it
     coupling = Coupling.of(regions["b"]).coupling
     assert coupling is not None and (coupling.group, coupling.leader) == (("a", "b", "c"), "c")
+
+
+def test_a_node_nested_in_one_region_only_deadlocks_in_its_second_pass() -> None:
+    # bc nests inside ab in b, but not in c: b's second ab pass runs bc again,
+    # which c, done with bc, never answers - the transport reports it at once
+    links = [X, Link("z", (("b", "q"), ("c", "q")))]
+    nodes = [
+        CouplingNode("ab", ("x",), max_iterations=2),
+        CouplingNode("bc", ("z",)),
+    ]
+    regions = _contexts(["a", "b", "c"], links, nodes)
+    add_coupled(regions["a"], "p", "x", _side(1.0, []))
+    add_coupled(regions["b"], "p", "x", _side(2.0, []))
+    add_coupled(regions["b"], "q", "z", _side(3.0, []))
+    add_coupled(regions["c"], "q", "z", _side(4.0, []))
+
+    fields = {"a": ["x"], "b": ["x", "z"], "c": ["z"]}
+    with pytest.raises(
+        CouplingDeadlock, match=r"region b waits for 'bc/\w+' from region c, which finished"
+    ):
+        run(
+            {
+                name: (ctx, [solve(field, lambda ctx: None) for field in fields[name]])
+                for name, ctx in regions.items()
+            }
+        )
 
 
 def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:

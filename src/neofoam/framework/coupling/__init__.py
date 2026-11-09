@@ -30,7 +30,10 @@
   factory); :class:`CouplingOutcome` per time step,
   :class:`CouplingNotConvergedWarning` when ``max_iterations`` ends it.
 - :class:`Transport` — all data between regions goes through it, point to point
-  (send, receive, close); :class:`InProcessTransport` between threads.
+  (send, receive, close); :class:`InProcessTransport` between threads, which
+  raises :class:`CouplingDeadlock` when every running region waits for a message
+  no region sent, and :class:`CouplingTimeout` after its ``timeout`` (both
+  :class:`CouplingTransportError`, as :class:`TransportClosed`).
 - numpy kernels: :func:`nearest_neighbor`, :class:`ConstantRelaxation`,
   :class:`AitkenRelaxation`, :class:`RelativeConvergence`; the registries
   :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES` name them for
@@ -78,11 +81,21 @@ from .region import (
     region_couplings,
     run_regions,
 )
-from .transport import InProcessTransport, SideKey, Transport, TransportClosed
+from .transport import (
+    DEFAULT_TIMEOUT,
+    CouplingDeadlock,
+    CouplingTimeout,
+    CouplingTransportError,
+    InProcessTransport,
+    SideKey,
+    Transport,
+    TransportClosed,
+)
 
 __all__ = [
     "ACCELERATIONS",
     "CONVERGENCES",
+    "DEFAULT_TIMEOUT",
     "ENTRY_POINT_GROUP",
     "MAPPINGS",
     "AitkenRelaxation",
@@ -92,10 +105,13 @@ __all__ = [
     "CoupledSide",
     "Coupling",
     "CouplingController",
+    "CouplingDeadlock",
     "CouplingNode",
     "CouplingNotConvergedWarning",
     "CouplingOp",
     "CouplingOutcome",
+    "CouplingTimeout",
+    "CouplingTransportError",
     "Exchange",
     "ExchangeSide",
     "GroupSide",
