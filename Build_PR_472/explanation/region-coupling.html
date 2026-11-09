@@ -724,7 +724,7 @@ patches of two regions; the <strong>mapping</strong> (<code class="docutils lite
 data of the partner onto a side’s own points; a region’s <strong>coupling op</strong> is a
 loop around its solving operations whose test exchanges its sides’ data; regions
 connected by exchanges form a <strong>group</strong>, whose last region in <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code>
-order leads it in <code class="docutils literal notranslate"><span class="pre">agree</span></code>; a <strong>coupling node</strong> is a named coupling loop over
+order leads it in agreeing the time step; a <strong>coupling node</strong> is a named coupling loop over
 some exchanges (its convergence, <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code>, an acceleration per exchange,
 its placement per region; nodes are listed outer to inner), whose last region in
 stepping order is the node’s <strong>leader</strong>: its controller decides when the node’s
@@ -832,10 +832,11 @@ A patch is in at most one exchange and carries one coupled side.</p>
     +-- thread "a":  instantiate(region="a", coupling=...)
     |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
     |                        then its BCs; a @coupled BC adds itself
-    |     execution_graph    model ops += ctx.models["coupling"].operations()
+    |     execution_graph    model ops += ctx.models["coupling"].operations(),
+    |                        the time-step op a.time_step (transient)
     |     resolve_operations DAGResolver places a.coupling around the time step
-    |     run()              time_loop { a.coupling { set_time_step, agree_dt,
-    |                                               increment_time, solve_x } }
+    |     run()              time_loop { set_time_step, a.time_step,
+    |                                    increment_time, a.coupling { solve_x } }
     |
     +-- thread "b" (leader): the same, its coupling op owns the controller
                  ^
@@ -855,23 +856,22 @@ node’s exchanges (<code class="docutils literal notranslate"><span class="pre"
 <code class="docutils literal notranslate"><span class="pre">Placement()</span></code>); none when the case does not couple the region. It raises
 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an exchange of the region has no side (also when the region
 has none at all), a patch two sides, or one field has sides in two nodes.</p>
-<p><strong>Agreeing on a value.</strong> <code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).agree(value,</span> <span class="pre">how=min)</span></code>: every
-region of the group sends its value to the leader, which reduces them with
-<code class="docutils literal notranslate"><span class="pre">how</span></code> and sends the result to all; every region gets the same result. Each call
-has its own tag (the regions call it in the same order); a region the case does
-not couple gets its value back.</p>
-<ul>
-<li><p>A <strong>transient</strong> solver agrees on its time step where it sets it, right after
-<code class="docutils literal notranslate"><span class="pre">set_time_step</span></code> (the test solvers’ <code class="docutils literal notranslate"><span class="pre">agree_dt</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">loop</span><span class="o">.</span><span class="n">set_delta_t</span><span class="p">(</span><span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">agree</span><span class="p">(</span><span class="n">loop</span><span class="o">.</span><span class="n">current_delta_t</span><span class="p">()),</span> <span class="n">adjust</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>so the coupled regions step the smallest time step any of them asks for.</p>
-</li>
-<li><p>A <strong>steady</strong> solver (outer iterations, no time step) calls nothing; neither
-the coupling nor <code class="docutils literal notranslate"><span class="pre">agree</span></code> needs a solution loop
-(<code class="docutils literal notranslate"><span class="pre">test/solver/multiRun/steady_solver.py</span></code>).</p></li>
-</ul>
+<p><strong>The time step.</strong> In a transient coupled region (<code class="docutils literal notranslate"><span class="pre">ctx.time</span></code> is set) the
+framework adds the time-step op <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.time_step</span></code> (<code class="docutils literal notranslate"><span class="pre">Coupling.time_step</span></code>)
+to the region’s graph, after the solutionLoop’s <code class="docutils literal notranslate"><span class="pre">set_time_step</span></code> and before its
+<code class="docutils literal notranslate"><span class="pre">increment_time</span></code>; a region without them raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>. Every region of
+the group sends the time step it asks for (<code class="docutils literal notranslate"><span class="pre">ctx.time.delta_t</span></code>) to the leader,
+which sends back the smallest (tag <code class="docutils literal notranslate"><span class="pre">time/dt</span></code>); each region writes it into its
+<code class="docutils literal notranslate"><span class="pre">ctx.time.delta_t</span></code>, which <code class="docutils literal notranslate"><span class="pre">increment_time</span></code> advances by. So the coupled
+regions step the smallest time step any of them asks for. The op is marked
+<code class="docutils literal notranslate"><span class="pre">first</span></code> (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.first</span></code>), as are <code class="docutils literal notranslate"><span class="pre">set_time_step</span></code> and
+<code class="docutils literal notranslate"><span class="pre">increment_time</span></code>: inside a coupling loop (the default placement around the
+whole time step) they run in its first pass only, once per time step; an op
+marked <code class="docutils literal notranslate"><span class="pre">first</span></code> runs while every wrapping loop around it is in its first pass
+(<code class="docutils literal notranslate"><span class="pre">ctx.loops</span></code>). A solver’s own start of a time step (storing the old time
+level) is marked <code class="docutils literal notranslate"><span class="pre">first</span></code> the same way.</p>
+<p>A <strong>steady</strong> solver (outer iterations, no time step) gets no time-step op; the
+coupling needs no solution loop (<code class="docutils literal notranslate"><span class="pre">test/solver/multiRun/steady_solver.py</span></code>).</p>
 <p>As a time step’s coupling starts, the leader compares the regions’ time
 (<code class="docutils literal notranslate"><span class="pre">ctx.time.value</span></code>) and raises when they differ; regions without a time
 (<code class="docutils literal notranslate"><span class="pre">ctx.time</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, steady) compare equal, so the check passes.</p>
