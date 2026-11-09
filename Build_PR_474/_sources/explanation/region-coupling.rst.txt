@@ -16,8 +16,8 @@ point-to-point channel. Regions exchange data over *exchanges*. Who does what:
        model per direction), its points. It adds itself to its region's
        **coupling model** (``Coupling.of(ctx).add(self)``).
    * - case (``system/regionCoupling.yaml``)
-     - which patches are paired (``exchanges``), the **mapping** of each pair, the
-       scheme, and the coupling nodes (``couplings``): their exchanges,
+     - which patches are paired (``exchanges``), the **mapping** of each pair, and
+       the coupling nodes (``couplings``): their exchanges, scheme,
        acceleration, convergence, ``maxIterations`` and placement.
    * - solver
      - if it supports coupling, its **coupling model** (``Coupling``,
@@ -39,8 +39,8 @@ data of the partner onto a side's own points; a region's **coupling op** is a
 loop around its solving operations whose test exchanges its sides' data; regions
 connected by exchanges form a **group**, whose last region in ``regionSolvers``
 order leads it in agreeing the time step; a **coupling node** is a named coupling loop over
-some exchanges (its convergence, ``maxIterations``, an acceleration per exchange,
-its placement per region; nodes are listed outer to inner), whose last region in
+some exchanges (its scheme, convergence, ``maxIterations``, an acceleration per
+exchange, its placement per region; nodes are listed outer to inner), whose last region in
 stepping order is the node's **leader**: its controller decides when the node's
 data converged; a side is keyed by ``(region, patch, field)``. ``multiRun``
 builds the nodes the case file lists under ``couplings``; without them it puts
@@ -102,7 +102,7 @@ The case file
         mapping: nearest-neighbor    # or identity (default nearest-neighbor)
         name: cht                    # optional, default "<region>-<region>"
       - sides: {solid: left, air: top}
-    scheme: serial                   # serial (Gauss-Seidel) | parallel (Jacobi)
+    scheme: parallel                 # parallel (Jacobi, the default) | serial (Gauss-Seidel)
     acceleration: {type: aitken, relaxation: 0.5}
     convergence:
       - {type: relative, data: T, limit: 1.0e-6}
@@ -118,9 +118,9 @@ whole time step of each region. ``couplings`` places the nodes instead:
     exchanges:
       - {name: wall-T, sides: {fluid: wall, solid: right}}
       - {name: wall-p, sides: {fluid: inlet, pipe: outlet}}
-    scheme: serial
     couplings:                       # outer to inner
       - name: wall                   # unique; the ops <region>.wall
+        scheme: parallel             # default: the top-level scheme (default parallel)
         maxIterations: 50            # default 100
         exchanges:                   # each exchange in exactly one node
           - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}
@@ -136,7 +136,24 @@ body of the op of the node before it (or the whole time step). ``wraps`` follows
 ``downstream`` (the default), every operation downstream of them; an operation
 name the region's graph lacks is reported when the graph is built. With
 ``couplings`` the top-level ``acceleration``, ``convergence`` and
-``maxIterations`` are an error; ``scheme`` applies to every node.
+``maxIterations`` are an error; the top-level ``scheme`` is the scheme of every
+node that names none.
+
+**Serial or parallel**, per node. Parallel (the default): a side receives what
+its partner sent in the pass before. Serial: a side receives from a region that
+steps before its own what it sent in the same pass, so a serial pass of a region
+waits for its partner's whole pass. Two rules follow, both checked before
+anything runs (``ValueError``):
+
+- a serial node encloses no node (one listed after it) that couples two of its
+  regions as well: the partner's pass needs the inner node of both regions, so
+  neither comes back. A chain (the inner node shares one region) is fine
+  (``region_couplings``);
+- a serial node does not hold the time step of its regions (the time-step op
+  waits for the leader, which waits for the partner's pass): place it around
+  named operations (``wraps.<region>.operations``) or make it parallel
+  (``Coupling.check``, as the region's graph is resolved). A steady region has
+  no time step, so a serial node may wrap it whole.
 
 ``mapping``, ``acceleration.type`` and ``convergence[].type`` name entries of
 the registries ``MAPPINGS``, ``ACCELERATIONS`` and ``CONVERGENCES``; the file is
@@ -159,9 +176,10 @@ Architecture
         |                        then its BCs; a @coupled BC adds itself
         |     execution_graph    model ops += ctx.models["coupling"].operations(),
         |                        the time-step op a.time_step (transient)
-        |     resolve_operations DAGResolver places a.coupling around the time step
-        |     run()              time_loop { set_time_step, a.time_step,
-        |                                    increment_time, a.coupling { solve_x } }
+        |     resolve_operations DAGResolver places a.coupling around the time step;
+        |                        Coupling.check: no time step in a serial node
+        |     run()              time_loop { a.coupling { set_time_step, a.time_step,
+        |                                                 increment_time, solve_x } }
         |
         +-- thread "b" (leader): the same, its coupling op owns the controller
                      ^
@@ -206,7 +224,7 @@ As a time step's coupling starts, the leader compares the regions' time
 
 **What a region knows.** Its ``RegionCoupling`` (``Coupling.coupling``): its name,
 its group (in stepping order), the group's exchanges (``Link``: name, two ends
-``(region, patch)``, mapping kind), its nodes, the scheme, the controller
+``(region, patch)``, mapping kind), its nodes (each with its scheme), the controller
 factory (``node_controller`` by default) and the transport. No region reads another region's objects.
 
 **A run of a coupling op.** Its first loop test sends every partner what its

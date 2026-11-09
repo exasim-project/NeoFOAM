@@ -701,6 +701,13 @@
 <span class="sd">stepping order leads that. The regions a node's exchanges connect form the node's group; its</span>
 <span class="sd">last region in stepping order leads the node (decides when it converged).</span>
 
+<span class="sd">Each node has its scheme (``CouplingNode.scheme``): ``parallel`` (the default)</span>
+<span class="sd">or ``serial``. A serial pass of a region waits for the whole pass of the regions</span>
+<span class="sd">that step before it, so a serial node may neither enclose a node coupling two of</span>
+<span class="sd">its regions as well (:func:`region_couplings` raises) nor hold the time step of</span>
+<span class="sd">its regions (``Coupling.check`` raises): both need the partner to come back</span>
+<span class="sd">inside the pass.</span>
+
 <span class="sd">Example::</span>
 
 <span class="sd">    links = [Link("interface", (("left", "right"), ("right", "left")))]</span>
@@ -714,7 +721,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextvars</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Placement</span>
 
@@ -765,6 +772,9 @@
 <span class="sd">    ``placement`` places the node's op in a region's graph (by region;</span>
 <span class="sd">    :class:`~neofoam.framework.types.Placement` ``()`` for a region it does not</span>
 <span class="sd">    name: around the whole body of the top scope, or of the node before).</span>
+<span class="sd">    ``scheme`` ``parallel``: a side receives what its partner sent in the pass</span>
+<span class="sd">    before; ``serial``: from a region that steps earlier, what it sent in the</span>
+<span class="sd">    same pass.</span>
 
 <span class="sd">    An acceleration keeps the data of its last passes: give each node its own.</span>
 <span class="sd">    """</span>
@@ -775,6 +785,12 @@
     <span class="n">convergence</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Convergence</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
     <span class="n">acceleration</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Acceleration</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">placement</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Placement</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">scheme</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"serial"</span><span class="p">,</span> <span class="s2">"parallel"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"parallel"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parallel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether the node's scheme is ``parallel``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheme</span> <span class="o">==</span> <span class="s2">"parallel"</span>
 
 <div class="viewcode-block" id="CouplingNode.placement_of">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.CouplingNode.placement_of">[docs]</a>
@@ -790,13 +806,12 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ControllerFactory</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Builds a node leader's controller from the node's sides, the leader's label and the node.</span>
 
-<span class="sd">    ``parallel`` is the coupling's (:attr:`RegionCoupling.parallel`); the</span>
-<span class="sd">    controller decides with it which sides receive fresh or carried data.</span>
-<span class="sd">    ``node`` holds the node's convergence, acceleration and max_iterations.</span>
+<span class="sd">    ``node`` holds the node's scheme (the controller decides with it which sides</span>
+<span class="sd">    receive fresh or carried data), convergence, acceleration and max_iterations.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CouplingController</span><span class="p">:</span> <span class="o">...</span></div>
 
 
@@ -804,7 +819,7 @@
 <div class="viewcode-block" id="node_controller">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.node_controller">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">node_controller</span><span class="p">(</span>
-    <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span>
+    <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CouplingController</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The default :class:`ControllerFactory`: a controller as ``node`` describes it."""</span>
     <span class="k">return</span> <span class="n">CouplingController</span><span class="p">(</span>
@@ -812,7 +827,7 @@
         <span class="n">label</span><span class="p">,</span>
         <span class="n">convergence</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">convergence</span><span class="p">,</span>
         <span class="n">max_iterations</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">max_iterations</span><span class="p">,</span>
-        <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">,</span>
+        <span class="n">parallel</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">parallel</span><span class="p">,</span>
         <span class="n">acceleration</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">acceleration</span><span class="p">),</span>
     <span class="p">)</span></div>
 
@@ -826,18 +841,14 @@
 
 <span class="sd">    ``group`` holds the regions coupled with it, itself included, in stepping</span>
 <span class="sd">    order; ``links`` the exchanges of the group; ``nodes`` the nodes with an</span>
-<span class="sd">    exchange of this region, outer to inner. ``parallel`` says whether a side</span>
-<span class="sd">    always receives what its partner sent in the pass before (else serial: from</span>
-<span class="sd">    a region that steps earlier, what it sent in the same pass). The leader of</span>
-<span class="sd">    each node builds its controller with ``controller``, handing it</span>
-<span class="sd">    ``parallel`` and the node.</span>
+<span class="sd">    exchange of this region, outer to inner. The leader of each node builds its</span>
+<span class="sd">    controller with ``controller``, handing it the node.</span>
 <span class="sd">    """</span>
 
     <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">group</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">links</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Link</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">Transport</span>
-    <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">controller</span><span class="p">:</span> <span class="n">ControllerFactory</span> <span class="o">=</span> <span class="n">node_controller</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
 
@@ -908,7 +919,6 @@
     <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">],</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">Transport</span><span class="p">,</span>
-    <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">controller</span><span class="p">:</span> <span class="n">ControllerFactory</span> <span class="o">=</span> <span class="n">node_controller</span><span class="p">,</span>
     <span class="n">nodes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RegionCoupling</span><span class="p">]:</span>
@@ -921,7 +931,10 @@
 <span class="sd">    two patches of one region, or shares a patch with another link; when two</span>
 <span class="sd">    nodes have one name, an exchange is in no node or in two, a node names an</span>
 <span class="sd">    exchange that does not exist, or a node's placement or acceleration names a</span>
-<span class="sd">    region or exchange that is not the node's.</span>
+<span class="sd">    region or exchange that is not the node's; when a serial node encloses a</span>
+<span class="sd">    node (one listed after it) that couples two of its regions as well: a serial</span>
+<span class="sd">    pass of a region waits for its partner's whole pass, which needs the inner</span>
+<span class="sd">    node of both regions.</span>
 <span class="sd">    """</span>
     <span class="n">named</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">region</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_patch</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">regions</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">named</span><span class="p">:</span>
@@ -955,7 +968,7 @@
             <span class="n">touching</span> <span class="o">=</span> <span class="p">{</span><span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">group_links</span> <span class="k">if</span> <span class="n">member</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">)}</span>
             <span class="n">member_nodes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span> <span class="k">if</span> <span class="n">touching</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">))</span>
             <span class="n">couplings</span><span class="p">[</span><span class="n">member</span><span class="p">]</span> <span class="o">=</span> <span class="n">RegionCoupling</span><span class="p">(</span>
-                <span class="n">member</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">group_links</span><span class="p">,</span> <span class="n">transport</span><span class="p">,</span> <span class="n">parallel</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">member_nodes</span>
+                <span class="n">member</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">group_links</span><span class="p">,</span> <span class="n">transport</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">member_nodes</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">couplings</span></div>
 
@@ -1005,6 +1018,27 @@
             <span class="sa">f</span><span class="s2">"the exchanges </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> are in no coupling node; each exchange is in exactly one "</span>
             <span class="sa">f</span><span class="s2">"node (the nodes: </span><span class="si">{</span><span class="n">seen</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
+    <span class="n">_check_serial_nesting</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">links</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_serial_nesting</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingNode</span><span class="p">],</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when a serial node encloses a node sharing two of its regions."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">regions</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">region</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">if</span> <span class="n">link</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span> <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">link</span><span class="o">.</span><span class="n">ends</span><span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">outer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nodes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">outer</span><span class="o">.</span><span class="n">parallel</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">inner</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]:</span>
+            <span class="n">shared</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">regions</span><span class="p">(</span><span class="n">outer</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">regions</span><span class="p">(</span><span class="n">inner</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shared</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"coupling '</span><span class="si">{</span><span class="n">outer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' is serial but encloses '</span><span class="si">{</span><span class="n">inner</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">', which "</span>
+                    <span class="sa">f</span><span class="s2">"couples </span><span class="si">{</span><span class="n">shared</span><span class="si">}</span><span class="s2"> as well; a serial outer pass waits for its partner's "</span>
+                    <span class="s2">"whole pass, which needs the inner coupling of both - make "</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">outer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' parallel"</span>
+                <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_group</span><span class="p">(</span><span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">links</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Link</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>

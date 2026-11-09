@@ -708,7 +708,9 @@
 <span class="sd">regions of the group step the smallest time step any of them asks for. It runs</span>
 <span class="sd">after the solutionLoop's ``set_time_step`` and before its ``increment_time``,</span>
 <span class="sd">once per time step (``first``), and reads and writes the time step in the</span>
-<span class="sd">region's context (``ctx.time.delta_t``).</span>
+<span class="sd">region's context (``ctx.time.delta_t``). It must not end up inside a serial</span>
+<span class="sd">coupling op: :meth:`Coupling.check` raises for the resolved graph (the</span>
+<span class="sd">runtime's ``resolve_operations`` calls it).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -872,6 +874,32 @@
                 <span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Coupling.check">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when the resolved ``graph`` holds the time step in a serial node.</span>
+
+<span class="sd">        A serial pass of a region waits for its partner's whole pass; when that</span>
+<span class="sd">        holds the time-step op, which waits for the region, neither comes back.</span>
+<span class="sd">        """</span>
+        <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
+        <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="c1"># the labels of the region's serial coupling ops, and their nodes' names</span>
+        <span class="n">serial</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">nodes</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">parallel</span>
+        <span class="p">}</span>
+        <span class="n">holder</span> <span class="o">=</span> <span class="n">_holder</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.time_step"</span><span class="p">,</span> <span class="n">serial</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">holder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"coupling '</span><span class="si">{</span><span class="n">holder</span><span class="si">}</span><span class="s2">' is serial but holds the time step of its regions; make it "</span>
+                <span class="sa">f</span><span class="s2">"parallel or place it around named operations "</span>
+                <span class="sa">f</span><span class="s2">"(wraps.</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.operations)"</span>
+            <span class="p">)</span></div>
 </div>
 
 
@@ -890,6 +918,18 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
             <span class="n">names</span> <span class="o">|=</span> <span class="n">_names</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">names</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_holder</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">serial</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The node of the outermost loop of ``serial`` (by label) holding operation ``name``."""</span>
+    <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="ow">in</span> <span class="n">serial</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_names</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">serial</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">]</span>
+            <span class="n">inside</span> <span class="o">=</span> <span class="n">_holder</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">serial</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inside</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">inside</span>
+    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TimeStep</span><span class="p">:</span>

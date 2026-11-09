@@ -704,8 +704,8 @@ model per direction), its points. It adds itself to its region’s
 <strong>coupling model</strong> (<code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).add(self)</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p>case (<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>)</p></td>
-<td><p>which patches are paired (<code class="docutils literal notranslate"><span class="pre">exchanges</span></code>), the <strong>mapping</strong> of each pair, the
-scheme, and the coupling nodes (<code class="docutils literal notranslate"><span class="pre">couplings</span></code>): their exchanges,
+<td><p>which patches are paired (<code class="docutils literal notranslate"><span class="pre">exchanges</span></code>), the <strong>mapping</strong> of each pair, and
+the coupling nodes (<code class="docutils literal notranslate"><span class="pre">couplings</span></code>): their exchanges, scheme,
 acceleration, convergence, <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> and placement.</p></td>
 </tr>
 <tr class="row-even"><td><p>solver</p></td>
@@ -733,8 +733,8 @@ data of the partner onto a side’s own points; a region’s <strong>coupling op
 loop around its solving operations whose test exchanges its sides’ data; regions
 connected by exchanges form a <strong>group</strong>, whose last region in <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code>
 order leads it in agreeing the time step; a <strong>coupling node</strong> is a named coupling loop over
-some exchanges (its convergence, <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code>, an acceleration per exchange,
-its placement per region; nodes are listed outer to inner), whose last region in
+some exchanges (its scheme, convergence, <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code>, an acceleration per
+exchange, its placement per region; nodes are listed outer to inner), whose last region in
 stepping order is the node’s <strong>leader</strong>: its controller decides when the node’s
 data converged; a side is keyed by <code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch,</span> <span class="pre">field)</span></code>. <code class="docutils literal notranslate"><span class="pre">multiRun</span></code>
 builds the nodes the case file lists under <code class="docutils literal notranslate"><span class="pre">couplings</span></code>; without them it puts
@@ -790,7 +790,7 @@ Dirichlet-Neumann with <code class="docutils literal notranslate"><span class="p
 <span class="w">    </span><span class="nt">mapping</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nearest-neighbor</span><span class="w">    </span><span class="c1"># or identity (default nearest-neighbor)</span>
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cht</span><span class="w">                    </span><span class="c1"># optional, default "&lt;region&gt;-&lt;region&gt;"</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">solid</span><span class="p">:</span><span class="w"> </span><span class="nv">left</span><span class="p p-Indicator">,</span><span class="nt"> air</span><span class="p">:</span><span class="w"> </span><span class="nv">top</span><span class="p p-Indicator">}</span>
-<span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">serial</span><span class="w">                   </span><span class="c1"># serial (Gauss-Seidel) | parallel (Jacobi)</span>
+<span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">parallel</span><span class="w">                 </span><span class="c1"># parallel (Jacobi, the default) | serial (Gauss-Seidel)</span>
 <span class="nt">acceleration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">aitken</span><span class="p p-Indicator">,</span><span class="nt"> relaxation</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">}</span>
 <span class="nt">convergence</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">relative</span><span class="p p-Indicator">,</span><span class="nt"> data</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">,</span><span class="nt"> limit</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-6</span><span class="p p-Indicator">}</span>
@@ -804,9 +804,9 @@ whole time step of each region. <code class="docutils literal notranslate"><span
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">exchanges</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">wall</span><span class="p p-Indicator">,</span><span class="nt"> solid</span><span class="p">:</span><span class="w"> </span><span class="nv">right</span><span class="p p-Indicator">}}</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-p</span><span class="p p-Indicator">,</span><span class="nt"> sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">inlet</span><span class="p p-Indicator">,</span><span class="nt"> pipe</span><span class="p">:</span><span class="w"> </span><span class="nv">outlet</span><span class="p p-Indicator">}}</span>
-<span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">serial</span>
 <span class="nt">couplings</span><span class="p">:</span><span class="w">                       </span><span class="c1"># outer to inner</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wall</span><span class="w">                   </span><span class="c1"># unique; the ops &lt;region&gt;.wall</span>
+<span class="w">    </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">parallel</span><span class="w">             </span><span class="c1"># default: the top-level scheme (default parallel)</span>
 <span class="w">    </span><span class="nt">maxIterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span><span class="w">            </span><span class="c1"># default 100</span>
 <span class="w">    </span><span class="nt">exchanges</span><span class="p">:</span><span class="w">                   </span><span class="c1"># each exchange in exactly one node</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> acceleration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">aitken</span><span class="p p-Indicator">,</span><span class="nt"> relaxation</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">}}</span>
@@ -823,7 +823,24 @@ body of the op of the node before it (or the whole time step). <code class="docu
 <code class="docutils literal notranslate"><span class="pre">downstream</span></code> (the default), every operation downstream of them; an operation
 name the region’s graph lacks is reported when the graph is built. With
 <code class="docutils literal notranslate"><span class="pre">couplings</span></code> the top-level <code class="docutils literal notranslate"><span class="pre">acceleration</span></code>, <code class="docutils literal notranslate"><span class="pre">convergence</span></code> and
-<code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> are an error; <code class="docutils literal notranslate"><span class="pre">scheme</span></code> applies to every node.</p>
+<code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> are an error; the top-level <code class="docutils literal notranslate"><span class="pre">scheme</span></code> is the scheme of every
+node that names none.</p>
+<p><strong>Serial or parallel</strong>, per node. Parallel (the default): a side receives what
+its partner sent in the pass before. Serial: a side receives from a region that
+steps before its own what it sent in the same pass, so a serial pass of a region
+waits for its partner’s whole pass. Two rules follow, both checked before
+anything runs (<code class="docutils literal notranslate"><span class="pre">ValueError</span></code>):</p>
+<ul class="simple">
+<li><p>a serial node encloses no node (one listed after it) that couples two of its
+regions as well: the partner’s pass needs the inner node of both regions, so
+neither comes back. A chain (the inner node shares one region) is fine
+(<code class="docutils literal notranslate"><span class="pre">region_couplings</span></code>);</p></li>
+<li><p>a serial node does not hold the time step of its regions (the time-step op
+waits for the leader, which waits for the partner’s pass): place it around
+named operations (<code class="docutils literal notranslate"><span class="pre">wraps.&lt;region&gt;.operations</span></code>) or make it parallel
+(<code class="docutils literal notranslate"><span class="pre">Coupling.check</span></code>, as the region’s graph is resolved). A steady region has
+no time step, so a serial node may wrap it whole.</p></li>
+</ul>
 <p><code class="docutils literal notranslate"><span class="pre">mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration.type</span></code> and <code class="docutils literal notranslate"><span class="pre">convergence[].type</span></code> name entries of
 the registries <code class="docutils literal notranslate"><span class="pre">MAPPINGS</span></code>, <code class="docutils literal notranslate"><span class="pre">ACCELERATIONS</span></code> and <code class="docutils literal notranslate"><span class="pre">CONVERGENCES</span></code>; the file is
 checked against them on load, as against unknown keys, two nodes of one name, an
@@ -842,9 +859,10 @@ A patch is in at most one exchange and carries one coupled side.</p>
     |                        then its BCs; a @coupled BC adds itself
     |     execution_graph    model ops += ctx.models["coupling"].operations(),
     |                        the time-step op a.time_step (transient)
-    |     resolve_operations DAGResolver places a.coupling around the time step
-    |     run()              time_loop { set_time_step, a.time_step,
-    |                                    increment_time, a.coupling { solve_x } }
+    |     resolve_operations DAGResolver places a.coupling around the time step;
+    |                        Coupling.check: no time step in a serial node
+    |     run()              time_loop { a.coupling { set_time_step, a.time_step,
+    |                                                 increment_time, solve_x } }
     |
     +-- thread "b" (leader): the same, its coupling op owns the controller
                  ^
@@ -885,7 +903,7 @@ coupling needs no solution loop (<code class="docutils literal notranslate"><spa
 (<code class="docutils literal notranslate"><span class="pre">ctx.time</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, steady) compare equal, so the check passes.</p>
 <p><strong>What a region knows.</strong> Its <code class="docutils literal notranslate"><span class="pre">RegionCoupling</span></code> (<code class="docutils literal notranslate"><span class="pre">Coupling.coupling</span></code>): its name,
 its group (in stepping order), the group’s exchanges (<code class="docutils literal notranslate"><span class="pre">Link</span></code>: name, two ends
-<code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>, mapping kind), its nodes, the scheme, the controller
+<code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>, mapping kind), its nodes (each with its scheme), the controller
 factory (<code class="docutils literal notranslate"><span class="pre">node_controller</span></code> by default) and the transport. No region reads another region’s objects.</p>
 <p><strong>A run of a coupling op.</strong> Its first loop test sends every partner what its
 side sends and receives (the models’ field kinds) and its points, and the leader
