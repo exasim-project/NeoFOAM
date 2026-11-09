@@ -791,13 +791,19 @@
 <span class="n">Acceleration</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">],</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]]</span>
 
 
+<span class="c1"># The elements of the target-by-source distance block :func:`nearest_neighbor` computes at once.</span>
+<span class="n">_BLOCK_ELEMENTS</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span>
+
+
 <div class="viewcode-block" id="nearest_neighbor">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.nearest_neighbor">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">nearest_neighbor</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""For every target point, the index of the nearest source point.</span>
+<span class="w">    </span><span class="sd">"""For every target point, the index of the nearest source point (the lowest on a tie).</span>
 
 <span class="sd">    Points are rows of ``(n_points, dim)`` arrays. Compares every pair of points,</span>
-<span class="sd">    so it suits interfaces of a few thousand points.</span>
+<span class="sd">    a block of target points at a time, so that memory grows with the points of</span>
+<span class="sd">    one side, not with the pairs: O(n + m) for ``m`` source and ``n`` target</span>
+<span class="sd">    points, time O(n * m).</span>
 
 <span class="sd">    Example::</span>
 
@@ -805,9 +811,18 @@
 <span class="sd">    """</span>
     <span class="n">source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">target</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">source</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_BLOCK_ELEMENTS</span> <span class="o">//</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">),</span> <span class="n">rows</span><span class="p">):</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">rows</span><span class="p">]</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">block</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">source</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">indices</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">rows</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">indices</span></div>
 
+
+
+<span class="c1">#: A mapping bound to the points of both sides: the data on the source points -&gt; on the target's.</span>
+<span class="n">BoundMapping</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Data</span><span class="p">],</span> <span class="n">Data</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="Mapping">
@@ -815,31 +830,44 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Mapping</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Maps the :data:`~neofoam.framework.coupling.Array` data a side sends onto the other side.</span>
 
-<span class="sd">    The mapping of an :class:`~neofoam.framework.coupling.Exchange`, run by the</span>
-<span class="sd">    receiving side's coupling op in its loop test: from the partner's points onto</span>
-<span class="sd">    the side's own (each a ``(n_points, dim)`` array, or ``None`` without</span>
-<span class="sd">    coordinates). ``kind`` names it (``system/regionCoupling.yaml``:</span>
-<span class="sd">    ``mapping:``); :data:`MAPPINGS` holds the kinds the framework offers. This</span>
-<span class="sd">    base class hands the data over unchanged (kind ``identity``): the sides share</span>
-<span class="sd">    their points. A mapping of one's own subclasses it and sets ``kind``.</span>
+<span class="sd">    The mapping of an :class:`~neofoam.framework.coupling.Exchange`. The</span>
+<span class="sd">    receiving side's coupling op binds it once, when it connects, to the</span>
+<span class="sd">    partner's points (``source``) and the side's own (``target``; each a</span>
+<span class="sd">    ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the data</span>
+<span class="sd">    of every pass with the bound mapping. ``kind`` names it</span>
+<span class="sd">    (``system/regionCoupling.yaml``: ``mapping:``); :data:`MAPPINGS` holds the</span>
+<span class="sd">    kinds the framework offers. This base class hands the data over unchanged</span>
+<span class="sd">    (kind ``identity``): the sides share their points. A mapping of one's own</span>
+<span class="sd">    subclasses it, sets ``kind`` and overrides :meth:`bind`.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        mapped = exchange.mapping({"T": values}, partner_points, points)</span>
+<span class="sd">        mapper = exchange.mapping.bind(partner_points, points)</span>
+<span class="sd">        mapped = mapper({"T": values})</span>
 <span class="sd">    """</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">"identity"</span>
 
-<div class="viewcode-block" id="Mapping.check">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Mapping.check">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when it cannot map from the points ``source`` onto ``target``."""</span></div>
+<div class="viewcode-block" id="Mapping.bind">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.Mapping.bind">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The mapping from the points ``source`` onto ``target``.</span>
+
+<span class="sd">        Raises ``ValueError`` when it cannot map between them: here, when both</span>
+<span class="sd">        sides have points and their numbers differ.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">' needs as many points on both sides: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="si">}</span><span class="s2"> sent, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2"> received"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_unchanged</span></div>
+</div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""``data`` given on the points ``source``, on the points ``target``."""</span>
-        <span class="k">return</span> <span class="n">data</span></div>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_unchanged</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">data</span>
 
 
 <div class="viewcode-block" id="NearestNeighborMapping">
@@ -847,27 +875,24 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">NearestNeighborMapping</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Maps every point of the receiving side to the nearest point of the sending side.</span>
 
-<span class="sd">    Both sides need coordinates. It keeps the indices of each pair of point</span>
-<span class="sd">    arrays, so the points must not move. Not thread safe.</span>
+<span class="sd">    Both sides need coordinates. :meth:`bind` finds the nearest points</span>
+<span class="sd">    (:func:`nearest_neighbor`) once, so the points must not move.</span>
 <span class="sd">    """</span>
 
     <span class="n">kind</span> <span class="o">=</span> <span class="s2">"nearest-neighbor"</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-
-<div class="viewcode-block" id="NearestNeighborMapping.check">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.NearestNeighborMapping.check">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="NearestNeighborMapping.bind">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.NearestNeighborMapping.bind">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">' needs the coordinates of both sides"</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">' needs the coordinates of both sides"</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">nearest_neighbor</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
+        <span class="k">def</span><span class="w"> </span><span class="nf">mapper</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">)[</span><span class="n">indices</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
-        <span class="n">pair</span> <span class="o">=</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="n">source</span><span class="p">),</span> <span class="nb">id</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">pair</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">[</span><span class="n">pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">nearest_neighbor</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">_indices</span><span class="p">[</span><span class="n">pair</span><span class="p">]]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+        <span class="k">return</span> <span class="n">mapper</span></div>
+</div>
 
 
 
