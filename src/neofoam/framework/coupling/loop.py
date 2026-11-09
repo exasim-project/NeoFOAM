@@ -240,7 +240,7 @@ class CouplingOutcome:
     ``converged`` whether the convergence check held (``False``:
     ``max_iterations`` stopped it), and ``residuals`` the relative change of
     every field's exchanged :data:`Array` data in the last pass (largest over its
-    sides and arrays).
+    sides and arrays; ``inf`` for a field no pass measured).
     """
 
     passes: int
@@ -255,7 +255,8 @@ class CouplingNotConvergedWarning(RuntimeWarning):
 def relative_changes(changes: list[SideChange]) -> dict[str, float]:
     """The relative change of each field's data: ``|current - previous| / |current|``.
 
-    Largest over the sides and arrays of the field; the absolute change where
+    Largest over the sides and arrays of the field (no floor: a field's value
+    is its largest measured change; a NaN stays NaN); the absolute change where
     the current data is zero.
     """
     residuals: dict[str, float] = {}
@@ -265,7 +266,7 @@ def relative_changes(changes: list[SideChange]) -> dict[str, float]:
             delta = float(np.linalg.norm(current - np.asarray(change.previous[name], dtype=float)))
             norm = float(np.linalg.norm(current))
             value = delta / norm if norm > 0 else delta
-            residuals[change.field] = max(residuals.get(change.field, 0.0), value)
+            residuals[change.field] = float(np.maximum(residuals.get(change.field, value), value))
     return residuals
 
 
@@ -359,7 +360,10 @@ class CouplingController:
             for side in self._sides
         ]
         self._outcomes: list[CouplingOutcome] = []
-        self._residuals: dict[str, float] = {}
+        # inf for every field with Array data until a pass measured its change:
+        # nothing counts as converged before it was measured
+        self._unmeasured = {side.field: math.inf for side in self._sides if side.arrays}
+        self._residuals = dict(self._unmeasured)
         # the pass of the current time step; 0 between time steps
         self._iteration = 0
         # whether the pass started last is the final one, and whether it is final
@@ -416,7 +420,10 @@ class CouplingController:
 
     @property
     def residuals(self) -> dict[str, float]:
-        """The relative change of each field's :data:`Array` data in the last pass."""
+        """The relative change of each field's :data:`Array` data in the last pass.
+
+        ``inf`` for a field no pass of the time step's coupling measured yet.
+        """
         return dict(self._residuals)
 
     def fresh(self, index: int) -> bool:
@@ -437,7 +444,7 @@ class CouplingController:
             SideChange(side.field, _arrays(side.arrays, previous), _arrays(side.arrays, now))
             for side, previous, now in zip(self._sides, self._carried, current)
         ]
-        self._residuals = self._relative_changes(changes)
+        self._residuals = {**self._unmeasured, **self._relative_changes(changes)}
         if self._final:
             converged = self._converged_before_final or self._converged(changes)
             self._finish(converged)
@@ -461,7 +468,7 @@ class CouplingController:
                         f"coupling {self.label}: the relative change of the {name} of region "
                         f"{side.region} patch {side.patch} is not finite in pass {self._iteration}"
                     )
-                residuals[name] = max(residuals.get(name, 0.0), value)
+                residuals[name] = float(np.maximum(residuals.get(name, value), value))
         return residuals
 
     def _converged(self, changes: list[SideChange]) -> bool:
@@ -492,7 +499,7 @@ class CouplingController:
 
     def _start_pass(self, final: bool) -> list[Data]:
         if self._iteration == 0:
-            self._residuals = {}
+            self._residuals = dict(self._unmeasured)
         self._iteration += 1
         self._final = final
         for exchange, acceleration in self._acceleration.items():

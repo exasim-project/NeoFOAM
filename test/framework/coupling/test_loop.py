@@ -11,6 +11,7 @@ it receives. Each region's coupling op wraps its solve; b, the last region, lead
 
 from __future__ import annotations
 
+import math
 from functools import partial
 from typing import Any, Optional
 
@@ -549,3 +550,24 @@ def test_a_convergence_over_no_data_raises_as_the_controller_is_built(
         CouplingController(
             _group(arrays), "b.coupling", convergence=[RelativeConvergence(data, 1e-5)]
         )
+
+
+def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
+    controller = CouplingController(_group(("x",)), "b.coupling", convergence=[_never])
+    assert controller.residuals == {"x": math.inf}
+
+    # the first decision starts the first pass: nothing measured yet
+    controller.decide([{"x": np.ones(1)}, {"x": np.ones(1)}])
+    assert controller.residuals == {"x": math.inf}
+
+    controller.decide([{"x": np.ones(1)}, {"x": np.full(1, 2.0)}])
+    assert controller.residuals == {"x": 0.5}
+
+
+def test_relative_changes_keep_a_nan() -> None:
+    changes = [
+        SideChange("x", {"x": np.ones(1)}, {"x": np.full(1, 2.0)}),
+        SideChange("x", {"x": np.ones(1)}, {"x": np.full(1, np.nan)}),
+    ]
+
+    assert math.isnan(relative_changes(changes)["x"])
