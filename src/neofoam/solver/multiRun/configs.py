@@ -3,19 +3,64 @@
 
 """Case config of the multiRun solver: the shared time loop, the region solvers, their coupling."""
 
-from typing import Any, Literal, Optional
+from functools import partial
+from typing import Annotated, Any, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    SerializeAsAny,
+    WithJsonSchema,
+    field_validator,
+    model_validator,
+)
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
-from neofoam.framework.coupling import ACCELERATIONS, CONVERGENCES, DEFAULT_TIMEOUT, MAPPINGS
+from neofoam.framework.coupling import (
+    DEFAULT_TIMEOUT,
+    Acceleration,
+    Convergence,
+    Mapping,
+    NearestNeighborMapping,
+    strategy,
+)
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
-def _known(name: str, registry: dict[str, Any], what: str) -> str:
-    if name not in registry:
-        raise ValueError(f"unknown {what} '{name}'; known: {sorted(registry)}")
-    return name
+def _selected(family: type[BaseModel], what: str) -> Any:
+    """A field holding a strategy of ``family``, selected by its ``type`` as it is validated.
+
+    Validated against the family as it stands then, so a plugin's strategy
+    (:func:`~neofoam.framework.coupling.load_plugins`) is selected too; the
+    JSON Schema is an open object for the same reason.
+    """
+    return Annotated[
+        SerializeAsAny[family],  # type: ignore[valid-type]
+        BeforeValidator(partial(strategy, family)),
+        WithJsonSchema(
+            {
+                "type": "object",
+                "description": f"a {what}: its type and options",
+            }
+        ),
+    ]
+
+
+#: A convergence measure: ``{type: relative, data: T, limit: 1.0e-5}``
+#: (:class:`~neofoam.framework.coupling.Convergence`; ``relative``: the data of
+#: field ``data`` changes by less than ``limit`` relative to it).
+ConvergenceConfig = _selected(Convergence, "convergence measure")
+#: How the leader relaxes the data carried into a pass: ``{type: aitken, relaxation: 0.5}``
+#: (:class:`~neofoam.framework.coupling.Acceleration`; ``constant`` factor
+#: ``relaxation``, or ``aitken`` starting from it).
+AccelerationConfig = _selected(Acceleration, "acceleration")
+#: How the point data of one side is mapped onto the other's points:
+#: ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both
+#: patches share their points); a type alone, or ``{type: ..., <option>: ...}``
+#: (:class:`~neofoam.framework.coupling.Mapping`).
+MappingConfig = _selected(Mapping, "mapping")
 
 
 @IOStrategy(YAML("system/controlDict.yaml"))
@@ -40,63 +85,19 @@ class ControlDictConfig(TimeControlConfig):
     regionSolvers: dict[str, str] = Field(min_length=1, json_schema_extra={"i18n": "nf.region"})
 
 
-class ConvergenceConfig(BaseModel):
-    """A convergence measure on the exchanged data of field ``data`` with its ``limit``.
-
-    ``type`` names it in :data:`~neofoam.framework.coupling.CONVERGENCES`
-    (``relative``: the data changes by less than ``limit`` relative to it).
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    type: str
-    data: str
-    limit: float = Field(gt=0)
-
-    @field_validator("type")
-    @classmethod
-    def _registered(cls, value: str) -> str:
-        return _known(value, CONVERGENCES, "convergence")
-
-
-class AccelerationConfig(BaseModel):
-    """How the leader relaxes the data carried into a pass, with its relaxation factor.
-
-    ``type`` names it in :data:`~neofoam.framework.coupling.ACCELERATIONS`
-    (``constant`` factor, or ``aitken`` starting from it).
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    type: str
-    relaxation: float = Field(gt=0, le=1)
-
-    @field_validator("type")
-    @classmethod
-    def _registered(cls, value: str) -> str:
-        return _known(value, ACCELERATIONS, "acceleration")
-
-
 class ExchangeConfig(BaseModel):
     """One exchange: the coupled patch of each of its two regions, and how data is mapped.
 
     ``sides`` maps each region to its patch; ``name`` defaults to the regions
     joined by ``-``. ``mapping`` maps the point data of one side onto the other's
-    points, a kind of :data:`~neofoam.framework.coupling.MAPPINGS`:
-    ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both
-    patches share their points).
+    points (:data:`MappingConfig`), by default ``nearest-neighbor``.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     name: Optional[str] = None
     sides: dict[str, str] = Field(min_length=2, max_length=2)
-    mapping: str = "nearest-neighbor"
-
-    @field_validator("mapping")
-    @classmethod
-    def _registered(cls, value: str) -> str:
-        return _known(value, MAPPINGS, "mapping")
+    mapping: MappingConfig = Field(default_factory=NearestNeighborMapping)
 
 
 class NodeExchangeConfig(BaseModel):

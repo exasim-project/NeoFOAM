@@ -21,14 +21,13 @@ from typing import Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    ACCELERATIONS,
-    CONVERGENCES,
     DEFAULT_TIMEOUT,
     CommChannel,
     CouplingNode,
     InProcessCommChannel,
     Link,
     RegionCoupling,
+    load_plugins,
     region_couplings,
     run_regions,
 )
@@ -115,11 +114,9 @@ def _node(config: CouplingNodeConfig) -> CouplingNode:
         tuple(exchange.name for exchange in config.exchanges),
         max_iterations=config.maxIterations,
         scheme=config.scheme or "parallel",
-        convergence=tuple(CONVERGENCES[e.type](e.data, e.limit) for e in config.convergence),
+        convergence=tuple(config.convergence),
         acceleration={
-            exchange.name: ACCELERATIONS[exchange.acceleration.type](
-                exchange.acceleration.relaxation
-            )
+            exchange.name: exchange.acceleration.model_copy(deep=True)
             for exchange in config.exchanges
             if exchange.acceleration is not None
         },
@@ -143,11 +140,16 @@ def run_region(runtime: SolverRuntime) -> Context:
 def run() -> dict[str, Context]:
     """Run the multi-region case in the working directory; return each region's final Context.
 
+    The coupling plugins are loaded first, before any region starts
+    (:func:`~neofoam.framework.coupling.load_plugins`), so the case's
+    ``system/regionCoupling.yaml`` may name their strategies.
+
     Example::
 
         cd <case>
         python -m neofoam.solver.multiRun
     """
+    load_plugins()
     config = ControlDictConfig.load(case_dir=Path("."))
     regions = list(config.regionSolvers)
     comm_channel = InProcessCommChannel(timeout=transport_timeout())

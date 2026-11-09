@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, CouplingOp
+from neofoam.framework.coupling import Coupling, CouplingOp, IdentityMapping
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
 from solver.multiRun.limitations.probe_solver import probe
@@ -128,7 +128,7 @@ def test_no_coordinates_with_the_identity_mapping_reaches_the_fixed_point(
     case = tmp_path / "no_coordinates"
     shutil.copytree(CASES / "no_coordinates", case)
     config = RegionCouplingConfig.load(case_dir=case)
-    config.exchanges[0].mapping = "identity"
+    config.exchanges[0].mapping = IdentityMapping()
     config.save(case_dir=case)
 
     regions = _run(case, monkeypatch)

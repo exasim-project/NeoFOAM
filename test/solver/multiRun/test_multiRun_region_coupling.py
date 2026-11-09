@@ -27,10 +27,10 @@ import numpy as np
 import pytest
 
 from neofoam.framework.context import Context
+from neofoam.framework.coupling import Acceleration, AitkenRelaxation, ConstantRelaxation
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from neofoam.solver.multiRun.configs import (
-    AccelerationConfig,
     CouplingNodeConfig,
     ExchangeConfig,
     NodeExchangeConfig,
@@ -62,7 +62,7 @@ def _case(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **update: Any) -> Non
     monkeypatch.chdir(tmp_path / "case")
 
 
-def _around_solve_T(scheme: Scheme, acceleration: AccelerationConfig) -> dict[str, Any]:
+def _around_solve_T(scheme: Scheme, acceleration: Acceleration) -> dict[str, Any]:
     """The case's coupling as one node of ``scheme`` that wraps each region's ``solve_T``."""
     config = RegionCouplingConfig.load(case_dir=CASE)
     node = CouplingNodeConfig(
@@ -79,16 +79,16 @@ def _around_solve_T(scheme: Scheme, acceleration: AccelerationConfig) -> dict[st
 @pytest.mark.parametrize(
     ("scheme", "acceleration"),
     [
-        ("serial", AccelerationConfig(type="aitken", relaxation=0.5)),
-        ("serial", AccelerationConfig(type="constant", relaxation=1.0)),
-        ("parallel", AccelerationConfig(type="aitken", relaxation=0.5)),
-        ("parallel", AccelerationConfig(type="constant", relaxation=0.7)),
+        ("serial", AitkenRelaxation(relaxation=0.5)),
+        ("serial", ConstantRelaxation(relaxation=1.0)),
+        ("parallel", AitkenRelaxation(relaxation=0.5)),
+        ("parallel", ConstantRelaxation(relaxation=0.7)),
     ],
     ids=["serial-aitken", "serial-constant", "parallel-aitken", "parallel-constant"],
 )
 def test_multiRun_region_coupling_reaches_the_steady_profile(
     scheme: Scheme,
-    acceleration: AccelerationConfig,
+    acceleration: Acceleration,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

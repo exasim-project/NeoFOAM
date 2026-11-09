@@ -118,7 +118,9 @@ def test_couplings_without_nodes_puts_every_exchange_in_one_node(
     assert couplings["b"].nodes == couplings["c"].nodes == (node,)
     assert (node.name, node.exchanges, node.max_iterations) == ("coupling", ("a-b", "b-c"), 9)
     assert sorted(node.acceleration) == ["a-b", "b-c"]
-    assert all(type(a) is ConstantRelaxation and a.omega == 0.7 for a in node.acceleration.values())
+    assert all(
+        type(a) is ConstantRelaxation and a.relaxation == 0.7 for a in node.acceleration.values()
+    )
     assert node.acceleration["a-b"] is not node.acceleration["b-c"]
     assert node.placement == {}
 
@@ -236,7 +238,8 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         (_broken("couplings.0.maxIteration", 5), r"couplings.0.maxIteration\n.*Extra inputs"),
         (
             _broken("couplings.0.exchanges.0.acceleration", {"type": "iqn-ils", "relaxation": 0.5}),
-            r"couplings.0.exchanges.0.acceleration.type\n.*unknown acceleration 'iqn-ils'",
+            r"couplings.0.exchanges.0.acceleration\n.*unknown acceleration type 'iqn-ils'; "
+            r"registered acceleration types: \['aitken', 'constant'\]",
         ),
         (
             _broken("couplings.1.wraps.b.operation", ["solve_x"]),
