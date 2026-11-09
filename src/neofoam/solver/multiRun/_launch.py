@@ -135,8 +135,9 @@ def check_decomposed(layout: RegionLayout, case_dir: Path = Path(".")) -> None:
         raise MpiSetupError("; ".join(problems))
 
 
-def check_world(region: str, comm: Any) -> None:
+def check_world(region: str, comm: Any, uses_neon: bool = True) -> None:
     """Raise ``MpiSetupError`` unless OpenFOAM's and NeoN's world of ``region`` is ``comm``."""
+    # NeoN is loaded in every process once any region solves with it
     pybfoam = sys.modules.get("pybFoam")
     if pybfoam is not None and pybfoam.Pstream.parRun():
         world = (int(pybfoam.Pstream.myProcNo()), int(pybfoam.Pstream.nProcs()))
@@ -146,7 +147,7 @@ def check_world(region: str, comm: Any) -> None:
                 f"split rank {comm.rank} of {comm.size}"
             )
     neon = sys.modules.get("neon._neon")
-    if neon is not None:
+    if uses_neon and neon is not None:
         if not hasattr(neon, "default_communicator"):
             raise MpiSetupError(
                 f"region {region}: NeoN was built without MPI communicator support "
