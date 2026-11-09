@@ -22,7 +22,7 @@ from framework.coupling.plugins import installed
 from pydantic import ValidationError
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import ConstantRelaxation, Mapping
+from neofoam.framework.coupling import BoundMapping, ConstantRelaxation, Mapping
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
@@ -50,9 +50,12 @@ calls = {"fake-rbf": 0, "fake-iqn": 0}
 class _RadialBasis(Mapping):
     kind = "fake-rbf"
 
-    def __call__(self, data: Any, source: Any, target: Any) -> Any:
-        calls["fake-rbf"] += 1
-        return data
+    def bind(self, source: Any, target: Any) -> BoundMapping:
+        def mapper(data: Any) -> Any:
+            calls["fake-rbf"] += 1
+            return data
+
+        return mapper
 
 
 class _QuasiNewton(ConstantRelaxation):

@@ -247,8 +247,9 @@ factory (``node_controller`` by default) and the comm channel. No region reads a
 **A run of a coupling op.** Its first loop test sends every partner what its
 side sends and receives (the models' field kinds) and its points, and the leader
 which sides it has; each region then checks that its side receives what the
-partner sends and that its mapping can map the partner's points onto its own,
-and the leader builds its controller. Each loop test then:
+partner sends and binds its mapping to the partner's points and its own, once
+(which fails when it cannot map between them; every pass then maps with the
+bound mapping), and the leader builds its controller. Each loop test then:
 
 1. computes what every side of the region sends now;
 2. after a pass, serial: sends it to every partner that steps later, which
