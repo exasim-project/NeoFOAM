@@ -66,9 +66,16 @@ def _op(name: str, func: object, first: bool = False) -> Operation:
 
 
 def _time_loop(
-    asked: list[float], log: list[float], solves: Optional[list[int]] = None
+    asked: list[float],
+    log: list[float],
+    solves: Optional[list[int]] = None,
+    inner: bool = False,
 ) -> StepBuilder:
-    """A time loop of ``len(asked)`` steps: set_time_step asks for ``asked[step]``."""
+    """A time loop of ``len(asked)`` steps: set_time_step asks for ``asked[step]``.
+
+    With ``inner`` the solve runs in an ``inner_loop`` stepped after
+    increment_time, as incompressibleFluid's PIMPLE loop.
+    """
     steps = iter(asked)
 
     def set_time_step(ctx: Context) -> None:
@@ -83,7 +90,13 @@ def _time_loop(
         time_builder.step(
             _op("increment_time", lambda ctx: log.append(ctx.time.delta_t), first=True)
         )
-        if solves is not None:
+        if solves is not None and inner:
+            inner_loop = Operation(
+                func=IterativeOp(_Passes(2)), metadata=OperationMetadata(op_name="inner_loop")
+            )
+            with time_builder.loop(inner_loop) as inner_builder:
+                inner_builder.step(_op("solve", lambda ctx: solves.append(1)))
+        elif solves is not None:
             time_builder.step(_op("solve", lambda ctx: solves.append(1)))
     return builder
 
@@ -148,6 +161,22 @@ def test_the_time_step_op_runs_between_set_time_step_and_increment_time() -> Non
         "solve",
     ]
     assert loop.sub_operations[1].metadata.first
+
+
+def test_the_time_step_op_leaves_a_loop_stepped_after_increment_time_after_it() -> None:
+    """The time-step op changes the order of a PIMPLE-like step only by its own insertion."""
+    regions = contexts(["a", "b", "c"], CHAIN)
+    ctx = regions["a"]
+    ctx.time = _Time(1.0)
+
+    (loop,) = _graph(ctx, _time_loop([1.0], [], [], inner=True)).ops
+
+    assert [op.operation_name for op in loop.sub_operations] == [
+        "set_time_step",
+        "a.time_step",
+        "increment_time",
+        "inner_loop",
+    ]
 
 
 def test_inside_a_coupling_loop_the_time_step_is_agreed_once_per_time_step() -> None:
@@ -221,3 +250,24 @@ def test_a_parallel_node_or_one_around_named_operations_may_hold_the_time_step(
     ops = _graph(ctx, _time_loop([1.0], [], []), _coupling_loop("a", placement))
 
     Coupling.of(ctx).check(ops)
+
+
+def test_a_serial_node_around_a_loop_leaves_the_time_step_outside() -> None:
+    """A serial node may wrap the PIMPLE-like loop whole: the time step stays outside."""
+    ctx = contexts(["a", "b", "c"], CHAIN, scheme="serial")["a"]
+    ctx.time = _Time(1.0)
+    ops = _graph(
+        ctx,
+        _time_loop([1.0], [], [], inner=True),
+        _coupling_loop("a", Placement(("inner_loop",))),
+    )
+
+    Coupling.of(ctx).check(ops)
+    (loop,) = ops.ops
+    assert [op.operation_name for op in loop.sub_operations] == [
+        "set_time_step",
+        "a.time_step",
+        "increment_time",
+        "a.coupling",
+    ]
+    assert [op.operation_name for op in loop.sub_operations[3].sub_operations] == ["inner_loop"]
