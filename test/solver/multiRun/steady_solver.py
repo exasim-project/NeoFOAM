@@ -97,7 +97,7 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     return builder, Operations()
 
 
-@steady.operation(solves=["x"])
+@steady.operation()
 def solve_x(self: Any, ctx: Context) -> None:
     """``x = gain * x_other + offset``."""
     config = ctx.models["steady"]
