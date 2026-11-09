@@ -18,6 +18,7 @@ from neofoam.framework.types import Placement
 from .comm.channel import CommChannel
 from .data import End
 from .field_port import FieldPort, check_field_ports
+from .mpi import RegionComm
 from .strategies.acceleration import CouplingAcceleration
 from .strategies.convergence import CouplingConvergence
 from .strategies.mapping import CouplingMapping, default_mapping
@@ -77,7 +78,8 @@ class ParticipantExchanges:
     """What region ``region`` knows of its case's coupling, built by :func:`participant_exchanges`.
 
     ``group``: the regions coupled with it in stepping order; ``exchanges``: the
-    group's exchanges; ``loops``: those with an exchange of this region, outer to inner.
+    group's exchanges; ``loops``: those with an exchange of this region, outer to inner;
+    ``comm``: the region's MPI processes (one on threads).
     """
 
     region: str
@@ -86,6 +88,7 @@ class ParticipantExchanges:
     comm_channel: CommChannel
     loops: tuple[CouplingLoop, ...] = ()
     field_ports: tuple[FieldPort, ...] = ()
+    comm: RegionComm = field(default_factory=RegionComm)
 
     @property
     def leader(self) -> str:

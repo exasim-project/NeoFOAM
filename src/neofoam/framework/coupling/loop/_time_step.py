@@ -51,18 +51,23 @@ class TimeStep:
         self._coupling = coupling
 
     def __call__(self, ctx: Context) -> None:
+        comm = self._coupling.comm
+        agreed = self._agree(ctx.time.delta_t) if comm.is_root else None
+        ctx.time.delta_t = comm.bcast(agreed)
+
+    def _agree(self, asked: float) -> float:
+        """The time step of the group, for the region asking for ``asked``."""
         coupling = self._coupling
         region, leader, comm_channel = coupling.region, coupling.leader, coupling.comm_channel
-        asked = ctx.time.delta_t
         if region != leader:
             comm_channel.send(region, leader, Tag.TIME_DT, asked)
-            agreed = comm_channel.receive(leader, region, Tag.TIME_DT)
-        else:
-            agreed = min(
-                asked if other == region else comm_channel.receive(other, region, Tag.TIME_DT)
-                for other in coupling.group
-            )
-            for other in coupling.group:
-                if other != region:
-                    comm_channel.send(region, other, Tag.TIME_DT, agreed)
-        ctx.time.delta_t = agreed
+            agreed: float = comm_channel.receive(leader, region, Tag.TIME_DT)
+            return agreed
+        agreed = min(
+            asked if other == region else comm_channel.receive(other, region, Tag.TIME_DT)
+            for other in coupling.group
+        )
+        for other in coupling.group:
+            if other != region:
+                comm_channel.send(region, other, Tag.TIME_DT, agreed)
+        return agreed

@@ -15,11 +15,17 @@ per process; a run on processes must give the run on threads, cell by cell
 tolerance (NeoN): the processor patches of a region exchange within the
 region's world.
 
+Coupled, ``coupledBlocks`` runs as on threads too: its regions' roots exchange
+the coupling over the MPI comm channel, each root gathering its region's part of
+the interface (decomposed along y, the interface spans the region's
+processes) and scattering what the processes receive. Its fields and the
+interface data match the run on threads up to the linear solver's tolerance.
+
 Every case the run cannot take is refused before it starts, by rank 0, and the
 run aborts: too few processes, a region not decomposed (also one on one
-process, without ``processor0``), a coupled case, and a NeoN region if this
-NeoN build communicates on MPI_COMM_WORLD only. An error in one region aborts
-every process.
+process, without ``processor0``), and a NeoN region if this NeoN build
+communicates on MPI_COMM_WORLD only. An error in one region aborts every
+process, also of a coupled case, where the other region's root waits for it.
 
 Each test runs ``mpirun`` in a subprocess with a timeout, so a hang fails it.
 The tests need mpi4py and an ``mpirun`` of the same MPI (the extra
@@ -104,8 +110,17 @@ def _processes(case: Path, n: int, *args: str) -> subprocess.CompletedProcess:
     return _run(case, [str(_mpirun()), "-np", str(n), sys.executable, str(WORKER), *args])
 
 
-def _results(run: subprocess.CompletedProcess) -> dict[str, dict[str, np.ndarray]]:
-    """Each region's ``T`` by cell, ordered by cell centre, from the processes' results."""
+def _by_point(points: np.ndarray, values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """``points`` and ``values`` (one row each), ordered by point."""
+    order = np.lexsort(points.round(9).T[::-1])
+    return points[order], values[order]
+
+
+def _results(run: subprocess.CompletedProcess) -> dict[str, dict[str, Any]]:
+    """Each region's ``T`` by cell, ordered by cell centre, from the processes' results.
+
+    And per coupled side (``sides``, by label) the Array data it sends, ordered by point.
+    """
     assert run.returncode == 0, f"stdout:\n{run.stdout[-6000:]}\nstderr:\n{run.stderr[-4000:]}"
     found: dict[str, list[Any]] = {}
     for line in run.stdout.splitlines():
@@ -114,13 +129,27 @@ def _results(run: subprocess.CompletedProcess) -> dict[str, dict[str, np.ndarray
                 found.setdefault(region, []).append(data)
     regions = {}
     for region, parts in found.items():
-        centres = np.concatenate([np.asarray(part["centres"]) for part in parts])
-        values = np.concatenate([np.asarray(part["T"]) for part in parts])
-        order = np.lexsort(centres.round(9).T[::-1])
+        centres, values = _by_point(
+            np.concatenate([np.asarray(part["centres"]) for part in parts]),
+            np.concatenate([np.asarray(part["T"]) for part in parts]),
+        )
+        sides: dict[str, dict[str, np.ndarray]] = {}
+        for label in parts[0]["sides"]:
+            points = np.concatenate(
+                [np.asarray(part["sides"][label]["points"]).reshape(-1, 3) for part in parts]
+            )
+            sides[label] = {}
+            for name in parts[0]["sides"][label]:
+                if name != "points":
+                    data = np.concatenate(
+                        [np.asarray(part["sides"][label][name]) for part in parts]
+                    )
+                    sides[label]["points"], sides[label][name] = _by_point(points, data)
         regions[region] = {
-            "centres": centres[order],
-            "T": values[order],
+            "centres": centres,
+            "T": values,
             "index": [part["index"] for part in parts],
+            "sides": sides,
         }
     return regions
 
@@ -161,6 +190,41 @@ def meshed(tmp_path_factory: pytest.TempPathFactory) -> Path:
                     timeout=TIMEOUT,
                 )
     return base
+
+
+@pytest.fixture(scope="module")
+def coupled(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """``coupledBlocks`` with its coupling, meshed, in ``<n>/`` decomposed into n parts (PARTS)."""
+    base = tmp_path_factory.mktemp("mpi_coupled") / "base"
+    for parts in PARTS:
+        case = base / str(parts)
+        for region in ("left", "right"):
+            shutil.copytree(REGIONS / region, case / region)
+            (case / region / "system" / "decomposeParDict").write_text(
+                DECOMPOSE_PAR_DICT.format(n=parts)
+            )
+            for tool in ("blockMesh", "decomposePar"):
+                subprocess.run(
+                    [tool, "-case", region],
+                    cwd=case,
+                    check=True,
+                    capture_output=True,
+                    timeout=TIMEOUT,
+                )
+    return base
+
+
+def _coupled_case(coupled: Path, tmp_path: Path, left: int, right: int) -> Path:
+    """``coupledBlocks`` on ``left`` + ``right`` processes, its times and coupling as they are."""
+    case = tmp_path / "case"
+    for region, processes in (("left", left), ("right", right)):
+        shutil.copytree(coupled / str(processes) / region, case / region)
+    (case / "system").mkdir()
+    times = yaml.safe_load((REGIONS / "system" / "controlDict.yaml").read_text())
+    times["regionSolvers"] = {"left": _neon(left), "right": _neon(right)}
+    (case / "system" / "controlDict.yaml").write_text(yaml.safe_dump(times))
+    shutil.copyfile(COUPLING, case / "system" / "regionCoupling.yaml")
+    return case
 
 
 def _processes_of(entry: Any) -> int:
@@ -271,14 +335,44 @@ def test_mpi_refuses_a_neon_region_if_neon_communicates_on_the_world(
     ) in message
 
 
-def test_mpi_refuses_a_coupled_case(meshed: Path, tmp_path: Path) -> None:
-    case = _case(meshed, tmp_path, {"left": _foam(1), "right": _foam(1)})
-    shutil.copyfile(COUPLING, case / "system" / "regionCoupling.yaml")
+@pytest.mark.parametrize(("left", "right"), [(1, 1), (1, 2), (2, 2)], ids=["1+1", "1+2", "2+2"])
+def test_mpi_coupled_regions_match_their_run_on_threads(
+    coupled: Path, tmp_path: Path, left: int, right: int
+) -> None:
+    if not _neon_takes_a_communicator():
+        pytest.skip("this NeoN build communicates on MPI_COMM_WORLD only")
+    case = _coupled_case(coupled, tmp_path, left, right)
 
-    message = _failure(_processes(case, 2))
+    threads = _results(_threads(case))
+    mpi = _results(_processes(case, left + right))
 
-    assert "the MPI comm channel is not implemented yet" in message
-    assert "interface (left - right)" in message
+    for region, processes in (("left", left), ("right", right)):
+        assert mpi[region]["index"] == [threads[region]["index"][0]] * processes
+        np.testing.assert_allclose(mpi[region]["centres"], threads[region]["centres"], atol=1e-12)
+        np.testing.assert_allclose(mpi[region]["T"], threads[region]["T"], rtol=1e-9)
+        assert np.abs(mpi[region]["T"] - INITIAL_T).max() > 1.0, f"{region}: T did not change"
+    # the interface: left's wall temperature, right's heat flux into it, face by face
+    for region, label, name in (("left", "left.interface", "T"), ("right", "right.interface", "q")):
+        there, here = mpi[region]["sides"][label], threads[region]["sides"][label]
+        np.testing.assert_allclose(there["points"], here["points"], atol=1e-12)
+        np.testing.assert_allclose(there[name], here[name], rtol=1e-9, atol=1e-9)
+    # the interface spans the processes: 3 (left) and 5 (right) faces, split along y
+    assert len(mpi["left"]["sides"]["left.interface"]["T"]) == 3
+    assert len(mpi["right"]["sides"]["right.interface"]["q"]) == 5
+
+
+def test_mpi_aborts_every_process_when_a_coupled_region_fails(
+    coupled: Path, tmp_path: Path
+) -> None:
+    if not _neon_takes_a_communicator():
+        pytest.skip("this NeoN build communicates on MPI_COMM_WORLD only")
+    case = _coupled_case(coupled, tmp_path, 2, 2)
+
+    # rank 3: right's second process, not its root; left's root waits for right's
+    message = _failure(_processes(case, 4, "fail-coupled:right:3"))
+
+    assert "region right (rank 1 of 2) failed" in message
+    assert "RuntimeError: region right fails on rank 3 as asked" in message
 
 
 def test_mpi_aborts_every_process_when_one_region_fails(meshed: Path, tmp_path: Path) -> None:

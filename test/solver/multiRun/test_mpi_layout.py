@@ -27,7 +27,6 @@ from neofoam.solver.multiRun.mpi import (
     check_decomposed,
     check_size,
     check_sub_communicator,
-    check_uncoupled,
     import_mpi,
     launched_size,
     under_mpi,
@@ -170,21 +169,6 @@ def test_heat_conduction_neon_runs_on_part_of_the_processes_if_neon_can() -> Non
     else:
         assert limitation is not None
         assert "this NeoN build communicates on MPI_COMM_WORLD" in limitation
-
-
-def test_check_uncoupled_refuses_a_coupled_case(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(CASES / "coupled_slabs")
-
-    with pytest.raises(MpiSetupError, match="the MPI comm channel is not implemented yet") as error:
-        check_uncoupled(["left", "right"])
-
-    assert "interface (left - right)" in str(error.value)
-
-
-def test_check_uncoupled_passes_an_uncoupled_case(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(CASES / "two_regions")
-
-    check_uncoupled(["left", "right"])
 
 
 @pytest.mark.parametrize(

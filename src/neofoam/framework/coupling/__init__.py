@@ -28,6 +28,7 @@ from .field_port import FieldAccess, FieldPort
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .loop._leader import CouplingNotConvergedWarning
 from .model import Participant, coupling
+from .mpi import MpiTransport
 from .run import run_participants
 from .strategies.acceleration import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
 from .strategies.convergence import CouplingConvergence, RelativeConvergence, StreamChange
@@ -74,6 +75,7 @@ __all__ = [
     "IdentityMapping",
     "InProcessCommChannel",
     "MeshGeometry",
+    "MpiTransport",
     "NearestNeighborMapping",
     "Patch",
     "ProbeData",

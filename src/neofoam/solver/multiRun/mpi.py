@@ -22,6 +22,12 @@ case ``<region>/`` is decomposed into ``<region>/processor0`` ..
 communicates on its world too: ``create_adapter_run_time`` hands it to NeoN as
 its default communicator.
 
+Coupled regions talk through their roots, rank 0 of each region: an
+:class:`~neofoam.framework.coupling.MpiTransport` between the roots (on a
+``Dup`` of MPI_COMM_WORLD), and in each region a
+:class:`~neofoam.framework.coupling.RegionComm` over which the root gathers its
+processes' side data and scatters what they receive.
+
 mpi4py (the extra ``neofoam[mpi]``) is imported only here, only under MPI: it
 initializes MPI before any OpenFOAM ``argList``. Without MPI (no ``mpirun``, or
 one process) multiRun runs its regions on threads, as always.
@@ -38,8 +44,6 @@ from pathlib import Path
 from typing import Any
 
 from neofoam.framework.solver import SolverSpec
-
-from .configs import RegionCouplingConfig
 
 #: The environment variables in which MPI launchers pass the number of processes.
 SIZE_VARIABLES = ("OMPI_COMM_WORLD_SIZE", "PMI_SIZE", "MV2_COMM_WORLD_SIZE")
@@ -182,26 +186,6 @@ def check_sub_communicator(layout: RegionLayout, specs: Mapping[str, SolverSpec]
     ]
     if problems:
         raise MpiSetupError("; ".join(problems))
-
-
-def check_uncoupled(regions: list[str]) -> None:
-    """Raise ``MpiSetupError`` when ``system/regionCoupling.yaml`` couples regions.
-
-    Under MPI every region runs on processes of its own, and no comm channel
-    carries the coupling between processes yet.
-    """
-    if not RegionCouplingConfig.get_default_path().exists():
-        return
-    config = RegionCouplingConfig.load()
-    exchanges = [
-        f"{name} ({' - '.join(exchange.sides)})"
-        for name, exchange in zip(config.exchange_names(), config.exchanges)
-    ]
-    raise MpiSetupError(
-        "the MPI comm channel is not implemented yet: system/regionCoupling.yaml couples "
-        f"regions that run on different MPI processes ({', '.join(exchanges)}; regions "
-        f"{regions}); run the coupled case without mpirun, on threads"
-    )
 
 
 def check_world(region: str, comm: Any) -> None:
