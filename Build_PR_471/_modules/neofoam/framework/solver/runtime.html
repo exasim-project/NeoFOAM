@@ -766,8 +766,15 @@
 <div class="viewcode-block" id="SolverRuntime.initialize">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.initialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Context"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Execute the registered initialization step."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Execute the registered initialization step.</span>
+
+<span class="sd">        The context belongs to the runtime's region (``ctx.region``), and so do</span>
+<span class="sd">        the init steps of a :class:`StagedInitRunner` injected into the</span>
+<span class="sd">        initializer (``InitStep.region``).</span>
+<span class="sd">        """</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+        <span class="k">return</span> <span class="n">ctx</span></div>
 
 
 <div class="viewcode-block" id="SolverRuntime.execution_graph">

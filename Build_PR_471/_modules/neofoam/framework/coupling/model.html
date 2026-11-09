@@ -707,6 +707,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingOp</span><span class="p">,</span> <span class="n">ExchangeSide</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
@@ -921,8 +922,6 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">_TimeStep</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The time-step op of a region: its group steps the smallest time step any region asks for."""</span>
 
-    <span class="n">TAG</span> <span class="o">=</span> <span class="s2">"time/dt"</span>
-
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">RegionCoupling</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span> <span class="o">=</span> <span class="n">coupling</span>
 
@@ -931,16 +930,16 @@
         <span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="n">transport</span> <span class="o">=</span> <span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">coupling</span><span class="o">.</span><span class="n">leader</span><span class="p">,</span> <span class="n">coupling</span><span class="o">.</span><span class="n">transport</span>
         <span class="n">asked</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">delta_t</span>
         <span class="k">if</span> <span class="n">region</span> <span class="o">!=</span> <span class="n">leader</span><span class="p">:</span>
-            <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">,</span> <span class="n">asked</span><span class="p">)</span>
-            <span class="n">agreed</span> <span class="o">=</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">leader</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">)</span>
+            <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">leader</span><span class="p">,</span> <span class="n">Tag</span><span class="o">.</span><span class="n">TIME_DT</span><span class="p">,</span> <span class="n">asked</span><span class="p">)</span>
+            <span class="n">agreed</span> <span class="o">=</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">leader</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">Tag</span><span class="o">.</span><span class="n">TIME_DT</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">agreed</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
-                <span class="n">asked</span> <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">region</span> <span class="k">else</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">)</span>
+                <span class="n">asked</span> <span class="k">if</span> <span class="n">other</span> <span class="o">==</span> <span class="n">region</span> <span class="k">else</span> <span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">region</span><span class="p">,</span> <span class="n">Tag</span><span class="o">.</span><span class="n">TIME_DT</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">group</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">group</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">other</span> <span class="o">!=</span> <span class="n">region</span><span class="p">:</span>
-                    <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">,</span> <span class="n">agreed</span><span class="p">)</span>
+                    <span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">Tag</span><span class="o">.</span><span class="n">TIME_DT</span><span class="p">,</span> <span class="n">agreed</span><span class="p">)</span>
         <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">delta_t</span> <span class="o">=</span> <span class="n">agreed</span>
 </pre></div>
         </article>
