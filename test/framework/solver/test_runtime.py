@@ -79,3 +79,10 @@ def test_runtime_initialize_hands_its_region_to_the_context() -> None:
     ctx = counter.instantiate(region="left").initialize()
 
     assert ctx.region == "left"
+
+
+def test_runtime_run_initializes_and_runs_its_region() -> None:
+    ctx = counter.instantiate(region="right").run()
+
+    assert ctx.region == "right"
+    assert ctx.fields["total"] == 3.0

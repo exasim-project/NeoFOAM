@@ -179,10 +179,7 @@ def run(
         os.close(log_fd)
 
     try:
-        solver = incompressibleFluidNeoN.instantiate(argv=argv or [])
-        ctx = solver.initialize()
-
-        solver.resolve_operations(ctx).run(ctx)
+        ctx = incompressibleFluidNeoN.instantiate(argv=argv or []).run()
 
         print("End")
         return ctx

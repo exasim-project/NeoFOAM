@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from neofoam.framework.context import Context
+from neofoam.framework.operations import Operations, StepBuilder
 from neofoam.framework.solver import Solver
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
@@ -25,6 +26,13 @@ counter = Solver("counter")
 def _initialize(self: Any) -> Context:
     config = IncrementConfig.load(case_dir=CASE / self.region if self.region else CASE)
     return Context(fields={"total": 0.0}, models={"increment": config.increment})
+
+
+@counter.execution_graph_step
+def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
+    builder = StepBuilder()
+    builder.step(self.operations["add_increment"])
+    return builder, Operations()
 
 
 @counter.operation()

@@ -147,6 +147,12 @@ class SolverRuntime:
             )
         return coupling
 
+    def run(self) -> "Context":
+        """Solve the runtime's region: initialize, resolve and run; return the context."""
+        ctx = self.initialize()
+        self.resolve_operations(ctx).run(ctx)
+        return ctx
+
     @property
     def operations(self) -> "OperationCollection":
         """Build operations with this runtime as the self binding."""
