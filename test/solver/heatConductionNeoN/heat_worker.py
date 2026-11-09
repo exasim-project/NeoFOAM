@@ -46,7 +46,7 @@ def _region(ctx: Context) -> dict[str, Any]:
                 "points": np.asarray(patch.points()).tolist(),
                 "wall_T": np.asarray(patch.wall_T()).tolist(),
             }
-            for patch in ctx.models["patches"]
+            for patch in ctx.models["conduction"].patches
         },
     }
 

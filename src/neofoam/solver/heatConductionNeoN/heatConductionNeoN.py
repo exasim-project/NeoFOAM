@@ -25,9 +25,8 @@ from typing import Any, Optional
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Coupling, RegionCoupling
-from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
-from neofoam.framework.solver import SolverRuntime, SolverSpec
+from neofoam.framework.solver import SolverRuntime, SolverSpec, core_model
 from neofoam.framework.types import OperationMetadata
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import SolutionLoopPredicate
 from neofoam.solver.neon_runtime import NeoNControlConfig, ensure_neon_initialized
@@ -63,13 +62,6 @@ heatConductionNeoN.config(NeoNControlConfig)
 heatConductionNeoN.config(ThermalPropertiesConfig)
 
 
-def _core_model(state: Any, spec_name: str) -> Any:
-    """Find an instantiated core model by its spec name."""
-    return next(
-        m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
-    )
-
-
 @heatConductionNeoN.initializer
 def initialize(self: Any) -> Context:
     """The context on the region's case, then the coupling model, then the coupled patches."""
@@ -78,9 +70,7 @@ def initialize(self: Any) -> Context:
     ctx = init.run()
     self.core_models = init.core_models
     ctx.models["coupling"] = Coupling(self.coupling)
-    patches = coupled_patches("T", ctx, region_case_dir(self.region))
-    ctx.models["patches"] = patches
-    ctx.models["conduction"].patches = patches
+    ctx.models["conduction"].patches = coupled_patches("T", ctx, region_case_dir(self.region))
     return ctx
 
 
@@ -98,8 +88,8 @@ def execution_graph(
     write_output      # final: inside a coupling op in its final pass only
     """
     _ = domain_name
-    loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
-    writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
+    loop_ops = Operations(core_model(self.state, "solutionLoop").operations)
+    writer_ops = Operations(core_model(self.state, "fieldWriter").operations)
     builder = StepBuilder()
     time_loop_op = Operation(
         func=IterativeOp(SolutionLoopPredicate()),
@@ -131,8 +121,6 @@ def solve_T(self: Any, ctx: Context) -> None:
 
 def run(argv: Optional[list[str]] = None) -> Context:
     """Run the single-region case in the working directory; return the final Context."""
-    solver = heatConductionNeoN.instantiate(argv=argv or ["heatConductionNeoN"])
-    ctx = solver.initialize()
-    solver.resolve_operations(ctx).run(ctx)
+    ctx = heatConductionNeoN.instantiate(argv=argv or ["heatConductionNeoN"]).run()
     print("End")
     return ctx
