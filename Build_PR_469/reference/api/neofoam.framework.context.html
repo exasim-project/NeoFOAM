@@ -666,7 +666,7 @@
 <p>Simulation context: shared field/model state passed through operations.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.framework.context.Context">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">Context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">fields:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any],</span> <span class="pre">models:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any],</span> <span class="pre">mesh:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">time:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">write_fields:</span> <span class="pre">set[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#Context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.Context" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">Context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">fields:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any],</span> <span class="pre">models:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any],</span> <span class="pre">mesh:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">time:</span> <span class="pre">~typing.Any</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">write_fields:</span> <span class="pre">set[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">loops:</span> <span class="pre">list[~neofoam.framework.context.LoopEntry]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#Context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.Context" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
 <p>The Context object holds the state of the framework at a given point in time.
 It contains fields and models that are used by various components of the framework.</p>
@@ -684,6 +684,41 @@ It contains fields and models that are used by various components of the framewo
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">FieldUpdates</span></span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#FieldUpdates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.FieldUpdates" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Any</span></code>]</p>
 <p>A dictionary that collects the pending field updates for Context.fields.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.context.</span></span><span class="sig-name descname"><span class="pre">LoopEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/context.html#LoopEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.context.LoopEntry" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NamedTuple</span></code></p>
+<p>A running loop, an entry of <code class="xref py py-attr docutils literal notranslate"><span class="pre">Context.loops</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">iteration</span></code> counts the loop’s passes from 0 (the time loop: its time
+steps); <code class="docutils literal notranslate"><span class="pre">first</span></code> is whether it is in its first pass. <code class="docutils literal notranslate"><span class="pre">wrapping</span></code> is whether
+the loop is a wrapping loop (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>, e.g. a coupling
+node), placed around operations of the time step.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.first">
+<span class="sig-name descname"><span class="pre">first</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.first" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.iteration">
+<span class="sig-name descname"><span class="pre">iteration</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.iteration" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.name" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.framework.context.LoopEntry.wrapping">
+<span class="sig-name descname"><span class="pre">wrapping</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.context.LoopEntry.wrapping" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -749,6 +784,13 @@ It contains fields and models that are used by various components of the framewo
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.framework.context.FieldUpdates"><code class="docutils literal notranslate"><span class="pre">FieldUpdates</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.context.LoopEntry"><code class="docutils literal notranslate"><span class="pre">LoopEntry</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.context.LoopEntry.first"><code class="docutils literal notranslate"><span class="pre">LoopEntry.first</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.context.LoopEntry.iteration"><code class="docutils literal notranslate"><span class="pre">LoopEntry.iteration</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.context.LoopEntry.name"><code class="docutils literal notranslate"><span class="pre">LoopEntry.name</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.context.LoopEntry.wrapping"><code class="docutils literal notranslate"><span class="pre">LoopEntry.wrapping</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
