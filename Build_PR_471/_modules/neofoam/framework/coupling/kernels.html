@@ -670,18 +670,16 @@
 <span class="sd">"""numpy kernels of a coupling: mapping, relaxation and convergence of the exchanged data.</span>
 
 <span class="sd">The mapping is per exchange and receiving side (:func:`mapping`); relaxation and</span>
-<span class="sd">convergence belong to the leader's</span>
-<span class="sd">:class:`~neofoam.framework.coupling.CouplingController`, which a region's</span>
-<span class="sd">coupling builds with its ``controller`` factory::</span>
+<span class="sd">convergence belong to a coupling node (its leader's</span>
+<span class="sd">:class:`~neofoam.framework.coupling.CouplingController`): a list of convergence</span>
+<span class="sd">measures, all of which must hold, and at most one acceleration per exchange::</span>
 
-<span class="sd">    def controller(sides, label, parallel):</span>
-<span class="sd">        return CouplingController(</span>
-<span class="sd">            sides,</span>
-<span class="sd">            label,</span>
-<span class="sd">            parallel=parallel,</span>
-<span class="sd">            converged=RelativeConvergence(data="T", limit=1e-5),</span>
-<span class="sd">            acceleration=AitkenRelaxation(initial=0.5),</span>
-<span class="sd">        )</span>
+<span class="sd">    CouplingNode(</span>
+<span class="sd">        "thermal",</span>
+<span class="sd">        ("interface",),</span>
+<span class="sd">        convergence=(RelativeConvergence(data="T", limit=1e-5),),</span>
+<span class="sd">        acceleration={"interface": AitkenRelaxation(initial=0.5)},</span>
+<span class="sd">    )</span>
 
 <span class="sd">The registries :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES`</span>
 <span class="sd">name them for the case (``system/regionCoupling.yaml``); a kernel of one's own</span>
@@ -895,15 +893,15 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">ConstantRelaxation</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Under-relaxes the data carried into a pass by a fixed factor.</span>
 
-<span class="sd">    Use it as the ``acceleration`` of a</span>
-<span class="sd">    :class:`~neofoam.framework.coupling.CouplingController`:</span>
+<span class="sd">    Use it as the ``acceleration`` of an exchange of a</span>
+<span class="sd">    :class:`~neofoam.framework.coupling.CouplingNode`:</span>
 <span class="sd">    ``x = x_last + omega * (sent - x_last)`` for all carried :data:`Array` data at once, with</span>
 <span class="sd">    ``x_last`` what the last pass received. ``omega = 1`` changes nothing; the</span>
 <span class="sd">    first data passes unchanged. Not thread safe.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        CouplingController(**group, acceleration=ConstantRelaxation(omega=0.5))</span>
+<span class="sd">        CouplingNode("n", ("interface",), acceleration={"interface": ConstantRelaxation(0.5)})</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">omega</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -936,7 +934,7 @@
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        CouplingController(**group, acceleration=AitkenRelaxation(initial=0.5))</span>
+<span class="sd">        CouplingNode("n", ("interface",), acceleration={"interface": AitkenRelaxation(0.5)})</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -997,14 +995,14 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">RelativeConvergence</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Converged once the data of field ``data`` changes by less than ``limit`` relative to it.</span>
 
-<span class="sd">    Use it as the ``converged`` of a</span>
-<span class="sd">    :class:`~neofoam.framework.coupling.CouplingController`.</span>
+<span class="sd">    Use it in the ``convergence`` of a</span>
+<span class="sd">    :class:`~neofoam.framework.coupling.CouplingNode`.</span>
 <span class="sd">    It checks every array sent by a side of the field ``data`` (2-norm of the</span>
 <span class="sd">    change over the 2-norm of the array) and ignores the sides of other fields.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        CouplingController(**group, converged=RelativeConvergence(data="T", limit=1e-5))</span>
+<span class="sd">        CouplingNode("n", ("interface",), convergence=(RelativeConvergence("T", 1e-5),))</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

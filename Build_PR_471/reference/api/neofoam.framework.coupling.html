@@ -679,20 +679,24 @@ what it sends and receives (one pydantic model each, of <code class="xref py py-
 plain fields) and its points; an instance adds itself to its region’s
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> model (<code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).add(self)</span></code>).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> — the coupling of one region, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>:
-its sides, the operation of the region’s graph (the coupling op), and
-<code class="docutils literal notranslate"><span class="pre">agree</span></code> (the regions of a group agree on a value, e.g. a time step).</p></li>
+its sides, the operations of the region’s graph (one coupling op per node),
+and <code class="docutils literal notranslate"><span class="pre">agree</span></code> (the regions of a group agree on a value, e.g. a time step).</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNode</span></code> — a named coupling loop: its exchanges, max_iterations,
+convergence measures, an acceleration per exchange and its placement per
+region; nodes are listed outer to inner.</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">RegionCoupling</span></code> — what a region knows of the case’s coupling: its
-group, the exchanges (<code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code>) and its transport; <code class="xref py py-func docutils literal notranslate"><span class="pre">region_couplings()</span></code>
-builds it for every coupled region; <code class="xref py py-func docutils literal notranslate"><span class="pre">run_regions()</span></code> runs each region on its
-own thread.</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code> — a region’s coupling (its <code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> builds it):
-a loop that wraps the region’s coupled fields; its loop test exchanges the
-sides’ data with the partner regions, mapped onto the sides’ points
-(<code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>).</p></li>
+group, the exchanges (<code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code>), its nodes and its transport;
+<code class="xref py py-func docutils literal notranslate"><span class="pre">region_couplings()</span></code> builds it for every coupled region; <code class="xref py py-func docutils literal notranslate"><span class="pre">run_regions()</span></code>
+runs each region on its own thread.</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code> — a region’s part of a node, <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code> (its
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> builds it): a loop placed as the node says; its loop test
+exchanges the node’s sides’ data with the partner regions, mapped onto the
+sides’ points (<code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code> — the leader’s part, in the coupling op of the
-group’s last region: decides when the data converged and relaxes it;
-<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOutcome</span></code> per time step, <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code>
-when <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> ends it.</p></li>
+node’s last region: decides when the node’s data converged and relaxes it,
+per exchange (built by <code class="xref py py-func docutils literal notranslate"><span class="pre">node_controller()</span></code> unless the case gives its own
+factory); <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOutcome</span></code> per time step,
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code> when <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> ends it.</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Transport</span></code> — all data between regions goes through it, point to point
 (send, receive, close); <code class="xref py py-class docutils literal notranslate"><span class="pre">InProcessTransport</span></code> between threads.</p></li>
 <li><p>numpy kernels: <code class="xref py py-func docutils literal notranslate"><span class="pre">nearest_neighbor()</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantRelaxation</span></code>,
