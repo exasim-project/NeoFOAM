@@ -31,9 +31,11 @@ from neofoam.framework.coupling import (
     CouplingNotConvergedWarning,
     CouplingOp,
     CouplingOutcome,
+    GroupSide,
     InProcessTransport,
     Link,
     Mapping,
+    RelativeConvergence,
     SideChange,
     TransportClosed,
     region_couplings,
@@ -479,3 +481,71 @@ def test_coupling_op_passes_plain_fields_through_unrelaxed_and_uncompared() -> N
     assert _controller(ops).outcomes == (
         CouplingOutcome(passes=2, converged=True, residuals={"x": 0.0}),
     )
+
+
+# --- diagnostics: non-finite data, convergence over no data ---------------------------------
+
+
+def test_a_side_sending_data_that_is_not_finite_raises() -> None:
+    a, b = _Side("a", []), _Side("b", [])
+    solve_a = a.solve
+
+    def diverging(ctx: Context) -> None:
+        solve_a(ctx)
+        if a.solves == 2:
+            a.value = float("nan")
+
+    a.solve = diverging  # type: ignore[method-assign]
+
+    with pytest.raises(
+        FloatingPointError,
+        match=r"coupling 'coupling': the x of region a patch p is not finite after pass 2$",
+    ):
+        _couple(a, b, convergence=[_never], max_iterations=10)
+
+
+def test_a_relative_change_that_is_not_finite_raises() -> None:
+    """The acceleration relaxes b's data to inf: its change in the next pass is not finite."""
+
+    def acceleration(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
+        return [{"x": np.full(1, np.inf)} for _data in sent]
+
+    a, b = _Side("a", []), _Side("b", [])
+
+    with pytest.raises(
+        FloatingPointError,
+        match=r"coupling b.coupling: the relative change of the x of region b patch p is not "
+        r"finite in pass 1",
+    ):
+        _couple(a, b, convergence=[_never], max_iterations=10, acceleration={"a-b": acceleration})
+
+
+def _group(arrays: tuple[str, ...]) -> list[GroupSide]:
+    return [GroupSide("a", "p", "x", arrays, 1, "a-b"), GroupSide("b", "p", "x", arrays, 0, "a-b")]
+
+
+@pytest.mark.parametrize(
+    ("data", "arrays", "error"),
+    [
+        (
+            "x",
+            (),
+            "coupling b.coupling: convergence RelativeConvergence on x has no Array data to "
+            "compare: the sides of x send plain fields only",
+        ),
+        (
+            "T",
+            ("x",),
+            r"coupling b.coupling: convergence RelativeConvergence on T, which no side of the "
+            r"node sends \(its sides couple \['x'\]\)",
+        ),
+    ],
+    ids=["plain fields only", "no side"],
+)
+def test_a_convergence_over_no_data_raises_as_the_controller_is_built(
+    data: str, arrays: tuple[str, ...], error: str
+) -> None:
+    with pytest.raises(ValueError, match=error):
+        CouplingController(
+            _group(arrays), "b.coupling", convergence=[RelativeConvergence(data, 1e-5)]
+        )

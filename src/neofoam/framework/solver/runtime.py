@@ -112,7 +112,9 @@ class SolverRuntime:
         """The runnable execution graph: ``execution_graph`` resolved with its model operations.
 
         Raises ``ValueError`` when the region's coupling model rejects the graph
-        (``Coupling.check``: the time step inside a serial coupling node).
+        (``Coupling.check``: the time step inside a serial coupling node), and
+        ``RuntimeError`` when the region is coupled but its solver added no
+        coupling model (:meth:`coupling_model`).
         Reported to the installed execution observer before it is returned.
         """
         from neofoam.framework import execution_observer  # noqa: PLC0415
@@ -120,13 +122,30 @@ class SolverRuntime:
 
         builder, model_ops = self.execution_graph(ctx=ctx)
         operations = DAGResolver().resolve(builder, model_ops).operations
-        coupling = None if ctx is None else ctx.models.get("coupling")
-        if isinstance(coupling, Coupling):
+        coupling = self.coupling_model(ctx)
+        if coupling is not None:
             coupling.check(operations)
         observer = execution_observer.current()
         if observer is not None:
             observer.operations(operations, ctx)
         return operations
+
+    def coupling_model(self, ctx: Optional["Context"]) -> Optional[Coupling]:
+        """The coupling model the solver added to ``ctx`` (``ctx.models["coupling"]``).
+
+        ``None`` when the region is not coupled (or without ``ctx``). Raises
+        ``RuntimeError`` when the region is coupled but the solver added none.
+        """
+        if self.coupling is None or ctx is None:
+            return None
+        coupling = ctx.models.get("coupling")
+        if not isinstance(coupling, Coupling):
+            raise RuntimeError(
+                f"region {self.region} is coupled in regionCoupling.yaml, but solver "
+                f"{self.name} added no coupling model; add "
+                "ctx.models['coupling'] = Coupling(self.coupling) in initialize"
+            )
+        return coupling
 
     @property
     def operations(self) -> "OperationCollection":

@@ -37,6 +37,7 @@ which adds itself to its region's coupling model
 
 from __future__ import annotations
 
+import math
 import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, Any, Callable, Optional, Sequence
@@ -312,6 +313,11 @@ class CouplingController:
     (``coupling_finished``); ending at ``max_iterations`` unconverged also warns
     (:class:`CouplingNotConvergedWarning`). Not thread safe.
 
+    Raises ``ValueError`` when a measure of ``convergence`` on a field's data
+    (``data``) has none to compare: no side of the field, or its sides send no
+    :data:`Array` data; :meth:`decide` raises ``FloatingPointError`` when the
+    change of a side is not finite.
+
     The leader builds it with its coupling's ``controller`` factory, which it
     hands the node (by default :func:`~neofoam.framework.coupling.node_controller`:
     the node's scheme, convergence, acceleration and max_iterations; one
@@ -344,6 +350,7 @@ class CouplingController:
         self._convergence = tuple(convergence)
         self._max_iterations = max_iterations
         self._acceleration = dict(acceleration or {})
+        self._check_convergence()
         rank: dict[str, int] = {}
         for side in self._sides:
             rank.setdefault(side.region, len(rank))
@@ -361,6 +368,31 @@ class CouplingController:
         self._converged_before_final = False
         # what each side carries into the pass (relaxed), in the order of _sides
         self._carried: list[Data] = []
+
+    def _check_convergence(self) -> None:
+        """Raise ``ValueError`` when a measure of the convergence has no data to compare.
+
+        A measure on the data of a field (its ``data``, e.g. :class:`RelativeConvergence`)
+        compares the :data:`Array` data the node's sides of that field send (plain
+        fields are not compared); with none it would hold over nothing.
+        """
+        for measure in self._convergence:
+            data = getattr(measure, "data", None)
+            if not isinstance(data, str):
+                continue
+            of_field = [side for side in self._sides if side.field == data]
+            if not of_field:
+                raise ValueError(
+                    f"coupling {self.label}: convergence {type(measure).__name__} on {data}, "
+                    f"which no side of the node sends (its sides couple "
+                    f"{sorted({side.field for side in self._sides})})"
+                )
+            if not any(side.arrays for side in of_field):
+                raise ValueError(
+                    f"coupling {self.label}: convergence {type(measure).__name__} on {data} "
+                    f"has no Array data to compare: the sides of {data} send plain fields "
+                    "only, which no convergence compares"
+                )
 
     @property
     def sides(self) -> tuple[GroupSide, ...]:
@@ -405,7 +437,7 @@ class CouplingController:
             SideChange(side.field, _arrays(side.arrays, previous), _arrays(side.arrays, now))
             for side, previous, now in zip(self._sides, self._carried, current)
         ]
-        self._residuals = relative_changes(changes)
+        self._residuals = self._relative_changes(changes)
         if self._final:
             converged = self._converged_before_final or self._converged(changes)
             self._finish(converged)
@@ -415,6 +447,22 @@ class CouplingController:
             self._converged_before_final = True
             return self._start_pass(final=True)
         return self._start_pass(final=self._iteration + 1 >= self._max_iterations)
+
+    def _relative_changes(self, changes: list[SideChange]) -> dict[str, float]:
+        """:func:`relative_changes` of ``changes`` (in the order of ``sides``).
+
+        Raises ``FloatingPointError`` when the change of a side is not finite.
+        """
+        residuals: dict[str, float] = {}
+        for side, change in zip(self._sides, changes):
+            for name, value in relative_changes([change]).items():
+                if not math.isfinite(value):
+                    raise FloatingPointError(
+                        f"coupling {self.label}: the relative change of the {name} of region "
+                        f"{side.region} patch {side.patch} is not finite in pass {self._iteration}"
+                    )
+                residuals[name] = max(residuals.get(name, 0.0), value)
+        return residuals
 
     def _converged(self, changes: list[SideChange]) -> bool:
         """Whether every measure of the convergence holds (none: :func:`unchanged`)."""
@@ -591,13 +639,13 @@ class CouplingOp(IterativeOp):
     def _test(self, ctx: Context) -> bool:
         if not self._connected:
             self._connect()
-        current = [_sent(side) for side in self._sides]
+        time = getattr(ctx.time, "value", None)
+        current = [_sent(side, self.node.name, self._iteration, time) for side in self._sides]
         if self._iteration > 0 and not self.node.parallel:
             for side, data in zip(self._sides, current):
                 region = self.exchange_of(side).partner[0]
                 if self._rank[region] > self._rank[self.region]:
                     self._send(region, f"data:{self.exchange_of(side).name}", data)
-        time = getattr(ctx.time, "value", None)
         go_on, final, decided = self._decide(current, time if self._iteration == 0 else None)
         if not go_on:
             self._iteration = 0
@@ -738,15 +786,28 @@ class CouplingOp(IterativeOp):
         side.side.receive(received)
 
 
-def _sent(side: ExchangeSide) -> Data:
-    """What ``side`` sends now, as named copies."""
+def _sent(side: ExchangeSide, node: str, iteration: int, time: Any) -> Data:
+    """What ``side`` sends now, as named copies.
+
+    Raises ``FloatingPointError`` when an :data:`Array` of it is not finite (in
+    coupling node ``node``, after pass ``iteration``, at ``time``).
+    """
     sent = side.side.send()
     if not isinstance(sent, side.sends):
         raise TypeError(
             f"the coupled side {side.label} declares it sends {side.sends.__name__}, "
             f"but its send() returned {type(sent).__name__}"
         )
-    return {
+    data = {
         name: np.array(getattr(sent, name), dtype=float) if kind == "Array" else getattr(sent, name)
         for name, kind in _kinds(side.sends).items()
     }
+    for name in _array_names(side.sends):
+        if not np.all(np.isfinite(data[name])):
+            when = f"after pass {iteration}" if iteration else "before the first pass"
+            at = "" if time is None else f" (t={time})"
+            raise FloatingPointError(
+                f"coupling '{node}': the {name} of region {side.region} patch {side.patch} "
+                f"is not finite {when}{at}"
+            )
+    return data

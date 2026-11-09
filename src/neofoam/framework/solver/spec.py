@@ -21,7 +21,6 @@ from neofoam.framework.config_injection import (
     _find_config_by_type,
 )
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
 from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
@@ -316,9 +315,11 @@ class SolverSpec:
         is injected with the live ``ctx`` (so the step can reach the built models
         without the runtime holding a long-lived reference to the context).
 
-        With ``ctx`` whose solver added a coupling model (``ctx.models["coupling"]``),
-        the model operations it returns also hold its operations: the coupling ops
-        and, in a transient case, the time-step op (``Coupling.time_step``).
+        With ``ctx`` of a coupled region, the model operations it returns also hold
+        the operations of the coupling model its solver added
+        (``ctx.models["coupling"]``): the coupling ops and, in a transient case, the
+        time-step op (``Coupling.time_step``). A coupled region whose solver added
+        no coupling model raises ``RuntimeError`` (``SolverRuntime.coupling_model``).
         """
         if self._execution_graph_func is None:
             raise RuntimeError(f"No execution_graph function registered for solver {self.name}")
@@ -341,8 +342,8 @@ class SolverSpec:
             )
 
         builder, model_ops = self._execution_graph_func(**kwargs)
-        coupling = None if ctx is None else ctx.models.get("coupling")
-        if ctx is None or not isinstance(coupling, Coupling):
+        coupling = runtime.coupling_model(ctx)
+        if ctx is None or coupling is None:
             return builder, model_ops
         ops = [*model_ops, *coupling.operations()]
         time_step = coupling.time_step(ctx, [*builder.operations, *model_ops])
