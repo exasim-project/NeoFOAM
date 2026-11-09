@@ -694,9 +694,10 @@ not couple the region):</p>
         <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The region’s execution graph then gets the model’s operations: the region’s
-<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code>, built once from all sides; none
-in a region the case does not couple.</p>
+<p>The region’s execution graph then gets the model’s operations: one
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code> per coupling node of the region
+(<code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code>, outer to inner), built once from the sides of the node’s
+exchanges; none in a region the case does not couple.</p>
 <p><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.agree" title="neofoam.framework.coupling.model.Coupling.agree"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Coupling.agree()</span></code></a> makes the regions of a group agree on a value, e.g. a
 transient solver on its next time step:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dt</span> <span class="o">=</span> <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">agree</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>          <span class="c1"># the smallest of the group</span>
@@ -744,10 +745,12 @@ not couple gets its <code class="docutils literal notranslate"><span class="pre"
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.operations">
 <span class="sig-name descname"><span class="pre">operations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operations" title="neofoam.framework.operations.Operations"><span class="pre">Operations</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling.operations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.operations" title="Link to this definition">¶</a></dt>
-<dd><p>The region’s coupling op; built once, from all sides.</p>
-<p>None when the case does not couple the region. Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when
-an exchange of the region has no side (also when the region has none at
-all), or a patch two.</p>
+<dd><p>The region’s coupling ops, one per coupling node, outer to inner; built once.</p>
+<p>Each from the sides on the patches of its node’s exchanges, placed as the
+node’s placement for the region says. None when the case does not couple
+the region. Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an exchange of the region has no
+side (also when the region has none at all), a patch two, or the sides of
+one field are in two nodes.</p>
 </dd></dl>
 
 <dl class="py property">
