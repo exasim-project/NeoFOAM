@@ -685,7 +685,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeControlConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACCELERATIONS</span><span class="p">,</span> <span class="n">CONVERGENCES</span><span class="p">,</span> <span class="n">MAPPINGS</span>
@@ -732,6 +732,8 @@
 <span class="sd">    (``relative``: the data changes by less than ``limit`` relative to it).</span>
 <span class="sd">    """</span>
 
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -751,6 +753,8 @@
 <span class="sd">    ``type`` names it in :data:`~neofoam.framework.coupling.ACCELERATIONS`</span>
 <span class="sd">    (``constant`` factor, or ``aitken`` starting from it).</span>
 <span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">relaxation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -774,6 +778,8 @@
 <span class="sd">    patches share their points).</span>
 <span class="sd">    """</span>
 
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sides</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"nearest-neighbor"</span>
@@ -783,6 +789,69 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_registered</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_known</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">MAPPINGS</span><span class="p">,</span> <span class="s2">"mapping"</span><span class="p">)</span></div>
 
+
+
+<div class="viewcode-block" id="NodeExchangeConfig">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.NodeExchangeConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NodeExchangeConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An exchange of a coupling node, by its ``name``, and the ``acceleration`` of its data.</span>
+
+<span class="sd">    In the yaml a plain name stands for an exchange without acceleration.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AccelerationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="PlacementConfig">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.PlacementConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PlacementConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Where a coupling node's op sits in a region's graph (a ``Placement``).</span>
+
+<span class="sd">    Without ``operations`` it wraps the whole time step (the body of the top</span>
+<span class="sd">    scope, or of the node before); with them those operations and, if</span>
+<span class="sd">    ``downstream``, every operation downstream of them.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">operations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">downstream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="CouplingNodeConfig">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.CouplingNodeConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CouplingNodeConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One coupling node: a named coupling loop over some ``exchanges``.</span>
+
+<span class="sd">    Its leader repeats the loop until every ``convergence`` measure holds, or</span>
+<span class="sd">    ``maxIterations`` passes; ``wraps`` places its op per region (a region it</span>
+<span class="sd">    does not name: the whole time step).</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">maxIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">exchanges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">NodeExchangeConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">convergence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConvergenceConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">wraps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PlacementConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"exchanges"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_plain_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">entry</span><span class="p">}</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">entry</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+
+
+<span class="c1">#: The name of the one coupling node of a file without ``couplings``.</span>
+<span class="n">DEFAULT_NODE</span> <span class="o">=</span> <span class="s2">"coupling"</span>
 
 
 <div class="viewcode-block" id="RegionCouplingConfig">
@@ -799,6 +868,13 @@
 <span class="sd">    what it sent in the previous one. Without the file the</span>
 <span class="sd">    regions are not coupled.</span>
 
+<span class="sd">    ``couplings`` lists the coupling nodes, outer to inner: each names its</span>
+<span class="sd">    exchanges (each in exactly one node), its convergence, maxIterations, an</span>
+<span class="sd">    acceleration per exchange and where its op wraps each region. Without it one</span>
+<span class="sd">    node ``coupling`` holds every exchange, with the top-level</span>
+<span class="sd">    ``acceleration`` (of every exchange), ``convergence`` and ``maxIterations``;</span>
+<span class="sd">    with it those top-level entries are an error. ``scheme`` is the case's.</span>
+
 <span class="sd">    Example::</span>
 
 <span class="sd">        exchanges:</span>
@@ -812,14 +888,139 @@
 <span class="sd">          - type: relative</span>
 <span class="sd">            data: T</span>
 <span class="sd">            limit: 1.0e-5</span>
+
+<span class="sd">    or, with the nodes::</span>
+
+<span class="sd">        exchanges:</span>
+<span class="sd">          - {name: wall-T, sides: {fluid: wall, solid: right}}</span>
+<span class="sd">          - {name: wall-p, sides: {fluid: inlet, pipe: outlet}}</span>
+<span class="sd">        couplings:</span>
+<span class="sd">          - name: wall</span>
+<span class="sd">            maxIterations: 50</span>
+<span class="sd">            exchanges:</span>
+<span class="sd">              - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}</span>
+<span class="sd">              - wall-p</span>
+<span class="sd">            convergence:</span>
+<span class="sd">              - {type: relative, data: T, limit: 1.0e-5}</span>
+<span class="sd">            wraps:</span>
+<span class="sd">              fluid: {operations: [solve_T], downstream: true}</span>
 <span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">exchanges</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExchangeConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">scheme</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"serial"</span><span class="p">,</span> <span class="s2">"parallel"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"serial"</span>
-    <span class="n">acceleration</span><span class="p">:</span> <span class="n">AccelerationConfig</span> <span class="o">=</span> <span class="n">AccelerationConfig</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">"constant"</span><span class="p">,</span> <span class="n">relaxation</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">convergence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ConvergenceConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">maxIterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+    <span class="n">acceleration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AccelerationConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">convergence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ConvergenceConfig</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">maxIterations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">couplings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">CouplingNodeConfig</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
+<div class="viewcode-block" id="RegionCouplingConfig.exchange_names">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.RegionCouplingConfig.exchange_names">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exchange_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Every exchange's name, in order: its ``name``, by default its regions joined by ``-``.</span>
+
+<span class="sd">        A default name another exchange has is numbered (``a-b-2``). Raises</span>
+<span class="sd">        ``ValueError`` when two exchanges are named alike.</span>
+<span class="sd">        """</span>
+        <span class="n">names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="n">_free</span><span class="p">(</span><span class="s2">"-"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exchange</span><span class="o">.</span><span class="n">sides</span><span class="p">),</span> <span class="n">names</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"two exchanges are named '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">names</span></div>
+
+
+<div class="viewcode-block" id="RegionCouplingConfig.nodes">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.RegionCouplingConfig.nodes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">CouplingNodeConfig</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The coupling nodes, outer to inner: ``couplings``, or the one default node."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">couplings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">couplings</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">CouplingNodeConfig</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">DEFAULT_NODE</span><span class="p">,</span>
+                <span class="n">maxIterations</span><span class="o">=</span><span class="mi">100</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxIterations</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxIterations</span><span class="p">,</span>
+                <span class="n">exchanges</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">NodeExchangeConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">acceleration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acceleration</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_names</span><span class="p">()</span>
+                <span class="p">],</span>
+                <span class="n">convergence</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">convergence</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_nodes_place_every_exchange_once</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"RegionCouplingConfig"</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_names</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">couplings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">convergence</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"convergence: required without couplings (the convergence of the one "</span>
+                    <span class="s2">"coupling node)"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="n">top</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">key</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"acceleration"</span><span class="p">,</span> <span class="s2">"convergence"</span><span class="p">,</span> <span class="s2">"maxIterations"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">top</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"couplings: with couplings the nodes set </span><span class="si">{</span><span class="n">top</span><span class="si">}</span><span class="s2">; remove the top-level </span><span class="si">{</span><span class="n">top</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="s2">"(they set the one default node of a file without couplings)"</span>
+            <span class="p">)</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">couplings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"couplings: two coupling nodes are named '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">exchanges</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"couplings: node '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' names the exchange '</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">', "</span>
+                        <span class="sa">f</span><span class="s2">"which does not exist; the exchanges are </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">exchange</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"couplings: exchange '</span><span class="si">{</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' is in the nodes "</span>
+                        <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">seen</span><span class="p">[</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'; an exchange is in exactly "</span>
+                        <span class="s2">"one node"</span>
+                    <span class="p">)</span>
+                <span class="n">seen</span><span class="p">[</span><span class="n">exchange</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">regions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">region</span>
+                    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">exchange</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchanges</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">and</span> <span class="n">seen</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">==</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
+                    <span class="k">for</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">exchange</span><span class="o">.</span><span class="n">sides</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="n">foreign</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">wraps</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">regions</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">foreign</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"couplings: node '</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' wraps the regions </span><span class="si">{</span><span class="n">foreign</span><span class="si">}</span><span class="s2">, which it does "</span>
+                    <span class="sa">f</span><span class="s2">"not couple; its regions are </span><span class="si">{</span><span class="n">regions</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"couplings: the exchanges </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> are in no coupling node; each exchange is "</span>
+                <span class="sa">f</span><span class="s2">"in exactly one node (the nodes: </span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_free</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">taken</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``name``, numbered if ``taken`` has it."""</span>
+    <span class="n">free</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="n">name</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">free</span> <span class="ow">in</span> <span class="n">taken</span><span class="p">:</span>
+        <span class="n">number</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">free</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">number</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="n">free</span>
 </pre></div>
         </article>
       </div>

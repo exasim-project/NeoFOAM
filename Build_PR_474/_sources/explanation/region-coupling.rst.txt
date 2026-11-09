@@ -17,16 +17,18 @@ point-to-point channel. Regions exchange data over *exchanges*. Who does what:
        **coupling model** (``Coupling.of(ctx).add(self)``).
    * - case (``system/regionCoupling.yaml``)
      - which patches are paired (``exchanges``), the **mapping** of each pair, the
-       scheme, acceleration, convergence and ``maxIterations`` of the couplings.
+       scheme, and the coupling nodes (``couplings``): their exchanges,
+       acceleration, convergence, ``maxIterations`` and placement.
    * - solver
      - if it supports coupling, its **coupling model** (``Coupling``,
        ``ctx.models["coupling"] = Coupling(self.coupling)``), added in its init
        before its boundary conditions.
    * - framework
-     - adds the coupling model's operations to the region's graph: the
-       region's **coupling op** (``CouplingOp``), placed by the resolver
-       around the operations that solve the coupled fields. The **leader** of a group of coupled regions owns
-       its **controller** (``CouplingController``).
+     - adds the coupling model's operations to the region's graph: one
+       **coupling op** (``CouplingOp``, ``<region>.<node>``) per **coupling
+       node** (``CouplingNode``) of the region, placed by the resolver as the
+       node says. The **leader** of a node owns its **controller**
+       (``CouplingController``).
    * - ``multiRun``
      - a launcher: reads ``regionSolvers`` and the case file, creates the
        transport, runs every region on its own thread.
@@ -36,8 +38,13 @@ patches of two regions; the **mapping** (``Mapping``, with a ``kind``) maps poin
 data of the partner onto a side's own points; a region's **coupling op** is a
 loop around its solving operations whose test exchanges its sides' data; regions
 connected by exchanges form a **group**, whose last region in ``regionSolvers``
-order is its **leader**: its controller decides when the group's data converged;
-a side is keyed by ``(region, patch, field)``.
+order leads it in ``agree``; a **coupling node** is a named coupling loop over
+some exchanges (its convergence, ``maxIterations``, an acceleration per exchange,
+its placement per region; nodes are listed outer to inner), whose last region in
+stepping order is the node's **leader**: its controller decides when the node's
+data converged; a side is keyed by ``(region, patch, field)``. ``multiRun``
+builds the nodes the case file lists under ``couplings``; without them it puts
+every exchange in one node, ``coupling``.
 
 The coupled boundary condition
 ------------------------------
@@ -101,11 +108,41 @@ The case file
       - {type: relative, data: T, limit: 1.0e-6}
     maxIterations: 100
 
+Without ``couplings`` the file describes one node, ``coupling``, holding every
+exchange: ``acceleration`` (of every exchange, default none), ``convergence``
+(required) and ``maxIterations`` (default 100) are its own, and its op wraps the
+whole time step of each region. ``couplings`` places the nodes instead:
+
+.. code-block:: yaml
+
+    exchanges:
+      - {name: wall-T, sides: {fluid: wall, solid: right}}
+      - {name: wall-p, sides: {fluid: inlet, pipe: outlet}}
+    scheme: serial
+    couplings:                       # outer to inner
+      - name: wall                   # unique; the ops <region>.wall
+        maxIterations: 50            # default 100
+        exchanges:                   # each exchange in exactly one node
+          - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}
+          - wall-p                   # a plain name: no acceleration
+        convergence:                 # every measure must hold
+          - {type: relative, data: T, limit: 1.0e-6}
+        wraps:                       # per region of the node; default: the whole time step
+          fluid: {operations: [solve_T], downstream: true}
+
+The nodes are listed outer to inner: a node's op without ``operations`` wraps the
+body of the op of the node before it (or the whole time step). ``wraps`` follows
+``Placement``: with ``operations`` it wraps those operations and, if
+``downstream`` (the default), every operation downstream of them; an operation
+name the region's graph lacks is reported when the graph is built. With
+``couplings`` the top-level ``acceleration``, ``convergence`` and
+``maxIterations`` are an error; ``scheme`` applies to every node.
+
 ``mapping``, ``acceleration.type`` and ``convergence[].type`` name entries of
 the registries ``MAPPINGS``, ``ACCELERATIONS`` and ``CONVERGENCES``; the file is
-checked against them. ``scheme``, ``acceleration``, ``convergence`` and
-``maxIterations`` apply to every group of the case. A patch is in at most one
-exchange and carries one coupled side.
+checked against them on load, as against unknown keys, two nodes of one name, an
+exchange in no node or in two, and a ``wraps`` region the node does not couple.
+A patch is in at most one exchange and carries one coupled side.
 
 Architecture
 ------------
@@ -121,8 +158,8 @@ Architecture
         |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
         |                        then its BCs; a @coupled BC adds itself
         |     execution_graph    model ops += ctx.models["coupling"].operations()
-        |     resolve_operations DAGResolver places a.couple around the time step
-        |     run()              time_loop { a.couple { set_time_step, agree_dt,
+        |     resolve_operations DAGResolver places a.coupling around the time step
+        |     run()              time_loop { a.coupling { set_time_step, agree_dt,
         |                                               increment_time, solve_x } }
         |
         +-- thread "b" (leader): the same, its coupling op owns the controller
@@ -137,10 +174,12 @@ and every operation downstream of them (over ``depends_on`` / ``before``), into
 the loop, which takes the place of the last of them. The operations must lie in
 one scope; else it raises ``ValueError``.
 
-**The coupling model** builds its operations once, after init, from all sides:
-the ``CouplingOp`` (``wraps=Placement()``); none when the case does not
-couple the region. It raises ``ValueError`` when an exchange of the region has
-no side (also when the region has none at all), or a patch two sides.
+**The coupling model** builds its operations once, after init: one
+``CouplingOp`` per node of the region, outer to inner, from the sides of the
+node's exchanges (``wraps=`` the node's placement for the region, by default
+``Placement()``); none when the case does not couple the region. It raises
+``ValueError`` when an exchange of the region has no side (also when the region
+has none at all), a patch two sides, or one field has sides in two nodes.
 
 **Agreeing on a value.** ``Coupling.of(ctx).agree(value, how=min)``: every
 region of the group sends its value to the leader, which reduces them with
@@ -164,8 +203,8 @@ As a time step's coupling starts, the leader compares the regions' time
 
 **What a region knows.** Its ``RegionCoupling`` (``Coupling.coupling``): its name,
 its group (in stepping order), the group's exchanges (``Link``: name, two ends
-``(region, patch)``, mapping kind), the scheme, the controller factory and the
-transport. No region reads another region's objects.
+``(region, patch)``, mapping kind), its nodes, the scheme, the controller
+factory (``node_controller`` by default) and the transport. No region reads another region's objects.
 
 **A run of a coupling op.** Its first loop test sends every partner what its
 side sends and receives (the models' field kinds) and its points, and the leader
@@ -191,7 +230,7 @@ closes the transport, so no region waits for it forever.
 (``ExchangeSide``: ``region``, ``patch``, ``field``, ``key``, ``sends``,
 ``receives``, ``mapped``, ``points``), ``exchange_of(side)`` (``Exchange``:
 ``name``, ``partner`` ``(region, patch)``, ``mapping``), ``partner(side)``
-(``"<region>.<patch>"``), ``is_leader`` and ``controller`` (the leader's, built at
+(``"<region>.<patch>"``), ``node``, ``leader``, ``is_leader`` and ``controller`` (the leader's, built at
 its first loop test: ``label``, ``parallel``, ``sides``, ``iteration``,
 ``outcomes``, ``residuals``).
 
