@@ -756,11 +756,13 @@
 <span class="w">    </span><span class="sd">"""A named coupling loop: its exchanges, its convergence and acceleration, its placement.</span>
 
 <span class="sd">    Each region the node's ``exchanges`` (names of :class:`Link` s) touch gets</span>
-<span class="sd">    one coupling op ``&lt;region&gt;.&lt;name&gt;`` for it. The node's leader stops the loop</span>
-<span class="sd">    once every measure of ``convergence`` holds (none:</span>
-<span class="sd">    :func:`~neofoam.framework.coupling.unchanged`) or after ``max_iterations``</span>
-<span class="sd">    passes; ``acceleration`` relaxes the data carried into a pass, at most one</span>
-<span class="sd">    per exchange (by its name; an exchange without one is not relaxed).</span>
+<span class="sd">    one coupling op ``&lt;region&gt;.&lt;name&gt;`` for it. Once every measure of</span>
+<span class="sd">    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.unchanged`)</span>
+<span class="sd">    the node's leader runs one more pass, the final one, and stops after it; the</span>
+<span class="sd">    last of ``max_iterations`` passes is final regardless (an operation marked</span>
+<span class="sd">    ``final`` runs in the final pass only). ``acceleration`` relaxes the data</span>
+<span class="sd">    carried into a pass, the final one too, at most one per exchange (by its</span>
+<span class="sd">    name; an exchange without one is not relaxed).</span>
 <span class="sd">    ``placement`` places the node's op in a region's graph (by region;</span>
 <span class="sd">    :class:`~neofoam.framework.types.Placement` ``()`` for a region it does not</span>
 <span class="sd">    name: around the whole body of the top scope, or of the node before).</span>

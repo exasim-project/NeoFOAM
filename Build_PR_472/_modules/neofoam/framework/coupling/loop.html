@@ -694,7 +694,10 @@
 <span class="sd">  the node's exchanges connect, owns the node's **controller**</span>
 <span class="sd">  (:class:`CouplingController`), which decides after each pass whether the</span>
 <span class="sd">  node's data converged, and relaxes the data carried into the next pass, per</span>
-<span class="sd">  exchange. Every region leaves the node's loop on the same pass;</span>
+<span class="sd">  exchange. It also decides which pass is the node's **final** one: the pass</span>
+<span class="sd">  after the one its data converged in, or the last one ``max_iterations``</span>
+<span class="sd">  allows. Every region runs the same passes, the final one marked final on its</span>
+<span class="sd">  loop entry (``LoopEntry.final``), and leaves the node's loop after it;</span>
 <span class="sd">- all data between regions goes through the region's</span>
 <span class="sd">  :class:`~neofoam.framework.coupling.transport.Transport`: no region reads</span>
 <span class="sd">  another region's objects.</span>
@@ -918,11 +921,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingOutcome</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""How the coupling loop of one time step ended.</span>
 
-<span class="sd">    ``passes`` is the number of passes it ran, ``converged`` whether the</span>
-<span class="sd">    convergence check held (``False``: ``max_iterations`` stopped it), and</span>
-<span class="sd">    ``residuals`` the relative change of every field's exchanged :data:`Array`</span>
-<span class="sd">    data in the last pass (largest over its sides and arrays; ``{}`` after a</span>
-<span class="sd">    single pass).</span>
+<span class="sd">    ``passes`` is the number of passes it ran, the final one included,</span>
+<span class="sd">    ``converged`` whether the convergence check held (``False``:</span>
+<span class="sd">    ``max_iterations`` stopped it), and ``residuals`` the relative change of</span>
+<span class="sd">    every field's exchanged :data:`Array` data in the last pass (largest over its</span>
+<span class="sd">    sides and arrays).</span>
 <span class="sd">    """</span>
 
     <span class="n">passes</span><span class="p">:</span> <span class="nb">int</span>
@@ -987,7 +990,11 @@
 <span class="sd">    names the leader's coupling op. After each pass (:meth:`decide`) it gets what</span>
 <span class="sd">    every side sent and checks every measure of ``convergence`` on the change of</span>
 <span class="sd">    its :data:`Array` data since the pass before (all must hold; none:</span>
-<span class="sd">    :func:`unchanged`); it stops after ``max_iterations`` passes regardless. Then</span>
+<span class="sd">    :func:`unchanged`). Once they hold it runs exactly one more pass, the</span>
+<span class="sd">    **final** one (:attr:`final`), and stops after it without checking again;</span>
+<span class="sd">    the last pass ``max_iterations`` allows is final in advance (no pass more;</span>
+<span class="sd">    it checks after it whether the data converged), and with ``max_iterations``</span>
+<span class="sd">    1 the only pass is first and final. Before each pass, the final one too,</span>
 <span class="sd">    it relaxes the :data:`Array` data carried into the next pass with the</span>
 <span class="sd">    ``acceleration`` of the side's exchange (by exchange name; at most one per</span>
 <span class="sd">    exchange, an exchange without one is not relaxed; plain fields pass through</span>
@@ -1046,6 +1053,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="c1"># the pass of the current time step; 0 between time steps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># whether the pass started last is the final one, and whether it is final</span>
+        <span class="c1"># because the data converged</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="c1"># what each side carries into the pass (relaxed), in the order of _sides</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -1058,6 +1069,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The pass of the current time step's coupling; ``0`` between time steps."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether the pass :meth:`decide` started last is the time step's final one."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">outcomes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CouplingOutcome</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -1081,23 +1097,27 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">decide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""The decision before a pass, from what every side sends now (in the order of ``sides``).</span>
 
-<span class="sd">        Returns what each side carries into the pass (relaxed), or ``None``: the</span>
-<span class="sd">        time step's coupling ended, its outcome recorded.</span>
+<span class="sd">        Returns what each side carries into the pass (relaxed), :attr:`final`</span>
+<span class="sd">        telling whether it is the final pass, or ``None``: the time step's</span>
+<span class="sd">        coupling ended after its final pass, its outcome recorded.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">changes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">SideChange</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="n">previous</span><span class="p">),</span> <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="n">now</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">side</span><span class="p">,</span> <span class="n">previous</span><span class="p">,</span> <span class="n">now</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">,</span> <span class="n">current</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="n">relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">)</span>
-        <span class="n">converged</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged</span><span class="p">(</span><span class="n">changes</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">converged</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final</span><span class="p">:</span>
+            <span class="n">converged</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged</span><span class="p">(</span><span class="n">changes</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_finish</span><span class="p">(</span><span class="n">converged</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">()</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_converged</span><span class="p">(</span><span class="n">changes</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">final</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_converged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1110,6 +1130,8 @@
         <span class="n">outcome</span> <span class="o">=</span> <span class="n">CouplingOutcome</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span><span class="p">,</span> <span class="n">converged</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outcomes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">outcome</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="n">observer</span> <span class="o">=</span> <span class="n">execution_observer</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">observer</span><span class="o">.</span><span class="n">coupling_finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome</span><span class="p">)</span>
@@ -1124,10 +1146,11 @@
                 <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_start_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_start_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="n">final</span>
         <span class="k">for</span> <span class="n">exchange</span><span class="p">,</span> <span class="n">acceleration</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># the sides of the exchange whose partner receives their data as carried</span>
             <span class="n">carried</span> <span class="o">=</span> <span class="p">[</span>
@@ -1145,9 +1168,10 @@
 
 
 
-<span class="c1"># The leader's decision for one region: another pass?, and what each of its sides</span>
-<span class="c1"># receives, by patch: the carried data, or None: what its partner sends in this pass.</span>
-<span class="n">_Decision</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]]]</span>
+<span class="c1"># The leader's decision for one region: another pass?, is it the final one?, and what</span>
+<span class="c1"># each of its sides receives, by patch: the carried data, or None: what its partner</span>
+<span class="c1"># sends in this pass.</span>
+<span class="n">_Decision</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Data</span><span class="p">]]]</span>
 
 
 <div class="viewcode-block" id="CouplingOp">
@@ -1170,7 +1194,9 @@
 <span class="sd">    sides' models and points with the partner regions and checks each exchange.</span>
 <span class="sd">    Each test then sends what every side sends now: to the partner that steps</span>
 <span class="sd">    later (serial: it receives it in the same pass) and to the node's leader;</span>
-<span class="sd">    the leader decides for the node and tells every region to go on or stop. On</span>
+<span class="sd">    the leader decides for the node and tells every region to go on or stop, and</span>
+<span class="sd">    whether the pass is the node's final one, which the test marks on the loop's</span>
+<span class="sd">    entry (``Context.mark_final``: an operation marked ``final`` runs in it). On</span>
 <span class="sd">    another pass every side gets what its partner sent (fresh, or carried by the</span>
 <span class="sd">    leader), mapped onto its points with the exchange's mapping, validated as</span>
 <span class="sd">    its ``receives`` model, reported to the execution observer</span>
@@ -1285,10 +1311,11 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rank</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">]:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exchange_of</span><span class="p">(</span><span class="n">side</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
         <span class="n">time</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">go_on</span><span class="p">,</span> <span class="n">decided</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decide</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">time</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">go_on</span><span class="p">,</span> <span class="n">final</span><span class="p">,</span> <span class="n">decided</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decide</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">time</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">go_on</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">mark_final</span><span class="p">(</span><span class="n">final</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_hand_over</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="n">decided</span><span class="p">)</span>
@@ -1398,7 +1425,7 @@
                     <span class="n">partner</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="o">.</span><span class="n">sides</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">partner</span>
                     <span class="n">received</span><span class="p">[</span><span class="n">patch</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">fresh</span> <span class="k">else</span> <span class="n">carried</span><span class="p">[</span><span class="n">partner</span><span class="p">]</span>
                 <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">decisions</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="n">received</span><span class="p">)</span>
+            <span class="n">decisions</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_controller</span><span class="o">.</span><span class="n">final</span><span class="p">,</span> <span class="n">received</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">region</span><span class="p">,</span> <span class="n">decision</span> <span class="ow">in</span> <span class="n">decisions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">region</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag</span><span class="p">(</span><span class="s2">"decision"</span><span class="p">),</span> <span class="n">decision</span><span class="p">)</span>

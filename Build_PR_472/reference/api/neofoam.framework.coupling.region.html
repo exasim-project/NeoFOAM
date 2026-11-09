@@ -723,11 +723,13 @@ receive fresh or carried data), convergence, acceleration and max_iterations.</p
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A named coupling loop: its exchanges, its convergence and acceleration, its placement.</p>
 <p>Each region the node’s <code class="docutils literal notranslate"><span class="pre">exchanges</span></code> (names of <a class="reference internal" href="#neofoam.framework.coupling.region.Link" title="neofoam.framework.coupling.region.Link"><code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code></a> s) touch gets
-one coupling op <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;name&gt;</span></code> for it. The node’s leader stops the loop
-once every measure of <code class="docutils literal notranslate"><span class="pre">convergence</span></code> holds (none:
-<code class="xref py py-func docutils literal notranslate"><span class="pre">unchanged()</span></code>) or after <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code>
-passes; <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> relaxes the data carried into a pass, at most one
-per exchange (by its name; an exchange without one is not relaxed).
+one coupling op <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;name&gt;</span></code> for it. Once every measure of
+<code class="docutils literal notranslate"><span class="pre">convergence</span></code> holds (none: <code class="xref py py-func docutils literal notranslate"><span class="pre">unchanged()</span></code>)
+the node’s leader runs one more pass, the final one, and stops after it; the
+last of <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> passes is final regardless (an operation marked
+<code class="docutils literal notranslate"><span class="pre">final</span></code> runs in the final pass only). <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> relaxes the data
+carried into a pass, the final one too, at most one per exchange (by its
+name; an exchange without one is not relaxed).
 <code class="docutils literal notranslate"><span class="pre">placement</span></code> places the node’s op in a region’s graph (by region;
 <a class="reference internal" href="neofoam.framework.types.html#neofoam.framework.types.Placement" title="neofoam.framework.types.Placement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Placement</span></code></a> <code class="docutils literal notranslate"><span class="pre">()</span></code> for a region it does not
 name: around the whole body of the top scope, or of the node before).
