@@ -282,16 +282,22 @@ who waits for what and the messages sent but not received.
 ``sends``, ``receives``, ``mapped``, ``points``), ``exchange_of(side)`` (``Exchange``:
 ``name``, ``partner`` ``(region, patch)``, ``mapping``), ``partner(side)``
 (``"<region>.<patch>"``), ``node``, ``leader``, ``is_leader`` and ``controller`` (the leader's, built at
-its first loop test: ``label``, ``parallel``, ``sides`` (by end), ``iteration``,
-``final``, ``outcomes``, ``residuals``).
+its first loop test: ``label``, ``parallel``, ``sides`` (by end), ``final``,
+``outcomes``, ``residuals``). The passes of a time step are counted once, by the
+op's entry on ``ctx.loops`` (``LoopEntry.iteration``), which the leader's op hands
+its controller with each decision.
 
 **Report.** At the end of each time step the leader's controller records a
 ``CouplingOutcome`` and calls the observer's ``coupling_finished(controller,
 outcome)``; it warns (``CouplingNotConvergedWarning``) when ``maxIterations``
-stopped it. Each coupling op calls ``coupling_exchanged(coupling, side, data)``
+stopped it, pointing at the first caller outside the framework (the solver's
+``run``). Each coupling op calls ``coupling_exchanged(coupling, side, data)``
 from its loop test with the data it hands over. Every region reports to the
 observer from its own thread; its graph with ``operations(operations, ctx)``,
-``ctx.region`` naming it.
+``ctx.region`` naming it. So one observer is called from several threads at
+once: its hooks must be thread safe (guard what they record with a lock), and a
+hook that blocks pauses its own region, the regions coupled with it waiting at
+their next exchange.
 
 Extension points
 ----------------

@@ -952,15 +952,21 @@ who waits for what and the messages sent but not received.</p>
 <code class="docutils literal notranslate"><span class="pre">sends</span></code>, <code class="docutils literal notranslate"><span class="pre">receives</span></code>, <code class="docutils literal notranslate"><span class="pre">mapped</span></code>, <code class="docutils literal notranslate"><span class="pre">points</span></code>), <code class="docutils literal notranslate"><span class="pre">exchange_of(side)</span></code> (<code class="docutils literal notranslate"><span class="pre">Exchange</span></code>:
 <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">partner</span></code> <code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>, <code class="docutils literal notranslate"><span class="pre">mapping</span></code>), <code class="docutils literal notranslate"><span class="pre">partner(side)</span></code>
 (<code class="docutils literal notranslate"><span class="pre">&quot;&lt;region&gt;.&lt;patch&gt;&quot;</span></code>), <code class="docutils literal notranslate"><span class="pre">node</span></code>, <code class="docutils literal notranslate"><span class="pre">leader</span></code>, <code class="docutils literal notranslate"><span class="pre">is_leader</span></code> and <code class="docutils literal notranslate"><span class="pre">controller</span></code> (the leader’s, built at
-its first loop test: <code class="docutils literal notranslate"><span class="pre">label</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code>, <code class="docutils literal notranslate"><span class="pre">sides</span></code> (by end), <code class="docutils literal notranslate"><span class="pre">iteration</span></code>,
-<code class="docutils literal notranslate"><span class="pre">final</span></code>, <code class="docutils literal notranslate"><span class="pre">outcomes</span></code>, <code class="docutils literal notranslate"><span class="pre">residuals</span></code>).</p>
+its first loop test: <code class="docutils literal notranslate"><span class="pre">label</span></code>, <code class="docutils literal notranslate"><span class="pre">parallel</span></code>, <code class="docutils literal notranslate"><span class="pre">sides</span></code> (by end), <code class="docutils literal notranslate"><span class="pre">final</span></code>,
+<code class="docutils literal notranslate"><span class="pre">outcomes</span></code>, <code class="docutils literal notranslate"><span class="pre">residuals</span></code>). The passes of a time step are counted once, by the
+op’s entry on <code class="docutils literal notranslate"><span class="pre">ctx.loops</span></code> (<code class="docutils literal notranslate"><span class="pre">LoopEntry.iteration</span></code>), which the leader’s op hands
+its controller with each decision.</p>
 <p><strong>Report.</strong> At the end of each time step the leader’s controller records a
 <code class="docutils literal notranslate"><span class="pre">CouplingOutcome</span></code> and calls the observer’s <code class="docutils literal notranslate"><span class="pre">coupling_finished(controller,</span>
 <span class="pre">outcome)</span></code>; it warns (<code class="docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code>) when <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code>
-stopped it. Each coupling op calls <code class="docutils literal notranslate"><span class="pre">coupling_exchanged(coupling,</span> <span class="pre">side,</span> <span class="pre">data)</span></code>
+stopped it, pointing at the first caller outside the framework (the solver’s
+<code class="docutils literal notranslate"><span class="pre">run</span></code>). Each coupling op calls <code class="docutils literal notranslate"><span class="pre">coupling_exchanged(coupling,</span> <span class="pre">side,</span> <span class="pre">data)</span></code>
 from its loop test with the data it hands over. Every region reports to the
 observer from its own thread; its graph with <code class="docutils literal notranslate"><span class="pre">operations(operations,</span> <span class="pre">ctx)</span></code>,
-<code class="docutils literal notranslate"><span class="pre">ctx.region</span></code> naming it.</p>
+<code class="docutils literal notranslate"><span class="pre">ctx.region</span></code> naming it. So one observer is called from several threads at
+once: its hooks must be thread safe (guard what they record with a lock), and a
+hook that blocks pauses its own region, the regions coupled with it waiting at
+their next exchange.</p>
 </section>
 <section id="extension-points">
 <h2>Extension points<a class="headerlink" href="#extension-points" title="Link to this heading">¶</a></h2>
