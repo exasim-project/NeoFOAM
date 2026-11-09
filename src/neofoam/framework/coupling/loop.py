@@ -264,7 +264,13 @@ class CouplingOp(IterativeOp):
             exchange = self.exchange_of(side)
             announced = self._receive(exchange.partner[0], Tag.side(exchange.name))
             _check_received(exchange.name, announced, side)
-            self._mappers[side.patch] = exchange.mapping.bind(announced["points"], side.coordinates)
+            try:
+                mapper = exchange.mapping.bind(announced["points"], side.coordinates)
+            except ValueError as error:
+                raise ValueError(
+                    f"exchange '{exchange.name}' ({announced['label']} -> {side.label}): {error}"
+                ) from None
+            self._mappers[side.patch] = mapper
         if self.is_leader:
             self._controller = self._coupling.controller(
                 self._node_sides(path, sides),

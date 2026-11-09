@@ -29,7 +29,7 @@
   :class:`CouplingTransportError`, as :class:`TransportClosed`).
 - strategies, each a :class:`~neofoam.core.plugin_system.PluginSystem` family
   selected by ``type`` (:func:`strategy`): :class:`CouplingMapping`
-  (:class:`IdentityMapping`, :class:`NearestNeighborMapping`; bound once to the
+  (:class:`NearestNeighborMapping`, the default, :class:`IdentityMapping`; bound once to the
   points of both sides: :data:`BoundMapping`), :class:`CouplingAcceleration`
   (:class:`ConstantRelaxation`, :class:`AitkenRelaxation`) and
   :class:`CouplingConvergence` (:class:`RelativeConvergence`, from the

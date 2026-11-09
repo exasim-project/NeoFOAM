@@ -169,8 +169,12 @@ def test_nearest_neighbor_never_holds_the_distances_of_all_pairs() -> None:
 
 
 def test_nearest_neighbor_mapping_needs_the_points_of_both_sides() -> None:
-    with pytest.raises(ValueError, match="'nearest-neighbor' needs the coordinates of both sides"):
+    with pytest.raises(ValueError, match="the receiving side has none: give its patch coordinates"):
         NearestNeighborMapping().bind(_points([[0.0]]), _points(None))
+    with pytest.raises(ValueError, match="the sending side has none"):
+        NearestNeighborMapping().bind(_points(None), _points([[0.0]]))
+    with pytest.raises(ValueError, match="neither side has any.*or choose mapping 'identity'"):
+        NearestNeighborMapping().bind(_points(None), _points(None))
 
 
 def test_a_mapping_of_a_type_is_a_new_instance_of_it() -> None:
