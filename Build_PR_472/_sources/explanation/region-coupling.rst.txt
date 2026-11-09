@@ -62,7 +62,7 @@ The coupled boundary condition
     class CoupledHeatFlux(Patch):        # sets self.field and self.patch
         def __init__(self, ctx, field, patch):
             super().__init__(ctx, field, patch)
-            Coupling.of(ctx).add(self)   # its region's coupling op wraps self.field
+            Coupling.of(ctx).add(self)   # a side of its region's coupling op
 
         @coupled.coordinates
         def points(self) -> Array: ...
@@ -121,23 +121,24 @@ Architecture
         |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
         |                        then its BCs; a @coupled BC adds itself
         |     execution_graph    model ops += ctx.models["coupling"].operations()
-        |     resolve_operations DAGResolver nests solve_x inside a.couple
-        |     run()              time_loop { set_time_step, agree_dt,
-        |                                    increment_time, a.couple { solve_x } }
+        |     resolve_operations DAGResolver places a.couple around the time step
+        |     run()              time_loop { a.couple { set_time_step, agree_dt,
+        |                                               increment_time, solve_x } }
         |
         +-- thread "b" (leader): the same, its coupling op owns the controller
                      ^
                      |   Transport: send / receive (source, target, tag)
                      v
 
-**Where the op goes.** A model's loop declares the fields it wraps
-(``OperationMetadata.wraps``). The resolver moves the operations that solve them,
+**Where the op goes.** A model's loop declares where it goes
+(``OperationMetadata.wraps``, a ``Placement``). Without operation names it wraps
+the whole body of the time loop; with them the resolver moves those operations,
 and every operation downstream of them (over ``depends_on`` / ``before``), into
 the loop, which takes the place of the last of them. The operations must lie in
 one scope; else it raises ``ValueError``.
 
 **The coupling model** builds its operations once, after init, from all sides:
-the ``CouplingOp`` (``wraps`` = the sides' fields); none when the case does not
+the ``CouplingOp`` (``wraps=Placement()``); none when the case does not
 couple the region. It raises ``ValueError`` when an exchange of the region has
 no side (also when the region has none at all), or a patch two sides.
 

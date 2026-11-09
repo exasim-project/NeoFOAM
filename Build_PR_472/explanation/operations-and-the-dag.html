@@ -904,25 +904,28 @@ itself never named the model operations.</p>
 <h3>Contributed loops: <code class="docutils literal notranslate"><span class="pre">wraps</span></code><a class="headerlink" href="#contributed-loops-wraps" title="Link to this heading">¶</a></h3>
 <p>Some changes to the graph are known only once the case is read: a
 boundary condition that needs the solution of its field repeated inside a
-loop, for example. The solver cannot name those, but it declares which
-fields its operations solve (<code class="docutils literal notranslate"><span class="pre">&#64;solver.operation(solves=[&quot;T&quot;])</span></code>). The
-model (e.g. a region’s coupling model) returns a loop operation that declares
-the fields it wraps (<code class="docutils literal notranslate"><span class="pre">OperationMetadata(wraps=[&quot;T&quot;])</span></code>) among its model
-operations, which the runtime resolves with the solver’s graph:</p>
+loop, for example. The model (e.g. a region’s coupling model) returns a
+wrapping loop, a loop operation that declares where it goes
+(<code class="docutils literal notranslate"><span class="pre">OperationMetadata(wraps=Placement(...))</span></code>), among its model operations,
+which the runtime resolves with the solver’s graph:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>                       <span class="c1"># state only</span>
 <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
 <span class="n">operations</span> <span class="o">=</span> <span class="n">DAGResolver</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span><span class="p">)</span><span class="o">.</span><span class="n">operations</span>
 </pre></div>
 </div>
-<p>The resolver picks, in the scope holding them, the operations that solve a
-wrapped field and everything downstream of them over <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> /
-<code class="docutils literal notranslate"><span class="pre">before</span></code>, and moves them into the loop, which takes the place of the last of
-them; the other operations of the scope stay outside, so an operation such as
-the old-time rotation at the start of the step runs once. Operations of a loop’s
-fields in more than one scope raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
+<p>Without operation names (<code class="docutils literal notranslate"><span class="pre">Placement()</span></code>) the loop wraps the whole body of the
+top scope: the body of the time loop, or of the innermost wrapping loop placed
+there before. With them (<code class="docutils literal notranslate"><span class="pre">Placement(operations=(&quot;solve_T&quot;,))</span></code>) the resolver
+picks, in the scope holding them, those operations and (with <code class="docutils literal notranslate"><span class="pre">downstream</span></code>,
+the default) everything downstream of them over <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">before</span></code>, and
+moves them into the loop, which takes the place of the last of them; the other
+operations of the scope stay outside, so an operation such as the old-time
+rotation at the start of the step runs once. Loops are placed in the order
+given, outer first; unknown names, operations in more than one scope, or a loop
+that would hold one placed before it raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
 <p>A coupled boundary condition (<code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code>) adds itself to its region’s
 coupling model, whose coupling op (<code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code>, one per region) is such a
-loop around the coupled fields; its loop test exchanges the sides’ data with the other regions
+loop, placed at the top; its loop test exchanges the sides’ data with the other regions
 (see <a class="reference internal" href="region-coupling.html"><span class="doc">Region coupling</span></a>).</p>
 </section>
 </section>
