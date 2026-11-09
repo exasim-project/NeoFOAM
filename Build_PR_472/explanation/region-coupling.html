@@ -697,7 +697,8 @@ model per direction), its points. It adds itself to its region’s
 </tr>
 <tr class="row-odd"><td><p>case (<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>)</p></td>
 <td><p>which patches are paired (<code class="docutils literal notranslate"><span class="pre">exchanges</span></code>), the <strong>mapping</strong> of each pair, the
-scheme, acceleration, convergence and <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> of the couplings.</p></td>
+scheme, and the coupling nodes (<code class="docutils literal notranslate"><span class="pre">couplings</span></code>): their exchanges,
+acceleration, convergence, <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> and placement.</p></td>
 </tr>
 <tr class="row-even"><td><p>solver</p></td>
 <td><p>if it supports coupling, its <strong>coupling model</strong> (<code class="docutils literal notranslate"><span class="pre">Coupling</span></code>,
@@ -728,7 +729,8 @@ some exchanges (its convergence, <code class="docutils literal notranslate"><spa
 its placement per region; nodes are listed outer to inner), whose last region in
 stepping order is the node’s <strong>leader</strong>: its controller decides when the node’s
 data converged; a side is keyed by <code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch,</span> <span class="pre">field)</span></code>. <code class="docutils literal notranslate"><span class="pre">multiRun</span></code>
-puts every exchange of the case in one node, <code class="docutils literal notranslate"><span class="pre">couple</span></code>.</p>
+builds the nodes the case file lists under <code class="docutils literal notranslate"><span class="pre">couplings</span></code>; without them it puts
+every exchange in one node, <code class="docutils literal notranslate"><span class="pre">coupling</span></code>.</p>
 <section id="the-coupled-boundary-condition">
 <h2>The coupled boundary condition<a class="headerlink" href="#the-coupled-boundary-condition" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
@@ -787,11 +789,38 @@ Dirichlet-Neumann with <code class="docutils literal notranslate"><span class="p
 <span class="nt">maxIterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
 </pre></div>
 </div>
+<p>Without <code class="docutils literal notranslate"><span class="pre">couplings</span></code> the file describes one node, <code class="docutils literal notranslate"><span class="pre">coupling</span></code>, holding every
+exchange: <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> (of every exchange, default none), <code class="docutils literal notranslate"><span class="pre">convergence</span></code>
+(required) and <code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> (default 100) are its own, and its op wraps the
+whole time step of each region. <code class="docutils literal notranslate"><span class="pre">couplings</span></code> places the nodes instead:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">exchanges</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">wall</span><span class="p p-Indicator">,</span><span class="nt"> solid</span><span class="p">:</span><span class="w"> </span><span class="nv">right</span><span class="p p-Indicator">}}</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-p</span><span class="p p-Indicator">,</span><span class="nt"> sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">inlet</span><span class="p p-Indicator">,</span><span class="nt"> pipe</span><span class="p">:</span><span class="w"> </span><span class="nv">outlet</span><span class="p p-Indicator">}}</span>
+<span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">serial</span>
+<span class="nt">couplings</span><span class="p">:</span><span class="w">                       </span><span class="c1"># outer to inner</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wall</span><span class="w">                   </span><span class="c1"># unique; the ops &lt;region&gt;.wall</span>
+<span class="w">    </span><span class="nt">maxIterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span><span class="w">            </span><span class="c1"># default 100</span>
+<span class="w">    </span><span class="nt">exchanges</span><span class="p">:</span><span class="w">                   </span><span class="c1"># each exchange in exactly one node</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="nv">wall-T</span><span class="p p-Indicator">,</span><span class="nt"> acceleration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">aitken</span><span class="p p-Indicator">,</span><span class="nt"> relaxation</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">}}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wall-p</span><span class="w">                   </span><span class="c1"># a plain name: no acceleration</span>
+<span class="w">    </span><span class="nt">convergence</span><span class="p">:</span><span class="w">                 </span><span class="c1"># every measure must hold</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">relative</span><span class="p p-Indicator">,</span><span class="nt"> data</span><span class="p">:</span><span class="w"> </span><span class="nv">T</span><span class="p p-Indicator">,</span><span class="nt"> limit</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-6</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">wraps</span><span class="p">:</span><span class="w">                       </span><span class="c1"># per region of the node; default: the whole time step</span>
+<span class="w">      </span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">operations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">solve_T</span><span class="p p-Indicator">],</span><span class="nt"> downstream</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+<p>The nodes are listed outer to inner: a node’s op without <code class="docutils literal notranslate"><span class="pre">operations</span></code> wraps the
+body of the op of the node before it (or the whole time step). <code class="docutils literal notranslate"><span class="pre">wraps</span></code> follows
+<code class="docutils literal notranslate"><span class="pre">Placement</span></code>: with <code class="docutils literal notranslate"><span class="pre">operations</span></code> it wraps those operations and, if
+<code class="docutils literal notranslate"><span class="pre">downstream</span></code> (the default), every operation downstream of them; an operation
+name the region’s graph lacks is reported when the graph is built. With
+<code class="docutils literal notranslate"><span class="pre">couplings</span></code> the top-level <code class="docutils literal notranslate"><span class="pre">acceleration</span></code>, <code class="docutils literal notranslate"><span class="pre">convergence</span></code> and
+<code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> are an error; <code class="docutils literal notranslate"><span class="pre">scheme</span></code> applies to every node.</p>
 <p><code class="docutils literal notranslate"><span class="pre">mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration.type</span></code> and <code class="docutils literal notranslate"><span class="pre">convergence[].type</span></code> name entries of
 the registries <code class="docutils literal notranslate"><span class="pre">MAPPINGS</span></code>, <code class="docutils literal notranslate"><span class="pre">ACCELERATIONS</span></code> and <code class="docutils literal notranslate"><span class="pre">CONVERGENCES</span></code>; the file is
-checked against them. <code class="docutils literal notranslate"><span class="pre">scheme</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration</span></code>, <code class="docutils literal notranslate"><span class="pre">convergence</span></code> and
-<code class="docutils literal notranslate"><span class="pre">maxIterations</span></code> apply to every group of the case. A patch is in at most one
-exchange and carries one coupled side.</p>
+checked against them on load, as against unknown keys, two nodes of one name, an
+exchange in no node or in two, and a <code class="docutils literal notranslate"><span class="pre">wraps</span></code> region the node does not couple.
+A patch is in at most one exchange and carries one coupled side.</p>
 </section>
 <section id="architecture">
 <h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h2>
@@ -804,8 +833,8 @@ exchange and carries one coupled side.</p>
     |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
     |                        then its BCs; a @coupled BC adds itself
     |     execution_graph    model ops += ctx.models["coupling"].operations()
-    |     resolve_operations DAGResolver places a.couple around the time step
-    |     run()              time_loop { a.couple { set_time_step, agree_dt,
+    |     resolve_operations DAGResolver places a.coupling around the time step
+    |     run()              time_loop { a.coupling { set_time_step, agree_dt,
     |                                               increment_time, solve_x } }
     |
     +-- thread "b" (leader): the same, its coupling op owns the controller
