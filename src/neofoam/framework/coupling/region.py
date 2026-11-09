@@ -76,11 +76,13 @@ class CouplingNode:
     """A named coupling loop: its exchanges, its convergence and acceleration, its placement.
 
     Each region the node's ``exchanges`` (names of :class:`Link` s) touch gets
-    one coupling op ``<region>.<name>`` for it. The node's leader stops the loop
-    once every measure of ``convergence`` holds (none:
-    :func:`~neofoam.framework.coupling.unchanged`) or after ``max_iterations``
-    passes; ``acceleration`` relaxes the data carried into a pass, at most one
-    per exchange (by its name; an exchange without one is not relaxed).
+    one coupling op ``<region>.<name>`` for it. Once every measure of
+    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.unchanged`)
+    the node's leader runs one more pass, the final one, and stops after it; the
+    last of ``max_iterations`` passes is final regardless (an operation marked
+    ``final`` runs in the final pass only). ``acceleration`` relaxes the data
+    carried into a pass, the final one too, at most one per exchange (by its
+    name; an exchange without one is not relaxed).
     ``placement`` places the node's op in a region's graph (by region;
     :class:`~neofoam.framework.types.Placement` ``()`` for a region it does not
     name: around the whole body of the top scope, or of the node before).

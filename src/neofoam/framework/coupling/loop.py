@@ -22,7 +22,10 @@ Vocabulary:
   the node's exchanges connect, owns the node's **controller**
   (:class:`CouplingController`), which decides after each pass whether the
   node's data converged, and relaxes the data carried into the next pass, per
-  exchange. Every region leaves the node's loop on the same pass;
+  exchange. It also decides which pass is the node's **final** one: the pass
+  after the one its data converged in, or the last one ``max_iterations``
+  allows. Every region runs the same passes, the final one marked final on its
+  loop entry (``LoopEntry.final``), and leaves the node's loop after it;
 - all data between regions goes through the region's
   :class:`~neofoam.framework.coupling.transport.Transport`: no region reads
   another region's objects.
@@ -232,11 +235,11 @@ def unchanged(changes: list[SideChange]) -> bool:
 class CouplingOutcome:
     """How the coupling loop of one time step ended.
 
-    ``passes`` is the number of passes it ran, ``converged`` whether the
-    convergence check held (``False``: ``max_iterations`` stopped it), and
-    ``residuals`` the relative change of every field's exchanged :data:`Array`
-    data in the last pass (largest over its sides and arrays; ``{}`` after a
-    single pass).
+    ``passes`` is the number of passes it ran, the final one included,
+    ``converged`` whether the convergence check held (``False``:
+    ``max_iterations`` stopped it), and ``residuals`` the relative change of
+    every field's exchanged :data:`Array` data in the last pass (largest over its
+    sides and arrays).
     """
 
     passes: int
@@ -289,7 +292,11 @@ class CouplingController:
     names the leader's coupling op. After each pass (:meth:`decide`) it gets what
     every side sent and checks every measure of ``convergence`` on the change of
     its :data:`Array` data since the pass before (all must hold; none:
-    :func:`unchanged`); it stops after ``max_iterations`` passes regardless. Then
+    :func:`unchanged`). Once they hold it runs exactly one more pass, the
+    **final** one (:attr:`final`), and stops after it without checking again;
+    the last pass ``max_iterations`` allows is final in advance (no pass more;
+    it checks after it whether the data converged), and with ``max_iterations``
+    1 the only pass is first and final. Before each pass, the final one too,
     it relaxes the :data:`Array` data carried into the next pass with the
     ``acceleration`` of the side's exchange (by exchange name; at most one per
     exchange, an exchange without one is not relaxed; plain fields pass through
@@ -348,6 +355,10 @@ class CouplingController:
         self._residuals: dict[str, float] = {}
         # the pass of the current time step; 0 between time steps
         self._iteration = 0
+        # whether the pass started last is the final one, and whether it is final
+        # because the data converged
+        self._final = False
+        self._converged_before_final = False
         # what each side carries into the pass (relaxed), in the order of _sides
         self._carried: list[Data] = []
 
@@ -360,6 +371,11 @@ class CouplingController:
     def iteration(self) -> int:
         """The pass of the current time step's coupling; ``0`` between time steps."""
         return self._iteration
+
+    @property
+    def final(self) -> bool:
+        """Whether the pass :meth:`decide` started last is the time step's final one."""
+        return self._final
 
     @property
     def outcomes(self) -> tuple[CouplingOutcome, ...]:
@@ -378,23 +394,27 @@ class CouplingController:
     def decide(self, current: list[Data]) -> Optional[list[Data]]:
         """The decision before a pass, from what every side sends now (in the order of ``sides``).
 
-        Returns what each side carries into the pass (relaxed), or ``None``: the
-        time step's coupling ended, its outcome recorded.
+        Returns what each side carries into the pass (relaxed), :attr:`final`
+        telling whether it is the final pass, or ``None``: the time step's
+        coupling ended after its final pass, its outcome recorded.
         """
         if self._iteration == 0:
             self._carried = list(current)
-            return self._start_pass()
+            return self._start_pass(final=self._max_iterations <= 1)
         changes = [
             SideChange(side.field, _arrays(side.arrays, previous), _arrays(side.arrays, now))
             for side, previous, now in zip(self._sides, self._carried, current)
         ]
         self._residuals = relative_changes(changes)
-        converged = self._converged(changes)
-        if converged or self._iteration >= self._max_iterations:
+        if self._final:
+            converged = self._converged_before_final or self._converged(changes)
             self._finish(converged)
             return None
         self._carried = list(current)
-        return self._start_pass()
+        if self._converged(changes):
+            self._converged_before_final = True
+            return self._start_pass(final=True)
+        return self._start_pass(final=self._iteration + 1 >= self._max_iterations)
 
     def _converged(self, changes: list[SideChange]) -> bool:
         """Whether every measure of the convergence holds (none: :func:`unchanged`)."""
@@ -406,6 +426,8 @@ class CouplingController:
         outcome = CouplingOutcome(self._iteration, converged, dict(self._residuals))
         self._outcomes.append(outcome)
         self._iteration = 0
+        self._final = False
+        self._converged_before_final = False
         observer = execution_observer.current()
         if observer is not None:
             observer.coupling_finished(self, outcome)
@@ -420,10 +442,11 @@ class CouplingController:
                 stacklevel=2,
             )
 
-    def _start_pass(self) -> list[Data]:
+    def _start_pass(self, final: bool) -> list[Data]:
         if self._iteration == 0:
             self._residuals = {}
         self._iteration += 1
+        self._final = final
         for exchange, acceleration in self._acceleration.items():
             # the sides of the exchange whose partner receives their data as carried
             carried = [
@@ -440,9 +463,10 @@ class CouplingController:
         return list(self._carried)
 
 
-# The leader's decision for one region: another pass?, and what each of its sides
-# receives, by patch: the carried data, or None: what its partner sends in this pass.
-_Decision = tuple[bool, dict[str, Optional[Data]]]
+# The leader's decision for one region: another pass?, is it the final one?, and what
+# each of its sides receives, by patch: the carried data, or None: what its partner
+# sends in this pass.
+_Decision = tuple[bool, bool, dict[str, Optional[Data]]]
 
 
 class CouplingOp(IterativeOp):
@@ -463,7 +487,9 @@ class CouplingOp(IterativeOp):
     sides' models and points with the partner regions and checks each exchange.
     Each test then sends what every side sends now: to the partner that steps
     later (serial: it receives it in the same pass) and to the node's leader;
-    the leader decides for the node and tells every region to go on or stop. On
+    the leader decides for the node and tells every region to go on or stop, and
+    whether the pass is the node's final one, which the test marks on the loop's
+    entry (``Context.mark_final``: an operation marked ``final`` runs in it). On
     another pass every side gets what its partner sent (fresh, or carried by the
     leader), mapped onto its points with the exchange's mapping, validated as
     its ``receives`` model, reported to the execution observer
@@ -572,10 +598,11 @@ class CouplingOp(IterativeOp):
                 if self._rank[region] > self._rank[self.region]:
                     self._send(region, f"data:{self.exchange_of(side).name}", data)
         time = getattr(ctx.time, "value", None)
-        go_on, decided = self._decide(current, time if self._iteration == 0 else None)
+        go_on, final, decided = self._decide(current, time if self._iteration == 0 else None)
         if not go_on:
             self._iteration = 0
             return False
+        ctx.mark_final(final)
         self._iteration += 1
         for side in self._sides:
             self._hand_over(side, decided)
@@ -685,7 +712,7 @@ class CouplingOp(IterativeOp):
                     partner = self._controller.sides[index].partner
                     received[patch] = None if fresh else carried[partner]
                 index += 1
-            decisions[region] = (carried is not None, received)
+            decisions[region] = (carried is not None, self._controller.final, received)
         for region, decision in decisions.items():
             if region != self.region:
                 self._send(region, self._tag("decision"), decision)

@@ -176,7 +176,8 @@ def test_coupling_op_stops_once_the_sent_data_is_unchanged() -> None:
 
     _couple(a, b, max_iterations=10)
 
-    assert (a.solves, b.solves) == (2, 2)
+    # unchanged after the second pass: one more, the final pass
+    assert (a.solves, b.solves) == (3, 3)
 
 
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
@@ -192,7 +193,7 @@ def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
     ops = _couple(_Side("a", [], fixed=5.0), _Side("b", [], fixed=0.0), max_iterations=10)
 
     controller = _controller(ops)
-    assert controller.outcomes == (CouplingOutcome(passes=2, converged=True, residuals={"x": 0.0}),)
+    assert controller.outcomes == (CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),)
     assert controller.label == "b.coupling"
     assert ops["a"].controller is None
 
@@ -225,6 +226,8 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
     # serial: a gets b's carried value (0, then 2), b gets a's fresh one
     assert exchanged == [
         ("a.coupling", "b.p", 0.0),
+        ("b.coupling", "a.p", 1.0),
+        ("a.coupling", "b.p", 2.0),
         ("b.coupling", "a.p", 1.0),
         ("a.coupling", "b.p", 2.0),
         ("b.coupling", "a.p", 1.0),
@@ -406,9 +409,10 @@ def test_coupling_op_maps_the_arrays_and_hands_plain_values_over_as_they_are(
 
     run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
 
-    assert [list(data) for data in mapping.mapped] == [["T"], ["T"]]
+    # converged after the first pass, then the final pass
+    assert [list(data) for data in mapping.mapped] == [["T"]] * 4
     assert all(isinstance(data, _Mixed) for data in received)
-    assert [(data.T.tolist(), data.q) for data in received] == [([2.0, 1.0], 3.0)] * 2
+    assert [(data.T.tolist(), data.q) for data in received] == [([2.0, 1.0], 3.0)] * 4
 
 
 def _live(ctx: Context) -> _Data:
@@ -430,9 +434,10 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     run({name: (ctx, [solve("x", step)]) for name, ctx in regions.items()})
     ops = {name: couple(ctx) for name, ctx in regions.items()}
 
-    # x: 1, 2, 3, then 3 again: unchanged after the fourth pass, not after the first
+    # x: 1, 2, 3, then 3 again: unchanged after the fourth pass, not after the first;
+    # then the final pass
     assert _controller(ops).outcomes == (
-        CouplingOutcome(passes=4, converged=True, residuals={"x": 0.0}),
+        CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
     )
 
 
@@ -468,9 +473,9 @@ def test_coupling_op_passes_plain_fields_through_unrelaxed_and_uncompared() -> N
     run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
     ops = {name: couple(ctx) for name, ctx in regions.items()}
 
-    # what the sides send never changes: converged after one pass
-    assert [data.tag for data in received] == ["from b", "from a"]
-    assert relaxed == [["x"]]
+    # what the sides send never changes: converged after one pass, then the final pass
+    assert [data.tag for data in received] == ["from b", "from a"] * 2
+    assert relaxed == [["x"], ["x"]]
     assert _controller(ops).outcomes == (
-        CouplingOutcome(passes=1, converged=True, residuals={"x": 0.0}),
+        CouplingOutcome(passes=2, converged=True, residuals={"x": 0.0}),
     )
