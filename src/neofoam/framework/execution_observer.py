@@ -12,6 +12,11 @@ hooks cost one ``None`` check.
 The observer is per thread (a :class:`~contextvars.ContextVar`); threads started
 by an observed run do not inherit it, except the region threads of a coupled run.
 
+So one observer of a multi-region run is called from several threads at once:
+its hooks must be thread safe (e.g. guard what they record with a lock). A hook
+that blocks pauses its own region's thread; the regions coupled with it wait
+for it at their next exchange.
+
 Example::
 
     class Printer(ExecutionObserver):

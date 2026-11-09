@@ -175,6 +175,8 @@ def test_the_controller_tells_which_pass_is_final() -> None:
 
     assert controller.decide({}, 0) == {} and not controller.final
     assert controller.decide({}, 1) == {} and controller.final
-    with pytest.warns(CouplingNotConvergedWarning):
+    with pytest.warns(CouplingNotConvergedWarning) as warned:
         assert controller.decide({}, 2) is None
+    # the warning points at the caller outside the framework
+    assert warned[0].filename == __file__
     assert not controller.final
