@@ -34,7 +34,7 @@ point-to-point channel. Regions exchange data over *exchanges*. Who does what:
        transport, runs every region on its own thread.
 
 Vocabulary: a **region** is one solver; an **exchange** is one line between two
-patches of two regions; the **mapping** (``Mapping``, with a ``kind``) maps point
+patches of two regions; the **mapping** (a ``Mapping``, by its ``type``) maps point
 data of the partner onto a side's own points; a region's **coupling op** is a
 loop around its solving operations whose test exchanges its sides' data; regions
 connected by exchanges form a **group**, whose last region in ``regionSolvers``
@@ -155,9 +155,12 @@ anything runs (``ValueError``):
   (``Coupling.check``, as the region's graph is resolved). A steady region has
   no time step, so a serial node may wrap it whole.
 
-``mapping``, ``acceleration.type`` and ``convergence[].type`` name entries of
-the registries ``MAPPINGS``, ``ACCELERATIONS`` and ``CONVERGENCES``; the file is
-checked against them on load, as against unknown keys, two nodes of one name, an
+``mapping``, ``acceleration`` and ``convergence[]`` each name a strategy by its
+``type``, with its options (``mapping`` may be the type alone): a member of the
+plugin families ``Mapping``, ``Acceleration`` and ``Convergence`` (see
+`Extension points`_). The file is checked against them on load: an unknown
+type lists the registered ones, an unknown or missing option the strategy's
+options; as against unknown keys, two nodes of one name, an
 exchange in no node or in two, and a ``wraps`` region the node does not couple.
 A patch is in at most one exchange and carries one coupled side.
 
@@ -241,7 +244,7 @@ As a time step's coupling starts, the leader compares the regions' time
 
 **What a region knows.** Its ``RegionCoupling`` (``Coupling.coupling``): its name,
 its group (in stepping order), the group's exchanges (``Link``: name, two ends
-``(region, patch)``, mapping kind), its nodes (each with its scheme), the controller
+``(region, patch)``, its mapping), its nodes (each with its scheme), the controller
 factory (``node_controller`` by default) and the transport. No region reads another region's objects.
 
 **A run of a coupling op.** Its first loop test sends every partner what its
@@ -349,43 +352,73 @@ Extension points
    * - to change
      - extend
    * - Mapping
-     - a ``Mapping`` subclass with a ``kind``: ``check(source, target)`` and
-       ``__call__(data, source, target)`` on the partner's and the side's points;
-       added to ``MAPPINGS`` (yaml ``mapping:``).
+     - a ``Mapping`` subclass: ``bind(source, target)`` on the partner's and
+       the side's points, once, returns the ``BoundMapping`` ``data -> data``
+       of every pass (yaml ``mapping:``).
    * - Acceleration
-     - a callable ``(carried Array data, iteration) -> data``, added to
-       ``ACCELERATIONS`` (yaml ``acceleration.type``).
+     - an ``Acceleration`` subclass: ``__call__(carried Array data, iteration)
+       -> data``; it keeps its last passes in private attributes (yaml
+       ``acceleration:``).
    * - Convergence
-     - a callable ``(list of SideChange) -> bool``, added to ``CONVERGENCES``
-       (yaml ``convergence[].type``).
+     - a ``Convergence`` subclass: ``__call__(list of SideChange) -> bool``
+       (yaml ``convergence[]``).
    * - Transport
      - a ``Transport``: ``send(source, target, tag, message)`` (never blocks),
        ``receive(source, target, tag)`` (blocks; in order per tag) and
        ``close(region)``; messages are plain data. ``InProcessTransport`` connects
        threads of one process.
 
+The three strategy families are families of NeoFOAM's ``PluginSystem``, as the
+viscosity models or the post-processing writers are: each strategy is a
+pydantic model with a ``type: Literal[...]`` that selects it, its options as
+its fields (an unknown one is refused), registered with its family
+(``@Mapping.register``). The built-in ones are members as well: the mappings
+``identity`` and ``nearest-neighbor``, the accelerations ``constant`` and
+``aitken`` (option ``relaxation``) and the convergence ``relative`` (options
+``data``, ``limit``). ``strategy(family, options)`` builds one from its yaml
+options.
+
 A package of its own, e.g. a ``neofoam-precice`` with preCICE's RBF mapping and
-IQN-ILS acceleration, adds its kernels to the registries without NeoFOAM
-importing it: an entry point of the group ``neofoam.coupling`` names its
-``register(mappings, accelerations, convergences)``, which fills the three dicts
-it is given.
+IQN-ILS acceleration, adds its strategies without NeoFOAM importing it: an
+entry point of the group ``neofoam.coupling`` names a module that registers
+them as it is imported.
 
 .. code-block:: toml
 
     [project.entry-points."neofoam.coupling"]
-    precice = "neofoam_precice:register"
+    precice = "neofoam_precice.coupling"
 
 .. code-block:: python
 
-    def register(mappings, accelerations, convergences):
-        mappings["rbf"] = RadialBasisMapping            # yaml mapping: rbf
-        accelerations["iqn-ils"] = IQNILSAcceleration   # yaml acceleration.type: iqn-ils
+    # neofoam_precice/coupling.py
+    @Mapping.register
+    class RadialBasisMapping(Mapping):
+        type: Literal["rbf"] = "rbf"
+        support_radius: float = Field(gt=0)
 
-The registries load every plugin once, on their first read, so before
-``system/regionCoupling.yaml`` is checked against them. A name that is built in
-or that another plugin registers raises a ``ValueError`` naming both; a plugin
-that fails to load or to register raises an ``ImportError`` naming it. Nothing
-is overridden.
+        def bind(self, source, target): ...
+
+    @Acceleration.register
+    class IQNILSAcceleration(Acceleration):
+        type: Literal["iqn-ils"] = "iqn-ils"
+        relaxation: float = Field(gt=0, le=1)
+        columns: int = 10
+
+        def __call__(self, sent, iteration): ...
+
+.. code-block:: yaml
+
+    exchanges:
+      - sides: {fluid: wall, solid: right}
+        mapping: {type: rbf, support_radius: 0.01}
+    acceleration: {type: iqn-ils, relaxation: 0.5, columns: 20}
+
+``multiRun`` imports every plugin once, before ``system/regionCoupling.yaml``
+is read and before any region starts (``load_plugins``; safe to call from
+several threads, the first call imports, the others wait), so no region sees
+the families change. A plugin that fails to import, or registers a type that
+is registered already, raises an ``ImportError`` naming it. Nothing is
+overridden.
 
 What is exchanged follows from the side's ``sends`` / ``receives`` models:
 ``Array`` fields are mapped, relaxed and compared, plain fields handed over as

@@ -685,19 +685,64 @@
 
 <span class="sd">"""Case config of the multiRun solver: the shared time loop, the region solvers, their coupling."""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseModel</span><span class="p">,</span>
+    <span class="n">BeforeValidator</span><span class="p">,</span>
+    <span class="n">ConfigDict</span><span class="p">,</span>
+    <span class="n">Field</span><span class="p">,</span>
+    <span class="n">SerializeAsAny</span><span class="p">,</span>
+    <span class="n">WithJsonSchema</span><span class="p">,</span>
+    <span class="n">field_validator</span><span class="p">,</span>
+    <span class="n">model_validator</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeControlConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">ACCELERATIONS</span><span class="p">,</span> <span class="n">CONVERGENCES</span><span class="p">,</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span> <span class="n">MAPPINGS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span>
+    <span class="n">Acceleration</span><span class="p">,</span>
+    <span class="n">Convergence</span><span class="p">,</span>
+    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">NearestNeighborMapping</span><span class="p">,</span>
+    <span class="n">strategy</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">YAML</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_known</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">registry</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unknown </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'; known: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">registry</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">name</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_selected</span><span class="p">(</span><span class="n">family</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A field holding a strategy of ``family``, selected by its ``type`` as it is validated.</span>
+
+<span class="sd">    Validated against the family as it stands then, so a plugin's strategy</span>
+<span class="sd">    (:func:`~neofoam.framework.coupling.load_plugins`) is selected too; the</span>
+<span class="sd">    JSON Schema is an open object for the same reason.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">SerializeAsAny</span><span class="p">[</span><span class="n">family</span><span class="p">],</span>  <span class="c1"># type: ignore[valid-type]</span>
+        <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">family</span><span class="p">)),</span>
+        <span class="n">WithJsonSchema</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
+                <span class="s2">"description"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"a </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">: its type and options"</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="c1">#: A convergence measure: ``{type: relative, data: T, limit: 1.0e-5}``</span>
+<span class="c1">#: (:class:`~neofoam.framework.coupling.Convergence`; ``relative``: the data of</span>
+<span class="c1">#: field ``data`` changes by less than ``limit`` relative to it).</span>
+<span class="n">ConvergenceConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">Convergence</span><span class="p">,</span> <span class="s2">"convergence measure"</span><span class="p">)</span>
+<span class="c1">#: How the leader relaxes the data carried into a pass: ``{type: aitken, relaxation: 0.5}``</span>
+<span class="c1">#: (:class:`~neofoam.framework.coupling.Acceleration`; ``constant`` factor</span>
+<span class="c1">#: ``relaxation``, or ``aitken`` starting from it).</span>
+<span class="n">AccelerationConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">Acceleration</span><span class="p">,</span> <span class="s2">"acceleration"</span><span class="p">)</span>
+<span class="c1">#: How the point data of one side is mapped onto the other's points:</span>
+<span class="c1">#: ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both</span>
+<span class="c1">#: patches share their points); a type alone, or ``{type: ..., &lt;option&gt;: ...}``</span>
+<span class="c1">#: (:class:`~neofoam.framework.coupling.Mapping`).</span>
+<span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">Mapping</span><span class="p">,</span> <span class="s2">"mapping"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ControlDictConfig">
@@ -725,49 +770,6 @@
 
 
 
-<div class="viewcode-block" id="ConvergenceConfig">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.ConvergenceConfig">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ConvergenceConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A convergence measure on the exchanged data of field ``data`` with its ``limit``.</span>
-
-<span class="sd">    ``type`` names it in :data:`~neofoam.framework.coupling.CONVERGENCES`</span>
-<span class="sd">    (``relative``: the data changes by less than ``limit`` relative to it).</span>
-<span class="sd">    """</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
-
-    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">data</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_registered</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_known</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">CONVERGENCES</span><span class="p">,</span> <span class="s2">"convergence"</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="AccelerationConfig">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.AccelerationConfig">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">AccelerationConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""How the leader relaxes the data carried into a pass, with its relaxation factor.</span>
-
-<span class="sd">    ``type`` names it in :data:`~neofoam.framework.coupling.ACCELERATIONS`</span>
-<span class="sd">    (``constant`` factor, or ``aitken`` starting from it).</span>
-<span class="sd">    """</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
-
-    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">relaxation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"type"</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_registered</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_known</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ACCELERATIONS</span><span class="p">,</span> <span class="s2">"acceleration"</span><span class="p">)</span></div>
-
-
-
 <div class="viewcode-block" id="ExchangeConfig">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.solver.multiRun.configs.html#neofoam.solver.multiRun.configs.ExchangeConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExchangeConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -775,21 +777,14 @@
 
 <span class="sd">    ``sides`` maps each region to its patch; ``name`` defaults to the regions</span>
 <span class="sd">    joined by ``-``. ``mapping`` maps the point data of one side onto the other's</span>
-<span class="sd">    points, a kind of :data:`~neofoam.framework.coupling.MAPPINGS`:</span>
-<span class="sd">    ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both</span>
-<span class="sd">    patches share their points).</span>
+<span class="sd">    points (:data:`MappingConfig`), by default ``nearest-neighbor``.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sides</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"nearest-neighbor"</span>
-
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"mapping"</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_registered</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_known</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">MAPPINGS</span><span class="p">,</span> <span class="s2">"mapping"</span><span class="p">)</span></div>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">NearestNeighborMapping</span><span class="p">)</span></div>
 
 
 
