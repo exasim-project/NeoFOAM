@@ -38,6 +38,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
         "convergence": [{"type": "relative", "data": "T", "limit": 1e-12}],
         "maxIterations": 100,
         "couplings": None,
+        "transportTimeout": 600.0,
     }
 
 
@@ -57,6 +58,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
         "convergence": [{"type": "relative", "data": "T", "limit": 1e-5}],
         "maxIterations": None,
         "couplings": None,
+        "transportTimeout": 600.0,
     }
 
 

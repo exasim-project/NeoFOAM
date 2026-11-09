@@ -280,3 +280,84 @@ def test_couplings_rejects_a_broken_file_as_it_loads(
 ) -> None:
     with pytest.raises(ValidationError, match="two coupling nodes are named 'outer'"):
         _couplings(tmp_path, monkeypatch, _broken("couplings.1.name", "outer"))
+
+
+def _timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, data: Any = None, env: Any = None
+) -> Any:
+    """multiRun's comm channel timeout with ``data`` as the case file (none: no file) and ``env``."""
+    (tmp_path / "system").mkdir()
+    if data is not None:
+        (tmp_path / "system" / "regionCoupling.yaml").write_text(yaml.safe_dump(data))
+    monkeypatch.chdir(tmp_path)
+    if env is None:
+        monkeypatch.delenv(MULTI_RUN.TIMEOUT_VARIABLE, raising=False)
+    else:
+        monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, env)
+    return MULTI_RUN.transport_timeout()
+
+
+@pytest.mark.parametrize(
+    ("data", "timeout"),
+    [
+        (None, 600.0),
+        (dict(NODES), 600.0),
+        ({**NODES, "transportTimeout": 5}, 5.0),
+        ({**NODES, "transportTimeout": 0}, None),
+        ({**NODES, "transportTimeout": None}, None),
+    ],
+    ids=["no-file", "default", "seconds", "zero", "null"],
+)
+def test_the_transport_timeout_is_the_file_s(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, data: Any, timeout: Any
+) -> None:
+    assert _timeout(tmp_path, monkeypatch, data) == timeout
+
+
+@pytest.mark.parametrize(("env", "timeout"), [("2.5", 2.5), ("0", None)])
+def test_the_environment_variable_overrides_the_file_s_transport_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str, timeout: Any
+) -> None:
+    data = {**NODES, "transportTimeout": 5}
+
+    assert _timeout(tmp_path, monkeypatch, data, env) == timeout
+
+
+@pytest.mark.parametrize("env", ["soon", "-1", "inf"])
+def test_a_broken_environment_variable_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str
+) -> None:
+    with pytest.raises(ValueError, match="NEOFOAM_COUPLING_TIMEOUT=.*at least 0"):
+        _timeout(tmp_path, monkeypatch, env=env)
+
+
+@pytest.mark.parametrize("seconds", [-1, float("inf")])
+def test_a_broken_transport_timeout_raises(seconds: float) -> None:
+    with pytest.raises(ValidationError, match="transportTimeout"):
+        RegionCouplingConfig.model_validate({**NODES, "transportTimeout": seconds})
+
+
+def test_run_hands_the_transport_timeout_to_the_transport(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    timeouts: list[Any] = []
+
+    class _Stop(Exception):
+        pass
+
+    def comm_channel(timeout: Any) -> None:
+        timeouts.append(timeout)
+        raise _Stop
+
+    (tmp_path / "system").mkdir()
+    (tmp_path / "system" / "controlDict.yaml").write_text(
+        yaml.safe_dump({"endTime": 1.0, "deltaT": 1.0, "regionSolvers": {"a": "x", "b": "x"}})
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, "3")
+    monkeypatch.setattr(MULTI_RUN, "InProcessCommChannel", comm_channel)
+
+    with pytest.raises(_Stop):
+        MULTI_RUN.run()
+
+    assert timeouts == [3.0]

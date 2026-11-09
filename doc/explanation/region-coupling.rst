@@ -263,7 +263,13 @@ and the leader builds its controller. Each loop test then:
    its points, validated as its ``receives`` model and reported to the observer.
 
 All regions leave the loop on the same pass. Receives block; a region that fails
-closes the comm channel, so no region waits for it forever.
+closes the comm channel, so no region waits for it forever. A deadlock (every running
+region waits for a message none sent, or one waits for a region that finished)
+raises ``CouplingDeadlock`` at once; as a fallback a receive raises
+``CouplingTimeout`` after ``transportTimeout`` seconds (top-level key of
+``system/regionCoupling.yaml``, default 600; ``0`` or ``null`` waits without end),
+which the environment variable ``NEOFOAM_COUPLING_TIMEOUT`` overrides. Both list
+who waits for what and the messages sent but not received.
 
 **Read API** of a ``CouplingOp``: ``region``, ``label``, ``sides``
 (``ExchangeSide``: ``region``, ``patch``, ``field``, ``key``, ``sends``,
