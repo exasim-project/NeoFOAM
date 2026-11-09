@@ -682,23 +682,37 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""A loop that wraps fields: the resolver nests their solution inside it.</span>
+<span class="sd">"""A wrapping loop: the resolver places it around operations of the graph.</span>
 
-<span class="sd">A model or boundary condition contributes a loop operation that declares the</span>
-<span class="sd">fields it repeats (``OperationMetadata.wraps``), not the operations: it does not</span>
-<span class="sd">know the solver's names. :func:`wrap` moves the operations that solve those</span>
-<span class="sd">fields, and every operation downstream of them, into the loop, which takes the</span>
-<span class="sd">place of the last of them::</span>
+<span class="sd">A model or boundary condition contributes a loop operation that repeats part of</span>
+<span class="sd">the solver's time step. Its ``OperationMetadata.wraps``</span>
+<span class="sd">(:class:`~neofoam.framework.types.Placement`) says which part:</span>
+
+<span class="sd">- no operations: the whole body of the top scope, the body of the outermost loop</span>
+<span class="sd">  (the time loop). Once a wrapping loop sits there, the next one wraps the whole</span>
+<span class="sd">  body of the innermost of them::</span>
+
+<span class="sd">    time_loop                       time_loop</span>
+<span class="sd">        start_step                      couple</span>
+<span class="sd">        solve_T      Placement()            start_step</span>
+<span class="sd">        update_rho   ----------&gt;            solve_T</span>
+<span class="sd">        write                               update_rho</span>
+<span class="sd">                                            write</span>
+
+<span class="sd">- named operations: those and, with ``downstream``, every operation downstream of</span>
+<span class="sd">  them over ``depends_on`` / ``before`` within their scope (the time-step body or</span>
+<span class="sd">  a loop body). The loop takes the place of the last of them::</span>
 
 <span class="sd">    time_loop                       time_loop</span>
 <span class="sd">        start_step                      start_step</span>
-<span class="sd">        solve_T          wraps T        left.couple</span>
-<span class="sd">        update_rho       -------&gt;           solve_T</span>
+<span class="sd">        solve_T      ("solve_T",)       couple</span>
+<span class="sd">        update_rho   -----------&gt;           solve_T</span>
 <span class="sd">        write                               update_rho</span>
 <span class="sd">                                        write</span>
 
-<span class="sd">Downstream means reachable over ``depends_on`` / ``before`` within the scope (the</span>
-<span class="sd">time-step body or a loop body) that holds the solving operations.</span>
+<span class="sd">Loops are placed in the order given, outer first: a loop whose operations lie</span>
+<span class="sd">inside one placed before nests inside it; one that would have to hold a loop</span>
+<span class="sd">placed before raises.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -707,6 +721,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">Operation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Placement</span>
 
 <span class="c1"># The path to a scope: the index of each loop on the way down from the root.</span>
 <span class="n">Path</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
@@ -717,7 +732,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">downstream</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Operation</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The operations of one resolved scope that ``seed`` picks and every one downstream of them.</span>
 
-<span class="sd">    The result keeps the order of ``ops``.</span>
+<span class="sd">    A loop counts with the edges and names of everything inside it. The result</span>
+<span class="sd">    keeps the order of ``ops``.</span>
 <span class="sd">    """</span>
     <span class="n">selected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -725,14 +741,12 @@
     <span class="c1"># A resolved scope is in dependency order, so one forward pass sees every</span>
     <span class="c1"># operation after the ones it depends on.</span>
     <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">seed</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">or</span> <span class="n">names</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">depends_on</span><span class="p">)</span> <span class="ow">or</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="ow">in</span> <span class="n">before_targets</span>
-        <span class="p">):</span>
+        <span class="n">depends_on</span><span class="p">,</span> <span class="n">before</span><span class="p">,</span> <span class="n">own</span> <span class="o">=</span> <span class="n">_edges</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">seed</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">or</span> <span class="n">names</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">depends_on</span><span class="p">)</span> <span class="ow">or</span> <span class="n">before_targets</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">own</span><span class="p">)):</span>
             <span class="k">continue</span>
         <span class="n">selected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">:</span>
-            <span class="n">names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">)</span>
-        <span class="n">before_targets</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">before</span><span class="p">)</span>
+        <span class="n">names</span> <span class="o">|=</span> <span class="n">own</span>
+        <span class="n">before_targets</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">before</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">selected</span></div>
 
 
@@ -740,48 +754,124 @@
 <div class="viewcode-block" id="wrap">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.wrap">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">wrap</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The resolved ``ops`` with the fields ``loop.metadata.wraps`` names solved inside ``loop``.</span>
+<span class="w">    </span><span class="sd">"""The resolved ``ops`` with ``loop`` placed as ``loop.metadata.wraps`` says.</span>
 
-<span class="sd">    The loop takes the place of the last selected operation; the other operations</span>
-<span class="sd">    of its scope keep their order. It solves what its body solves, so a second</span>
-<span class="sd">    loop that wraps one of the fields wraps the first.</span>
-
-<span class="sd">    Raises ``ValueError`` when no operation solves one of the fields, or when the</span>
-<span class="sd">    selected operations lie in more than one scope.</span>
+<span class="sd">    Raises ``ValueError`` when an operation name is unknown or names a loop, when</span>
+<span class="sd">    the named operations lie in more than one scope, when the loop would have to</span>
+<span class="sd">    hold a wrapping loop placed before it, or when no top scope can be told.</span>
 <span class="sd">    """</span>
-    <span class="n">fields</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">loop</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span><span class="p">)</span>
-    <span class="n">found</span> <span class="o">=</span> <span class="n">_found</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">solves</span><span class="p">)),</span> <span class="p">())</span>
-    <span class="n">solved</span> <span class="o">=</span> <span class="p">{</span><span class="n">field</span> <span class="k">for</span> <span class="n">_path</span><span class="p">,</span> <span class="n">picked</span> <span class="ow">in</span> <span class="n">found</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">picked</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">solves</span><span class="p">}</span>
-    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">solved</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">, which no operation solves; it needs "</span>
-            <span class="s2">"an operation declared with solves=[...] for each field"</span>
-        <span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"the operations solving </span><span class="si">{</span><span class="n">fields</span><span class="si">}</span><span class="s2"> lie in more than one loop scope; "</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps operations of one scope"</span>
-        <span class="p">)</span>
-    <span class="p">((</span><span class="n">path</span><span class="p">,</span> <span class="n">picked</span><span class="p">),)</span> <span class="o">=</span> <span class="n">found</span>
+    <span class="n">placement</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span>
+    <span class="k">assert</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">operations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">_top</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_in_scope</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">scope</span><span class="p">:</span> <span class="p">[</span><span class="n">_filled</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">scope</span><span class="p">)])</span>
+    <span class="n">path</span><span class="p">,</span> <span class="n">picked</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">loop</span><span class="p">,</span> <span class="n">placement</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_in_scope</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">scope</span><span class="p">:</span> <span class="n">_wrapped</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">picked</span><span class="p">,</span> <span class="n">loop</span><span class="p">))</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_found</span><span class="p">(</span>
-    <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Operation</span><span class="p">],</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]]:</span>
-<span class="w">    </span><span class="sd">"""Every scope where ``seed`` picks operations, and what it selects there.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_top</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The path to the scope a loop without operations wraps whole."""</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">scope</span> <span class="o">=</span> <span class="n">ops</span>
+    <span class="n">outer</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outer</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps the body of the outermost loop, but the graph "</span>
+            <span class="s2">"has several; name its operations"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">outer</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="n">outer</span><span class="p">[</span><span class="mi">0</span><span class="p">],)</span>
+        <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="p">[</span><span class="n">outer</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">sub_operations</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">wrapping</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span> <span class="k">if</span> <span class="n">_is_wrapping</span><span class="p">(</span><span class="n">op</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">wrapping</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">path</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrapping</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps the body of the innermost wrapping loop, "</span>
+                <span class="s2">"but a scope holds several; name its operations"</span>
+            <span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">wrapping</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">scope</span> <span class="o">=</span> <span class="n">scope</span><span class="p">[</span><span class="n">wrapping</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">sub_operations</span>
 
-<span class="sd">    A selected loop is taken whole: the scopes inside it are not searched.</span>
-<span class="sd">    """</span>
-    <span class="n">picked</span> <span class="o">=</span> <span class="n">downstream</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
-    <span class="n">found</span> <span class="o">=</span> <span class="p">[(</span><span class="n">path</span><span class="p">,</span> <span class="n">picked</span><span class="p">)]</span> <span class="k">if</span> <span class="n">picked</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="n">taken</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">picked</span><span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_selected</span><span class="p">(</span>
+    <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">placement</span><span class="p">:</span> <span class="n">Placement</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The scope of the operations ``placement`` names, and what the loop takes there."""</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">placement</span><span class="o">.</span><span class="n">operations</span> <span class="ow">or</span> <span class="p">())</span>
+    <span class="n">located</span> <span class="o">=</span> <span class="n">_located</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="p">())</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">located</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">_path</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_loop</span><span class="p">(</span><span class="n">op</span><span class="p">)})</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">, which name no operation; "</span>
+            <span class="sa">f</span><span class="s2">"the operations are </span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">loops</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">_is_loop</span><span class="p">(</span><span class="n">located</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">])]</span>
+    <span class="k">if</span> <span class="n">loops</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps </span><span class="si">{</span><span class="n">loops</span><span class="si">}</span><span class="s2">, which are loops; it wraps operations"</span>
+        <span class="p">)</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{</span><span class="n">located</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the operations </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2"> lie in more than one loop scope; "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps operations of one scope"</span>
+        <span class="p">)</span>
+    <span class="p">(</span><span class="n">path</span><span class="p">,)</span> <span class="o">=</span> <span class="n">paths</span>
+    <span class="n">scope</span> <span class="o">=</span> <span class="n">_scope</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="n">seeds</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">located</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">downstream</span><span class="p">:</span>
+        <span class="n">picked</span> <span class="o">=</span> <span class="n">downstream</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">picked</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">scope</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">]</span>
+    <span class="n">held</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">picked</span> <span class="k">if</span> <span class="n">_is_wrapping</span><span class="p">(</span><span class="n">op</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">held</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> would hold the coupling loop </span><span class="si">{</span><span class="n">held</span><span class="si">}</span><span class="s2"> placed before it; "</span>
+            <span class="s2">"list the outer coupling first"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span><span class="p">,</span> <span class="n">picked</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_located</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Every named operation in ``ops`` and below, with the path to its scope."""</span>
+    <span class="n">located</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ops</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">taken</span><span class="p">:</span>
-            <span class="n">found</span> <span class="o">+=</span> <span class="n">_found</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">found</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">:</span>
+            <span class="n">located</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_is_loop</span><span class="p">(</span><span class="n">op</span><span class="p">):</span>
+            <span class="n">located</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_located</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="n">index</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">located</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_edges</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``depends_on``, ``before`` and names of ``op`` and everything inside it."""</span>
+    <span class="n">depends_on</span><span class="p">,</span> <span class="n">before</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">depends_on</span><span class="p">),</span> <span class="nb">set</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">before</span><span class="p">)</span>
+    <span class="n">own</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">}</span> <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">_is_loop</span><span class="p">(</span><span class="n">op</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">inner</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">:</span>
+            <span class="n">inner_depends</span><span class="p">,</span> <span class="n">inner_before</span><span class="p">,</span> <span class="n">inner_own</span> <span class="o">=</span> <span class="n">_edges</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+            <span class="n">depends_on</span> <span class="o">|=</span> <span class="n">inner_depends</span>
+            <span class="n">before</span> <span class="o">|=</span> <span class="n">inner_before</span>
+            <span class="n">own</span> <span class="o">|=</span> <span class="n">inner_own</span>
+    <span class="k">return</span> <span class="n">depends_on</span> <span class="o">-</span> <span class="n">own</span><span class="p">,</span> <span class="n">before</span> <span class="o">-</span> <span class="n">own</span><span class="p">,</span> <span class="n">own</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_loop</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_wrapping</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_is_loop</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">and</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scope</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="n">ops</span> <span class="o">=</span> <span class="n">ops</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">sub_operations</span>
+    <span class="k">return</span> <span class="n">ops</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_in_scope</span><span class="p">(</span>
@@ -797,20 +887,28 @@
     <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">ops</span><span class="p">[:</span><span class="n">index</span><span class="p">],</span> <span class="n">loop</span><span class="p">,</span> <span class="o">*</span><span class="n">ops</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_filled</span><span class="p">(</span><span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Operation</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">sub_operations</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">body</span><span class="p">))</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_wrapped</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place."""</span>
+<span class="w">    </span><span class="sd">"""``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place.</span>
+
+<span class="sd">    Raises ``ValueError`` when an operation left before the loop depends on one in it.</span>
+<span class="sd">    """</span>
     <span class="n">member_ids</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">}</span>
     <span class="n">last</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">member_ids</span><span class="p">)</span>
-    <span class="n">solves</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">field</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">selected</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">solves</span><span class="p">})</span>
-    <span class="n">filled</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
-        <span class="n">loop</span><span class="p">,</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">loop</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="n">solves</span><span class="o">=</span><span class="n">solves</span><span class="p">),</span>
-        <span class="n">sub_operations</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">selected</span><span class="p">),</span>
-    <span class="p">)</span>
-    <span class="c1"># Operations before the last member that are not members do not depend on one</span>
-    <span class="c1"># (they would be downstream), so running them before the loop keeps every edge.</span>
     <span class="n">earlier</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">scope</span><span class="p">[:</span><span class="n">last</span><span class="p">]</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">member_ids</span><span class="p">]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">earlier</span><span class="p">,</span> <span class="n">filled</span><span class="p">,</span> <span class="o">*</span><span class="n">scope</span><span class="p">[</span><span class="n">last</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]]</span>
+    <span class="c1"># Without downstream an operation between the members may depend on one of</span>
+    <span class="c1"># them; running it before the loop would break that edge.</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">downstream</span><span class="p">(</span><span class="n">scope</span><span class="p">[:</span><span class="n">last</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">member_ids</span><span class="p">)}</span>
+    <span class="n">broken</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">earlier</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">after</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">broken</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">broken</span><span class="si">}</span><span class="s2"> depend on operations </span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps but run before "</span>
+            <span class="s2">"it; wrap them too"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">earlier</span><span class="p">,</span> <span class="n">_filled</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="o">*</span><span class="n">scope</span><span class="p">[</span><span class="n">last</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]]</span>
 </pre></div>
         </article>
       </div>

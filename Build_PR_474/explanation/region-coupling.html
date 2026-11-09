@@ -752,7 +752,7 @@ a side is keyed by <code class="docutils literal notranslate"><span class="pre">
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledHeatFlux</span><span class="p">(</span><span class="n">Patch</span><span class="p">):</span>        <span class="c1"># sets self.field and self.patch</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">patch</span><span class="p">)</span>
-        <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>   <span class="c1"># its region's coupling op wraps self.field</span>
+        <span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>   <span class="c1"># a side of its region's coupling op</span>
 
     <span class="nd">@coupled</span><span class="o">.</span><span class="n">coordinates</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span> <span class="o">...</span>
@@ -807,9 +807,9 @@ exchange and carries one coupled side.</p>
     |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
     |                        then its BCs; a @coupled BC adds itself
     |     execution_graph    model ops += ctx.models["coupling"].operations()
-    |     resolve_operations DAGResolver nests solve_x inside a.couple
-    |     run()              time_loop { set_time_step, agree_dt,
-    |                                    increment_time, a.couple { solve_x } }
+    |     resolve_operations DAGResolver places a.couple around the time step
+    |     run()              time_loop { a.couple { set_time_step, agree_dt,
+    |                                               increment_time, solve_x } }
     |
     +-- thread "b" (leader): the same, its coupling op owns the controller
                  ^
@@ -817,13 +817,14 @@ exchange and carries one coupled side.</p>
                  v
 </pre></div>
 </div>
-<p><strong>Where the op goes.</strong> A model’s loop declares the fields it wraps
-(<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>). The resolver moves the operations that solve them,
+<p><strong>Where the op goes.</strong> A model’s loop declares where it goes
+(<code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>, a <code class="docutils literal notranslate"><span class="pre">Placement</span></code>). Without operation names it wraps
+the whole body of the time loop; with them the resolver moves those operations,
 and every operation downstream of them (over <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">before</span></code>), into
 the loop, which takes the place of the last of them. The operations must lie in
 one scope; else it raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
 <p><strong>The coupling model</strong> builds its operations once, after init, from all sides:
-the <code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code> (<code class="docutils literal notranslate"><span class="pre">wraps</span></code> = the sides’ fields); none when the case does not
+the <code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code> (<code class="docutils literal notranslate"><span class="pre">wraps=Placement()</span></code>); none when the case does not
 couple the region. It raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an exchange of the region has
 no side (also when the region has none at all), or a patch two sides.</p>
 <p><strong>Agreeing on a value.</strong> <code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).agree(value,</span> <span class="pre">how=min)</span></code>: every
@@ -889,9 +890,9 @@ observer from its own thread; its graph with <code class="docutils literal notra
 <p><code class="docutils literal notranslate"><span class="pre">heatConductionNeoN</span></code> solves <code class="docutils literal notranslate"><span class="pre">dT/dt</span> <span class="pre">=</span> <span class="pre">laplacian(k/(rho</span> <span class="pre">cp),</span> <span class="pre">T)</span> <span class="pre">+</span> <span class="pre">Q/(rho</span> <span class="pre">cp)</span></code>
 on NeoN (<code class="docutils literal notranslate"><span class="pre">constant/thermalProperties</span></code>: <code class="docutils literal notranslate"><span class="pre">rho</span></code>, <code class="docutils literal notranslate"><span class="pre">cp</span></code>, <code class="docutils literal notranslate"><span class="pre">k</span></code>, <code class="docutils literal notranslate"><span class="pre">heatSource</span></code>)
 and supports coupling: its init adds the coupling model, then the coupled
-patches of <code class="docutils literal notranslate"><span class="pre">T</span></code>; <code class="docutils literal notranslate"><span class="pre">solve_T</span></code> is <code class="docutils literal notranslate"><span class="pre">solves=[&quot;T&quot;]</span></code>; it agrees on the time step
-(<code class="docutils literal notranslate"><span class="pre">agree_dt</span></code>). A patch of <code class="docutils literal notranslate"><span class="pre">0/T</span></code> is coupled when a <code class="docutils literal notranslate"><span class="pre">coupled</span></code> entry names its
-condition; it is <code class="docutils literal notranslate"><span class="pre">calculated</span></code>, so NeoN leaves its values to the coupling:</p>
+patches of <code class="docutils literal notranslate"><span class="pre">T</span></code>; it agrees on the time step (<code class="docutils literal notranslate"><span class="pre">agree_dt</span></code>). A patch of <code class="docutils literal notranslate"><span class="pre">0/T</span></code>
+is coupled when a <code class="docutils literal notranslate"><span class="pre">coupled</span></code> entry names its condition; it is <code class="docutils literal notranslate"><span class="pre">calculated</span></code>, so
+NeoN leaves its values to the coupling:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">interface</span>
 <span class="p">{</span>
 <span class="w">    </span><span class="n">type</span><span class="w">        </span><span class="n">calculated</span><span class="p">;</span>
