@@ -20,6 +20,7 @@ from pybFoam import Info, dictionary
 
 from neofoam import telemetry
 from neofoam.framework.context import Context
+from neofoam.framework.coupling import Coupling
 from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
     IterativeOp,
@@ -40,7 +41,9 @@ from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
 
 from .configs import ControlDictConfig, TelemetryDictConfig
-from .create_fields import create_init
+from .coupled_patches import coupled_patches
+from .create_fields import create_init, region_case_dir
+from .models.field_writer import keep_coupled_entries
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import SolutionLoopPredicate
@@ -123,8 +126,25 @@ incompressibleFluid.models(incompressibleFluidModel)  # optional: zero or more
 
 @incompressibleFluid.initializer
 def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
-    """Initialize using create_init factory with dependency injection."""
-    return init.run()
+    """Initialize using create_init factory with dependency injection.
+
+    On the region's case (the injected runner gets the runtime's region), then
+    the coupling model, then the coupled patches of ``T`` (:mod:`.coupled_patches`),
+    as ``heatConductionNeoN`` does; the field writer adds their ``coupled``
+    entries back to each written ``T``.
+    """
+    ctx = init.run()
+    case_dir = region_case_dir(self.region)
+    ctx.models["coupling"] = Coupling(self.coupling)
+    patches = coupled_patches("T", ctx, case_dir)
+    ctx.models["coupled_patches"] = patches
+    keep_coupled_entries(
+        ctx.models["writer"],
+        ctx.fields["T"].mesh().time() if patches else None,
+        case_dir,
+        {"T": {patch.patch: patch.condition for patch in patches}},
+    )
+    return ctx
 
 
 @incompressibleFluid.execution_graph_step

@@ -16,7 +16,7 @@ algorithm.
 """
 
 from pathlib import Path
-from typing import Annotated, Any, Protocol
+from typing import Annotated, Any, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import fvm, surfaceScalarField, volScalarField
@@ -149,11 +149,21 @@ class GravityConfig(BaseConfig):
 
 @IOStrategy(OF("constant/transportProperties"))
 class BoussinesqConfig(BaseConfig):
+    """The Boussinesq entries of ``constant/transportProperties``.
+
+    ``rho`` and ``cp`` (the fluid's density and heat capacity, SI units) are needed
+    only by a coupled patch of ``T``: the heat flux it exchanges is
+    ``rho cp (nu/Pr + alphat) dT/dn``, in W/m^2 (the solver itself is kinematic).
+    Without a coupled patch they may be absent.
+    """
+
     beta: float
     TRef: float
     Pr: float
     Prt: float
     hRef: float = 0.0
+    rho: Optional[float] = Field(default=None, gt=0)
+    cp: Optional[float] = Field(default=None, gt=0)
 
 
 boussinesq = (

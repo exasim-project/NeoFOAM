@@ -1,0 +1,8 @@
+FoamFile { version 2.0; format ascii; class volScalarField; object T; }
+dimensions [0 0 0 1 0 0 0]; internalField uniform 300;
+boundaryField {
+ inlet { type fixedValue; value uniform 300; }
+ interface { type fixedValue; coupled coupledTemperature; value uniform 310; }
+ "(outlet|top|slip-bottom|bottom)" { type zeroGradient; }
+ frontAndBack { type empty; }
+}

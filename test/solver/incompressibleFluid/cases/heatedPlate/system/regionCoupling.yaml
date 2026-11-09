@@ -1,0 +1,20 @@
+# Dirichlet-Neumann at the plate's top: the fluid's interface (coupledTemperature)
+# receives the wall temperature and sends the heat flux into the fluid; the plate's
+# top (coupledHeatFlux) receives it and sends its wall temperature. Serial, the
+# fluid first; the node wraps the fluid's PIMPLE loop and the plate's solve_T, so
+# the time step stays outside it.
+exchanges:
+  - name: interface
+    sides: {fluid: interface, solid: top}
+    mapping: nearest-neighbor
+couplings:
+  - name: cht
+    scheme: serial
+    maxIterations: 30
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.1}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}
+    wraps:
+      fluid: {operations: [inner_loop]}
+      solid: {operations: [solve_T]}
