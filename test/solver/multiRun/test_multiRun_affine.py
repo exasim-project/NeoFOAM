@@ -32,6 +32,9 @@ import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
+    Acceleration,
+    AitkenRelaxation,
+    ConstantRelaxation,
     Coupling,
     CouplingController,
     CouplingNotConvergedWarning,
@@ -42,7 +45,7 @@ from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.operations import Operation, Operations
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
-from neofoam.solver.multiRun.configs import AccelerationConfig, RegionCouplingConfig
+from neofoam.solver.multiRun.configs import RegionCouplingConfig
 from solver.multiRun.affine_solver import affine
 
 CASE = Path(__file__).parent / "cases" / "affine_pair"
@@ -59,7 +62,7 @@ def _with_affine(name: str) -> Any:
 def _case(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    acceleration: Optional[AccelerationConfig] = None,
+    acceleration: Optional[Acceleration] = None,
     **update: Any,
 ) -> None:
     """The case in ``tmp_path`` as the working directory, its coupling node updated.
@@ -127,7 +130,7 @@ def test_multiRun_affine_regions_couple_through_their_coupling_ops(ctx: Regions)
     ]
     assert (a_op.partner(a_side), b_op.partner(b_side)) == ("b.interface", "a.interface")
     exchange = a_op.exchange_of(a_side)
-    assert (exchange.name, exchange.mapping.kind) == ("a-b", "nearest-neighbor")
+    assert (exchange.name, exchange.mapping.type) == ("a-b", "nearest-neighbor")
     assert b_op.exchange_of(b_side).name == "a-b"
 
 
@@ -159,15 +162,15 @@ def test_multiRun_affine_iteration_count(ctx: Regions) -> None:
 @pytest.mark.parametrize(
     ("scheme", "acceleration", "passes"),
     [
-        ("serial", AccelerationConfig(type="aitken", relaxation=0.5), 5),
+        ("serial", AitkenRelaxation(relaxation=0.5), 5),
         # Jacobi: each side receives what the other sent in the previous pass
-        ("parallel", AccelerationConfig(type="constant", relaxation=1.0), 40),
+        ("parallel", ConstantRelaxation(relaxation=1.0), 40),
     ],
     ids=["serial-aitken", "parallel-constant"],
 )
 def test_multiRun_affine_scheme_and_acceleration_change_only_the_passes(
     scheme: str,
-    acceleration: AccelerationConfig,
+    acceleration: Acceleration,
     passes: int,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
