@@ -146,6 +146,74 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     assert ("receive_b 0.0" in log) is parallel
 
 
+@pytest.mark.parametrize("parallel", [False, True], ids=["serial", "parallel"])
+@pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
+def test_coupling_op_sends_fresh_data_as_the_leader_decided_not_by_the_node_scheme(
+    parallel: bool,
+) -> None:
+    # the node's scheme says the opposite of the controller's: the regions follow the leader
+    log: list[str] = []
+    a, b = _Side("a", log), _Side("b", log)
+    node = CouplingNode(
+        "coupling",
+        ("a-b",),
+        scheme="serial" if parallel else "parallel",
+        convergence=(_never,),
+        max_iterations=2,
+    )
+
+    def controller(sides: Any, label: str, /, *, node: CouplingNode) -> CouplingController:
+        return CouplingController(
+            sides, label, convergence=node.convergence, max_iterations=2, parallel=parallel
+        )
+
+    transport = InProcessTransport()
+    couplings = region_couplings(["a", "b"], [LINK], transport, nodes=[node], controller=controller)
+    regions = {
+        name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
+        for name in ("a", "b")
+    }
+    for side in (a, b):
+        add_coupled(regions[side.name], "p", "x", side.side())
+    sent: list[str] = []
+    send = transport.send
+
+    def recording(source: str, target: str, tag: str, message: Any) -> None:
+        sent.append(tag)
+        send(source, target, tag, message)
+
+    transport.send = recording  # type: ignore[method-assign]
+
+    run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
+
+    if parallel:
+        assert [entry for entry in log if entry.endswith("a") or "_a " in entry] == [
+            "receive_a 0.0",
+            "solve_a",
+            "receive_a 1.0",
+            "solve_a",
+        ]
+        assert [entry for entry in log if entry.endswith("b") or "_b " in entry] == [
+            "receive_b 0.0",
+            "solve_b",
+            "receive_b 1.0",
+            "solve_b",
+        ]
+    else:
+        assert log == [
+            "receive_a 0.0",
+            "solve_a",
+            "receive_b 1.0",
+            "solve_b",
+            "receive_a 1.0",
+            "solve_a",
+            "receive_b 2.0",
+            "solve_b",
+        ]
+    # a sends its data to b once per pass b receives it fresh, never else
+    assert sent.count("data:a-b") == (0 if parallel else 2)
+
+
 @pytest.mark.parametrize(
     ("parallel", "carried"),
     [(False, [[0.0], [2.0]]), (True, [[0.0, 0.0], [1.0, 2.0]])],
