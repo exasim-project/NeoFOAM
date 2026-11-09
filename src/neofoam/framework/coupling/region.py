@@ -47,7 +47,7 @@ from neofoam.framework.types import Placement
 
 from .kernels import Acceleration, Convergence
 from .loop import CouplingController, GroupSide
-from .transport import Transport
+from .transport import Transport, TransportClosed
 
 T = TypeVar("T")
 # The end of an exchange: (region, patch).
@@ -340,10 +340,13 @@ def _group(region: str, regions: Sequence[str], links: Sequence[Link]) -> tuple[
 def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> dict[str, T]:
     """Run every region's task on its own thread; return each task's result, by region.
 
-    The threads report to the execution observer of the calling thread. A region
-    whose task fails closes the transport for every region, so none waits for it
-    forever; a region that ends closes it for itself. The first error is raised
-    once every thread ended.
+    The threads report to the execution observer of the calling thread. The
+    transport learns the running regions (``Transport.start``), so it can tell a
+    deadlock. A region whose task fails closes the transport for every region
+    (``Transport.abort``), so none waits for it forever; a region that ends
+    closes it for itself. Once every thread ended the first error is raised that
+    is not a :class:`~neofoam.framework.coupling.TransportClosed` (that follows
+    another region's error), else the first error.
     """
     results: dict[str, T] = {}
     errors: list[BaseException] = []
@@ -355,8 +358,7 @@ def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> d
         except BaseException as error:  # re-raised in the calling thread
             with lock:
                 errors.append(error)
-            for other in tasks:
-                transport.close(other)
+            transport.abort(tasks)
         finally:
             transport.close(region)
 
@@ -366,10 +368,11 @@ def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> d
         )
         for region, task in tasks.items()
     ]
+    transport.start(tasks)
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
     if errors:
-        raise errors[0]
+        raise next((e for e in errors if not isinstance(e, TransportClosed)), errors[0])
     return {region: results[region] for region in tasks}

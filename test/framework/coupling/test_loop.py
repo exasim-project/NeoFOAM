@@ -373,7 +373,7 @@ def test_a_failing_region_ends_every_region_with_its_error() -> None:
 def test_a_region_waiting_for_one_that_left_raises() -> None:
     regions = contexts(["a", "b"], [LINK])
     transport = transport_of(regions["a"])
-    transport.close("b")
+    transport.abort(["b"])
 
     with pytest.raises(TransportClosed, match="region a waits for 'x' from region b"):
         transport.receive("b", "a", "x")
