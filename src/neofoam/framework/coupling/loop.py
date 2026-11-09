@@ -518,6 +518,21 @@ class CouplingController:
         return list(self._carried)
 
 
+# The loops enclosing a region's coupling op, outermost first, as (name, iteration):
+# a coupling op by its node's name, other loops by their names; iteration from 0.
+_Loops = tuple[tuple[Optional[str], int], ...]
+
+
+def _path(names: Sequence[Optional[str]]) -> str:
+    """``time_loop > ab``: the names of enclosing loops, ``top`` for none."""
+    return " > ".join(str(name) for name in names) or "top"
+
+
+def _state(loops: _Loops) -> str:
+    """``time_loop#3 > ab#1``: ``loops`` with their passes (from 1), ``top`` for none."""
+    return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
+
+
 # The leader's decision for one region: another pass?, is it the final one?, and what
 # each of its sides receives, by patch: the carried data, or None: what its partner
 # sends in this pass.
@@ -537,6 +552,11 @@ class CouplingOp(IterativeOp):
     is ``<region>.<node>``; its messages to other regions are tagged by node
     (``<node>/sides``, ``<node>/pass``, ``<node>/decision``) or by exchange
     (``side:<exchange>``, ``data:<exchange>``).
+
+    A node runs equally often in all its regions, so it sits in the same loops
+    in each: the first test tells the leader the names of the loops enclosing
+    the op (``Context.loops``, a coupling op by its node's name), and every
+    test their passes; the leader raises ``ValueError`` when they differ.
 
     Its loop test runs before each pass. The first test ever exchanges the
     sides' models and points with the partner regions and checks each exchange.
@@ -644,8 +664,9 @@ class CouplingOp(IterativeOp):
     # --- the loop test ------------------------------------------------------------------------
 
     def _test(self, ctx: Context) -> bool:
+        loops = self._enclosing(ctx)
         if not self._connected:
-            self._connect()
+            self._connect(loops)
         time = getattr(ctx.time, "value", None)
         current = [_sent(side, self.node.name, self._iteration, time) for side in self._sides]
         if self._iteration > 0 and not self.node.parallel:
@@ -653,7 +674,7 @@ class CouplingOp(IterativeOp):
                 region = self.exchange_of(side).partner[0]
                 if self._rank[region] > self._rank[self.region]:
                     self._send(region, f"data:{self.exchange_of(side).name}", data)
-        go_on, final, decided = self._decide(current, time if self._iteration == 0 else None)
+        go_on, final, decided = self._decide(current, time if self._iteration == 0 else None, loops)
         if not go_on:
             self._iteration = 0
             return False
@@ -663,19 +684,33 @@ class CouplingOp(IterativeOp):
             self._hand_over(side, decided)
         return True
 
+    def _enclosing(self, ctx: Context) -> _Loops:
+        """The loops enclosing the op, outermost first: ``ctx.loops`` without its own entry.
+
+        The op runs its test with its own entry last on ``ctx.loops``. A
+        coupling op of the region (``<region>.<node>``) is named by its node, so
+        that the regions' loops compare.
+        """
+        nodes = {f"{self.region}.{node.name}": node.name for node in self._coupling.nodes}
+        return tuple(
+            (nodes.get(entry.name or "", entry.name), entry.iteration) for entry in ctx.loops[:-1]
+        )
+
     def _send(self, target: str, tag: str, message: Any) -> None:
         self._transport.send(self.region, target, tag, message)
 
     def _receive(self, source: str, tag: str) -> Any:
         return self._transport.receive(source, self.region, tag)
 
-    def _connect(self) -> None:
+    def _connect(self, loops: _Loops) -> None:
         """Tell each partner its side (models, points), the leader the region's sides; check.
 
-        Raises ``ValueError`` when a side does not receive what its partner sends
-        or its mapping cannot map between their points; in the leader, when the
-        controller cannot be built.
+        The leader also gets the names of the ``loops`` enclosing the op. Raises
+        ``ValueError`` when a side does not receive what its partner sends or its
+        mapping cannot map between their points; in the leader, when the regions'
+        ops sit in different loops or the controller cannot be built.
         """
+        path = tuple(name for name, _iteration in loops)
         for side in self._sides:
             exchange = self.exchange_of(side)
             announced = {
@@ -687,7 +722,7 @@ class CouplingOp(IterativeOp):
             self._send(exchange.partner[0], f"side:{exchange.name}", announced)
         sides = [(side.patch, side.field, _array_names(side.sends)) for side in self._sides]
         if not self.is_leader:
-            self._send(self._leader, self._tag("sides"), sides)
+            self._send(self._leader, self._tag("sides"), (path, sides))
         for side in self._sides:
             exchange = self.exchange_of(side)
             announced = self._receive(exchange.partner[0], f"side:{exchange.name}")
@@ -696,7 +731,7 @@ class CouplingOp(IterativeOp):
             self._partner_points[side.patch] = announced["points"]
         if self.is_leader:
             self._controller = self._coupling.controller(
-                self._node_sides(sides),
+                self._node_sides(path, sides),
                 self.label,
                 node=self.node,
             )
@@ -706,12 +741,29 @@ class CouplingOp(IterativeOp):
         """The transport tag ``<node>/<what>`` of the node's messages."""
         return f"{self.node.name}/{what}"
 
-    def _node_sides(self, own: list[tuple[str, str, tuple[str, ...]]]) -> list[GroupSide]:
-        """The leader: the sides of every region of the node, as the regions told it."""
-        told = {
-            region: own if region == self.region else self._receive(region, self._tag("sides"))
+    def _node_sides(
+        self, path: tuple[Optional[str], ...], own: list[tuple[str, str, tuple[str, ...]]]
+    ) -> list[GroupSide]:
+        """The leader: the sides of every region of the node, as the regions told it.
+
+        Raises ``ValueError`` when the regions' ops sit in different loops (``path``:
+        the names of the loops enclosing the leader's).
+        """
+        received = {
+            region: (path, own)
+            if region == self.region
+            else self._receive(region, self._tag("sides"))
             for region in self._group
         }
+        paths = {region: there for region, (there, _sides) in received.items()}
+        if len(set(paths.values())) > 1:
+            where = ", ".join(f"{region}: {_path(there)}" for region, there in paths.items())
+            raise ValueError(
+                f"coupling '{self.node.name}' sits in different loops in its regions: {where}; "
+                "a node must run equally often in all its regions \u2013 put the exchanges in "
+                "one node or place it alike"
+            )
+        told = {region: sides for region, (_path, sides) in received.items()}
         ends = [(region, *side) for region, sides in told.items() for side in sides]
         self._patches = {
             region: [patch for patch, *_rest in sides] for region, sides in told.items()
@@ -731,31 +783,40 @@ class CouplingOp(IterativeOp):
             for region, patch, field, arrays in ends
         ]
 
-    def _decide(self, current: list[Data], time: Any) -> _Decision:
+    def _decide(self, current: list[Data], time: Any, loops: _Loops) -> _Decision:
         """The node leader's decision for this region, from what its sides send now.
 
-        ``time`` is the region's time as a time step's coupling starts, else ``None``.
+        ``time`` is the region's time as a time step's coupling starts, else
+        ``None``; ``loops`` the loops enclosing the op, with their passes. The
+        leader raises ``ValueError`` when the regions' times or loops' passes differ.
         """
         leader = self._leader
         if not self.is_leader:
-            self._send(leader, self._tag("pass"), (time, current))
+            self._send(leader, self._tag("pass"), (time, loops, current))
             decision: _Decision = self._receive(leader, self._tag("decision"))
             return decision
         assert self._controller is not None
         sent = {
-            region: (time, current)
+            region: (time, loops, current)
             if region == self.region
             else self._receive(region, self._tag("pass"))
             for region in self._group
         }
-        times = {region: when for region, (when, _data) in sent.items()}
+        times = {region: when for region, (when, _loops, _data) in sent.items()}
         if len(set(times.values())) > 1:
             raise ValueError(
                 f"the coupled regions {list(times)} start a time step at different times "
                 f"{times}; they must step the same times (deltaT, endTime)"
             )
+        states = {region: there for region, (_when, there, _data) in sent.items()}
+        if len(set(states.values())) > 1:
+            where = ", ".join(f"{region}: {_state(there)}" for region, there in states.items())
+            raise ValueError(
+                f"coupling '{self.node.name}': its regions entered pass {self._iteration + 1} "
+                f"in different loop states: {where}"
+            )
         carried = self._controller.decide(
-            [data for _when, sides in sent.values() for data in sides]
+            [data for _when, _loops, sides in sent.values() for data in sides]
         )
         decisions: dict[str, _Decision] = {}
         index = 0
