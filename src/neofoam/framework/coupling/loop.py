@@ -80,9 +80,9 @@ class CouplingOp(IterativeOp):
     Built from what the region knows of the case's coupling (``coupling``: its
     exchanges, the group's regions, its transport), the ``node`` (its exchanges)
     and the region's coupled ``sides`` of the node (the region's
-    :class:`~neofoam.framework.coupling.Coupling` builds it); raises
-    ``ValueError`` when a side has no exchange of the node, a patch two sides,
-    or an exchange of the node in the region no side. The resolver places it
+    :class:`~neofoam.framework.coupling.Coupling` builds it, each side on an
+    exchange of the node); raises ``ValueError`` when a patch has two sides, or
+    an exchange of the node in the region none. The resolver places it
     as the node's placement for the region says (``metadata.wraps``). Its label
     is ``<region>.<node>``; its messages to other regions are tagged by node
     (``<node>/sides``, ``<node>/pass``, ``<node>/decision``) or by exchange
@@ -142,15 +142,15 @@ class CouplingOp(IterativeOp):
         self._fresh: frozenset[str] = frozenset()
 
     def _check(self) -> None:
-        """Raise ``ValueError`` unless every side has an exchange and every exchange one side."""
+        """Raise ``ValueError`` unless every exchange of the node has exactly one side.
+
+        That every side has an exchange of the node :meth:`Coupling.add
+        <neofoam.framework.coupling.Coupling.add>` checked, and
+        :meth:`Coupling.operations <neofoam.framework.coupling.Coupling.operations>`
+        hands each node the sides on its exchanges' patches.
+        """
         patches = [side.patch for side in self._sides]
         for side in self._sides:
-            if side.patch not in self._exchanges:
-                raise ValueError(
-                    f"no exchange of coupling node '{self.node.name}' connects the coupled side "
-                    f"of {side.label}; a coupled boundary condition needs its exchange "
-                    "(system/regionCoupling.yaml: exchanges)"
-                )
             if patches.count(side.patch) > 1:
                 raise ValueError(
                     f"two coupled sides on patch {side.label}; an exchange joins patches "

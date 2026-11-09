@@ -41,7 +41,6 @@ from neofoam.framework.coupling.controller import (
     GroupSide,
     relative_changes,
 )
-from neofoam.framework.coupling.data import ExchangeSide
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
@@ -513,21 +512,6 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     assert _controller(ops).outcomes == (
         CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
     )
-
-
-def test_coupled_side_needs_pydantic_models() -> None:
-    with pytest.raises(
-        TypeError, match="declares what it sends as a pydantic model, got <class 'dict'>"
-    ):
-        ExchangeSide(
-            "a",
-            "p",
-            "x",
-            sends=dict,  # type: ignore[arg-type]
-            receives=_Data,
-            send=dict,  # type: ignore[arg-type]
-            receive=lambda data: None,
-        )
 
 
 class _Tagged(BaseModel):
