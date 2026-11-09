@@ -739,15 +739,17 @@ the op (<code class="docutils literal notranslate"><span class="pre">Context.loo
 test their passes; the leader raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when they differ.</p>
 <p>Its loop test runs before each pass. The first test ever exchanges the
 sides’ models and points with the partner regions and checks each exchange.
-Each test then sends what every side sends now: to the partner that steps
-later (serial: it receives it in the same pass) and to the node’s leader;
-the leader decides for the node and tells every region to go on or stop, and
-whether the pass is the node’s final one, which the test marks on the loop’s
-entry (<code class="docutils literal notranslate"><span class="pre">Context.mark_final</span></code>: an operation marked <code class="docutils literal notranslate"><span class="pre">final</span></code> runs in it). On
-another pass every side gets what its partner sent (fresh, or carried by the
-leader), mapped onto its points with the exchange’s mapping, validated as
-its <code class="docutils literal notranslate"><span class="pre">receives</span></code> model, reported to the execution observer
-(<code class="docutils literal notranslate"><span class="pre">coupling_exchanged</span></code>) and handed to its <code class="docutils literal notranslate"><span class="pre">receive</span></code>. Not thread safe.</p>
+Each test then sends what every side sends now to the node’s leader, and to
+the partner of every side the leader’s decision before named (the partner
+receives it fresh, in the pass of that decision); the leader decides for the
+node and tells every region to go on or stop, and whether the pass is the
+node’s final one, which the test marks on the loop’s entry
+(<code class="docutils literal notranslate"><span class="pre">Context.mark_final</span></code>: an operation marked <code class="docutils literal notranslate"><span class="pre">final</span></code> runs in it). On
+another pass every side gets what the leader decided: what its partner sends
+at its next test (fresh), or what the leader carried, mapped onto its points
+with the exchange’s mapping, validated as its <code class="docutils literal notranslate"><span class="pre">receives</span></code> model, reported to
+the execution observer (<code class="docutils literal notranslate"><span class="pre">coupling_exchanged</span></code>) and handed to its
+<code class="docutils literal notranslate"><span class="pre">receive</span></code>. Not thread safe.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.controller">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">controller</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController" title="neofoam.framework.coupling.controller.CouplingController"><span class="pre">CouplingController</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.controller" title="Link to this definition">¶</a></dt>
