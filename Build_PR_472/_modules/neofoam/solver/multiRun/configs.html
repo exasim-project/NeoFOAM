@@ -693,26 +693,38 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeControlConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span>
-    <span class="n">Acceleration</span><span class="p">,</span>
-    <span class="n">Convergence</span><span class="p">,</span>
-    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">CouplingAcceleration</span><span class="p">,</span>
+    <span class="n">CouplingConvergence</span><span class="p">,</span>
+    <span class="n">CouplingMapping</span><span class="p">,</span>
     <span class="n">NearestNeighborMapping</span><span class="p">,</span>
+    <span class="n">load_plugins</span><span class="p">,</span>
     <span class="n">strategy</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TIMEOUT</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">YAML</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_with_plugins</span><span class="p">(</span><span class="n">family</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">options</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The strategy of ``family`` that ``options`` describe, the coupling plugins loaded first.</span>
+
+<span class="sd">    :func:`~neofoam.framework.coupling.load_plugins` imports them once (locked), so</span>
+<span class="sd">    reading ``system/regionCoupling.yaml`` anywhere (a tool, the UI, ``multiRun``)</span>
+<span class="sd">    selects a plugin's strategy by its type.</span>
+<span class="sd">    """</span>
+    <span class="n">load_plugins</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">strategy</span><span class="p">(</span><span class="n">family</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_selected</span><span class="p">(</span><span class="n">family</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A field holding a strategy of ``family``, selected by its ``type`` as it is validated.</span>
 
-<span class="sd">    Validated against the family as it stands then, so a plugin's strategy</span>
-<span class="sd">    (:func:`~neofoam.framework.coupling.load_plugins`) is selected too; the</span>
-<span class="sd">    JSON Schema is an open object for the same reason.</span>
+<span class="sd">    The coupling plugins are loaded before the first strategy is selected</span>
+<span class="sd">    (:func:`_with_plugins`), so a plugin's strategy is selected too; the JSON</span>
+<span class="sd">    Schema is an open object, as plugins add their own options.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="n">SerializeAsAny</span><span class="p">[</span><span class="n">family</span><span class="p">],</span>  <span class="c1"># type: ignore[valid-type]</span>
-        <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">family</span><span class="p">)),</span>
+        <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_with_plugins</span><span class="p">,</span> <span class="n">family</span><span class="p">)),</span>
         <span class="n">WithJsonSchema</span><span class="p">(</span>
             <span class="p">{</span>
                 <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"object"</span><span class="p">,</span>
@@ -723,18 +735,18 @@
 
 
 <span class="c1">#: A convergence measure: ``{type: relative, data: T, limit: 1.0e-5}``</span>
-<span class="c1">#: (:class:`~neofoam.framework.coupling.Convergence`; ``relative``: the data of</span>
+<span class="c1">#: (:class:`~neofoam.framework.coupling.CouplingConvergence`; ``relative``: the data of</span>
 <span class="c1">#: field ``data`` changes by less than ``limit`` relative to it).</span>
-<span class="n">ConvergenceConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">Convergence</span><span class="p">,</span> <span class="s2">"convergence measure"</span><span class="p">)</span>
+<span class="n">ConvergenceConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">CouplingConvergence</span><span class="p">,</span> <span class="s2">"convergence measure"</span><span class="p">)</span>
 <span class="c1">#: How the leader relaxes the data carried into a pass: ``{type: aitken, relaxation: 0.5}``</span>
-<span class="c1">#: (:class:`~neofoam.framework.coupling.Acceleration`; ``constant`` factor</span>
+<span class="c1">#: (:class:`~neofoam.framework.coupling.CouplingAcceleration`; ``constant`` factor</span>
 <span class="c1">#: ``relaxation``, or ``aitken`` starting from it).</span>
-<span class="n">AccelerationConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">Acceleration</span><span class="p">,</span> <span class="s2">"acceleration"</span><span class="p">)</span>
+<span class="n">AccelerationConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">CouplingAcceleration</span><span class="p">,</span> <span class="s2">"acceleration"</span><span class="p">)</span>
 <span class="c1">#: How the point data of one side is mapped onto the other's points:</span>
 <span class="c1">#: ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both</span>
 <span class="c1">#: patches share their points); a type alone, or ``{type: ..., &lt;option&gt;: ...}``</span>
-<span class="c1">#: (:class:`~neofoam.framework.coupling.Mapping`).</span>
-<span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">Mapping</span><span class="p">,</span> <span class="s2">"mapping"</span><span class="p">)</span>
+<span class="c1">#: (:class:`~neofoam.framework.coupling.CouplingMapping`).</span>
+<span class="n">MappingConfig</span> <span class="o">=</span> <span class="n">_selected</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">,</span> <span class="s2">"mapping"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ControlDictConfig">

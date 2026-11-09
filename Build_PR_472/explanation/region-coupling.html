@@ -722,7 +722,7 @@ transport, runs every region on its own thread.</p></td>
 </table>
 </div>
 <p>Vocabulary: a <strong>region</strong> is one solver; an <strong>exchange</strong> is one line between two
-patches of two regions; the <strong>mapping</strong> (a <code class="docutils literal notranslate"><span class="pre">Mapping</span></code>, by its <code class="docutils literal notranslate"><span class="pre">type</span></code>) maps point
+patches of two regions; the <strong>mapping</strong> (a <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code>, by its <code class="docutils literal notranslate"><span class="pre">type</span></code>) maps point
 data of the partner onto a side’s own points; a region’s <strong>coupling op</strong> is a
 loop around its solving operations whose test exchanges its sides’ data; regions
 connected by exchanges form a <strong>group</strong>, whose last region in <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code>
@@ -837,9 +837,11 @@ no time step, so a serial node may wrap it whole.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> and <code class="docutils literal notranslate"><span class="pre">convergence[]</span></code> each name a strategy by its
 <code class="docutils literal notranslate"><span class="pre">type</span></code>, with its options (<code class="docutils literal notranslate"><span class="pre">mapping</span></code> may be the type alone): a member of the
-plugin families <code class="docutils literal notranslate"><span class="pre">Mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">Acceleration</span></code> and <code class="docutils literal notranslate"><span class="pre">Convergence</span></code> (see
-<a class="reference internal" href="#extension-points">Extension points</a>). The file is checked against them on load: an unknown
-type lists the registered ones, an unknown or missing option the strategy’s
+plugin families <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code>, <code class="docutils literal notranslate"><span class="pre">CouplingAcceleration</span></code> and
+<code class="docutils literal notranslate"><span class="pre">CouplingConvergence</span></code> (see <a class="reference internal" href="#extension-points">Extension points</a>); reading the file loads the
+coupling plugins first (<code class="docutils literal notranslate"><span class="pre">load_plugins</span></code>), in <code class="docutils literal notranslate"><span class="pre">multiRun</span></code> or a tool alike. The
+file is checked against them on load: an unknown type lists the registered
+ones, an unknown or missing option the strategy’s
 options; as against unknown keys, two nodes of one name, an
 exchange in no node or in two, and a <code class="docutils literal notranslate"><span class="pre">wraps</span></code> region the node does not couple.
 A patch is in at most one exchange and carries one coupled side.</p>
@@ -971,17 +973,17 @@ observer from its own thread; its graph with <code class="docutils literal notra
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Mapping</p></td>
-<td><p>a <code class="docutils literal notranslate"><span class="pre">Mapping</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">bind(source,</span> <span class="pre">target)</span></code> on the partner’s and
+<td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingMapping</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">bind(source,</span> <span class="pre">target)</span></code> on the partner’s and
 the side’s points, once, returns the <code class="docutils literal notranslate"><span class="pre">BoundMapping</span></code> <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">-&gt;</span> <span class="pre">data</span></code>
 of every pass (yaml <code class="docutils literal notranslate"><span class="pre">mapping:</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p>Acceleration</p></td>
-<td><p>an <code class="docutils literal notranslate"><span class="pre">Acceleration</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">__call__(carried</span> <span class="pre">Array</span> <span class="pre">data,</span> <span class="pre">iteration)</span>
+<td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingAcceleration</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">__call__(carried</span> <span class="pre">Array</span> <span class="pre">data,</span> <span class="pre">iteration)</span>
 <span class="pre">-&gt;</span> <span class="pre">data</span></code>; it keeps its last passes in private attributes (yaml
 <code class="docutils literal notranslate"><span class="pre">acceleration:</span></code>).</p></td>
 </tr>
 <tr class="row-even"><td><p>Convergence</p></td>
-<td><p>a <code class="docutils literal notranslate"><span class="pre">Convergence</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">__call__(list</span> <span class="pre">of</span> <span class="pre">SideChange)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>
+<td><p>a <code class="docutils literal notranslate"><span class="pre">CouplingConvergence</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">__call__(list</span> <span class="pre">of</span> <span class="pre">SideChange)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>
 (yaml <code class="docutils literal notranslate"><span class="pre">convergence[]</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p>Transport</p></td>
@@ -997,7 +999,7 @@ threads of one process.</p></td>
 viscosity models or the post-processing writers are: each strategy is a
 pydantic model with a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code> that selects it, its options as
 its fields (an unknown one is refused), registered with its family
-(<code class="docutils literal notranslate"><span class="pre">&#64;Mapping.register</span></code>). The built-in ones are members as well: the mappings
+(<code class="docutils literal notranslate"><span class="pre">&#64;CouplingMapping.register</span></code>). The built-in ones are members as well: the mappings
 <code class="docutils literal notranslate"><span class="pre">identity</span></code> and <code class="docutils literal notranslate"><span class="pre">nearest-neighbor</span></code>, the accelerations <code class="docutils literal notranslate"><span class="pre">constant</span></code> and
 <code class="docutils literal notranslate"><span class="pre">aitken</span></code> (option <code class="docutils literal notranslate"><span class="pre">relaxation</span></code>) and the convergence <code class="docutils literal notranslate"><span class="pre">relative</span></code> (options
 <code class="docutils literal notranslate"><span class="pre">data</span></code>, <code class="docutils literal notranslate"><span class="pre">limit</span></code>). <code class="docutils literal notranslate"><span class="pre">strategy(family,</span> <span class="pre">options)</span></code> builds one from its yaml
@@ -1011,15 +1013,15 @@ them as it is imported.</p>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># neofoam_precice/coupling.py</span>
-<span class="nd">@Mapping</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">RadialBasisMapping</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RadialBasisMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"rbf"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"rbf"</span>
     <span class="n">support_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span> <span class="o">...</span>
 
-<span class="nd">@Acceleration</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">IQNILSAcceleration</span><span class="p">(</span><span class="n">Acceleration</span><span class="p">):</span>
+<span class="nd">@CouplingAcceleration</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IQNILSAcceleration</span><span class="p">(</span><span class="n">CouplingAcceleration</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"iqn-ils"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"iqn-ils"</span>
     <span class="n">relaxation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>

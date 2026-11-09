@@ -34,7 +34,7 @@ point-to-point channel. Regions exchange data over *exchanges*. Who does what:
        transport, runs every region on its own thread.
 
 Vocabulary: a **region** is one solver; an **exchange** is one line between two
-patches of two regions; the **mapping** (a ``Mapping``, by its ``type``) maps point
+patches of two regions; the **mapping** (a ``CouplingMapping``, by its ``type``) maps point
 data of the partner onto a side's own points; a region's **coupling op** is a
 loop around its solving operations whose test exchanges its sides' data; regions
 connected by exchanges form a **group**, whose last region in ``regionSolvers``
@@ -157,9 +157,11 @@ anything runs (``ValueError``):
 
 ``mapping``, ``acceleration`` and ``convergence[]`` each name a strategy by its
 ``type``, with its options (``mapping`` may be the type alone): a member of the
-plugin families ``Mapping``, ``Acceleration`` and ``Convergence`` (see
-`Extension points`_). The file is checked against them on load: an unknown
-type lists the registered ones, an unknown or missing option the strategy's
+plugin families ``CouplingMapping``, ``CouplingAcceleration`` and
+``CouplingConvergence`` (see `Extension points`_); reading the file loads the
+coupling plugins first (``load_plugins``), in ``multiRun`` or a tool alike. The
+file is checked against them on load: an unknown type lists the registered
+ones, an unknown or missing option the strategy's
 options; as against unknown keys, two nodes of one name, an
 exchange in no node or in two, and a ``wraps`` region the node does not couple.
 A patch is in at most one exchange and carries one coupled side.
@@ -300,15 +302,15 @@ Extension points
    * - to change
      - extend
    * - Mapping
-     - a ``Mapping`` subclass: ``bind(source, target)`` on the partner's and
+     - a ``CouplingMapping`` subclass: ``bind(source, target)`` on the partner's and
        the side's points, once, returns the ``BoundMapping`` ``data -> data``
        of every pass (yaml ``mapping:``).
    * - Acceleration
-     - an ``Acceleration`` subclass: ``__call__(carried Array data, iteration)
+     - a ``CouplingAcceleration`` subclass: ``__call__(carried Array data, iteration)
        -> data``; it keeps its last passes in private attributes (yaml
        ``acceleration:``).
    * - Convergence
-     - a ``Convergence`` subclass: ``__call__(list of SideChange) -> bool``
+     - a ``CouplingConvergence`` subclass: ``__call__(list of SideChange) -> bool``
        (yaml ``convergence[]``).
    * - Transport
      - a ``Transport``: ``send(source, target, tag, message)`` (never blocks),
@@ -320,7 +322,7 @@ The three strategy families are families of NeoFOAM's ``PluginSystem``, as the
 viscosity models or the post-processing writers are: each strategy is a
 pydantic model with a ``type: Literal[...]`` that selects it, its options as
 its fields (an unknown one is refused), registered with its family
-(``@Mapping.register``). The built-in ones are members as well: the mappings
+(``@CouplingMapping.register``). The built-in ones are members as well: the mappings
 ``identity`` and ``nearest-neighbor``, the accelerations ``constant`` and
 ``aitken`` (option ``relaxation``) and the convergence ``relative`` (options
 ``data``, ``limit``). ``strategy(family, options)`` builds one from its yaml
@@ -339,15 +341,15 @@ them as it is imported.
 .. code-block:: python
 
     # neofoam_precice/coupling.py
-    @Mapping.register
-    class RadialBasisMapping(Mapping):
+    @CouplingMapping.register
+    class RadialBasisMapping(CouplingMapping):
         type: Literal["rbf"] = "rbf"
         support_radius: float = Field(gt=0)
 
         def bind(self, source, target): ...
 
-    @Acceleration.register
-    class IQNILSAcceleration(Acceleration):
+    @CouplingAcceleration.register
+    class IQNILSAcceleration(CouplingAcceleration):
         type: Literal["iqn-ils"] = "iqn-ils"
         relaxation: float = Field(gt=0, le=1)
         columns: int = 10
