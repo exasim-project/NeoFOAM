@@ -215,6 +215,23 @@ marked ``first`` runs while every wrapping loop around it is in its first pass
 (``ctx.loops``). A solver's own start of a time step (storing the old time
 level) is marked ``first`` the same way.
 
+**The final pass.** Once every convergence measure of a node holds, its leader
+runs exactly one more pass, the **final** one, and stops after it without
+checking again; the last pass ``maxIterations`` allows is final in advance (no
+pass more; it warns when the data did not converge), and with ``maxIterations``
+1 the only pass is first and final. The acceleration relaxes the carried data
+of the final pass as of any other. The leader sends the flag with its decision,
+so every region of the node runs the same passes; each coupling op marks the
+pass on its loop entry (``LoopEntry.final``, ``Context.mark_final``). An
+operation marked ``final`` (``OperationMetadata.final``, the ``final=`` of the
+``operation`` decorators), such as the fieldWriter's ``write_output``, runs
+while every wrapping loop around it is in its final pass: once per time step,
+on the converged data. Outside wrapping loops it runs every time. The resolver
+raises when an op that runs in the other passes of a wrapping loop depends on a
+``final`` op in it, and an op cannot be ``first`` and ``final``. For debugging,
+``ctx.run_every_pass`` (operation names, per region) runs the ``final`` ops it
+names in every pass; naming an op that is not marked ``final`` raises.
+
 A **steady** solver (outer iterations, no time step) gets no time-step op; the
 coupling needs no solution loop (``test/solver/multiRun/steady_solver.py``).
 
@@ -239,7 +256,8 @@ and the leader builds its controller. Each loop test then:
 3. sends it to the leader and waits for its decision. The leader checks the
    regions started the time step at the same time (if they have one), runs convergence and
    acceleration (on what the partners receive as carried), and sends every region
-   to go on (with the carried data its sides receive) or to stop;
+   to go on (with the carried data its sides receive and whether the pass is the
+   final one) or to stop;
 4. on another pass, hands every side what its partner sent (fresh from a region
    that stepped before its own, serial; else carried by the leader), mapped onto
    its points, validated as its ``receives`` model and reported to the observer.
@@ -253,7 +271,7 @@ closes the comm channel, so no region waits for it forever.
 ``name``, ``partner`` ``(region, patch)``, ``mapping``), ``partner(side)``
 (``"<region>.<patch>"``), ``node``, ``leader``, ``is_leader`` and ``controller`` (the leader's, built at
 its first loop test: ``label``, ``parallel``, ``sides``, ``iteration``,
-``outcomes``, ``residuals``).
+``final``, ``outcomes``, ``residuals``).
 
 **Report.** At the end of each time step the leader's controller records a
 ``CouplingOutcome`` and calls the observer's ``coupling_finished(controller,
