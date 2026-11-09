@@ -940,7 +940,13 @@ that stepped before its own, serial; else carried by the leader), mapped onto
 its points, validated as its <code class="docutils literal notranslate"><span class="pre">receives</span></code> model and reported to the observer.</p></li>
 </ol>
 <p>All regions leave the loop on the same pass. Receives block; a region that fails
-closes the transport, so no region waits for it forever.</p>
+closes the transport, so no region waits for it forever. A deadlock (every running
+region waits for a message none sent, or one waits for a region that finished)
+raises <code class="docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code> at once; as a fallback a receive raises
+<code class="docutils literal notranslate"><span class="pre">CouplingTimeout</span></code> after <code class="docutils literal notranslate"><span class="pre">transportTimeout</span></code> seconds (top-level key of
+<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>, default 600; <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">null</span></code> waits without end),
+which the environment variable <code class="docutils literal notranslate"><span class="pre">NEOFOAM_COUPLING_TIMEOUT</span></code> overrides. Both list
+who waits for what and the messages sent but not received.</p>
 <p><strong>Read API</strong> of a <code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code>: <code class="docutils literal notranslate"><span class="pre">region</span></code>, <code class="docutils literal notranslate"><span class="pre">label</span></code>, <code class="docutils literal notranslate"><span class="pre">sides</span></code>
 (<code class="docutils literal notranslate"><span class="pre">ExchangeSide</span></code>: <code class="docutils literal notranslate"><span class="pre">region</span></code>, <code class="docutils literal notranslate"><span class="pre">patch</span></code>, <code class="docutils literal notranslate"><span class="pre">field</span></code>, <code class="docutils literal notranslate"><span class="pre">key</span></code>, <code class="docutils literal notranslate"><span class="pre">sends</span></code>,
 <code class="docutils literal notranslate"><span class="pre">receives</span></code>, <code class="docutils literal notranslate"><span class="pre">mapped</span></code>, <code class="docutils literal notranslate"><span class="pre">points</span></code>), <code class="docutils literal notranslate"><span class="pre">exchange_of(side)</span></code> (<code class="docutils literal notranslate"><span class="pre">Exchange</span></code>:
