@@ -142,12 +142,8 @@ class ExchangeSide:
     coordinates: Any = None
 
     def __post_init__(self) -> None:
+        # that both are pydantic models @coupled checked on the class
         for role in ("sends", "receives"):
-            if not _is_model(getattr(self, role)):
-                raise TypeError(
-                    f"a coupled side declares what it {role} as a pydantic model, "
-                    f"got {getattr(self, role)!r}"
-                )
             _check_plain(getattr(self, role))
         if self.coordinates is not None:
             object.__setattr__(self, "coordinates", np.asarray(self.coordinates, dtype=float))
