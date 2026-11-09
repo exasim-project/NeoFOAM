@@ -48,7 +48,7 @@ from neofoam.framework.types import Placement
 from . import kernels
 from .controller import CouplingController, GroupSide
 from .data import End
-from .kernels import Acceleration, Convergence
+from .kernels import CouplingAcceleration, CouplingConvergence
 from .transport import Transport, TransportClosed
 
 T = TypeVar("T")
@@ -58,13 +58,13 @@ T = TypeVar("T")
 class Link:
     """One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping.
 
-    ``mapping`` is a :class:`~neofoam.framework.coupling.Mapping` (by default
+    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping` (by default
     :class:`~neofoam.framework.coupling.IdentityMapping`).
     """
 
     name: str
     ends: tuple[End, End]
-    mapping: kernels.Mapping = field(default_factory=kernels.IdentityMapping)
+    mapping: kernels.CouplingMapping = field(default_factory=kernels.IdentityMapping)
 
     def partner(self, region: str) -> End:
         """The end of the exchange that is not in ``region``."""
@@ -78,7 +78,7 @@ class CouplingNode:
 
     Each region the node's ``exchanges`` (names of :class:`Link` s) touch gets
     one coupling op ``<region>.<name>`` for it. Once every measure of
-    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.unchanged`)
+    ``convergence`` holds (none: :func:`~neofoam.framework.coupling.controller.unchanged`)
     the node's leader runs one more pass, the final one, and stops after it; the
     last of ``max_iterations`` passes is final regardless (an operation marked
     ``final`` runs in the final pass only). ``acceleration`` relaxes the data
@@ -97,8 +97,8 @@ class CouplingNode:
     name: str
     exchanges: tuple[str, ...]
     max_iterations: int = 100
-    convergence: tuple[Convergence, ...] = ()
-    acceleration: Mapping[str, Acceleration] = field(default_factory=dict)
+    convergence: tuple[CouplingConvergence, ...] = ()
+    acceleration: Mapping[str, CouplingAcceleration] = field(default_factory=dict)
     placement: Mapping[str, Placement] = field(default_factory=dict)
     scheme: Literal["serial", "parallel"] = "parallel"
 

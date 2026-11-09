@@ -26,22 +26,24 @@ from neofoam.framework.coupling import (
     Array,
     BoundMapping,
     Coupling,
-    CouplingController,
+    CouplingMapping,
     CouplingNode,
     CouplingNotConvergedWarning,
-    CouplingOp,
-    CouplingOutcome,
-    ExchangeSide,
-    GroupSide,
     InProcessTransport,
     Link,
-    Mapping,
     RelativeConvergence,
     SideChange,
     TransportClosed,
-    region_couplings,
+)
+from neofoam.framework.coupling.controller import (
+    CouplingController,
+    CouplingOutcome,
+    GroupSide,
     relative_changes,
 )
+from neofoam.framework.coupling.data import ExchangeSide
+from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
 
@@ -460,7 +462,7 @@ class _Mixed(BaseModel):
     q: float
 
 
-class _Reversed(Mapping):
+class _Reversed(CouplingMapping):
     type: Literal["reversed"] = "reversed"
     mapped: list[dict[str, Any]] = Field(default_factory=list)
 

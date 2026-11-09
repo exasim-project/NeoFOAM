@@ -21,14 +21,13 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Coupling,
     CouplingNode,
-    CouplingOp,
     InProcessTransport,
     Link,
     Transport,
     coupled,
-    region_couplings,
-    run_regions,
 )
+from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import Operation, Operations, SequentialOp, StepBuilder
 from neofoam.framework.types import OperationMetadata

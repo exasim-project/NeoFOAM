@@ -137,7 +137,7 @@ class InProcessTransport(Transport):
     takes the class default :attr:`PICKLE`.
 
     Once :meth:`start` named the running regions (as
-    :func:`~neofoam.framework.coupling.run_regions` does), a receive raises
+    :func:`~neofoam.framework.coupling.region.run_regions` does), a receive raises
     :class:`CouplingDeadlock` as soon as every running region waits in a
     receive and none of the messages they wait for is there: only these
     regions send. A receive from a region that finished (left by :meth:`close`,

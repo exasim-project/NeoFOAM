@@ -1,139 +1,98 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Coupling of regions: sides, exchanges, mappings, the coupling ops and their transport.
+"""Coupling of regions: the public API of sides, exchanges, nodes, strategies and transports.
 
 - :func:`coupled` — a boundary condition declares its side: the field it couples,
   what it sends and receives (one pydantic model each, of :data:`Array` and
   plain fields) and its points; an instance adds itself to its region's
   :class:`Coupling` model (``Coupling.of(ctx).add(self)``).
 - :class:`Coupling` — the coupling of one region, ``ctx.models["coupling"]``:
-  its sides, the operations of the region's graph (one coupling op per node)
-  and, in a transient case, its time-step op (the group steps the smallest time
-  step any region asks for).
+  its sides, the operations of the region's graph (one coupling op per node,
+  :class:`~neofoam.framework.coupling.loop.CouplingOp`) and, in a transient
+  case, its time-step op (the group steps the smallest time step any region
+  asks for).
 - :class:`CouplingNode` — a named coupling loop: its exchanges, its scheme
   (``parallel``, the default, or ``serial``), max_iterations, convergence
   measures, an acceleration per exchange and its placement per region; nodes
-  are listed outer to inner.
-- :class:`RegionCoupling` — what a region knows of the case's coupling: its
-  group, the exchanges (:class:`Link`), its nodes and its transport;
-  :func:`region_couplings` builds it for every coupled region; :func:`run_regions`
-  runs each region on its own thread.
-- :class:`CouplingOp` — a region's part of a node, ``<region>.<node>`` (its
-  :class:`Coupling` builds it): a loop placed as the node says; its loop test
-  exchanges the node's sides' data with the partner regions, mapped onto the
-  sides' points (:class:`Exchange`, :class:`Mapping`, bound once to the points:
-  :data:`BoundMapping`).
-- :class:`CouplingController` — the leader's part, in the coupling op of the
-  node's last region: decides when the node's data converged, which pass is
-  the final one (one more after converging, or the last of max_iterations), and
-  relaxes the data, per exchange (built by :func:`node_controller` unless the case gives its own
-  factory); :class:`CouplingOutcome` per time step,
-  :class:`CouplingNotConvergedWarning` when ``max_iterations`` ends it.
+  are listed outer to inner. Its leader (the
+  :class:`~neofoam.framework.coupling.controller.CouplingController` of the
+  node's last region) decides when the node's data converged and relaxes it;
+  :class:`CouplingNotConvergedWarning` when ``max_iterations`` ends a time step.
+- :class:`RegionCoupling` — what a region's solver knows of the case's
+  coupling: its group, the exchanges (:class:`Link`), its nodes and its
+  transport (built by :func:`~neofoam.framework.coupling.region.region_couplings`).
 - :class:`Transport` — all data between regions goes through it, point to point
   (send, receive, close); :class:`InProcessTransport` between threads, which
   raises :class:`CouplingDeadlock` when every running region waits for a message
   no region sent, and :class:`CouplingTimeout` after its ``timeout`` (both
-  :class:`CouplingTransportError`, as :class:`TransportClosed`); :class:`Tag`
-  builds the tags of the messages.
+  :class:`CouplingTransportError`, as :class:`TransportClosed`).
 - strategies, each a :class:`~neofoam.core.plugin_system.PluginSystem` family
-  selected by ``type`` (:func:`strategy`): :class:`Mapping`
-  (:class:`IdentityMapping`, :class:`NearestNeighborMapping`, by
-  :func:`nearest_neighbor`), :class:`Acceleration` (:class:`ConstantRelaxation`,
-  :class:`AitkenRelaxation`) and :class:`Convergence`
-  (:class:`RelativeConvergence`); a package adds its own through the
+  selected by ``type`` (:func:`strategy`): :class:`CouplingMapping`
+  (:class:`IdentityMapping`, :class:`NearestNeighborMapping`; bound once to the
+  points of both sides: :data:`BoundMapping`), :class:`CouplingAcceleration`
+  (:class:`ConstantRelaxation`, :class:`AitkenRelaxation`) and
+  :class:`CouplingConvergence` (:class:`RelativeConvergence`, from the
+  :class:`SideChange` of every side); a package adds its own through the
   entry-point group ``neofoam.coupling``, imported once before the regions
   start (:func:`load_plugins`).
+
+Everything else (the coupling op, the controller, the sides of a group, the
+tags of the messages, ...) is internal: import it from its submodule.
 """
 
-from .controller import (
-    CouplingController,
-    CouplingNotConvergedWarning,
-    CouplingOutcome,
-    GroupSide,
-    relative_changes,
-    unchanged,
-)
+from .controller import CouplingNotConvergedWarning
 from .coupled import coupled
-from .data import Array, Exchange, ExchangeSide
+from .data import Array
 from .kernels import (
-    ENTRY_POINT_GROUP,
-    Acceleration,
     AitkenRelaxation,
     BoundMapping,
     ConstantRelaxation,
-    Convergence,
+    CouplingAcceleration,
+    CouplingConvergence,
+    CouplingMapping,
     IdentityMapping,
-    Mapping,
     NearestNeighborMapping,
     RelativeConvergence,
     SideChange,
     load_plugins,
-    nearest_neighbor,
     strategy,
 )
-from .loop import CouplingOp
 from .model import Coupling
-from .region import (
-    ControllerFactory,
-    CouplingNode,
-    Link,
-    RegionCoupling,
-    node_controller,
-    region_couplings,
-    run_regions,
-)
+from .region import CouplingNode, Link, RegionCoupling
 from .transport import (
-    DEFAULT_TIMEOUT,
     CouplingDeadlock,
     CouplingTimeout,
     CouplingTransportError,
     InProcessTransport,
-    Tag,
     Transport,
     TransportClosed,
 )
 
 __all__ = [
-    "DEFAULT_TIMEOUT",
-    "ENTRY_POINT_GROUP",
-    "Acceleration",
     "AitkenRelaxation",
     "Array",
     "BoundMapping",
     "ConstantRelaxation",
-    "ControllerFactory",
-    "Convergence",
     "Coupling",
-    "CouplingController",
+    "CouplingAcceleration",
+    "CouplingConvergence",
     "CouplingDeadlock",
+    "CouplingMapping",
     "CouplingNode",
     "CouplingNotConvergedWarning",
-    "CouplingOp",
-    "CouplingOutcome",
     "CouplingTimeout",
     "CouplingTransportError",
-    "Exchange",
-    "ExchangeSide",
-    "GroupSide",
     "IdentityMapping",
     "InProcessTransport",
     "Link",
-    "Mapping",
     "NearestNeighborMapping",
     "RegionCoupling",
     "RelativeConvergence",
     "SideChange",
-    "Tag",
     "Transport",
     "TransportClosed",
     "coupled",
     "load_plugins",
-    "nearest_neighbor",
-    "node_controller",
-    "region_couplings",
-    "relative_changes",
-    "run_regions",
     "strategy",
-    "unchanged",
 ]

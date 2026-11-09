@@ -32,12 +32,9 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
     from neofoam.framework.context import Context
-    from neofoam.framework.coupling import (
-        CouplingController,
-        CouplingOp,
-        CouplingOutcome,
-        ExchangeSide,
-    )
+    from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
+    from neofoam.framework.coupling.data import ExchangeSide
+    from neofoam.framework.coupling.loop import CouplingOp
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
 

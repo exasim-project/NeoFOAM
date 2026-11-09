@@ -28,10 +28,11 @@ from pathlib import Path
 import pytest
 
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.framework.coupling import ENTRY_POINT_GROUP, kernels
+from neofoam.framework.coupling import kernels
+from neofoam.framework.coupling.kernels import ENTRY_POINT_GROUP
 
 #: The strategy families a plugin may register with.
-FAMILIES = ("Mapping", "Acceleration", "Convergence")
+FAMILIES = ("CouplingMapping", "CouplingAcceleration", "CouplingConvergence")
 
 
 @contextmanager

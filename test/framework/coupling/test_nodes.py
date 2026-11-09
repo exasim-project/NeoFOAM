@@ -22,15 +22,13 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     Coupling,
-    CouplingController,
     CouplingNode,
-    GroupSide,
     InProcessTransport,
     Link,
     SideChange,
-    region_couplings,
-    run_regions,
 )
+from neofoam.framework.coupling.controller import CouplingController, GroupSide
+from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import IterativeOp, Operation, StepBuilder
 from neofoam.framework.types import OperationMetadata, Placement

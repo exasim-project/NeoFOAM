@@ -25,7 +25,7 @@ import numpy as np
 from neofoam.framework import execution_observer
 
 from .data import End, _arrays
-from .kernels import Acceleration, Convergence, SideChange
+from .kernels import CouplingAcceleration, CouplingConvergence, SideChange
 from .transport import Data
 
 
@@ -132,7 +132,7 @@ class CouplingController:
     change of a side is not finite.
 
     The leader builds it with its coupling's ``controller`` factory, which it
-    hands the node (by default :func:`~neofoam.framework.coupling.node_controller`:
+    hands the node (by default :func:`~neofoam.framework.coupling.region.node_controller`:
     the node's scheme, convergence, acceleration and max_iterations; one
     acceleration per exchange: it keeps the data of its last passes)::
 
@@ -150,10 +150,10 @@ class CouplingController:
         self,
         sides: Sequence[GroupSide],
         label: str,
-        convergence: Sequence[Convergence] = (),
+        convergence: Sequence[CouplingConvergence] = (),
         max_iterations: int = 100,
         parallel: bool = False,
-        acceleration: Optional[dict[str, Acceleration]] = None,
+        acceleration: Optional[dict[str, CouplingAcceleration]] = None,
     ) -> None:
         #: The name of the leader, the coupling op that owns the controller.
         self.label = label
