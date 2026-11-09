@@ -728,13 +728,15 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Link</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""One exchange of a case: its name, its two ends ``(region, patch)`` and its mapping.</span>
 
-<span class="sd">    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping` (by default</span>
-<span class="sd">    :class:`~neofoam.framework.coupling.IdentityMapping`).</span>
+<span class="sd">    ``mapping`` is a :class:`~neofoam.framework.coupling.CouplingMapping`, by default</span>
+<span class="sd">    :func:`~neofoam.framework.coupling.kernels.default_mapping` (nearest-neighbor: both</span>
+<span class="sd">    patches need coordinates; :class:`~neofoam.framework.coupling.IdentityMapping` for</span>
+<span class="sd">    patches that share their points).</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">ends</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">End</span><span class="p">]</span>
-    <span class="n">mapping</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">CouplingMapping</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">kernels</span><span class="o">.</span><span class="n">IdentityMapping</span><span class="p">)</span>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">kernels</span><span class="o">.</span><span class="n">CouplingMapping</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">kernels</span><span class="o">.</span><span class="n">default_mapping</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Link.partner">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Link.partner">[docs]</a>
