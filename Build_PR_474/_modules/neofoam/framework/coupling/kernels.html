@@ -960,8 +960,17 @@
 <div class="viewcode-block" id="NearestNeighborMapping.bind">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.NearestNeighborMapping.bind">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raises ``ValueError`` naming the side without coordinates."""</span>
         <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' needs the coordinates of both sides"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="s2">"neither side has any: give both patches"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">side</span> <span class="o">=</span> <span class="s2">"sending"</span> <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"receiving"</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">side</span><span class="si">}</span><span class="s2"> side has none: give its patch"</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' needs the coordinates of both sides, but </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="s2">"coordinates (@coupled.coordinates) or choose mapping 'identity'"</span>
+            <span class="p">)</span>
         <span class="n">indices</span> <span class="o">=</span> <span class="n">nearest_neighbor</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">mapper</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
@@ -969,6 +978,18 @@
 
         <span class="k">return</span> <span class="n">mapper</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="default_mapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.default_mapping">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">default_mapping</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CouplingMapping</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The mapping of an exchange that names none: :class:`NearestNeighborMapping`.</span>
+
+<span class="sd">    The one default of both a :class:`~neofoam.framework.coupling.region.Link`</span>
+<span class="sd">    and an exchange of ``system/regionCoupling.yaml``.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">NearestNeighborMapping</span><span class="p">()</span></div>
 
 
 
