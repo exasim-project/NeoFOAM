@@ -13,6 +13,9 @@ The observer is per thread (a :class:`~contextvars.ContextVar`); threads started
 by an observed run do not inherit it, except the region threads of a coupled
 run: there its hooks are called from several threads at once and must be thread safe.
 
+Under ``mpirun`` every process has its own observer; the coupling hooks are
+called on a region's root process only.
+
 Example::
 
     class Printer(ExecutionObserver):
@@ -70,12 +73,16 @@ class ExecutionObserver:
         """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
 
     def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
-        """A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread."""
+        """A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread
+        (under ``mpirun``: its root process)."""
 
     def coupling_exchanged(
         self, coupling: CouplingLoopOp, port: CoupledPort, data: BaseModel
     ) -> None:
-        """The region's ``coupling`` op is about to hand ``port`` its mapped ``data``."""
+        """The region's ``coupling`` op is about to hand ``port`` its mapped ``data``.
+
+        Under ``mpirun`` on the region's root process only, with the whole port's data.
+        """
 
 
 _observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(
