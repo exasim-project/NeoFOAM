@@ -317,7 +317,8 @@ class SolverSpec:
         without the runtime holding a long-lived reference to the context).
 
         With ``ctx`` whose solver added a coupling model (``ctx.models["coupling"]``),
-        the model operations it returns also hold its operations.
+        the model operations it returns also hold its operations: the coupling ops
+        and, in a transient case, the time-step op (``Coupling.time_step``).
         """
         if self._execution_graph_func is None:
             raise RuntimeError(f"No execution_graph function registered for solver {self.name}")
@@ -341,9 +342,13 @@ class SolverSpec:
 
         builder, model_ops = self._execution_graph_func(**kwargs)
         coupling = None if ctx is None else ctx.models.get("coupling")
-        if not isinstance(coupling, Coupling):
+        if ctx is None or not isinstance(coupling, Coupling):
             return builder, model_ops
-        return builder, Operations([*model_ops, *coupling.operations()])
+        ops = [*model_ops, *coupling.operations()]
+        time_step = coupling.time_step(ctx, [*builder.operations, *model_ops])
+        if time_step is not None:
+            ops.append(time_step)
+        return builder, Operations(ops)
 
     # ------------------------------------------------------------------
     # Operation building (called by SolverRuntime.operations)
