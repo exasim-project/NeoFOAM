@@ -202,3 +202,31 @@ def test_registering_the_same_class_again_is_tolerated() -> None:
     registry = PluginSystem.get_registered("WidgetInterface")
     assert registry is not None
     assert registry.base_cls is WidgetInterface
+
+
+def test_a_second_plugin_cannot_claim_a_registered_discriminator_value() -> None:
+    """Two plugins of one family with the same discriminator value: a clear error, none kept."""
+    impostor = type(
+        "OtherCircle",
+        (BaseModel,),
+        {
+            "__module__": "other_package.shapes",
+            "__annotations__": {"shape_type": Literal["circle"], "diameter": float},
+        },
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        ShapeInterface.register(impostor)
+
+    message = str(excinfo.value)
+    assert "ShapeInterface" in message
+    assert "'circle'" in message
+    assert f"{CircleConfig.__module__}.CircleConfig" in message
+    assert "other_package.shapes.OtherCircle" in message
+    registry = PluginSystem.get_registered("ShapeInterface")
+    assert registry is not None
+    assert impostor not in registry.plugin_registry
+    circle = ShapeInterface.create(  # type: ignore[attr-defined]
+        shape={"shape_type": "circle", "radius": 1.0}, color="red"
+    )
+    assert isinstance(circle.shape, CircleConfig)

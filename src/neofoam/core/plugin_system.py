@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Callable, Optional, Type, Union
+from typing import Annotated, Any, Callable, Literal, Optional, Type, Union, get_args, get_origin
 
 from pydantic import BaseModel, Field, create_model
 
@@ -81,6 +81,9 @@ class PluginSystem:
 
             def plugin_decorator(plugin_cls: Type[BaseModel]) -> Type[BaseModel]:
                 registry_obj = PluginSystem._registry[base_cls.__name__]
+                if plugin_cls in registry_obj.plugin_registry:
+                    return plugin_cls
+                PluginSystem._reject_duplicate_discriminator(registry_obj, plugin_cls)
                 registry_obj.plugin_registry.append(plugin_cls)
                 registry = registry_obj.plugin_registry
                 union: Any = Annotated[
@@ -139,6 +142,49 @@ class PluginSystem:
             "name because the registry is keyed by class name — rename one of the two base "
             "classes."
         )
+
+    @staticmethod
+    def _discriminator_values(plugin_cls: Type[BaseModel], discriminator: str) -> tuple[Any, ...]:
+        """The values of ``discriminator`` that select ``plugin_cls``: its ``Literal`` values."""
+        field_info = plugin_cls.model_fields.get(discriminator)
+        if field_info is None:
+            return ()
+        if get_origin(field_info.annotation) is Literal:
+            return get_args(field_info.annotation)
+        return ()
+
+    @staticmethod
+    def _reject_duplicate_discriminator(
+        registry_obj: PluginRegistry, plugin_cls: Type[BaseModel]
+    ) -> None:
+        """Refuse a plugin whose discriminator value another plugin of the family holds.
+
+        A module reload builds a new class at the same definition site; it replaces
+        the previous one instead.
+        """
+        discriminator = registry_obj.discriminator
+        values = PluginSystem._discriminator_values(plugin_cls, discriminator)
+        for registered in list(registry_obj.plugin_registry):
+            shared = [
+                value
+                for value in PluginSystem._discriminator_values(registered, discriminator)
+                if value in values
+            ]
+            if not shared:
+                continue
+            if (
+                registered.__module__ == plugin_cls.__module__
+                and registered.__qualname__ == plugin_cls.__qualname__
+            ):
+                registry_obj.plugin_registry.remove(registered)
+                continue
+            raise ValueError(
+                f"plugin family '{registry_obj.base_cls.__name__}': "
+                f"{discriminator}={shared[0]!r} is already registered by "
+                f"{registered.__module__}.{registered.__qualname__}; "
+                f"{plugin_cls.__module__}.{plugin_cls.__qualname__} cannot register the same "
+                f"{discriminator} — give one of the two another {discriminator}."
+            )
 
     @classmethod
     def get_registered(cls, base_cls_name: str) -> Optional["PluginRegistry"]:
