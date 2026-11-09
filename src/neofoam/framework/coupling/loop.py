@@ -38,9 +38,11 @@ which adds itself to its region's coupling model
 from __future__ import annotations
 
 import math
+import types
+import typing
 import warnings
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated, Any, Callable, Optional, Sequence
+from typing import TYPE_CHECKING, Annotated, Any, Callable, Literal, Optional, Sequence
 
 import numpy as np
 from pydantic import BaseModel, PlainValidator
@@ -49,7 +51,7 @@ from neofoam.framework import execution_observer
 from neofoam.framework.operations import IterativeOp
 
 from .kernels import Acceleration, Convergence, Mapping, SideChange, mapping
-from .transport import Data, SideKey
+from .transport import Data, SideKey, Tag
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -85,7 +87,12 @@ class CoupledSide:
     both ways is the special case of a symmetric exchange. ``send()`` returns an
     instance of ``sends``; ``receive(data)`` takes an instance of ``receives``,
     already mapped onto this side's points. ``coordinates`` holds one row per
-    point of the patch, or ``None``.
+    point of the patch, or ``None``; it is kept as a float numpy array.
+
+    What travels between regions is plain data (it pickles): the plain fields
+    are ``float``, ``int``, ``str``, ``bool`` or ``None`` (or a union of them),
+    or a pydantic model of such fields, sent as its ``model_dump()``. Raises
+    ``TypeError`` for another field type.
 
     A boundary condition usually declares it with
     :func:`~neofoam.framework.coupling.coupled` instead of building it.
@@ -109,6 +116,9 @@ class CoupledSide:
                     f"a coupled side declares what it {role} as a pydantic model, "
                     f"got {getattr(self, role)!r}"
                 )
+            _check_plain(getattr(self, role))
+        if self.coordinates is not None:
+            object.__setattr__(self, "coordinates", np.asarray(self.coordinates, dtype=float))
 
     @property
     def points(self) -> Optional[int]:
@@ -126,6 +136,35 @@ def _kinds(model: type[BaseModel]) -> dict[str, str]:
         else getattr(info.annotation, "__name__", repr(info.annotation))
         for name, info in model.model_fields.items()
     }
+
+
+# The types a plain (non-Array) field of an exchange model may have, besides a
+# pydantic model of such fields.
+_PLAIN = (float, int, str, bool, type(None))
+
+
+def _plain(annotation: Any) -> bool:
+    """Whether a field annotated ``annotation`` holds plain data: a :data:`_PLAIN` type,
+    a union of them, or a pydantic model of such fields."""
+    if annotation in _PLAIN:
+        return True
+    if _is_model(annotation):
+        return all(_plain(info.annotation) for info in annotation.model_fields.values())
+    if typing.get_origin(annotation) in (typing.Union, types.UnionType):
+        return all(_plain(arg) for arg in typing.get_args(annotation))
+    return False
+
+
+def _check_plain(model: type[BaseModel]) -> None:
+    """Raise ``TypeError`` unless each plain (non-Array) field of ``model`` holds plain data."""
+    for name, kind in _kinds(model).items():
+        annotation = model.model_fields[name].annotation
+        if kind != "Array" and not _plain(annotation):
+            raise TypeError(
+                f"the field '{name}' of the exchange model {model.__qualname__} is "
+                f"{annotation!r}: a field that is not Array is float, int, str, bool or None, "
+                "or a pydantic model of such fields"
+            )
 
 
 def _array_names(model: type[BaseModel]) -> tuple[str, ...]:
@@ -673,7 +712,7 @@ class CouplingOp(IterativeOp):
             for side, data in zip(self._sides, current):
                 region = self.exchange_of(side).partner[0]
                 if self._rank[region] > self._rank[self.region]:
-                    self._send(region, f"data:{self.exchange_of(side).name}", data)
+                    self._send(region, Tag.data(self.exchange_of(side).name), data)
         go_on, final, decided = self._decide(current, time if self._iteration == 0 else None, loops)
         if not go_on:
             self._iteration = 0
@@ -719,13 +758,13 @@ class CouplingOp(IterativeOp):
                 "kinds": _kinds(side.sends),
                 "points": side.side.coordinates,
             }
-            self._send(exchange.partner[0], f"side:{exchange.name}", announced)
+            self._send(exchange.partner[0], Tag.side(exchange.name), announced)
         sides = [(side.patch, side.field, _array_names(side.sends)) for side in self._sides]
         if not self.is_leader:
             self._send(self._leader, self._tag("sides"), (path, sides))
         for side in self._sides:
             exchange = self.exchange_of(side)
-            announced = self._receive(exchange.partner[0], f"side:{exchange.name}")
+            announced = self._receive(exchange.partner[0], Tag.side(exchange.name))
             _check_received(exchange.name, announced, side)
             exchange.mapping.check(announced["points"], side.side.coordinates)
             self._partner_points[side.patch] = announced["points"]
@@ -737,9 +776,9 @@ class CouplingOp(IterativeOp):
             )
         self._connected = True
 
-    def _tag(self, what: str) -> str:
-        """The transport tag ``<node>/<what>`` of the node's messages."""
-        return f"{self.node.name}/{what}"
+    def _tag(self, what: Literal["sides", "pass", "decision"]) -> str:
+        """The transport tag ``<node>/<what>`` of the node's messages (:meth:`Tag.node`)."""
+        return Tag.node(self.node.name, what)
 
     def _node_sides(
         self, path: tuple[Optional[str], ...], own: list[tuple[str, str, tuple[str, ...]]]
@@ -843,7 +882,7 @@ class CouplingOp(IterativeOp):
         exchange = self.exchange_of(side)
         data = decided[side.patch]
         if data is None:
-            data = self._receive(exchange.partner[0], f"data:{exchange.name}")
+            data = self._receive(exchange.partner[0], Tag.data(exchange.name))
         mapped = exchange.mapping(
             _arrays(side.mapped, data), self._partner_points[side.patch], side.side.coordinates
         )
@@ -852,6 +891,12 @@ class CouplingOp(IterativeOp):
         if observer is not None:
             observer.coupling_exchanged(self, side, received)
         side.side.receive(received)
+
+
+def _dumped(sent: BaseModel, name: str) -> Any:
+    """The plain field ``name`` of ``sent``; a pydantic model as its ``model_dump()``."""
+    value = getattr(sent, name)
+    return value.model_dump() if isinstance(value, BaseModel) else value
 
 
 def _sent(side: ExchangeSide, node: str, iteration: int, time: Any) -> Data:
@@ -867,7 +912,7 @@ def _sent(side: ExchangeSide, node: str, iteration: int, time: Any) -> Data:
             f"but its send() returned {type(sent).__name__}"
         )
     data = {
-        name: np.array(getattr(sent, name), dtype=float) if kind == "Array" else getattr(sent, name)
+        name: np.array(getattr(sent, name), dtype=float) if kind == "Array" else _dumped(sent, name)
         for name, kind in _kinds(side.sends).items()
     }
     for name in _array_names(side.sends):

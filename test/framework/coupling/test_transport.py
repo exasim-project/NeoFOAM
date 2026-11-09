@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import threading
 import time
+from types import SimpleNamespace
 from typing import Any, Callable
 
+import numpy as np
 import pytest
 
 from neofoam.framework.coupling import (
@@ -20,6 +22,7 @@ from neofoam.framework.coupling import (
     CouplingTimeout,
     CouplingTransportError,
     InProcessTransport,
+    Tag,
     TransportClosed,
     run_regions,
 )
@@ -207,3 +210,46 @@ def test_the_timeout_is_ten_minutes_by_default() -> None:
 def test_a_negative_timeout_raises() -> None:
     with pytest.raises(ValueError, match="at least 0 seconds, not -1"):
         InProcessTransport(timeout=-1)
+
+
+def test_the_tags_of_the_coupling_messages() -> None:
+    assert Tag.data("x") == "data:x"
+    assert Tag.side("x") == "side:x"
+    assert [Tag.node("outer", what) for what in Tag.NODE] == [  # type: ignore[arg-type]
+        "outer/sides",
+        "outer/pass",
+        "outer/decision",
+    ]
+    assert Tag.TIME_DT == "time/dt"
+
+
+def test_a_node_sends_no_other_tag() -> None:
+    with pytest.raises(ValueError, match="not 'data'"):
+        Tag.node("outer", "data")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("pickle", [False, True])
+def test_a_receiver_gets_a_copy(pickle: bool) -> None:
+    transport = InProcessTransport(pickle=pickle)
+    sent = {"T": np.ones(3), "h": 2.0}
+
+    transport.send("a", "b", "x", sent)
+    received = transport.receive("a", "b", "x")
+    received["T"][0] = 5.0
+
+    assert received is not sent and sent["T"][0] == 1.0 and received["h"] == 2.0
+
+
+def test_a_pickling_transport_raises_for_a_message_that_is_not_plain_data() -> None:
+    transport = InProcessTransport(pickle=True)
+
+    with pytest.raises(TypeError, match="the message 'x' from region a to region b is not plain"):
+        transport.send("a", "b", "x", {"f": lambda: None})
+
+
+def test_a_transport_pickles_as_its_class_default_says(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(InProcessTransport, "PICKLE", False)
+    assert not InProcessTransport().pickle
+    assert InProcessTransport(pickle=True).pickle
+    # not plain, but a deep copy can copy it
+    InProcessTransport().send("a", "b", "x", SimpleNamespace(f=lambda: None))

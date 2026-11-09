@@ -33,7 +33,8 @@
   (send, receive, close); :class:`InProcessTransport` between threads, which
   raises :class:`CouplingDeadlock` when every running region waits for a message
   no region sent, and :class:`CouplingTimeout` after its ``timeout`` (both
-  :class:`CouplingTransportError`, as :class:`TransportClosed`).
+  :class:`CouplingTransportError`, as :class:`TransportClosed`); :class:`Tag`
+  builds the tags of the messages.
 - numpy kernels: :func:`nearest_neighbor`, :class:`ConstantRelaxation`,
   :class:`AitkenRelaxation`, :class:`RelativeConvergence`; the registries
   :data:`MAPPINGS`, :data:`ACCELERATIONS` and :data:`CONVERGENCES` name them for
@@ -88,6 +89,7 @@ from .transport import (
     CouplingTransportError,
     InProcessTransport,
     SideKey,
+    Tag,
     Transport,
     TransportClosed,
 )
@@ -124,6 +126,7 @@ __all__ = [
     "RelativeConvergence",
     "SideChange",
     "SideKey",
+    "Tag",
     "Transport",
     "TransportClosed",
     "coupled",
