@@ -158,9 +158,10 @@ anything runs (``ValueError``):
 ``mapping``, ``acceleration`` and ``convergence[]`` each name a strategy by its
 ``type``, with its options (``mapping`` may be the type alone): a member of the
 plugin families ``CouplingMapping``, ``CouplingAcceleration`` and
-``CouplingConvergence`` (see `Extension points`_). The file is checked against
-them on load: an unknown type lists the registered ones, an unknown or missing
-option the strategy's
+``CouplingConvergence`` (see `Extension points`_); reading the file loads the
+coupling plugins first (``load_plugins``), in ``multiRun`` or a tool alike. The
+file is checked against them on load: an unknown type lists the registered
+ones, an unknown or missing option the strategy's
 options; as against unknown keys, two nodes of one name, an
 exchange in no node or in two, and a ``wraps`` region the node does not couple.
 A patch is in at most one exchange and carries one coupled side.

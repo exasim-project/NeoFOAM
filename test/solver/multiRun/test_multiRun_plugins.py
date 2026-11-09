@@ -8,9 +8,9 @@ The plugin is a fake entry point of ``neofoam.coupling``
 (the identity: both patches of ``cases/coupled_slabs`` lie at x = 1) and the
 acceleration ``fake-iqn`` (a constant relaxation), each with an option of its
 own and counting its calls. The case's file names them with their options; it
-validates with the plugin only, and multiRun, which loads the plugins before
-the regions start, reaches the steady profile of
-``test_multiRun_region_coupling`` through them.
+validates with the plugin only, reading it loads the plugins (outside multiRun
+too), and multiRun, which loads them before the regions start, reaches the
+steady profile of ``test_multiRun_region_coupling`` through them.
 """
 
 import importlib
@@ -25,6 +25,7 @@ from pydantic import ValidationError
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import load_plugins
+from neofoam.framework.coupling.kernels import ENTRY_POINT_GROUP
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
@@ -110,6 +111,23 @@ def test_multiRun_couples_through_the_strategies_of_a_plugin_with_their_options(
     assert calls["fake-iqn"] > 0
     for region, expected in EXPECTED.items():
         np.testing.assert_allclose(regions[region].fields["T"], expected, rtol=0, atol=1e-8)
+
+
+def test_reading_region_coupling_outside_multiRun_loads_the_plugins(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A tool or the UI reads the file without ``run()``: the plugin's strategies are selected."""
+    case = _case(tmp_path)
+
+    with installed(monkeypatch, tmp_path, precice=PRECICE) as asked:
+        config = RegionCouplingConfig.load(case_dir=case)
+        RegionCouplingConfig.load(case_dir=case)
+
+    mapping: Any = config.exchanges[0].mapping
+    acceleration: Any = config.acceleration
+    assert (type(mapping).__name__, mapping.radius) == ("RadialBasis", 0.25)
+    assert (type(acceleration).__name__, acceleration.columns) == ("QuasiNewton", 3)
+    assert asked == [ENTRY_POINT_GROUP]  # loaded once
 
 
 def test_region_coupling_naming_a_strategy_of_no_installed_plugin_raises(tmp_path: Path) -> None:
