@@ -272,11 +272,11 @@ which the environment variable ``NEOFOAM_COUPLING_TIMEOUT`` overrides. Both list
 who waits for what and the messages sent but not received.
 
 **Read API** of a ``CouplingOp``: ``region``, ``label``, ``sides``
-(``ExchangeSide``: ``region``, ``patch``, ``field``, ``key``, ``sends``,
-``receives``, ``mapped``, ``points``), ``exchange_of(side)`` (``Exchange``:
+(``ExchangeSide``: ``region``, ``patch``, ``field``, ``end`` ``(region, patch)``,
+``sends``, ``receives``, ``mapped``, ``points``), ``exchange_of(side)`` (``Exchange``:
 ``name``, ``partner`` ``(region, patch)``, ``mapping``), ``partner(side)``
 (``"<region>.<patch>"``), ``node``, ``leader``, ``is_leader`` and ``controller`` (the leader's, built at
-its first loop test: ``label``, ``parallel``, ``sides``, ``iteration``,
+its first loop test: ``label``, ``parallel``, ``sides`` (by end), ``iteration``,
 ``final``, ``outcomes``, ``residuals``).
 
 **Report.** At the end of each time step the leader's controller records a

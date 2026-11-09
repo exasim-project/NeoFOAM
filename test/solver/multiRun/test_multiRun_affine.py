@@ -121,7 +121,10 @@ def test_multiRun_affine_regions_couple_through_their_coupling_ops(ctx: Regions)
     ]
     assert a_op.controller is None and b_op.controller is not None
     (a_side,), (b_side,) = a_op.sides, b_op.sides
-    assert (a_side.key, b_side.key) == (("a", "interface", "x"), ("b", "interface", "x"))
+    assert [(side.end, side.field) for side in (a_side, b_side)] == [
+        (("a", "interface"), "x"),
+        (("b", "interface"), "x"),
+    ]
     assert (a_op.partner(a_side), b_op.partner(b_side)) == ("b.interface", "a.interface")
     exchange = a_op.exchange_of(a_side)
     assert (exchange.name, exchange.mapping.kind) == ("a-b", "nearest-neighbor")
