@@ -265,11 +265,7 @@ def test_coupling_op_public_read_api() -> None:
 
     controller = fluid_op.controller
     assert solid_op.controller is None and controller is not None
-    assert (controller.label, controller.parallel, controller.iteration) == (
-        "fluid.coupling",
-        False,
-        0,
-    )
+    assert (controller.label, controller.parallel) == ("fluid.coupling", False)
     assert [(end, s.field, s.arrays, s.partner) for end, s in controller.sides.items()] == [
         (("solid", "right"), "T", ("T",), ("fluid", "wall")),
         (("fluid", "wall"), "T", ("q",), ("solid", "right")),

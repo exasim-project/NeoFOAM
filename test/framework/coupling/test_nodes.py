@@ -316,7 +316,7 @@ def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
 
     controller = CouplingController(_sides(), "b.n", parallel=True, acceleration={"x": halve})
 
-    carried = controller.decide(_data(1.0, 2.0, 10.0, 20.0))
+    carried = controller.decide(_data(1.0, 2.0, 10.0, 20.0), 0)
 
     assert carried is not None
     assert relaxed == [[1.0, 2.0]]
@@ -335,26 +335,26 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
     controller = CouplingController(
         _sides(), "b.n", convergence=[measure("first"), measure("second")], max_iterations=10
     )
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is not None
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None
 
     verdicts["second"] = True
 
     # converged: the final pass, then the end
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 2) is not None
     assert controller.final
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 3) is None
     assert controller.outcomes[-1].converged
 
 
 def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> None:
     controller = CouplingController(_sides(), "b.n", max_iterations=10)
 
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0)) is not None
-    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0)) is not None
-    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0)) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 1) is not None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 2) is not None
     assert controller.final
-    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0)) is None
+    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 3) is None
 
 
 def test_the_default_node_holds_every_exchange() -> None:

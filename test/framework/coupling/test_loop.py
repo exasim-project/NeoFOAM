@@ -623,10 +623,10 @@ def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None
     assert controller.residuals == {"x": math.inf}
 
     # the first decision starts the first pass: nothing measured yet
-    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.ones(1)}})
+    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.ones(1)}}, 0)
     assert controller.residuals == {"x": math.inf}
 
-    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.full(1, 2.0)}})
+    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.full(1, 2.0)}}, 1)
     assert controller.residuals == {"x": 0.5}
 
 

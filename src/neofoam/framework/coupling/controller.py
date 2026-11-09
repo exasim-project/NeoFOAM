@@ -103,8 +103,10 @@ class CouplingController:
 
     ``sides`` are the sides of the node, its regions in stepping order; ``label``
     names the leader's coupling op. After each pass (:meth:`decide`) it gets what
-    every side sent and checks every measure of ``convergence`` on the change of
-    its :data:`Array` data since the pass before (all must hold; none:
+    every side sent, and the number of passes the leader's op ran in the time
+    step (its entry on ``Context.loops``, the one count of passes), and checks
+    every measure of ``convergence`` on the change of its :data:`Array` data
+    since the pass before (all must hold; none:
     :func:`unchanged`). Once they hold it runs exactly one more pass, the
     **final** one (:attr:`final`), and stops after it without checking again;
     the last pass ``max_iterations`` allows is final in advance (no pass more;
@@ -176,8 +178,6 @@ class CouplingController:
         # nothing counts as converged before it was measured
         self._unmeasured = {side.field: math.inf for side in self._sides.values() if side.arrays}
         self._residuals = dict(self._unmeasured)
-        # the pass of the current time step; 0 between time steps
-        self._iteration = 0
         # whether the pass started last is the final one, and whether it is final
         # because the data converged
         self._final = False
@@ -217,11 +217,6 @@ class CouplingController:
         return dict(self._sides)
 
     @property
-    def iteration(self) -> int:
-        """The pass of the current time step's coupling; ``0`` between time steps."""
-        return self._iteration
-
-    @property
     def final(self) -> bool:
         """Whether the pass :meth:`decide` started last is the time step's final one."""
         return self._final
@@ -243,17 +238,19 @@ class CouplingController:
         """Whether the side at ``end`` receives what its partner sent in this pass, not carried."""
         return self._fresh[end]
 
-    def decide(self, current: dict[End, Data]) -> Optional[dict[End, Data]]:
+    def decide(self, current: dict[End, Data], iteration: int) -> Optional[dict[End, Data]]:
         """The decision before a pass, from what every side sends now (by its end).
 
+        ``iteration`` is the number of passes the time step's coupling ran
+        (``LoopEntry.iteration`` of the leader's op): ``0`` before its first.
         Returns what each side carries into the pass (relaxed), by its end,
         :attr:`final` telling whether it is the final pass, or ``None``: the
         time step's coupling ended after its final pass, its outcome recorded.
         """
         current = {end: current[end] for end in self._sides}
-        if self._iteration == 0:
+        if iteration == 0:
             self._carried = current
-            return self._start_pass(final=self._max_iterations <= 1)
+            return self._start_pass(iteration + 1, final=self._max_iterations <= 1)
         changes = {
             end: SideChange(
                 side.field,
@@ -262,18 +259,18 @@ class CouplingController:
             )
             for end, side in self._sides.items()
         }
-        self._residuals = {**self._unmeasured, **self._relative_changes(changes)}
+        self._residuals = {**self._unmeasured, **self._relative_changes(changes, iteration)}
         if self._final:
             converged = self._converged_before_final or self._converged(changes)
-            self._finish(converged)
+            self._finish(iteration, converged)
             return None
         self._carried = current
         if self._converged(changes):
             self._converged_before_final = True
-            return self._start_pass(final=True)
-        return self._start_pass(final=self._iteration + 1 >= self._max_iterations)
+            return self._start_pass(iteration + 1, final=True)
+        return self._start_pass(iteration + 1, final=iteration + 1 >= self._max_iterations)
 
-    def _relative_changes(self, changes: dict[End, SideChange]) -> dict[str, float]:
+    def _relative_changes(self, changes: dict[End, SideChange], iteration: int) -> dict[str, float]:
         """:func:`relative_changes` of ``changes`` (by the end of each side).
 
         Raises ``FloatingPointError`` when the change of a side is not finite.
@@ -284,7 +281,7 @@ class CouplingController:
                 if not math.isfinite(value):
                     raise FloatingPointError(
                         f"coupling {self.label}: the relative change of the {name} of region "
-                        f"{region} patch {patch} is not finite in pass {self._iteration}"
+                        f"{region} patch {patch} is not finite in pass {iteration}"
                     )
                 residuals[name] = float(np.maximum(residuals.get(name, value), value))
         return residuals
@@ -296,10 +293,9 @@ class CouplingController:
             return bool(unchanged(listed))
         return all(bool(measure(listed)) for measure in self._convergence)
 
-    def _finish(self, converged: bool) -> None:
-        outcome = CouplingOutcome(self._iteration, converged, dict(self._residuals))
+    def _finish(self, passes: int, converged: bool) -> None:
+        outcome = CouplingOutcome(passes, converged, dict(self._residuals))
         self._outcomes.append(outcome)
-        self._iteration = 0
         self._final = False
         self._converged_before_final = False
         observer = execution_observer.current()
@@ -316,10 +312,10 @@ class CouplingController:
                 stacklevel=2,
             )
 
-    def _start_pass(self, final: bool) -> dict[End, Data]:
-        if self._iteration == 0:
+    def _start_pass(self, number: int, final: bool) -> dict[End, Data]:
+        """Start pass ``number`` (from 1) of the time step's coupling: what each side carries."""
+        if number == 1:
             self._residuals = dict(self._unmeasured)
-        self._iteration += 1
         self._final = final
         for exchange, acceleration in self._acceleration.items():
             # the sides of the exchange whose partner receives their data as carried
@@ -331,7 +327,7 @@ class CouplingController:
             if not carried:
                 continue
             arrays = [_arrays(self._sides[end].arrays, self._carried[end]) for end in carried]
-            relaxed = acceleration(arrays, self._iteration)
+            relaxed = acceleration(arrays, number)
             for end, data in zip(carried, relaxed):
                 self._carried[end] = {**self._carried[end], **data}
         return dict(self._carried)

@@ -137,7 +137,6 @@ class CouplingOp(IterativeOp):
         self._connected = False
         self._mappers: dict[str, BoundMapping] = {}
         self._controller: Optional[CouplingController] = None
-        self._iteration = 0
         # the patches whose data the partner receives fresh: the leader's last decision
         self._fresh: frozenset[str] = frozenset()
 
@@ -201,25 +200,23 @@ class CouplingOp(IterativeOp):
 
     def _test(self, ctx: Context) -> bool:
         loops = self._enclosing(ctx)
+        # the passes the op ran in this time step: its own entry on ctx.loops counts them
+        iteration = ctx.loops[-1].iteration
         if not self._connected:
             self._connect(loops)
         time = getattr(ctx.time, "value", None)
-        current = {
-            side.patch: _sent(side, self.node.name, self._iteration, time) for side in self._sides
-        }
+        current = {side.patch: _sent(side, self.node.name, iteration, time) for side in self._sides}
         for side in self._sides:
             if side.patch in self._fresh:
                 exchange = self.exchange_of(side)
                 self._send(exchange.partner[0], Tag.data(exchange.name), current[side.patch])
         go_on, final, decided, self._fresh = self._decide(
-            current, time if self._iteration == 0 else None, loops
+            current, time if iteration == 0 else None, loops, iteration
         )
         if not go_on:
-            self._iteration = 0
             self._fresh = frozenset()
             return False
         ctx.mark_final(final)
-        self._iteration += 1
         for side in self._sides:
             self._hand_over(side, decided)
         return True
@@ -314,12 +311,15 @@ class CouplingOp(IterativeOp):
             for patch, field, arrays in sides
         ]
 
-    def _decide(self, current: dict[str, Data], time: Any, loops: _Loops) -> _Decision:
+    def _decide(
+        self, current: dict[str, Data], time: Any, loops: _Loops, iteration: int
+    ) -> _Decision:
         """The node leader's decision for this region, from what its sides send now (by patch).
 
         ``time`` is the region's time as a time step's coupling starts, else
-        ``None``; ``loops`` the loops enclosing the op, with their passes. The
-        leader raises ``ValueError`` when the regions' times or loops' passes differ.
+        ``None``; ``loops`` the loops enclosing the op, with their passes;
+        ``iteration`` the passes the op ran in this time step. The leader raises
+        ``ValueError`` when the regions' times or loops' passes differ.
         """
         leader = self._leader
         if not self.is_leader:
@@ -343,7 +343,7 @@ class CouplingOp(IterativeOp):
         if len(set(states.values())) > 1:
             where = ", ".join(f"{region}: {_state(there)}" for region, there in states.items())
             raise ValueError(
-                f"coupling '{self.node.name}': its regions entered pass {self._iteration + 1} "
+                f"coupling '{self.node.name}': its regions entered pass {iteration + 1} "
                 f"in different loop states: {where}"
             )
         controller = self._controller
@@ -352,7 +352,8 @@ class CouplingOp(IterativeOp):
                 (region, patch): data
                 for region, (_when, _loops, sides) in sent.items()
                 for patch, data in sides.items()
-            }
+            },
+            iteration,
         )
         received: dict[str, dict[str, Optional[Data]]] = {region: {} for region in self._group}
         # the patches of each region whose partner receives their data fresh
