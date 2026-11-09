@@ -61,12 +61,13 @@ def test_steady_regions_couple_in_every_outer_iteration_without_a_time(
     for region in ("a", "b"):
         assert regions[region].time is None
         assert "solution_loop" not in regions[region].models
-        # the first outer iteration couples to the fixed point, the others start there
-        assert _passes(regions, region) == [20, 1, 1]
+        # the first outer iteration couples to the fixed point, the others start there;
+        # each ends with its final pass
+        assert _passes(regions, region) == [21, 2, 2]
     op: Any = Coupling.of(regions["b"]).operations()[0].func
     assert isinstance(op, CouplingOp) and op.controller is not None
     assert [(o.passes, o.converged) for o in op.controller.outcomes] == [
-        (20, True),
-        (1, True),
-        (1, True),
+        (21, True),
+        (2, True),
+        (2, True),
     ]

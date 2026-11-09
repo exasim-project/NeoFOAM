@@ -17,8 +17,9 @@ decides. Both start at 0.
 Serial, b receives what a sent in the same pass (Gauss-Seidel), so pass k gives
 ``a_k = 2 - 2**(1 - k)`` and ``b_k = 1 - 2**-k``: the error halves every pass.
 Before pass k + 1 the leader checks the relative change of what both sides sent in pass k,
-``2**(1 - k) / a_k`` for a, which drops below 1e-6 at k = 20. The case runs two
-time steps; the second starts converged and stops after one pass.
+``2**(1 - k) / a_k`` for a, which drops below 1e-6 at k = 20; pass 21 is the
+final one, after which it stops. The case runs two time steps; the second starts
+converged and stops after its final pass, the second.
 """
 
 import importlib
@@ -47,7 +48,8 @@ from solver.multiRun.affine_solver import affine
 CASE = Path(__file__).parent / "cases" / "affine_pair"
 # The package exports the multiRun solver under the module's name.
 MULTI_RUN_MODULE = importlib.import_module("neofoam.solver.multiRun.multiRun")
-PASSES = 20
+# 20 passes to converge, then the final pass
+PASSES = 21
 
 
 def _with_affine(name: str) -> Any:
@@ -146,16 +148,17 @@ def test_multiRun_affine_converges_to_the_fixed_point(ctx: Regions) -> None:
 def test_multiRun_affine_iteration_count(ctx: Regions) -> None:
     for region in ["a", "b"]:
         assert len(_history(ctx, region, 1)) == PASSES
-        # the second time step starts at the fixed point: one pass shows no change
-        assert len(_history(ctx, region, 2)) == 1
+        # the second time step starts at the fixed point: one pass shows no change,
+        # then the final pass
+        assert len(_history(ctx, region, 2)) == 2
 
 
 @pytest.mark.parametrize(
     ("scheme", "acceleration", "passes"),
     [
-        ("serial", AccelerationConfig(type="aitken", relaxation=0.5), 4),
+        ("serial", AccelerationConfig(type="aitken", relaxation=0.5), 5),
         # Jacobi: each side receives what the other sent in the previous pass
-        ("parallel", AccelerationConfig(type="constant", relaxation=1.0), 39),
+        ("parallel", AccelerationConfig(type="constant", relaxation=1.0), 40),
     ],
     ids=["serial-aitken", "parallel-constant"],
 )
@@ -180,9 +183,9 @@ def test_multiRun_affine_records_the_coupling_outcome_of_every_time_step(ctx: Re
     assert controller is not None
     outcomes = controller.outcomes
 
-    assert [(o.passes, o.converged) for o in outcomes] == [(PASSES, True), (1, True)]
-    # pass 20 changed a by 2**-19 (of 2) and b by 2**-20 (of 1)
-    assert outcomes[0].residuals == {"x": pytest.approx(2.0**-20, rel=1e-6)}
+    assert [(o.passes, o.converged) for o in outcomes] == [(PASSES, True), (2, True)]
+    # the final pass 21 changed a by 2**-20 (of 2) and b by 2**-21 (of 1)
+    assert outcomes[0].residuals == {"x": pytest.approx(2.0**-21, rel=1e-6)}
     assert outcomes[1].residuals["x"] < 1e-6
 
 
@@ -287,19 +290,20 @@ def test_multiRun_affine_execution_observer_sees_each_region_s_graph(
     }
     assert all(ctx is regions[ctx.region or ""] for _name, ctx in recorder.ran)
     # every region's coupling op runs PASSES passes, then the leader's decision ends
-    # it in the same pass; the second time step stops after one pass
+    # it in the same pass; the second time step stops after two passes
     for region in ("a", "b"):
         couple = [t for t in recorder.tests[region] if t[0] == f"{region}.coupling"]
         assert couple == [
             *[(f"{region}.coupling", k, True) for k in range(1, PASSES + 1)],
             (f"{region}.coupling", PASSES + 1, False),
             (f"{region}.coupling", 1, True),
-            (f"{region}.coupling", 2, False),
+            (f"{region}.coupling", 2, True),
+            (f"{region}.coupling", 3, False),
         ]
     # b's coupling op, the leader, decided
     assert [(label, o.passes, o.converged) for label, o in recorder.couplings] == [
         ("b.coupling", PASSES, True),
-        ("b.coupling", 1, True),
+        ("b.coupling", 2, True),
     ]
 
 

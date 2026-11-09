@@ -69,5 +69,5 @@ def test_dirichlet_neumann_slabs_exchange_one_model_each_way(regions: dict[str, 
     assert isinstance(op, CouplingOp)
     controller = op.controller
     assert controller is not None
-    # Aitken: a few passes per time step
-    assert [(o.passes, o.converged) for o in controller.outcomes] == [(4, True), (4, True)]
+    # Aitken: a few passes per time step, the final one included
+    assert [(o.passes, o.converged) for o in controller.outcomes] == [(5, True), (5, True)]
