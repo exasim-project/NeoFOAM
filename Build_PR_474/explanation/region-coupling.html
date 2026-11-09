@@ -730,7 +730,7 @@ transport, runs every region on its own thread.</p></td>
 </table>
 </div>
 <p>Vocabulary: a <strong>region</strong> is one solver; an <strong>exchange</strong> is one line between two
-patches of two regions; the <strong>mapping</strong> (a <code class="docutils literal notranslate"><span class="pre">Mapping</span></code>, by its <code class="docutils literal notranslate"><span class="pre">type</span></code>) maps point
+patches of two regions; the <strong>mapping</strong> (<code class="docutils literal notranslate"><span class="pre">Mapping</span></code>, with a <code class="docutils literal notranslate"><span class="pre">kind</span></code>) maps point
 data of the partner onto a side’s own points; a region’s <strong>coupling op</strong> is a
 loop around its solving operations whose test exchanges its sides’ data; regions
 connected by exchanges form a <strong>group</strong>, whose last region in <code class="docutils literal notranslate"><span class="pre">regionSolvers</span></code>
@@ -843,12 +843,9 @@ named operations (<code class="docutils literal notranslate"><span class="pre">w
 (<code class="docutils literal notranslate"><span class="pre">Coupling.check</span></code>, as the region’s graph is resolved). A steady region has
 no time step, so a serial node may wrap it whole.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> and <code class="docutils literal notranslate"><span class="pre">convergence[]</span></code> each name a strategy by its
-<code class="docutils literal notranslate"><span class="pre">type</span></code>, with its options (<code class="docutils literal notranslate"><span class="pre">mapping</span></code> may be the type alone): a member of the
-plugin families <code class="docutils literal notranslate"><span class="pre">Mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">Acceleration</span></code> and <code class="docutils literal notranslate"><span class="pre">Convergence</span></code> (see
-<a class="reference internal" href="#extension-points">Extension points</a>). The file is checked against them on load: an unknown
-type lists the registered ones, an unknown or missing option the strategy’s
-options; as against unknown keys, two nodes of one name, an
+<p><code class="docutils literal notranslate"><span class="pre">mapping</span></code>, <code class="docutils literal notranslate"><span class="pre">acceleration.type</span></code> and <code class="docutils literal notranslate"><span class="pre">convergence[].type</span></code> name entries of
+the registries <code class="docutils literal notranslate"><span class="pre">MAPPINGS</span></code>, <code class="docutils literal notranslate"><span class="pre">ACCELERATIONS</span></code> and <code class="docutils literal notranslate"><span class="pre">CONVERGENCES</span></code>; the file is
+checked against them on load, as against unknown keys, two nodes of one name, an
 exchange in no node or in two, and a <code class="docutils literal notranslate"><span class="pre">wraps</span></code> region the node does not couple.
 A patch is in at most one exchange and carries one coupled side.</p>
 </section>
@@ -924,7 +921,7 @@ coupling needs no solution loop (<code class="docutils literal notranslate"><spa
 (<code class="docutils literal notranslate"><span class="pre">ctx.time</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>, steady) compare equal, so the check passes.</p>
 <p><strong>What a region knows.</strong> Its <code class="docutils literal notranslate"><span class="pre">RegionCoupling</span></code> (<code class="docutils literal notranslate"><span class="pre">Coupling.coupling</span></code>): its name,
 its group (in stepping order), the group’s exchanges (<code class="docutils literal notranslate"><span class="pre">Link</span></code>: name, two ends
-<code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>, its mapping), its nodes (each with its scheme), the controller
+<code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>, mapping kind), its nodes (each with its scheme), the controller
 factory (<code class="docutils literal notranslate"><span class="pre">node_controller</span></code> by default) and the transport. No region reads another region’s objects.</p>
 <p><strong>A run of a coupling op.</strong> Its first loop test sends every partner what its
 side sends and receives (the models’ field kinds) and its points, and the leader
@@ -1035,18 +1032,17 @@ reaches the piecewise-linear steady profile
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Mapping</p></td>
-<td><p>a <code class="docutils literal notranslate"><span class="pre">Mapping</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">bind(source,</span> <span class="pre">target)</span></code> on the partner’s and
-the side’s points, once, returns the <code class="docutils literal notranslate"><span class="pre">BoundMapping</span></code> <code class="docutils literal notranslate"><span class="pre">data</span> <span class="pre">-&gt;</span> <span class="pre">data</span></code>
-of every pass (yaml <code class="docutils literal notranslate"><span class="pre">mapping:</span></code>).</p></td>
+<td><p>a <code class="docutils literal notranslate"><span class="pre">Mapping</span></code> subclass with a <code class="docutils literal notranslate"><span class="pre">kind</span></code>: <code class="docutils literal notranslate"><span class="pre">check(source,</span> <span class="pre">target)</span></code> and
+<code class="docutils literal notranslate"><span class="pre">__call__(data,</span> <span class="pre">source,</span> <span class="pre">target)</span></code> on the partner’s and the side’s points;
+added to <code class="docutils literal notranslate"><span class="pre">MAPPINGS</span></code> (yaml <code class="docutils literal notranslate"><span class="pre">mapping:</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p>Acceleration</p></td>
-<td><p>an <code class="docutils literal notranslate"><span class="pre">Acceleration</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">__call__(carried</span> <span class="pre">Array</span> <span class="pre">data,</span> <span class="pre">iteration)</span>
-<span class="pre">-&gt;</span> <span class="pre">data</span></code>; it keeps its last passes in private attributes (yaml
-<code class="docutils literal notranslate"><span class="pre">acceleration:</span></code>).</p></td>
+<td><p>a callable <code class="docutils literal notranslate"><span class="pre">(carried</span> <span class="pre">Array</span> <span class="pre">data,</span> <span class="pre">iteration)</span> <span class="pre">-&gt;</span> <span class="pre">data</span></code>, added to
+<code class="docutils literal notranslate"><span class="pre">ACCELERATIONS</span></code> (yaml <code class="docutils literal notranslate"><span class="pre">acceleration.type</span></code>).</p></td>
 </tr>
 <tr class="row-even"><td><p>Convergence</p></td>
-<td><p>a <code class="docutils literal notranslate"><span class="pre">Convergence</span></code> subclass: <code class="docutils literal notranslate"><span class="pre">__call__(list</span> <span class="pre">of</span> <span class="pre">SideChange)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>
-(yaml <code class="docutils literal notranslate"><span class="pre">convergence[]</span></code>).</p></td>
+<td><p>a callable <code class="docutils literal notranslate"><span class="pre">(list</span> <span class="pre">of</span> <span class="pre">SideChange)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>, added to <code class="docutils literal notranslate"><span class="pre">CONVERGENCES</span></code>
+(yaml <code class="docutils literal notranslate"><span class="pre">convergence[].type</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p>Transport</p></td>
 <td><p>a <code class="docutils literal notranslate"><span class="pre">Transport</span></code>: <code class="docutils literal notranslate"><span class="pre">send(source,</span> <span class="pre">target,</span> <span class="pre">tag,</span> <span class="pre">message)</span></code> (never blocks),
@@ -1057,52 +1053,25 @@ threads of one process.</p></td>
 </tbody>
 </table>
 </div>
-<p>The three strategy families are families of NeoFOAM’s <code class="docutils literal notranslate"><span class="pre">PluginSystem</span></code>, as the
-viscosity models or the post-processing writers are: each strategy is a
-pydantic model with a <code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">Literal[...]</span></code> that selects it, its options as
-its fields (an unknown one is refused), registered with its family
-(<code class="docutils literal notranslate"><span class="pre">&#64;Mapping.register</span></code>). The built-in ones are members as well: the mappings
-<code class="docutils literal notranslate"><span class="pre">identity</span></code> and <code class="docutils literal notranslate"><span class="pre">nearest-neighbor</span></code>, the accelerations <code class="docutils literal notranslate"><span class="pre">constant</span></code> and
-<code class="docutils literal notranslate"><span class="pre">aitken</span></code> (option <code class="docutils literal notranslate"><span class="pre">relaxation</span></code>) and the convergence <code class="docutils literal notranslate"><span class="pre">relative</span></code> (options
-<code class="docutils literal notranslate"><span class="pre">data</span></code>, <code class="docutils literal notranslate"><span class="pre">limit</span></code>). <code class="docutils literal notranslate"><span class="pre">strategy(family,</span> <span class="pre">options)</span></code> builds one from its yaml
-options.</p>
 <p>A package of its own, e.g. a <code class="docutils literal notranslate"><span class="pre">neofoam-precice</span></code> with preCICE’s RBF mapping and
-IQN-ILS acceleration, adds its strategies without NeoFOAM importing it: an
-entry point of the group <code class="docutils literal notranslate"><span class="pre">neofoam.coupling</span></code> names a module that registers
-them as it is imported.</p>
+IQN-ILS acceleration, adds its kernels to the registries without NeoFOAM
+importing it: an entry point of the group <code class="docutils literal notranslate"><span class="pre">neofoam.coupling</span></code> names its
+<code class="docutils literal notranslate"><span class="pre">register(mappings,</span> <span class="pre">accelerations,</span> <span class="pre">convergences)</span></code>, which fills the three dicts
+it is given.</p>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"neofoam.coupling"</span><span class="k">]</span>
-<span class="n">precice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_precice.coupling"</span>
+<span class="n">precice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"neofoam_precice:register"</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># neofoam_precice/coupling.py</span>
-<span class="nd">@Mapping</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">RadialBasisMapping</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"rbf"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"rbf"</span>
-    <span class="n">support_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span> <span class="o">...</span>
-
-<span class="nd">@Acceleration</span><span class="o">.</span><span class="n">register</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">IQNILSAcceleration</span><span class="p">(</span><span class="n">Acceleration</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"iqn-ils"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"iqn-ils"</span>
-    <span class="n">relaxation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">,</span> <span class="n">iteration</span><span class="p">):</span> <span class="o">...</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">mappings</span><span class="p">,</span> <span class="n">accelerations</span><span class="p">,</span> <span class="n">convergences</span><span class="p">):</span>
+    <span class="n">mappings</span><span class="p">[</span><span class="s2">"rbf"</span><span class="p">]</span> <span class="o">=</span> <span class="n">RadialBasisMapping</span>            <span class="c1"># yaml mapping: rbf</span>
+    <span class="n">accelerations</span><span class="p">[</span><span class="s2">"iqn-ils"</span><span class="p">]</span> <span class="o">=</span> <span class="n">IQNILSAcceleration</span>   <span class="c1"># yaml acceleration.type: iqn-ils</span>
 </pre></div>
 </div>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">exchanges</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">sides</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">fluid</span><span class="p">:</span><span class="w"> </span><span class="nv">wall</span><span class="p p-Indicator">,</span><span class="nt"> solid</span><span class="p">:</span><span class="w"> </span><span class="nv">right</span><span class="p p-Indicator">}</span>
-<span class="w">    </span><span class="nt">mapping</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">rbf</span><span class="p p-Indicator">,</span><span class="nt"> support_radius</span><span class="p">:</span><span class="w"> </span><span class="nv">0.01</span><span class="p p-Indicator">}</span>
-<span class="nt">acceleration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">iqn-ils</span><span class="p p-Indicator">,</span><span class="nt"> relaxation</span><span class="p">:</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="nt"> columns</span><span class="p">:</span><span class="w"> </span><span class="nv">20</span><span class="p p-Indicator">}</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">multiRun</span></code> imports every plugin once, before <code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>
-is read and before any region starts (<code class="docutils literal notranslate"><span class="pre">load_plugins</span></code>; safe to call from
-several threads, the first call imports, the others wait), so no region sees
-the families change. A plugin that fails to import, or registers a type that
-is registered already, raises an <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> naming it. Nothing is
-overridden.</p>
+<p>The registries load every plugin once, on their first read, so before
+<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code> is checked against them. A name that is built in
+or that another plugin registers raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> naming both; a plugin
+that fails to load or to register raises an <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> naming it. Nothing
+is overridden.</p>
 <p>What is exchanged follows from the side’s <code class="docutils literal notranslate"><span class="pre">sends</span></code> / <code class="docutils literal notranslate"><span class="pre">receives</span></code> models:
 <code class="docutils literal notranslate"><span class="pre">Array</span></code> fields are mapped, relaxed and compared, plain fields handed over as
 they are.</p>
