@@ -118,7 +118,8 @@ class CouplingController:
     A side receives what its partner sent in this pass when the scheme is serial
     (the default) and the partner's region steps before its own; else
     (``parallel``, or the partner steps later) what the controller carried from
-    the pass before. Only the carried data is relaxed.
+    the pass before. Only the carried data is relaxed. This is the only rule: the
+    sending regions send their data fresh exactly where the leader decided it.
 
     When a time step's coupling ends it appends its :class:`CouplingOutcome` to
     :attr:`outcomes` and hands it to the execution observer

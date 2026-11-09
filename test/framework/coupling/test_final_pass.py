@@ -135,7 +135,7 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     class _Recording(InProcessTransport):
         def send(self, source: str, target: str, tag: str, message: Any) -> None:
             if tag.endswith("/decision"):
-                go_on, final, _received = message
+                go_on, final, _received, _fresh = message
                 decisions.append((target, go_on, final))
             super().send(source, target, tag, message)
 

@@ -67,10 +67,11 @@ def _state(loops: _Loops) -> str:
     return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
 
 
-# The leader's decision for one region: another pass?, is it the final one?, and what
+# The leader's decision for one region: another pass?, is it the final one?, what
 # each of its sides receives, by patch: the carried data, or None: what its partner
-# sends in this pass.
-_Decision = tuple[bool, bool, dict[str, Optional[Data]]]
+# sends in this pass; and the patches whose partner receives that (the region sends
+# their data at its next loop test, after the pass).
+_Decision = tuple[bool, bool, dict[str, Optional[Data]], frozenset[str]]
 
 
 class CouplingOp(IterativeOp):
@@ -94,15 +95,17 @@ class CouplingOp(IterativeOp):
 
     Its loop test runs before each pass. The first test ever exchanges the
     sides' models and points with the partner regions and checks each exchange.
-    Each test then sends what every side sends now: to the partner that steps
-    later (serial: it receives it in the same pass) and to the node's leader;
-    the leader decides for the node and tells every region to go on or stop, and
-    whether the pass is the node's final one, which the test marks on the loop's
-    entry (``Context.mark_final``: an operation marked ``final`` runs in it). On
-    another pass every side gets what its partner sent (fresh, or carried by the
-    leader), mapped onto its points with the exchange's mapping, validated as
-    its ``receives`` model, reported to the execution observer
-    (``coupling_exchanged``) and handed to its ``receive``. Not thread safe.
+    Each test then sends what every side sends now to the node's leader, and to
+    the partner of every side the leader's decision before named (the partner
+    receives it fresh, in the pass of that decision); the leader decides for the
+    node and tells every region to go on or stop, and whether the pass is the
+    node's final one, which the test marks on the loop's entry
+    (``Context.mark_final``: an operation marked ``final`` runs in it). On
+    another pass every side gets what the leader decided: what its partner sends
+    at its next test (fresh), or what the leader carried, mapped onto its points
+    with the exchange's mapping, validated as its ``receives`` model, reported to
+    the execution observer (``coupling_exchanged``) and handed to its
+    ``receive``. Not thread safe.
     """
 
     def __init__(
@@ -130,12 +133,13 @@ class CouplingOp(IterativeOp):
         }
         self._sides = tuple(sides)
         self._check()
-        self._rank = {region: index for index, region in enumerate(self._group)}
         # set at the first test: the partner's points per patch, and the leader's controller
         self._connected = False
         self._partner_points: dict[str, Any] = {}
         self._controller: Optional[CouplingController] = None
         self._iteration = 0
+        # the patches whose data the partner receives fresh: the leader's last decision
+        self._fresh: frozenset[str] = frozenset()
 
     def _check(self) -> None:
         """Raise ``ValueError`` unless every side has an exchange and every exchange one side."""
@@ -203,14 +207,16 @@ class CouplingOp(IterativeOp):
         current = {
             side.patch: _sent(side, self.node.name, self._iteration, time) for side in self._sides
         }
-        if self._iteration > 0 and not self.node.parallel:
-            for side in self._sides:
-                region = self.exchange_of(side).partner[0]
-                if self._rank[region] > self._rank[self.region]:
-                    self._send(region, Tag.data(self.exchange_of(side).name), current[side.patch])
-        go_on, final, decided = self._decide(current, time if self._iteration == 0 else None, loops)
+        for side in self._sides:
+            if side.patch in self._fresh:
+                exchange = self.exchange_of(side)
+                self._send(exchange.partner[0], Tag.data(exchange.name), current[side.patch])
+        go_on, final, decided, self._fresh = self._decide(
+            current, time if self._iteration == 0 else None, loops
+        )
         if not go_on:
             self._iteration = 0
+            self._fresh = frozenset()
             return False
         ctx.mark_final(final)
         self._iteration += 1
@@ -350,13 +356,17 @@ class CouplingOp(IterativeOp):
             }
         )
         received: dict[str, dict[str, Optional[Data]]] = {region: {} for region in self._group}
+        # the patches of each region whose partner receives their data fresh
+        fresh: dict[str, set[str]] = {region: set() for region in self._group}
         if carried is not None:
             for end, side in controller.sides.items():
-                received[side.region][side.patch] = (
-                    None if controller.fresh(end) else carried[side.partner]
-                )
+                if controller.fresh(end):
+                    received[side.region][side.patch] = None
+                    fresh[side.partner[0]].add(side.partner[1])
+                else:
+                    received[side.region][side.patch] = carried[side.partner]
         decisions = {
-            region: (carried is not None, controller.final, by_patch)
+            region: (carried is not None, controller.final, by_patch, frozenset(fresh[region]))
             for region, by_patch in received.items()
         }
         for region, decision in decisions.items():
