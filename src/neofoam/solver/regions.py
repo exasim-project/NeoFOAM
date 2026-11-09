@@ -4,10 +4,10 @@
 """What the solvers share to run as the coupled regions of a ``multiRun`` case."""
 
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Any, Mapping, Optional
 
 import pybFoam as pyf
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt, field_validator
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.framework.coupling import Array, FaceData
@@ -15,6 +15,7 @@ from neofoam.io import YAML, IOStrategy
 
 __all__ = [
     "ControlDictConfig",
+    "RegionSolverConfig",
     "WallHeatFlux",
     "WallTemperature",
     "coupled_entries",
@@ -22,24 +23,59 @@ __all__ = [
 ]
 
 
+class RegionSolverConfig(BaseModel):
+    """The solver of one region and the MPI ``processes`` it runs on.
+
+    In the yaml a plain solver name stands for one process. ``processes`` counts
+    only under ``mpirun`` (:mod:`~neofoam.solver.multiRun.mpi`); without MPI
+    every region runs on a thread of its own, whatever it says.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    solver: str
+    processes: PositiveInt = 1
+
+
 @IOStrategy(YAML("system/controlDict.yaml"))
 class ControlDictConfig(TimeControlConfig):
     """``system/controlDict.yaml``: the time control of every region, and its solvers.
 
     ``participants`` maps each region to its solver, in stepping order; a region
-    reads its own files under ``<region>/``.
+    reads its own files under ``<region>/``. An entry is the solver's name or
+    ``{solver: <name>, processes: <n>}`` (MPI processes under ``mpirun``).
 
     Example::
 
         endTime: 10.0
         deltaT: 1.0
         participants:
-          fluid: myFluidSolver
+          fluid: {solver: myFluidSolver, processes: 2}
           solid: mySolidSolver
     """
 
     # The i18n prefix labels the wizard's "add a region" row (neofoam.ui.form_schema).
-    participants: dict[str, str] = Field(min_length=1, json_schema_extra={"i18n": "nf.region"})
+    participants: dict[str, RegionSolverConfig] = Field(
+        min_length=1, json_schema_extra={"i18n": "nf.region"}
+    )
+
+    @field_validator("participants", mode="before")
+    @classmethod
+    def _plain_names(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {
+                region: {"solver": entry} if isinstance(entry, str) else entry
+                for region, entry in value.items()
+            }
+        return value
+
+    def solvers(self) -> dict[str, str]:
+        """Every region's solver name, in stepping order."""
+        return {region: entry.solver for region, entry in self.participants.items()}
+
+    def processes(self) -> dict[str, int]:
+        """Every region's number of MPI processes, in stepping order."""
+        return {region: entry.processes for region, entry in self.participants.items()}
 
 
 def region_case_dir(region: Optional[str]) -> Path:

@@ -40,6 +40,9 @@ from .create_fields import create_init
 heatConductionNeoN = Solver("heatConductionNeoN")
 # Kokkos is finalized on its initializing thread; multiRun instantiates on the main one
 heatConductionNeoN.on_instantiate = ensure_neon_initialized
+heatConductionNeoN.sub_communicator_limitation = (
+    "NeoN communicates on MPI_COMM_WORLD and cannot run on the region's sub-communicator yet"
+)
 
 heatConductionNeoN.config(ControlDictConfig)
 heatConductionNeoN.config(NeoNControlConfig)
