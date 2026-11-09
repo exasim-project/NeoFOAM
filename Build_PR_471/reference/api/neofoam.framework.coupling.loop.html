@@ -756,6 +756,10 @@ the pass before. Only the carried data is relaxed.</p>
 <a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.outcomes" title="neofoam.framework.coupling.loop.CouplingController.outcomes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">outcomes</span></code></a> and hands it to the execution observer
 (<code class="docutils literal notranslate"><span class="pre">coupling_finished</span></code>); ending at <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> unconverged also warns
 (<a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingNotConvergedWarning" title="neofoam.framework.coupling.loop.CouplingNotConvergedWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code></a>). Not thread safe.</p>
+<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when a measure of <code class="docutils literal notranslate"><span class="pre">convergence</span></code> on a field’s data
+(<code class="docutils literal notranslate"><span class="pre">data</span></code>) has none to compare: no side of the field, or its sides send no
+<code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data; <a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.decide" title="neofoam.framework.coupling.loop.CouplingController.decide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decide()</span></code></a> raises <code class="docutils literal notranslate"><span class="pre">FloatingPointError</span></code> when the
+change of a side is not finite.</p>
 <p>The leader builds it with its coupling’s <code class="docutils literal notranslate"><span class="pre">controller</span></code> factory, which it
 hands the node (by default <code class="xref py py-func docutils literal notranslate"><span class="pre">node_controller()</span></code>:
 the node’s scheme, convergence, acceleration and max_iterations; one
@@ -819,6 +823,7 @@ coupling ended after its final pass, its outcome recorded.</p>
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingController.residuals">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">residuals</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingController.residuals" title="Link to this definition">¶</a></dt>
 <dd><p>The relative change of each field’s <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data in the last pass.</p>
+<p><code class="docutils literal notranslate"><span class="pre">inf</span></code> for a field no pass of the time step’s coupling measured yet.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -933,7 +938,7 @@ its <code class="docutils literal notranslate"><span class="pre">receives</span>
 <code class="docutils literal notranslate"><span class="pre">converged</span></code> whether the convergence check held (<code class="docutils literal notranslate"><span class="pre">False</span></code>:
 <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> stopped it), and <code class="docutils literal notranslate"><span class="pre">residuals</span></code> the relative change of
 every field’s exchanged <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data in the last pass (largest over its
-sides and arrays).</p>
+sides and arrays; <code class="docutils literal notranslate"><span class="pre">inf</span></code> for a field no pass measured).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -1007,7 +1012,8 @@ exchange.</p>
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.relative_changes">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.loop.</span></span><span class="sig-name descname"><span class="pre">relative_changes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">changes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.SideChange" title="neofoam.framework.coupling.kernels.SideChange"><span class="pre">SideChange</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#relative_changes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.relative_changes" title="Link to this definition">¶</a></dt>
 <dd><p>The relative change of each field’s data: <code class="docutils literal notranslate"><span class="pre">|current</span> <span class="pre">-</span> <span class="pre">previous|</span> <span class="pre">/</span> <span class="pre">|current|</span></code>.</p>
-<p>Largest over the sides and arrays of the field; the absolute change where
+<p>Largest over the sides and arrays of the field (no floor: a field’s value
+is its largest measured change; a NaN stays NaN); the absolute change where
 the current data is zero.</p>
 </dd></dl>
 
