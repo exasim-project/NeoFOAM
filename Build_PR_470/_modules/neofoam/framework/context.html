@@ -665,7 +665,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContextVar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
@@ -713,6 +713,24 @@
 
 
 
+<div class="viewcode-block" id="LoopEntry">
+<a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.LoopEntry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoopEntry</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A running loop, an entry of :attr:`Context.loops`.</span>
+
+<span class="sd">    ``iteration`` counts the loop's passes from 0 (the time loop: its time</span>
+<span class="sd">    steps); ``first`` is whether it is in its first pass. ``wrapping`` is whether</span>
+<span class="sd">    the loop is a wrapping loop (``OperationMetadata.wraps``, e.g. a coupling</span>
+<span class="sd">    node), placed around operations of the time step.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">wrapping</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+
+
 <div class="viewcode-block" id="Context">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.context.html#neofoam.framework.context.Context">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Context</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -733,6 +751,9 @@
     <span class="c1"># names of fields (keys of ``fields``) flagged for persistence via</span>
     <span class="c1"># ``field(..., write=True)``; a per-field write backend writes exactly these.</span>
     <span class="n">write_fields</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+    <span class="c1"># the loops running now, outermost first: each loop op adds its entry while it</span>
+    <span class="c1"># runs and updates it before each pass (``Operation``)</span>
+    <span class="n">loops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LoopEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="c1"># the region of a multi-region case this context belongs to; None for one region</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">initializing</span><span class="p">)</span></div>
 
