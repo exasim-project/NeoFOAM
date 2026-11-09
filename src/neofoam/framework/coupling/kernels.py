@@ -105,11 +105,17 @@ Convergence = Callable[[list[SideChange]], bool]
 Acceleration = Callable[[list[Data], int], list[Data]]
 
 
+# The elements of the target-by-source distance block :func:`nearest_neighbor` computes at once.
+_BLOCK_ELEMENTS = 1 << 20
+
+
 def nearest_neighbor(source: Any, target: Any) -> Any:
-    """For every target point, the index of the nearest source point.
+    """For every target point, the index of the nearest source point (the lowest on a tie).
 
     Points are rows of ``(n_points, dim)`` arrays. Compares every pair of points,
-    so it suits interfaces of a few thousand points.
+    a block of target points at a time, so that memory grows with the points of
+    one side, not with the pairs: O(n + m) for ``m`` source and ``n`` target
+    points, time O(n * m).
 
     Example::
 
@@ -117,57 +123,76 @@ def nearest_neighbor(source: Any, target: Any) -> Any:
     """
     source = np.asarray(source, dtype=float)
     target = np.asarray(target, dtype=float)
-    distances = np.linalg.norm(target[:, None, :] - source[None, :, :], axis=-1)
-    return np.argmin(distances, axis=1)
+    indices = np.empty(len(target), dtype=np.intp)
+    rows = max(1, _BLOCK_ELEMENTS // max(1, source.size))
+    for start in range(0, len(target), rows):
+        block = target[start : start + rows]
+        distances = np.linalg.norm(block[:, None, :] - source[None, :, :], axis=-1)
+        indices[start : start + rows] = np.argmin(distances, axis=1)
+    return indices
+
+
+#: A mapping bound to the points of both sides: the data on the source points -> on the target's.
+BoundMapping = Callable[[Data], Data]
 
 
 class Mapping:
     """Maps the :data:`~neofoam.framework.coupling.Array` data a side sends onto the other side.
 
-    The mapping of an :class:`~neofoam.framework.coupling.Exchange`, run by the
-    receiving side's coupling op in its loop test: from the partner's points onto
-    the side's own (each a ``(n_points, dim)`` array, or ``None`` without
-    coordinates). ``kind`` names it (``system/regionCoupling.yaml``:
-    ``mapping:``); :data:`MAPPINGS` holds the kinds the framework offers. This
-    base class hands the data over unchanged (kind ``identity``): the sides share
-    their points. A mapping of one's own subclasses it and sets ``kind``.
+    The mapping of an :class:`~neofoam.framework.coupling.Exchange`. The
+    receiving side's coupling op binds it once, when it connects, to the
+    partner's points (``source``) and the side's own (``target``; each a
+    ``(n_points, dim)`` array, or ``None`` without coordinates), and maps the data
+    of every pass with the bound mapping. ``kind`` names it
+    (``system/regionCoupling.yaml``: ``mapping:``); :data:`MAPPINGS` holds the
+    kinds the framework offers. This base class hands the data over unchanged
+    (kind ``identity``): the sides share their points. A mapping of one's own
+    subclasses it, sets ``kind`` and overrides :meth:`bind`.
 
     Example::
 
-        mapped = exchange.mapping({"T": values}, partner_points, points)
+        mapper = exchange.mapping.bind(partner_points, points)
+        mapped = mapper({"T": values})
     """
 
     kind = "identity"
 
-    def check(self, source: Any, target: Any) -> None:
-        """Raise ``ValueError`` when it cannot map from the points ``source`` onto ``target``."""
+    def bind(self, source: Any, target: Any) -> BoundMapping:
+        """The mapping from the points ``source`` onto ``target``.
 
-    def __call__(self, data: Data, source: Any, target: Any) -> Data:
-        """``data`` given on the points ``source``, on the points ``target``."""
-        return data
+        Raises ``ValueError`` when it cannot map between them: here, when both
+        sides have points and their numbers differ.
+        """
+        if source is not None and target is not None and len(source) != len(target):
+            raise ValueError(
+                f"mapping '{self.kind}' needs as many points on both sides: "
+                f"{len(source)} sent, {len(target)} received"
+            )
+        return _unchanged
+
+
+def _unchanged(data: Data) -> Data:
+    return data
 
 
 class NearestNeighborMapping(Mapping):
     """Maps every point of the receiving side to the nearest point of the sending side.
 
-    Both sides need coordinates. It keeps the indices of each pair of point
-    arrays, so the points must not move. Not thread safe.
+    Both sides need coordinates. :meth:`bind` finds the nearest points
+    (:func:`nearest_neighbor`) once, so the points must not move.
     """
 
     kind = "nearest-neighbor"
 
-    def __init__(self) -> None:
-        self._indices: dict[tuple[int, int], Any] = {}
-
-    def check(self, source: Any, target: Any) -> None:
+    def bind(self, source: Any, target: Any) -> BoundMapping:
         if source is None or target is None:
             raise ValueError(f"mapping '{self.kind}' needs the coordinates of both sides")
+        indices = nearest_neighbor(source, target)
 
-    def __call__(self, data: Data, source: Any, target: Any) -> Data:
-        pair = (id(source), id(target))
-        if pair not in self._indices:
-            self._indices[pair] = nearest_neighbor(source, target)
-        return {name: np.asarray(values)[self._indices[pair]] for name, values in data.items()}
+        def mapper(data: Data) -> Data:
+            return {name: np.asarray(values)[indices] for name, values in data.items()}
+
+        return mapper
 
 
 #: The mappings by their ``kind``: a new instance per exchange.

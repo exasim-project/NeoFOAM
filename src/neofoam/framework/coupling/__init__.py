@@ -22,7 +22,8 @@
 - :class:`CouplingOp` — a region's part of a node, ``<region>.<node>`` (its
   :class:`Coupling` builds it): a loop placed as the node says; its loop test
   exchanges the node's sides' data with the partner regions, mapped onto the
-  sides' points (:class:`Exchange`, :class:`Mapping`).
+  sides' points (:class:`Exchange`, :class:`Mapping`, bound once to the points:
+  :data:`BoundMapping`).
 - :class:`CouplingController` — the leader's part, in the coupling op of the
   node's last region: decides when the node's data converged, which pass is
   the final one (one more after converging, or the last of max_iterations), and
@@ -58,6 +59,7 @@ from .kernels import (
     ENTRY_POINT_GROUP,
     MAPPINGS,
     AitkenRelaxation,
+    BoundMapping,
     ConstantRelaxation,
     Mapping,
     NearestNeighborMapping,
@@ -98,6 +100,7 @@ __all__ = [
     "MAPPINGS",
     "AitkenRelaxation",
     "Array",
+    "BoundMapping",
     "ConstantRelaxation",
     "ControllerFactory",
     "Coupling",

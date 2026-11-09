@@ -25,6 +25,7 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     MAPPINGS,
     Array,
+    BoundMapping,
     Coupling,
     CouplingController,
     CouplingNode,
@@ -466,9 +467,12 @@ class _Reversed(Mapping):
     def __init__(self) -> None:
         self.mapped: list[dict[str, Any]] = []
 
-    def __call__(self, data: dict[str, Any], source: Any, target: Any) -> dict[str, Any]:
-        self.mapped.append(data)
-        return {name: values[::-1] for name, values in data.items()}
+    def bind(self, source: Any, target: Any) -> BoundMapping:
+        def mapper(data: dict[str, Any]) -> dict[str, Any]:
+            self.mapped.append(data)
+            return {name: values[::-1] for name, values in data.items()}
+
+        return mapper
 
 
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")

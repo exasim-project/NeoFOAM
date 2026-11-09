@@ -9,6 +9,7 @@ value last delivered. Aitken's factor is exact for a linear map of one value, so
 its second relaxed pass lands on the fixed point (to round-off, hence 1e-12).
 """
 
+import tracemalloc
 from typing import Any
 
 import numpy as np
@@ -21,6 +22,7 @@ from neofoam.framework.coupling import (
     NearestNeighborMapping,
     RelativeConvergence,
     SideChange,
+    kernels,
     mapping,
     nearest_neighbor,
 )
@@ -91,16 +93,83 @@ def test_relaxation_keeps_the_names_and_shapes_of_the_data() -> None:
 def test_nearest_neighbor_mapping_maps_each_target_point_to_its_nearest_source() -> None:
     source = _points([[0.0], [1.0], [2.0]])
     target = _points([[1.9], [0.1]])
-    nearest = NearestNeighborMapping()
+    mapper = NearestNeighborMapping().bind(source, target)
 
-    received = nearest({"T": np.array([10.0, 20.0, 30.0])}, source, target)
+    received = mapper({"T": np.array([10.0, 20.0, 30.0])})
 
     assert received["T"].tolist() == [30.0, 10.0]
 
 
+def test_nearest_neighbor_mapping_finds_the_neighbors_once_at_bind(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    searched: list[int] = []
+
+    def counted(source: Any, target: Any) -> Any:
+        searched.append(len(target))
+        return nearest_neighbor(source, target)
+
+    monkeypatch.setattr(kernels, "nearest_neighbor", counted)
+    mapper = NearestNeighborMapping().bind(_points([[0.0], [1.0]]), _points([[0.9], [0.2], [1.1]]))
+
+    passes = [mapper({"T": np.array([1.0, 2.0]) * k})["T"].tolist() for k in (1.0, 2.0, 3.0)]
+
+    assert searched == [3]
+    assert passes == [[2.0, 1.0, 2.0], [4.0, 2.0, 4.0], [6.0, 3.0, 6.0]]
+
+
+def _pairwise_nearest(source: Any, target: Any) -> Any:
+    """The nearest neighbours as before the blocks: one distance tensor of all pairs."""
+    distances = np.linalg.norm(target[:, None, :] - source[None, :, :], axis=-1)
+    return np.argmin(distances, axis=1)
+
+
+@pytest.mark.parametrize("seed", range(4))
+def test_nearest_neighbor_in_blocks_equals_all_pairs_at_once(
+    seed: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # blocks of a few target rows, so that the blocks' seams are tested
+    monkeypatch.setattr(kernels, "_BLOCK_ELEMENTS", 3 * 50 * 7)
+    rng = np.random.default_rng(seed)
+    source = rng.random((50, 3))
+    target = rng.random((333, 3))
+
+    np.testing.assert_array_equal(
+        nearest_neighbor(source, target), _pairwise_nearest(source, target)
+    )
+
+
+def test_nearest_neighbor_takes_the_lowest_index_on_a_tie(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(kernels, "_BLOCK_ELEMENTS", 2 * 9)
+    # points on a grid: every target point is as far from two or four source points
+    source = np.array([[x, y] for x in range(3) for y in range(3)], dtype=float)
+    target = np.array([[x + 0.5, y + 0.5] for x in range(2) for y in range(2)] + [[0.5, 0.0]])
+
+    indices = nearest_neighbor(source, target)
+
+    assert indices.tolist() == [0, 1, 3, 4, 0]
+    np.testing.assert_array_equal(indices, _pairwise_nearest(source, target))
+
+
+def test_nearest_neighbor_never_holds_the_distances_of_all_pairs() -> None:
+    rng = np.random.default_rng(0)
+    source = rng.random((20_000, 3))
+    target = rng.random((20_000, 3))
+    tracemalloc.start()
+    try:
+        indices = nearest_neighbor(source, target)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert indices.shape == (20_000,)
+    # all pairs at once: 20k * 20k * 3 doubles, 9.6 GB
+    assert peak < 64 * 2**20, f"peak {peak / 2**20:.0f} MiB"
+
+
 def test_nearest_neighbor_mapping_needs_the_points_of_both_sides() -> None:
     with pytest.raises(ValueError, match="'nearest-neighbor' needs the coordinates of both sides"):
-        NearestNeighborMapping().check(_points([[0.0]]), _points(None))
+        NearestNeighborMapping().bind(_points([[0.0]]), _points(None))
 
 
 def test_mapping_of_a_kind_is_a_new_instance_of_it() -> None:
@@ -114,7 +183,15 @@ def test_mapping_of_a_kind_is_a_new_instance_of_it() -> None:
 def test_identity_mapping_hands_the_data_over_unchanged() -> None:
     data = {"T": np.array([1.0, 2.0])}
 
-    assert Mapping()(data, _points(None), _points(None)) is data
+    assert Mapping().bind(_points(None), _points(None))(data) is data
+    assert Mapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0]]))(data) is data
+
+
+def test_identity_mapping_needs_as_many_points_on_both_sides() -> None:
+    with pytest.raises(
+        ValueError, match="'identity' needs as many points on both sides: 2 sent, 3"
+    ):
+        Mapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0], [2.0]]))
 
 
 @pytest.mark.parametrize(

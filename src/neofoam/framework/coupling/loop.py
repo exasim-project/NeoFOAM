@@ -43,7 +43,7 @@ from neofoam.framework.operations import IterativeOp
 
 from .controller import CouplingController, GroupSide
 from .data import End, Exchange, ExchangeSide, _array_names, _arrays, _check_received, _kinds, _sent
-from .kernels import mapping
+from .kernels import BoundMapping, mapping
 from .transport import Data, Tag
 
 if TYPE_CHECKING:
@@ -133,9 +133,9 @@ class CouplingOp(IterativeOp):
         }
         self._sides = tuple(sides)
         self._check()
-        # set at the first test: the partner's points per patch, and the leader's controller
+        # set at the first test: the bound mapping per patch, and the leader's controller
         self._connected = False
-        self._partner_points: dict[str, Any] = {}
+        self._mappers: dict[str, BoundMapping] = {}
         self._controller: Optional[CouplingController] = None
         self._iteration = 0
         # the patches whose data the partner receives fresh: the leader's last decision
@@ -267,8 +267,7 @@ class CouplingOp(IterativeOp):
             exchange = self.exchange_of(side)
             announced = self._receive(exchange.partner[0], Tag.side(exchange.name))
             _check_received(exchange.name, announced, side)
-            exchange.mapping.check(announced["points"], side.coordinates)
-            self._partner_points[side.patch] = announced["points"]
+            self._mappers[side.patch] = exchange.mapping.bind(announced["points"], side.coordinates)
         if self.is_leader:
             self._controller = self._coupling.controller(
                 self._node_sides(path, sides),
@@ -384,9 +383,7 @@ class CouplingOp(IterativeOp):
         data = decided[side.patch]
         if data is None:
             data = self._receive(exchange.partner[0], Tag.data(exchange.name))
-        mapped = exchange.mapping(
-            _arrays(side.mapped, data), self._partner_points[side.patch], side.coordinates
-        )
+        mapped = self._mappers[side.patch](_arrays(side.mapped, data))
         received = side.receives.model_validate({**data, **mapped})
         observer = execution_observer.current()
         if observer is not None:
