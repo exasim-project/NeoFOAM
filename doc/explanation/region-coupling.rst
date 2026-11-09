@@ -17,7 +17,8 @@ point-to-point channel. Regions exchange data over *exchanges*. Who does what:
        **coupling model** (``Coupling.of(ctx).add(self)``).
    * - case (``system/regionCoupling.yaml``)
      - which patches are paired (``exchanges``), the **mapping** of each pair, the
-       scheme, acceleration, convergence and ``maxIterations`` of the couplings.
+       scheme, and the coupling nodes (``couplings``): their exchanges,
+       acceleration, convergence, ``maxIterations`` and placement.
    * - solver
      - if it supports coupling, its **coupling model** (``Coupling``,
        ``ctx.models["coupling"] = Coupling(self.coupling)``), added in its init
@@ -42,7 +43,8 @@ some exchanges (its convergence, ``maxIterations``, an acceleration per exchange
 its placement per region; nodes are listed outer to inner), whose last region in
 stepping order is the node's **leader**: its controller decides when the node's
 data converged; a side is keyed by ``(region, patch, field)``. ``multiRun``
-puts every exchange of the case in one node, ``couple``.
+builds the nodes the case file lists under ``couplings``; without them it puts
+every exchange in one node, ``coupling``.
 
 The coupled boundary condition
 ------------------------------
@@ -106,11 +108,41 @@ The case file
       - {type: relative, data: T, limit: 1.0e-6}
     maxIterations: 100
 
+Without ``couplings`` the file describes one node, ``coupling``, holding every
+exchange: ``acceleration`` (of every exchange, default none), ``convergence``
+(required) and ``maxIterations`` (default 100) are its own, and its op wraps the
+whole time step of each region. ``couplings`` places the nodes instead:
+
+.. code-block:: yaml
+
+    exchanges:
+      - {name: wall-T, sides: {fluid: wall, solid: right}}
+      - {name: wall-p, sides: {fluid: inlet, pipe: outlet}}
+    scheme: serial
+    couplings:                       # outer to inner
+      - name: wall                   # unique; the ops <region>.wall
+        maxIterations: 50            # default 100
+        exchanges:                   # each exchange in exactly one node
+          - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}
+          - wall-p                   # a plain name: no acceleration
+        convergence:                 # every measure must hold
+          - {type: relative, data: T, limit: 1.0e-6}
+        wraps:                       # per region of the node; default: the whole time step
+          fluid: {operations: [solve_T], downstream: true}
+
+The nodes are listed outer to inner: a node's op without ``operations`` wraps the
+body of the op of the node before it (or the whole time step). ``wraps`` follows
+``Placement``: with ``operations`` it wraps those operations and, if
+``downstream`` (the default), every operation downstream of them; an operation
+name the region's graph lacks is reported when the graph is built. With
+``couplings`` the top-level ``acceleration``, ``convergence`` and
+``maxIterations`` are an error; ``scheme`` applies to every node.
+
 ``mapping``, ``acceleration.type`` and ``convergence[].type`` name entries of
 the registries ``MAPPINGS``, ``ACCELERATIONS`` and ``CONVERGENCES``; the file is
-checked against them. ``scheme``, ``acceleration``, ``convergence`` and
-``maxIterations`` apply to every group of the case. A patch is in at most one
-exchange and carries one coupled side.
+checked against them on load, as against unknown keys, two nodes of one name, an
+exchange in no node or in two, and a ``wraps`` region the node does not couple.
+A patch is in at most one exchange and carries one coupled side.
 
 Architecture
 ------------
@@ -126,8 +158,8 @@ Architecture
         |     initialize()       the solver: ctx.models["coupling"] = Coupling(self.coupling),
         |                        then its BCs; a @coupled BC adds itself
         |     execution_graph    model ops += ctx.models["coupling"].operations()
-        |     resolve_operations DAGResolver places a.couple around the time step
-        |     run()              time_loop { a.couple { set_time_step, agree_dt,
+        |     resolve_operations DAGResolver places a.coupling around the time step
+        |     run()              time_loop { a.coupling { set_time_step, agree_dt,
         |                                               increment_time, solve_x } }
         |
         +-- thread "b" (leader): the same, its coupling op owns the controller

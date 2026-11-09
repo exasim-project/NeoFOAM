@@ -58,7 +58,7 @@ def _interface(regions: list[str], comm_channel: CommChannel) -> dict[str, Regio
     """Left's patch ``right`` and right's patch ``left`` in one exchange."""
     link = Link("interface", (("left", "right"), ("right", "left")))
     return region_couplings(
-        regions, [link], comm_channel, nodes=[CouplingNode("couple", ("interface",))]
+        regions, [link], comm_channel, nodes=[CouplingNode("coupling", ("interface",))]
     )
 
 
@@ -132,7 +132,7 @@ def test_multiRun_each_region_wraps_its_solution_in_its_coupling_op(
                 "agree_dt",
                 "increment_time",
                 "store_old_time",
-                (f"{region}.couple", ["solve_T"]),
+                (f"{region}.coupling", ["solve_T"]),
             ],
         )
     ]

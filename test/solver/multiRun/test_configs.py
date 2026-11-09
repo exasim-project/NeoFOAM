@@ -37,6 +37,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
         "acceleration": {"type": "aitken", "relaxation": 0.5},
         "convergence": [{"type": "relative", "data": "T", "limit": 1e-12}],
         "maxIterations": 100,
+        "couplings": None,
     }
 
 
@@ -52,9 +53,10 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
             }
         ],
         "scheme": "serial",
-        "acceleration": {"type": "constant", "relaxation": 1.0},
+        "acceleration": None,
         "convergence": [{"type": "relative", "data": "T", "limit": 1e-5}],
-        "maxIterations": 100,
+        "maxIterations": None,
+        "couplings": None,
     }
 
 

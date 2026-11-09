@@ -10,7 +10,7 @@ the regions ``a`` and ``b``, each with its own ``constant/<region>/affine.yaml``
 
 ``system/regionCoupling.yaml`` couples their patches ``interface`` (serial,
 relaxation 1, relative change of ``x`` < 1e-6): each region runs on its own
-thread and repeats its ``solve_x`` in its coupling op ``<region>.couple`` to the
+thread and repeats its ``solve_x`` in its coupling op ``<region>.coupling`` to the
 fixed point ``a = 2``, ``b = 1``, as b (the leader) decides. Both start at 0.
 Serial, b receives what a sent in the same pass (Gauss-Seidel), so pass k gives
 ``a_k = 2 - 2**(1 - k)`` and ``b_k = 1 - 2**-k``: the error halves every pass.
@@ -97,8 +97,8 @@ def test_multiRun_affine_reads_each_regions_config(ctx: Regions) -> None:
 def test_multiRun_affine_regions_couple_through_their_coupling_ops(ctx: Regions) -> None:
     a_op, b_op = _coupling(ctx, "a"), _coupling(ctx, "b")
     assert [(op.label, op.region, op.is_leader) for op in (a_op, b_op)] == [
-        ("a.couple", "a", False),
-        ("b.couple", "b", True),
+        ("a.coupling", "a", False),
+        ("b.coupling", "b", True),
     ]
     assert a_op.controller is None and b_op.controller is not None
     (a_side,), (b_side,) = a_op.sides, b_op.sides
@@ -237,7 +237,7 @@ def test_multiRun_affine_execution_observer_sees_each_region_s_graph(
                     "set_time_step",
                     "agree_dt",
                     "increment_time",
-                    (f"{region}.couple", ["solve_x"]),
+                    (f"{region}.coupling", ["solve_x"]),
                 ],
             )
         ]
@@ -258,17 +258,17 @@ def test_multiRun_affine_execution_observer_sees_each_region_s_graph(
     # every region's coupling op runs PASSES passes, then the leader's decision ends
     # it in the same pass; the second time step stops after one pass
     for region in ("a", "b"):
-        couple = [t for t in recorder.tests[region] if t[0] == f"{region}.couple"]
+        couple = [t for t in recorder.tests[region] if t[0] == f"{region}.coupling"]
         assert couple == [
-            *[(f"{region}.couple", k, True) for k in range(1, PASSES + 1)],
-            (f"{region}.couple", PASSES + 1, False),
-            (f"{region}.couple", 1, True),
-            (f"{region}.couple", 2, False),
+            *[(f"{region}.coupling", k, True) for k in range(1, PASSES + 1)],
+            (f"{region}.coupling", PASSES + 1, False),
+            (f"{region}.coupling", 1, True),
+            (f"{region}.coupling", 2, False),
         ]
     # b's coupling op, the leader, decided
     assert [(label, o.passes, o.converged) for label, o in recorder.couplings] == [
-        ("b.couple", PASSES, True),
-        ("b.couple", 1, True),
+        ("b.coupling", PASSES, True),
+        ("b.coupling", 1, True),
     ]
 
 
