@@ -131,7 +131,9 @@ def build(self: Any) -> list[Any]:
     declarations; ``@build`` carries ``phi``, the SimpleControl object,
     the running continuity-error accumulator, and the pressure-reference
     cell logic (reading the ``SIMPLE`` subdict of ``system/fvSolution``).
+    ``self`` is the run's runtime; its ``config`` holds the case directory.
     """
+    case_dir = self.config.case_dir
 
     def create_phi(context: dict[str, Any]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
@@ -143,7 +145,7 @@ def build(self: Any) -> list[Any]:
         p = context["fields.p"]
         mesh = context["mesh"]
 
-        fv_solution = pyf.dictionary.read("system/fvSolution")
+        fv_solution = pyf.dictionary.read(str(case_dir / "system" / "fvSolution"))
         algo_dict = fv_solution.subDict("SIMPLE")
         pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
 
@@ -158,7 +160,11 @@ def build(self: Any) -> list[Any]:
 
     return [
         field("phi", create_phi, depends_on=["fields.U"], write=True),
-        model("simple_control", create_simple_control, depends_on=["mesh"]),
+        model(
+            "simple_control",
+            lambda context: create_simple_control(context, case_dir),
+            depends_on=["mesh"],
+        ),
         model("cumulativeContErr", create_cumulative_cont_err),
         model(
             "pressure_reference",

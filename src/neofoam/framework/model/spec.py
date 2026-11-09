@@ -10,6 +10,7 @@ callables; all mutable state lives on ModelRuntime created per instantiate().
 
 from __future__ import annotations
 
+import inspect
 import re
 from pathlib import Path
 from types import SimpleNamespace
@@ -224,14 +225,26 @@ class ModelSpec:
         self._build_func = func
         return func
 
-    def detect(self, func: Callable[[], bool]) -> Callable[[], bool]:
-        """Register the DETECT predicate."""
+    def detect(self, func: Callable[..., bool]) -> Callable[..., bool]:
+        """Register the DETECT predicate.
+
+        Signature: ``def detect() -> bool``, or ``def detect(case_dir: Path) -> bool``
+        for a predicate that reads the case (handed the case directory).
+        """
         self._detect_func = func
         return func
 
-    def run_detect(self) -> bool:
-        """Return True if the detect predicate passes (default: True)."""
-        return self._detect_func() if self._detect_func is not None else True
+    def run_detect(self, case_dir: Optional[Path] = None) -> bool:
+        """Return True if the detect predicate passes (default: True).
+
+        A predicate with a parameter is handed ``case_dir`` (default ``.``, the
+        working directory).
+        """
+        if self._detect_func is None:
+            return True
+        if inspect.signature(self._detect_func).parameters:
+            return bool(self._detect_func(Path(case_dir) if case_dir is not None else Path(".")))
+        return bool(self._detect_func())
 
     # ------------------------------------------------------------------
     # Operation decorators

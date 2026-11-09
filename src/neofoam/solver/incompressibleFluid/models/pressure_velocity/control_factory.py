@@ -10,6 +10,7 @@ typed config (:mod:`neofoam.foam.algorithm_configs`) and return
 ``pybFoam.pimpleControl`` so loop logic stays in Python.
 """
 
+from pathlib import Path
 from typing import Any
 
 import pybFoam as pyf
@@ -29,13 +30,15 @@ _PIMPLE_CLASSES = (PimpleAlgorithmConfig, DynamicMeshControls)
 _PISO_CLASSES = (PisoAlgorithmConfig, PisoDynamicMeshControls)
 
 
-def _algorithm_classes() -> tuple[type[PimpleAlgorithmConfig], type[DynamicMeshControls]]:
+def _algorithm_classes(
+    case_dir: Path = Path("."),
+) -> tuple[type[PimpleAlgorithmConfig], type[DynamicMeshControls]]:
     """The config classes for whichever of ``PIMPLE`` / ``PISO`` the case ships.
 
     pisoFoam tutorials ship a ``PISO`` block where pimpleFoam ships ``PIMPLE``;
     PISO is a single-outer-loop PIMPLE, so it is read from the same place.
     """
-    fv_solution = pyf.dictionary.read("system/fvSolution")
+    fv_solution = pyf.dictionary.read(str(case_dir / "system" / "fvSolution"))
     if fv_solution.isDict("PIMPLE"):
         return _PIMPLE_CLASSES
     if fv_solution.isDict("PISO"):
@@ -46,32 +49,34 @@ def _algorithm_classes() -> tuple[type[PimpleAlgorithmConfig], type[DynamicMeshC
     )
 
 
-def load_pimple_config() -> PimpleAlgorithmConfig:
-    """The active algorithm block as a typed config; a ``PISO`` block pins
-    ``nOuterCorrectors`` to 1 (no outer loop) and ``validate=False`` mirrors the
+def load_pimple_config(case_dir: Path = Path(".")) -> PimpleAlgorithmConfig:
+    """The active algorithm block of ``case_dir`` as a typed config; a ``PISO`` block
+    pins ``nOuterCorrectors`` to 1 (no outer loop) and ``validate=False`` mirrors the
     framework's own auto-load, falling back to schema defaults for absent keys."""
-    config_cls, _ = _algorithm_classes()
-    config = config_cls.load(validate=False)
+    config_cls, _ = _algorithm_classes(case_dir)
+    config = config_cls.load(case_dir=case_dir, validate=False)
     if issubclass(config_cls, PisoAlgorithmConfig):
         return config.model_copy(update={"nOuterCorrectors": 1})
     return config
 
 
-def create_dynamic_mesh_controls(context: dict[str, Any]) -> DynamicMeshControls:
+def create_dynamic_mesh_controls(
+    context: dict[str, Any], case_dir: Path = Path(".")
+) -> DynamicMeshControls:
     """The algorithm block's mesh-motion switches (``createDyMControls.H``).
 
     Native re-reads them every time step (``readDyMControls.H``); read once here
     because no tutorial rewrites them mid-run. ``correctPhi`` defaults to
     ``mesh.dynamic()``, resolved here where the mesh is in hand.
     """
-    _, controls_cls = _algorithm_classes()
-    controls = controls_cls.load(validate=False)
+    _, controls_cls = _algorithm_classes(case_dir)
+    controls = controls_cls.load(case_dir=case_dir, validate=False)
     return controls.resolved(mesh_dynamic=bool(context["mesh"].dynamic()))
 
 
-def create_pimple_control(_context: dict[str, Any]) -> PimpleControl:
-    """Create a :class:`PimpleControl` from the PIMPLE (or PISO) block."""
-    config = load_pimple_config()
+def create_pimple_control(_context: dict[str, Any], case_dir: Path = Path(".")) -> PimpleControl:
+    """Create a :class:`PimpleControl` from the PIMPLE (or PISO) block of ``case_dir``."""
+    config = load_pimple_config(case_dir)
     return PimpleControl(
         nOuterCorrectors=config.nOuterCorrectors,
         nCorrectors=config.nCorrectors,
@@ -85,9 +90,9 @@ def create_pimple_control(_context: dict[str, Any]) -> PimpleControl:
     )
 
 
-def create_simple_control(_context: dict[str, Any]) -> SimpleControl:
-    """Create a :class:`SimpleControl` from the SIMPLE block."""
-    config = SimpleAlgorithmConfig.load(validate=False)
+def create_simple_control(_context: dict[str, Any], case_dir: Path = Path(".")) -> SimpleControl:
+    """Create a :class:`SimpleControl` from the SIMPLE block of ``case_dir``."""
+    config = SimpleAlgorithmConfig.load(case_dir=case_dir, validate=False)
     return SimpleControl(
         nNonOrthogonalCorrectors=config.nNonOrthogonalCorrectors,
         momentumPredictor=config.momentumPredictor,

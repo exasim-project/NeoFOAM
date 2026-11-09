@@ -201,7 +201,7 @@ def build(self: Any) -> list[Any]:
         mesh = context["mesh"]
         p_rgh = context.get("fields.p_rgh") if settings.use_boussinesq else None
 
-        fv_solution = pyf.dictionary.read("system/fvSolution")
+        fv_solution = pyf.dictionary.read(str(settings.case_dir / "system" / "fvSolution"))
         algo_dict = fv_solution.subDict(settings.algorithm_type)
         pressure_field = p_rgh if p_rgh is not None else p
         field_name = "p_rgh" if p_rgh is not None else "p"
@@ -234,8 +234,16 @@ def build(self: Any) -> list[Any]:
         # disk file in the standard sense) so it stays on the legacy
         # ``field()`` helper until a surface-field schema lands.
         field("phi", create_phi, depends_on=["fields.U"], write=True),
-        model("pimple_control", create_pimple_control, depends_on=["mesh"]),
-        model("dynamic_mesh_controls", create_dynamic_mesh_controls, depends_on=["mesh"]),
+        model(
+            "pimple_control",
+            lambda context: create_pimple_control(context, settings.case_dir),
+            depends_on=["mesh"],
+        ),
+        model(
+            "dynamic_mesh_controls",
+            lambda context: create_dynamic_mesh_controls(context, settings.case_dir),
+            depends_on=["mesh"],
+        ),
         model("Uf", create_Uf, depends_on=["mesh", "fields.U"]),
         model("cumulativeContErr", create_cumulative_cont_err),
     ]

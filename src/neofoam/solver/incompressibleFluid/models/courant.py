@@ -20,7 +20,7 @@ owning ``timeStepConstraint`` interface by ``ModelSpec`` identity, not a name lo
 ``ctx.models``. No import-time activation toggle.
 """
 
-import os
+from pathlib import Path
 
 from pybFoam import computeCFLNumber, dictionary, surfaceScalarField
 from pydantic import Field
@@ -51,16 +51,18 @@ courant.config(CourantConfig)
 
 
 @courant.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     """Active iff ``system/controlDict`` enables adaptive stepping with a ``maxCo``.
 
     OpenFOAM only honours ``maxCo`` when ``adjustTimeStep`` is on; mirror that so a
-    fixed-step case (``adjustTimeStep no``) keeps a fixed step. Read relative to the
-    run's working directory; inactive when the file or the entries are absent.
+    fixed-step case (``adjustTimeStep no``) keeps a fixed step. Read from the case
+    directory (a region's, in a multi-region case); inactive when the file or the
+    entries are absent.
     """
-    if not os.path.isfile("system/controlDict"):
+    control_dict = case_dir / "system" / "controlDict"
+    if not control_dict.is_file():
         return False
-    cd = dictionary.read("system/controlDict")
+    cd = dictionary.read(str(control_dict))
     adaptive = cd.found("adjustTimeStep") and cd.get[bool]("adjustTimeStep")
     return bool(adaptive and cd.found("maxCo"))
 

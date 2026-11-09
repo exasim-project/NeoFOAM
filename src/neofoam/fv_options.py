@@ -36,17 +36,17 @@ from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["FvOptionsConfig", "fvOptions"]
 
-# OpenFOAM's own search order (``fv::options::createIOobject``). Case-relative:
-# the solver runs with the case directory as its working directory.
+# OpenFOAM's own search order (``fv::options::createIOobject``), relative to the
+# case directory (a region's, in a multi-region case).
 _FV_OPTIONS_PATHS = ("constant/fvOptions", "system/fvOptions")
 
 
-def _dictionary_path() -> Optional[Path]:
-    """First of the two locations that exists, in OpenFOAM's search order."""
+def _dictionary_path(case_dir: Path) -> Optional[Path]:
+    """First of the two locations that exists in ``case_dir``, in OpenFOAM's search
+    order, relative to ``case_dir``."""
     for candidate in _FV_OPTIONS_PATHS:
-        path = Path(candidate)
-        if path.is_file():
-            return path
+        if (case_dir / candidate).is_file():
+            return Path(candidate)
     return None
 
 
@@ -72,15 +72,15 @@ fvOptions.config(FvOptionsConfig)
 
 
 @fvOptions.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     """fvOptions is active exactly when the case carries one of the two dictionaries."""
-    return _dictionary_path() is not None
+    return _dictionary_path(case_dir) is not None
 
 
 @fvOptions.load
 def load_config(case_dir: Path, _instance_id: Optional[str]) -> FvOptionsConfig:
     """Load the dictionary from whichever of the two locations the case uses."""
-    path = _dictionary_path()
+    path = _dictionary_path(Path(case_dir))
     if path is None:
         raise FileNotFoundError(
             f"fvOptions model instantiated for a case without any of {_FV_OPTIONS_PATHS}"

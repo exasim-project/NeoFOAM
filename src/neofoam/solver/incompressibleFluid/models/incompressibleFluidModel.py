@@ -59,7 +59,7 @@ class incompressibleFluidModel(BaseModel):
                 continue
 
             spec: ModelSpec = plugin_cls.get_model_instance(plugin_cls)
-            if spec.run_detect():
+            if spec.run_detect(effective_dir):
                 runtimes.append(spec.instantiate(case_dir=effective_dir, instance_id=spec.name))
 
         return runtimes

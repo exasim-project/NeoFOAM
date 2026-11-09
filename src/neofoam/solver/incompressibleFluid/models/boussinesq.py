@@ -256,10 +256,10 @@ def load(case_dir: Path, _instance_id: str) -> BoussinesqConfig:
 
 
 @boussinesq.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     """Boussinesq is active when transportProperties has both beta and TRef."""
     try:
-        props = pyf.dictionary.read("constant/transportProperties")
+        props = pyf.dictionary.read(str(case_dir / "constant" / "transportProperties"))
         return bool(props.found("beta") and props.found("TRef"))
     except Exception:
         return False

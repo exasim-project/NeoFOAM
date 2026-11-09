@@ -9,8 +9,9 @@ PIMPLE rather than producing a missing-algorithm error so existing
 tutorial cases that specify it still run.
 """
 
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Optional
 
 import pybFoam as pyf
 
@@ -27,10 +28,14 @@ class PressureVelocitySettings:
     algorithm_type: str
     #: Set by the boussinesq model's resolve: dispatches the buoyant variants.
     use_boussinesq: bool = False
+    #: The case directory the run reads ``system/fvSolution`` from (a region's, in a
+    #: multi-region case).
+    case_dir: Path = field(default_factory=lambda: Path("."))
 
 
-def _runtime(spec: ModelSpec, algorithm_type: str) -> ModelRuntime:
-    return ModelRuntime(spec=spec, name=spec.name, config=PressureVelocitySettings(algorithm_type))
+def _runtime(spec: ModelSpec, algorithm_type: str, case_dir: Optional[Path] = None) -> ModelRuntime:
+    settings = PressureVelocitySettings(algorithm_type, case_dir=Path(case_dir or "."))
+    return ModelRuntime(spec=spec, name=spec.name, config=settings)
 
 
 class PressureVelocityAlgorithm:
@@ -47,9 +52,10 @@ class PressureVelocityAlgorithm:
         return [pimple, simple]
 
     @classmethod
-    def detect_and_create(cls) -> ModelRuntime:
-        """Detect the algorithm from fvSolution: a fresh runtime of its spec."""
-        fv_solution = pyf.dictionary.read("system/fvSolution")
+    def detect_and_create(cls, case_dir: Optional[Path] = None) -> ModelRuntime:
+        """Detect the algorithm from ``case_dir``'s fvSolution (default: the working
+        directory's): a fresh runtime of its spec, reading its case from there."""
+        fv_solution = pyf.dictionary.read(str(Path(case_dir or ".") / "system" / "fvSolution"))
 
         if fv_solution.found("PIMPLE"):
             algorithm_type = "PIMPLE"
@@ -60,7 +66,7 @@ class PressureVelocityAlgorithm:
         else:
             algorithm_type = "PIMPLE"
 
-        return _runtime(simple if algorithm_type == "SIMPLE" else pimple, algorithm_type)
+        return _runtime(simple if algorithm_type == "SIMPLE" else pimple, algorithm_type, case_dir)
 
     @classmethod
     def create(cls, *, algorithm_type: str) -> ModelRuntime:

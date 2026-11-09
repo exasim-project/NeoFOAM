@@ -43,7 +43,7 @@ from .pressure_velocity.extension import (
 
 __all__ = ["MRFPropertiesConfig", "mrf"]
 
-# Case-relative: the solver runs with the case directory as its working directory.
+# Relative to the case directory (a region's, in a multi-region case).
 _MRF_PROPERTIES = "constant/MRFProperties"
 
 
@@ -68,9 +68,9 @@ mrf.config(MRFPropertiesConfig)
 
 
 @mrf.detect
-def detect_model() -> bool:
+def detect_model(case_dir: Path) -> bool:
     """MRF is active exactly when the case carries ``constant/MRFProperties``."""
-    return Path(_MRF_PROPERTIES).is_file()
+    return (case_dir / _MRF_PROPERTIES).is_file()
 
 
 @mrf.build
