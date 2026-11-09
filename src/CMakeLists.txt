@@ -37,6 +37,10 @@ target_sources(
           "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
           "functionObjects/forces.cpp"
-          "functionObjects/forceCoeffs.cpp")
+          "functionObjects/forceCoeffs.cpp"
+          "lagrangian/ParticleSolver.cpp"
+          "lagrangian/TrackingMesh.cpp"
+          "lagrangian/CarrierField.cpp"
+          "lagrangian/ParticleOutput.cpp")
 
 install(TARGETS NeoFOAM)
