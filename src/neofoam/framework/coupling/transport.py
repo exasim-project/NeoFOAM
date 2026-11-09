@@ -42,8 +42,6 @@ from typing import Any, Iterable, Literal, Optional
 # What a side sends, by name: arrays with one entry per point of its patch, or one
 # value for the whole interface.
 Data = dict[str, Any]
-# A coupled side: (region, patch, field).
-SideKey = tuple[str, str, str]
 
 # How long a receive of an InProcessTransport waits by default, in seconds: 10 minutes.
 DEFAULT_TIMEOUT = 600.0

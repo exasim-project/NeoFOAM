@@ -22,9 +22,9 @@ from pydantic import BaseModel
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
-    CoupledSide,
     Coupling,
     CouplingOp,
+    ExchangeSide,
     InProcessTransport,
     Link,
     NearestNeighborMapping,
@@ -128,9 +128,8 @@ def test_a_coupled_boundary_condition_adds_its_side_to_its_region_s_coupling() -
     (operation,) = Coupling.of(region).operations()
     assert isinstance(operation.func, CouplingOp)
     assert (operation.operation_name, operation.metadata.wraps) == ("solid.coupling", Placement())
-    (exchange_side,) = operation.func.sides
-    side = exchange_side.side
-    assert exchange_side.key == ("solid", "right", "T")
+    (side,) = operation.func.sides
+    assert (side.region, side.patch, side.field) == ("solid", "right", "T")
     assert (side.sends, side.receives, side.points) == (WallTemperature, WallHeatFlux, 2)
     assert getattr(side.send, "__self__") is wall
 
@@ -191,7 +190,7 @@ def test_coupled_couples_the_field_of_each_instance() -> None:
 
     (operation,) = Coupling.of(region).operations()
     assert operation.metadata.wraps == Placement()
-    assert [side.key for side in couple(region).sides] == [
+    assert [(side.region, side.patch, side.field) for side in couple(region).sides] == [
         ("solid", "right", "T"),
         ("solid", "left", "U"),
     ]
@@ -271,9 +270,9 @@ def test_coupling_op_public_read_api() -> None:
         False,
         0,
     )
-    assert [(s.region, s.patch, s.field, s.arrays, s.partner) for s in controller.sides] == [
-        ("solid", "right", "T", ("T",), 1),
-        ("fluid", "wall", "T", ("q",), 0),
+    assert [(end, s.field, s.arrays, s.partner) for end, s in controller.sides.items()] == [
+        (("solid", "right"), "T", ("T",), ("fluid", "wall")),
+        (("fluid", "wall"), "T", ("q",), ("solid", "right")),
     ]
     # what the sides send does not change: converged after one pass
     assert [(o.passes, o.converged) for o in controller.outcomes] == [(1, True)]
@@ -368,7 +367,12 @@ def test_a_chain_of_exchanges_is_one_coupling_group() -> None:
     controller = ops["c"].controller
     assert controller is not None
     # serial: a side receives fresh data from a region that steps before its own
-    assert [controller.fresh(i) for i in range(4)] == [False, True, False, True]
+    assert {end: controller.fresh(end) for end in controller.sides} == {
+        ("a", "to_b"): False,
+        ("b", "to_a"): True,
+        ("b", "to_c"): False,
+        ("c", "to_b"): True,
+    }
 
 
 def _coupling(ctx: Context) -> RegionCoupling:
@@ -469,11 +473,22 @@ class _Nested(BaseModel):
 @pytest.mark.parametrize(("model", "field"), [(_Listed, "weights"), (_Nested, "inner")])
 def test_a_field_that_is_not_array_holds_plain_data(model: type[BaseModel], field: str) -> None:
     with pytest.raises(TypeError, match=f"the field '{field}' of the exchange model"):
-        CoupledSide(sends=model, receives=WallTemperature, send=lambda: None, receive=print)
+        ExchangeSide(
+            "solid",
+            "right",
+            "T",
+            sends=model,
+            receives=WallTemperature,
+            send=lambda: None,
+            receive=print,
+        )
 
 
 def test_a_side_keeps_its_coordinates_as_a_float_array() -> None:
-    side = CoupledSide(
+    side = ExchangeSide(
+        "solid",
+        "right",
+        "T",
         sends=WallTemperature,
         receives=WallTemperature,
         send=lambda: None,

@@ -45,13 +45,12 @@ from typing import Callable, Literal, Mapping, Optional, Protocol, Sequence, Typ
 
 from neofoam.framework.types import Placement
 
+from .controller import CouplingController, GroupSide
+from .data import End
 from .kernels import Acceleration, Convergence
-from .loop import CouplingController, GroupSide
 from .transport import Transport, TransportClosed
 
 T = TypeVar("T")
-# The end of an exchange: (region, patch).
-End = tuple[str, str]
 
 
 @dataclass(frozen=True)

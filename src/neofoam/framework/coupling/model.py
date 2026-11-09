@@ -40,7 +40,8 @@ from typing import TYPE_CHECKING, Any, Iterable, Optional
 from neofoam.framework.operations import IterativeOp, Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from .loop import CouplingOp, ExchangeSide
+from .data import ExchangeSide
+from .loop import CouplingOp
 from .transport import Tag
 
 if TYPE_CHECKING:
@@ -98,9 +99,7 @@ class Coupling:
                 f"no exchange connects the coupled side on patch {instance.patch}: the case "
                 "does not couple its region (system/regionCoupling.yaml: exchanges)"
             )
-        side = ExchangeSide(
-            self.coupling.region, instance.patch, instance.field, declaration.side(instance)
-        )
+        side = declaration.side(instance, self.coupling.region)
         if side.patch not in self.coupling.patches:
             raise ValueError(
                 f"no exchange connects the coupled side of {side.label}; a coupled boundary "

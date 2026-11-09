@@ -17,7 +17,7 @@ from typing import Any, Optional
 
 import numpy as np
 import pytest
-from framework.coupling.regions import add_coupled, contexts, couple, graph, run, solve
+from framework.coupling.regions import Side, add_coupled, contexts, couple, graph, run, solve
 from framework.coupling.regions import transport as transport_of
 from pydantic import BaseModel
 
@@ -25,13 +25,13 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     MAPPINGS,
     Array,
-    CoupledSide,
     Coupling,
     CouplingController,
     CouplingNode,
     CouplingNotConvergedWarning,
     CouplingOp,
     CouplingOutcome,
+    ExchangeSide,
     GroupSide,
     InProcessTransport,
     Link,
@@ -73,8 +73,8 @@ class _Side:
     def receive(self, data: _Data) -> None:
         self.log.append(f"receive_{self.name} {data.x[0]}")
 
-    def side(self) -> CoupledSide:
-        return CoupledSide(_Data, _Data, self.send, self.receive, np.zeros((1, 1)))
+    def side(self) -> Side:
+        return Side(_Data, _Data, self.send, self.receive, np.zeros((1, 1)))
 
 
 def _never(changes: list[SideChange]) -> bool:
@@ -258,7 +258,12 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
     assert (loop.operation_name, loop.metadata.wraps) == ("a.coupling", Placement())
     assert [sub.operation_name for sub in loop.sub_operations] == ["solve_x"]
     (side,) = op.sides
-    assert (side.key, op.partner(side), op.is_leader) == (("a", "p", "x"), "b.p", False)
+    assert (side.end, side.field, op.partner(side), op.is_leader) == (
+        ("a", "p"),
+        "x",
+        "b.p",
+        False,
+    )
     exchange = op.exchange_of(side)
     assert (exchange.name, exchange.partner, exchange.mapping.kind) == (
         "a-b",
@@ -407,7 +412,7 @@ def test_coupling_op_maps_the_arrays_and_hands_plain_values_over_as_they_are(
     monkeypatch.setitem(MAPPINGS, "reversed", lambda: mapping)
     regions = contexts(["a", "b"], [Link("a-b", (("a", "p"), ("b", "p")), "reversed")])
     for ctx in regions.values():
-        side = CoupledSide(_Mixed, _Mixed, lambda: _Mixed(T=[1.0, 2.0], q=3.0), received.append)
+        side = Side(_Mixed, _Mixed, lambda: _Mixed(T=[1.0, 2.0], q=3.0), received.append)
         add_coupled(ctx, "p", "x", side)
 
     run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
@@ -427,9 +432,7 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     regions = contexts(["a", "b"], [LINK], max_iterations=10)
     for ctx in regions.values():
         ctx.fields["x"] = np.zeros(1)
-        add_coupled(
-            ctx, "p", "x", CoupledSide(_Data, _Data, partial(_live, ctx), lambda data: None)
-        )
+        add_coupled(ctx, "p", "x", Side(_Data, _Data, partial(_live, ctx), lambda data: None))
 
     def step(ctx: Context) -> None:
         ctx.fields["x"][0] = min(ctx.fields["x"][0] + 1.0, 3.0)
@@ -448,7 +451,15 @@ def test_coupled_side_needs_pydantic_models() -> None:
     with pytest.raises(
         TypeError, match="declares what it sends as a pydantic model, got <class 'dict'>"
     ):
-        CoupledSide(sends=dict, receives=_Data, send=dict, receive=lambda data: None)  # type: ignore[arg-type]
+        ExchangeSide(
+            "a",
+            "p",
+            "x",
+            sends=dict,  # type: ignore[arg-type]
+            receives=_Data,
+            send=dict,  # type: ignore[arg-type]
+            receive=lambda data: None,
+        )
 
 
 class _Tagged(BaseModel):
@@ -468,7 +479,7 @@ def test_coupling_op_passes_plain_fields_through_unrelaxed_and_uncompared() -> N
 
     regions = contexts(["a", "b"], [LINK], max_iterations=10, acceleration={"a-b": acceleration})
     for name, ctx in regions.items():
-        side = CoupledSide(
+        side = Side(
             _Tagged, _Tagged, partial(_Tagged, x=[1.0], tag=f"from {name}"), received.append
         )
         add_coupled(ctx, "p", "x", side)
@@ -522,7 +533,10 @@ def test_a_relative_change_that_is_not_finite_raises() -> None:
 
 
 def _group(arrays: tuple[str, ...]) -> list[GroupSide]:
-    return [GroupSide("a", "p", "x", arrays, 1, "a-b"), GroupSide("b", "p", "x", arrays, 0, "a-b")]
+    return [
+        GroupSide("a", "p", "x", arrays, ("b", "p"), "a-b"),
+        GroupSide("b", "p", "x", arrays, ("a", "p"), "a-b"),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -557,10 +571,10 @@ def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None
     assert controller.residuals == {"x": math.inf}
 
     # the first decision starts the first pass: nothing measured yet
-    controller.decide([{"x": np.ones(1)}, {"x": np.ones(1)}])
+    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.ones(1)}})
     assert controller.residuals == {"x": math.inf}
 
-    controller.decide([{"x": np.ones(1)}, {"x": np.full(1, 2.0)}])
+    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.full(1, 2.0)}})
     assert controller.residuals == {"x": 0.5}
 
 

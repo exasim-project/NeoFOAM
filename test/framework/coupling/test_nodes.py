@@ -15,23 +15,22 @@ from typing import Any, Optional, Sequence
 
 import numpy as np
 import pytest
-from framework.coupling.regions import add_coupled, couple, graph, run, solve, transport
+from framework.coupling.regions import Side, add_coupled, couple, graph, run, solve, transport
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
-    CoupledSide,
     Coupling,
     CouplingController,
     CouplingNode,
+    GroupSide,
     InProcessTransport,
     Link,
     SideChange,
     region_couplings,
     run_regions,
 )
-from neofoam.framework.coupling.loop import GroupSide
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import IterativeOp, Operation, StepBuilder
 from neofoam.framework.types import OperationMetadata, Placement
@@ -56,8 +55,8 @@ class _Recording(InProcessTransport):
         super().send(source, target, tag, message)
 
 
-def _side(value: float, log: list[float]) -> CoupledSide:
-    return CoupledSide(
+def _side(value: float, log: list[float]) -> Side:
+    return Side(
         _Data,
         _Data,
         lambda: _Data(v=[value]),
@@ -298,15 +297,16 @@ def test_a_node_is_parallel_by_default() -> None:
 def _sides() -> list[GroupSide]:
     """Two exchanges x and y between a and b."""
     return [
-        GroupSide("a", "p", "x", ("v",), 1, "x"),
-        GroupSide("b", "p", "x", ("v",), 0, "x"),
-        GroupSide("a", "q", "y", ("v",), 3, "y"),
-        GroupSide("b", "q", "y", ("v",), 2, "y"),
+        GroupSide("a", "p", "x", ("v",), ("b", "p"), "x"),
+        GroupSide("b", "p", "x", ("v",), ("a", "p"), "x"),
+        GroupSide("a", "q", "y", ("v",), ("b", "q"), "y"),
+        GroupSide("b", "q", "y", ("v",), ("a", "q"), "y"),
     ]
 
 
-def _data(*values: float) -> list[dict[str, Any]]:
-    return [{"v": np.array([value])} for value in values]
+def _data(*values: float) -> dict[tuple[str, str], dict[str, Any]]:
+    """The data of the sides of :func:`_sides`, in their order."""
+    return {side.end: {"v": np.array([value])} for side, value in zip(_sides(), values)}
 
 
 def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
@@ -322,7 +322,7 @@ def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
 
     assert carried is not None
     assert relaxed == [[1.0, 2.0]]
-    assert [float(data["v"][0]) for data in carried] == [0.5, 1.0, 10.0, 20.0]
+    assert [float(data["v"][0]) for data in carried.values()] == [0.5, 1.0, 10.0, 20.0]
 
 
 def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:

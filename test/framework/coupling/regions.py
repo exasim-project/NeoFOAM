@@ -11,12 +11,14 @@ per coupling node), which the resolver wraps around them.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Literal, Optional, Sequence
 
+from pydantic import BaseModel
+
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    CoupledSide,
     Coupling,
     CouplingNode,
     CouplingOp,
@@ -58,7 +60,18 @@ def contexts(
     }
 
 
-def add_coupled(ctx: Context, patch: str, field: str, side: CoupledSide) -> None:
+@dataclass(frozen=True)
+class Side:
+    """What a ``@coupled`` boundary condition declares: its models, methods and points."""
+
+    sends: type[BaseModel]
+    receives: type[BaseModel]
+    send: Callable[[], BaseModel]
+    receive: Callable[[Any], None]
+    coordinates: Any = None
+
+
+def add_coupled(ctx: Context, patch: str, field: str, side: Side) -> None:
     """Add ``side`` on ``patch``, coupling ``field``, to the region's coupling model.
 
     As a ``@coupled`` boundary condition with ``side``'s models and methods does.

@@ -44,7 +44,7 @@ import typing
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, TypeVar
 
-from .loop import CoupledSide, _is_model
+from .data import ExchangeSide, _is_model
 
 T = TypeVar("T", bound=type)
 F = TypeVar("F", bound=Callable[..., Any])
@@ -65,10 +65,16 @@ class _Declaration:
     receive: str
     coordinates: Optional[str]
 
-    def side(self, instance: Any) -> CoupledSide:
-        """The coupled side of ``instance``, its methods bound."""
+    def side(self, instance: Any, region: str) -> ExchangeSide:
+        """The coupled side of ``instance`` in ``region``, its methods bound.
+
+        On the instance's ``patch``, coupling its ``field``.
+        """
         points = getattr(instance, self.coordinates)() if self.coordinates else None
-        return CoupledSide(
+        return ExchangeSide(
+            region=region,
+            patch=instance.patch,
+            field=instance.field,
             sends=self.sends,
             receives=self.receives,
             send=getattr(instance, self.send),
