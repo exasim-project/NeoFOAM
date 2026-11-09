@@ -115,7 +115,7 @@ def test_multiRun_region_coupling_of_an_unknown_region_raises(
         exchanges=[ExchangeConfig(sides={"left": "right", "fluid": "interface"})],
     )
 
-    with pytest.raises(ValueError, match=r"couples the regions \['fluid'\]"):
+    with pytest.raises(ValueError, match=r"couple the regions \['fluid'\], which are not in"):
         run()
 
 
