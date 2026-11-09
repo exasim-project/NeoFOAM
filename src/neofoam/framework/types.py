@@ -64,6 +64,20 @@ class OpType(Enum):
     OPERATION = "operation"
 
 
+@dataclass(frozen=True)
+class Placement:
+    """Where the resolver places a wrapping loop (``OperationMetadata.wraps``).
+
+    Without ``operations`` the loop wraps the whole body of the top scope: the body
+    of the outermost loop, or of the innermost wrapping loop placed there before.
+    With them it wraps the operations of that name and, if ``downstream``, every
+    operation downstream of them in their scope.
+    """
+
+    operations: tuple[str, ...] | None = None
+    downstream: bool = True
+
+
 @dataclass
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated
@@ -85,11 +99,9 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
-    # the fields the operation solves for; a loop that wraps a field holds them
-    solves: list[str] = field(default_factory=list)
-    # the fields a loop contributed by a model or boundary condition repeats: the
-    # resolver nests the operations solving them inside it (graph.wrapping)
-    wraps: list[str] = field(default_factory=list)
+    # set on a loop contributed by a model or boundary condition: a wrapping loop,
+    # which the resolver places around operations of the graph (graph.wrapping)
+    wraps: Placement | None = None
 
     # DAG visualization properties
     shape: str = "box"

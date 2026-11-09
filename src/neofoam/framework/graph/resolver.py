@@ -284,11 +284,12 @@ class DAGResolver:
     ) -> StepBuilder:
         """The operations of ``builder`` and ``additional_ops``, ordered in their scopes.
 
-        An additional loop that wraps fields (``metadata.wraps``) holds the
-        operations solving them afterwards (:func:`~.wrapping.wrap`).
+        An additional wrapping loop (``metadata.wraps``) is placed afterwards,
+        in the order given, around the whole body of the top scope or the
+        operations it names (:func:`~.wrapping.wrap`).
         """
-        wrapping = [op for op in additional_ops if op.metadata.wraps]
-        rest = Operations([op for op in additional_ops if not op.metadata.wraps])
+        wrapping = [op for op in additional_ops if op.metadata.wraps is not None]
+        rest = Operations([op for op in additional_ops if op.metadata.wraps is None])
         tagged = _collect_tagged_ops(builder, rest)
         graph, op_map = _build_global_graph(tagged)
         sorted_scopes = _sort_global(graph, op_map, tagged, sorter=self._sorter)
