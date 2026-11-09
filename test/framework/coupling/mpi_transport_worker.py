@@ -23,8 +23,8 @@ from neofoam.framework.coupling import (
     CouplingDeadlock,
     CouplingTimeout,
     MpiTransport,
-    RegionComm,
 )
+from neofoam.framework.coupling.mpi import RegionComm
 
 WORLD = MPI.COMM_WORLD
 ROOTS = {"a": 0, "b": 1}

@@ -32,10 +32,9 @@ from neofoam.framework.coupling import (
     CommChannelClosed,
     CouplingDeadlock,
     CouplingTimeout,
-    FollowerTransport,
     MpiTransport,
-    RegionComm,
 )
+from neofoam.framework.coupling.mpi import FollowerTransport, RegionComm
 
 HERE = Path(__file__).parent
 WORKER = HERE / "mpi_transport_worker.py"

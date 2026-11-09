@@ -25,7 +25,7 @@ its default communicator.
 Coupled regions talk through their roots, rank 0 of each region: an
 :class:`~neofoam.framework.coupling.MpiTransport` between the roots (on a
 ``Dup`` of MPI_COMM_WORLD), and in each region a
-:class:`~neofoam.framework.coupling.RegionComm` over which the root gathers its
+:class:`~neofoam.framework.coupling.mpi.RegionComm` over which the root gathers its
 processes' side data and scatters what they receive.
 
 mpi4py (the extra ``neofoam[mpi]``) is imported only here, only under MPI: it

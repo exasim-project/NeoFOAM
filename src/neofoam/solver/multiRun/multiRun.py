@@ -150,9 +150,9 @@ def mpi_coupling(
     On the region's root (rank 0 of ``comm``) an
     :class:`~neofoam.framework.coupling.MpiTransport` over ``channel`` to the
     roots of the region's group, with ``timeout``; on its other processes a
-    :class:`~neofoam.framework.coupling.FollowerTransport`, which talks to no
+    :class:`~neofoam.framework.coupling.mpi.FollowerTransport`, which talks to no
     region. Each has the region's processes as its ``comm``
-    (:class:`~neofoam.framework.coupling.RegionComm`).
+    (:class:`~neofoam.framework.coupling.mpi.RegionComm`).
     """
     if planned is None:
         return None
