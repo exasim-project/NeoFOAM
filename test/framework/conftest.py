@@ -6,7 +6,16 @@
 
 from typing import Any
 
+import pytest
+
+from neofoam.framework.coupling import InProcessTransport
 from neofoam.io import BaseConfig
+
+
+@pytest.fixture(autouse=True)
+def _pickled_messages(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every in-process transport pickles its messages: a message that is not plain data fails."""
+    monkeypatch.setattr(InProcessTransport, "PICKLE", True)
 
 
 class MaxIterations:

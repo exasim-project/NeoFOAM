@@ -41,6 +41,7 @@ from neofoam.framework.operations import IterativeOp, Operation, Operations, Seq
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .loop import CouplingOp, ExchangeSide
+from .transport import Tag
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -237,8 +238,6 @@ def _holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -> Opti
 class _TimeStep:
     """The time-step op of a region: its group steps the smallest time step any region asks for."""
 
-    TAG = "time/dt"
-
     def __init__(self, coupling: RegionCoupling) -> None:
         self._coupling = coupling
 
@@ -247,14 +246,14 @@ class _TimeStep:
         region, leader, transport = coupling.region, coupling.leader, coupling.transport
         asked = ctx.time.delta_t
         if region != leader:
-            transport.send(region, leader, self.TAG, asked)
-            agreed = transport.receive(leader, region, self.TAG)
+            transport.send(region, leader, Tag.TIME_DT, asked)
+            agreed = transport.receive(leader, region, Tag.TIME_DT)
         else:
             agreed = min(
-                asked if other == region else transport.receive(other, region, self.TAG)
+                asked if other == region else transport.receive(other, region, Tag.TIME_DT)
                 for other in coupling.group
             )
             for other in coupling.group:
                 if other != region:
-                    transport.send(region, other, self.TAG, agreed)
+                    transport.send(region, other, Tag.TIME_DT, agreed)
         ctx.time.delta_t = agreed

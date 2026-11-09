@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
+    CoupledSide,
     Coupling,
     CouplingOp,
     InProcessTransport,
@@ -414,3 +415,71 @@ def test_a_region_no_exchange_names_is_not_coupled() -> None:
     )
 
     assert list(couplings) == ["a", "b"]
+
+
+class _Film(BaseModel):
+    h: float
+    phase: str | None
+
+
+class _Wet(BaseModel):
+    q: Array
+    film: _Film
+
+
+@coupled
+class _WetFlux(_Patch):
+    """Sends a flux with a nested plain model, receives a temperature."""
+
+    @coupled.sends
+    def send(self) -> _Wet:
+        return _Wet(q=-self.ctx.fields["T"], film=_Film(h=3.0, phase=None))
+
+    @coupled.receives
+    def receive(self, data: WallTemperature) -> None:
+        self.received.append(data)
+
+
+@coupled
+class _WetWall(_Wall):
+    @coupled.receives
+    def receive(self, data: _Wet) -> None:
+        self.received.append(data)
+
+
+def test_a_nested_plain_model_travels_as_its_dump() -> None:
+    regions = _pair()
+    wall = _WetWall(regions["solid"], "right")
+    _WetFlux(regions["fluid"], "wall")
+
+    _run(regions)
+
+    assert wall.received[-1].film == _Film(h=3.0, phase=None)
+
+
+class _Listed(BaseModel):
+    q: Array
+    weights: list[float]
+
+
+class _Nested(BaseModel):
+    inner: _Listed
+
+
+@pytest.mark.parametrize(("model", "field"), [(_Listed, "weights"), (_Nested, "inner")])
+def test_a_field_that_is_not_array_holds_plain_data(model: type[BaseModel], field: str) -> None:
+    with pytest.raises(TypeError, match=f"the field '{field}' of the exchange model"):
+        CoupledSide(sends=model, receives=WallTemperature, send=lambda: None, receive=print)
+
+
+def test_a_side_keeps_its_coordinates_as_a_float_array() -> None:
+    side = CoupledSide(
+        sends=WallTemperature,
+        receives=WallTemperature,
+        send=lambda: None,
+        receive=print,
+        coordinates=[[0, 0, 0], [1, 0, 0]],
+    )
+
+    assert isinstance(side.coordinates, np.ndarray) and side.coordinates.dtype == float
+    assert side.points == 2
