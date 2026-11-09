@@ -60,6 +60,7 @@ def _runtime_steps(argv: list[str], case_dir: Path) -> list[InitStep]:
         lazy("_neon_runtime", create_neon_runtime, depends_on=["_foam_time"]),
         init_model("neon_runtime", lambda ctx: ctx["_neon_runtime"], depends_on=["_neon_runtime"]),
         lazy("mesh", lambda ctx: ctx["_neon_runtime"].mesh, depends_on=["_neon_runtime"]),
+        init_model("foam_time", lambda ctx: ctx["_foam_time"], depends_on=["_foam_time"]),
     ]
 
 

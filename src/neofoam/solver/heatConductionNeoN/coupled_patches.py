@@ -25,6 +25,9 @@ def _host(vector: Any) -> Any:
 class NeoNPatch:
     """A patch of the NeoN field ``field``: its faces, their cells and the conductance between."""
 
+    #: the name of its condition, its ``coupled`` entry in the field file
+    condition: str = ""
+
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         rt = ctx.models["neon_runtime"]
         self.field = field
@@ -62,6 +65,8 @@ class NeoNPatch:
 class CoupledTemperature(NeoNPatch):
     """The Dirichlet side: takes the partner's wall temperature, sends its heat flux."""
 
+    condition = "coupledTemperature"
+
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)
         self.set_wall_T(self.wall_T())
@@ -82,6 +87,8 @@ class CoupledHeatFlux(NeoNPatch):
     NeoN sets no per-face gradient from Python, so the heat flux enters as an explicit
     source in the cells next to the faces.
     """
+
+    condition = "coupledHeatFlux"
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)

@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 
 from neofoam.framework.coupling.strategies.mapping import nearest_neighbor
+from neofoam.solver.regions import coupled_entries
 from solver.heatConductionNeoN._run_case import mesh_copy, result
 
 T_INTERFACE = 325.0
@@ -41,7 +42,8 @@ ATOL_K = 1e-6
 
 @pytest.fixture(scope="module")
 def blocks(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    return result(mesh_copy("coupledBlocks", tmp_path_factory.mktemp("multiRun") / "case"), "multi")
+    case_dir = mesh_copy("coupledBlocks", tmp_path_factory.mktemp("multiRun") / "case")
+    return {**result(case_dir, "multi"), "case_dir": case_dir}
 
 
 @pytest.mark.parametrize("region", ["left", "right"])
@@ -106,6 +108,19 @@ def test_coupled_blocks_write_the_interface_temperature(
     np.testing.assert_allclose(
         written, T_INTERFACE, rtol=0, atol=ATOL_K, err_msg=f"coupledBlocks/{region} written T"
     )
+
+
+@pytest.mark.parametrize("time", ["1e+06", "2e+06"])
+@pytest.mark.parametrize(
+    ("region", "condition"), [("left", "coupledHeatFlux"), ("right", "coupledTemperature")]
+)
+def test_coupled_blocks_written_temperature_restarts_coupled(
+    blocks: dict[str, Any], region: str, condition: str, time: str
+) -> None:
+    written = blocks["case_dir"] / region / time / "T"
+
+    # NeoN writes the calculated patch without its coupled entry; the writer adds it back
+    assert coupled_entries(written, {condition: "calculated"}) == {"interface": condition}
 
 
 def test_coupled_blocks_aitken_converges_in_a_few_iterations(blocks: dict[str, Any]) -> None:

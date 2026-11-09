@@ -23,6 +23,7 @@ from neofoam.framework.coupling import Participant, Patch, coupling
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
 from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.types import OperationMetadata
+from neofoam.solver.coupled_entries import keep_coupled_entries
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import SolutionLoopPredicate
 from neofoam.solver.neon_runtime import (
     NeoNControlConfig,
@@ -51,17 +52,24 @@ def initialize(self: Any) -> Context:
     init = create_init(self.region, list(self.argv))
     ctx = init.run()
     self.core_models = init.core_models
+    case_dir = region_case_dir(self.region)
     if self.coupling is not None:
-        time_dir = region_case_dir(self.region) / ctx.models["solution_loop"].timeName()
+        time_dir = case_dir / ctx.models["solution_loop"].timeName()
         check_written_patches(self.coupling.field_ports, time_dir)
     runtime = ctx.models["neon_runtime"]
     ctx.models["coupling"] = Participant(
         self.coupling, NeoNGeometry(runtime), NeoNFields(runtime, ctx.fields)
     )
-    patches = coupled_patches("T", ctx, region_case_dir(self.region))
+    patches = coupled_patches("T", ctx, case_dir)
     for patch, bc in patches.items():
         coupling(ctx).add(Patch(patch), bc)
     ctx.models["conduction"].patches = list(patches.values())
+    keep_coupled_entries(
+        ctx.models["writer"],
+        ctx.models["foam_time"],
+        case_dir,
+        {"T": {patch: bc.condition for patch, bc in patches.items()}},
+    )
     return ctx
 
 
