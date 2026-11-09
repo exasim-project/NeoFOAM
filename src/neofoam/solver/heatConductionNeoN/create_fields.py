@@ -157,5 +157,5 @@ def create_init(region: Optional[str] = None) -> StagedInitRunner:
         )
         return builder.build()
 
-    runner = StagedInitRunner(spec_builder.finalize())
+    runner = StagedInitRunner(spec_builder.finalize(), region=region)
     return runner
