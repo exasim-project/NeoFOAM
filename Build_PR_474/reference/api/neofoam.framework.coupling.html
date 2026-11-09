@@ -688,47 +688,44 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.coupling">
 <span id="neofoam-framework-coupling"></span><h1>neofoam.framework.coupling<a class="headerlink" href="#module-neofoam.framework.coupling" title="Link to this heading">¶</a></h1>
-<p>Coupling of regions: sides, exchanges, mappings, the coupling ops and their transport.</p>
+<p>Coupling of regions: the public API of sides, exchanges, nodes, strategies and transports.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="neofoam.framework.coupling.coupled.html#neofoam.framework.coupling.coupled" title="neofoam.framework.coupling.coupled"><code class="xref py py-func docutils literal notranslate"><span class="pre">coupled()</span></code></a> — a boundary condition declares its side: the field it couples,
 what it sends and receives (one pydantic model each, of <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> and
 plain fields) and its points; an instance adds itself to its region’s
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> model (<code class="docutils literal notranslate"><span class="pre">Coupling.of(ctx).add(self)</span></code>).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> — the coupling of one region, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>:
-its sides, the operations of the region’s graph (one coupling op per node)
-and, in a transient case, its time-step op (the group steps the smallest time
-step any region asks for).</p></li>
+its sides, the operations of the region’s graph (one coupling op per node,
+<a class="reference internal" href="neofoam.framework.coupling.loop.html#neofoam.framework.coupling.loop.CouplingOp" title="neofoam.framework.coupling.loop.CouplingOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code></a>) and, in a transient
+case, its time-step op (the group steps the smallest time step any region
+asks for).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNode</span></code> — a named coupling loop: its exchanges, its scheme
 (<code class="docutils literal notranslate"><span class="pre">parallel</span></code>, the default, or <code class="docutils literal notranslate"><span class="pre">serial</span></code>), max_iterations, convergence
 measures, an acceleration per exchange and its placement per region; nodes
-are listed outer to inner.</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">RegionCoupling</span></code> — what a region knows of the case’s coupling: its
-group, the exchanges (<code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code>), its nodes and its transport;
-<code class="xref py py-func docutils literal notranslate"><span class="pre">region_couplings()</span></code> builds it for every coupled region; <code class="xref py py-func docutils literal notranslate"><span class="pre">run_regions()</span></code>
-runs each region on its own thread.</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code> — a region’s part of a node, <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code> (its
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> builds it): a loop placed as the node says; its loop test
-exchanges the node’s sides’ data with the partner regions, mapped onto the
-sides’ points (<code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>, bound once to the points:
-<code class="xref py py-data docutils literal notranslate"><span class="pre">BoundMapping</span></code>).</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code> — the leader’s part, in the coupling op of the
-node’s last region: decides when the node’s data converged, which pass is
-the final one (one more after converging, or the last of max_iterations), and
-relaxes the data, per exchange (built by <code class="xref py py-func docutils literal notranslate"><span class="pre">node_controller()</span></code> unless the case gives its own
-factory); <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOutcome</span></code> per time step,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code> when <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> ends it.</p></li>
+are listed outer to inner. Its leader (the
+<a class="reference internal" href="neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController" title="neofoam.framework.coupling.controller.CouplingController"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code></a> of the
+node’s last region) decides when the node’s data converged and relaxes it;
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code> when <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> ends a time step.</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">RegionCoupling</span></code> — what a region’s solver knows of the case’s
+coupling: its group, the exchanges (<code class="xref py py-class docutils literal notranslate"><span class="pre">Link</span></code>), its nodes and its
+transport (built by <a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.region_couplings" title="neofoam.framework.coupling.region.region_couplings"><code class="xref py py-func docutils literal notranslate"><span class="pre">region_couplings()</span></code></a>).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Transport</span></code> — all data between regions goes through it, point to point
 (send, receive, close); <code class="xref py py-class docutils literal notranslate"><span class="pre">InProcessTransport</span></code> between threads, which
 raises <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code> when every running region waits for a message
 no region sent, and <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTimeout</span></code> after its <code class="docutils literal notranslate"><span class="pre">timeout</span></code> (both
-<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code>, as <code class="xref py py-class docutils literal notranslate"><span class="pre">TransportClosed</span></code>); <code class="xref py py-class docutils literal notranslate"><span class="pre">Tag</span></code>
-builds the tags of the messages.</p></li>
-<li><p>numpy kernels: <code class="xref py py-func docutils literal notranslate"><span class="pre">nearest_neighbor()</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantRelaxation</span></code>,
-<code class="xref py py-class docutils literal notranslate"><span class="pre">AitkenRelaxation</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">RelativeConvergence</span></code>; the registries
-<code class="xref py py-data docutils literal notranslate"><span class="pre">MAPPINGS</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">ACCELERATIONS</span></code> and <code class="xref py py-data docutils literal notranslate"><span class="pre">CONVERGENCES</span></code> name them for
-the case; a package adds its own through the entry-point group
-<code class="docutils literal notranslate"><span class="pre">neofoam.coupling</span></code> (<code class="xref py py-func docutils literal notranslate"><span class="pre">load_plugins()</span></code>).</p></li>
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code>, as <code class="xref py py-class docutils literal notranslate"><span class="pre">TransportClosed</span></code>).</p></li>
+<li><p>strategies, each a <a class="reference internal" href="neofoam.core.plugin_system.html#neofoam.core.plugin_system.PluginSystem" title="neofoam.core.plugin_system.PluginSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">PluginSystem</span></code></a> family
+selected by <code class="docutils literal notranslate"><span class="pre">type</span></code> (<code class="xref py py-func docutils literal notranslate"><span class="pre">strategy()</span></code>): <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingMapping</span></code>
+(<code class="xref py py-class docutils literal notranslate"><span class="pre">IdentityMapping</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">NearestNeighborMapping</span></code>; bound once to the
+points of both sides: <code class="xref py py-data docutils literal notranslate"><span class="pre">BoundMapping</span></code>), <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingAcceleration</span></code>
+(<code class="xref py py-class docutils literal notranslate"><span class="pre">ConstantRelaxation</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">AitkenRelaxation</span></code>) and
+<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingConvergence</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">RelativeConvergence</span></code>, from the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SideChange</span></code> of every side); a package adds its own through the
+entry-point group <code class="docutils literal notranslate"><span class="pre">neofoam.coupling</span></code>, imported once before the regions
+start (<code class="xref py py-func docutils literal notranslate"><span class="pre">load_plugins()</span></code>).</p></li>
 </ul>
+<p>Everything else (the coupling op, the controller, the sides of a group, the
+tags of the messages, …) is internal: import it from its submodule.</p>
 <p class="rubric">Modules</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -743,7 +740,7 @@ the case; a package adds its own through the entry-point group
 <td><p>What a coupled side exchanges: <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code>, the side, and what it sends.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.coupling.kernels.html#module-neofoam.framework.coupling.kernels" title="neofoam.framework.coupling.kernels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernels</span></code></a></p></td>
-<td><p>numpy kernels of a coupling: mapping, relaxation and convergence of the exchanged data.</p></td>
+<td><p>The strategies of a coupling: mapping, acceleration and convergence of the exchanged data.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.coupling.loop.html#module-neofoam.framework.coupling.loop" title="neofoam.framework.coupling.loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loop</span></code></a></p></td>
 <td><p>The coupling of a region: its coupling op.</p></td>

@@ -707,7 +707,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">execution_observer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span><span class="p">,</span> <span class="n">_arrays</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Acceleration</span><span class="p">,</span> <span class="n">Convergence</span><span class="p">,</span> <span class="n">SideChange</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingAcceleration</span><span class="p">,</span> <span class="n">CouplingConvergence</span><span class="p">,</span> <span class="n">SideChange</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
 
 
@@ -831,7 +831,7 @@
 <span class="sd">    change of a side is not finite.</span>
 
 <span class="sd">    The leader builds it with its coupling's ``controller`` factory, which it</span>
-<span class="sd">    hands the node (by default :func:`~neofoam.framework.coupling.node_controller`:</span>
+<span class="sd">    hands the node (by default :func:`~neofoam.framework.coupling.region.node_controller`:</span>
 <span class="sd">    the node's scheme, convergence, acceleration and max_iterations; one</span>
 <span class="sd">    acceleration per exchange: it keeps the data of its last passes)::</span>
 
@@ -841,7 +841,7 @@
 <span class="sd">                label,</span>
 <span class="sd">                max_iterations=50,</span>
 <span class="sd">                parallel=node.parallel,</span>
-<span class="sd">                acceleration={"interface": AitkenRelaxation(initial=0.5)},</span>
+<span class="sd">                acceleration={"interface": AitkenRelaxation(relaxation=0.5)},</span>
 <span class="sd">            )</span>
 <span class="sd">    """</span>
 
@@ -849,10 +849,10 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span>
         <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">convergence</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Convergence</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+        <span class="n">convergence</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingConvergence</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
         <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
         <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">acceleration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Acceleration</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">acceleration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CouplingAcceleration</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1">#: The name of the leader, the coupling op that owns the controller.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>

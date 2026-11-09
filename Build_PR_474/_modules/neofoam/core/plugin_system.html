@@ -683,7 +683,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">create_model</span>
 
@@ -768,6 +768,9 @@
 
             <span class="k">def</span><span class="w"> </span><span class="nf">plugin_decorator</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
                 <span class="n">registry_obj</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">base_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry_obj</span><span class="o">.</span><span class="n">plugin_registry</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">plugin_cls</span>
+                <span class="n">PluginSystem</span><span class="o">.</span><span class="n">_reject_duplicate_discriminator</span><span class="p">(</span><span class="n">registry_obj</span><span class="p">,</span> <span class="n">plugin_cls</span><span class="p">)</span>
                 <span class="n">registry_obj</span><span class="o">.</span><span class="n">plugin_registry</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">)</span>
                 <span class="n">registry</span> <span class="o">=</span> <span class="n">registry_obj</span><span class="o">.</span><span class="n">plugin_registry</span>
                 <span class="n">union</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -826,6 +829,49 @@
             <span class="s2">"name because the registry is keyed by class name — rename one of the two base "</span>
             <span class="s2">"classes."</span>
         <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_discriminator_values</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">discriminator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The values of ``discriminator`` that select ``plugin_cls``: its ``Literal`` values."""</span>
+        <span class="n">field_info</span> <span class="o">=</span> <span class="n">plugin_cls</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">discriminator</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field_info</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">()</span>
+        <span class="k">if</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Literal</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">get_args</span><span class="p">(</span><span class="n">field_info</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reject_duplicate_discriminator</span><span class="p">(</span>
+        <span class="n">registry_obj</span><span class="p">:</span> <span class="n">PluginRegistry</span><span class="p">,</span> <span class="n">plugin_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Refuse a plugin whose discriminator value another plugin of the family holds.</span>
+
+<span class="sd">        A module reload builds a new class at the same definition site; it replaces</span>
+<span class="sd">        the previous one instead.</span>
+<span class="sd">        """</span>
+        <span class="n">discriminator</span> <span class="o">=</span> <span class="n">registry_obj</span><span class="o">.</span><span class="n">discriminator</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">_discriminator_values</span><span class="p">(</span><span class="n">plugin_cls</span><span class="p">,</span> <span class="n">discriminator</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">registered</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">registry_obj</span><span class="o">.</span><span class="n">plugin_registry</span><span class="p">):</span>
+            <span class="n">shared</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">value</span>
+                <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">_discriminator_values</span><span class="p">(</span><span class="n">registered</span><span class="p">,</span> <span class="n">discriminator</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">shared</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">registered</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">plugin_cls</span><span class="o">.</span><span class="vm">__module__</span>
+                <span class="ow">and</span> <span class="n">registered</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">==</span> <span class="n">plugin_cls</span><span class="o">.</span><span class="vm">__qualname__</span>
+            <span class="p">):</span>
+                <span class="n">registry_obj</span><span class="o">.</span><span class="n">plugin_registry</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">registered</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"plugin family '</span><span class="si">{</span><span class="n">registry_obj</span><span class="o">.</span><span class="n">base_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">': "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">discriminator</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">shared</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> is already registered by "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">registered</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">registered</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">; "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">plugin_cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">plugin_cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2"> cannot register the same "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">discriminator</span><span class="si">}</span><span class="s2"> — give one of the two another </span><span class="si">{</span><span class="n">discriminator</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_registered</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base_cls_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">"PluginRegistry"</span><span class="p">]:</span>

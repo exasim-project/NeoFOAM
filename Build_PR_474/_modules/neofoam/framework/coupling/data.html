@@ -694,7 +694,7 @@
 <span class="sd">  points; an **end** (:data:`End`) is its ``(region, patch)``;</span>
 <span class="sd">- an **exchange** (:class:`Exchange`) joins a side with the side of another</span>
 <span class="sd">  region (its partner); the case configures it per patch pair; its **mapping**</span>
-<span class="sd">  (:class:`~neofoam.framework.coupling.kernels.Mapping`) maps the :data:`Array`</span>
+<span class="sd">  (:class:`~neofoam.framework.coupling.kernels.CouplingMapping`) maps the :data:`Array`</span>
 <span class="sd">  data the partner sends onto the side's points;</span>
 <span class="sd">- :func:`_sent` takes what a side sends now as plain data and checks that its</span>
 <span class="sd">  :data:`Array` data is finite; :func:`_check_received` that a side receives</span>
@@ -711,7 +711,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">PlainValidator</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingMapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
 
 <span class="c1"># The end of an exchange: (region, patch).</span>
@@ -877,7 +877,7 @@
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">partner</span><span class="p">:</span> <span class="n">End</span>
-    <span class="n">mapping</span><span class="p">:</span> <span class="n">Mapping</span></div>
+    <span class="n">mapping</span><span class="p">:</span> <span class="n">CouplingMapping</span></div>
 
 
 
