@@ -706,7 +706,10 @@ of the region in the node what its partner sent, mapped onto the side’s points
 the node’s exchanges connect, owns the node’s <strong>controller</strong>
 (<a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController" title="neofoam.framework.coupling.loop.CouplingController"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code></a>), which decides after each pass whether the
 node’s data converged, and relaxes the data carried into the next pass, per
-exchange. Every region leaves the node’s loop on the same pass;</p></li>
+exchange. It also decides which pass is the node’s <strong>final</strong> one: the pass
+after the one its data converged in, or the last one <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code>
+allows. Every region runs the same passes, the final one marked final on its
+loop entry (<code class="docutils literal notranslate"><span class="pre">LoopEntry.final</span></code>), and leaves the node’s loop after it;</p></li>
 <li><p>all data between regions goes through the region’s
 <a class="reference internal" href="neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport" title="neofoam.framework.coupling.transport.Transport"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transport</span></code></a>: no region reads
 another region’s objects.</p></li>
@@ -750,7 +753,11 @@ point of the patch, or <code class="docutils literal notranslate"><span class="p
 names the leader’s coupling op. After each pass (<a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.decide" title="neofoam.framework.coupling.loop.CouplingController.decide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decide()</span></code></a>) it gets what
 every side sent and checks every measure of <code class="docutils literal notranslate"><span class="pre">convergence</span></code> on the change of
 its <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data since the pass before (all must hold; none:
-<a class="reference internal" href="#neofoam.framework.coupling.loop.unchanged" title="neofoam.framework.coupling.loop.unchanged"><code class="xref py py-func docutils literal notranslate"><span class="pre">unchanged()</span></code></a>); it stops after <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> passes regardless. Then
+<a class="reference internal" href="#neofoam.framework.coupling.loop.unchanged" title="neofoam.framework.coupling.loop.unchanged"><code class="xref py py-func docutils literal notranslate"><span class="pre">unchanged()</span></code></a>). Once they hold it runs exactly one more pass, the
+<strong>final</strong> one (<a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.final" title="neofoam.framework.coupling.loop.CouplingController.final"><code class="xref py py-attr docutils literal notranslate"><span class="pre">final</span></code></a>), and stops after it without checking again;
+the last pass <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> allows is final in advance (no pass more;
+it checks after it whether the data converged), and with <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code>
+1 the only pass is first and final. Before each pass, the final one too,
 it relaxes the <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data carried into the next pass with the
 <code class="docutils literal notranslate"><span class="pre">acceleration</span></code> of the side’s exchange (by exchange name; at most one per
 exchange, an exchange without one is not relaxed; plain fields pass through
@@ -781,8 +788,15 @@ acceleration per exchange: it keeps the data of its last passes):</p>
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingController.decide">
 <span class="sig-name descname"><span class="pre">decide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#CouplingController.decide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingController.decide" title="Link to this definition">¶</a></dt>
 <dd><p>The decision before a pass, from what every side sends now (in the order of <code class="docutils literal notranslate"><span class="pre">sides</span></code>).</p>
-<p>Returns what each side carries into the pass (relaxed), or <code class="docutils literal notranslate"><span class="pre">None</span></code>: the
-time step’s coupling ended, its outcome recorded.</p>
+<p>Returns what each side carries into the pass (relaxed), <a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.final" title="neofoam.framework.coupling.loop.CouplingController.final"><code class="xref py py-attr docutils literal notranslate"><span class="pre">final</span></code></a>
+telling whether it is the final pass, or <code class="docutils literal notranslate"><span class="pre">None</span></code>: the time step’s
+coupling ended after its final pass, its outcome recorded.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingController.final">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingController.final" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the pass <a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.decide" title="neofoam.framework.coupling.loop.CouplingController.decide"><code class="xref py py-meth docutils literal notranslate"><span class="pre">decide()</span></code></a> started last is the time step’s final one.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -855,7 +869,9 @@ is <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&
 sides’ models and points with the partner regions and checks each exchange.
 Each test then sends what every side sends now: to the partner that steps
 later (serial: it receives it in the same pass) and to the node’s leader;
-the leader decides for the node and tells every region to go on or stop. On
+the leader decides for the node and tells every region to go on or stop, and
+whether the pass is the node’s final one, which the test marks on the loop’s
+entry (<code class="docutils literal notranslate"><span class="pre">Context.mark_final</span></code>: an operation marked <code class="docutils literal notranslate"><span class="pre">final</span></code> runs in it). On
 another pass every side gets what its partner sent (fresh, or carried by the
 leader), mapped onto its points with the exchange’s mapping, validated as
 its <code class="docutils literal notranslate"><span class="pre">receives</span></code> model, reported to the execution observer
@@ -927,11 +943,11 @@ its <code class="docutils literal notranslate"><span class="pre">receives</span>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.loop.</span></span><span class="sig-name descname"><span class="pre">CouplingOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">passes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">converged</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residuals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">float]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#CouplingOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOutcome" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>How the coupling loop of one time step ended.</p>
-<p><code class="docutils literal notranslate"><span class="pre">passes</span></code> is the number of passes it ran, <code class="docutils literal notranslate"><span class="pre">converged</span></code> whether the
-convergence check held (<code class="docutils literal notranslate"><span class="pre">False</span></code>: <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> stopped it), and
-<code class="docutils literal notranslate"><span class="pre">residuals</span></code> the relative change of every field’s exchanged <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code>
-data in the last pass (largest over its sides and arrays; <code class="docutils literal notranslate"><span class="pre">{}</span></code> after a
-single pass).</p>
+<p><code class="docutils literal notranslate"><span class="pre">passes</span></code> is the number of passes it ran, the final one included,
+<code class="docutils literal notranslate"><span class="pre">converged</span></code> whether the convergence check held (<code class="docutils literal notranslate"><span class="pre">False</span></code>:
+<code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> stopped it), and <code class="docutils literal notranslate"><span class="pre">residuals</span></code> the relative change of
+every field’s exchanged <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data in the last pass (largest over its
+sides and arrays).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -1079,6 +1095,7 @@ the current data is zero.</p>
 </li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController"><code class="docutils literal notranslate"><span class="pre">CouplingController</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.decide"><code class="docutils literal notranslate"><span class="pre">CouplingController.decide()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.final"><code class="docutils literal notranslate"><span class="pre">CouplingController.final</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.fresh"><code class="docutils literal notranslate"><span class="pre">CouplingController.fresh()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.iteration"><code class="docutils literal notranslate"><span class="pre">CouplingController.iteration</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingController.label"><code class="docutils literal notranslate"><span class="pre">CouplingController.label</span></code></a></li>

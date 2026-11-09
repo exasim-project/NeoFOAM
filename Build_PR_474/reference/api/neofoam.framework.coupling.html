@@ -709,8 +709,9 @@ runs each region on its own thread.</p></li>
 exchanges the node’s sides’ data with the partner regions, mapped onto the
 sides’ points (<code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code>).</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code> — the leader’s part, in the coupling op of the
-node’s last region: decides when the node’s data converged and relaxes it,
-per exchange (built by <code class="xref py py-func docutils literal notranslate"><span class="pre">node_controller()</span></code> unless the case gives its own
+node’s last region: decides when the node’s data converged, which pass is
+the final one (one more after converging, or the last of max_iterations), and
+relaxes the data, per exchange (built by <code class="xref py py-func docutils literal notranslate"><span class="pre">node_controller()</span></code> unless the case gives its own
 factory); <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOutcome</span></code> per time step,
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNotConvergedWarning</span></code> when <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> ends it.</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Transport</span></code> — all data between regions goes through it, point to point

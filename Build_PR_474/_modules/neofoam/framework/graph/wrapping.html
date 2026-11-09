@@ -717,7 +717,9 @@
 <span class="sd">An operation marked ``first`` (``OperationMetadata.first``, e.g. the start of a</span>
 <span class="sd">time step) runs only in the first pass of the wrapping loops around it; it may</span>
 <span class="sd">not depend on an operation that runs in every pass of one of them</span>
-<span class="sd">(:func:`check_first`).</span>
+<span class="sd">(:func:`check_first`). One marked ``final`` (``OperationMetadata.final``, e.g.</span>
+<span class="sd">writing the results) runs only in their final pass; no operation that runs in</span>
+<span class="sd">an other pass of one of them may depend on it (:func:`check_final`).</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -775,16 +777,8 @@
 
 
 
-<div class="viewcode-block" id="check_first">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.check_first">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_first</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.</span>
-
-<span class="sd">    An operation marked ``first`` (``OperationMetadata.first``) runs only in the</span>
-<span class="sd">    first pass of the wrapping loops around it; one it depends on (its</span>
-<span class="sd">    ``depends_on``, or the other's ``before``) that runs in every pass of a</span>
-<span class="sd">    wrapping loop around both would leave it on stale data.</span>
-<span class="sd">    """</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_around</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Operation</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Every named operation of ``ops`` with the wrapping loops around it, outer first."""</span>
     <span class="n">located</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Operation</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">around</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -796,12 +790,59 @@
                 <span class="n">located</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">around</span><span class="p">)</span>
 
     <span class="n">walk</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="p">())</span>
+    <span class="k">return</span> <span class="n">located</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_upstream</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">located</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Operation</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The operations ``op`` depends on: its ``depends_on``, and those naming it ``before``."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">op</span><span class="o">.</span><span class="n">depends_on</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">other</span> <span class="k">for</span> <span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">before</span><span class="p">)]</span>
+
+
+<div class="viewcode-block" id="check_final">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.check_final">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_final</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when an operation not marked ``final`` depends on one that is.</span>
+
+<span class="sd">    An operation marked ``final`` (``OperationMetadata.final``) runs only in the</span>
+<span class="sd">    final pass of the wrapping loops around it; one that depends on it (its</span>
+<span class="sd">    ``depends_on``, or the final one's ``before``) and runs in the other passes of</span>
+<span class="sd">    a wrapping loop around both would run before it, or on stale data.</span>
+<span class="sd">    """</span>
+    <span class="n">located</span> <span class="o">=</span> <span class="n">_around</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">around</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">around</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="n">_upstream</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">located</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dependency</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">located</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">dependency_op</span><span class="p">,</span> <span class="n">dependency_around</span> <span class="o">=</span> <span class="n">located</span><span class="p">[</span><span class="n">dependency</span><span class="p">]</span>
+            <span class="n">shared</span> <span class="o">=</span> <span class="p">[</span><span class="n">loop</span> <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">around</span> <span class="k">if</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">dependency_around</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">shared</span> <span class="ow">and</span> <span class="n">dependency_op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> runs in every pass of the wrapping loop </span><span class="si">{</span><span class="n">shared</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, but depends "</span>
+                    <span class="sa">f</span><span class="s2">"on </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">, which runs only in its final pass (final); mark </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"final too or place the loop so that </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is outside it"</span>
+                <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_first">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.check_first">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_first</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.</span>
+
+<span class="sd">    An operation marked ``first`` (``OperationMetadata.first``) runs only in the</span>
+<span class="sd">    first pass of the wrapping loops around it; one it depends on (its</span>
+<span class="sd">    ``depends_on``, or the other's ``before``) that runs in every pass of a</span>
+<span class="sd">    wrapping loop around both would leave it on stale data.</span>
+<span class="sd">    """</span>
+    <span class="n">located</span> <span class="o">=</span> <span class="n">_around</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">around</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">first</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">around</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">upstream</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">op</span><span class="o">.</span><span class="n">depends_on</span><span class="p">]</span>
-        <span class="n">upstream</span> <span class="o">+=</span> <span class="p">[</span><span class="n">other</span> <span class="k">for</span> <span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">before</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">before</span><span class="o">.</span><span class="n">before</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="n">upstream</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="n">_upstream</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">located</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">dependency</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">located</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">dependency_op</span><span class="p">,</span> <span class="n">dependency_around</span> <span class="o">=</span> <span class="n">located</span><span class="p">[</span><span class="n">dependency</span><span class="p">]</span>
