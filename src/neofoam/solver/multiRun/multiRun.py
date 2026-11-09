@@ -15,7 +15,6 @@ regions exchange their data through it as ``system/regionCoupling.yaml`` lists
 
 import math
 import os
-from functools import partial
 from pathlib import Path
 from typing import Optional
 
@@ -30,7 +29,7 @@ from neofoam.framework.coupling import (
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.region import region_couplings, run_regions
-from neofoam.framework.solver import Solver, SolverRuntime
+from neofoam.framework.solver import Solver
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.types import Placement
 
@@ -86,13 +85,6 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
     config = RegionCouplingConfig.load()
-    named = sorted({region for exchange in config.exchanges for region in exchange.sides})
-    unknown = [region for region in named if region not in regions]
-    if unknown:
-        raise ValueError(
-            f"system/regionCoupling.yaml couples the regions {unknown}, "
-            f"which are not in regionSolvers {regions}"
-        )
     links: list[Link] = []
     for name, exchange in zip(config.exchange_names(), config.exchanges):
         first, second = exchange.sides.items()
@@ -128,14 +120,6 @@ def _node(config: CouplingNodeConfig) -> CouplingNode:
     )
 
 
-def run_region(runtime: SolverRuntime) -> Context:
-    """Run one region as its solver runs alone: initialize, resolve, run, finalize."""
-    ctx = runtime.initialize()
-    runtime.resolve_operations(ctx).run(ctx)
-    runtime.finalize(ctx)
-    return ctx
-
-
 def run() -> dict[str, Context]:
     """Run the multi-region case in the working directory; return each region's final Context.
 
@@ -158,5 +142,5 @@ def run() -> dict[str, Context]:
         region: resolve_solver(name).instantiate(region=region, coupling=coupling.get(region))
         for region, name in config.regionSolvers.items()
     }
-    tasks = {region: partial(run_region, runtime) for region, runtime in runtimes.items()}
+    tasks = {region: runtime.run for region, runtime in runtimes.items()}
     return run_regions(tasks, comm_channel)
