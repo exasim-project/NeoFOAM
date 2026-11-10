@@ -21,7 +21,7 @@ from neofoam.framework.operations import (
 )
 
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter
-from .wrapping import check_final, check_first, wrap
+from .wrapping import check_passes, wrap
 
 
 class CyclicDependencyError(Exception):
@@ -196,12 +196,10 @@ def _sort_global(
     loop in the same scope. Loops carry no edges, so interleaving them by builder
     index is always dependency-safe.
 
-    The first ``stepped`` entries of ``tagged`` are the builder's (default: all);
-    the rest, the model ops, have no place of their own beside a loop. A loop
-    goes after the last op of its scope stepped before it, unless one stepped
-    after it sorts earlier, in which case it goes ahead of that one. A model op
-    that sorts ahead of an op stepped before the loop therefore stays ahead of
-    the loop; one that sorts after them all follows it.
+    Only the first ``stepped`` entries of ``tagged`` (the builder's; default all)
+    place a loop: it goes after the last op of its scope stepped before it, or
+    ahead of the first one stepped after it if that sorts earlier. Model ops have
+    no place of their own beside a loop.
     """
     # Builder insertion order: position in the pre-order ``tagged`` list.
     order: dict[int, int] = {id(op): i for i, (_, op) in enumerate(tagged)}
@@ -231,10 +229,7 @@ def _sort_global(
         if isinstance(op.func, IterativeOp):
             loops_by_scope[scope].append(op)
 
-    # Merge loops into each scope's sequential ops by builder order. The
-    # sequential ops keep their topological order; each loop is inserted after
-    # the last op stepped before it, or ahead of the first op stepped after it
-    # if that sorts earlier. Model ops (index ``stepped`` and up) do not move it.
+    # Merge loops into each scope's sequential ops, which keep their topological order.
     n_stepped = len(tagged) if stepped is None else stepped
     by_scope: dict[str, list[Operation]] = {}
     for scope in set(seq_by_scope) | set(loops_by_scope):
@@ -260,12 +255,7 @@ def _sort_global(
 
 
 def _rebuild_builder(sorted_scopes: dict[str, list[Operation]]) -> StepBuilder:
-    """Reconstruct a ``StepBuilder`` from sorted scope data.
-
-    Starts at ``root`` and fills every loop with the sorted operations of its
-    scope (named after the loop), recursively; sequential operations stay in
-    their scope beside the loops, at any depth.
-    """
+    """A ``StepBuilder`` from ``root``, each loop filled with its sorted scope, recursively."""
 
     def rebuild(scope: str) -> list[Operation]:
         return [
@@ -299,13 +289,8 @@ class DAGResolver:
     ) -> StepBuilder:
         """The operations of ``builder`` and ``additional_ops``, ordered in their scopes.
 
-        An additional wrapping loop (``metadata.wraps``) is placed afterwards,
-        in the order given, around the whole body of the top scope or the
-        operations it names (:func:`~.wrapping.wrap`). Raises ``ValueError`` when
-        an operation marked ``first`` then depends on one in a wrapping loop
-        around both that is not (:func:`~.wrapping.check_first`), or when one
-        not marked ``final`` depends on one in a wrapping loop around both that
-        is (:func:`~.wrapping.check_final`).
+        Additional wrapping loops (``metadata.wraps``) are placed afterwards, in
+        the order given (:func:`~.wrapping.wrap`, :func:`~.wrapping.check_passes`).
         """
         wrapping = [op for op in additional_ops if op.metadata.wraps is not None]
         rest = Operations([op for op in additional_ops if op.metadata.wraps is None])
@@ -317,6 +302,5 @@ class DAGResolver:
         ops = _rebuild_builder(sorted_scopes).operations.ops
         for loop in wrapping:
             ops = wrap(ops, loop)
-        check_final(ops)
-        check_first(ops)
+        check_passes(ops)
         return StepBuilder(ops)
