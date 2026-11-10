@@ -119,10 +119,6 @@ class SolverRuntime:
             observer.operations(operations, ctx)
         return operations
 
-    def finalize(self, ctx: "Context") -> None:
-        """Run the registered end-of-run step (if any)."""
-        self.spec._run_finalize(self, ctx)
-
     @property
     def operations(self) -> "OperationCollection":
         """Build operations with this runtime as the self binding."""

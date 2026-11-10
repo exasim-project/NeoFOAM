@@ -79,12 +79,3 @@ def test_runtime_initialize_hands_its_region_to_the_context() -> None:
     ctx = counter.instantiate(region="left").initialize()
 
     assert ctx.region == "left"
-
-
-def test_runtime_finalize_runs_the_registered_finalizer() -> None:
-    runtime = counter.instantiate(region="left")
-    ctx = runtime.initialize()
-
-    runtime.finalize(ctx)
-
-    assert ctx.models["finalized"] is True

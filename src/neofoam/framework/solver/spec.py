@@ -52,7 +52,6 @@ class SolverSpec:
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
-        self._finalize_func: Optional[Callable[..., None]] = None
 
     @property
     def _config_class(self) -> Optional[type]:
@@ -199,11 +198,6 @@ class SolverSpec:
         self._execution_graph_func = func
         return func
 
-    def finalizer(self, func: Callable[..., None]) -> Callable[..., None]:
-        """Decorator to register the end-of-run step ``(self, ctx)`` (close files, ...)."""
-        self._finalize_func = func
-        return func
-
     def operation(
         self,
         operation_number: Optional[str] = None,
@@ -336,11 +330,6 @@ class SolverSpec:
             )
 
         return self._execution_graph_func(**kwargs)
-
-    def _run_finalize(self, runtime: SolverRuntime, ctx: Context) -> None:
-        """Run the registered end-of-run step, if any."""
-        if self._finalize_func is not None:
-            self._finalize_func(self=runtime, ctx=ctx)
 
     # ------------------------------------------------------------------
     # Operation building (called by SolverRuntime.operations)
