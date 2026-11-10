@@ -181,7 +181,9 @@ TEST_CASE("lagrangian walk locate and cellPoint interpolation", "[lagrangian]")
     // linear carrier velocity U = (x, 0, 0): cellPoint interpolation reproduces a linear
     // field exactly, so the sampled velocity must equal the x coordinate of the particle
     const Foam::dimensionedVector perLength(
-        "perLength", Foam::dimVelocity / Foam::dimLength, Foam::vector(1, 0, 0)
+        "perLength",
+        Foam::dimVelocity / Foam::dimLength,
+        Foam::vector(1, 0, 0)
     );
     Foam::volVectorField U("U", perLength * mesh.C().component(Foam::vector::X));
 
@@ -219,7 +221,10 @@ TEST_CASE("lagrangian walk locate and cellPoint interpolation", "[lagrangian]")
         NeoN::Vector<NeoN::Vec3> uCells(exec, mesh.nCells(), NeoN::Vec3 {0.0, 0.0, 0.0});
         const NeoN::label left = solver.locateAndInterpolate(cloud, uf, uCells);
         return std::tuple {
-            left, cloud.cell.copyToHost(), cloud.active.copyToHost(), uf.copyToHost()
+            left,
+            cloud.cell.copyToHost(),
+            cloud.active.copyToHost(),
+            uf.copyToHost()
         };
     };
 

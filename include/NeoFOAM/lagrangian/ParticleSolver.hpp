@@ -107,7 +107,7 @@ private:
     const MeshAdapter& mesh_;
     const Foam::volVectorField& U_;
     std::optional<NeoN::TrackingMesh> trackingMesh_; ///< built for locate walk only
-    std::optional<CarrierField> carrierField_; ///< built for locate walk only
+    std::optional<CarrierField> carrierField_;       ///< built for locate walk only
 };
 
 } // namespace NeoFOAM::lagrangian

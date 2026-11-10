@@ -8,7 +8,6 @@
 #include "NeoN/mesh/unstructured/pointInterpolation.hpp"
 
 
-
 namespace NeoFOAM::lagrangian
 {
 // wrapper method for interpolation, either cell or cellPoint (OpenFOAM's volPointInterpolation)
