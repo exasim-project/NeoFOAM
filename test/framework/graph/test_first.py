@@ -86,8 +86,8 @@ def test_a_running_loop_publishes_its_pass_on_ctx_loops() -> None:
 
     ops.run(ctx)
 
-    time = [LoopEntry("time_loop", step, step == 0, False) for step in (0, 1)]
-    couple = [LoopEntry("couple", passes, passes == 0, True) for passes in (0, 1)]
+    time = [LoopEntry("time_loop", step, False) for step in (0, 1)]
+    couple = [LoopEntry("couple", passes, True) for passes in (0, 1)]
     assert seen == [[step, passes] for step in time for passes in couple]
     assert ctx.loops == []
 
@@ -101,10 +101,8 @@ def test_a_loop_entry_holds_the_pass_its_loop_test_decides_on() -> None:
 
     Operation(func=IterativeOp(test), metadata=OperationMetadata(op_name="loop")).run(_context())
 
-    assert seen == [
-        LoopEntry("loop", 0, True, False),
-        *(LoopEntry("loop", i, False, False) for i in (1, 2)),
-    ]
+    assert seen == [LoopEntry("loop", i, False) for i in (0, 1, 2)]
+    assert [entry.first for entry in seen] == [True, False, False]
 
 
 def test_a_failing_loop_leaves_ctx_loops_empty() -> None:
