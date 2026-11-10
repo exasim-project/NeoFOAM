@@ -38,7 +38,6 @@ class ModelRuntime:
     spec: "ModelSpec"
     name: str  # unique: "<spec.name>_<instance_id>"
     config: Any  # loaded config — updated during RESOLVE
-    # resolves the Depends() of this run's operations, with this run's cache
     dependency_resolver: DependencyResolver = field(default_factory=DependencyResolver, repr=False)
 
     def run_resolve(self, ctx: "ConfigContext") -> None:

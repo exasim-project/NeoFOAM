@@ -47,8 +47,7 @@ class SolverRuntime:
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
-    # resolves the Depends() of this run's initializer and operations, with this
-    # run's cache: two runtimes of one spec (e.g. two regions) share none
+    # per run, so two runtimes of one spec (two regions) share no Depends() cache
     dependency_resolver: DependencyResolver = field(default_factory=DependencyResolver, repr=False)
 
     # ------------------------------------------------------------------
