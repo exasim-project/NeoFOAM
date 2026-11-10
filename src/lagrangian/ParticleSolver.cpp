@@ -18,7 +18,7 @@ ParticleSolver::ParticleSolver(
     LocateMethod locate,
     Interpolation interpolation,
     const NeoN::Executor& exec,
-    const Foam::fvMesh& mesh,
+    const MeshAdapter& mesh,
     const Foam::volVectorField& U
 )
     : drag_(drag)
@@ -123,7 +123,7 @@ NeoN::label ParticleSolver::locateWalk(ParticleCloud& cloud, NeoN::Vector<NeoN::
     auto cellV = cloud.cell.view();
     auto activeV = cloud.active.view();
     auto ufV = uf.view();
-    const TrackingMeshView m = view(*trackingMesh_);
+    const NeoN::TrackingMeshView m = trackingMesh_->view();
     const CarrierFieldView f = view(*carrierField_);
 
     // ─── One thread per particle ───
@@ -139,7 +139,7 @@ NeoN::label ParticleSolver::locateWalk(ParticleCloud& cloud, NeoN::Vector<NeoN::
 
             // Q1: walk from the old cell to the cell containing x (x shifted on cyclics)
             NeoN::Vec3 x = xV[i];
-            const NeoN::label c = locate(x, cellV[i], m);
+            const NeoN::label c = NeoN::locateCell(x, cellV[i], m);
 
             // Q10: left the domain through a non-periodic boundary
             if (c < 0)

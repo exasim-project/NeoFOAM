@@ -10,7 +10,7 @@
 #include "TrackingMesh.hpp"
 #include "drag/DragModel.hpp"
 #include "force/ForceModel.hpp"
-#include "fvMesh.H"
+#include "NeoFOAM/datastructures/meshAdapter.hpp"
 #include "volFields.H"
 #include <optional>
 
@@ -51,7 +51,7 @@ public:
      * @param interpolation  carrier interpolation for walk (cell or cellPoint);
      *                       findCell always uses the cell value
      * @param exec           executor of the cloud
-     * @param mesh           OpenFOAM mesh (kept by reference)
+     * @param mesh           mesh adapter: OpenFOAM and NeoN mesh (kept by reference)
      * @param U              frozen carrier velocity (kept by reference)
      */
 
@@ -64,7 +64,7 @@ public:
         LocateMethod locate,
         Interpolation interpolation,
         const NeoN::Executor& exec,
-        const Foam::fvMesh& mesh,
+        const MeshAdapter& mesh,
         const Foam::volVectorField& U
     );
 
@@ -104,9 +104,9 @@ private:
     IntegrationScheme scheme_;
     CarrierProperties carrier_;
     LocateMethod locate_;
-    const Foam::fvMesh& mesh_;
+    const MeshAdapter& mesh_;
     const Foam::volVectorField& U_;
-    std::optional<TrackingMesh> trackingMesh_; ///< built for locate walk only
+    std::optional<NeoN::TrackingMesh> trackingMesh_; ///< built for locate walk only
     std::optional<CarrierField> carrierField_; ///< built for locate walk only
 };
 

@@ -170,3 +170,75 @@ TEST_CASE("lagrangian cell finding", "[lagrangian]")
         REQUIRE(activeH.view()[1] == 0);
     }
 }
+
+TEST_CASE("lagrangian walk locate and cellPoint interpolation", "[lagrangian]")
+{
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+
+    // linear carrier velocity U = (x, 0, 0): cellPoint interpolation reproduces a linear
+    // field exactly, so the sampled velocity must equal the x coordinate of the particle
+    const Foam::dimensionedVector perLength(
+        "perLength", Foam::dimVelocity / Foam::dimLength, Foam::vector(1, 0, 0)
+    );
+    Foam::volVectorField U("U", perLength * mesh.C().component(Foam::vector::X));
+
+    // the middle cell of the 3x3 mesh, and a point inside it but away from its centre
+    const Foam::label target = mesh.findCell(Foam::point(0.51, 0.51, 0.05));
+    REQUIRE(target >= 0);
+    const Foam::point centre = mesh.C()[target];
+    const Foam::point corner = mesh.points()[mesh.cellPoints()[target][0]];
+    const Foam::point inside = 0.6 * centre + 0.4 * corner;
+
+    // particle 0 at p0, particle 1 outside the domain; both start the walk in cell 0
+    auto run = [&](lag::Interpolation interpolation, const Foam::point& p0)
+    {
+        lag::ParticleSolver solver(
+            lag::DragModel {},
+            lag::ForceModels {},
+            lag::IntegrationScheme::Euler,
+            lag::CarrierProperties {1.2, 1.8e-5},
+            lag::LocateMethod::walk,
+            interpolation,
+            exec,
+            mesh,
+            U
+        );
+        lag::ParticleCloud cloud(
+            exec,
+            {{p0.x(), p0.y(), p0.z()}, {5.0, 5.0, 0.05}},
+            {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}},
+            {1e-4, 1e-4},
+            {2500.0, 2500.0},
+            {0, 0}
+        );
+        NeoN::Vector<NeoN::Vec3> uf(exec, 2, NeoN::Vec3 {0.0, 0.0, 0.0});
+        // walk samples the carrier field built from U; uCells is only used by findCell
+        NeoN::Vector<NeoN::Vec3> uCells(exec, mesh.nCells(), NeoN::Vec3 {0.0, 0.0, 0.0});
+        const NeoN::label left = solver.locateAndInterpolate(cloud, uf, uCells);
+        return std::tuple {
+            left, cloud.cell.copyToHost(), cloud.active.copyToHost(), uf.copyToHost()
+        };
+    };
+
+    SECTION("walk finds the cell from a distant start and deactivates outside (" + execName + ")")
+    {
+        auto [left, cellH, activeH, ufH] = run(lag::Interpolation::cell, centre);
+        REQUIRE(cellH.view()[0] == target);
+        REQUIRE(activeH.view()[0] == 1);
+        REQUIRE(ufH.view()[0][0] == Catch::Approx(centre.x()).epsilon(1e-12)); // cell value
+        REQUIRE(left == 1);
+        REQUIRE(activeH.view()[1] == 0);
+    }
+
+    SECTION("cellPoint interpolation is exact for a linear field (" + execName + ")")
+    {
+        auto [left, cellH, activeH, ufH] = run(lag::Interpolation::cellPoint, inside);
+        REQUIRE(cellH.view()[0] == target);
+        REQUIRE(ufH.view()[0][0] == Catch::Approx(inside.x()).epsilon(1e-10));
+        REQUIRE(ufH.view()[0][1] == Catch::Approx(0.0).margin(1e-12));
+        REQUIRE(ufH.view()[0][2] == Catch::Approx(0.0).margin(1e-12));
+    }
+}
