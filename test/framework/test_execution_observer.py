@@ -7,7 +7,7 @@ import threading
 from typing import Any
 
 from framework.conftest import MaxIterations
-from neofoam.framework.context import Context, initializing_region
+from neofoam.framework.context import Context
 from neofoam.framework.execution_observer import ExecutionObserver, current, observe
 from neofoam.framework.initialization.execution.executor import execute_lazy_inits
 from neofoam.framework.initialization.init_step import InitStep
@@ -147,17 +147,8 @@ def test_init_steps_carry_the_region_they_initialize() -> None:
     regions: list[Any] = []
     recorder.init_steps = lambda steps: regions.extend(s.region for s in steps)  # type: ignore[method-assign]
 
-    with observe(recorder), initializing_region("left"):
-        execute_lazy_inits(steps)
-    execute_lazy_inits([InitStep(name="b", initializer=lambda ctx: 1)])
+    with observe(recorder):
+        execute_lazy_inits(steps, region="left")
+        execute_lazy_inits([InitStep(name="b", initializer=lambda ctx: 1)])
 
-    assert regions == ["left"]
-    assert steps[0].region == "left"
-
-
-def test_a_context_built_while_a_region_initializes_belongs_to_it() -> None:
-    with initializing_region("left"):
-        ctx = _ctx()
-
-    assert ctx.region == "left"
-    assert _ctx().region is None
+    assert regions == ["left", None]

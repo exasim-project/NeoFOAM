@@ -20,7 +20,7 @@ from neofoam.framework.config_injection import (
     _discover_configs_from_signature,
     _find_config_by_type,
 )
-from neofoam.framework.context import Context, initializing_region
+from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
@@ -281,8 +281,7 @@ class SolverSpec:
         if first_param is not None and hasattr(first_param, "argv"):
             first_param.argv = runtime.argv
 
-        with initializing_region(runtime.region):
-            ctx = self._initialize_func(**kwargs)
+        ctx = self._initialize_func(**kwargs)
 
         if first_param is not None:
             inj_state = getattr(first_param, "state", None)

@@ -4,11 +4,10 @@
 
 """Execute init steps in dependency order."""
 
-from typing import Any
+from typing import Any, Optional
 
 from neofoam import telemetry
 from neofoam.framework import execution_observer
-from neofoam.framework.context import initializing
 
 from ..init_step import InitStep, InitStepExecutionError
 from .init_result import InitResult
@@ -41,11 +40,13 @@ def execute_step(step: InitStep, context: dict[str, Any]) -> Any:
 
 
 def execute_lazy_inits(
-    lazy_inits: list[InitStep], *, assume_validated: bool = False
+    lazy_inits: list[InitStep],
+    *,
+    assume_validated: bool = False,
+    region: Optional[str] = None,
 ) -> list[InitResult]:
-    """Execute ``lazy_inits`` in dependency order and collect their results."""
+    """Execute ``lazy_inits`` in dependency order; steps without a region get ``region``."""
     sorted_inits = _topological_sort(lazy_inits, validate_graph=not assume_validated)
-    region = initializing()
     if region is not None:
         for step in sorted_inits:
             if step.region is None:
