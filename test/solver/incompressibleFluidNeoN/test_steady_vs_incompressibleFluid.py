@@ -35,7 +35,17 @@ Two comparisons with different discriminating power:
    See ``MODELS`` and report/steady-turbulence-wall-functions.md.
 
 A third test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
-the native ``simpleFoam`` binary, which is bitwise on this case.
+the native ``simpleFoam`` binary after 50 iterations. Each field's relative L2
+difference ``||reference - native||_2 / ||native||_2`` (all cells and
+components) must be at most ``1e-10``. The two are bitwise equal when pybFoam
+and OpenFOAM are built alike, but not on an ``x86-64-v3`` toolchain (the
+ubuntu-26.04 runner's gcc): pybFoam is compiled there with FMA, the prebuilt
+OpenFOAM is not. The case's 1e-13 linear solvers keep that round-off from
+growing, yet it still exceeds a pointwise ``1e-15 * peak`` bound in near-zero
+cells. Measured: the FMA difference is at most 9.3e-12 (kOmegaSST p, 10x
+below the bound); a 1e-6 relative change to the U relaxation factor or to
+``nu`` (reference run only) raises each model's largest field difference to
+6.5e-8 or more (SpalartAllmaras with ``nu``), 650x above it.
 
 A fourth covers the *SIMPLEC* branch (``consistent yes``): the same case with
 ``solution/simplec/fvSolution`` overlaid on both solvers, again at two
@@ -58,6 +68,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+
+from solver.incompressibleFluid.comparison_helpers import relative_l2_error
 
 _HERE = Path(__file__).parent
 _CASE = _HERE / "cases" / "pitzDailySteady"
@@ -227,6 +239,41 @@ def _assert_fields_match(
     assert not failures, f"{label}: fields diverged beyond rtol={rtol:.0e}: " + ", ".join(failures)
 
 
+def _assert_fields_match_l2(
+    result_case: Path,
+    reference_case: Path,
+    tmp_path: Path,
+    label: str,
+    fields: tuple[str, ...],
+    rel_l2_tol: float,
+) -> None:
+    """Per-field relative L2 difference of the final times is at most ``rel_l2_tol``."""
+    result_final = _final_time_dir(result_case)
+    reference_final = _final_time_dir(reference_case)
+    assert result_final.name == reference_final.name, (
+        f"solvers wrote different final times: {result_final.name} vs {reference_final.name}"
+    )
+
+    result_vals = _load_internal_fields(result_case, fields, tmp_path / f"{label}_result")
+    reference_vals = _load_internal_fields(reference_case, fields, tmp_path / f"{label}_reference")
+
+    failures = []
+    for name in fields:
+        reference = reference_vals[name]
+        result = result_vals[name]
+        error = relative_l2_error(result, reference)
+        peak = float(np.max(np.abs(reference))) or 1.0
+        max_abs = float(np.max(np.abs(result - reference)))
+        print(
+            f"[{label}] {name}: relative L2 = {error:.3e}, "
+            f"max abs diff = {max_abs:.3e} (peak = {peak:.3e})"
+        )
+        if not error <= rel_l2_tol:
+            failures.append(f"{name}(relative L2={error:.3e}, max abs={max_abs:.3e})")
+
+    assert not failures, f"{label}: relative L2 above {rel_l2_tol:.0e}: " + ", ".join(failures)
+
+
 @pytest.mark.parametrize("model", list(MODELS), ids=list(MODELS))
 def test_neon_steady_two_iterations_roundoff(model: str, tmp_path: Path) -> None:
     """Per-iteration SIMPLE parity is machine precision (sharp, fast check)."""
@@ -276,8 +323,8 @@ def test_neon_steady_converged_matches_incompressibleFluid(model: str, tmp_path:
 @pytest.mark.skipif(shutil.which("simpleFoam") is None, reason="native simpleFoam not on PATH")
 @pytest.mark.parametrize("model", list(MODELS), ids=list(MODELS))
 def test_reference_steady_matches_native_simpleFoam(model: str, tmp_path: Path) -> None:
-    """The reference itself: incompressibleFluid (SIMPLE) is bitwise-parity
-    with the native simpleFoam binary on this case."""
+    """The reference itself: incompressibleFluid (SIMPLE) matches the native
+    simpleFoam binary to round-off (relative L2, see the module docstring)."""
     fields = MODELS[model][0]
     reference_case = tmp_path / "reference"
     native_case = tmp_path / "native"
@@ -293,9 +340,7 @@ def test_reference_steady_matches_native_simpleFoam(model: str, tmp_path: Path) 
     )
     assert result.returncode == 0, f"simpleFoam failed: {result.stderr[-3000:]}"
 
-    _assert_fields_match(
-        reference_case, native_case, tmp_path, f"{model}_native", fields, 1e-10, 1e-15
-    )
+    _assert_fields_match_l2(reference_case, native_case, tmp_path, f"{model}_native", fields, 1e-10)
 
 
 def test_neon_regex_equation_relaxation_leaves_the_pressure_equation_alone(
