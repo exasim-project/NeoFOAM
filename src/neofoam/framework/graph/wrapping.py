@@ -2,15 +2,14 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A wrapping loop: the resolver places it around operations of the graph.
+"""Place a contributed wrapping loop around operations of the resolved graph.
 
-A model or boundary condition contributes a loop operation that repeats part of
-the solver's time step. Its ``OperationMetadata.wraps``
-(:class:`~neofoam.framework.types.Placement`) says which part:
+A model or boundary condition contributes a loop that repeats part of the time
+step; its ``OperationMetadata.wraps`` (:class:`~neofoam.framework.types.Placement`)
+says which part:
 
-- no operations: the whole body of the top scope, the body of the outermost loop
-  (the time loop). Once a wrapping loop sits there, the next one wraps the whole
-  body of the innermost of them::
+- no operations: the whole body of the outermost loop (the time loop), or of the
+  innermost wrapping loop already placed there::
 
     time_loop                       time_loop
         start_step                      couple
@@ -20,8 +19,7 @@ the solver's time step. Its ``OperationMetadata.wraps``
                                             write
 
 - named operations: those and, with ``downstream``, every operation downstream of
-  them over ``depends_on`` / ``before`` within their scope (the time-step body or
-  a loop body). The loop takes the place of the last of them::
+  them in their scope; the loop takes the place of the last of them::
 
     time_loop                       time_loop
         start_step                      start_step
@@ -30,9 +28,8 @@ the solver's time step. Its ``OperationMetadata.wraps``
         write                               update_rho
                                         write
 
-  A name may be a loop inside the outermost one (e.g. a PIMPLE ``inner_loop``):
-  the wrapping loop holds it whole, as one operation, and downstream of it is
-  downstream of anything inside it::
+  A named loop inside the outermost one (e.g. PIMPLE's ``inner_loop``) is held
+  whole::
 
     time_loop                       time_loop
         set_time_step                   set_time_step
@@ -43,22 +40,16 @@ the solver's time step. Its ``OperationMetadata.wraps``
         write                                   solve_p
                                             write
 
-Loops are placed in the order given, outer first: a loop whose operations lie
-inside one placed before nests inside it; one that would have to hold a loop
-placed before raises.
-
-An operation marked ``first`` (``OperationMetadata.first``, e.g. the start of a
-time step) runs only in the first pass of the wrapping loops around it; it may
-not depend on an operation that runs in every pass of one of them
-(:func:`check_first`). One marked ``final`` (``OperationMetadata.final``, e.g.
-writing the results) runs only in their final pass; no operation that runs in
-an other pass of one of them may depend on it (:func:`check_final`).
+Loops are placed in the order given, outer first; one that would have to hold a
+loop placed before it raises. An operation marked ``first`` runs only in the first
+pass of the wrapping loops around it, one marked ``final`` only in their final
+pass; :func:`check_passes` rejects dependencies that would read stale data.
 """
 
 from __future__ import annotations
 
 import dataclasses
-from typing import Callable
+from typing import Callable, Iterator
 
 from neofoam.framework.operations import IterativeOp, Operation
 from neofoam.framework.types import Placement
@@ -67,12 +58,8 @@ from neofoam.framework.types import Placement
 Path = tuple[int, ...]
 
 
-def downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list[Operation]:
-    """The operations of one resolved scope that ``seed`` picks and every one downstream of them.
-
-    A loop counts with the edges and names of everything inside it. The result
-    keeps the order of ``ops``.
-    """
+def _downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list[Operation]:
+    """The operations of a resolved scope that ``seed`` picks and all downstream of them."""
     selected: list[Operation] = []
     names: set[str] = set()
     before_targets: set[str] = set()
@@ -89,12 +76,9 @@ def downstream(ops: list[Operation], seed: Callable[[Operation], bool]) -> list[
 
 
 def wrap(ops: list[Operation], loop: Operation) -> list[Operation]:
-    """The resolved ``ops`` with ``loop`` placed as ``loop.metadata.wraps`` says.
+    """The resolved ``ops`` with ``loop`` placed as its ``metadata.wraps`` says.
 
-    Raises ``ValueError`` when an operation name is unknown or names the
-    outermost loop, when the named operations lie in more than one scope, when
-    the loop would have to hold a wrapping loop placed before it, or when no top
-    scope can be told.
+    Raises ``ValueError`` when the placement names no, or no single, scope.
     """
     placement = loop.metadata.wraps
     assert placement is not None
@@ -128,54 +112,42 @@ def _upstream(
     return [*op.depends_on, *(other for other, (o, _) in located.items() if name in o.before)]
 
 
-def check_final(ops: list[Operation]) -> None:
-    """Raise ``ValueError`` when an operation not marked ``final`` depends on one that is.
+def check_passes(ops: list[Operation]) -> None:
+    """Raise ``ValueError`` when a dependency inside a shared wrapping loop crosses passes.
 
-    An operation marked ``final`` (``OperationMetadata.final``) runs only in the
-    final pass of the wrapping loops around it; one that depends on it (its
-    ``depends_on``, or the final one's ``before``) and runs in the other passes of
-    a wrapping loop around both would run before it, or on stale data.
+    Within a wrapping loop around both, an operation not marked ``final`` may not
+    depend on one that is, and one marked ``first`` only on one that is too: either
+    would run before its dependency, or on stale data.
     """
-    located = _around(ops)
+    pairs = list(_sharing_a_loop(_around(ops)))
+    for name, op, dependency, dependency_op, loop in pairs:
+        if dependency_op.metadata.final and not op.metadata.final:
+            raise ValueError(
+                f"{name} runs in every pass of the wrapping loop {loop}, but depends "
+                f"on {dependency}, which runs only in its final pass (final); mark {name} "
+                f"final too or place the loop so that {name} is outside it"
+            )
+    for name, op, dependency, dependency_op, loop in pairs:
+        if op.metadata.first and not dependency_op.metadata.first:
+            raise ValueError(
+                f"{name} runs only in the first pass of the wrapping loop {loop} "
+                f"(first), but depends on {dependency}, which runs in every pass of it; "
+                f"mark {dependency} first too or place the loop around it"
+            )
+
+
+def _sharing_a_loop(
+    located: dict[str, tuple[Operation, tuple[str, ...]]],
+) -> Iterator[tuple[str, Operation, str, Operation, str]]:
+    """Each dependency pair inside a wrapping loop around both, with the innermost such loop."""
     for name, (op, around) in located.items():
-        if op.metadata.final or not around:
-            continue
         for dependency in _upstream(name, op, located):
             if dependency not in located:
                 continue
             dependency_op, dependency_around = located[dependency]
             shared = [loop for loop in around if loop in dependency_around]
-            if shared and dependency_op.metadata.final:
-                raise ValueError(
-                    f"{name} runs in every pass of the wrapping loop {shared[-1]}, but depends "
-                    f"on {dependency}, which runs only in its final pass (final); mark {name} "
-                    f"final too or place the loop so that {name} is outside it"
-                )
-
-
-def check_first(ops: list[Operation]) -> None:
-    """Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.
-
-    An operation marked ``first`` (``OperationMetadata.first``) runs only in the
-    first pass of the wrapping loops around it; one it depends on (its
-    ``depends_on``, or the other's ``before``) that runs in every pass of a
-    wrapping loop around both would leave it on stale data.
-    """
-    located = _around(ops)
-    for name, (op, around) in located.items():
-        if not op.metadata.first or not around:
-            continue
-        for dependency in _upstream(name, op, located):
-            if dependency not in located:
-                continue
-            dependency_op, dependency_around = located[dependency]
-            shared = [loop for loop in around if loop in dependency_around]
-            if shared and not dependency_op.metadata.first:
-                raise ValueError(
-                    f"{name} runs only in the first pass of the wrapping loop {shared[-1]} "
-                    f"(first), but depends on {dependency}, which runs in every pass of it; "
-                    f"mark {dependency} first too or place the loop around it"
-                )
+            if shared:
+                yield name, op, dependency, dependency_op, shared[-1]
 
 
 def _top(ops: list[Operation], loop: Operation) -> Path:
@@ -235,7 +207,7 @@ def _selected(
     scope = _scope(ops, path)
     seeds = {id(located[name][1]) for name in names}
     if placement.downstream:
-        picked = downstream(scope, lambda op: id(op) in seeds)
+        picked = _downstream(scope, lambda op: id(op) in seeds)
     else:
         picked = [op for op in scope if id(op) in seeds]
     held = _wrapping_in(picked)
@@ -314,16 +286,13 @@ def _filled(loop: Operation, body: list[Operation]) -> Operation:
 
 
 def _wrapped(scope: list[Operation], selected: list[Operation], loop: Operation) -> list[Operation]:
-    """``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place.
-
-    Raises ``ValueError`` when an operation left before the loop depends on one in it.
-    """
+    """``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place."""
     member_ids = {id(op) for op in selected}
     last = max(index for index, op in enumerate(scope) if id(op) in member_ids)
     earlier = [op for op in scope[:last] if id(op) not in member_ids]
     # Without downstream an operation between the members may depend on one of
     # them; running it before the loop would break that edge.
-    after = {id(op) for op in downstream(scope[:last], lambda op: id(op) in member_ids)}
+    after = {id(op) for op in _downstream(scope[:last], lambda op: id(op) in member_ids)}
     broken = [op.operation_name for op in earlier if id(op) in after]
     if broken:
         raise ValueError(
