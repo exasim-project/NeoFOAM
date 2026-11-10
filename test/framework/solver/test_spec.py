@@ -6,15 +6,12 @@
 from neofoam.framework.solver import Solver
 
 
-def test_empty_argv_gets_a_program_name() -> None:
-    # pyf.argList([]) segfaults; run() without arguments must not reach it with [].
+def test_instantiate_empty_argv_gets_a_program_name() -> None:
     assert Solver("emptyArgv").instantiate().argv == ["neofoam"]
     assert Solver("emptyArgv").instantiate(argv=[]).argv == ["neofoam"]
 
 
-def test_given_argv_is_kept() -> None:
-    assert Solver("givenArgv").instantiate(argv=["prog", "-case", "x"]).argv == [
-        "prog",
-        "-case",
-        "x",
-    ]
+def test_instantiate_keeps_a_given_argv() -> None:
+    argv = ["prog", "-case", "x"]
+
+    assert Solver("givenArgv").instantiate(argv=argv).argv == argv
