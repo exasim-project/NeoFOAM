@@ -101,9 +101,7 @@ class SolverRuntime:
         return self.spec._run_execution_graph(self, domain_name, ctx)
 
     def resolve_operations(self, ctx: "Context") -> "Operations":
-        """The runnable execution graph: ``execution_graph`` with its model
-        operations (optional models, ...) merged in by
-        :class:`~neofoam.framework.graph.DAGResolver`.
+        """The runnable execution graph: ``execution_graph`` resolved with its model operations.
 
         Reported to the installed execution observer before it is returned.
         """

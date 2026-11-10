@@ -8,12 +8,7 @@ from typing import Any
 
 from framework.conftest import MaxIterations
 from neofoam.framework.context import Context
-from neofoam.framework.execution_observer import (
-    ExecutionObserver,
-    current,
-    observe,
-    set_observer,
-)
+from neofoam.framework.execution_observer import ExecutionObserver, current, observe
 from neofoam.framework.initialization.execution.executor import execute_lazy_inits
 from neofoam.framework.initialization.init_step import InitStep
 from neofoam.framework.operations import IterativeOp, Operation, SequentialOp, StepBuilder
@@ -110,7 +105,6 @@ def test_observe_restores_previous_observer() -> None:
             assert current() is inner
         assert current() is outer
     assert current() is None
-    assert set_observer(None) is None
 
 
 def test_no_observer_runs_unchanged() -> None:
