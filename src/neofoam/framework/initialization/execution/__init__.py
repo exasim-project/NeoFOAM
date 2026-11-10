@@ -35,6 +35,8 @@ without modifying framework code.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from ...context import Context
 from ..init_step import InitStep
 from .context_builder import (
@@ -52,6 +54,7 @@ def execute_initialization(
     lazy_inits: list[InitStep],
     *,
     router: CategoryRouter | None = None,
+    region: Optional[str] = None,
 ) -> Context:
     """Validate ``lazy_inits``, execute them in order, build a :class:`Context`.
 
@@ -66,7 +69,7 @@ def execute_initialization(
     # ``replaces=[X]`` that names no present step must still raise.
     check_replacements(lazy_inits)
 
-    results = execute_lazy_inits(lazy_inits, assume_validated=True)
+    results = execute_lazy_inits(lazy_inits, assume_validated=True, region=region)
     return build_context_from_results(results, router=router or default_router())
 
 

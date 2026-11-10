@@ -75,6 +75,12 @@ def test_runtime_region_selects_the_region_configs(region: Optional[str], expect
     assert ctx.models["increment"] == expected
 
 
+def test_runtime_initialize_hands_its_region_to_the_context() -> None:
+    ctx = counter.instantiate(region="left").initialize()
+
+    assert ctx.region == "left"
+
+
 def test_runtime_finalize_runs_the_registered_finalizer() -> None:
     runtime = counter.instantiate(region="left")
     ctx = runtime.initialize()

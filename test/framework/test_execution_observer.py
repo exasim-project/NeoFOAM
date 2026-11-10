@@ -7,7 +7,7 @@ import threading
 from typing import Any
 
 from framework.conftest import MaxIterations
-from neofoam.framework.context import Context, initializing_region
+from neofoam.framework.context import Context
 from neofoam.framework.execution_observer import ExecutionObserver, current, observe
 from neofoam.framework.initialization.execution.executor import execute_lazy_inits
 from neofoam.framework.initialization.init_step import InitStep
@@ -20,7 +20,7 @@ class Recorder(ExecutionObserver):
         self.events: list[tuple[Any, ...]] = []
 
     def init_steps(self, steps: list[InitStep]) -> None:
-        self.events.append(("init_steps", [step.name for step in steps]))
+        self.events.append(("init_steps", [s.name for s in steps]))
 
     def before_init_step(self, step: InitStep, context: dict[str, Any]) -> None:
         self.events.append(("before_init", step.name, sorted(context)))
@@ -41,27 +41,27 @@ class Recorder(ExecutionObserver):
         self.events.append(("tested", op.name, iteration, result))
 
 
-def _sequential(name: str) -> Operation:
+def _seq(name: str) -> Operation:
     return Operation(func=SequentialOp(lambda ctx: None), metadata=OperationMetadata(op_name=name))
 
 
-def _context() -> Context:
+def _ctx() -> Context:
     return Context(fields={}, models={}, mesh={})
 
 
-def test_observer_reports_execution_events_in_order() -> None:
+def test_operations_and_loop_tests_are_reported_in_order() -> None:
     builder = StepBuilder()
-    with builder as scope:
-        scope.step(_sequential("first"))
+    with builder as b:
+        b.step(_seq("first"))
         loop = Operation(
             func=IterativeOp(MaxIterations(max_iters=2)), metadata=OperationMetadata(op_name="loop")
         )
-        with scope.loop(loop) as body:
-            body.step(_sequential("inner"))
+        with b.loop(loop) as body:
+            body.step(_seq("inner"))
 
     recorder = Recorder()
     with observe(recorder):
-        builder.operations.run(_context())
+        builder.operations.run(_ctx())
 
     assert recorder.events == [
         ("before", "first"),
@@ -79,7 +79,7 @@ def test_observer_reports_execution_events_in_order() -> None:
     ]
 
 
-def test_observer_reports_init_steps_in_order_with_their_values() -> None:
+def test_init_steps_are_reported_with_order_and_values() -> None:
     steps = [
         InitStep(name="b", depends_on=["a"], initializer=lambda ctx: ctx["a"] + 1),
         InitStep(name="a", initializer=lambda ctx: 1),
@@ -113,7 +113,7 @@ def test_no_observer_runs_unchanged() -> None:
         func=SequentialOp(lambda ctx: count.__setitem__(0, count[0] + 1)),
         metadata=OperationMetadata(op_name="count"),
     )
-    op.run(_context())
+    op.run(_ctx())
     assert count == [1]
 
 
@@ -147,17 +147,8 @@ def test_init_steps_carry_the_region_they_initialize() -> None:
     regions: list[Any] = []
     recorder.init_steps = lambda steps: regions.extend(s.region for s in steps)  # type: ignore[method-assign]
 
-    with observe(recorder), initializing_region("left"):
-        execute_lazy_inits(steps)
-    execute_lazy_inits([InitStep(name="b", initializer=lambda ctx: 1)])
+    with observe(recorder):
+        execute_lazy_inits(steps, region="left")
+        execute_lazy_inits([InitStep(name="b", initializer=lambda ctx: 1)])
 
-    assert regions == ["left"]
-    assert steps[0].region == "left"
-
-
-def test_a_context_built_while_a_region_initializes_belongs_to_it() -> None:
-    with initializing_region("left"):
-        ctx = _context()
-
-    assert ctx.region == "left"
-    assert _context().region is None
+    assert regions == ["left", None]

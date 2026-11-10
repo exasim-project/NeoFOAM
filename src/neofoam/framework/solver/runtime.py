@@ -88,8 +88,10 @@ class SolverRuntime:
     # ------------------------------------------------------------------
 
     def initialize(self) -> "Context":
-        """Execute the registered initialization step."""
-        return self.spec._run_initialize(self)
+        """Execute the registered initialization step; the context gets the runtime's region."""
+        ctx = self.spec._run_initialize(self)
+        ctx.region = self.region
+        return ctx
 
     def execution_graph(
         self, domain_name: Optional[str] = None, ctx: Optional["Context"] = None
