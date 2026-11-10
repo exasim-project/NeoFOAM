@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Specs keep no run state: `SolverRuntime` and `ModelRuntime` each own the `DependencyResolver` that caches `Depends()` values, and the SIMPLE/PIMPLE settings (`algorithm_type`, `use_boussinesq`) live on the pressure-velocity `ModelRuntime` instead of the shared spec, so two runs or regions selecting the same spec no longer see each other's state [#467](https://github.com/exasim-project/NeoFOAM/pull/467)
 - Add a C++ test of the `slip` boundary reader against OpenFOAM [#481](https://github.com/exasim-project/NeoFOAM/pull/481)
 - Apply the fvOptions `velocityDampingConstraint` in neoSimpleFoam (diagonal-only damping of cells above `UMax`, as in OpenFOAM) via a new post-relaxation `PDE::setPostRelaxConstraint` hook; other fvOptions entries are now reported as unsupported instead of silently ignored [#479](https://github.com/exasim-project/NeoFOAM/pull/479)
 - Keep the linear system and momentum solver across time steps, so NeoN's solver caches (e.g. the distributed matrix cache) can hit [#448](https://github.com/exasim-project/NeoFOAM/pull/448)
