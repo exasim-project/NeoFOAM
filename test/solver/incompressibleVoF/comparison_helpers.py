@@ -52,7 +52,6 @@ _SOLVER_WORKER = Path(__file__).parent / "_mules_regime_worker.py"
 def run_dambreak_comparison(
     tutorial_name: str,
     native_solver: str,
-    case_prefix: str,
     work_dir: Path,
     end_time: float = 0.05,
     write_interval: float = 0.05,
@@ -61,15 +60,14 @@ def run_dambreak_comparison(
     native ``native_solver`` binary, then assert the written fields match to
     machine precision (rtol=atol=1e-10).
 
-    ``case_prefix`` names the two scratch case directories under ``work_dir``
-    (``<case_prefix>_incompressibleVoF`` / ``<case_prefix>_<native_solver>``),
-    which are removed afterwards.
+    The two scratch cases are ``work_dir/incompressibleVoF`` and
+    ``work_dir/<native_solver>``.
     """
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / tutorial_name
 
-    test_case_custom = work_dir / f"{case_prefix}_incompressibleVoF"
-    test_case_native = work_dir / f"{case_prefix}_{native_solver}"
+    test_case_custom = work_dir / "incompressibleVoF"
+    test_case_native = work_dir / native_solver
 
     try:
         # ------------------------------------------------------------------ #

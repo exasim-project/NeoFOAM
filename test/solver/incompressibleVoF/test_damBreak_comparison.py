@@ -31,18 +31,17 @@ from .comparison_helpers import run_dambreak_comparison
 
 
 @pytest.mark.parametrize(
-    "tutorial_name, native_solver, case_prefix",
+    "tutorial_name, native_solver",
     [
-        pytest.param("damBreak", "interFoam", "damBreak", id="MULES"),
-        pytest.param("damBreak_isoAdvector", "interIsoFoam", "damBreak_iso", id="isoAdvector"),
+        pytest.param("damBreak", "interFoam", id="MULES"),
+        pytest.param("damBreak_isoAdvector", "interIsoFoam", id="isoAdvector"),
     ],
 )
 def test_damBreak_matches_the_native_solver(
-    tutorial_name: str, native_solver: str, case_prefix: str, tmp_path: Path
+    tutorial_name: str, native_solver: str, tmp_path: Path
 ) -> None:
     run_dambreak_comparison(
         tutorial_name=tutorial_name,
         native_solver=native_solver,
-        case_prefix=case_prefix,
         work_dir=tmp_path,
     )
