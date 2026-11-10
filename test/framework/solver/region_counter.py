@@ -27,11 +27,6 @@ def _initialize(self: Any) -> Context:
     return Context(fields={"total": 0.0}, models={"increment": config.increment})
 
 
-@counter.finalizer
-def _finalize(self: Any, ctx: Context) -> None:
-    ctx.models["finalized"] = True
-
-
 @counter.operation()
 def add_increment(self: Any, ctx: Context) -> None:
     ctx.fields["total"] += ctx.models["increment"]
