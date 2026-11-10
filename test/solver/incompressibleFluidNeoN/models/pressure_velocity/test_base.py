@@ -5,9 +5,8 @@
 
 ``PressureVelocityAlgorithmNeoN.create`` is the case-free entry point;
 ``detect_and_create`` is the on-disk one and needs a case, so only ``create`` is
-covered here. Each call hands back a fresh runtime of the selected spec, whose
-``config`` carries the run's ``algorithm_type``; the module-level spec stays an
-immutable description, so two regions or two runs never see each other's setting.
+covered here. Each call returns a fresh runtime whose ``config`` carries the
+run's ``algorithm_type``; the module-level spec stays unchanged.
 """
 
 from __future__ import annotations
