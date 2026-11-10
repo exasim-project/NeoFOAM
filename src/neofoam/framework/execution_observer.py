@@ -1,20 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Hooks through which a tool watches — or pauses — a solver run.
+"""Hooks through which a tool watches, or pauses, a solver run.
 
-The framework calls the installed :class:`ExecutionObserver` around every init
-step, every operation and every loop-predicate evaluation, and hands it the
-init order and the resolved execution graph before they run. A hook that
-blocks pauses the run right there, which is how a step-by-step debugger UI
-(e.g. the ``neofoam_ui`` DAG stepper) drives an unmodified solver.
+The installed :class:`ExecutionObserver` is called around every init step,
+operation and loop test, and is handed the init order and the resolved graph
+before they run. A hook that blocks pauses the run there: that is how a
+step-by-step debugger UI drives an unmodified solver. Without an observer the
+hooks cost one ``None`` check.
 
-No observer is installed by default; the hooks then cost one ``None`` check.
-
-The observer is per thread (a :class:`~contextvars.ContextVar`): a run observed
-in one thread does not report to, or block in, a run in another thread, and
-overlapping ``observe()`` scopes in different threads cannot undo each other.
-Threads started by an observed run do not inherit the observer.
+The observer is per thread (a :class:`~contextvars.ContextVar`); threads started
+by an observed run do not inherit it.
 
 Example::
 
@@ -37,7 +33,7 @@ if TYPE_CHECKING:
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
 
-__all__ = ["ExecutionObserver", "current", "observe", "set_observer"]
+__all__ = ["ExecutionObserver", "current", "observe"]
 
 
 class ExecutionObserver:
@@ -76,13 +72,6 @@ _observer: ContextVar[Optional[ExecutionObserver]] = ContextVar(
 def current() -> Optional[ExecutionObserver]:
     """The observer installed in this thread, or ``None``."""
     return _observer.get()
-
-
-def set_observer(observer: Optional[ExecutionObserver]) -> Optional[ExecutionObserver]:
-    """Install ``observer`` in this thread (``None`` removes it) and return the previous one."""
-    previous = _observer.get()
-    _observer.set(observer)
-    return previous
 
 
 @contextmanager
