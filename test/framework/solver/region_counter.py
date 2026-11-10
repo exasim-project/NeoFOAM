@@ -23,7 +23,7 @@ counter = Solver("counter")
 
 @counter.initializer
 def _initialize(self: Any) -> Context:
-    config = IncrementConfig.load(case_dir=CASE, region=self.region)
+    config = IncrementConfig.load(case_dir=CASE / self.region if self.region else CASE)
     return Context(fields={"total": 0.0}, models={"increment": config.increment})
 
 
