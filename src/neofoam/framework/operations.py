@@ -104,11 +104,9 @@ class Operation:
     def run(self, ctx: Context) -> Any:
         """Run the operation on ``ctx``.
 
-        An operation marked ``first`` (``OperationMetadata.first``) is skipped
-        unless every wrapping loop running around it is in its first pass; one
-        marked ``final`` (``OperationMetadata.final``) unless every one is in its
-        final pass, or ``ctx.run_every_pass`` names it. Raises ``ValueError`` when
-        ``ctx.run_every_pass`` names an operation not marked ``final``.
+        A ``first`` operation is skipped unless every wrapping loop around it is in
+        its first pass, a ``final`` one unless every one is in its final pass or
+        ``ctx.run_every_pass`` names it.
         """
         if (self.metadata.first or self.metadata.final or ctx.run_every_pass) and self._skipped(
             ctx
@@ -151,14 +149,14 @@ class Operation:
         wrapping = self.metadata.wraps is not None
         loops = ctx.loops
         index = len(loops)
-        loops.append(LoopEntry(self.name, 0, True, wrapping))
+        loops.append(LoopEntry(self.name, 0, wrapping))
         try:
             iteration = 0
             while self.func(ctx):
                 for op in self.sub_operations:
                     op.run(ctx)
                 iteration += 1
-                loops[index] = LoopEntry(self.name, iteration, False, wrapping)
+                loops[index] = LoopEntry(self.name, iteration, wrapping)
         finally:
             del loops[index:]
 
@@ -171,12 +169,8 @@ def _not_final(op: Operation) -> str:
     )
 
 
-def check_run_every_pass(ops: list[Operation], names: set[str]) -> None:
-    """Raise ``ValueError`` unless every name of ``names`` is an operation of ``ops`` marked final.
-
-    ``ops`` is a graph (loops with the operations inside them), ``names`` a
-    ``Context.run_every_pass``.
-    """
+def _check_run_every_pass(ops: list[Operation], names: set[str]) -> None:
+    """Raise ``ValueError`` unless each of ``names`` is a ``final`` operation of ``ops``."""
     found: dict[str, Operation] = {}
 
     def walk(scope: list[Operation]) -> None:
@@ -244,14 +238,9 @@ class Operations:
         return iter(self.ops)
 
     def run(self, ctx: Context) -> None:
-        """Run the operations on ``ctx``.
-
-        Raises ``ValueError`` first when ``ctx.run_every_pass`` names an operation
-        that is not one of them, or not marked ``final``
-        (:func:`check_run_every_pass`).
-        """
+        """Run the operations on ``ctx``; ``ValueError`` if ``ctx.run_every_pass`` is invalid."""
         if ctx.run_every_pass:
-            check_run_every_pass(self.ops, ctx.run_every_pass)
+            _check_run_every_pass(self.ops, ctx.run_every_pass)
         for operation in self.ops:
             operation.run(ctx)
 

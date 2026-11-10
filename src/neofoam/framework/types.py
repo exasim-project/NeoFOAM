@@ -68,11 +68,9 @@ class OpType(Enum):
 class Placement:
     """Where the resolver places a wrapping loop (``OperationMetadata.wraps``).
 
-    Without ``operations`` the loop wraps the whole body of the top scope: the body
-    of the outermost loop, or of the innermost wrapping loop placed there before.
-    With them it wraps the operations of that name and, if ``downstream``, every
-    operation downstream of them in their scope. A name may be a loop inside the
-    outermost one (e.g. ``inner_loop``), which the loop then holds whole.
+    Without ``operations`` the loop wraps the whole time-step body; with them, the
+    named operations and, if ``downstream``, everything downstream of them in their
+    scope (:mod:`~neofoam.framework.graph.wrapping`).
     """
 
     operations: tuple[str, ...] | None = None
@@ -100,17 +98,9 @@ class OperationMetadata:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     domain_name: str | None = None
-    # set on a loop contributed by a model or boundary condition: a wrapping loop,
-    # which the resolver places around operations of the graph (graph.wrapping)
-    wraps: Placement | None = None
-    # runs once per pass of the loop that holds the wrapping loops: only while every
-    # wrapping loop around it is in its first pass (``Context.loops``), e.g. the
-    # start of a time step inside a coupling loop
-    first: bool = False
-    # runs once per pass of the loop that holds the wrapping loops, in their last
-    # pass: only while every wrapping loop around it is in its final pass
-    # (``Context.loops``), e.g. writing the results of a coupled time step
-    final: bool = False
+    wraps: Placement | None = None  # a wrapping loop: where the resolver places it
+    first: bool = False  # run only in the first pass of the wrapping loops around it
+    final: bool = False  # run only in their final pass
 
     # DAG visualization properties
     shape: str = "box"
@@ -138,7 +128,7 @@ class OperationMetadata:
 
     @property
     def name(self) -> str | None:
-        """``[<domain>.]<op>``: the op_name with its model domain."""
+        """``[<domain>.]<op>``."""
         if self.op_name is None:
             return None
         if self.domain_name:

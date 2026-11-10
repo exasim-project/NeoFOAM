@@ -95,7 +95,7 @@ def _time_step(log: list[str]) -> StepBuilder:
 
 
 def test_a_loop_entry_is_not_final_unless_its_test_marks_it() -> None:
-    assert LoopEntry("loop", 0, True, False).final is False
+    assert LoopEntry("loop", 0, False).final is False
 
     seen: list[LoopEntry] = []
     builder = StepBuilder()
@@ -105,7 +105,7 @@ def test_a_loop_entry_is_not_final_unless_its_test_marks_it() -> None:
 
     ops.run(_context())
 
-    assert seen == [LoopEntry("couple", i, i == 0, True, i == 2) for i in range(3)]
+    assert seen == [LoopEntry("couple", i, True, i == 2) for i in range(3)]
 
 
 def test_a_final_operation_outside_a_wrapping_loop_runs_every_time_step() -> None:
