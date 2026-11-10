@@ -428,7 +428,7 @@ class ModelSpec:
         return self._build_operations_for(runtime)
 
     def wrap_operation(self, func: Callable[..., Any], runtime: Any) -> Callable[..., Any]:
-        """Wrap ``func`` with this spec's dependency resolution.
+        """Wrap ``func`` with the dependency resolution of ``runtime``.
 
         For ``@operation_collection`` bodies, which bypass the spec's default
         operation wrapping and must wrap each exposed operation themselves.
@@ -492,10 +492,6 @@ def Model(name: str) -> ModelSpec:
 
 
 def _resolver(runtime: Any) -> DependencyResolver:
-    """The dependency resolver of a model's run: its runtime's.
-
-    A spec used as its own runtime (no ``dependency_resolver``) gets a fresh one,
-    so the spec keeps no run state.
-    """
+    """The runtime's dependency resolver; a fresh one for a spec used as its own runtime."""
     resolver = getattr(runtime, "dependency_resolver", None)
     return resolver if isinstance(resolver, DependencyResolver) else DependencyResolver()
