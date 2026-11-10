@@ -6,9 +6,7 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
-from contextvars import ContextVar
-from typing import Any, Iterator, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 from pydantic import BaseModel, Field
 
@@ -19,32 +17,6 @@ class FieldUpdates(dict[str, Any]):
     """
 
     pass
-
-
-_initializing: ContextVar[Optional[str]] = ContextVar("neofoam_initializing_region", default=None)
-
-
-@contextmanager
-def initializing_region(region: Optional[str]) -> Iterator[None]:
-    """Initialize the region ``region`` in the ``with`` block.
-
-    A region's ``SolverRuntime.initialize`` enters it: the init steps it runs
-    carry the region (``InitStep.region``), and a :class:`Context` built in it
-    gets ``region``. ``None`` keeps the enclosing region.
-    """
-    if region is None:
-        yield
-        return
-    token = _initializing.set(region)
-    try:
-        yield
-    finally:
-        _initializing.reset(token)
-
-
-def initializing() -> Optional[str]:
-    """The region being initialized in this thread (see :func:`initializing_region`)."""
-    return _initializing.get()
 
 
 class LoopEntry(NamedTuple):
@@ -87,8 +59,8 @@ class Context(BaseModel):
     loops: list[LoopEntry] = Field(default_factory=list)
     # ``final`` operations to run in every pass too, e.g. to watch them while debugging
     run_every_pass: set[str] = Field(default_factory=set)
-    # the region of a multi-region case this context belongs to; None for one region
-    region: Optional[str] = Field(default_factory=initializing)
+    # set by SolverRuntime.initialize; None for a single-region case
+    region: Optional[str] = None
 
     def mark_final(self, final: bool = True) -> None:
         """Mark the pass the innermost loop is about to run as its last; call from its test.

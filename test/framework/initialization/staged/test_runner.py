@@ -134,6 +134,17 @@ def test_run_without_resolve():
     assert ctx.mesh == "m"
 
 
+def test_run_hands_the_region_to_its_init_steps():
+    builder = StagedInitSpec.build("X")
+    steps = [lazy("mesh", create=lambda _ctx: "m")]
+    builder.load(lambda: LoadResult(core_models=[], optional_models=[]))
+    builder.build(lambda core, opt: steps)
+
+    StagedInitRunner(builder.finalize(), region="left").run()
+
+    assert [step.region for step in steps] == ["left"]
+
+
 @pytest.mark.parametrize(
     "models,expected_key",
     [
