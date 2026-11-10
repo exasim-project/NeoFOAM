@@ -76,18 +76,29 @@ def compare_fields_numerically(
     return match, max_abs_diff, rel_diff
 
 
+def relative_l2_error(result: np.ndarray, reference: np.ndarray) -> float:
+    """Relative L2 difference ``||result - reference||_2 / ||reference||_2``.
+
+    Taken over every cell and, for a vector or tensor field, every component.
+    """
+    assert result.shape == reference.shape, f"shape {result.shape} vs {reference.shape}"
+    return float(np.linalg.norm(result - reference) / np.linalg.norm(reference))
+
+
 def setup_case(
     source_case: Path,
     test_case: Path,
     end_time: float = 0.01,
     write_interval: float = 0.01,
     run_setfields: bool = False,
+    write_precision: int | None = None,
 ) -> None:
     """Copy a tutorial case, restore ``0/``, run blockMesh, override timings.
 
     ``run_setfields=True`` invokes ``setFields`` after blockMesh — needed
     by cases like hotRoom that initialize a temperature blob via
-    ``system/setFieldsDict``.
+    ``system/setFieldsDict``. ``write_precision`` overrides the case's
+    ``writePrecision`` (left as is when ``None``).
     """
     if test_case.exists():
         shutil.rmtree(test_case)
@@ -129,6 +140,8 @@ def setup_case(
             new_lines.append("writeControl    adjustable;")
         elif stripped.startswith("writeInterval"):
             new_lines.append(f"writeInterval   {write_interval};")
+        elif stripped.startswith("writePrecision") and write_precision is not None:
+            new_lines.append(f"writePrecision  {write_precision};")
         else:
             new_lines.append(line)
     control_dict.write_text("\n".join(new_lines))
