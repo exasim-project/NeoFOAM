@@ -3,12 +3,8 @@
 
 """Each selection of a pressure-velocity algorithm is a run of its own.
 
-``PressureVelocityAlgorithm.create`` is the case-free entry point (the on-disk
-``detect_and_create`` picks the same way from ``system/fvSolution``). Two regions
-of one case, or two runs in one process, select the same spec; their settings
-(``algorithm_type``, ``use_boussinesq``) live on the runtime each selection
-returns, so neither sees the other's, and the module-level spec stays an
-immutable description.
+Two regions or runs select the same spec; their settings live on the runtime each
+``create`` returns, so the module-level spec stays unchanged.
 """
 
 from __future__ import annotations
