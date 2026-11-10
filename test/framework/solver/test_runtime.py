@@ -4,12 +4,12 @@
 # NB: no ``from __future__ import annotations`` — the dependency resolver matches
 # ``param.annotation is Context``.
 
-"""Two regions that run one solver spec share no run state, as multiRun runs them.
+"""A runtime solves one region: its context, case files and ``Depends`` cache are its own.
 
-``shared`` records the value of a cached ``Depends`` (the region of the context)
-in its one operation. Each region instantiates the spec, initializes and runs
-it on a thread of its own, one after the other: a cache on the spec would hand
-the second region the first region's value.
+``shared`` records a cached ``Depends`` (the context's region); the regions run
+one after the other, each on its own thread, so a cache on the spec would hand
+the second region the first one's value. ``cases/regions`` holds a different
+increment per region and at the single-region path, so a wrong file shows.
 """
 
 import threading

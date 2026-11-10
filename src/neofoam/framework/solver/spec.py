@@ -240,14 +240,9 @@ class SolverSpec:
         argv: Optional[list[Any]] = None,
         region: Optional[str] = None,
     ) -> SolverRuntime:
-        """Create a fresh SolverRuntime for one run of this solver.
+        """Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.
 
-        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads
-        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.
-        ``run()`` called from Python without arguments).
-
-        ``region`` names the region of a multi-region case the runtime solves;
-        ``None`` (the default) is a single-region case.
+        An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.
         """
         return SolverRuntime(
             spec=self,
