@@ -690,6 +690,19 @@ a loop body). The loop takes the place of the last of them:</p>
                                     <span class="n">write</span>
 </pre></div>
 </div>
+<p>A name may be a loop inside the outermost one (e.g. a PIMPLE <code class="docutils literal notranslate"><span class="pre">inner_loop</span></code>):
+the wrapping loop holds it whole, as one operation, and downstream of it is
+downstream of anything inside it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">time_loop</span>                       <span class="n">time_loop</span>
+    <span class="n">set_time_step</span>                   <span class="n">set_time_step</span>
+    <span class="n">increment_time</span>                  <span class="n">increment_time</span>
+    <span class="n">inner_loop</span>   <span class="p">(</span><span class="s2">"inner_loop"</span><span class="p">,)</span>    <span class="n">couple</span>
+        <span class="n">solve_U</span>  <span class="o">--------------&gt;</span>        <span class="n">inner_loop</span>
+        <span class="n">solve_p</span>                             <span class="n">solve_U</span>
+    <span class="n">write</span>                                   <span class="n">solve_p</span>
+                                        <span class="n">write</span>
+</pre></div>
+</div>
 </li>
 </ul>
 <p>Loops are placed in the order given, outer first: a loop whose operations lie
@@ -733,9 +746,10 @@ keeps the order of <code class="docutils literal notranslate"><span class="pre">
 <dt class="sig sig-object py" id="neofoam.framework.graph.wrapping.wrap">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.graph.wrapping.</span></span><span class="sig-name descname"><span class="pre">wrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/wrapping.html#wrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.wrapping.wrap" title="Link to this definition">¶</a></dt>
 <dd><p>The resolved <code class="docutils literal notranslate"><span class="pre">ops</span></code> with <code class="docutils literal notranslate"><span class="pre">loop</span></code> placed as <code class="docutils literal notranslate"><span class="pre">loop.metadata.wraps</span></code> says.</p>
-<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an operation name is unknown or names a loop, when
-the named operations lie in more than one scope, when the loop would have to
-hold a wrapping loop placed before it, or when no top scope can be told.</p>
+<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an operation name is unknown or names the
+outermost loop, when the named operations lie in more than one scope, when
+the loop would have to hold a wrapping loop placed before it, or when no top
+scope can be told.</p>
 </dd></dl>
 
 </section>
