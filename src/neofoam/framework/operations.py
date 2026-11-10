@@ -7,17 +7,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Iterator, Union
+from typing import Any, Callable, Iterator, Union
 
 from neofoam import telemetry
 from neofoam.framework import execution_observer
-from neofoam.framework.context import LoopEntry
+from neofoam.framework.context import Context, LoopEntry
 
 from .types import OperationMetadata, OperationNumber
-
-if TYPE_CHECKING:
-    # Context holds the graph edits, which build operations: import it for typing only.
-    from neofoam.framework.context import Context
 
 
 class ConditionalOp:
@@ -112,7 +108,7 @@ class Operation:
             ctx
         ):
             return None
-        # Loops report their predicate evaluations instead (see _loop_test).
+        # loops report their predicate evaluations instead (_loop_test)
         observer = None if self.operation_type == "iterative" else execution_observer.current()
         if observer is not None:
             observer.before_operation(self, ctx)
