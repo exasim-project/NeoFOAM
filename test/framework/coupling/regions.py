@@ -22,13 +22,13 @@ from neofoam.framework.coupling import (
     FaceData,
     InProcessCommChannel,
     Participant,
+    ParticipantExchanges,
     Patch,
-    RegionCoupling,
     SideChange,
     coupled,
     coupling,
 )
-from neofoam.framework.coupling.exchanges import region_couplings
+from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.coupling.iteration._loop_op import CouplingOp
 from neofoam.framework.coupling.run import run_regions
 from neofoam.framework.graph import DAGResolver
@@ -101,13 +101,13 @@ def contexts(
     """A context per region, coupled over ``exchanges`` in ``nodes`` (default: one of ``node``)."""
     if nodes is None:
         nodes = [CouplingLoop("coupling", tuple(exchange.name for exchange in exchanges), **node)]
-    couplings = region_couplings(
+    couplings = participant_exchanges(
         regions, exchanges, comm_channel or InProcessCommChannel(), nodes=nodes
     )
     return {region: context(region, couplings.get(region)) for region in regions}
 
 
-def context(region: str, region_coupling: Optional[RegionCoupling]) -> Context:
+def context(region: str, region_coupling: Optional[ParticipantExchanges]) -> Context:
     """The context of ``region``, with its coupling model on a fake geometry."""
     return Context(
         fields={},

@@ -35,7 +35,7 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 from .runtime import SolverRuntime
 
 if TYPE_CHECKING:
-    from neofoam.framework.coupling.exchanges import RegionCoupling
+    from neofoam.framework.coupling.exchanges import ParticipantExchanges
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 
@@ -247,7 +247,7 @@ class SolverSpec:
         self,
         argv: Optional[list[Any]] = None,
         region: Optional[str] = None,
-        coupling: Optional[RegionCoupling] = None,
+        coupling: Optional[ParticipantExchanges] = None,
     ) -> SolverRuntime:
         """Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.
 

@@ -17,7 +17,7 @@ from .location import Location, MeshGeometry
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .exchanges import RegionCoupling
+    from .exchanges import ParticipantExchanges
 from .iteration._time_step import (
     INCREMENT_TIME,
     SET_TIME_STEP,
@@ -38,7 +38,7 @@ class Participant:
         coupling(ctx).add(Patch("top"), bc)
     """
 
-    def __init__(self, coupling: Optional[RegionCoupling], geometry: MeshGeometry) -> None:
+    def __init__(self, coupling: Optional[ParticipantExchanges], geometry: MeshGeometry) -> None:
         self.coupling = coupling
         self.geometry = geometry
         self._ports: dict[str, CoupledPort] = {}
@@ -90,7 +90,7 @@ class Participant:
             self._operations = Operations() if coupling is None else self._build(coupling)
         return self._operations
 
-    def _build(self, coupling: RegionCoupling) -> Operations:
+    def _build(self, coupling: ParticipantExchanges) -> Operations:
         by_node = self._by_node(coupling)
         geometries = {port.name: port.location.geometry(self.geometry) for port in self.ports}
         ops: list[Operation] = []
@@ -102,7 +102,7 @@ class Participant:
             ops.append(Operation(func=couple, metadata=metadata))
         return Operations(ops)
 
-    def _by_node(self, coupling: RegionCoupling) -> dict[str, list[CoupledPort]]:
+    def _by_node(self, coupling: ParticipantExchanges) -> dict[str, list[CoupledPort]]:
         """The ports by node; ``ValueError`` when a data field is in two nodes."""
         by_node: dict[str, list[CoupledPort]] = {node.name: [] for node in coupling.nodes}
         in_node: dict[str, str] = {}

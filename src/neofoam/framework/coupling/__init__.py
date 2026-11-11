@@ -22,7 +22,7 @@ from .comm.channel import (
 from .comm.in_process import InProcessCommChannel
 from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
-from .exchanges import CouplingLoop, Exchange, RegionCoupling
+from .exchanges import CouplingLoop, Exchange, ParticipantExchanges
 from .iteration._leader import CouplingNotConvergedWarning
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .model import Participant, coupling
@@ -73,7 +73,7 @@ __all__ = [
     "Patch",
     "ProbeData",
     "ProbeMapping",
-    "RegionCoupling",
+    "ParticipantExchanges",
     "RelativeConvergence",
     "Scalar",
     "SideChange",

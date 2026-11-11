@@ -17,7 +17,7 @@ from neofoam.framework.dependency_resolver import DependencyResolver
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
-    from neofoam.framework.coupling.exchanges import RegionCoupling
+    from neofoam.framework.coupling.exchanges import ParticipantExchanges
     from neofoam.framework.operations import (
         Operation,
         OperationCollection,
@@ -76,7 +76,7 @@ class SolverRuntime:
     # None for a single-region case
     region: Optional[str] = None
     # None: the case does not couple the region
-    coupling: Optional[RegionCoupling] = None
+    coupling: Optional[ParticipantExchanges] = None
     state: SolverState = field(default_factory=SolverState)
     config: Any = None
     _config_instance: Any = field(default=None, repr=False)
