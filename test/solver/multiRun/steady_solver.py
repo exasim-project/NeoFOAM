@@ -4,12 +4,7 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""``steady``: the ``probe`` solver in ``outerIterations`` outer iterations, without a time.
-
-``<region>/constant/steady.yaml`` holds a probe config plus ``outerIterations``;
-``ctx.time`` is ``None`` and there is no solution loop. A solve records
-``(outer iteration, value)``.
-"""
+"""``steady``: the ``probe`` solver in outer iterations, without a time."""
 
 from pathlib import Path
 from typing import Any
@@ -50,7 +45,6 @@ def _initialize(self: Any) -> Context:
 
 @steady.execution_graph_step
 def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
-    """The outer iterations around solve_x."""
     builder = StepBuilder()
     outer = Operation(
         func=IterativeOp(_Outer(ctx.models["probe"].outerIterations)),

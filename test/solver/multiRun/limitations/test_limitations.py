@@ -59,7 +59,7 @@ def test_pair_reaches_the_fixed_point(tmp_path: Path, monkeypatch: pytest.Monkey
 def test_chain_reaches_the_fixed_point_in_one_coupling_loop(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Both exchanges share b: one loop over a, b and c led by c (nested loops took 122 solves)."""
+    """Both exchanges share b: one loop over a, b and c, led by c."""
     _case("chain", tmp_path, monkeypatch)
 
     regions = run()
@@ -79,7 +79,6 @@ def test_chain_reaches_the_fixed_point_in_one_coupling_loop(
 def test_two_interfaces_reach_the_fixed_point_in_one_loop(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Both exchanges in one loop (nested loops took 113 solves)."""
     _case("two_interfaces", tmp_path, monkeypatch)
 
     regions = run()

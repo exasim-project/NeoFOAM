@@ -3,11 +3,9 @@
 
 """multiRun runs two uncoupled regions, each as its own single-region run would.
 
-``cases/two_regions`` holds ``cases/slab_left`` and ``cases/slab_right`` as its
-regions under one controlDict; they differ in mesh, diffusivity and
-temperatures, so a region reading the other's files or missing a step would
-differ. Both runs do the same floating-point operations in the same order,
-hence round-off as the tolerance.
+The regions of ``cases/two_regions`` differ in mesh, diffusivity and temperatures, so
+a region reading the other's files or missing a step would differ. Both runs do the
+same floating-point operations in the same order, hence round-off as the tolerance.
 """
 
 from pathlib import Path

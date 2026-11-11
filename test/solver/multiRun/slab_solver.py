@@ -4,13 +4,7 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""``slab``: a test-only region solver of implicit 1D heat conduction, in numpy.
-
-Heat capacity one, so ``diffusivity`` is the conductivity. Each face (patch
-``left`` / ``right``) is a mixed condition, plus an optional heat flux
-``heat_in``; ``coupledConduction``, ``coupledTemperature`` and ``coupledHeatFlux``
-couple it to a patch of another region.
-"""
+"""``slab``: a test-only region solver of implicit 1D heat conduction, in numpy."""
 
 from pathlib import Path
 from typing import Any, Literal, Optional, Union
@@ -45,10 +39,11 @@ class _ControlDictConfig(TimeControlConfig):
 
 @IOStrategy(YAML("constant/slab.yaml"))
 class _SlabConfig(BaseConfig):
+    """Heat capacity one, so ``diffusivity`` is the conductivity."""
+
     cells: int
     length: float
     diffusivity: float
-    # x of the left face
     origin: float = 0.0
 
 
@@ -100,8 +95,6 @@ class SlabPatch:
 
 
 class FixedTemperature(SlabPatch):
-    """A face held at ``value``."""
-
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
         self.set_mixed(ref_value=[value], value_fraction=[1.0])
@@ -246,7 +239,6 @@ def _create_init(region: Optional[str]) -> StagedInitRunner:
 
 @slab.initializer
 def _initialize(self: Any) -> Context:
-    """The context, then its patches; a coupled one adds itself to the coupling model."""
     init = _create_init(self.region)
     ctx = init.run()
     self.core_models = init.core_models

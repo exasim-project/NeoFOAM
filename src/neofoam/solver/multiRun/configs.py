@@ -90,7 +90,7 @@ class PlacementConfig(BaseModel):
 
 
 class CouplingNodeConfig(BaseModel):
-    """One coupling node; ``scheme`` and ``maxIterations`` default as a ``CouplingNode``'s."""
+    """One coupling node of ``couplings``."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -132,10 +132,9 @@ class CouplingNodeConfig(BaseModel):
 class RegionCouplingConfig(BaseConfig):
     """``system/regionCoupling.yaml``: the exchanges between regions and the coupling nodes.
 
-    ``couplings`` lists the nodes outer to inner, each exchange in exactly one;
-    the file is checked as it loads (:func:`~neofoam.framework.coupling.region.check_couplings`).
-    ``transportTimeout`` bounds a wait for a message in seconds; ``0`` or ``null``
-    waits without end. Without the file no region is coupled.
+    ``couplings`` lists the nodes outer to inner, each exchange in one; checked on load.
+    ``transportTimeout`` is in seconds, ``0`` or ``null`` without end. Without the file
+    no region is coupled.
 
     Example::
 

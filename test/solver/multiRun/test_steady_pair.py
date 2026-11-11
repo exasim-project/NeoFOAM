@@ -3,11 +3,9 @@
 
 """Two steady regions couple in every outer iteration, without a time or a time step.
 
-``cases/steady_pair`` is ``cases/affine_pair`` in the ``steady`` solver: three
-outer iterations instead of time steps, coupled serial around the whole outer
-iteration, which holds no time step. The first outer iteration takes the 21
-passes of ``test_affine_pair``, the others start converged. The limit 1e-6 is
-relative: the fixed point holds to 1e-5.
+``cases/steady_pair`` is ``cases/affine_pair`` in the ``steady`` solver: the first
+outer iteration takes the 21 passes of ``test_affine_pair``, the others start
+converged. The limit 1e-6 is relative: the fixed point holds to 1e-5.
 """
 
 import numpy as np

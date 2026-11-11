@@ -3,10 +3,7 @@
 
 """The slabs of ``cases/coupled_slabs``, coupled Dirichlet-Neumann, reach the same profile.
 
-``cases/dirichlet_neumann_slabs``: left (``coupledHeatFlux``) takes the heat flux
-right takes in and sends its wall temperature; right (``coupledTemperature``)
-takes it and sends its heat flux. Serial with Aitken relaxation around each
-``solve_T``; tolerance as in ``test_coupled_slabs``.
+Serial with Aitken around each ``solve_T``; tolerance as in ``test_coupled_slabs``.
 """
 
 import numpy as np

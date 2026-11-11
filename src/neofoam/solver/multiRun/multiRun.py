@@ -28,21 +28,14 @@ multiRun.config(ControlDictConfig)
 
 
 def transport_timeout() -> Optional[float]:
-    """How long a region waits for a message, in seconds; ``None``: without end.
-
-    The case's ``transportTimeout``, else 600 seconds; ``0`` waits without end.
-    """
+    """Seconds a region waits for a message (``transportTimeout``); ``None``: no end."""
     if not RegionCouplingConfig.get_default_path().exists():
         return DEFAULT_TIMEOUT
     return RegionCouplingConfig.load().transportTimeout or None
 
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
-    """The coupling of every coupled region as ``system/regionCoupling.yaml`` lists it.
-
-    Without the file no region is coupled. Raises ``ValueError`` as
-    :func:`~neofoam.framework.coupling.region.region_couplings`.
-    """
+    """Each region's coupling from ``system/regionCoupling.yaml``; none without it."""
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
     config = RegionCouplingConfig.load()
