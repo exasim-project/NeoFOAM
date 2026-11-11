@@ -43,7 +43,7 @@ class RelativeConvergence(CouplingConvergence):
 
     Example::
 
-        CouplingNode("n", ("interface",), convergence=(RelativeConvergence(data="T", limit=1e-5),))
+        CouplingLoop("n", ("interface",), convergence=(RelativeConvergence(data="T", limit=1e-5),))
     """
 
     type: Literal["relative"] = "relative"

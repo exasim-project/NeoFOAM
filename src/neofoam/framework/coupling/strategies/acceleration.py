@@ -62,7 +62,7 @@ class AitkenRelaxation(ConstantRelaxation):
 
     Example::
 
-        CouplingNode("n", ("i",), acceleration={"i": AitkenRelaxation(relaxation=0.5)})
+        CouplingLoop("n", ("i",), acceleration={"i": AitkenRelaxation(relaxation=0.5)})
     """
 
     type: Literal["aitken"] = "aitken"  # type: ignore[assignment]

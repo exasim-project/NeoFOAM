@@ -27,7 +27,7 @@ from framework.coupling.regions import (
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    CouplingNode,
+    CouplingLoop,
     Exchange,
     InProcessCommChannel,
     coupling,
@@ -44,8 +44,8 @@ Y = Exchange("y", (("a", "q"), ("b", "q")))
 def _two_nodes(comm_channel: Optional[InProcessCommChannel] = None) -> dict[str, Context]:
     """a and b, coupled over x in the outer node and over y in the inner node (parallel)."""
     nodes = [
-        CouplingNode("outer", ("x",), scheme="parallel"),
-        CouplingNode(
+        CouplingLoop("outer", ("x",), scheme="parallel"),
+        CouplingLoop(
             "inner",
             ("y",),
             placement={"a": Placement(("solve_y",)), "b": Placement(("solve_y",))},
@@ -102,8 +102,8 @@ def test_each_node_has_its_own_leader() -> None:
     exchanges = [X, Exchange("z", (("b", "q"), ("c", "q")))]
     # in b, ab around solve_x and bc around solve_z: neither nests in the other
     nodes = [
-        CouplingNode("ab", ("x",), placement={"b": Placement(("solve_x",))}),
-        CouplingNode("bc", ("z",), placement={"b": Placement(("solve_z",))}),
+        CouplingLoop("ab", ("x",), placement={"b": Placement(("solve_x",))}),
+        CouplingLoop("bc", ("z",), placement={"b": Placement(("solve_z",))}),
     ]
     regions = contexts(["a", "b", "c"], exchanges, nodes)
     add_coupled(regions["a"], "p", fixed(1.0, [], data="x"))
@@ -141,8 +141,8 @@ def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
     """a-b-c, ab over x and bc over z: by default bc nests inside ab in b, not in c."""
     exchanges = [X, Exchange("z", (("b", "q"), ("c", "q")))]
     nodes = [
-        CouplingNode("ab", ("x",), max_iterations=2),
-        CouplingNode("bc", ("z",)),
+        CouplingLoop("ab", ("x",), max_iterations=2),
+        CouplingLoop("bc", ("z",)),
     ]
     regions = contexts(["a", "b", "c"], exchanges, nodes)
     add_coupled(regions["a"], "p", fixed(1.0, [], data="x"))
@@ -181,7 +181,7 @@ def _counting(name: str, passes: int, *ops: Operation) -> Operation:
 def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
     """a and b, node ``n`` around solve_x in loops ``outer`` > ``inner`` of ``passes`` each."""
     placement = Placement(("solve_x",))
-    nodes = [CouplingNode("n", ("x",), placement={"a": placement, "b": placement})]
+    nodes = [CouplingLoop("n", ("x",), placement={"a": placement, "b": placement})]
     regions = contexts(["a", "b"], [X], nodes)
     tasks = {}
     for name, ctx in regions.items():
