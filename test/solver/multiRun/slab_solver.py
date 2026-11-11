@@ -236,8 +236,8 @@ def _create_init(region: Optional[str]) -> StagedInitRunner:
             name="solutionLoop_main",
             config=_ControlDictConfig.load(case_dir=case_dir),
         )
-        geometry = _SlabConfig.load(case_dir=case_dir, region=region)
-        temperature = _TemperatureConfig.load(case_dir=case_dir, region=region)
+        geometry = _SlabConfig.load(case_dir=Path(region or "."))
+        temperature = _TemperatureConfig.load(case_dir=Path(region or "."))
         return LoadResult(core_models=[loop, geometry, temperature], optional_models=[])
 
     @spec_builder.build
@@ -319,7 +319,4 @@ def solve_T(self: Any, ctx: Context) -> None:
 
 def run_alone() -> Context:
     """Run the single-region case in the working directory; return the final Context."""
-    runtime = slab.instantiate()
-    ctx = runtime.initialize()
-    runtime.resolve_operations(ctx).run(ctx)
-    return ctx
+    return slab.instantiate().run()

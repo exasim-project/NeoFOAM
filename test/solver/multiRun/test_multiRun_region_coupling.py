@@ -137,7 +137,7 @@ def test_multiRun_region_coupling_of_a_region_without_a_coupled_patch_raises(
 ) -> None:
     """right's patch left is fixed, not coupledConduction: right has no coupled side."""
     _case(tmp_path, monkeypatch)
-    temperature = Path("0/right/T.yaml")
+    temperature = Path("right/0/T.yaml")
     temperature.write_text(
         temperature.read_text().replace(
             "left:\n  type: coupledConduction\n  value: 300.0", "left: 300.0"

@@ -109,7 +109,7 @@ def _create_init(region: Optional[str]) -> StagedInitRunner:
             name="solutionLoop_main",
             config=_ControlDictConfig.load(case_dir=case_dir),
         )
-        coefficients = _AffineConfig.load(case_dir=case_dir, region=region)
+        coefficients = _AffineConfig.load(case_dir=Path(region or "."))
         return LoadResult(core_models=[loop, coefficients], optional_models=[])
 
     @spec_builder.build

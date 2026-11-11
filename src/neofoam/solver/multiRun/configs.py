@@ -22,67 +22,49 @@ from neofoam.framework.coupling import (
     CouplingAcceleration,
     CouplingConvergence,
     CouplingMapping,
-    load_plugins,
-    strategy,
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.kernels import default_mapping
 from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
-def _with_plugins(family: type[BaseModel], options: Any) -> Any:
-    """The strategy of ``family`` that ``options`` describe, the coupling plugins loaded first.
-
-    :func:`~neofoam.framework.coupling.load_plugins` imports them once (locked), so
-    reading ``system/regionCoupling.yaml`` anywhere (a tool, the UI, ``multiRun``)
-    selects a plugin's strategy by its type.
-    """
-    load_plugins()
-    return strategy(family, options)
+def _created(family: Any, variable: str, value: Any) -> Any:
+    """The strategy of ``family`` that ``value`` names: ``{type: ..., <option>: ...}`` or a type."""
+    if isinstance(value, str):
+        value = {"type": value}
+    if not isinstance(value, dict):
+        return value
+    return getattr(family.create(**{variable: value}), variable)
 
 
-def _selected(family: type[BaseModel], what: str) -> Any:
-    """A field holding a strategy of ``family``, selected by its ``type`` as it is validated.
-
-    The coupling plugins are loaded before the first strategy is selected
-    (:func:`_with_plugins`), so a plugin's strategy is selected too; the JSON
-    Schema is an open object, as plugins add their own options.
-    """
-    return Annotated[
-        SerializeAsAny[family],  # type: ignore[valid-type]
-        BeforeValidator(partial(_with_plugins, family)),
-        WithJsonSchema(
-            {
-                "type": "object",
-                "description": f"a {what}: its type and options",
-            }
-        ),
-    ]
+def _schema(what: str) -> WithJsonSchema:
+    """An open object: a plugin adds its own options."""
+    return WithJsonSchema({"type": "object", "description": f"a {what}: its type and options"})
 
 
-#: A convergence measure: ``{type: relative, data: T, limit: 1.0e-5}``
-#: (:class:`~neofoam.framework.coupling.CouplingConvergence`; ``relative``: the data of
-#: field ``data`` changes by less than ``limit`` relative to it).
-ConvergenceConfig = _selected(CouplingConvergence, "convergence measure")
-#: How the leader relaxes the data carried into a pass: ``{type: aitken, relaxation: 0.5}``
-#: (:class:`~neofoam.framework.coupling.CouplingAcceleration`; ``constant`` factor
-#: ``relaxation``, or ``aitken`` starting from it).
-AccelerationConfig = _selected(CouplingAcceleration, "acceleration")
-#: How the point data of one side is mapped onto the other's points:
-#: ``nearest-neighbor`` (both patches need coordinates) or ``identity`` (both
-#: patches share their points); a type alone, or ``{type: ..., <option>: ...}``
-#: (:class:`~neofoam.framework.coupling.CouplingMapping`).
-MappingConfig = _selected(CouplingMapping, "mapping")
+MappingConfig = Annotated[
+    SerializeAsAny[CouplingMapping],
+    BeforeValidator(partial(_created, CouplingMapping, "mapping")),
+    _schema("mapping"),
+]
+AccelerationConfig = Annotated[
+    SerializeAsAny[CouplingAcceleration],
+    BeforeValidator(partial(_created, CouplingAcceleration, "acceleration")),
+    _schema("acceleration"),
+]
+ConvergenceConfig = Annotated[
+    SerializeAsAny[CouplingConvergence],
+    BeforeValidator(partial(_created, CouplingConvergence, "convergence")),
+    _schema("convergence measure"),
+]
 
 
 @IOStrategy(YAML("system/controlDict.yaml"))
 class ControlDictConfig(TimeControlConfig):
     """``system/controlDict.yaml`` — the time control every region reads, and its solvers.
 
-    ``regionSolvers`` maps each region to the solver that runs it, in stepping
-    order (a coupling group's last region leads it); each region keeps its own
-    files under ``constant/<region>/``, ``0/<region>/`` and ``system/<region>/``.
-    Every region runs its own time loop on this file's times.
+    ``regionSolvers`` maps each region to its solver, in stepping order; a region
+    reads its own files under ``<region>/``.
 
     Example::
 
@@ -126,18 +108,11 @@ class NodeExchangeConfig(BaseModel):
 
 
 class PlacementConfig(BaseModel):
-    """Where a coupling node's op sits in a region's graph (a ``Placement``).
-
-    Without ``operations`` it wraps the whole time step (the body of the top
-    scope, or of the node before); with them those operations and, if
-    ``downstream``, every operation downstream of them. A name may be a loop
-    inside the time loop (``operations: [inner_loop]``), which it holds whole.
-    """
+    """Where a node's op sits in a region's graph, as a :class:`Placement`."""
 
     model_config = ConfigDict(extra="forbid")
 
     operations: Optional[list[str]] = None
-    downstream: bool = True
 
 
 class CouplingNodeConfig(BaseModel):
@@ -228,7 +203,7 @@ class RegionCouplingConfig(BaseConfig):
             convergence:
               - {type: relative, data: T, limit: 1.0e-5}
             wraps:
-              fluid: {operations: [solve_T], downstream: true}
+              fluid: {operations: [solve_T]}
               pipe: {operations: [inner_loop]}  # a loop, held whole
     """
 

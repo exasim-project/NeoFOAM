@@ -35,7 +35,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
         ],
         "scheme": "parallel",
         "acceleration": {"type": "aitken", "relaxation": 0.5},
-        "convergence": [{"type": "relative", "data": "T", "limit": 1e-12}],
+        "convergence": [{"data": "T", "type": "relative", "limit": 1e-12}],
         "maxIterations": 100,
         "couplings": None,
         "transportTimeout": 600.0,
@@ -55,7 +55,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
         ],
         "scheme": "parallel",
         "acceleration": None,
-        "convergence": [{"type": "relative", "data": "T", "limit": 1e-5}],
+        "convergence": [{"data": "T", "type": "relative", "limit": 1e-5}],
         "maxIterations": None,
         "couplings": None,
         "transportTimeout": 600.0,
@@ -75,30 +75,27 @@ def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
     ("error", "update"),
     [
         (
-            r"acceleration\n.*unknown acceleration type 'anderson'; registered acceleration "
-            r"types: \['aitken', 'constant'\]",
+            r"acceleration.acceleration\n.*Input tag 'anderson' found using 'type' does not match "
+            r"any of the expected tags: 'constant', 'aitken'",
             {"acceleration": {"type": "anderson", "relaxation": 0.5}},
         ),
         (
-            r"convergence.0\n.*unknown convergence type 'absolute'; registered convergence "
-            r"types: \['relative'\]",
+            r"convergence.0.convergence\n.*Input tag 'absolute' .* expected tags: 'relative'",
             {"convergence": [{"type": "absolute", "data": "x", "limit": 1}]},
         ),
         (
-            r"exchanges.0.mapping\n.*unknown mapping type 'rbf'; registered mapping types: "
-            r"\['identity', 'nearest-neighbor'\]",
+            r"exchanges.0.mapping.mapping\n.*Input tag 'rbf' .* expected tags: 'identity', "
+            r"'nearest-neighbor'",
             {"exchanges": [{"sides": {"a": "p", "b": "q"}, "mapping": "rbf"}]},
         ),
         (
-            r"acceleration\n.*acceleration 'aitken': missing option 'relaxation'; unknown option "
-            r"'relax'; its options: "
-            r"\['relaxation'\]",
+            r"acceleration.acceleration.aitken.relaxation\n.*Field required.*\n.*\n"
+            r"acceleration.acceleration.aitken.relax\n.*Extra inputs",
             {"acceleration": {"type": "aitken", "relax": 0.5}},
         ),
         (
-            r"convergence.0\n.*convergence 'relative': missing option 'limit'; unknown option "
-            r"'lmit'; its options: "
-            r"\['data', 'limit'\]",
+            r"convergence.0.convergence.relative.limit\n.*Field required.*\n.*\n"
+            r"convergence.0.convergence.relative.lmit\n.*Extra inputs",
             {"convergence": [{"type": "relative", "data": "x", "lmit": 1}]},
         ),
     ],
@@ -110,7 +107,7 @@ def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
         "convergence option",
     ],
 )
-def test_region_coupling_config_lists_the_registered_types_and_options(
+def test_region_coupling_config_names_the_registered_types_and_options(
     error: str, update: dict[str, Any]
 ) -> None:
     data = {
@@ -131,7 +128,7 @@ def test_region_coupling_config_lists_the_registered_types_and_options(
         ("three_regions", "exchanges.0.sides"),
         (
             "relaxation_above_one",
-            r"acceleration\n.*relaxation: Input should be less than or equal to 1",
+            r"acceleration.acceleration.constant.relaxation\n.*less than or equal to 1",
         ),
     ],
 )

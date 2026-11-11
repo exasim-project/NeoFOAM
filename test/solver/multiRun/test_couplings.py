@@ -51,7 +51,7 @@ NODES: dict[str, Any] = {
             "name": "inner",
             "exchanges": ["a-b"],
             "convergence": [{"type": "relative", "data": "x", "limit": 1e-8}],
-            "wraps": {"b": {"operations": ["solve_x"], "downstream": False}},
+            "wraps": {"b": {"operations": ["solve_x"]}},
         },
     ],
 }
@@ -79,7 +79,7 @@ def test_couplings_reads_the_nodes_outer_to_inner() -> None:
     assert [(c.data, c.limit) for c in outer.convergence] == [("x", 1e-6), ("y", 1e-3)]
     assert (outer.maxIterations, inner.maxIterations) == (7, 100)
     assert outer.wraps == {}
-    assert inner.wraps["b"].model_dump() == {"operations": ["solve_x"], "downstream": False}
+    assert inner.wraps["b"].model_dump() == {"operations": ["solve_x"]}
 
 
 def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -97,7 +97,7 @@ def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.M
         (RelativeConvergence, "x", 1e-6),
         (RelativeConvergence, "y", 1e-3),
     ]
-    assert inner.placement == {"b": Placement(("solve_x",), downstream=False)}
+    assert inner.placement == {"b": Placement(("solve_x",))}
     assert inner.placement_of("a") == Placement()
     assert outer.placement_of("b") == Placement()
 
@@ -238,12 +238,16 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         (_broken("couplings.0.maxIteration", 5), r"couplings.0.maxIteration\n.*Extra inputs"),
         (
             _broken("couplings.0.exchanges.0.acceleration", {"type": "iqn-ils", "relaxation": 0.5}),
-            r"couplings.0.exchanges.0.acceleration\n.*unknown acceleration type 'iqn-ils'; "
-            r"registered acceleration types: \['aitken', 'constant'\]",
+            r"couplings.0.exchanges.0.acceleration.acceleration\n.*Input tag 'iqn-ils' .* "
+            r"expected tags: 'constant', 'aitken'",
         ),
         (
             _broken("couplings.1.wraps.b.operation", ["solve_x"]),
             r"couplings.1.wraps.b.operation\n.*Extra inputs",
+        ),
+        (
+            _broken("couplings.1.wraps.b.downstream", False),
+            r"couplings.1.wraps.b.downstream\n.*Extra inputs",
         ),
         (
             _broken("couplings.1.wraps", {"c": {"operations": ["solve_x"]}}),
@@ -267,6 +271,7 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         "typo-in-a-node",
         "unknown-acceleration",
         "typo-in-wraps",
+        "downstream-in-wraps",
         "wraps-a-region-of-another-node",
         "top-level-maxIterations",
         "top-level-convergence",

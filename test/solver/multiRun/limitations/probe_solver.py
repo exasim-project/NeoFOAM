@@ -145,7 +145,7 @@ def _initialize(self: Any) -> Context:
     init = _create_init(self.region)
     ctx = init.run()
     self.core_models = init.core_models
-    config = ProbeConfig.load(case_dir=Path("."), region=self.region)
+    config = ProbeConfig.load(case_dir=Path(self.region or "."))
     ctx.fields[config.field] = np.zeros(1)
     ctx.models.update(probe=config, received={}, history=[], coupling=Coupling(self.coupling))
     received: dict[str, str] = {}

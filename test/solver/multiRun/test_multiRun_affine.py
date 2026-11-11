@@ -128,9 +128,9 @@ def test_multiRun_affine_regions_couple_through_their_coupling_ops(ctx: Regions)
         (("b", "interface"), "x"),
     ]
     assert (a_op.partner(a_side), b_op.partner(b_side)) == ("b.interface", "a.interface")
-    exchange = a_op.exchange_of(a_side)
-    assert (exchange.name, exchange.mapping.type) == ("a-b", "nearest-neighbor")
-    assert b_op.exchange_of(b_side).name == "a-b"
+    link = a_op.link_of(a_side)
+    assert (link.name, link.mapping.type) == ("a-b", "nearest-neighbor")
+    assert b_op.link_of(b_side).name == "a-b"
 
 
 def test_multiRun_affine_exchanges_the_partners_value_every_pass(ctx: Regions) -> None:
@@ -317,7 +317,7 @@ def test_multiRun_affine_regions_step_the_smallest_time_step_any_asks_for(
 ) -> None:
     """a asks for deltaT 0.5, b for the controlDict's 1.0: both step 0.5 (the time-step op)."""
     _case(tmp_path, monkeypatch)
-    affine_a = Path("constant/a/affine.yaml")
+    affine_a = Path("a/constant/affine.yaml")
     affine_a.write_text(affine_a.read_text() + "deltaT: 0.5\n")
 
     regions = run()
