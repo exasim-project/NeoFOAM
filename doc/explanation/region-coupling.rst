@@ -71,8 +71,8 @@ The case file
 .. code-block:: yaml
 
     exchanges:
-      - {name: wall-T, sides: {fluid: wall, solid: right}}   # mapping: nearest-neighbor
-      - {sides: {fluid: inlet, pipe: outlet}, mapping: identity}   # name: fluid-pipe
+      - {name: wall-T, ports: {fluid: wall, solid: right}}   # mapping: nearest-neighbor
+      - {ports: {fluid: inlet, pipe: outlet}, mapping: identity}   # name: fluid-pipe
     couplings:                       # outer to inner; each exchange in exactly one
       - name: wall                   # the ops <region>.wall
         scheme: serial               # serial (default) | parallel

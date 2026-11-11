@@ -63,12 +63,12 @@ ConvergenceConfig = Annotated[
 
 
 class ExchangeConfig(BaseModel):
-    """One exchange: the coupled patch of each of its two regions; ``name`` defaults to theirs."""
+    """One exchange: the port of each of its two regions; ``name`` defaults to theirs."""
 
     model_config = ConfigDict(extra="forbid")
 
     name: Optional[str] = None
-    sides: dict[str, str] = Field(min_length=2, max_length=2)
+    ports: dict[str, str] = Field(min_length=2, max_length=2)
     mapping: MappingConfig = Field(default_factory=default_mapping)
 
 
@@ -139,7 +139,7 @@ class RegionCouplingConfig(BaseConfig):
     Example::
 
         exchanges:
-          - {name: wall, sides: {fluid: wall, solid: right}, mapping: nearest-neighbor}
+          - {name: wall, ports: {fluid: wall, solid: right}, mapping: nearest-neighbor}
         couplings:
           - name: thermal
             scheme: serial
@@ -163,8 +163,8 @@ class RegionCouplingConfig(BaseConfig):
         exchanges: list[Exchange] = []
         for config in self.exchanges:
             taken = [exchange.name for exchange in exchanges]
-            name = config.name or _free("-".join(config.sides), taken)
-            first, second = config.sides.items()
+            name = config.name or _free("-".join(config.ports), taken)
+            first, second = config.ports.items()
             exchanges.append(Exchange(name, (first, second), config.mapping))
         return exchanges
 
