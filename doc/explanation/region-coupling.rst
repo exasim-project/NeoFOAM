@@ -230,7 +230,7 @@ Regions on MPI processes
 ------------------------
 
 Under ``mpirun`` each region runs on processes of its own instead of a thread
-(``neofoam.solver.multiRun.mpi``; mpi4py, the extra ``neofoam[mpi]``). A region
+(``neofoam.solver.multiRun._launch``; mpi4py, the extra ``neofoam[mpi]``). A region
 entry gives its number of processes, a plain name is one::
 
     participants:

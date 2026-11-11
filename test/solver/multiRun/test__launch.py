@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from neofoam.solver.multiRun.mpi import (
+from neofoam.solver.multiRun._launch import (
     MpiSetupError,
     RegionLayout,
     check_decomposed,

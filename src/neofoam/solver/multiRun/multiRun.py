@@ -7,7 +7,7 @@
 solver instantiated with ``region=``. Regions share nothing but a
 :class:`~neofoam.framework.coupling.CommChannel`, over which the coupled patches
 listed in ``system/coupling.yaml`` exchange their data. Under ``mpirun``
-each region runs on processes of its own (:mod:`~neofoam.solver.multiRun.mpi`).
+each region runs on processes of its own (``neofoam.solver.multiRun._launch``).
 """
 
 import dataclasses
@@ -29,7 +29,7 @@ from neofoam.framework.solver import Solver, SolverSpec
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig
 
-from .mpi import (
+from ._launch import (
     RegionLayout,
     abort,
     abort_all,
