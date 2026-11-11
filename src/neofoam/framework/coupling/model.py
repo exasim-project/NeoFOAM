@@ -75,12 +75,12 @@ class Participant:
         if coupling is None:
             raise ValueError(
                 f"no exchange connects the port {location.name}: the case does not couple its "
-                "region (system/regionCoupling.yaml: exchanges)"
+                "region (system/coupling.yaml: exchanges)"
             )
         if location.name not in coupling.ports:
             raise ValueError(
                 f"no exchange connects the port {coupling.region}.{location.name}; a coupled "
-                "instance needs its exchange (system/regionCoupling.yaml: exchanges)"
+                "instance needs its exchange (system/coupling.yaml: exchanges)"
             )
         return coupling.region
 
