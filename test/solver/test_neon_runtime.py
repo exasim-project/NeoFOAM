@@ -38,7 +38,7 @@ The abort only fires at interpreter shutdown, so it cannot be observed in-proces
 
 **A patch a field port writes is ``calculated``.** ``check_written_patches`` reads
 the field files only, so it runs on ``cases/writtenPatches`` without NeoN: the
-ports of each variant's ``system/regionCoupling.yaml`` against region ``plant``'s
+ports of each variant's ``system/coupling.yaml`` against region ``plant``'s
 ``0/T``, whose ``inlet`` is ``fixedValue``, ``outlet`` ``zeroGradient`` and
 ``interface`` ``calculated``.
 """
@@ -226,7 +226,7 @@ def test_finalize_does_not_abort_with_neon_object_pinned_by_traceback() -> None:
 
 
 def _plant_ports(variant: str) -> list[FieldPort]:
-    """Region ``plant``'s field ports in the ``regionCoupling.yaml`` of ``variant``."""
+    """Region ``plant``'s field ports in the ``coupling.yaml`` of ``variant``."""
     config = RegionCouplingConfig.load(case_dir=WRITTEN_PATCHES / variant)
     return config.field_ports()["plant"]
 
