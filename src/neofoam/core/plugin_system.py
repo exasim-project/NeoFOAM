@@ -145,7 +145,7 @@ class PluginSystem:
 
     @staticmethod
     def _discriminator_values(plugin_cls: Type[BaseModel], discriminator: str) -> tuple[Any, ...]:
-        """The values of ``discriminator`` that select ``plugin_cls``: its ``Literal`` values."""
+        """The ``Literal`` values of field ``discriminator``; ``()`` if none."""
         field_info = plugin_cls.model_fields.get(discriminator)
         if field_info is None:
             return ()
@@ -157,7 +157,6 @@ class PluginSystem:
     def _reject_duplicate_discriminator(
         registry_obj: PluginRegistry, plugin_cls: Type[BaseModel]
     ) -> None:
-        """Refuse a plugin whose discriminator value another plugin of the family holds."""
         discriminator = registry_obj.discriminator
         values = PluginSystem._discriminator_values(plugin_cls, discriminator)
         for registered in registry_obj.plugin_registry:

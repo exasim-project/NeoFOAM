@@ -36,9 +36,8 @@ def unchanged(changes: list[SideChange]) -> bool:
 class CouplingOutcome:
     """How the coupling loop of one time step ended.
 
-    ``passes`` includes the final one; ``converged`` is ``False`` when
-    ``max_iterations`` stopped it; ``residuals`` is each field's relative change
-    in the last pass (``inf`` where no pass measured it).
+    ``passes`` includes the final one; ``residuals`` is each field's relative change
+    in the last pass (``inf`` where none measured it).
     """
 
     passes: int
@@ -50,7 +49,6 @@ class CouplingNotConvergedWarning(RuntimeWarning):
     """A coupling loop reached ``max_iterations`` before it converged."""
 
 
-# the frames a coupling warning passes over
 _FRAMEWORK = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + os.sep
 
 
@@ -91,28 +89,19 @@ class GroupSide:
 
     @property
     def end(self) -> End:
-        """``(region, patch)``: the side's end of its exchange."""
+        """The side's end of its exchange."""
         return (self.region, self.patch)
 
 
 class CouplingController:
     """The leader's part of a coupling node: after each pass, whether another runs and which.
 
-    :meth:`decide` gets what every side sent; once every convergence measure of
-    the node holds, exactly one more pass runs, the final one, then it stops;
-    the last pass ``max_iterations`` allows is final in advance. It relaxes the
-    carried data with each exchange's acceleration. A side receives fresh data
-    (sent in this pass) when the node is serial and its partner steps earlier,
-    else what the controller carried; the sending regions follow this decision.
-    A finished time step's :class:`CouplingOutcome` goes to :attr:`outcomes` and
-    the execution observer, and warns when unconverged. Not thread safe.
-
-    Raises ``ValueError`` for a convergence on a field no side sends;
-    :meth:`decide` raises ``FloatingPointError`` for a non-finite change.
+    Final pass as :class:`CouplingNode` describes; warns when ``max_iterations`` ends
+    the loop unconverged. A side receives fresh data when the node is serial and
+    its partner steps earlier, else the carried data, relaxed. Not thread safe.
     """
 
     def __init__(self, sides: Sequence[GroupSide], label: str, node: CouplingNode) -> None:
-        #: the label of the leader's coupling op
         self.label = label
         self.parallel = parallel = node.parallel
         self._sides = {side.end: side for side in sides}
@@ -136,7 +125,6 @@ class CouplingController:
         self._carried: dict[End, Data] = {}
 
     def _check_convergence(self) -> None:
-        """Raise ``ValueError`` when a measure on a field's ``data`` has no side of it."""
         fields = {side.field for side in self._sides.values()}
         for measure in self._convergence:
             data = measure.data
@@ -172,10 +160,7 @@ class CouplingController:
         return self._fresh[end]
 
     def decide(self, current: dict[End, Data], iteration: int) -> Optional[dict[End, Data]]:
-        """What each side carries into the next pass, by end, or ``None`` once it ended.
-
-        ``current`` is what every side sends now, ``iteration`` the passes run so far.
-        """
+        """Each side's carried data for the next pass, by end; ``None`` at the end."""
         current = {end: current[end] for end in self._sides}
         if iteration == 0:
             self._carried = current

@@ -30,10 +30,7 @@ if TYPE_CHECKING:
 
 @runtime_checkable
 class GraphContribution(Protocol):
-    """A model of ``ctx.models`` that adds operations to its region's graph and checks it.
-
-    E.g. a region's coupling model: its coupling ops, and where the resolver put them.
-    """
+    """A model of ``ctx.models`` that adds operations to its region's graph."""
 
     def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
         """The operations to add to ``graph``, the solver's operations."""
@@ -157,11 +154,7 @@ class SolverRuntime:
         return operations
 
     def graph_contributions(self, ctx: "Context") -> list[GraphContribution]:
-        """The models of ``ctx`` that contribute to the region's graph.
-
-        Raises ``RuntimeError`` when the case couples the region but none does:
-        its solver added no coupling model.
-        """
+        """The models of ``ctx`` that contribute to the region's graph."""
         contributions = [m for m in ctx.models.values() if isinstance(m, GraphContribution)]
         if self.coupling is not None and not contributions:
             raise RuntimeError(

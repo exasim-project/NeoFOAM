@@ -1,14 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A region's coupling op: the loop of one coupling node in the region's graph.
-
-Each region runs the same passes of a node: at the start of each pass its op's
-loop test hands every side what its partner sent, mapped onto the side's
-points, as the node's leader decided (fresh from this pass or carried). All
-data between regions goes through the transport; no region reads another's
-objects.
-"""
+"""A region's coupling op: the loop of one coupling node in the region's graph."""
 
 from __future__ import annotations
 
@@ -50,12 +43,9 @@ _Decision = tuple[bool, bool, dict[str, Optional[Data]], frozenset[str]]
 class CouplingOp(IterativeOp):
     """A region's coupling node: a loop whose test exchanges the node's sides' data.
 
-    Labelled ``<region>.<node>``; placed by the node's placement for the region.
-    The first test exchanges the sides' models and points with the partners and
-    checks them; every test sends the leader what the sides send, gets its
-    decision, marks the final pass and hands each side its mapped data.
-    Raises ``ValueError`` when a patch has two sides, an exchange none, or the
-    regions' ops sit in different loops or times. Not thread safe.
+    Labelled ``<region>.<node>``. The first test exchanges the sides' models and
+    points with the partners; every test sends the leader what the sides send and
+    hands each side its mapped data as the leader decides. Not thread safe.
     """
 
     def __init__(
@@ -85,7 +75,6 @@ class CouplingOp(IterativeOp):
         self._fresh: frozenset[str] = frozenset()
 
     def _check(self) -> None:
-        """Raise ``ValueError`` unless every exchange of the node has exactly one side."""
         patches = [side.patch for side in self._sides]
         for side in self._sides:
             if patches.count(side.patch) > 1:
@@ -197,7 +186,6 @@ class CouplingOp(IterativeOp):
         self._connected = True
 
     def _tag(self, what: Literal["sides", "pass", "decision"]) -> str:
-        """The tag of the node's message ``what``."""
         return Tag.node(self.node.name, what)
 
     def _node_sides(

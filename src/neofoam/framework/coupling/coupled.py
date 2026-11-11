@@ -1,25 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``@coupled``: a boundary condition declares its side of an exchange by annotations.
-
-Example::
-
-    @coupled
-    class CoupledHeatFlux(Patch):     # sets self.field and self.patch
-        def __init__(self, ctx, ...):
-            ...
-            Coupling.of(ctx).add(self)
-
-        @coupled.coordinates
-        def points(self) -> Array: ...
-
-        @coupled.sends
-        def send(self) -> WallTemperature: ...
-
-        @coupled.receives
-        def receive(self, data: WallHeatFlux) -> None: ...
-"""
+"""``@coupled``: a boundary condition declares its side of an exchange."""
 
 from __future__ import annotations
 
@@ -47,7 +29,6 @@ class _Declaration:
     coordinates: Optional[str]
 
     def side(self, instance: Any, region: str) -> ExchangeSide:
-        """The coupled side of ``instance`` in ``region``, its methods bound."""
         points = getattr(instance, self.coordinates)() if self.coordinates else None
         return ExchangeSide(
             region=region,
@@ -98,10 +79,27 @@ def _model(cls: type, name: str, role: str) -> type[Any]:
 
 
 class _Coupled:
-    """``@coupled`` on a boundary condition class, and its method markers."""
+    """``@coupled`` on a boundary condition class, and its method markers.
+
+    Example::
+
+        @coupled
+        class CoupledHeatFlux(Patch):     # sets self.field and self.patch
+            def __init__(self, ctx, ...):
+                ...
+                Coupling.of(ctx).add(self)
+
+            @coupled.coordinates
+            def points(self) -> Array: ...
+
+            @coupled.sends
+            def send(self) -> WallTemperature: ...
+
+            @coupled.receives
+            def receive(self, data: WallHeatFlux) -> None: ...
+    """
 
     def __call__(self, cls: T) -> T:
-        """Declare the decorated class a coupled side."""
         roles = _marked(cls)
         missing = [role for role in ("sends", "receives") if role not in roles]
         if missing:

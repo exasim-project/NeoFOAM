@@ -3,18 +3,9 @@
 
 """What one region knows of the coupling of a case: :class:`RegionCoupling`.
 
-Regions that exchanges connect form a group; its last region in stepping order
-leads it (agrees the time step). A node's last region leads the node (decides
-when it converged). A serial pass waits for the whole pass of the regions that
-step before it, so a serial node may neither enclose a node coupling two of its
-regions nor hold their time step: both need the partner back inside the pass.
-
-Example::
-
-    links = [Link("interface", (("left", "right"), ("right", "left")))]
-    nodes = [CouplingNode("thermal", ("interface",), max_iterations=20)]
-    couplings = region_couplings(["left", "right"], links, InProcessTransport(), nodes=nodes)
-    couplings["right"].is_leader    # True
+A serial pass waits for the whole pass of the regions that step before it, so a
+serial node may neither enclose a node coupling two of its regions nor hold their
+time step: both need the partner back inside the pass.
 """
 
 from __future__ import annotations
@@ -58,12 +49,11 @@ class CouplingNode:
 
     Once every measure of ``convergence`` holds (none: the data is unchanged) one
     more pass runs, the final one; the last of ``max_iterations`` is final
-    regardless. ``acceleration`` relaxes the carried data, by exchange name;
-    ``placement`` places the op per region (default: around the whole top scope).
-    ``serial`` (the default): a side receives what an earlier-stepping partner sent
-    in the same pass; ``parallel``: what it sent in the pass before.
-
-    An acceleration keeps state across passes: give each node its own.
+    regardless. ``acceleration`` relaxes the carried data, by exchange name, and
+    keeps state across passes: give each node its own. ``placement`` places the op
+    per region (default: around the whole top scope). ``serial``: a side receives
+    what an earlier-stepping partner sent in the same pass; ``parallel``: what it
+    sent in the pass before.
     """
 
     name: str
@@ -76,7 +66,6 @@ class CouplingNode:
 
     @property
     def parallel(self) -> bool:
-        """Whether the node's scheme is ``parallel``."""
         return self.scheme == "parallel"
 
     def placement_of(self, region: str) -> Placement:
@@ -138,10 +127,9 @@ def region_couplings(
     transport: Transport,
     nodes: Sequence[CouplingNode],
 ) -> dict[str, RegionCoupling]:
-    """The coupling of every region ``links`` connect, by region; ``regions`` in stepping order.
+    """The coupling of every region ``links`` connect, by region.
 
-    ``nodes`` lists the coupling nodes, outer to inner. Raises ``ValueError`` as
-    :func:`check_couplings`.
+    ``regions`` are in stepping order, ``nodes`` outer to inner.
     """
     check_couplings(regions, links, nodes)
     couplings: dict[str, RegionCoupling] = {}
@@ -162,11 +150,7 @@ def check_couplings(
 ) -> None:
     """Raise ``ValueError`` unless ``links`` and ``nodes`` couple ``regions`` consistently.
 
-    The one check of a case's coupling, for the Python API and the case's config:
-    every link joins two regions of ``regions`` on patches no other link has and
-    has a name of its own; every exchange is in exactly one node; a node's
-    placement and acceleration name only its own regions and exchanges; and no
-    serial node encloses a node that couples two of its regions as well.
+    The one check of a case's coupling, for the Python API and the case's config.
     """
     _check_links(regions, links)
     names = [link.name for link in links]
@@ -192,7 +176,6 @@ def check_couplings(
 
 
 def _check_links(regions: Sequence[str], links: Sequence[Link]) -> None:
-    """Raise ``ValueError`` unless each link joins two known regions on patches of its own."""
     named = sorted({region for link in links for region, _patch in link.ends} - set(regions))
     if named:
         raise ValueError(
@@ -216,7 +199,6 @@ def _check_links(regions: Sequence[str], links: Sequence[Link]) -> None:
 
 
 def _check_node(node: CouplingNode, links: Sequence[Link]) -> None:
-    """Raise ``ValueError`` unless ``node`` names existing exchanges and only its own regions."""
     names = [link.name for link in links]
     if not node.exchanges:
         raise ValueError(f"coupling node '{node.name}' has no exchange")
@@ -242,12 +224,10 @@ def _check_node(node: CouplingNode, links: Sequence[Link]) -> None:
 
 
 def _regions(node: CouplingNode, links: Sequence[Link]) -> set[str]:
-    """The regions the exchanges of ``node`` connect."""
     return {region for link in links if link.name in node.exchanges for region, _ in link.ends}
 
 
 def _check_serial_nesting(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
-    """Raise ``ValueError`` when a serial node encloses a node sharing two of its regions."""
     for index, outer in enumerate(nodes):
         if outer.parallel:
             continue

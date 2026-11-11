@@ -127,7 +127,6 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
 
     verdicts["second"] = True
 
-    # converged: the final pass, then the end
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 2) is not None
     assert controller.final
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 3) is None

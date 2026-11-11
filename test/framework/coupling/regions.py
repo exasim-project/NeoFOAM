@@ -61,7 +61,6 @@ class _Never(CouplingConvergence):
         return False
 
 
-# a convergence that never holds
 never = _Never()
 
 
@@ -181,7 +180,6 @@ def run(regions: dict[str, tuple[Context, list[Operation]]]) -> None:
 
 
 def transport(ctx: Context) -> Transport:
-    """The transport of the coupled region ``ctx``."""
     coupling = Coupling.of(ctx).coupling
     assert coupling is not None
     return coupling.transport

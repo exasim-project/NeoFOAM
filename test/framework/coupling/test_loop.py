@@ -388,8 +388,7 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     run({name: (ctx, [solve("x", step)]) for name, ctx in regions.items()})
     ops = {name: couple(ctx) for name, ctx in regions.items()}
 
-    # x: 1, 2, 3, then 3 again: unchanged after the fourth pass, not after the first;
-    # then the final pass
+    # x: 1, 2, 3, 3: unchanged after the fourth pass, then the final pass
     assert _controller(ops).outcomes == (
         CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
     )

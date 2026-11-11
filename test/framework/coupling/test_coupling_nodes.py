@@ -132,7 +132,6 @@ def test_each_node_has_its_own_leader() -> None:
         "c.bc": ("c.bc", ("b", "c"), True),
     }
     assert [op.controller is not None for op in ops.values()] == [False, True, False, True]
-    # the group agrees as one: its last region leads it
     coupling = Coupling.of(regions["b"]).coupling
     assert coupling is not None and (coupling.group, coupling.leader) == (("a", "b", "c"), "c")
 
@@ -170,7 +169,6 @@ def test_a_node_nested_in_one_region_only_raises_at_its_first_pass() -> None:
 
 
 def _counting(name: str, passes: int, *ops: Operation) -> Operation:
-    """A loop ``name`` of ``passes`` passes around ``ops``."""
     loop = Operation(
         func=IterativeOp(lambda ctx: ctx.loops[-1].iteration < passes),
         metadata=OperationMetadata(op_name=name),

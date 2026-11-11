@@ -35,7 +35,6 @@ def _is_model(model: Any) -> bool:
 
 
 def _check_arrays(model: type[BaseModel]) -> None:
-    """Raise ``TypeError`` unless every field of the exchange model ``model`` is :data:`Array`."""
     for name, info in model.model_fields.items():
         if not any(isinstance(meta, _ArrayKind) for meta in info.metadata):
             raise TypeError(
@@ -48,15 +47,9 @@ def _check_arrays(model: type[BaseModel]) -> None:
 class ExchangeSide:
     """A coupled side of a region: its patch, the field it couples, its models and points.
 
-    ``sends`` and ``receives`` are pydantic models of :data:`Array` fields
-    (``TypeError`` otherwise); ``receive`` gets data already mapped onto its
-    ``coordinates`` (one row per point, or ``None``). Built by
+    ``receive`` gets data already mapped onto its ``coordinates`` (one row per
+    point, or ``None``). Built by
     :meth:`~neofoam.framework.coupling.Coupling.add` for a ``@coupled`` instance.
-
-    Example::
-
-        ExchangeSide("solid", "right", "T", sends=WallTemperature, receives=WallHeatFlux,
-                     send=self.send, receive=self.receive, coordinates=points)
     """
 
     region: str
@@ -76,7 +69,7 @@ class ExchangeSide:
 
     @property
     def end(self) -> End:
-        """``(region, patch)``: the side's end of its exchange."""
+        """The side's end of its exchange."""
         return (self.region, self.patch)
 
     @property
@@ -93,7 +86,6 @@ class ExchangeSide:
 
 
 def _check_received(name: str, announced: dict[str, Any], side: ExchangeSide) -> None:
-    """Raise ``ValueError`` unless ``side`` receives the fields its partner sends."""
     sent, received = announced["fields"], tuple(side.receives.model_fields)
     what_sent = f"{announced['model']} (sent by {announced['label']})"
     what_received = f"{side.receives.__qualname__} (received by {side.label})"
