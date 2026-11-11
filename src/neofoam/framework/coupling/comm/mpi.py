@@ -23,8 +23,8 @@ from neofoam.framework.operations import IterativeOp
 
 from ..coupled import CoupledPort
 from ..data import Stream, sent
-from ..iteration._loop_op import CouplingLoopOp
 from ..location import Geometry
+from ..loop._loop_op import CouplingLoopOp
 from .channel import DEFAULT_TIMEOUT, CouplingTimeout, Mailbox, pickled
 
 if TYPE_CHECKING:
