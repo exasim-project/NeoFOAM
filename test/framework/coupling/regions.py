@@ -18,7 +18,7 @@ from neofoam.framework.coupling import (
     CommChannel,
     Coupling,
     CouplingConvergence,
-    CouplingNode,
+    CouplingLoop,
     Exchange,
     FaceData,
     InProcessCommChannel,
@@ -94,13 +94,13 @@ class FakeGeometry:
 def contexts(
     regions: list[str],
     exchanges: list[Exchange],
-    nodes: Optional[Sequence[CouplingNode]] = None,
+    nodes: Optional[Sequence[CouplingLoop]] = None,
     comm_channel: Optional[InProcessCommChannel] = None,
     **node: Any,
 ) -> dict[str, Context]:
     """A context per region, coupled over ``exchanges`` in ``nodes`` (default: one of ``node``)."""
     if nodes is None:
-        nodes = [CouplingNode("coupling", tuple(exchange.name for exchange in exchanges), **node)]
+        nodes = [CouplingLoop("coupling", tuple(exchange.name for exchange in exchanges), **node)]
     couplings = region_couplings(
         regions, exchanges, comm_channel or InProcessCommChannel(), nodes=nodes
     )

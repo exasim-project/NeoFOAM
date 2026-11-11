@@ -34,8 +34,8 @@ from neofoam.framework.coupling import (
     Array,
     BoundMapping,
     CommChannelClosed,
+    CouplingLoop,
     CouplingMapping,
-    CouplingNode,
     CouplingNotConvergedWarning,
     Exchange,
     FaceData,
@@ -132,7 +132,7 @@ def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_befo
 def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: bool) -> None:
     log: list[str] = []
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
-    node = CouplingNode("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
+    node = CouplingLoop("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
     couplings = region_couplings(["a", "b"], [EXCHANGE], InProcessCommChannel(), nodes=[node])
     regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     for side in (a, b):
@@ -153,7 +153,7 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
 ) -> None:
     comm_channel = RecordingCommChannel()
     nodes = [
-        CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
+        CouplingLoop("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
     couplings = region_couplings(["a", "b"], [EXCHANGE], comm_channel, nodes=nodes)
     regions = {name: context(name, couplings[name]) for name in ("a", "b")}

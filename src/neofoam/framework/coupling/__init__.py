@@ -8,7 +8,7 @@ A ``@coupled`` class declares what it sends and receives (``FaceData``,
 (``coupling(ctx).add(Patch("top"), bc)``), which is its port. An
 :class:`Exchange` pairs what one port sends with what the other receives, its
 mapping moves the data between their locations. The region's :class:`Coupling`
-model builds one coupling op per :class:`CouplingNode`; a node's leader (its last
+model builds one coupling op per :class:`CouplingLoop`; a node's leader (its last
 region in stepping order) decides convergence and the final pass.
 """
 
@@ -22,7 +22,7 @@ from .comm.channel import (
 from .comm.in_process import InProcessCommChannel
 from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
-from .exchanges import CouplingNode, Exchange, RegionCoupling
+from .exchanges import CouplingLoop, Exchange, RegionCoupling
 from .iteration._leader import CouplingNotConvergedWarning
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .model import Coupling, coupling
@@ -59,7 +59,7 @@ __all__ = [
     "CouplingConvergence",
     "CouplingDeadlock",
     "CouplingMapping",
-    "CouplingNode",
+    "CouplingLoop",
     "CouplingNotConvergedWarning",
     "CouplingTimeout",
     "Exchange",

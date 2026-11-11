@@ -42,7 +42,7 @@ class Exchange:
 
 
 @dataclass(frozen=True)
-class CouplingNode:
+class CouplingLoop:
     """A named coupling loop over some exchanges; one op ``<region>.<name>`` per region.
 
     Once every measure of ``convergence`` holds (none: the data is unchanged) one
@@ -83,7 +83,7 @@ class RegionCoupling:
     group: tuple[str, ...]
     exchanges: tuple[Exchange, ...]
     comm_channel: CommChannel
-    nodes: tuple[CouplingNode, ...] = ()
+    nodes: tuple[CouplingLoop, ...] = ()
 
     @property
     def leader(self) -> str:
@@ -104,11 +104,11 @@ class RegionCoupling:
             if self.region in dict(exchange.ends)
         )
 
-    def node_exchanges(self, node: CouplingNode) -> tuple[Exchange, ...]:
+    def node_exchanges(self, node: CouplingLoop) -> tuple[Exchange, ...]:
         """The exchanges of ``node`` in this region's group."""
         return tuple(exchange for exchange in self.exchanges if exchange.name in node.exchanges)
 
-    def node_of(self, port: str) -> CouplingNode:
+    def node_of(self, port: str) -> CouplingLoop:
         """The node whose exchange connects ``port`` of this region."""
         for node in self.nodes:
             for exchange in self.node_exchanges(node):
@@ -116,7 +116,7 @@ class RegionCoupling:
                     return node
         raise KeyError(f"no coupling node has an exchange on {self.region}.{port}")
 
-    def node_group(self, node: CouplingNode) -> tuple[str, ...]:
+    def node_group(self, node: CouplingLoop) -> tuple[str, ...]:
         """The regions ``node`` connects with this region, itself included, in stepping order."""
         return _group(self.region, self.group, self.node_exchanges(node))
 
@@ -125,7 +125,7 @@ def region_couplings(
     regions: Sequence[str],
     exchanges: Sequence[Exchange],
     comm_channel: CommChannel,
-    nodes: Sequence[CouplingNode],
+    nodes: Sequence[CouplingLoop],
 ) -> dict[str, RegionCoupling]:
     """The coupling of every region ``exchanges`` connect, by region.
 
@@ -150,7 +150,7 @@ def region_couplings(
 
 
 def check_couplings(
-    regions: Sequence[str], exchanges: Sequence[Exchange], nodes: Sequence[CouplingNode]
+    regions: Sequence[str], exchanges: Sequence[Exchange], nodes: Sequence[CouplingLoop]
 ) -> None:
     """Raise ``ValueError`` unless ``exchanges`` and ``nodes`` couple ``regions`` consistently.
 
@@ -207,7 +207,7 @@ def _check_exchanges(regions: Sequence[str], exchanges: Sequence[Exchange]) -> N
             owner[end] = exchange.name
 
 
-def _check_node(node: CouplingNode, exchanges: Sequence[Exchange]) -> None:
+def _check_node(node: CouplingLoop, exchanges: Sequence[Exchange]) -> None:
     names = [exchange.name for exchange in exchanges]
     if not node.exchanges:
         raise ValueError(f"coupling node '{node.name}' has no exchange")
@@ -232,7 +232,7 @@ def _check_node(node: CouplingNode, exchanges: Sequence[Exchange]) -> None:
         )
 
 
-def _regions(node: CouplingNode, exchanges: Sequence[Exchange]) -> set[str]:
+def _regions(node: CouplingLoop, exchanges: Sequence[Exchange]) -> set[str]:
     return {
         region
         for exchange in exchanges
@@ -241,7 +241,7 @@ def _regions(node: CouplingNode, exchanges: Sequence[Exchange]) -> set[str]:
     }
 
 
-def _check_serial_nesting(nodes: Sequence[CouplingNode], exchanges: Sequence[Exchange]) -> None:
+def _check_serial_nesting(nodes: Sequence[CouplingLoop], exchanges: Sequence[Exchange]) -> None:
     for index, outer in enumerate(nodes):
         if outer.parallel:
             continue

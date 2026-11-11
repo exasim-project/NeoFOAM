@@ -29,7 +29,7 @@ from framework.coupling.regions import (
 from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
-    CouplingNode,
+    CouplingLoop,
     CouplingNotConvergedWarning,
     Exchange,
     FaceData,
@@ -134,7 +134,7 @@ def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
 
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     comm_channel = RecordingCommChannel()
-    nodes = [CouplingNode("coupling", ("a-b", "b-c"))]
+    nodes = [CouplingLoop("coupling", ("a-b", "b-c"))]
     couplings = region_couplings(list(PATCHES), EXCHANGES, comm_channel, nodes)
     regions = {name: context(name, couplings.get(name)) for name in PATCHES}
     tests = {name: _Region(name, 1.0) for name in PATCHES}

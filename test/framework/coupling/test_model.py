@@ -9,7 +9,7 @@ import pytest
 from framework.coupling.regions import add_coupled, contexts, fixed, graph, solve
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import CouplingNode, Exchange, IdentityMapping, Patch, coupling
+from neofoam.framework.coupling import CouplingLoop, Exchange, IdentityMapping, Patch, coupling
 from neofoam.framework.coupling.iteration._loop_op import CouplingOp
 from neofoam.framework.types import Placement
 
@@ -70,7 +70,7 @@ def test_only_a_coupled_instance_is_added() -> None:
 
 
 def test_a_region_s_data_field_is_in_at_most_one_node() -> None:
-    nodes = [CouplingNode("n", ("x",), scheme="parallel"), CouplingNode("m", ("y",))]
+    nodes = [CouplingLoop("n", ("x",), scheme="parallel"), CouplingLoop("m", ("y",))]
     regions = contexts(["a", "b"], [X, Y], nodes)
     add_coupled(regions["a"], "p", fixed(data="T"))
     add_coupled(regions["a"], "q", fixed(data="T"))

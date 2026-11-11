@@ -19,7 +19,7 @@ from neofoam.framework import execution_observer
 
 from ..comm.channel import Data
 from ..data import End
-from ..exchanges import CouplingNode
+from ..exchanges import CouplingLoop
 from ..strategies.convergence import SideChange
 
 
@@ -101,7 +101,7 @@ class GroupStream:
 class CouplingController:
     """The leader's part of a coupling node: after each pass, whether another runs and which.
 
-    Final pass as :class:`CouplingNode` describes; warns when more than one of
+    Final pass as :class:`CouplingLoop` describes; warns when more than one of
     ``max_iterations`` ends the loop unconverged (one is explicit coupling). A port
     receives a stream fresh when the node is serial and its sender steps earlier,
     else the carried data, relaxed. Not thread safe.
@@ -111,7 +111,7 @@ class CouplingController:
         self,
         streams: Sequence[GroupStream],
         label: str,
-        node: CouplingNode,
+        node: CouplingLoop,
         group: Sequence[str],
     ) -> None:
         self.label = label
