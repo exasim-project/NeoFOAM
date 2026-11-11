@@ -10,8 +10,7 @@
 one after the other, each on its own thread, so a cache on the spec would hand
 the second region the first one's value. ``cases/regions`` holds a different
 increment per region and at the single-region path, so a wrong file shows.
-``uncoupling`` adds no coupling model: a region the case couples raises instead
-of running uncoupled.
+``uncoupling`` adds no coupling model, so a region the case couples raises.
 """
 
 import threading

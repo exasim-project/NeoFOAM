@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Coupling nodes: one coupling op per node of a region, each with its own leader and strategies.
+"""Several coupling nodes: one op per node of a region, each with its own leader.
 
-Regions ``a``, ``b`` (and ``c``) are joined by exchanges on patches ``p`` and
-``q``; a ``_Side`` on a patch sends a fixed value of its field and logs what it
-receives, so every node converges after its second pass.
+Every side sends a fixed value, so every node converges after its second pass.
 """
 
 from __future__ import annotations
@@ -182,10 +180,7 @@ def _counting(name: str, passes: int, *ops: Operation) -> Operation:
 
 
 def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
-    """a and b, each node ``n`` around solve_x inside loop ``inner`` inside loop ``outer``.
-
-    ``passes`` are the passes of each region's (outer, inner) loops.
-    """
+    """a and b, node ``n`` around solve_x in loops ``outer`` > ``inner`` of ``passes`` each."""
     placement = Placement(("solve_x",))
     nodes = [CouplingNode("n", ("x",), placement={"a": placement, "b": placement})]
     regions = contexts(["a", "b"], [X], nodes)

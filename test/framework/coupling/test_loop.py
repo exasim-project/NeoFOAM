@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Two regions ``a`` and ``b`` joined by one exchange, each on its own thread.
+"""A region's coupling op: two regions ``a`` and ``b``, one exchange, b leads.
 
-``_Side`` stands in for a coupled boundary condition on patch ``p`` together
-with the operation that solves its field ``x``: solving sets its value (one more
-each pass, or a fixed one), it sends that value (:class:`_Data`) and logs what
-it receives. Each region's coupling op wraps its solve; b, the last region, leads.
+``_Side`` is a coupled boundary condition with the solve of its field: each
+solve counts its value up (or sets a fixed one); it logs what it receives.
 """
 
 from __future__ import annotations
@@ -52,7 +50,6 @@ from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
 
-# The sides of these tests have no coordinates: identity, not the default nearest-neighbor.
 LINK = Link("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
 
 
@@ -401,9 +398,6 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     assert _controller(ops).outcomes == (
         CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
     )
-
-
-# --- diagnostics: non-finite data, convergence over no data ---------------------------------
 
 
 def test_a_side_sending_data_that_is_not_finite_raises() -> None:

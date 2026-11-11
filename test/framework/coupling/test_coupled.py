@@ -1,13 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``@coupled`` boundary conditions, the exchanges that join them and their coupling ops.
+"""``@coupled`` boundary conditions and the exchanges that join them.
 
-``_Wall`` is a coupled boundary condition of a region that solves ``T``: it sends
-its wall temperature (``WallTemperature``) and receives a heat flux
-(``WallHeatFlux``), one model per direction. ``_Flux`` is its counterpart. Each
-region is a :class:`Context` of its own, coupled as ``system/regionCoupling.yaml``
-would couple it, and runs its own graph ``solve_T`` on its own thread.
+``_Wall`` sends its wall temperature and receives a heat flux, ``_Flux`` the
+reverse: one model per direction, each region on its own thread.
 """
 
 from __future__ import annotations

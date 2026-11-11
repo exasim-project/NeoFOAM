@@ -3,11 +3,8 @@
 
 """The time-step op: coupled transient regions step the smallest time step any asks for.
 
-Each region's graph is a time loop around ``set_time_step`` (the region asks for
-its time step, ``ctx.time.delta_t``) and ``increment_time`` (logs the time step
-it advances by), both ``first`` as the solutionLoop's, with the region's
-time-step op (``Coupling.time_step``) merged in. The regions run on their own
-threads; the last region leads the group.
+Each region's graph is a time loop around ``set_time_step`` (asks for a time
+step) and ``increment_time`` (logs the one it advances by), as the solutionLoop's.
 """
 
 from __future__ import annotations
@@ -71,11 +68,7 @@ def _time_loop(
     solves: Optional[list[int]] = None,
     inner: bool = False,
 ) -> StepBuilder:
-    """A time loop of ``len(asked)`` steps: set_time_step asks for ``asked[step]``.
-
-    With ``inner`` the solve runs in an ``inner_loop`` stepped after
-    increment_time, as incompressibleFluid's PIMPLE loop.
-    """
+    """A time loop asking for ``asked[step]``; with ``inner`` a PIMPLE-like ``inner_loop``."""
     steps = iter(asked)
 
     def set_time_step(ctx: Context) -> None:
@@ -110,8 +103,7 @@ def _graph(ctx: Context, builder: StepBuilder, *loops: Operation) -> Operations:
 def _step(
     asked: dict[str, list[float]], passes: int = 0
 ) -> tuple[dict[str, Context], dict[str, list[float]], dict[str, list[int]]]:
-    """Run every region of the chain a - b - c over the steps ``asked``; a coupling-like
-    loop of ``passes`` passes around each time step, if any."""
+    """Run the chain a - b - c over ``asked``, in a loop of ``passes`` per step if any."""
     regions = contexts(list(asked), CHAIN)
     logs: dict[str, list[float]] = {region: [] for region in asked}
     solves: dict[str, list[int]] = {region: [] for region in asked}
