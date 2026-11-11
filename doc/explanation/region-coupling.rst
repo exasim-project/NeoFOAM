@@ -17,7 +17,7 @@ graph and time loop on its own thread. Regions share nothing but a
      - the part of the mesh, and so the geometry: face centres and areas, cell
        centres and volumes, from the region's ``MeshGeometry``.
    * - solver
-     - its coupling model, ``ctx.models["coupling"] = Coupling(self.coupling,
+     - its coupling model, ``ctx.models["coupling"] = Participant(self.coupling,
        geometry, fields)``, and the binding of its instances,
        ``coupling(ctx).add(Patch("top"), bc)``: a **port**.
    * - case (``system/regionCoupling.yaml``)
@@ -145,8 +145,8 @@ serial node may neither enclose a node coupling two of its regions nor hold
 their time step: place it around named operations or make it parallel. A
 steady region has no time step, so a serial node may wrap it whole.
 
-The file is checked as it loads, by the same ``check_couplings`` as
-``region_couplings``: unknown keys, types or options, an exchange in no node
+The file is checked as it loads, by the same ``check_exchanges`` as
+``participant_exchanges``: unknown keys, types or options, an exchange in no node
 or in two, two exchanges or nodes of one name, a port in two exchanges, a
 ``wraps`` region the node does not couple, and a serial node enclosing a node
 of two of its regions. A serial node holding the time step is found as the
@@ -158,13 +158,13 @@ How it runs
 .. code-block:: text
 
     multiRun.run()                          main thread
-      region_couplings(...) -> RegionCoupling per coupled region
-      run_regions: one thread per region; the first error is raised
+      RegionCouplingConfig.participant_exchanges(...) -> ParticipantExchanges per region
+      run_participants: one thread per region; the first error is raised
         |
         +-- thread "a":  instantiate(region="a", coupling=...).run()
         |     the coupling model adds a.coupling (placed by its wraps) and,
         |     transient, a.time_step between set_time_step and increment_time
-        +-- thread "b" (leader): the same; its op owns the controller
+        +-- thread "b" (leader): the same; its op holds the leader
                      ^
                      |   CommChannel: send / receive (source, target, tag)
                      v
@@ -175,8 +175,7 @@ ops, a solver's old-time storage) run in the first pass of a coupling loop
 only.
 
 **A pass.** The first loop test tells each partner what a port sends and its
-geometry, checks the pairs, binds the mappings once and builds the leader's
-controller. Each test then sends the ports' data, a stream per data model
+geometry, checks the pairs, binds the mappings once and builds the leader. Each test then sends the ports' data, a stream per data model
 (serial: to later partners at once), and the leader's decision, convergence
 and acceleration (per exchange, over its streams) included, comes back; on
 another pass each port receives its partner's data, mapped and validated. All
