@@ -42,7 +42,6 @@ class WallTemperature(BaseModel):
 
 class WallHeatFlux(BaseModel):
     q: Array
-    h: float
 
 
 class _Patch:
@@ -75,7 +74,7 @@ class _Flux(_Patch):
 
     @coupled.sends
     def send(self) -> WallHeatFlux:
-        return WallHeatFlux(q=-self.ctx.fields["T"], h=2.0)
+        return WallHeatFlux(q=-self.ctx.fields["T"])
 
     @coupled.receives
     def receive(self, data: WallTemperature) -> None:
@@ -207,7 +206,7 @@ def test_coupled_exchange_with_one_model_per_direction() -> None:
     assert isinstance(received_flux, WallHeatFlux) and isinstance(
         received_temperature, WallTemperature
     )
-    assert (received_flux.q.tolist(), received_flux.h) == ([-1.0, -2.0], 2.0)
+    assert received_flux.q.tolist() == [-1.0, -2.0]
     assert received_temperature.T.tolist() == [1.0, 2.0]
 
 
@@ -245,11 +244,11 @@ def test_coupling_op_public_read_api() -> None:
         True,
     )
     assert [
-        (s.region, s.patch, s.field, s.sends, s.receives, s.points, s.mapped)
+        (s.region, s.patch, s.field, s.sends, s.receives, s.points)
         for s in (solid_side, fluid_side)
     ] == [
-        ("solid", "right", "T", WallTemperature, WallHeatFlux, 2, ("q",)),
-        ("fluid", "wall", "T", WallHeatFlux, WallTemperature, 2, ("T",)),
+        ("solid", "right", "T", WallTemperature, WallHeatFlux, 2),
+        ("fluid", "wall", "T", WallHeatFlux, WallTemperature, 2),
     ]
     assert (solid_op.partner(solid_side), fluid_op.partner(fluid_side)) == (
         "fluid.wall",
@@ -266,22 +265,21 @@ def test_coupling_op_public_read_api() -> None:
     controller = fluid_op.controller
     assert solid_op.controller is None and controller is not None
     assert (controller.label, controller.parallel) == ("fluid.coupling", False)
-    assert [(end, s.field, s.arrays, s.partner) for end, s in controller.sides.items()] == [
-        (("solid", "right"), "T", ("T",), ("fluid", "wall")),
-        (("fluid", "wall"), "T", ("q",), ("solid", "right")),
+    assert [(end, s.field, s.partner) for end, s in controller.sides.items()] == [
+        (("solid", "right"), "T", ("fluid", "wall")),
+        (("fluid", "wall"), "T", ("solid", "right")),
     ]
     # what the sides send does not change: converged after one pass
     assert [(o.passes, o.converged) for o in controller.outcomes] == [(1, True)]
 
 
 class _Other(BaseModel):
-    q: float
-    h: float
+    flux: Array
 
 
 @coupled
 class _Odd(_Patch):
-    """Sends a flux whose q is plain, receives a temperature with an extra field."""
+    """Sends a flux named otherwise, receives a heat flux, not a temperature."""
 
     @coupled.sends
     def send(self) -> _Other:
@@ -304,11 +302,10 @@ def test_each_region_checks_that_its_side_receives_what_the_partner_sends() -> N
     assert str(error.value) in (
         "exchange 'solid-fluid': each side must receive what the other sends: "
         "'T' is in WallTemperature (sent by solid.right) only; "
-        "'q' is in WallHeatFlux (received by fluid.wall) only; "
-        "'h' is in WallHeatFlux (received by fluid.wall) only",
+        "'q' is in WallHeatFlux (received by fluid.wall) only",
         "exchange 'solid-fluid': each side must receive what the other sends: "
-        "'q' is float in _Other (sent by fluid.wall) but Array in WallHeatFlux "
-        "(received by solid.right)",
+        "'flux' is in _Other (sent by fluid.wall) only; "
+        "'q' is in WallHeatFlux (received by solid.right) only",
     )
 
 
@@ -430,58 +427,21 @@ def test_a_region_no_exchange_names_is_not_coupled() -> None:
     assert list(couplings) == ["a", "b"]
 
 
-class _Film(BaseModel):
-    h: float
-    phase: str | None
-
-
-class _Wet(BaseModel):
+class _Plain(BaseModel):
     q: Array
-    film: _Film
-
-
-@coupled
-class _WetFlux(_Patch):
-    """Sends a flux with a nested plain model, receives a temperature."""
-
-    @coupled.sends
-    def send(self) -> _Wet:
-        return _Wet(q=-self.ctx.fields["T"], film=_Film(h=3.0, phase=None))
-
-    @coupled.receives
-    def receive(self, data: WallTemperature) -> None:
-        self.received.append(data)
-
-
-@coupled
-class _WetWall(_Wall):
-    @coupled.receives
-    def receive(self, data: _Wet) -> None:
-        self.received.append(data)
-
-
-def test_a_nested_plain_model_travels_as_its_dump() -> None:
-    regions = _pair()
-    wall = _WetWall(regions["solid"], "right")
-    _WetFlux(regions["fluid"], "wall")
-
-    _run(regions)
-
-    assert wall.received[-1].film == _Film(h=3.0, phase=None)
+    h: float
 
 
 class _Listed(BaseModel):
-    q: Array
     weights: list[float]
 
 
-class _Nested(BaseModel):
-    inner: _Listed
-
-
-@pytest.mark.parametrize(("model", "field"), [(_Listed, "weights"), (_Nested, "inner")])
-def test_a_field_that_is_not_array_holds_plain_data(model: type[BaseModel], field: str) -> None:
-    with pytest.raises(TypeError, match=f"the field '{field}' of the exchange model"):
+@pytest.mark.parametrize(("model", "field"), [(_Plain, "h"), (_Listed, "weights")])
+def test_an_exchange_model_holds_array_fields_only(model: type[BaseModel], field: str) -> None:
+    with pytest.raises(
+        TypeError,
+        match=f"the field '{field}' of the exchange model {model.__name__} is not Array",
+    ):
         ExchangeSide(
             "solid",
             "right",

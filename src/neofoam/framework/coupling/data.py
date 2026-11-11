@@ -21,10 +21,8 @@
 
 from __future__ import annotations
 
-import types
-import typing
 from dataclasses import dataclass
-from typing import Annotated, Any, Callable, Optional, Sequence
+from typing import Annotated, Any, Callable, Optional
 
 import numpy as np
 from pydantic import BaseModel, PlainValidator
@@ -54,53 +52,14 @@ def _is_model(model: Any) -> bool:
     return isinstance(model, type) and issubclass(model, BaseModel)
 
 
-def _kinds(model: type[BaseModel]) -> dict[str, str]:
-    """The kind of each field of the exchange model ``model``: ``Array``, or its type's name."""
-    return {
-        name: "Array"
-        if any(isinstance(meta, _ArrayKind) for meta in info.metadata)
-        else getattr(info.annotation, "__name__", repr(info.annotation))
-        for name, info in model.model_fields.items()
-    }
-
-
-# The types a plain (non-Array) field of an exchange model may have, besides a
-# pydantic model of such fields.
-_PLAIN = (float, int, str, bool, type(None))
-
-
-def _plain(annotation: Any) -> bool:
-    """Whether a field annotated ``annotation`` holds plain data: a :data:`_PLAIN` type,
-    a union of them, or a pydantic model of such fields."""
-    if annotation in _PLAIN:
-        return True
-    if _is_model(annotation):
-        return all(_plain(info.annotation) for info in annotation.model_fields.values())
-    if typing.get_origin(annotation) in (typing.Union, types.UnionType):
-        return all(_plain(arg) for arg in typing.get_args(annotation))
-    return False
-
-
-def _check_plain(model: type[BaseModel]) -> None:
-    """Raise ``TypeError`` unless each plain (non-Array) field of ``model`` holds plain data."""
-    for name, kind in _kinds(model).items():
-        annotation = model.model_fields[name].annotation
-        if kind != "Array" and not _plain(annotation):
+def _check_arrays(model: type[BaseModel]) -> None:
+    """Raise ``TypeError`` unless every field of the exchange model ``model`` is :data:`Array`."""
+    for name, info in model.model_fields.items():
+        if not any(isinstance(meta, _ArrayKind) for meta in info.metadata):
             raise TypeError(
-                f"the field '{name}' of the exchange model {model.__qualname__} is "
-                f"{annotation!r}: a field that is not Array is float, int, str, bool or None, "
-                "or a pydantic model of such fields"
+                f"the field '{name}' of the exchange model {model.__qualname__} is not Array: "
+                "an exchange model holds Array fields only, one value per point of the patch"
             )
-
-
-def _array_names(model: type[BaseModel]) -> tuple[str, ...]:
-    """The :data:`Array` fields of the exchange model ``model``."""
-    return tuple(name for name, kind in _kinds(model).items() if kind == "Array")
-
-
-def _arrays(names: Sequence[str], data: Data) -> Data:
-    """The :data:`Array` fields ``names`` of ``data``."""
-    return {name: data[name] for name in names}
 
 
 @dataclass(frozen=True)
@@ -143,8 +102,8 @@ class ExchangeSide:
 
     def __post_init__(self) -> None:
         # that both are pydantic models @coupled checked on the class
-        for role in ("sends", "receives"):
-            _check_plain(getattr(self, role))
+        _check_arrays(self.sends)
+        _check_arrays(self.receives)
         if self.coordinates is not None:
             object.__setattr__(self, "coordinates", np.asarray(self.coordinates, dtype=float))
 
@@ -159,14 +118,6 @@ class ExchangeSide:
         if self.coordinates is None:
             return None
         return int(np.shape(self.coordinates)[0])
-
-    @property
-    def mapped(self) -> tuple[str, ...]:
-        """The fields of what the side receives that the mapping maps (its :data:`Array` fields).
-
-        The others are one value for the interface, handed over as they are.
-        """
-        return _array_names(self.receives)
 
     @property
     def label(self) -> str:
@@ -190,20 +141,12 @@ class Exchange:
 
 
 def _check_received(name: str, announced: dict[str, Any], side: ExchangeSide) -> None:
-    """Raise ``ValueError`` unless ``side`` receives what its partner (``announced``) sends.
-
-    By field name and kind (``Array`` or plain type); the model classes may differ.
-    """
-    sent, received = announced["kinds"], _kinds(side.receives)
+    """Raise ``ValueError`` unless ``side`` receives the fields its partner sends."""
+    sent, received = announced["fields"], tuple(side.receives.model_fields)
     what_sent = f"{announced['model']} (sent by {announced['label']})"
     what_received = f"{side.receives.__qualname__} (received by {side.label})"
     problems = [f"'{n}' is in {what_sent} only" for n in sent if n not in received]
     problems += [f"'{n}' is in {what_received} only" for n in received if n not in sent]
-    problems += [
-        f"'{n}' is {kind} in {what_sent} but {received[n]} in {what_received}"
-        for n, kind in sent.items()
-        if n in received and received[n] != kind
-    ]
     if problems:
         raise ValueError(
             f"exchange '{name}': each side must receive what the other sends: "
@@ -211,17 +154,11 @@ def _check_received(name: str, announced: dict[str, Any], side: ExchangeSide) ->
         )
 
 
-def _dumped(sent: BaseModel, name: str) -> Any:
-    """The plain field ``name`` of ``sent``; a pydantic model as its ``model_dump()``."""
-    value = getattr(sent, name)
-    return value.model_dump() if isinstance(value, BaseModel) else value
-
-
 def _sent(side: ExchangeSide, node: str, iteration: int, time: Any) -> Data:
-    """What ``side`` sends now, as named copies.
+    """What ``side`` sends now, as float copies.
 
-    Raises ``FloatingPointError`` when an :data:`Array` of it is not finite (in
-    coupling node ``node``, after pass ``iteration``, at ``time``).
+    Raises ``FloatingPointError`` when an array of it is not finite (in coupling
+    node ``node``, after pass ``iteration``, at ``time``).
     """
     sent = side.send()
     if not isinstance(sent, side.sends):
@@ -229,12 +166,9 @@ def _sent(side: ExchangeSide, node: str, iteration: int, time: Any) -> Data:
             f"the coupled side {side.label} declares it sends {side.sends.__name__}, "
             f"but its send() returned {type(sent).__name__}"
         )
-    data = {
-        name: np.array(getattr(sent, name), dtype=float) if kind == "Array" else _dumped(sent, name)
-        for name, kind in _kinds(side.sends).items()
-    }
-    for name in _array_names(side.sends):
-        if not np.all(np.isfinite(data[name])):
+    data = {name: np.array(getattr(sent, name), dtype=float) for name in side.sends.model_fields}
+    for name, values in data.items():
+        if not np.all(np.isfinite(values)):
             when = f"after pass {iteration}" if iteration else "before the first pass"
             at = "" if time is None else f" (t={time})"
             raise FloatingPointError(

@@ -42,7 +42,7 @@ from neofoam.framework import execution_observer
 from neofoam.framework.operations import IterativeOp
 
 from .controller import CouplingController, GroupSide
-from .data import End, Exchange, ExchangeSide, _array_names, _arrays, _check_received, _kinds, _sent
+from .data import End, Exchange, ExchangeSide, _check_received, _sent
 from .kernels import BoundMapping
 from .transport import Data, Tag
 
@@ -253,11 +253,11 @@ class CouplingOp(IterativeOp):
             announced = {
                 "label": side.label,
                 "model": side.sends.__qualname__,
-                "kinds": _kinds(side.sends),
+                "fields": tuple(side.sends.model_fields),
                 "points": side.coordinates,
             }
             self._send(exchange.partner[0], Tag.side(exchange.name), announced)
-        sides = [(side.patch, side.field, _array_names(side.sends)) for side in self._sides]
+        sides = [(side.patch, side.field) for side in self._sides]
         if not self.is_leader:
             self._send(self._leader, self._tag("sides"), (path, sides))
         for side in self._sides:
@@ -282,7 +282,7 @@ class CouplingOp(IterativeOp):
         return Tag.node(self.node.name, what)
 
     def _node_sides(
-        self, path: tuple[Optional[str], ...], own: list[tuple[str, str, tuple[str, ...]]]
+        self, path: tuple[Optional[str], ...], own: list[tuple[str, str]]
     ) -> list[GroupSide]:
         """The leader: the sides of every region of the node, as the regions told it.
 
@@ -308,11 +308,9 @@ class CouplingOp(IterativeOp):
         }
         exchange = {end: link.name for link in self._links for end in link.ends}
         return [
-            GroupSide(
-                region, patch, field, arrays, other[(region, patch)], exchange[(region, patch)]
-            )
+            GroupSide(region, patch, field, other[(region, patch)], exchange[(region, patch)])
             for region, (_path, sides) in received.items()
-            for patch, field, arrays in sides
+            for patch, field in sides
         ]
 
     def _decide(
@@ -388,8 +386,7 @@ class CouplingOp(IterativeOp):
         data = decided[side.patch]
         if data is None:
             data = self._receive(exchange.partner[0], Tag.data(exchange.name))
-        mapped = self._mappers[side.patch](_arrays(side.mapped, data))
-        received = side.receives.model_validate({**data, **mapped})
+        received = side.receives.model_validate(self._mappers[side.patch](data))
         observer = execution_observer.current()
         if observer is not None:
             observer.coupling_exchanged(self, side, received)
