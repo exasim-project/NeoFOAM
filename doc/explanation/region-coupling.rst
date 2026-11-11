@@ -139,8 +139,8 @@ The value mappings take scalar fields only. A region's data field (``T``,
 ``q``) is in at most one coupling loop.
 
 **Serial or parallel.** Parallel: a port receives what its partner sent in the
-pass before. Serial: from a region that steps before its own, what it sent in
-the same pass, so a serial pass waits for the partner's whole pass. Hence a
+iteration before. Serial: from a region that steps before its own, what it sent in
+the same iteration, so a serial iteration waits for the partner's whole iteration. Hence a
 serial coupling loop may neither enclose a loop coupling two of its regions
 nor hold their time step: place it around named operations or make it
 parallel. A steady region has no time step, so a serial loop may wrap it whole.
@@ -171,21 +171,22 @@ How it runs
 
 **The time step.** Every region of a group sends the time step it asks for to
 the leader, which sends back the smallest. Ops marked ``first`` (the time-step
-ops, a solver's old-time storage) run in the first pass of a coupling loop
+ops, a solver's old-time storage) run in the first iteration of a coupling loop
 only.
 
-**A pass.** The first loop test tells each partner what a port sends and its
-geometry, checks the pairs, binds the mappings once and builds the leader. Each test then sends the ports' data, a stream per data model
+**An iteration.** An iteration of a coupling loop is a pass of its loop op, the
+entry of ``ctx.loops`` it counts. The first loop test tells each partner what a
+port sends and its geometry, checks the pairs, binds the mappings once and builds the leader. Each test then sends the ports' data, a stream per data model
 (serial: to later partners at once), and the leader's decision, convergence
 and acceleration (per exchange, over its streams) included, comes back; on
-another pass each port receives its partner's data, mapped and validated. All
-regions leave the loop on the same pass.
+another iteration each port receives its partner's data, mapped and validated. All
+regions leave the loop on the same iteration.
 
-**The final pass.** Once every measure holds, the leader runs one more pass,
-the final one; the last pass ``maxIterations`` allows is final regardless (it
+**The final iteration.** Once every measure holds, the leader runs one more iteration,
+the final one; the last iteration ``maxIterations`` allows is final regardless (it
 warns, ``CouplingNotConvergedWarning``). ``maxIterations: 1`` is explicit
-coupling: one pass, no warning. Ops marked ``final`` (such as
-``write_output``) run in the final pass only.
+coupling: one iteration, no warning. Ops marked ``final`` (such as
+``write_output``) run in the final iteration only.
 
 **Failures.** A region that fails closes the comm channel, so none waits for it
 forever. A deadlock raises ``CouplingDeadlock`` at once; as a fallback a receive
@@ -207,7 +208,7 @@ Extension points
    * - mapping
      - a ``CouplingMapping``: ``kinds`` (the entities it maps) and
        ``bind(source, target)`` once on both ports' ``Geometry``, returning the
-       ``data -> data`` map of every pass.
+       ``data -> data`` map of every iteration.
    * - backend
      - a ``MeshGeometry`` (face centres and areas, cell centres and volumes)
        and a ``FieldAccess`` (read and write a field on a location).

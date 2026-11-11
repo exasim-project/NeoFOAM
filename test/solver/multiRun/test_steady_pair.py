@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Two steady regions couple in every outer iteration, without a time or a time step.
+"""Two steady regions couple in every pass of the outer loop, without a time or a time step.
 
-``cases/steady_pair`` is ``cases/affine_pair`` in the ``steady`` solver: the first
-outer iteration takes the 21 passes of ``test_affine_pair``, the others start
+``cases/steady_pair`` is ``cases/affine_pair`` in the ``steady`` solver: the outer
+loop's first pass takes the 21 iterations of ``test_affine_pair``, the others start
 converged. The limit 1e-6 is relative: the fixed point holds to 1e-5.
 """
 
@@ -32,8 +32,8 @@ def regions(case: tuple[dict[str, Context], Outcomes]) -> dict[str, Context]:
     return case[0]
 
 
-def _passes(regions: dict[str, Context], region: str) -> list[int]:
-    """The solves of ``region`` in each outer iteration."""
+def _solves(regions: dict[str, Context], region: str) -> list[int]:
+    """The solves of ``region`` in each pass of the outer loop."""
     outer = [index for index, _x in regions[region].models["history"]]
     return [outer.count(index) for index in sorted(set(outer))]
 
@@ -50,7 +50,7 @@ def test_steady_pair_couples_in_every_outer_iteration_without_a_time(
 ) -> None:
     assert regions[region].time is None
     assert "solution_loop" not in regions[region].models
-    assert _passes(regions, region) == [21, 2, 2]
+    assert _solves(regions, region) == [21, 2, 2]
 
 
 def test_steady_pair_leader_records_an_outcome_per_outer_iteration(
@@ -60,7 +60,7 @@ def test_steady_pair_leader_records_an_outcome_per_outer_iteration(
     leader = couple(regions["b"]).controller
     assert leader is not None
 
-    assert [(o.passes, o.converged) for o in outcomes.of(leader.label)] == [
+    assert [(o.iterations, o.converged) for o in outcomes.of(leader.label)] == [
         (21, True),
         (2, True),
         (2, True),
