@@ -20,7 +20,7 @@ from neofoam.framework.coupling import (
     RelativeConvergence,
     StreamChange,
 )
-from neofoam.framework.coupling.iteration._leader import (
+from neofoam.framework.coupling.loop._leader import (
     CouplingOutcome,
     GroupStream,
     Leader,

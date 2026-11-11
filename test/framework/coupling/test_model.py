@@ -10,7 +10,7 @@ from framework.coupling.regions import add_coupled, contexts, fixed, graph, solv
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import CouplingLoop, Exchange, IdentityMapping, Patch, coupling
-from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
 from neofoam.framework.types import Placement
 
 EXCHANGE = Exchange("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
