@@ -134,7 +134,10 @@ def test_coupling_config_reads_a_list_of_exchanges() -> None:
         ("no_convergence", r"couplings.0.convergence\n.*at least 1 item"),
         ("three_regions", r"exchanges.0.ports\n.*at most 2 items"),
         ("top_level_convergence", r"couplings\n.*Field required.*\n.*\nconvergence\n.*Extra"),
-        ("sides", r"exchanges.0.ports\n.*Field required.*\n.*\nexchanges.0.sides\n.*Extra"),
+        (
+            "removed_sides_key",
+            r"exchanges.0.ports\n.*Field required.*\n.*\nexchanges.0.sides\n.*Extra",
+        ),
     ],
 )
 def test_coupling_config_rejects_an_invalid_file(case: str, error: str) -> None:
