@@ -65,9 +65,9 @@ def region(tmp_path_factory: pytest.TempPathFactory) -> Iterator[dict[str, Any]]
 def patch(region: dict[str, Any]) -> Iterator[CoupledTemperature]:
     """A coupled patch on ``interface``, its 0/T values put back after the test."""
     ctx = region["ctx"]
-    side = CoupledTemperature("T", "interface", ctx)
-    yield side
-    side.set_wall_T(np.full(4, 310.0))
+    instance = CoupledTemperature("T", "interface", ctx)
+    yield instance
+    instance.set_wall_T(np.full(4, 310.0))
     np.asarray(ctx.fields["alphat"]["interface"])[:] = 0.0
 
 
