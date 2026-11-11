@@ -18,8 +18,9 @@ from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.solver import Solver
 from neofoam.framework.solver.registry import resolve_solver
+from neofoam.solver.regions import ControlDictConfig
 
-from .configs import ControlDictConfig, RegionCouplingConfig
+from .configs import RegionCouplingConfig
 
 multiRun = Solver("multiRun")
 

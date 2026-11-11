@@ -53,6 +53,11 @@ the linked reference pages for the full API.
     runs on its own thread; ``system/regionCoupling.yaml`` lists the
     ``exchanges`` and ``couplings``.
 
+``solver/regions.py``
+    What the solvers share to run as the regions of a ``multiRun`` case, such as
+    the case's ``system/controlDict.yaml`` (``ControlDictConfig``), so a
+    single-region solver does not import ``multiRun``.
+
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and
     ``select_turbulence_model``, which builds the native-NeoN or the pybFoam
