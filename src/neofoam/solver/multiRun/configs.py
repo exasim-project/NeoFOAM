@@ -22,7 +22,7 @@ from neofoam.framework.coupling import (
     CouplingConvergence,
     CouplingMapping,
     CouplingNode,
-    Link,
+    Exchange,
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.kernels import default_mapping
@@ -158,15 +158,15 @@ class RegionCouplingConfig(BaseConfig):
     couplings: list[CouplingNodeConfig] = Field(min_length=1)
     commChannelTimeout: Optional[float] = Field(default=DEFAULT_TIMEOUT, ge=0, allow_inf_nan=False)
 
-    def links(self) -> list[Link]:
-        """One link per exchange; a default name another exchange has is numbered (``a-b-2``)."""
-        links: list[Link] = []
-        for exchange in self.exchanges:
-            taken = [link.name for link in links]
-            name = exchange.name or _free("-".join(exchange.sides), taken)
-            first, second = exchange.sides.items()
-            links.append(Link(name, (first, second), exchange.mapping))
-        return links
+    def coupling_exchanges(self) -> list[Exchange]:
+        """The exchanges; a default name another exchange has is numbered (``a-b-2``)."""
+        exchanges: list[Exchange] = []
+        for config in self.exchanges:
+            taken = [exchange.name for exchange in exchanges]
+            name = config.name or _free("-".join(config.sides), taken)
+            first, second = config.sides.items()
+            exchanges.append(Exchange(name, (first, second), config.mapping))
+        return exchanges
 
     def nodes(self) -> list[CouplingNode]:
         """The coupling nodes, outer to inner."""
@@ -174,9 +174,11 @@ class RegionCouplingConfig(BaseConfig):
 
     @model_validator(mode="after")
     def _check(self) -> "RegionCouplingConfig":
-        links = self.links()
-        regions = list(dict.fromkeys(region for link in links for region, _patch in link.ends))
-        check_couplings(regions, links, self.nodes())
+        exchanges = self.coupling_exchanges()
+        regions = list(
+            dict.fromkeys(region for exchange in exchanges for region, _patch in exchange.ends)
+        )
+        check_couplings(regions, exchanges, self.nodes())
         return self
 
 
