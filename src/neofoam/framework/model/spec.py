@@ -251,9 +251,8 @@ class ModelSpec:
 
         ``fallback=True`` marks the op as belonging to the model's *fallback*
         backend (partitioned by :meth:`ModelRuntime.fallback_operations`); by
-        default an op is native. ``first=True`` runs it only in the first pass
-        of the wrapping loops around it (``OperationMetadata.first``),
-        ``final=True`` only in their final pass (``OperationMetadata.final``).
+        default an op is native. ``first=True`` (``final=True``) runs it only in the
+        first (final) pass of the wrapping loops around it.
         """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

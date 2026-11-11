@@ -102,12 +102,7 @@ class Operation:
         return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
-        """Run the operation on ``ctx``.
-
-        A ``first`` operation is skipped unless every wrapping loop around it is in
-        its first pass, a ``final`` one unless every one is in its final pass or
-        ``ctx.run_every_pass`` names it.
-        """
+        """Run on ``ctx``, unless its ``first``/``final`` mark skips this pass."""
         if (self.metadata.first or self.metadata.final or ctx.run_every_pass) and self._skipped(
             ctx
         ):

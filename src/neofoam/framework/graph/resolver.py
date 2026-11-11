@@ -196,10 +196,9 @@ def _sort_global(
     loop in the same scope. Loops carry no edges, so interleaving them by builder
     index is always dependency-safe.
 
-    Only the first ``stepped`` entries of ``tagged`` (the builder's; default all)
-    place a loop: it goes after the last op of its scope stepped before it, or
-    ahead of the first one stepped after it if that sorts earlier. Model ops have
-    no place of their own beside a loop.
+    Only the builder's ops (the first ``stepped`` of ``tagged``) place a loop: after the
+    last op of its scope stepped before it, or ahead of the first stepped after it if
+    that sorts earlier.
     """
     # Builder insertion order: position in the pre-order ``tagged`` list.
     order: dict[int, int] = {id(op): i for i, (_, op) in enumerate(tagged)}
@@ -229,7 +228,6 @@ def _sort_global(
         if isinstance(op.func, IterativeOp):
             loops_by_scope[scope].append(op)
 
-    # Merge loops into each scope's sequential ops, which keep their topological order.
     n_stepped = len(tagged) if stepped is None else stepped
     by_scope: dict[str, list[Operation]] = {}
     for scope in set(seq_by_scope) | set(loops_by_scope):

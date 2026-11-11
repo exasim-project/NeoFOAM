@@ -367,8 +367,6 @@ def set_time_step(
 
     ``deltaT`` is re-published between the first step's two passes, mirroring the
     ``CourantNo.H`` pimpleFoam/interFoam re-run at the head of the loop.
-
-    Marked ``first``: inside a coupling loop it runs in its first pass only.
     """
     loop = _engine(ctx)
     ctx.fields["deltaT"] = loop.current_delta_t()
