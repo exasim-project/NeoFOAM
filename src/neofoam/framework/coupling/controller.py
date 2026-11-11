@@ -137,17 +137,14 @@ class CouplingController:
 
     def _check_convergence(self) -> None:
         """Raise ``ValueError`` when a measure on a field's ``data`` has no side of it."""
-        sides = self._sides.values()
+        fields = {side.field for side in self._sides.values()}
         for measure in self._convergence:
-            data = getattr(measure, "data", None)
-            if not isinstance(data, str):
-                continue
-            of_field = [side for side in sides if side.field == data]
-            if not of_field:
+            data = measure.data
+            if data is not None and data not in fields:
                 raise ValueError(
                     f"coupling {self.label}: convergence {type(measure).__name__} on {data}, "
                     f"which no side of the node sends (its sides couple "
-                    f"{sorted({side.field for side in sides})})"
+                    f"{sorted(fields)})"
                 )
 
     @property

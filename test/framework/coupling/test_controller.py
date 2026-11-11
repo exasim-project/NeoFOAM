@@ -13,6 +13,7 @@ import pytest
 from framework.coupling.regions import never
 
 from neofoam.framework.coupling import (
+    CouplingConvergence,
     CouplingNode,
     CouplingNotConvergedWarning,
     RelativeConvergence,
@@ -111,13 +112,15 @@ def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
 def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
     verdicts = {"first": True, "second": False}
 
-    def measure(name: str) -> Any:
-        def converged(changes: list[SideChange]) -> bool:
-            return verdicts[name]
+    class _Verdict(CouplingConvergence):
+        name: str
 
-        return converged
+        def __call__(self, changes: list[SideChange]) -> bool:
+            return verdicts[self.name]
 
-    node = CouplingNode("n", ("x", "y"), convergence=(measure("first"), measure("second")))
+    node = CouplingNode(
+        "n", ("x", "y"), convergence=(_Verdict(name="first"), _Verdict(name="second"))
+    )
     controller = CouplingController(_sides(), "b.n", node)
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None

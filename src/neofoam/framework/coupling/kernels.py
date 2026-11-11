@@ -234,10 +234,11 @@ def _unflatten(values: Any, like: list[Data]) -> list[Data]:
 class CouplingConvergence(BaseModel):
     """Whether a node converged, from every side's change in the last pass; a plugin family.
 
-    A measure on one field's data names it in its ``data`` option.
+    ``data`` names the field a measure compares, ``None`` for a measure of all fields.
     """
 
     model_config = ConfigDict(extra="forbid")
+    data: Optional[str] = None
 
     def __call__(self, changes: list[SideChange]) -> bool:
         """Whether the data converged, from ``changes``."""
