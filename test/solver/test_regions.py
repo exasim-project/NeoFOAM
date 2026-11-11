@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``neofoam.solver.regions`` on the files of ``cases/coupledEntries``, ``cases/regionSolvers``."""
+"""``neofoam.solver.regions`` on the files of ``cases/coupledEntries``, ``cases/participants``."""
 
 from pathlib import Path
 
@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from neofoam.solver.regions import ControlDictConfig, coupled_entries
 
 CASES = Path(__file__).parent / "cases" / "coupledEntries"
-REGION_SOLVERS = Path(__file__).parent / "cases" / "regionSolvers"
+REGION_SOLVERS = Path(__file__).parent / "cases" / "participants"
 PATCH_TYPES = {"coupledTemperature": "calculated", "coupledHeatFlux": "calculated"}
 
 

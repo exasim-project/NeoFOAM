@@ -117,7 +117,7 @@ def test_run_takes_the_mpi_path_under_mpirun(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: str, path: str
 ) -> None:
     taken: list[str] = []
-    shutil.copytree(CASES.parents[1] / "cases" / "regionSolvers" / "entries", tmp_path / "case")
+    shutil.copytree(CASES.parents[1] / "cases" / "participants" / "entries", tmp_path / "case")
     monkeypatch.chdir(tmp_path / "case")
     monkeypatch.setattr(MULTI_RUN, "run_mpi", lambda config: taken.append("mpi") or {})
     monkeypatch.setattr(MULTI_RUN, "run_threads", lambda config: taken.append("threads") or {})

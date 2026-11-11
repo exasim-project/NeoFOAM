@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""multiRun under ``mpirun``: MPI_COMM_WORLD split into the regions of ``regionSolvers``.
+"""multiRun under ``mpirun``: MPI_COMM_WORLD split into the regions of ``participants``.
 
 Every region runs ``-parallel -world <region>``, also one on one process (``processor0``):
 OpenFOAM's split under ``-world`` is collective over every process. mpi4py, the extra

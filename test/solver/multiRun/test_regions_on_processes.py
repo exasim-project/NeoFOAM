@@ -142,7 +142,7 @@ def _case(meshed: Path, tmp_path: Path, control: Path, regions: dict[str, Any]) 
         shutil.copytree(meshed / str(entry["processes"]) / region, case / region)
     shutil.copytree(control.parent, case / "system")
     times = yaml.safe_load(control.read_text())
-    times["regionSolvers"] = regions
+    times["participants"] = regions
     (case / "system" / "controlDict.yaml").write_text(yaml.safe_dump(times))
     return case
 
