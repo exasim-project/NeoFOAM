@@ -6,14 +6,7 @@
 
 """The coupled patches of the fluid's ``T``: the Dirichlet side on an OpenFOAM ``fixedValue`` patch.
 
-A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
-
-    interface
-    {
-        type        fixedValue;
-        coupled     coupledTemperature;
-        value       uniform 300;
-    }
+A patch of ``0/T`` is coupled by its entry ``coupled coupledTemperature;``.
 """
 
 from pathlib import Path
@@ -53,7 +46,6 @@ class FoamPatch:
         return np.array(np.asarray(self.ctx.fields[self.field][self.patch]))
 
     def set_wall_T(self, values: Any) -> None:
-        """Set the values of the patch."""
         # through the numpy view: OpenFOAM disables operator= of a fixedValue patch
         np.asarray(self.ctx.fields[self.field][self.patch])[:] = np.asarray(values, dtype=float)
 

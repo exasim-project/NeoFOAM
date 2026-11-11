@@ -3,14 +3,11 @@
 
 """Flow over a heated plate, its first three time steps: the fluid coupled to the plate.
 
-``cases/heatedPlate`` is ``tutorials/flowOverHeatedPlate`` to 0.03 s: the fluid
-(incompressibleFluid, Boussinesq) over the plate (heatConductionNeoN),
-Dirichlet-Neumann on the fluid's ``interface`` and the plate's ``top``, 161
-against 100 faces mapped nearest-neighbor, serial with Aitken. The reference
-is the probe the coupled patch was built from (same case, same arithmetic):
-its passes and wall temperatures, printed to 1e-6 K, so ``ATOL_K`` covers that
-rounding. Nearest-neighbor between non-matching faces does not conserve the
-heat: 0.07 % at 0.03 s, ``HEAT_RTOL`` bounds it.
+``cases/heatedPlate`` is ``tutorials/flowOverHeatedPlate`` to 0.03 s: Dirichlet-Neumann
+on the fluid's ``interface`` and the plate's ``top``, 161 against 100 faces mapped
+nearest-neighbor, serial with Aitken. The reference is the probe the coupled patch
+was built from (same case, same arithmetic), printed to 1e-6 K: ``ATOL_K``.
+Nearest-neighbor mapping does not conserve the heat: 0.07 % at 0.03 s, ``HEAT_RTOL``.
 """
 
 import sys

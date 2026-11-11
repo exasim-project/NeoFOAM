@@ -25,8 +25,7 @@ PROBE_WALL_T = (301.315643, 300.962216, 301.347602)
 
 
 def mesh_copy(dest: Path, overlay: Optional[str] = None, *, tools: tuple[str, ...]) -> Path:
-    """``cases/heatedPlate`` copied to ``dest``, ``cases/<overlay>`` laid over it, each
-    region run through ``tools`` (``blockMesh``, ``decomposePar``)."""
+    """``cases/heatedPlate`` in ``dest``, ``cases/<overlay>`` over it, meshed by ``tools``."""
     shutil.copytree(CASE, dest)
     if overlay is not None:
         shutil.copytree(CASES / overlay, dest, dirs_exist_ok=True)

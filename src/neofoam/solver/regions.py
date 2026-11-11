@@ -163,10 +163,8 @@ def restore_coupled_entries(path: Path, entries: Mapping[str, str]) -> None:
 class CoupledEntriesWriteHook(FieldHook):
     """Write through ``inner``, then add the ``coupled`` entries back to the written files.
 
-    Neither OpenFOAM's ``fixedValue`` nor NeoN's ``calculated`` writes the
-    entry, so without it a written time restarts uncoupled. ``entries``: field
-    -> patch -> condition; ``time`` is the ``Foam::Time`` the files are written at.
-    Build it with :func:`keep_coupled_entries`.
+    Neither OpenFOAM's ``fixedValue`` nor NeoN's ``calculated`` writes the entry, so
+    a written time would restart uncoupled. Build it with :func:`keep_coupled_entries`.
     """
 
     field_hook_type: Literal["coupledEntries"] = "coupledEntries"
