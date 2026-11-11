@@ -277,7 +277,10 @@ class CouplingAcceleration(BaseModel):
 
 @CouplingAcceleration.register
 class ConstantRelaxation(CouplingAcceleration):
-    """``x = x_last + relaxation * (sent - x_last)``; first data passes unchanged."""
+    """``x = x_last + relaxation * (sent - x_last)``.
+
+    The first data of every time step (pass 1) passes unchanged.
+    """
 
     type: Literal["constant"] = "constant"
     relaxation: float = Field(gt=0, le=1)
@@ -285,6 +288,8 @@ class ConstantRelaxation(CouplingAcceleration):
 
     def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
         values = _flatten(sent)
+        if iteration == 1:
+            self._last = None
         if self._last is not None:
             residual = values - self._last
             values = self._last + self._factor(residual, iteration) * residual
