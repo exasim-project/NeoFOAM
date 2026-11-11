@@ -45,8 +45,8 @@ from neofoam.framework.coupling import (
 )
 from neofoam.framework.coupling.exchanges import region_couplings
 from neofoam.framework.coupling.iteration._leader import (
-    CouplingController,
     CouplingOutcome,
+    Leader,
 )
 from neofoam.framework.coupling.iteration._loop_op import CouplingOp
 from neofoam.framework.execution_observer import ExecutionObserver, observe
@@ -93,7 +93,7 @@ def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
     return {name: couple(ctx) for name, ctx in regions.items()}
 
 
-def _controller(ops: dict[str, CouplingOp]) -> CouplingController:
+def _controller(ops: dict[str, CouplingOp]) -> Leader:
     controller = ops["b"].controller
     assert controller is not None
     return controller
@@ -236,7 +236,7 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
     exchanged: list[tuple[str, str, float]] = []
 
     class _Observer(ExecutionObserver):
-        def coupling_finished(self, coupling: CouplingController, outcome: CouplingOutcome) -> None:
+        def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
             finished.append((coupling.label, outcome))
 
         def coupling_exchanged(self, coupling: CouplingOp, side: Any, data: BaseModel) -> None:

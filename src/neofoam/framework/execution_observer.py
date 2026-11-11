@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
     from neofoam.framework.context import Context
     from neofoam.framework.coupling.data import CoupledPort
-    from neofoam.framework.coupling.iteration._leader import CouplingController, CouplingOutcome
+    from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
     from neofoam.framework.coupling.iteration._loop_op import CouplingOp
     from neofoam.framework.initialization.init_step import InitStep
     from neofoam.framework.operations import Operation, Operations
@@ -69,7 +69,7 @@ class ExecutionObserver:
     def after_loop_test(self, op: Operation, ctx: Context, iteration: int, result: bool) -> None:
         """The predicate of loop ``op`` returned ``result`` for ``iteration``."""
 
-    def coupling_finished(self, coupling: CouplingController, outcome: CouplingOutcome) -> None:
+    def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
         """A time step's coupling ended, as the leader's ``coupling`` decided; leader's thread."""
 
     def coupling_exchanged(self, coupling: CouplingOp, port: CoupledPort, data: BaseModel) -> None:

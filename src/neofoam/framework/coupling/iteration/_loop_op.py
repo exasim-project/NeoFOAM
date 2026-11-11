@@ -14,7 +14,7 @@ from ..comm.channel import Data, Tag
 from ..data import CoupledPort, End, Stream, check_received, check_rows, sent
 from ..location import Geometry
 from ..strategies.mapping import BoundMapping
-from ._leader import CouplingController, GroupStream, StreamId
+from ._leader import GroupStream, Leader, StreamId
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -81,7 +81,7 @@ class CouplingOp(IterativeOp):
         # set at the first test
         self._connected = False
         self._mappers: dict[str, BoundMapping] = {}
-        self._controller: Optional[CouplingController] = None
+        self._controller: Optional[Leader] = None
         # the streams whose data the partner receives fresh, as the leader last decided
         self._fresh: frozenset[_Local] = frozenset()
 
@@ -110,7 +110,7 @@ class CouplingOp(IterativeOp):
         return self._group
 
     @property
-    def controller(self) -> Optional[CouplingController]:
+    def controller(self) -> Optional[Leader]:
         """The leader's controller, built at its first loop test; ``None`` in other regions."""
         return self._controller
 
@@ -197,7 +197,7 @@ class CouplingOp(IterativeOp):
             if port.receives:
                 self._mappers[port.name] = self._bind(exchange, announced, port)
         if self.is_leader:
-            self._controller = CouplingController(
+            self._controller = Leader(
                 self._node_streams(path, streams), self.label, self.node, self._group
             )
         self._connected = True

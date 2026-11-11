@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The leader's part of a coupling node: its :class:`CouplingController`."""
+"""The leader's part of a coupling node: its :class:`Leader`."""
 
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ class GroupStream:
         return (self.region, self.port, self.key)
 
 
-class CouplingController:
+class Leader:
     """The leader's part of a coupling node: after each pass, whether another runs and which.
 
     Final pass as :class:`CouplingLoop` describes; warns when more than one of
