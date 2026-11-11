@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The leader's controller on hand-made streams: convergence, relaxation, final pass, residuals."""
+"""The Leader on hand-made streams: convergence, relaxation, final pass, residuals."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def _group() -> list[GroupStream]:
     ]
 
 
-def test_a_convergence_on_a_field_no_port_sends_raises_as_the_controller_is_built() -> None:
+def test_a_convergence_on_a_field_no_port_sends_raises_as_the_leader_is_built() -> None:
     with pytest.raises(
         ValueError,
         match=r"coupling b.coupling: convergence RelativeConvergence on T, which no port of the "
@@ -63,19 +63,17 @@ def test_a_convergence_on_a_field_no_port_sends_raises_as_the_controller_is_buil
 
 
 def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
-    controller = Leader(
+    leader = Leader(
         _group(), "b.coupling", CouplingLoop("coupling", ("a-b",), convergence=(never,)), ("a", "b")
     )
-    assert controller.residuals == {"x": math.inf}
+    assert leader.residuals == {"x": math.inf}
 
     # the first decision starts the first pass: nothing measured yet
-    controller.decide({("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}, 0)
-    assert controller.residuals == {"x": math.inf}
+    leader.decide({("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}, 0)
+    assert leader.residuals == {"x": math.inf}
 
-    controller.decide(
-        {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.full(1, 2.0)}}, 1
-    )
-    assert controller.residuals == {"x": 0.5}
+    leader.decide({("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.full(1, 2.0)}}, 1)
+    assert leader.residuals == {"x": 0.5}
 
 
 def test_relative_changes_keep_a_nan() -> None:
@@ -110,9 +108,9 @@ def test_an_acceleration_relaxes_only_the_streams_of_its_exchange() -> None:
         return [{"v": data["v"] / 2} for data in sent]
 
     loop = CouplingLoop("n", ("x", "y"), scheme="parallel", acceleration={"x": halve})
-    controller = Leader(_streams(), "b.n", loop, ("a", "b"))
+    leader = Leader(_streams(), "b.n", loop, ("a", "b"))
 
-    carried = controller.decide(_data(1.0, 2.0, 10.0, 20.0), 0)
+    carried = leader.decide(_data(1.0, 2.0, 10.0, 20.0), 0)
 
     assert carried is not None
     assert relaxed == [[1.0, 2.0]]
@@ -131,71 +129,71 @@ def test_a_loop_converges_once_every_measure_of_its_convergence_holds() -> None:
     loop = CouplingLoop(
         "n", ("x", "y"), convergence=(_Verdict(name="first"), _Verdict(name="second"))
     )
-    controller = Leader(_streams(), "b.n", loop, ("a", "b"))
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None
+    leader = Leader(_streams(), "b.n", loop, ("a", "b"))
+    assert leader.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
+    assert leader.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None
 
     verdicts["second"] = True
 
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 2) is not None
-    assert controller.final
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 3) is None
-    assert controller.outcome is not None and controller.outcome.converged
+    assert leader.decide(_data(1.0, 2.0, 3.0, 4.0), 2) is not None
+    assert leader.final
+    assert leader.decide(_data(1.0, 2.0, 3.0, 4.0), 3) is None
+    assert leader.outcome is not None and leader.outcome.converged
 
 
 def test_a_loop_without_convergence_converges_once_the_data_is_unchanged() -> None:
-    controller = Leader(_streams(), "b.n", CouplingLoop("n", ("x", "y")), ("a", "b"))
+    leader = Leader(_streams(), "b.n", CouplingLoop("n", ("x", "y")), ("a", "b"))
 
-    assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
-    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 1) is not None
-    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 2) is not None
-    assert controller.final
-    assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 3) is None
+    assert leader.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
+    assert leader.decide(_data(1.0, 2.0, 3.0, 5.0), 1) is not None
+    assert leader.decide(_data(1.0, 2.0, 3.0, 5.0), 2) is not None
+    assert leader.final
+    assert leader.decide(_data(1.0, 2.0, 3.0, 5.0), 3) is None
 
 
-def test_the_controller_tells_which_pass_is_final() -> None:
+def test_the_leader_tells_which_pass_is_final() -> None:
     loop = CouplingLoop("coupling", ("a-b",), convergence=(never,), max_iterations=2)
-    controller = Leader([], "c.coupling", loop, ("c",))
+    leader = Leader([], "c.coupling", loop, ("c",))
 
-    assert controller.decide({}, 0) == {} and not controller.final
-    assert controller.decide({}, 1) == {} and controller.final
+    assert leader.decide({}, 0) == {} and not leader.final
+    assert leader.decide({}, 1) == {} and leader.final
     with pytest.warns(CouplingNotConvergedWarning) as warned:
-        assert controller.decide({}, 2) is None
+        assert leader.decide({}, 2) is None
     # the warning points at the caller outside the framework
     assert warned[0].filename == __file__
-    assert not controller.final
+    assert not leader.final
 
 
 def test_explicit_coupling_runs_one_pass_without_a_not_converged_warning() -> None:
     loop = CouplingLoop("coupling", ("a-b",), convergence=(never,), max_iterations=1)
-    controller = Leader(_group(), "b.coupling", loop, ("a", "b"))
+    leader = Leader(_group(), "b.coupling", loop, ("a", "b"))
     data = {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}
 
-    assert controller.decide(data, 0) is not None and controller.final
+    assert leader.decide(data, 0) is not None and leader.final
     with warnings.catch_warnings():
         warnings.simplefilter("error", CouplingNotConvergedWarning)
-        assert controller.decide(data, 1) is None
+        assert leader.decide(data, 1) is None
 
-    assert controller.outcome is not None and controller.outcome.passes == 1
+    assert leader.outcome is not None and leader.outcome.passes == 1
 
 
 def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_loop() -> None:
     """``b`` only receives (it sends nothing): its rank comes from the loop's group."""
     streams = [GroupStream("a", "p", "x", ("x",), ("b", "p"), "a-b")]
 
-    controller = Leader(streams, "b.n", CouplingLoop("n", ("a-b",)), ("a", "b"))
+    leader = Leader(streams, "b.n", CouplingLoop("n", ("a-b",)), ("a", "b"))
 
-    assert controller.fresh(("a", "p", "x"))
+    assert leader.fresh(("a", "p", "x"))
 
 
 def test_the_leader_keeps_the_outcome_of_the_last_time_step_only() -> None:
     loop = CouplingLoop("coupling", ("a-b",), max_iterations=1)
-    controller = Leader(_group(), "b.coupling", loop, ("a", "b"))
+    leader = Leader(_group(), "b.coupling", loop, ("a", "b"))
     for value in (1.0, 3.0):
         data = {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.full(1, value)}}
-        controller.decide(data, 0)
-        controller.decide({**data, ("b", "p", "x"): {"x": np.full(1, value + 1.0)}}, 1)
+        leader.decide(data, 0)
+        leader.decide({**data, ("b", "p", "x"): {"x": np.full(1, value + 1.0)}}, 1)
 
     # b's x went 3 -> 4 in the second time step (1 -> 2 in the first); observers get both
-    assert controller.outcome == CouplingOutcome(passes=1, converged=False, residuals={"x": 0.25})
-    assert not hasattr(controller, "outcomes")
+    assert leader.outcome == CouplingOutcome(passes=1, converged=False, residuals={"x": 0.25})
+    assert not hasattr(leader, "outcomes")

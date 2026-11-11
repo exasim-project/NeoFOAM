@@ -95,7 +95,7 @@ class CouplingLoopOp(IterativeOp):
 
     @property
     def controller(self) -> Optional[Leader]:
-        """The leader's controller, built at its first loop test; ``None`` in other regions."""
+        """The :class:`Leader`, built at its first loop test; ``None`` in other regions."""
         return self._controller
 
     def exchange_of(self, port: CoupledPort) -> Exchange:
@@ -252,9 +252,9 @@ class CouplingLoopOp(IterativeOp):
             else self._receive(region, self._tag("pass"))
             for region in self._group
         }
-        controller = self._controller
-        assert controller is not None
-        decisions = controller.decisions(sent_by, iteration)
+        leader = self._controller
+        assert leader is not None
+        decisions = leader.decisions(sent_by, iteration)
         for region, decision in decisions.items():
             if region != self.region:
                 self._send(region, self._tag("decision"), decision)

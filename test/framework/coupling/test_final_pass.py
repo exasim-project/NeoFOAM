@@ -158,7 +158,7 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     ]
 
 
-def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
+def test_the_leader_relaxes_the_data_carried_into_the_final_pass() -> None:
     iterations: list[int] = []
 
     def acceleration(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
