@@ -45,7 +45,7 @@ def test_steady_pair_reaches_the_fixed_point(regions: dict[str, Context]) -> Non
 
 
 @pytest.mark.parametrize("region", ["a", "b"])
-def test_steady_pair_couples_in_every_outer_iteration_without_a_time(
+def test_steady_pair_couples_in_every_pass_of_the_outer_loop_without_a_time(
     regions: dict[str, Context], region: str
 ) -> None:
     assert regions[region].time is None
@@ -53,7 +53,7 @@ def test_steady_pair_couples_in_every_outer_iteration_without_a_time(
     assert _solves(regions, region) == [21, 2, 2]
 
 
-def test_steady_pair_leader_records_an_outcome_per_outer_iteration(
+def test_steady_pair_leader_records_an_outcome_per_pass_of_the_outer_loop(
     case: tuple[dict[str, Context], Outcomes],
 ) -> None:
     regions, outcomes = case

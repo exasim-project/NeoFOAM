@@ -19,7 +19,7 @@ from solver.multiRun.probe_solver import ProbeConfig, add_patches, solve
 
 @IOStrategy(YAML("constant/steady.yaml"))
 class _SteadyConfig(ProbeConfig):
-    outerIterations: int = 3
+    outerLoops: int = 3
 
 
 class _Outer:
@@ -47,7 +47,7 @@ def _initialize(self: Any) -> Context:
 def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     builder = StepBuilder()
     outer = Operation(
-        func=IterativeOp(_Outer(ctx.models["probe"].outerIterations)),
+        func=IterativeOp(_Outer(ctx.models["probe"].outerLoops)),
         metadata=OperationMetadata(op_name="outer_loop"),
     )
     with builder.loop(outer) as outer_builder:
