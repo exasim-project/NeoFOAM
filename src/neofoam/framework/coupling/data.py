@@ -129,7 +129,7 @@ class Stream:
 class CoupledPort:
     """A coupled location of a region: what it sends and receives there, by data key.
 
-    Built by :meth:`~neofoam.framework.coupling.Coupling.add`; several instances
+    Built by :meth:`~neofoam.framework.coupling.Participant.add`; several instances
     on one location merge into one port.
     """
 

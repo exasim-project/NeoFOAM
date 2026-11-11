@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A region's coupling model ``ctx.models["coupling"]``, a :class:`Coupling`; :func:`coupling`."""
+"""The coupling model of a region, ``ctx.models["coupling"]``: :class:`Participant`."""
 
 from __future__ import annotations
 
@@ -27,13 +27,13 @@ from .iteration._time_step import (
 )
 
 
-class Coupling:
+class Participant:
     """The coupling of one region: its coupled ports and the operations they need.
 
     A solver that supports coupling adds it in its init, with its mesh geometry,
     before it binds its coupled instances to their locations::
 
-        ctx.models["coupling"] = Coupling(self.coupling, FoamGeometry(mesh))
+        ctx.models["coupling"] = Participant(self.coupling, FoamGeometry(mesh))
         ...
         coupling(ctx).add(Patch("top"), bc)
     """
@@ -171,7 +171,7 @@ class Coupling:
             )
 
 
-def coupling(ctx: Context) -> Coupling:
+def coupling(ctx: Context) -> Participant:
     """The coupling model of the region ``ctx``; ``ValueError`` when its solver added none.
 
     Example::
@@ -179,7 +179,7 @@ def coupling(ctx: Context) -> Coupling:
         coupling(ctx).add(Patch("top"), bc)
     """
     model = ctx.models.get("coupling")
-    if not isinstance(model, Coupling):
+    if not isinstance(model, Participant):
         raise ValueError(f"the solver of region {ctx.region} does not support coupling")
     return model
 
