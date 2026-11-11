@@ -59,6 +59,8 @@ class Context(BaseModel):
     loops: list[LoopEntry] = Field(default_factory=list)
     # ``final`` operations to run in every pass too, e.g. to watch them while debugging
     run_every_pass: set[str] = Field(default_factory=set)
+    # set by SolverRuntime.initialize; None for a single-region case
+    region: Optional[str] = None
 
     def mark_final(self, final: bool = True) -> None:
         """Mark the pass the innermost loop is about to run as its last; call from its test.

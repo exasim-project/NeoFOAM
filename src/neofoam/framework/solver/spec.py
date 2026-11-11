@@ -235,12 +235,20 @@ class SolverSpec:
     # Instantiation
     # ------------------------------------------------------------------
 
-    def instantiate(self, argv: Optional[list[Any]] = None) -> SolverRuntime:
-        """Create a fresh SolverRuntime for one run of this solver."""
+    def instantiate(
+        self,
+        argv: Optional[list[Any]] = None,
+        region: Optional[str] = None,
+    ) -> SolverRuntime:
+        """Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.
+
+        An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.
+        """
         return SolverRuntime(
             spec=self,
             name=self.name,
-            argv=argv or [],
+            argv=argv or ["neofoam"],
+            region=region,
         )
 
     # ------------------------------------------------------------------

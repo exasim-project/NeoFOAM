@@ -139,3 +139,16 @@ def test_observer_is_per_thread() -> None:
     thread.join(5)
     assert seen == {"inside": second, "after": None}
     assert current() is None
+
+
+def test_init_steps_carry_the_region_they_initialize() -> None:
+    steps = [InitStep(name="a", initializer=lambda ctx: 1)]
+    recorder = Recorder()
+    regions: list[Any] = []
+    recorder.init_steps = lambda steps: regions.extend(s.region for s in steps)  # type: ignore[method-assign]
+
+    with observe(recorder):
+        execute_lazy_inits(steps, region="left")
+        execute_lazy_inits([InitStep(name="b", initializer=lambda ctx: 1)])
+
+    assert regions == ["left", None]

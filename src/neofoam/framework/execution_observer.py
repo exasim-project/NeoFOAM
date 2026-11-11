@@ -49,7 +49,7 @@ class ExecutionObserver:
         """``step`` produced ``value`` (not yet stored in ``context``)."""
 
     def operations(self, operations: Operations, ctx: Context) -> None:
-        """The resolved execution graph of ``ctx``, before the time loop starts."""
+        """The resolved execution graph of ``ctx``, before the time loop starts; one per region."""
 
     def before_operation(self, op: Operation, ctx: Context) -> None:
         """A sequential or conditional ``op`` is about to run on ``ctx``."""
