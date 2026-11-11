@@ -33,7 +33,7 @@ from .kernels import (
     SideChange,
 )
 from .model import Coupling
-from .region import CouplingNode, Link, RegionCoupling
+from .region import CouplingNode, Exchange, RegionCoupling
 
 __all__ = [
     "AitkenRelaxation",
@@ -51,9 +51,9 @@ __all__ = [
     "CouplingNode",
     "CouplingNotConvergedWarning",
     "CouplingTimeout",
+    "Exchange",
     "IdentityMapping",
     "InProcessCommChannel",
-    "Link",
     "NearestNeighborMapping",
     "RegionCoupling",
     "RelativeConvergence",

@@ -18,7 +18,7 @@ from framework.coupling.regions import comm_channel as comm_channel_of
 from framework.coupling.regions import contexts
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, Link
+from neofoam.framework.coupling import Coupling, Exchange
 from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
@@ -30,7 +30,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata, Placement
 
-CHAIN = [Link("a-b", (("a", "p"), ("b", "p"))), Link("b-c", (("b", "q"), ("c", "p")))]
+CHAIN = [Exchange("a-b", (("a", "p"), ("b", "p"))), Exchange("b-c", (("b", "q"), ("c", "p")))]
 
 
 @dataclass

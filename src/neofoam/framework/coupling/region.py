@@ -26,7 +26,7 @@ T = TypeVar("T")
 
 
 @dataclass(frozen=True)
-class Link:
+class Exchange:
     """One exchange of a case: its unique name, its two ends ``(region, patch)``, its mapping.
 
     Nearest-neighbor by default, which needs the coordinates of both patches;
@@ -77,13 +77,13 @@ class CouplingNode:
 class RegionCoupling:
     """What region ``region`` knows of its case's coupling, built by :func:`region_couplings`.
 
-    ``group``: the regions coupled with it in stepping order; ``links``: the
+    ``group``: the regions coupled with it in stepping order; ``exchanges``: the
     group's exchanges; ``nodes``: those with an exchange of this region, outer to inner.
     """
 
     region: str
     group: tuple[str, ...]
-    links: tuple[Link, ...]
+    exchanges: tuple[Exchange, ...]
     comm_channel: CommChannel
     nodes: tuple[CouplingNode, ...] = ()
 
@@ -101,116 +101,125 @@ class RegionCoupling:
     def patches(self) -> tuple[str, ...]:
         """The patches of this region that an exchange connects."""
         return tuple(
-            dict(link.ends)[self.region] for link in self.links if self.region in dict(link.ends)
+            dict(exchange.ends)[self.region]
+            for exchange in self.exchanges
+            if self.region in dict(exchange.ends)
         )
 
-    def node_links(self, node: CouplingNode) -> tuple[Link, ...]:
+    def node_exchanges(self, node: CouplingNode) -> tuple[Exchange, ...]:
         """The exchanges of ``node`` in this region's group."""
-        return tuple(link for link in self.links if link.name in node.exchanges)
+        return tuple(exchange for exchange in self.exchanges if exchange.name in node.exchanges)
 
     def node_of(self, patch: str) -> CouplingNode:
         """The node whose exchange connects ``patch`` of this region."""
         for node in self.nodes:
-            for link in self.node_links(node):
-                if dict(link.ends).get(self.region) == patch:
+            for exchange in self.node_exchanges(node):
+                if dict(exchange.ends).get(self.region) == patch:
                     return node
         raise KeyError(f"no coupling node has an exchange on {self.region}.{patch}")
 
     def node_group(self, node: CouplingNode) -> tuple[str, ...]:
         """The regions ``node`` connects with this region, itself included, in stepping order."""
-        return _group(self.region, self.group, self.node_links(node))
+        return _group(self.region, self.group, self.node_exchanges(node))
 
 
 def region_couplings(
     regions: Sequence[str],
-    links: Sequence[Link],
+    exchanges: Sequence[Exchange],
     comm_channel: CommChannel,
     nodes: Sequence[CouplingNode],
 ) -> dict[str, RegionCoupling]:
-    """The coupling of every region ``links`` connect, by region.
+    """The coupling of every region ``exchanges`` connect, by region.
 
     ``regions`` are in stepping order, ``nodes`` outer to inner.
     """
-    check_couplings(regions, links, nodes)
+    check_couplings(regions, exchanges, nodes)
     couplings: dict[str, RegionCoupling] = {}
     for region in regions:
-        group = _group(region, regions, links)
+        group = _group(region, regions, exchanges)
         if region in couplings or len(group) < 2:
             continue
-        group_links = tuple(link for link in links if link.ends[0][0] in group)
+        group_exchanges = tuple(exchange for exchange in exchanges if exchange.ends[0][0] in group)
         for member in group:
-            touching = {link.name for link in group_links if member in dict(link.ends)}
+            touching = {
+                exchange.name for exchange in group_exchanges if member in dict(exchange.ends)
+            }
             member_nodes = tuple(node for node in nodes if touching & set(node.exchanges))
             couplings[member] = RegionCoupling(
-                member, group, group_links, comm_channel, member_nodes
+                member, group, group_exchanges, comm_channel, member_nodes
             )
     return couplings
 
 
 def check_couplings(
-    regions: Sequence[str], links: Sequence[Link], nodes: Sequence[CouplingNode]
+    regions: Sequence[str], exchanges: Sequence[Exchange], nodes: Sequence[CouplingNode]
 ) -> None:
-    """Raise ``ValueError`` unless ``links`` and ``nodes`` couple ``regions`` consistently.
+    """Raise ``ValueError`` unless ``exchanges`` and ``nodes`` couple ``regions`` consistently.
 
     The one check of a case's coupling, for the Python API and the case's config.
     """
-    _check_links(regions, links)
-    names = [link.name for link in links]
+    _check_exchanges(regions, exchanges)
+    names = [exchange.name for exchange in exchanges]
     in_node: dict[str, str] = {}
     for node in nodes:
         if node.name in [other.name for other in nodes if other is not node]:
             raise ValueError(f"two coupling nodes are named '{node.name}'; a node's name is unique")
-        _check_node(node, links)
-        for exchange in node.exchanges:
-            if exchange in in_node:
+        _check_node(node, exchanges)
+        for exchange_name in node.exchanges:
+            if exchange_name in in_node:
                 raise ValueError(
-                    f"exchange '{exchange}' is in the coupling nodes '{in_node[exchange]}' and "
-                    f"'{node.name}'; an exchange is in exactly one node"
+                    f"exchange '{exchange_name}' is in the coupling nodes "
+                    f"'{in_node[exchange_name]}' and '{node.name}'; an exchange is in exactly "
+                    "one node"
                 )
-            in_node[exchange] = node.name
+            in_node[exchange_name] = node.name
     missing = [name for name in names if name not in in_node]
     if missing:
         raise ValueError(
             f"the exchanges {missing} are in no coupling node; each exchange is in exactly one "
             f"node (the nodes: {[node.name for node in nodes]})"
         )
-    _check_serial_nesting(nodes, links)
+    _check_serial_nesting(nodes, exchanges)
 
 
-def _check_links(regions: Sequence[str], links: Sequence[Link]) -> None:
-    named = sorted({region for link in links for region, _patch in link.ends} - set(regions))
+def _check_exchanges(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
+    named = sorted(
+        {region for exchange in exchanges for region, _patch in exchange.ends} - set(regions)
+    )
     if named:
         raise ValueError(
             f"the exchanges couple the regions {named}, which are not in {list(regions)}"
         )
-    names = [link.name for link in links]
+    names = [exchange.name for exchange in exchanges]
     owner: dict[End, str] = {}
-    for link in links:
-        if names.count(link.name) > 1:
-            raise ValueError(f"two exchanges are named '{link.name}'; an exchange's name is unique")
-        first, second = link.ends
+    for exchange in exchanges:
+        if names.count(exchange.name) > 1:
+            raise ValueError(
+                f"two exchanges are named '{exchange.name}'; an exchange's name is unique"
+            )
+        first, second = exchange.ends
         if first[0] == second[0]:
-            raise ValueError(f"exchange '{link.name}' joins two patches of region {first[0]}")
-        for end in link.ends:
+            raise ValueError(f"exchange '{exchange.name}' joins two patches of region {first[0]}")
+        for end in exchange.ends:
             if end in owner:
                 raise ValueError(
                     f"{end[0]}.{end[1]} is in the exchanges '{owner[end]}' and "
-                    f"'{link.name}'; a coupled patch is in one exchange"
+                    f"'{exchange.name}'; a coupled patch is in one exchange"
                 )
-            owner[end] = link.name
+            owner[end] = exchange.name
 
 
-def _check_node(node: CouplingNode, links: Sequence[Link]) -> None:
-    names = [link.name for link in links]
+def _check_node(node: CouplingNode, exchanges: Sequence[Exchange]) -> None:
+    names = [exchange.name for exchange in exchanges]
     if not node.exchanges:
         raise ValueError(f"coupling node '{node.name}' has no exchange")
-    unknown_exchanges = [exchange for exchange in node.exchanges if exchange not in names]
+    unknown_exchanges = [name for name in node.exchanges if name not in names]
     if unknown_exchanges:
         raise ValueError(
             f"coupling node '{node.name}' names the exchange '{unknown_exchanges[0]}', which "
             f"does not exist; the exchanges are {names}"
         )
-    regions = sorted(_regions(node, links))
+    regions = sorted(_regions(node, exchanges))
     unknown = sorted(set(node.placement) - set(regions))
     if unknown:
         raise ValueError(
@@ -225,16 +234,21 @@ def _check_node(node: CouplingNode, links: Sequence[Link]) -> None:
         )
 
 
-def _regions(node: CouplingNode, links: Sequence[Link]) -> set[str]:
-    return {region for link in links if link.name in node.exchanges for region, _ in link.ends}
+def _regions(node: CouplingNode, exchanges: Sequence[Exchange]) -> set[str]:
+    return {
+        region
+        for exchange in exchanges
+        if exchange.name in node.exchanges
+        for region, _ in exchange.ends
+    }
 
 
-def _check_serial_nesting(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
+def _check_serial_nesting(nodes: Sequence[CouplingNode], exchanges: Sequence[Exchange]) -> None:
     for index, outer in enumerate(nodes):
         if outer.parallel:
             continue
         for inner in nodes[index + 1 :]:
-            shared = sorted(_regions(outer, links) & _regions(inner, links))
+            shared = sorted(_regions(outer, exchanges) & _regions(inner, exchanges))
             if len(shared) >= 2:
                 raise ValueError(
                     f"coupling '{outer.name}' is serial but encloses '{inner.name}', which "
@@ -244,13 +258,13 @@ def _check_serial_nesting(nodes: Sequence[CouplingNode], links: Sequence[Link]) 
                 )
 
 
-def _group(region: str, regions: Sequence[str], links: Sequence[Link]) -> tuple[str, ...]:
-    """The regions connected with ``region`` over ``links``, itself included, in stepping order."""
+def _group(region: str, regions: Sequence[str], exchanges: Sequence[Exchange]) -> tuple[str, ...]:
+    """The regions ``exchanges`` connect with ``region``, itself included, in stepping order."""
     group, todo = {region}, [region]
     while todo:
         current = todo.pop()
-        for link in links:
-            ends = {name for name, _patch in link.ends}
+        for exchange in exchanges:
+            ends = {name for name, _patch in exchange.ends}
             if current in ends:
                 todo += sorted(ends - group)
                 group |= ends

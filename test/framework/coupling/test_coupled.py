@@ -20,7 +20,7 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     Coupling,
-    Link,
+    Exchange,
     NearestNeighborMapping,
     coupled,
 )
@@ -74,14 +74,14 @@ class _Flux(_Patch):
 
 
 def _region(name: str) -> Context:
-    return contexts([name, "other"], [Link("x", ((name, "right"), ("other", "p")))])[name]
+    return contexts([name, "other"], [Exchange("x", ((name, "right"), ("other", "p")))])[name]
 
 
-CHT = Link("cht", (("solid", "right"), ("fluid", "wall")), NearestNeighborMapping())
+CHT = Exchange("cht", (("solid", "right"), ("fluid", "wall")), NearestNeighborMapping())
 
 
-def _pair(link: Link = CHT) -> dict[str, Context]:
-    regions = contexts(["solid", "fluid"], [link], max_iterations=1)
+def _pair(exchange: Exchange = CHT) -> dict[str, Context]:
+    regions = contexts(["solid", "fluid"], [exchange], max_iterations=1)
     for ctx in regions.values():
         ctx.fields["T"] = np.array([1.0, 2.0])
     return regions
@@ -161,11 +161,11 @@ def test_coupled_needs_ctx_and_patch() -> None:
 
 
 def test_coupled_couples_the_field_of_each_instance() -> None:
-    links = [
-        Link("a", (("solid", "right"), ("x", "p"))),
-        Link("b", (("solid", "left"), ("x", "q"))),
+    exchanges = [
+        Exchange("a", (("solid", "right"), ("x", "p"))),
+        Exchange("b", (("solid", "left"), ("x", "q"))),
     ]
-    region = contexts(["solid", "x"], links)["solid"]
+    region = contexts(["solid", "x"], exchanges)["solid"]
 
     _Wall(region, "right", field="T")
     _Wall(region, "left", field="U")
@@ -237,7 +237,7 @@ def test_coupling_op_public_read_api() -> None:
         "fluid.wall",
         "solid.right",
     )
-    assert solid_op.link_of(solid_side) is CHT
+    assert solid_op.exchange_of(solid_side) is CHT
     # the leader builds its controller at its first loop test
     assert (solid_op.controller, fluid_op.controller) == (None, None)
 
@@ -272,7 +272,7 @@ class _Odd(_Patch):
 
 
 def test_each_region_checks_that_its_side_receives_what_the_partner_sends() -> None:
-    regions = _pair(Link("solid-fluid", (("solid", "right"), ("fluid", "wall"))))
+    regions = _pair(Exchange("solid-fluid", (("solid", "right"), ("fluid", "wall"))))
     _Wall(regions["solid"], "right")
     _Odd(regions["fluid"], "wall")
 
@@ -326,11 +326,11 @@ class _Same(_Patch):
 
 
 def test_a_chain_of_exchanges_is_one_coupling_group() -> None:
-    links = [
-        Link("a-b", (("a", "to_b"), ("b", "to_a"))),
-        Link("b-c", (("b", "to_c"), ("c", "to_b"))),
+    exchanges = [
+        Exchange("a-b", (("a", "to_b"), ("b", "to_a"))),
+        Exchange("b-c", (("b", "to_c"), ("c", "to_b"))),
     ]
-    regions = contexts(["a", "b", "c"], links, max_iterations=1)
+    regions = contexts(["a", "b", "c"], exchanges, max_iterations=1)
     for ctx in regions.values():
         ctx.fields["T"] = np.array([1.0, 2.0])
     _Same(regions["a"], "to_b")

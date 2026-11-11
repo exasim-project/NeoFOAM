@@ -31,14 +31,14 @@ from neofoam.framework.coupling import (
     Coupling,
     CouplingNode,
     CouplingNotConvergedWarning,
-    Link,
+    Exchange,
 )
 from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
 from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
 
-LINKS = [Link("a-b", (("a", "p"), ("b", "p"))), Link("b-c", (("b", "q"), ("c", "q")))]
+EXCHANGES = [Exchange("a-b", (("a", "p"), ("b", "p"))), Exchange("b-c", (("b", "q"), ("c", "q")))]
 PATCHES = {"a": ["p"], "b": ["p", "q"], "c": ["q"]}
 SCHEMES = pytest.mark.parametrize("scheme", ["serial", "parallel"])
 
@@ -81,7 +81,7 @@ def _couple(
     scheme: Literal["serial", "parallel"] = "serial", **node: Any
 ) -> tuple[dict[str, _Region], CouplingController]:
     """Couple a, b and c in one node and run one time step; the regions and c's controller."""
-    regions = contexts(list(PATCHES), LINKS, scheme=scheme, **node)
+    regions = contexts(list(PATCHES), EXCHANGES, scheme=scheme, **node)
     tests = {name: _Region(name, fixed) for name, fixed in zip(PATCHES, (1.0, 2.0, 3.0))}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
@@ -132,7 +132,7 @@ def test_a_single_pass_is_first_and_final(scheme: Any) -> None:
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     comm_channel = RecordingCommChannel()
     nodes = [CouplingNode("coupling", ("a-b", "b-c"))]
-    couplings = region_couplings(list(PATCHES), LINKS, comm_channel, nodes)
+    couplings = region_couplings(list(PATCHES), EXCHANGES, comm_channel, nodes)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings.get(name))}, region=name)
         for name in PATCHES

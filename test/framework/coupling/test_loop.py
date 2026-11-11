@@ -37,9 +37,9 @@ from neofoam.framework.coupling import (
     CouplingMapping,
     CouplingNode,
     CouplingNotConvergedWarning,
+    Exchange,
     IdentityMapping,
     InProcessCommChannel,
-    Link,
 )
 from neofoam.framework.coupling.controller import (
     CouplingController,
@@ -50,7 +50,7 @@ from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.types import Placement
 
-LINK = Link("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
+EXCHANGE = Exchange("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
 
 
 class _Data(BaseModel):
@@ -84,7 +84,7 @@ class _Side:
 
 def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
     """Couple ``a`` and ``b`` over patch ``p``, run one time step; their coupling ops."""
-    regions = contexts(["a", "b"], [LINK], **loop)
+    regions = contexts(["a", "b"], [EXCHANGE], **loop)
     for side in (a, b):
         add_coupled(regions[side.name], "p", "x", side.side())
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
@@ -131,7 +131,7 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     log: list[str] = []
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
     node = CouplingNode("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
-    couplings = region_couplings(["a", "b"], [LINK], InProcessCommChannel(), nodes=[node])
+    couplings = region_couplings(["a", "b"], [EXCHANGE], InProcessCommChannel(), nodes=[node])
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
         for name in ("a", "b")
@@ -156,7 +156,7 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
     nodes = [
         CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
-    couplings = region_couplings(["a", "b"], [LINK], comm_channel, nodes=nodes)
+    couplings = region_couplings(["a", "b"], [EXCHANGE], comm_channel, nodes=nodes)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
         for name in ("a", "b")
@@ -262,7 +262,7 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
 
 
 def test_coupling_op_wraps_its_region_s_solving_op() -> None:
-    regions = contexts(["a", "b"], [LINK])
+    regions = contexts(["a", "b"], [EXCHANGE])
     add_coupled(regions["a"], "p", "x", _Side("a", []).side())
 
     (loop,) = graph(regions["a"], solve("x", lambda ctx: None)).ops
@@ -278,18 +278,18 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
         "b.p",
         False,
     )
-    assert op.link_of(side) is LINK
+    assert op.exchange_of(side) is EXCHANGE
 
 
 def test_a_coupled_region_without_a_side_raises() -> None:
-    regions = contexts(["a", "b"], [LINK])
+    regions = contexts(["a", "b"], [EXCHANGE])
 
     with pytest.raises(ValueError, match="exchange 'a-b' connects a.p, which has no coupled side"):
         Coupling.of(regions["a"]).operations()
 
 
 def test_two_sides_on_one_patch_raise() -> None:
-    regions = contexts(["a", "b"], [LINK])
+    regions = contexts(["a", "b"], [EXCHANGE])
     add_coupled(regions["a"], "p", "x", _Side("a", []).side())
     add_coupled(regions["a"], "p", "y", _Side("a", []).side())
 
@@ -298,8 +298,8 @@ def test_two_sides_on_one_patch_raise() -> None:
 
 
 def test_an_exchange_without_a_side_raises() -> None:
-    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
-    regions = contexts(["a", "b"], links)
+    exchanges = [EXCHANGE, Exchange("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
+    regions = contexts(["a", "b"], exchanges)
     add_coupled(regions["a"], "p", "x", _Side("a", []).side())
 
     with pytest.raises(
@@ -337,7 +337,7 @@ def test_a_failing_region_ends_every_region_with_its_error() -> None:
 
 
 def test_a_region_waiting_for_one_that_left_raises() -> None:
-    regions = contexts(["a", "b"], [LINK])
+    regions = contexts(["a", "b"], [EXCHANGE])
     comm_channel = comm_channel_of(regions["a"])
     comm_channel.abort(["b"])
 
@@ -360,7 +360,7 @@ class _Reversed(CouplingMapping):
 def test_coupling_op_maps_what_the_partner_sent_onto_the_side_s_points() -> None:
     received: list[_Data] = []
     mapping = _Reversed()
-    regions = contexts(["a", "b"], [Link("a-b", (("a", "p"), ("b", "p")), mapping)])
+    regions = contexts(["a", "b"], [Exchange("a-b", (("a", "p"), ("b", "p")), mapping)])
     for ctx in regions.values():
         add_coupled(ctx, "p", "x", Side(_Data, _Data, lambda: _Data(x=[1.0, 2.0]), received.append))
 
@@ -377,7 +377,7 @@ def _live(ctx: Context) -> _Data:
 
 def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     """A side that sends its live field and changes it in place still converges by the change."""
-    regions = contexts(["a", "b"], [LINK], max_iterations=10)
+    regions = contexts(["a", "b"], [EXCHANGE], max_iterations=10)
     for ctx in regions.values():
         ctx.fields["x"] = np.zeros(1)
         add_coupled(ctx, "p", "x", Side(_Data, _Data, partial(_live, ctx), lambda data: None))

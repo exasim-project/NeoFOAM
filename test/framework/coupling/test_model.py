@@ -9,18 +9,18 @@ import pytest
 from framework.coupling.regions import add_coupled, contexts, fixed, graph, solve
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, CouplingNode, IdentityMapping, Link
+from neofoam.framework.coupling import Coupling, CouplingNode, Exchange, IdentityMapping
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.types import Placement
 
-LINK = Link("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
-X = Link("x", (("a", "p"), ("b", "p")))
-Y = Link("y", (("a", "q"), ("b", "q")))
+EXCHANGE = Exchange("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
+X = Exchange("x", (("a", "p"), ("b", "p")))
+Y = Exchange("y", (("a", "q"), ("b", "q")))
 
 
 def test_the_coupling_model_builds_one_coupling_op_once() -> None:
-    links = [LINK, Link("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
-    regions = contexts(["a", "b"], links)
+    exchanges = [EXCHANGE, Exchange("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
+    regions = contexts(["a", "b"], exchanges)
     add_coupled(regions["a"], "p", "x", fixed())
     add_coupled(regions["a"], "q", "y", fixed())
 
@@ -41,7 +41,7 @@ def test_a_region_whose_solver_added_no_coupling_model_cannot_couple() -> None:
 
 
 def test_a_region_the_case_does_not_couple_has_no_coupling_ops() -> None:
-    regions = contexts(["a", "b", "c"], [LINK])
+    regions = contexts(["a", "b", "c"], [EXCHANGE])
 
     assert len(Coupling.of(regions["c"]).operations()) == 0
     (loop,) = graph(regions["c"], solve("x", lambda ctx: None)).ops
@@ -49,21 +49,21 @@ def test_a_region_the_case_does_not_couple_has_no_coupling_ops() -> None:
 
 
 def test_a_side_in_a_region_the_case_does_not_couple_raises() -> None:
-    regions = contexts(["a", "b", "c"], [LINK])
+    regions = contexts(["a", "b", "c"], [EXCHANGE])
 
     with pytest.raises(ValueError, match="the case does not couple its region"):
         add_coupled(regions["c"], "p", "x", fixed())
 
 
 def test_a_side_on_a_patch_no_exchange_names_raises() -> None:
-    regions = contexts(["a", "b"], [LINK])
+    regions = contexts(["a", "b"], [EXCHANGE])
 
     with pytest.raises(ValueError, match=r"no exchange connects the coupled side of a\.top"):
         add_coupled(regions["a"], "top", "x", fixed())
 
 
 def test_only_a_coupled_instance_with_field_and_patch_is_added() -> None:
-    model = Coupling.of(contexts(["a", "b"], [LINK])["a"])
+    model = Coupling.of(contexts(["a", "b"], [EXCHANGE])["a"])
 
     with pytest.raises(TypeError, match="object is not @coupled"):
         model.add(object())

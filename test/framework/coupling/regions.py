@@ -19,8 +19,8 @@ from neofoam.framework.coupling import (
     Coupling,
     CouplingConvergence,
     CouplingNode,
+    Exchange,
     InProcessCommChannel,
-    Link,
     SideChange,
     coupled,
 )
@@ -66,16 +66,16 @@ never = _Never()
 
 def contexts(
     regions: list[str],
-    links: list[Link],
+    exchanges: list[Exchange],
     nodes: Optional[Sequence[CouplingNode]] = None,
     comm_channel: Optional[InProcessCommChannel] = None,
     **node: Any,
 ) -> dict[str, Context]:
-    """A context per region, coupled over ``links`` in ``nodes`` (default: one node of ``node``)."""
+    """A context per region, coupled over ``exchanges`` in ``nodes`` (default: one of ``node``)."""
     if nodes is None:
-        nodes = [CouplingNode("coupling", tuple(link.name for link in links), **node)]
+        nodes = [CouplingNode("coupling", tuple(exchange.name for exchange in exchanges), **node)]
     couplings = region_couplings(
-        regions, links, comm_channel or InProcessCommChannel(), nodes=nodes
+        regions, exchanges, comm_channel or InProcessCommChannel(), nodes=nodes
     )
     return {
         region: Context(
