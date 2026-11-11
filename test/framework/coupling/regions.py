@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from functools import cache, partial
 from typing import Any, Callable, Optional, Sequence
@@ -29,8 +30,10 @@ from neofoam.framework.coupling import (
     coupling,
 )
 from neofoam.framework.coupling.exchanges import participant_exchanges
+from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
 from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
 from neofoam.framework.coupling.run import run_participants
+from neofoam.framework.execution_observer import ExecutionObserver
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
     IterativeOp,
@@ -43,6 +46,27 @@ from neofoam.framework.types import OperationMetadata
 
 # a receive that should raise at once times out after this instead
 TIMEOUT = 30.0
+
+
+class Outcomes(ExecutionObserver):
+    """Records every coupling loop's outcome, one per time step, by its leader's label.
+
+    The leader keeps only its last outcome; a test that checks the time steps observes
+    the run with this (``with observe(outcomes): ...``). Thread safe.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._by_label: dict[str, list[CouplingOutcome]] = {}
+
+    def coupling_finished(self, coupling: Leader, outcome: CouplingOutcome) -> None:
+        with self._lock:
+            self._by_label.setdefault(coupling.label, []).append(outcome)
+
+    def of(self, label: str) -> tuple[CouplingOutcome, ...]:
+        """The outcomes of the loop ``label`` (``<leader region>.<loop>``), in time order."""
+        with self._lock:
+            return tuple(self._by_label.get(label, ()))
 
 
 class RecordingCommChannel(InProcessCommChannel):

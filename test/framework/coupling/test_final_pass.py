@@ -15,6 +15,7 @@ from typing import Any, Literal
 import numpy as np
 import pytest
 from framework.coupling.regions import (
+    Outcomes,
     RecordingCommChannel,
     Side,
     add_coupled,
@@ -35,7 +36,8 @@ from neofoam.framework.coupling import (
     FaceData,
 )
 from neofoam.framework.coupling.exchanges import participant_exchanges
-from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
+from neofoam.framework.coupling.iteration._leader import CouplingOutcome
+from neofoam.framework.execution_observer import observe
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
 
@@ -80,17 +82,18 @@ class _Region:
 
 def _couple(
     scheme: Literal["serial", "parallel"] = "serial", **node: Any
-) -> tuple[dict[str, _Region], Leader]:
-    """Couple a, b and c in one node and run one time step; the regions and c's controller."""
+) -> tuple[dict[str, _Region], tuple[CouplingOutcome, ...]]:
+    """Couple a, b and c in one node and run one time step; the regions and c's outcomes."""
     regions = contexts(list(PATCHES), EXCHANGES, scheme=scheme, **node)
     tests = {name: _Region(name, fixed) for name, fixed in zip(PATCHES, (1.0, 2.0, 3.0))}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
             add_coupled(ctx, patch, tests[name].side())
-    run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
-    controller = couple(regions["c"]).controller
-    assert controller is not None
-    return tests, controller
+    outcomes = Outcomes()
+    with observe(outcomes):
+        run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
+    assert couple(regions["c"]).controller is not None
+    return tests, outcomes.of("c.coupling")
 
 
 def _flags(region: _Region) -> list[tuple[int, bool, bool]]:
@@ -99,24 +102,24 @@ def _flags(region: _Region) -> list[tuple[int, bool, bool]]:
 
 @SCHEMES
 def test_every_region_runs_one_final_pass_after_the_data_converged(scheme: Any) -> None:
-    tests, controller = _couple(scheme, max_iterations=10)
+    tests, outcomes = _couple(scheme, max_iterations=10)
 
     # the values change in the first pass, not in the second: the third is final
     for region in tests.values():
         assert _flags(region) == [(0, True, False), (1, False, False), (2, False, True)]
         assert region.writes == 1
-    assert controller.outcomes == (CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),)
+    assert outcomes == (CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),)
 
 
 @SCHEMES
 def test_the_last_pass_max_iterations_allows_is_final_and_warns(scheme: Any) -> None:
     with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
-        tests, controller = _couple(scheme, convergence=[never], max_iterations=3)
+        tests, outcomes = _couple(scheme, convergence=[never], max_iterations=3)
 
     for region in tests.values():
         assert _flags(region) == [(0, True, False), (1, False, False), (2, False, True)]
         assert region.writes == 1
-    assert [(o.passes, o.converged) for o in controller.outcomes] == [(3, False)]
+    assert [(o.passes, o.converged) for o in outcomes] == [(3, False)]
 
 
 @SCHEMES
@@ -124,12 +127,12 @@ def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
     """``max_iterations: 1`` is explicit coupling: no not-converged warning."""
     with warnings.catch_warnings():
         warnings.simplefilter("error", CouplingNotConvergedWarning)
-        tests, controller = _couple(scheme, max_iterations=1)
+        tests, outcomes = _couple(scheme, max_iterations=1)
 
     for region in tests.values():
         assert _flags(region) == [(0, True, True)]
         assert region.writes == 1
-    assert [o.passes for o in controller.outcomes] == [1]
+    assert [o.passes for o in outcomes] == [1]
 
 
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
@@ -162,7 +165,7 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
         iterations.append(iteration)
         return sent
 
-    _tests, controller = _couple("parallel", max_iterations=10, acceleration={"a-b": acceleration})
+    _tests, outcomes = _couple("parallel", max_iterations=10, acceleration={"a-b": acceleration})
 
     assert iterations == [1, 2, 3]
-    assert controller.outcomes[-1].passes == 3
+    assert outcomes[-1].passes == 3
