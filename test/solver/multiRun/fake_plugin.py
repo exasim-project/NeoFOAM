@@ -31,7 +31,7 @@ class RadialBasis(CouplingMapping):
 class QuasiNewton(ConstantRelaxation):
     """A constant relaxation, counting its calls."""
 
-    type: Literal["fake-iqn"] = "fake-iqn"
+    type: Literal["fake-iqn"] = "fake-iqn"  # type: ignore[assignment]
     columns: int = Field(gt=0)
 
     def __call__(self, sent: Any, iteration: int) -> Any:

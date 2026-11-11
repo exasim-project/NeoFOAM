@@ -1,6 +1,7 @@
 exchanges:
   - sides: {solid: interface, fluid: interface, air: interface}
-convergence:
-  - type: relative
-    data: T
-    limit: 1.0e-5
+couplings:
+  - name: thermal
+    exchanges: [solid-fluid-air]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}

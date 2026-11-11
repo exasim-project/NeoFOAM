@@ -1,6 +1,8 @@
 exchanges:
   - sides: {a: to_b, b: to_a}
-convergence:
-  - type: relative
-    data: T
-    limit: 1.0e-6
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [a-b]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-6}

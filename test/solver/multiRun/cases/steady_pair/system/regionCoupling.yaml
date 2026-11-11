@@ -1,9 +1,10 @@
-# Steady: no time step, so the node may be serial around the whole outer iteration.
+# Steady: no time step, so the serial node may wrap the whole outer iteration.
 exchanges:
   - sides: {a: interface, b: interface}
     mapping: identity
-scheme: serial
-convergence:
-  - type: relative
-    data: x
-    limit: 1.0e-6
+couplings:
+  - name: coupling
+    scheme: serial
+    exchanges: [a-b]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}

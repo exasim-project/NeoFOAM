@@ -1,7 +1,9 @@
 # The patches give no points: nearest-neighbor (the default) cannot map them; identity could.
 exchanges:
   - sides: {a: to_b, b: to_a}
-convergence:
-  - type: relative
-    data: x
-    limit: 1.0e-6
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges: [a-b]
+    convergence:
+      - {type: relative, data: x, limit: 1.0e-6}
