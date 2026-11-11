@@ -1,19 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Test regions for the coupling: a context per region, each run on its own thread.
-
-Every region's context holds its coupling model (``ctx.models["coupling"]``), as
-a solver that supports coupling adds it. A region's graph is one operation
-``solve_<field>`` per field its sides couple, and the region's coupling ops (one
-per coupling node), which the resolver wraps around them.
-"""
+"""Test regions for the coupling: a context per region with its coupling model, one thread each."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Literal, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 
 from pydantic import BaseModel
 
@@ -23,32 +17,58 @@ from neofoam.framework.coupling import (
     CouplingNode,
     InProcessTransport,
     Link,
+    SideChange,
     Transport,
     coupled,
 )
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.graph import DAGResolver
-from neofoam.framework.operations import Operation, Operations, SequentialOp, StepBuilder
+from neofoam.framework.operations import (
+    IterativeOp,
+    Operation,
+    Operations,
+    SequentialOp,
+    StepBuilder,
+)
 from neofoam.framework.types import OperationMetadata
+
+
+class RecordingTransport(InProcessTransport):
+    """An in-process transport that records every message it sends."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sent: list[tuple[str, str, str, Any]] = []
+
+    def send(self, source: str, target: str, tag: str, message: Any) -> None:
+        self.sent.append((source, target, tag, message))
+        super().send(source, target, tag, message)
+
+    @property
+    def tags(self) -> list[str]:
+        return [tag for _source, _target, tag, _message in self.sent]
+
+
+def never(changes: list[SideChange]) -> bool:
+    """A convergence that never holds."""
+    return False
 
 
 def contexts(
     regions: list[str],
     links: list[Link],
-    scheme: Literal["serial", "parallel"] = "serial",
     nodes: Optional[Sequence[CouplingNode]] = None,
+    transport: Optional[InProcessTransport] = None,
     **node: Any,
 ) -> dict[str, Context]:
     """A context per region, coupled over ``links`` in ``nodes``.
 
-    Without ``nodes`` one node ``coupling`` of ``scheme`` holds every link;
-    ``node`` sets its max_iterations, convergence and acceleration.
+    Without ``nodes`` one node ``coupling`` with the options ``node`` holds every link.
     """
     if nodes is None:
-        names = tuple(link.name for link in links)
-        nodes = [CouplingNode("coupling", names, scheme=scheme, **node)]
-    couplings = region_couplings(regions, links, InProcessTransport(), nodes=nodes)
+        nodes = [CouplingNode("coupling", tuple(link.name for link in links), **node)]
+    couplings = region_couplings(regions, links, transport or InProcessTransport(), nodes=nodes)
     return {
         region: Context(
             fields={},
@@ -71,10 +91,7 @@ class Side:
 
 
 def add_coupled(ctx: Context, patch: str, field: str, side: Side) -> None:
-    """Add ``side`` on ``patch``, coupling ``field``, to the region's coupling model.
-
-    As a ``@coupled`` boundary condition with ``side``'s models and methods does.
-    """
+    """Add ``side`` on ``patch``, coupling ``field``, as a ``@coupled`` boundary condition does."""
 
     def send(self: Any) -> Any:
         return side.send()
@@ -106,6 +123,16 @@ def couple(ctx: Context, index: int = 0) -> CouplingOp:
     op = Coupling.of(ctx).operations()[index].func
     assert isinstance(op, CouplingOp)
     return op
+
+
+def tree(ops: Sequence[Operation]) -> list[Any]:
+    """The names of ``ops``, a loop as ``(name, tree of what it holds)``."""
+    return [
+        (op.operation_name, tree(op.sub_operations))
+        if isinstance(op.func, IterativeOp)
+        else op.operation_name
+        for op in ops
+    ]
 
 
 def solve(field: str, func: Callable[[Context], None]) -> Operation:

@@ -11,11 +11,22 @@ receives, so every node converges after its second pass.
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import numpy as np
 import pytest
-from framework.coupling.regions import Side, add_coupled, couple, graph, run, solve, transport
+from framework.coupling.regions import (
+    RecordingTransport,
+    Side,
+    add_coupled,
+    contexts,
+    couple,
+    graph,
+    run,
+    solve,
+    transport,
+    tree,
+)
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context
@@ -41,18 +52,6 @@ class _Data(BaseModel):
     v: Array
 
 
-class _Recording(InProcessTransport):
-    """An in-process transport that records the tag of every message."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.tags: list[tuple[str, str, str]] = []
-
-    def send(self, source: str, target: str, tag: str, message: Any) -> None:
-        self.tags.append((source, target, tag))
-        super().send(source, target, tag, message)
-
-
 def _side(value: float, log: list[float]) -> Side:
     return Side(
         _Data,
@@ -61,30 +60,6 @@ def _side(value: float, log: list[float]) -> Side:
         lambda d: log.append(float(d.v[0])),
         np.zeros((1, 1)),
     )
-
-
-def _contexts(
-    regions: list[str],
-    links: list[Link],
-    nodes: Sequence[CouplingNode],
-    transport: Optional[InProcessTransport] = None,
-) -> dict[str, Context]:
-    couplings = region_couplings(regions, links, transport or InProcessTransport(), nodes=nodes)
-    return {
-        region: Context(
-            fields={}, models={"coupling": Coupling(couplings.get(region))}, region=region
-        )
-        for region in regions
-    }
-
-
-def _tree(ops: list[Operation]) -> list[Any]:
-    return [
-        (op.operation_name, _tree(op.sub_operations))
-        if isinstance(op.func, IterativeOp)
-        else op.operation_name
-        for op in ops
-    ]
 
 
 def _two_nodes(transport: Optional[InProcessTransport] = None) -> dict[str, Context]:
@@ -97,7 +72,7 @@ def _two_nodes(transport: Optional[InProcessTransport] = None) -> dict[str, Cont
             placement={"a": Placement(("solve_y",)), "b": Placement(("solve_y",))},
         ),
     ]
-    regions = _contexts(["a", "b"], [X, Y], nodes, transport)
+    regions = contexts(["a", "b"], [X, Y], nodes, transport)
     for name, ctx in regions.items():
         add_coupled(ctx, "p", "x", _side(1.0, []))
         add_coupled(ctx, "q", "y", _side(2.0, []))
@@ -121,11 +96,11 @@ def test_an_inner_node_with_its_placement_nests_inside_the_outer_node() -> None:
 
     ops = graph(regions["a"], solve("x", lambda ctx: None), solve("y", lambda ctx: None)).ops
 
-    assert _tree(ops) == [("a.outer", ["solve_x", ("a.inner", ["solve_y"])])]
+    assert tree(ops) == [("a.outer", ["solve_x", ("a.inner", ["solve_y"])])]
 
 
 def test_the_messages_of_each_node_are_tagged_by_node() -> None:
-    transport = _Recording()
+    transport = RecordingTransport()
     regions = _two_nodes(transport)
 
     run(
@@ -135,7 +110,7 @@ def test_the_messages_of_each_node_are_tagged_by_node() -> None:
         }
     )
 
-    tags = {tag for _source, _target, tag in transport.tags}
+    tags = set(transport.tags)
     assert {"outer/sides", "outer/pass", "outer/decision", "side:x"} <= tags
     assert {"inner/sides", "inner/pass", "inner/decision", "side:y"} <= tags
     assert not tags & {"sides", "pass", "decision"}
@@ -151,7 +126,7 @@ def test_each_node_has_its_own_leader() -> None:
         CouplingNode("ab", ("x",), placement={"b": Placement(("solve_x",))}),
         CouplingNode("bc", ("z",), placement={"b": Placement(("solve_z",))}),
     ]
-    regions = _contexts(["a", "b", "c"], links, nodes)
+    regions = contexts(["a", "b", "c"], links, nodes)
     add_coupled(regions["a"], "p", "x", _side(1.0, []))
     add_coupled(regions["b"], "p", "x", _side(2.0, []))
     add_coupled(regions["b"], "q", "z", _side(3.0, []))
@@ -190,7 +165,7 @@ def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
         CouplingNode("ab", ("x",), max_iterations=2),
         CouplingNode("bc", ("z",)),
     ]
-    regions = _contexts(["a", "b", "c"], links, nodes)
+    regions = contexts(["a", "b", "c"], links, nodes)
     add_coupled(regions["a"], "p", "x", _side(1.0, []))
     add_coupled(regions["b"], "p", "x", _side(2.0, []))
     add_coupled(regions["b"], "q", "z", _side(3.0, []))
@@ -232,7 +207,7 @@ def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
     """
     placement = Placement(("solve_x",))
     nodes = [CouplingNode("n", ("x",), placement={"a": placement, "b": placement})]
-    regions = _contexts(["a", "b"], [X], nodes)
+    regions = contexts(["a", "b"], [X], nodes)
     tasks = {}
     for name, ctx in regions.items():
         add_coupled(ctx, "p", "x", _side(1.0, []))
@@ -412,7 +387,7 @@ def test_region_couplings_check_the_nodes(nodes: list[CouplingNode], error: str)
 
 def test_a_region_s_field_is_in_at_most_one_node() -> None:
     nodes = [CouplingNode("n", ("x",), scheme="parallel"), CouplingNode("m", ("y",))]
-    regions = _contexts(["a", "b"], [X, Y], nodes)
+    regions = contexts(["a", "b"], [X, Y], nodes)
     add_coupled(regions["a"], "p", "T", _side(1.0, []))
     add_coupled(regions["a"], "q", "T", _side(1.0, []))
 
