@@ -10,7 +10,7 @@ import pytest
 
 from neofoam.framework.coupling import (
     RelativeConvergence,
-    SideChange,
+    StreamChange,
 )
 
 
@@ -22,12 +22,12 @@ from neofoam.framework.coupling import (
 def test_relative_convergence_compares_the_change_with_the_limit(
     current: float, converged: bool
 ) -> None:
-    change = SideChange({"T_sink": np.array([100.0])}, {"T_sink": np.array([current])})
+    change = StreamChange({"T_sink": np.array([100.0])}, {"T_sink": np.array([current])})
 
     assert RelativeConvergence(data="T_sink", limit=1e-5)([change]) is converged
 
 
 def test_relative_convergence_ignores_other_fields() -> None:
-    changes: list[Any] = [SideChange({"u": np.array([1.0])}, {"u": np.array([2.0])})]
+    changes: list[Any] = [StreamChange({"u": np.array([1.0])}, {"u": np.array([2.0])})]
 
     assert RelativeConvergence(data="T", limit=1e-5)(changes) is True

@@ -20,10 +20,10 @@ from neofoam.framework import execution_observer
 from ..comm.channel import Data
 from ..data import End
 from ..exchanges import CouplingLoop
-from ..strategies.convergence import SideChange
+from ..strategies.convergence import StreamChange
 
 
-def unchanged(changes: list[SideChange]) -> bool:
+def unchanged(changes: list[StreamChange]) -> bool:
     """Converged once no stream's data changes by more than round-off between two passes."""
     return all(
         np.allclose(change.current[name], change.previous[name], rtol=1e-12, atol=0.0)
@@ -61,7 +61,7 @@ def _stacklevel() -> int:
     return level
 
 
-def relative_changes(changes: list[SideChange]) -> dict[str, float]:
+def relative_changes(changes: list[StreamChange]) -> dict[str, float]:
     """Each data field's largest ``|current - previous| / |current|`` over its streams.
 
     The absolute change where the current data is zero; a NaN stays NaN.
@@ -254,7 +254,7 @@ class Leader:
             self._carried = current
             return self._start_pass(iteration + 1, final=self._max_iterations <= 1)
         changes = {
-            stream_id: SideChange(self._carried[stream_id], current[stream_id])
+            stream_id: StreamChange(self._carried[stream_id], current[stream_id])
             for stream_id in self._order
         }
         self._residuals = {**self._unmeasured, **self._relative_changes(changes, iteration)}
@@ -269,7 +269,7 @@ class Leader:
         return self._start_pass(iteration + 1, final=iteration + 1 >= self._max_iterations)
 
     def _relative_changes(
-        self, changes: dict[StreamId, SideChange], iteration: int
+        self, changes: dict[StreamId, StreamChange], iteration: int
     ) -> dict[str, float]:
         """:func:`relative_changes`; raises ``FloatingPointError`` for a non-finite one."""
         residuals: dict[str, float] = {}
@@ -284,7 +284,7 @@ class Leader:
                 _keep_largest(residuals, name, value)
         return residuals
 
-    def _converged(self, changes: dict[StreamId, SideChange]) -> bool:
+    def _converged(self, changes: dict[StreamId, StreamChange]) -> bool:
         """Whether every measure of the convergence holds (none: :func:`unchanged`)."""
         listed = list(changes.values())
         if not self._convergence:
