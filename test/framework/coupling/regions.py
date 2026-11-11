@@ -16,6 +16,7 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     Coupling,
+    CouplingConvergence,
     CouplingNode,
     InProcessTransport,
     Link,
@@ -55,9 +56,13 @@ class RecordingTransport(InProcessTransport):
         return [tag for _source, _target, tag, _message in self.sent]
 
 
-def never(changes: list[SideChange]) -> bool:
-    """A convergence that never holds."""
-    return False
+class _Never(CouplingConvergence):
+    def __call__(self, changes: list[SideChange]) -> bool:
+        return False
+
+
+# a convergence that never holds
+never = _Never()
 
 
 def contexts(
