@@ -4,7 +4,7 @@
 """The relaxations of a coupling, each on a few hand-checked values.
 
 The relaxations are fed the fixed-point iteration ``x -> 0.5 * x + 1`` (fixed
-point 2), the way a coupling feeds them: what the other side sends back for the
+point 2), the way a coupling feeds them: what the partner sends back for the
 value last delivered. Aitken's factor is exact for a linear map of one value, so
 its second relaxed pass lands on the fixed point (to round-off, hence 1e-12).
 """

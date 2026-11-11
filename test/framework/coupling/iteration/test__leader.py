@@ -46,7 +46,7 @@ def _group() -> list[GroupStream]:
     ]
 
 
-def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_built() -> None:
+def test_a_convergence_on_a_field_no_port_sends_raises_as_the_controller_is_built() -> None:
     with pytest.raises(
         ValueError,
         match=r"coupling b.coupling: convergence RelativeConvergence on T, which no port of the "

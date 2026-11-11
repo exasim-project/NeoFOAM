@@ -15,9 +15,9 @@ from typing import Any, Literal
 import numpy as np
 import pytest
 from framework.coupling.regions import (
+    CoupledInstance,
     Outcomes,
     RecordingCommChannel,
-    Side,
     add_coupled,
     context,
     contexts,
@@ -51,7 +51,7 @@ class _Data(FaceData):
 
 
 class _Region:
-    """A test region: solving sets its sides' value to ``fixed``; it logs its passes and writes."""
+    """A test region: solving sets its ports' value to ``fixed``; it logs its passes and writes."""
 
     def __init__(self, name: str, fixed: float) -> None:
         self.name = name
@@ -67,8 +67,8 @@ class _Region:
     def write(self, ctx: Context) -> None:
         self.writes += 1
 
-    def side(self) -> Side:
-        return Side(
+    def instance(self) -> CoupledInstance:
+        return CoupledInstance(
             _Data, _Data, lambda: _Data(x=[self.value]), lambda data: None, np.zeros((1, 1))
         )
 
@@ -88,7 +88,7 @@ def _couple(
     tests = {name: _Region(name, fixed) for name, fixed in zip(PATCHES, (1.0, 2.0, 3.0))}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
-            add_coupled(ctx, patch, tests[name].side())
+            add_coupled(ctx, patch, tests[name].instance())
     outcomes = Outcomes()
     with observe(outcomes):
         run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
@@ -143,7 +143,7 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     tests = {name: _Region(name, 1.0) for name in PATCHES}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
-            add_coupled(ctx, patch, tests[name].side())
+            add_coupled(ctx, patch, tests[name].instance())
     run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
 
     decisions = [

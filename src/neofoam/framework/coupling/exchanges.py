@@ -49,7 +49,7 @@ class CouplingLoop:
     more pass runs, the final one; the last of ``max_iterations`` is final
     regardless. ``acceleration`` relaxes the carried data, by exchange name, and
     keeps state across passes: give each loop its own. ``placement`` places the op
-    per region (default: around the whole top scope). ``serial``: a side receives
+    per region (default: around the whole top scope). ``serial``: a port receives
     what an earlier-stepping partner sent in the same pass; ``parallel``: what it
     sent in the pass before.
     """

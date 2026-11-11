@@ -141,7 +141,7 @@ def context(region: str, region_coupling: Optional[ParticipantExchanges]) -> Con
 
 
 @dataclass(frozen=True)
-class Side:
+class CoupledInstance:
     """What a ``@coupled`` instance declares: its models (``None``: it has none) and methods.
 
     ``coordinates``: the face centres of its patch in the fake geometry.
@@ -163,11 +163,13 @@ def value_model(data: str) -> type[FaceData]:
     return model
 
 
-def fixed(value: float = 0.0, log: Optional[list[float]] = None, data: str = "v") -> Side:
-    """A side of one face that sends ``value`` as ``data`` and logs what it receives."""
+def fixed(
+    value: float = 0.0, log: Optional[list[float]] = None, data: str = "v"
+) -> CoupledInstance:
+    """A coupled instance on one face that sends ``value`` as ``data`` and logs what it receives."""
     received = [] if log is None else log
     model = value_model(data)
-    return Side(
+    return CoupledInstance(
         model,
         model,
         lambda: model.model_validate({data: [value]}),
@@ -176,26 +178,26 @@ def fixed(value: float = 0.0, log: Optional[list[float]] = None, data: str = "v"
     )
 
 
-def add_coupled(ctx: Context, patch: str, side: Side) -> None:
-    """Bind ``side`` to ``Patch(patch)``, as a solver binds its ``@coupled`` instance."""
+def add_coupled(ctx: Context, patch: str, instance: CoupledInstance) -> None:
+    """Bind ``instance`` to ``Patch(patch)``, as a solver binds its ``@coupled`` instance."""
 
     def send(self: Any) -> Any:
-        return side.send()
+        return instance.send()
 
     def receive(self: Any, data: Any) -> None:
-        side.receive(data)
+        instance.receive(data)
 
-    send.__annotations__ = {"return": side.sends}
-    receive.__annotations__ = {"data": side.receives, "return": None}
+    send.__annotations__ = {"return": instance.sends}
+    receive.__annotations__ = {"data": instance.receives, "return": None}
     methods: dict[str, Any] = {}
-    if side.sends is not None:
+    if instance.sends is not None:
         methods["send"] = coupled.sends(send)
-    if side.receives is not None:
+    if instance.receives is not None:
         methods["receive"] = coupled.receives(receive)
-    instance = coupled(type("Side", (), methods))()
-    if side.coordinates is not None:
-        coupling(ctx).geometry.centres[patch] = side.coordinates  # type: ignore[attr-defined]
-    coupling(ctx).add(Patch(patch), instance)
+    bound = coupled(type("CoupledInstance", (), methods))()
+    if instance.coordinates is not None:
+        coupling(ctx).geometry.centres[patch] = instance.coordinates  # type: ignore[attr-defined]
+    coupling(ctx).add(Patch(patch), bound)
 
 
 def couple(ctx: Context, index: int = 0) -> CouplingLoopOp:
