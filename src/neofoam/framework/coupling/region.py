@@ -182,46 +182,15 @@ def region_couplings(
     """The coupling of every region ``links`` connect, by region; ``regions`` in stepping order.
 
     ``nodes`` lists the coupling nodes, outer to inner; without them one node
-    ``coupling`` holds every exchange, with the defaults of :class:`CouplingNode`.
-
-    Raises ``ValueError`` when a link names a region not in ``regions``, joins
-    two patches of one region, or shares a patch with another link; when two
-    nodes have one name, an exchange is in no node or in two, a node names an
-    exchange that does not exist, or a node's placement or acceleration names a
-    region or exchange that is not the node's; when a serial node encloses a
-    node (one listed after it) that couples two of its regions as well: a serial
-    pass of a region waits for its partner's whole pass, which needs the inner
-    node of both regions.
+    ``coupling`` holds every exchange. Raises ``ValueError`` as :func:`check_couplings`.
     """
-    named = sorted({region for link in links for region, _patch in link.ends} - set(regions))
-    if named:
-        raise ValueError(
-            f"the exchanges couple the regions {named}, which are not in {list(regions)}"
-        )
-    owner: dict[End, str] = {}
-    names = [link.name for link in links]
-    for link in links:
-        if names.count(link.name) > 1:
-            raise ValueError(f"two exchanges are named '{link.name}'; an exchange's name is unique")
-        first, second = link.ends
-        if first[0] == second[0]:
-            raise ValueError(f"exchange '{link.name}' joins two patches of region {first[0]}")
-        for region, patch in link.ends:
-            if (region, patch) in owner:
-                raise ValueError(
-                    f"{region}.{patch} is in the exchanges '{owner[(region, patch)]}' and "
-                    f"'{link.name}'; a coupled patch is in one exchange"
-                )
-            owner[(region, patch)] = link.name
     if nodes is None:
         nodes = [CouplingNode("coupling", tuple(link.name for link in links))]
-    _check_nodes(nodes, links)
+    check_couplings(regions, links, nodes)
     couplings: dict[str, RegionCoupling] = {}
     for region in regions:
-        if region in couplings:
-            continue
         group = _group(region, regions, links)
-        if len(group) < 2:
+        if region in couplings or len(group) < 2:
             continue
         group_links = tuple(link for link in links if link.ends[0][0] in group)
         for member in group:
@@ -231,64 +200,102 @@ def region_couplings(
     return couplings
 
 
-def _check_nodes(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
-    """Raise ``ValueError`` unless ``nodes`` hold every exchange of ``links`` once, consistently."""
+def check_couplings(
+    regions: Sequence[str], links: Sequence[Link], nodes: Sequence[CouplingNode]
+) -> None:
+    """Raise ``ValueError`` unless ``links`` and ``nodes`` couple ``regions`` consistently.
+
+    The one check of a case's coupling, for the Python API and the case's config:
+    every link joins two regions of ``regions`` on patches no other link has and
+    has a name of its own; every exchange is in exactly one node; a node's
+    placement and acceleration name only its own regions and exchanges; and no
+    serial node encloses a node that couples two of its regions as well.
+    """
+    _check_links(regions, links)
     names = [link.name for link in links]
-    seen: list[str] = []
     in_node: dict[str, str] = {}
     for node in nodes:
-        if node.name in seen:
+        if node.name in [other.name for other in nodes if other is not node]:
             raise ValueError(f"two coupling nodes are named '{node.name}'; a node's name is unique")
-        seen.append(node.name)
-        if not node.exchanges:
-            raise ValueError(f"coupling node '{node.name}' has no exchange")
+        _check_node(node, links)
         for exchange in node.exchanges:
-            if exchange not in names:
-                raise ValueError(
-                    f"coupling node '{node.name}' names the exchange '{exchange}', which does "
-                    f"not exist; the exchanges are {names}"
-                )
             if exchange in in_node:
                 raise ValueError(
                     f"exchange '{exchange}' is in the coupling nodes '{in_node[exchange]}' and "
                     f"'{node.name}'; an exchange is in exactly one node"
                 )
             in_node[exchange] = node.name
-        regions = sorted(
-            {region for link in links if link.name in node.exchanges for region, _ in link.ends}
-        )
-        unknown = sorted(set(node.placement) - set(regions))
-        if unknown:
-            raise ValueError(
-                f"coupling node '{node.name}' places its op in the regions {unknown}, which it "
-                f"does not couple; its regions are {regions}"
-            )
-        foreign = sorted(set(node.acceleration) - set(node.exchanges))
-        if foreign:
-            raise ValueError(
-                f"coupling node '{node.name}' accelerates the exchanges {foreign}, which are "
-                f"not its own; its exchanges are {list(node.exchanges)}"
-            )
     missing = [name for name in names if name not in in_node]
     if missing:
         raise ValueError(
             f"the exchanges {missing} are in no coupling node; each exchange is in exactly one "
-            f"node (the nodes: {seen})"
+            f"node (the nodes: {[node.name for node in nodes]})"
         )
     _check_serial_nesting(nodes, links)
 
 
+def _check_links(regions: Sequence[str], links: Sequence[Link]) -> None:
+    """Raise ``ValueError`` unless each link joins two known regions on patches of its own."""
+    named = sorted({region for link in links for region, _patch in link.ends} - set(regions))
+    if named:
+        raise ValueError(
+            f"the exchanges couple the regions {named}, which are not in {list(regions)}"
+        )
+    names = [link.name for link in links]
+    owner: dict[End, str] = {}
+    for link in links:
+        if names.count(link.name) > 1:
+            raise ValueError(f"two exchanges are named '{link.name}'; an exchange's name is unique")
+        first, second = link.ends
+        if first[0] == second[0]:
+            raise ValueError(f"exchange '{link.name}' joins two patches of region {first[0]}")
+        for end in link.ends:
+            if end in owner:
+                raise ValueError(
+                    f"{end[0]}.{end[1]} is in the exchanges '{owner[end]}' and "
+                    f"'{link.name}'; a coupled patch is in one exchange"
+                )
+            owner[end] = link.name
+
+
+def _check_node(node: CouplingNode, links: Sequence[Link]) -> None:
+    """Raise ``ValueError`` unless ``node`` names existing exchanges and only its own regions."""
+    names = [link.name for link in links]
+    if not node.exchanges:
+        raise ValueError(f"coupling node '{node.name}' has no exchange")
+    unknown_exchanges = [exchange for exchange in node.exchanges if exchange not in names]
+    if unknown_exchanges:
+        raise ValueError(
+            f"coupling node '{node.name}' names the exchange '{unknown_exchanges[0]}', which "
+            f"does not exist; the exchanges are {names}"
+        )
+    regions = sorted(_regions(node, links))
+    unknown = sorted(set(node.placement) - set(regions))
+    if unknown:
+        raise ValueError(
+            f"coupling node '{node.name}' places its op in the regions {unknown}, which it "
+            f"does not couple; its regions are {regions}"
+        )
+    foreign = sorted(set(node.acceleration) - set(node.exchanges))
+    if foreign:
+        raise ValueError(
+            f"coupling node '{node.name}' accelerates the exchanges {foreign}, which are "
+            f"not its own; its exchanges are {list(node.exchanges)}"
+        )
+
+
+def _regions(node: CouplingNode, links: Sequence[Link]) -> set[str]:
+    """The regions the exchanges of ``node`` connect."""
+    return {region for link in links if link.name in node.exchanges for region, _ in link.ends}
+
+
 def _check_serial_nesting(nodes: Sequence[CouplingNode], links: Sequence[Link]) -> None:
     """Raise ``ValueError`` when a serial node encloses a node sharing two of its regions."""
-
-    def regions(node: CouplingNode) -> set[str]:
-        return {region for link in links if link.name in node.exchanges for region, _ in link.ends}
-
     for index, outer in enumerate(nodes):
         if outer.parallel:
             continue
         for inner in nodes[index + 1 :]:
-            shared = sorted(regions(outer) & regions(inner))
+            shared = sorted(_regions(outer, links) & _regions(inner, links))
             if len(shared) >= 2:
                 raise ValueError(
                     f"coupling '{outer.name}' is serial but encloses '{inner.name}', which "
