@@ -309,7 +309,11 @@ def test_coupling_op_public_read_api() -> None:
 
     controller = fluid_op.controller
     assert solid_op.controller is None and controller is not None
-    assert (controller.label, controller.parallel) == ("fluid.coupling", False)
+    # serial: the fluid receives what the solid, stepping first, sent in this pass
+    assert (controller.label, [controller.fresh(s) for s in controller.streams]) == (
+        "fluid.coupling",
+        [True, False],
+    )
     assert [(stream_id, s.partner) for stream_id, s in controller.streams.items()] == [
         (("solid", "right", "T"), ("fluid", "wall")),
         (("fluid", "wall", "q"), ("solid", "right")),
