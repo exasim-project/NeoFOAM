@@ -28,6 +28,7 @@ from neofoam.solver.neon_runtime import (
     NeoNControlConfig,
     NeoNFields,
     NeoNGeometry,
+    check_written_patches,
     ensure_neon_initialized,
 )
 from neofoam.solver.regions import region_case_dir
@@ -50,6 +51,9 @@ def initialize(self: Any) -> Context:
     init = create_init(self.region, list(self.argv))
     ctx = init.run()
     self.core_models = init.core_models
+    if self.coupling is not None:
+        time_dir = region_case_dir(self.region) / ctx.models["solution_loop"].timeName()
+        check_written_patches(self.coupling.field_ports, time_dir)
     runtime = ctx.models["neon_runtime"]
     ctx.models["coupling"] = Coupling(
         self.coupling, NeoNGeometry(runtime), NeoNFields(runtime, ctx.fields)

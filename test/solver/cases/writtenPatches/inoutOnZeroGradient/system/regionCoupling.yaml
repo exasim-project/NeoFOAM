@@ -1,0 +1,13 @@
+# The inout port T_wall writes plant's zeroGradient patch outlet.
+ports:
+  plant:
+    - {name: T_wall, field: T, patch: outlet, direction: inout}
+  controller:
+    - {name: T_set, field: T, direction: inout}
+exchanges:
+  - {name: actuator, ports: {controller: T_set, plant: T_wall}, mapping: identity}
+couplings:
+  - name: control
+    exchanges: [actuator]
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-5}
