@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Iterator, Union
 
 from neofoam import telemetry
+from neofoam.framework import execution_observer
 from neofoam.framework.context import Context, LoopEntry
 
 from .types import OperationMetadata, OperationNumber
@@ -107,14 +108,31 @@ class Operation:
             ctx
         ):
             return None
+        # loops report their predicate evaluations instead (_loop_test)
+        observer = None if self.operation_type == "iterative" else execution_observer.current()
+        if observer is not None:
+            observer.before_operation(self, ctx)
         if not telemetry.is_active():
-            return self._execute(ctx)
-        with telemetry.span(
-            self.metadata.op_name or self.metadata.name or "operation",
-            operation_type=self.operation_type,
-            domain=self.metadata.domain_name,
-        ):
-            return self._execute(ctx)
+            result = self._execute(ctx)
+        else:
+            with telemetry.span(
+                self.metadata.op_name or self.metadata.name or "operation",
+                operation_type=self.operation_type,
+                domain=self.metadata.domain_name,
+            ):
+                result = self._execute(ctx)
+        if observer is not None:
+            observer.after_operation(self, ctx)
+        return result
+
+    def _loop_test(self, ctx: Context, iteration: int) -> bool:
+        observer = execution_observer.current()
+        if observer is None:
+            return bool(self.func(ctx))
+        observer.before_loop_test(self, ctx, iteration)
+        result = bool(self.func(ctx))
+        observer.after_loop_test(self, ctx, iteration, result)
+        return result
 
     def _skipped(self, ctx: Context) -> bool:
         """Whether the pass of the wrapping loops around the operation skips it."""
@@ -147,7 +165,8 @@ class Operation:
         loops.append(LoopEntry(self.name, 0, wrapping))
         try:
             iteration = 0
-            while self.func(ctx):
+            # the observer counts the passes from 1
+            while self._loop_test(ctx, iteration + 1):
                 for op in self.sub_operations:
                     op.run(ctx)
                 iteration += 1

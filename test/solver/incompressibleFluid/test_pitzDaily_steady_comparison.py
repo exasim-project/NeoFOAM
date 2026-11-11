@@ -62,13 +62,13 @@ run(["incompressibleFluid"])
 """
 
 
-def test_framework_matches_native_simpleFoam() -> None:
+def test_framework_matches_native_simpleFoam(tmp_path: Path) -> None:
     """incompressibleFluid (SIMPLE) matches native simpleFoam after five iterations."""
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / "pitzDaily_steady"
 
-    case_framework = repo_root / "test_cases" / "pitzDaily_steady_framework"
-    case_native = repo_root / "test_cases" / "pitzDaily_steady_native"
+    case_framework = tmp_path / "pitzDaily_steady_framework"
+    case_native = tmp_path / "pitzDaily_steady_native"
 
     try:
         for case in (case_framework, case_native):
