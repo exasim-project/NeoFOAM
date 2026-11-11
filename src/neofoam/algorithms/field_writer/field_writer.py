@@ -71,9 +71,6 @@ def build(config: WriteControlConfig) -> list[InitStep]:
 def write_output(self: Any, ctx: Context) -> None:
     """Write the flagged fields on write steps; optionally report step timing.
 
-    Marked ``final``: inside a coupling loop it runs in its final pass only, once
-    per time step.
-
     The decision reads the loop state (``ctx.time``, with the Python-computed
     ``write_time`` flag); the action writes through the injected backend hook.
     Only the ``write=True``-flagged fields are handed over (a registry backend

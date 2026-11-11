@@ -2,13 +2,10 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Running loops on ``ctx.loops``; operations marked ``first`` or ``final``.
+"""Operations marked ``first``/``final`` run only in their wrapping loops' first/final pass.
 
-An operation marked ``first`` runs only while every wrapping loop around it is in
-its first pass, one marked ``final`` only while every one is in its final pass (its
-test marks it: ``Context.mark_final``): once per time step inside coupling loops,
-every time outside of them. ``Context.run_every_pass`` runs a final one in every
-pass instead.
+Outside coupling loops they run every time; ``Context.run_every_pass`` runs a
+final one in every pass.
 """
 
 from __future__ import annotations

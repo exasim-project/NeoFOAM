@@ -4,11 +4,7 @@
 
 """The resolver places a contributed wrapping loop at the top or around named operations.
 
-The graphs are a solver's time step: a ``time_loop`` around ``start_step``,
-``solve_U``, ``solve_T`` (both after start_step), ``update_rho`` (after solve_T)
-and ``write`` (stepped last, depends on nothing). A contributed loop is a model op
-whose ``metadata.wraps`` is a :class:`Placement`. Expected graphs are nested
-``(loop, [body])`` / name literals.
+Expected graphs are nested ``(loop, [body])`` / name literals.
 """
 
 from __future__ import annotations
@@ -182,11 +178,7 @@ def test_a_loop_around_the_outermost_loop_raises() -> None:
 
 
 def _pimple_step(log: list[str], time_step: bool = False) -> StepBuilder:
-    """time_loop: set_time_step, increment_time, inner_loop [solve_U, solve_p], update_T, write.
-
-    With ``time_step`` a coupled region's time-step op runs between
-    set_time_step and increment_time (numbered, as the coupling model adds it).
-    """
+    """time_loop: set_time_step, increment_time, inner_loop [solve_U, solve_p], update_T, write."""
     builder = StepBuilder()
     with builder.loop(_loop("time_loop")) as time_builder:
         time_builder.step(_op("set_time_step", log))
