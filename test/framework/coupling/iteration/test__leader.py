@@ -21,6 +21,7 @@ from neofoam.framework.coupling import (
     SideChange,
 )
 from neofoam.framework.coupling.iteration._leader import (
+    CouplingOutcome,
     GroupStream,
     Leader,
     relative_changes,
@@ -139,7 +140,7 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 2) is not None
     assert controller.final
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 3) is None
-    assert controller.outcomes[-1].converged
+    assert controller.outcome is not None and controller.outcome.converged
 
 
 def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> None:
@@ -175,7 +176,7 @@ def test_explicit_coupling_runs_one_pass_without_a_not_converged_warning() -> No
         warnings.simplefilter("error", CouplingNotConvergedWarning)
         assert controller.decide(data, 1) is None
 
-    assert controller.outcomes[-1].passes == 1
+    assert controller.outcome is not None and controller.outcome.passes == 1
 
 
 def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_node() -> None:
@@ -185,3 +186,16 @@ def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_no
     controller = Leader(streams, "b.n", CouplingLoop("n", ("a-b",)), ("a", "b"))
 
     assert controller.fresh(("a", "p", "x"))
+
+
+def test_the_leader_keeps_the_outcome_of_the_last_time_step_only() -> None:
+    node = CouplingLoop("coupling", ("a-b",), max_iterations=1)
+    controller = Leader(_group(), "b.coupling", node, ("a", "b"))
+    for value in (1.0, 3.0):
+        data = {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.full(1, value)}}
+        controller.decide(data, 0)
+        controller.decide({**data, ("b", "p", "x"): {"x": np.full(1, value + 1.0)}}, 1)
+
+    # b's x went 3 -> 4 in the second time step (1 -> 2 in the first); observers get both
+    assert controller.outcome == CouplingOutcome(passes=1, converged=False, residuals={"x": 0.25})
+    assert not hasattr(controller, "outcomes")

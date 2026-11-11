@@ -15,6 +15,7 @@ from typing import Any, Literal, Optional
 import numpy as np
 import pytest
 from framework.coupling.regions import (
+    Outcomes,
     RecordingCommChannel,
     Side,
     add_coupled,
@@ -144,7 +145,7 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     # serial: b receives what a, stepping first, sent in this pass; parallel: neither fresh
     assert [controller.fresh(stream) for stream in controller.streams] == [not parallel, False]
     assert not hasattr(controller, "parallel")
-    assert controller.outcomes[-1].converged
+    assert controller.outcome is not None and controller.outcome.converged
     assert ("receive_b 0.0" in log) is parallel
 
 
@@ -215,20 +216,26 @@ def test_every_region_stops_at_max_iterations() -> None:
 
 
 def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
-    ops = _couple(_Side("a", [], fixed=5.0), _Side("b", [], fixed=0.0), max_iterations=10)
+    outcomes = Outcomes()
+    with observe(outcomes):
+        ops = _couple(_Side("a", [], fixed=5.0), _Side("b", [], fixed=0.0), max_iterations=10)
 
     controller = _controller(ops)
-    assert controller.outcomes == (CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),)
+    assert outcomes.of("b.coupling") == (
+        CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),
+    )
     assert controller.label == "b.coupling"
     assert ops["a"].controller is None
 
 
 def test_the_leader_warns_and_records_when_max_iterations_ends_the_loop() -> None:
-    with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
-        ops = _couple(_Side("a", []), _Side("b", []), convergence=[never], max_iterations=3)
+    outcomes = Outcomes()
+    with observe(outcomes):
+        with pytest.warns(CouplingNotConvergedWarning, match="did not converge in 3 passes"):
+            ops = _couple(_Side("a", []), _Side("b", []), convergence=[never], max_iterations=3)
 
     # the last pass took both sides from 2 to 3
-    assert _controller(ops).outcomes == (
+    assert outcomes.of(_controller(ops).label) == (
         CouplingOutcome(passes=3, converged=False, residuals={"x": 1 / 3}),
     )
 
@@ -247,7 +254,7 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
     with observe(_Observer()):
         ops = _couple(_Side("a", [], fixed=1.0), _Side("b", [], fixed=2.0), max_iterations=10)
 
-    assert finished == [("b.coupling", _controller(ops).outcomes[0])]
+    assert finished == [("b.coupling", _controller(ops).outcome)]
     # serial: a gets b's carried value (0, then 2), b gets a's fresh one
     assert exchanged == [
         ("a.coupling", "b.p", 0.0),
@@ -382,11 +389,13 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     def step(ctx: Context) -> None:
         ctx.fields["x"][0] = min(ctx.fields["x"][0] + 1.0, 3.0)
 
-    run({name: (ctx, [solve("x", step)]) for name, ctx in regions.items()})
+    outcomes = Outcomes()
+    with observe(outcomes):
+        run({name: (ctx, [solve("x", step)]) for name, ctx in regions.items()})
     ops = {name: couple(ctx) for name, ctx in regions.items()}
 
     # x: 1, 2, 3, 3: unchanged after the fourth pass, then the final pass
-    assert _controller(ops).outcomes == (
+    assert outcomes.of(_controller(ops).label) == (
         CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
     )
 

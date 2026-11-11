@@ -144,7 +144,7 @@ class Leader:
             stream_id: not parallel and rank[stream.region] < rank[stream.partner[0]]
             for stream_id, stream in self._streams.items()
         }
-        self._outcomes: list[CouplingOutcome] = []
+        self._outcome: Optional[CouplingOutcome] = None
         # nothing counts as converged before a pass measured it
         self._unmeasured = {
             name: math.inf for stream in self._streams.values() for name in stream.names
@@ -176,9 +176,12 @@ class Leader:
         return self._final
 
     @property
-    def outcomes(self) -> tuple[CouplingOutcome, ...]:
-        """The outcome of every finished coupling, one per time step."""
-        return tuple(self._outcomes)
+    def outcome(self) -> Optional[CouplingOutcome]:
+        """The outcome of the last finished coupling (time step); ``None`` before.
+
+        Only the last one is kept; an execution observer gets every one (``coupling_finished``).
+        """
+        return self._outcome
 
     @property
     def residuals(self) -> dict[str, float]:
@@ -279,7 +282,7 @@ class Leader:
 
     def _finish(self, passes: int, converged: bool) -> None:
         outcome = CouplingOutcome(passes, converged, dict(self._residuals))
-        self._outcomes.append(outcome)
+        self._outcome = outcome
         self._final = False
         self._converged_before_final = False
         observer = execution_observer.current()

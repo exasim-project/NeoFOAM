@@ -16,7 +16,7 @@ from typing import Any
 
 import numpy as np
 import pytest
-from framework.coupling.regions import contexts, couple, graph, run, solve, tree
+from framework.coupling.regions import Outcomes, contexts, couple, graph, run, solve, tree
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
@@ -41,6 +41,7 @@ from neofoam.framework.coupling.strategies.mapping import (
     ProbeMapping,
     UniformMapping,
 )
+from neofoam.framework.execution_observer import observe
 from neofoam.framework.types import Placement
 
 
@@ -305,7 +306,9 @@ def test_coupling_op_public_read_api() -> None:
     # the leader builds its controller at its first loop test
     assert (solid_op.controller, fluid_op.controller) == (None, None)
 
-    _run(regions)
+    outcomes = Outcomes()
+    with observe(outcomes):
+        _run(regions)
 
     controller = fluid_op.controller
     assert solid_op.controller is None and controller is not None
@@ -318,7 +321,7 @@ def test_coupling_op_public_read_api() -> None:
         (("solid", "right", "T"), ("fluid", "wall")),
         (("fluid", "wall", "q"), ("solid", "right")),
     ]
-    assert [(o.passes, o.converged) for o in controller.outcomes] == [(1, True)]
+    assert [(o.passes, o.converged) for o in outcomes.of("fluid.coupling")] == [(1, True)]
 
 
 class _Other(FaceData):
