@@ -27,10 +27,10 @@ from framework.coupling.regions import (
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
-    Coupling,
     CouplingNode,
     Exchange,
     InProcessCommChannel,
+    coupling,
 )
 from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.graph import DAGResolver
@@ -53,20 +53,20 @@ def _two_nodes(comm_channel: Optional[InProcessCommChannel] = None) -> dict[str,
     ]
     regions = contexts(["a", "b"], [X, Y], nodes, comm_channel)
     for name, ctx in regions.items():
-        add_coupled(ctx, "p", "x", fixed(1.0, []))
-        add_coupled(ctx, "q", "y", fixed(2.0, []))
+        add_coupled(ctx, "p", fixed(1.0, [], data="x"))
+        add_coupled(ctx, "q", fixed(2.0, [], data="y"))
     return regions
 
 
 def test_a_region_gets_one_coupling_op_per_node_in_node_order() -> None:
     regions = _two_nodes()
 
-    outer, inner = Coupling.of(regions["a"]).operations()
+    outer, inner = coupling(regions["a"]).operations()
 
     assert [outer.operation_name, inner.operation_name] == ["a.outer", "a.inner"]
     assert (outer.metadata.wraps, inner.metadata.wraps) == (Placement(), Placement(("solve_y",)))
-    assert [s.patch for s in couple(regions["a"], 0).sides] == ["p"]
-    assert [s.patch for s in couple(regions["a"], 1).sides] == ["q"]
+    assert [port.name for port in couple(regions["a"], 0).ports] == ["p"]
+    assert [port.name for port in couple(regions["a"], 1).ports] == ["q"]
     assert couple(regions["a"], 1).node.name == "inner"
 
 
@@ -106,10 +106,10 @@ def test_each_node_has_its_own_leader() -> None:
         CouplingNode("bc", ("z",), placement={"b": Placement(("solve_z",))}),
     ]
     regions = contexts(["a", "b", "c"], exchanges, nodes)
-    add_coupled(regions["a"], "p", "x", fixed(1.0, []))
-    add_coupled(regions["b"], "p", "x", fixed(2.0, []))
-    add_coupled(regions["b"], "q", "z", fixed(3.0, []))
-    add_coupled(regions["c"], "q", "z", fixed(4.0, []))
+    add_coupled(regions["a"], "p", fixed(1.0, [], data="x"))
+    add_coupled(regions["b"], "p", fixed(2.0, [], data="x"))
+    add_coupled(regions["b"], "q", fixed(3.0, [], data="z"))
+    add_coupled(regions["c"], "q", fixed(4.0, [], data="z"))
 
     fields = {"a": ["x"], "b": ["x", "z"], "c": ["z"]}
     run(
@@ -132,8 +132,9 @@ def test_each_node_has_its_own_leader() -> None:
         "c.bc": ("c.bc", ("b", "c"), True),
     }
     assert [op.controller is not None for op in ops.values()] == [False, True, False, True]
-    coupling = Coupling.of(regions["b"]).coupling
-    assert coupling is not None and (coupling.group, coupling.leader) == (("a", "b", "c"), "c")
+    region_coupling = coupling(regions["b"]).coupling
+    assert region_coupling is not None
+    assert (region_coupling.group, region_coupling.leader) == (("a", "b", "c"), "c")
 
 
 def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
@@ -144,10 +145,10 @@ def _chain() -> tuple[dict[str, Context], dict[str, list[Operation]]]:
         CouplingNode("bc", ("z",)),
     ]
     regions = contexts(["a", "b", "c"], exchanges, nodes)
-    add_coupled(regions["a"], "p", "x", fixed(1.0, []))
-    add_coupled(regions["b"], "p", "x", fixed(2.0, []))
-    add_coupled(regions["b"], "q", "z", fixed(3.0, []))
-    add_coupled(regions["c"], "q", "z", fixed(4.0, []))
+    add_coupled(regions["a"], "p", fixed(1.0, [], data="x"))
+    add_coupled(regions["b"], "p", fixed(2.0, [], data="x"))
+    add_coupled(regions["b"], "q", fixed(3.0, [], data="z"))
+    add_coupled(regions["c"], "q", fixed(4.0, [], data="z"))
 
     fields = {"a": ["x"], "b": ["x", "z"], "c": ["z"]}
     return regions, {
@@ -184,12 +185,12 @@ def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
     regions = contexts(["a", "b"], [X], nodes)
     tasks = {}
     for name, ctx in regions.items():
-        add_coupled(ctx, "p", "x", fixed(1.0, []))
+        add_coupled(ctx, "p", fixed(1.0, [], data="x"))
         outer, inner = passes[name]
         builder = StepBuilder(
             [_counting("outer", outer, _counting("inner", inner, solve("x", lambda ctx: None)))]
         )
-        resolved = DAGResolver().resolve(builder, Coupling.of(ctx).operations()).operations
+        resolved = DAGResolver().resolve(builder, coupling(ctx).operations()).operations
         tasks[name] = partial(resolved.run, ctx)
     run_regions(tasks, comm_channel(regions["a"]))
     return regions

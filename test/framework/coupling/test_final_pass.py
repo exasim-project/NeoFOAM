@@ -17,21 +17,21 @@ from framework.coupling.regions import (
     RecordingCommChannel,
     Side,
     add_coupled,
+    context,
     contexts,
     couple,
     never,
     run,
     solve,
 )
-from pydantic import BaseModel
 
 from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
-    Coupling,
     CouplingNode,
     CouplingNotConvergedWarning,
     Exchange,
+    FaceData,
 )
 from neofoam.framework.coupling.controller import CouplingController, CouplingOutcome
 from neofoam.framework.coupling.region import region_couplings
@@ -43,7 +43,7 @@ PATCHES = {"a": ["p"], "b": ["p", "q"], "c": ["q"]}
 SCHEMES = pytest.mark.parametrize("scheme", ["serial", "parallel"])
 
 
-class _Data(BaseModel):
+class _Data(FaceData):
     x: Array
 
 
@@ -85,7 +85,7 @@ def _couple(
     tests = {name: _Region(name, fixed) for name, fixed in zip(PATCHES, (1.0, 2.0, 3.0))}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
-            add_coupled(ctx, patch, "x", tests[name].side())
+            add_coupled(ctx, patch, tests[name].side())
     run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
     controller = couple(regions["c"]).controller
     assert controller is not None
@@ -133,14 +133,11 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     comm_channel = RecordingCommChannel()
     nodes = [CouplingNode("coupling", ("a-b", "b-c"))]
     couplings = region_couplings(list(PATCHES), EXCHANGES, comm_channel, nodes)
-    regions = {
-        name: Context(fields={}, models={"coupling": Coupling(couplings.get(name))}, region=name)
-        for name in PATCHES
-    }
+    regions = {name: context(name, couplings.get(name)) for name in PATCHES}
     tests = {name: _Region(name, 1.0) for name in PATCHES}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
-            add_coupled(ctx, patch, "x", tests[name].side())
+            add_coupled(ctx, patch, tests[name].side())
     run({name: (ctx, tests[name].ops()) for name, ctx in regions.items()})
 
     decisions = [

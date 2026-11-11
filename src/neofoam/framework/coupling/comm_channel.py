@@ -11,7 +11,7 @@ import time
 from collections import defaultdict, deque
 from typing import Any, Iterable, Literal, Optional, Protocol
 
-# What a side sends, by field name: one value (or row) per point of its patch.
+# What a port sends of one data model, by field name: a row per entity, or a value.
 Data = dict[str, Any]
 
 # Seconds a receive of an InProcessCommChannel waits by default.
@@ -24,18 +24,18 @@ class Tag:
     TIME_DT = "time/dt"
 
     @staticmethod
-    def data(exchange: str) -> str:
-        """What a side sends, each pass."""
-        return f"data:{exchange}"
+    def data(exchange: str, key: str) -> str:
+        """What a port sends of one data model (by its ``key``), each pass."""
+        return f"data:{exchange}/{key}"
 
     @staticmethod
     def side(exchange: str) -> str:
-        """A side's models and points, sent to its partner once."""
+        """What a port sends and its geometry, told its partner once."""
         return f"side:{exchange}"
 
     @staticmethod
     def node(node: str, what: Literal["sides", "pass", "decision"]) -> str:
-        """A region's sides, its pass and the leader's decision, within coupling node ``node``."""
+        """A region's streams, its pass and the leader's decision, within coupling node ``node``."""
         return f"{node}/{what}"
 
 

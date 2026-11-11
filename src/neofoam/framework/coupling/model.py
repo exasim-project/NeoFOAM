@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A region's coupling model, ``ctx.models["coupling"]``: a :class:`Coupling`."""
+"""A region's coupling model ``ctx.models["coupling"]``, a :class:`Coupling`; :func:`coupling`."""
 
 from __future__ import annotations
 
@@ -11,7 +11,8 @@ from neofoam.framework.operations import IterativeOp, Operation, Operations, Seq
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .comm_channel import Tag
-from .data import ExchangeSide
+from .data import CoupledPort, base_name
+from .location import Location, MeshGeometry
 from .loop import CouplingOp
 
 if TYPE_CHECKING:
@@ -21,86 +22,95 @@ if TYPE_CHECKING:
 
 
 class Coupling:
-    """The coupling of one region: its coupled sides and the operations they need.
+    """The coupling of one region: its coupled ports and the operations they need.
 
-    A solver that supports coupling adds it in its init, before its boundary
-    conditions, and each ``@coupled`` boundary condition adds itself::
+    A solver that supports coupling adds it in its init, with its mesh geometry,
+    before it binds its coupled instances to their locations::
 
-        ctx.models["coupling"] = Coupling(self.coupling)
+        ctx.models["coupling"] = Coupling(self.coupling, FoamGeometry(mesh))
         ...
-        Coupling.of(ctx).add(self)
+        coupling(ctx).add(Patch("top"), bc)
     """
 
-    def __init__(self, coupling: Optional[RegionCoupling]) -> None:
+    def __init__(self, coupling: Optional[RegionCoupling], geometry: MeshGeometry) -> None:
         self.coupling = coupling
-        self._sides: list[ExchangeSide] = []
+        self.geometry = geometry
+        self._ports: dict[str, CoupledPort] = {}
         self._operations: Optional[Operations] = None
 
-    @staticmethod
-    def of(ctx: Context) -> Coupling:
-        """The coupling model of the region ``ctx``; ``ValueError`` when its solver added none."""
-        coupling = ctx.models.get("coupling")
-        if not isinstance(coupling, Coupling):
-            raise ValueError(f"the solver of region {ctx.region} does not support coupling")
-        return coupling
-
     @property
-    def sides(self) -> tuple[ExchangeSide, ...]:
-        """The region's coupled sides, in the order they were added."""
-        return tuple(self._sides)
+    def ports(self) -> tuple[CoupledPort, ...]:
+        """The region's coupled ports, in the order they were added."""
+        return tuple(self._ports.values())
 
-    def add(self, instance: Any) -> None:
-        """Add the side of the ``@coupled`` ``instance``, before the graph is built."""
+    def add(self, location: Location, instance: Any) -> None:
+        """Bind the ``@coupled`` ``instance`` to ``location``, before the graph is built.
+
+        Instances on one location merge into its port.
+        """
         declaration = getattr(type(instance), "__coupled__", None)
         if declaration is None:
             raise TypeError(f"{type(instance).__qualname__} is not @coupled")
-        for attribute in ("field", "patch"):
-            if not hasattr(instance, attribute):
-                raise TypeError(
-                    f"@coupled {type(instance).__qualname__} sets no self.{attribute} in __init__"
-                )
-        if self.coupling is None:
-            raise ValueError(
-                f"no exchange connects the coupled side on patch {instance.patch}: the case "
-                "does not couple its region (system/regionCoupling.yaml: exchanges)"
-            )
-        side = declaration.side(instance, self.coupling.region)
-        if side.patch not in self.coupling.patches:
-            raise ValueError(
-                f"no exchange connects the coupled side of {side.label}; a coupled boundary "
-                "condition needs its exchange (system/regionCoupling.yaml: exchanges)"
-            )
+        port = CoupledPort(
+            self._region(location),
+            location,
+            declaration.streams(instance, "sends"),
+            declaration.streams(instance, "receives"),
+        )
+        _check_entities(port)
         if self._operations is not None:
-            raise ValueError(f"{side.label} is added after the region's graph was built")
-        self._sides.append(side)
+            raise ValueError(f"{port.label} is added after the region's graph was built")
+        known = self._ports.get(port.name)
+        self._ports[port.name] = port if known is None else known.merged(port)
+
+    def _region(self, location: Location) -> str:
+        coupling = self.coupling
+        if coupling is None:
+            raise ValueError(
+                f"no exchange connects the port {location.name}: the case does not couple its "
+                "region (system/regionCoupling.yaml: exchanges)"
+            )
+        if location.name not in coupling.ports:
+            raise ValueError(
+                f"no exchange connects the port {coupling.region}.{location.name}; a coupled "
+                "instance needs its exchange (system/regionCoupling.yaml: exchanges)"
+            )
+        return coupling.region
 
     def operations(self) -> Operations:
         """The region's coupling ops, one per node, outer to inner; built once."""
         if self._operations is None:
             coupling = self.coupling
-            if coupling is None:
-                self._operations = Operations()
-            else:
-                by_node: dict[str, list[ExchangeSide]] = {node.name: [] for node in coupling.nodes}
-                in_node: dict[str, str] = {}
-                for side in self._sides:
-                    name = coupling.node_of(side.patch).name
-                    if in_node.setdefault(side.field, name) != name:
-                        raise ValueError(
-                            f"field {side.field} of region {coupling.region} is coupled in the "
-                            f"nodes '{in_node[side.field]}' and '{name}' ({side.label}); a "
-                            "region's field is in at most one coupling node"
-                        )
-                    by_node[name].append(side)
-                ops: list[Operation] = []
-                for node in coupling.nodes:
-                    couple = CouplingOp(coupling, node, by_node[node.name])
-                    metadata = OperationMetadata(
-                        op_name=couple.label, wraps=node.placement_of(coupling.region)
-                    )
-                    ops.append(Operation(func=couple, metadata=metadata))
-                self._operations = Operations(ops)
+            self._operations = Operations() if coupling is None else self._build(coupling)
         return self._operations
+
+    def _build(self, coupling: RegionCoupling) -> Operations:
+        by_node = self._by_node(coupling)
+        geometries = {port.name: port.location.geometry(self.geometry) for port in self.ports}
+        ops: list[Operation] = []
+        for node in coupling.nodes:
+            couple = CouplingOp(coupling, node, by_node[node.name], geometries)
+            metadata = OperationMetadata(
+                op_name=couple.label, wraps=node.placement_of(coupling.region)
+            )
+            ops.append(Operation(func=couple, metadata=metadata))
+        return Operations(ops)
+
+    def _by_node(self, coupling: RegionCoupling) -> dict[str, list[CoupledPort]]:
+        """The ports by node; ``ValueError`` when a data field is in two nodes."""
+        by_node: dict[str, list[CoupledPort]] = {node.name: [] for node in coupling.nodes}
+        in_node: dict[str, str] = {}
+        for port in self.ports:
+            name = coupling.node_of(port.name).name
+            for data in sorted(port.names):
+                if in_node.setdefault(data, name) != name:
+                    raise ValueError(
+                        f"the data {data} of region {coupling.region} is coupled in the nodes "
+                        f"'{in_node[data]}' and '{name}' ({port.label}); a region's data field "
+                        "is in at most one coupling node"
+                    )
+            by_node[name].append(port)
+        return by_node
 
     def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
         """The region's coupling ops and, in a transient case, its time-step op."""
@@ -152,6 +162,29 @@ class Coupling:
                 f"coupling '{holder}' is serial but holds the time step of its regions; make it "
                 f"parallel or place it around named operations "
                 f"(wraps.{coupling.region}.operations)"
+            )
+
+
+def coupling(ctx: Context) -> Coupling:
+    """The coupling model of the region ``ctx``; ``ValueError`` when its solver added none.
+
+    Example::
+
+        coupling(ctx).add(Patch("top"), bc)
+    """
+    model = ctx.models.get("coupling")
+    if not isinstance(model, Coupling):
+        raise ValueError(f"the solver of region {ctx.region} does not support coupling")
+    return model
+
+
+def _check_entities(port: CoupledPort) -> None:
+    """Raise ``TypeError`` unless every model of ``port`` lives on its location's entities."""
+    for stream in (*port.sends, *port.receives):
+        if stream.model.entity not in port.location.entities:
+            raise TypeError(
+                f"{stream.model.__qualname__} is {base_name(stream.model)}, which "
+                f"does not live on {port.location} ({port.label})"
             )
 
 

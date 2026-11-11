@@ -11,13 +11,13 @@ from framework.coupling.regions import TIMEOUT, contexts
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     CommChannelClosed,
-    Coupling,
     CouplingDeadlock,
     CouplingNode,
     Exchange,
     InProcessCommChannel,
     NearestNeighborMapping,
     RegionCoupling,
+    coupling,
 )
 from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.types import Placement
@@ -110,9 +110,9 @@ def test_an_exchange_maps_by_nearest_neighbor_by_default() -> None:
 
 
 def _coupling(ctx: Context) -> RegionCoupling:
-    coupling = Coupling.of(ctx).coupling
-    assert coupling is not None
-    return coupling
+    region_coupling = coupling(ctx).coupling
+    assert region_coupling is not None
+    return region_coupling
 
 
 def test_unconnected_groups_of_exchanges_get_a_leader_each() -> None:
@@ -135,7 +135,7 @@ def test_unconnected_groups_of_exchanges_get_a_leader_each() -> None:
     ("exchange", "error"),
     [
         (Exchange("x", (("a", "p"), ("fluid", "q"))), r"couple the regions \['fluid'\]"),
-        (Exchange("x", (("a", "p"), ("a", "q"))), "exchange 'x' joins two patches of region a"),
+        (Exchange("x", (("a", "p"), ("a", "q"))), "exchange 'x' joins two ports of region a"),
     ],
 )
 def test_region_couplings_check_the_links(exchange: Exchange, error: str) -> None:

@@ -5,15 +5,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Literal, Mapping, Optional, Sequence
 
 from neofoam.framework import execution_observer
 from neofoam.framework.operations import IterativeOp
 
 from .comm_channel import Data, Tag
-from .controller import CouplingController, GroupSide
-from .data import End, ExchangeSide, _check_received, _sent
+from .controller import CouplingController, GroupStream, StreamId
+from .data import CoupledPort, End, Stream, check_received, check_rows, sent
 from .kernels import BoundMapping
+from .location import Geometry
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
 
 # the loops enclosing a coupling op, outermost first: (name, iteration from 0)
 _Loops = tuple[tuple[Optional[str], int], ...]
+
+# a stream of this region: (port, data key)
+_Local = tuple[str, str]
 
 
 def _path(names: Sequence[Optional[str]]) -> str:
@@ -35,21 +39,27 @@ def _state(loops: _Loops) -> str:
     return " > ".join(f"{name}#{iteration + 1}" for name, iteration in loops) or "top"
 
 
-# the leader's decision for a region: another pass?, final?, by patch the carried
-# data or None (receive it fresh), and the patches whose data to send fresh
-_Decision = tuple[bool, bool, dict[str, Optional[Data]], frozenset[str]]
+# the leader's decision for a region: another pass?, final?, by received stream the
+# carried data or None (receive it fresh), and the sent streams to send fresh
+_Decision = tuple[bool, bool, dict[_Local, Optional[Data]], frozenset[_Local]]
 
 
 class CouplingOp(IterativeOp):
-    """A region's coupling node: a loop whose test exchanges the node's sides' data.
+    """A region's coupling node: a loop whose test exchanges the node's ports' data.
 
-    Labelled ``<region>.<node>``. The first test exchanges the sides' models and
-    points with the partners; every test sends the leader what the sides send and
-    hands each side its mapped data as the leader decides. Not thread safe.
+    Labelled ``<region>.<node>``. The first test tells each partner what the
+    port sends and its geometry and checks the pairing; every test sends the
+    leader what the ports send, one stream per data model, and hands each port
+    its mapped data as the leader decides. ``geometries``: each port's, by name.
+    Not thread safe.
     """
 
     def __init__(
-        self, coupling: RegionCoupling, node: CouplingNode, sides: Sequence[ExchangeSide]
+        self,
+        coupling: RegionCoupling,
+        node: CouplingNode,
+        ports: Sequence[CoupledPort],
+        geometries: Mapping[str, Geometry],
     ) -> None:
         super().__init__(self._test)
         self.region = coupling.region
@@ -60,39 +70,34 @@ class CouplingOp(IterativeOp):
         self._exchanges = coupling.node_exchanges(node)
         self._group = coupling.node_group(node)
         self._leader = self._group[-1]
-        self._by_patch = {
+        self._by_port = {
             dict(exchange.ends)[self.region]: exchange
             for exchange in self._exchanges
             if self.region in dict(exchange.ends)
         }
-        self._sides = tuple(sides)
+        self._ports = tuple(ports)
+        self._geometries = dict(geometries)
         self._check()
         # set at the first test
         self._connected = False
         self._mappers: dict[str, BoundMapping] = {}
         self._controller: Optional[CouplingController] = None
-        # the patches whose data the partner receives fresh, as the leader last decided
-        self._fresh: frozenset[str] = frozenset()
+        # the streams whose data the partner receives fresh, as the leader last decided
+        self._fresh: frozenset[_Local] = frozenset()
 
     def _check(self) -> None:
-        patches = [side.patch for side in self._sides]
-        for side in self._sides:
-            if patches.count(side.patch) > 1:
+        names = [port.name for port in self._ports]
+        for name, exchange in self._by_port.items():
+            if name not in names:
                 raise ValueError(
-                    f"two coupled sides on patch {side.label}; an exchange joins patches "
-                    "with one coupled side each"
-                )
-        for patch, exchange in self._by_patch.items():
-            if patch not in patches:
-                raise ValueError(
-                    f"exchange '{exchange.name}' connects {self.region}.{patch}, which has no "
-                    "coupled side (no coupled boundary condition on that patch)"
+                    f"exchange '{exchange.name}' connects {self.region}.{name}, which has no "
+                    "coupled instance (no coupling(ctx).add on that location)"
                 )
 
     @property
-    def sides(self) -> tuple[ExchangeSide, ...]:
-        """The region's sides, in the order they receive."""
-        return self._sides
+    def ports(self) -> tuple[CoupledPort, ...]:
+        """The region's ports, in the order they receive."""
+        return self._ports
 
     @property
     def is_leader(self) -> bool:
@@ -109,14 +114,14 @@ class CouplingOp(IterativeOp):
         """The leader's controller, built at its first loop test; ``None`` in other regions."""
         return self._controller
 
-    def exchange_of(self, side: ExchangeSide) -> Exchange:
-        """The exchange ``side`` belongs to."""
-        return self._by_patch[side.patch]
+    def exchange_of(self, port: CoupledPort) -> Exchange:
+        """The exchange ``port`` belongs to."""
+        return self._by_port[port.name]
 
-    def partner(self, side: ExchangeSide) -> str:
-        """``<region>.<patch>`` of the side ``side`` receives from."""
-        region, patch = self.exchange_of(side).partner(self.region)
-        return f"{region}.{patch}"
+    def partner(self, port: CoupledPort) -> str:
+        """``<region>.<port>`` of the port ``port`` exchanges with."""
+        region, name = self.exchange_of(port).partner(self.region)
+        return f"{region}.{name}"
 
     def _test(self, ctx: Context) -> bool:
         loops = self._enclosing(ctx)
@@ -124,13 +129,13 @@ class CouplingOp(IterativeOp):
         if not self._connected:
             self._connect(loops)
         time = getattr(ctx.time, "value", None)
-        current = {side.patch: _sent(side, self.node.name, iteration, time) for side in self._sides}
-        for side in self._sides:
-            if side.patch in self._fresh:
-                exchange = self.exchange_of(side)
-                self._send(
-                    exchange.partner(self.region)[0], Tag.data(exchange.name), current[side.patch]
-                )
+        current = self._current((iteration, time))
+        for port in self._ports:
+            exchange = self.exchange_of(port)
+            for stream in port.sends:
+                if (port.name, stream.key) in self._fresh:
+                    tag = Tag.data(exchange.name, stream.key)
+                    self._send(self._partner_region(port), tag, current[(port.name, stream.key)])
         go_on, final, decided, self._fresh = self._decide(
             current, time if iteration == 0 else None, loops, iteration
         )
@@ -138,9 +143,23 @@ class CouplingOp(IterativeOp):
             self._fresh = frozenset()
             return False
         ctx.mark_final(final)
-        for side in self._sides:
-            self._hand_over(side, decided)
+        for port in self._ports:
+            self._hand_over(port, decided)
         return True
+
+    def _current(self, when: tuple[int, Any]) -> dict[_Local, Data]:
+        """What every port sends now, by stream; ``ValueError`` for a wrong row count."""
+        current: dict[_Local, Data] = {}
+        for port in self._ports:
+            size = self._geometries[port.name].size
+            for stream in port.sends:
+                data = sent(stream, port, self.node.name, when)
+                check_rows(stream, data, size, port)
+                current[(port.name, stream.key)] = data
+        return current
+
+    def _partner_region(self, port: CoupledPort) -> str:
+        return self.exchange_of(port).partner(self.region)[0]
 
     def _enclosing(self, ctx: Context) -> _Loops:
         """``ctx.loops`` without the op's own entry; coupling ops by node name, to compare."""
@@ -156,56 +175,61 @@ class CouplingOp(IterativeOp):
         return self._comm_channel.receive(source, self.region, tag)
 
     def _connect(self, loops: _Loops) -> None:
-        """Tell each partner its side and the leader the region's sides and loops; check them."""
+        """Tell each partner what a port sends and the leader the region's streams; check them."""
         path = tuple(name for name, _iteration in loops)
-        for side in self._sides:
-            exchange = self.exchange_of(side)
+        for port in self._ports:
             announced = {
-                "label": side.label,
-                "model": side.sends.__qualname__,
-                "fields": tuple(side.sends.model_fields),
-                "points": side.coordinates,
+                "label": port.label,
+                "sends": {stream.key: stream.model.__qualname__ for stream in port.sends},
+                "entities": {stream.key: stream.model.entity for stream in port.sends},
+                "geometry": self._geometries[port.name],
             }
-            self._send(exchange.partner(self.region)[0], Tag.side(exchange.name), announced)
-        sides = [(side.patch, side.field) for side in self._sides]
+            self._send(self._partner_region(port), Tag.side(self.exchange_of(port).name), announced)
+        streams = [
+            (port.name, stream.key, stream.names) for port in self._ports for stream in port.sends
+        ]
         if not self.is_leader:
-            self._send(self._leader, self._tag("sides"), (path, sides))
-        for side in self._sides:
-            exchange = self.exchange_of(side)
-            announced = self._receive(exchange.partner(self.region)[0], Tag.side(exchange.name))
-            _check_received(exchange.name, announced, side)
-            try:
-                mapper = exchange.mapping.bind(announced["points"], side.coordinates)
-            except ValueError as error:
-                raise ValueError(
-                    f"exchange '{exchange.name}' ({announced['label']} -> {side.label}): {error}"
-                ) from None
-            self._mappers[side.patch] = mapper
+            self._send(self._leader, self._tag("sides"), (path, streams))
+        for port in self._ports:
+            exchange = self.exchange_of(port)
+            announced = self._receive(self._partner_region(port), Tag.side(exchange.name))
+            check_received(exchange.name, announced, port)
+            if port.receives:
+                self._mappers[port.name] = self._bind(exchange, announced, port)
         if self.is_leader:
             self._controller = CouplingController(
-                self._node_sides(path, sides), self.label, self.node
+                self._node_streams(path, streams), self.label, self.node, self._group
             )
         self._connected = True
+
+    def _bind(self, exchange: Exchange, announced: dict[str, Any], port: CoupledPort) -> Any:
+        """The exchange's mapping onto ``port``; ``ValueError`` naming both ports."""
+        try:
+            for stream in port.receives:
+                exchange.mapping.check(announced["entities"][stream.key], stream.model.entity)
+            return exchange.mapping.bind(announced["geometry"], self._geometries[port.name])
+        except ValueError as error:
+            raise ValueError(
+                f"exchange '{exchange.name}' ({announced['label']} -> {port.label}): {error}"
+            ) from None
 
     def _tag(self, what: Literal["sides", "pass", "decision"]) -> str:
         return Tag.node(self.node.name, what)
 
-    def _node_sides(
-        self, path: tuple[Optional[str], ...], own: list[tuple[str, str]]
-    ) -> list[GroupSide]:
-        """The leader: every region's sides; ``ValueError`` when their loops differ."""
+    def _node_streams(self, path: tuple[Optional[str], ...], own: list[Any]) -> list[GroupStream]:
+        """The leader: every region's streams; ``ValueError`` when their loops differ."""
         received = {
             region: (path, own)
             if region == self.region
             else self._receive(region, self._tag("sides"))
             for region in self._group
         }
-        paths = {region: there for region, (there, _sides) in received.items()}
+        paths = {region: there for region, (there, _streams) in received.items()}
         if len(set(paths.values())) > 1:
             where = ", ".join(f"{region}: {_path(there)}" for region, there in paths.items())
             raise ValueError(
                 f"coupling '{self.node.name}' sits in different loops in its regions: {where}; "
-                "a node must run equally often in all its regions \u2013 put the exchanges in "
+                "a node must run equally often in all its regions – put the exchanges in "
                 "one node or place it alike"
             )
         other: dict[End, End] = {
@@ -217,75 +241,92 @@ class CouplingOp(IterativeOp):
             end: exchange.name for exchange in self._exchanges for end in exchange.ends
         }
         return [
-            GroupSide(region, patch, field, other[(region, patch)], exchange_name[(region, patch)])
-            for region, (_path, sides) in received.items()
-            for patch, field in sides
+            GroupStream(
+                region,
+                port,
+                key,
+                tuple(names),
+                other[(region, port)],
+                exchange_name[(region, port)],
+            )
+            for region, (_path, streams) in received.items()
+            for port, key, names in streams
         ]
 
     def _decide(
-        self, current: dict[str, Data], time: Any, loops: _Loops, iteration: int
+        self, current: dict[_Local, Data], time: Any, loops: _Loops, iteration: int
     ) -> _Decision:
         """The leader's decision for this region; the leader checks the regions' times and loops."""
-        leader = self._leader
         if not self.is_leader:
-            self._send(leader, self._tag("pass"), (time, loops, current))
-            decision: _Decision = self._receive(leader, self._tag("decision"))
+            self._send(self._leader, self._tag("pass"), (time, loops, current))
+            decision: _Decision = self._receive(self._leader, self._tag("decision"))
             return decision
-        assert self._controller is not None
-        sent = {
+        sent_by = {
             region: (time, loops, current)
             if region == self.region
             else self._receive(region, self._tag("pass"))
             for region in self._group
         }
-        times = {region: when for region, (when, _loops, _data) in sent.items()}
+        self._check_pass(sent_by, iteration)
+        decisions = self._decisions(sent_by, iteration)
+        for region, decision in decisions.items():
+            if region != self.region:
+                self._send(region, self._tag("decision"), decision)
+        return decisions[self.region]
+
+    def _check_pass(self, sent_by: dict[str, Any], iteration: int) -> None:
+        """Raise ``ValueError`` unless the regions entered the pass at one time and loop state."""
+        times = {region: when for region, (when, _loops, _data) in sent_by.items()}
         if len(set(times.values())) > 1:
             raise ValueError(
                 f"the coupled regions {list(times)} start a time step at different times "
                 f"{times}; they must step the same times (deltaT, endTime)"
             )
-        states = {region: there for region, (_when, there, _data) in sent.items()}
+        states = {region: there for region, (_when, there, _data) in sent_by.items()}
         if len(set(states.values())) > 1:
             where = ", ".join(f"{region}: {_state(there)}" for region, there in states.items())
             raise ValueError(
                 f"coupling '{self.node.name}': its regions entered pass {iteration + 1} "
                 f"in different loop states: {where}"
             )
-        controller = self._controller
-        carried = controller.decide(
-            {
-                (region, patch): data
-                for region, (_when, _loops, sides) in sent.items()
-                for patch, data in sides.items()
-            },
-            iteration,
-        )
-        received: dict[str, dict[str, Optional[Data]]] = {region: {} for region in self._group}
-        fresh: dict[str, set[str]] = {region: set() for region in self._group}
-        if carried is not None:
-            for end, side in controller.sides.items():
-                if controller.fresh(end):
-                    received[side.region][side.patch] = None
-                    fresh[side.partner[0]].add(side.partner[1])
-                else:
-                    received[side.region][side.patch] = carried[side.partner]
-        decisions = {
-            region: (carried is not None, controller.final, by_patch, frozenset(fresh[region]))
-            for region, by_patch in received.items()
-        }
-        for region, decision in decisions.items():
-            if region != self.region:
-                self._send(region, self._tag("decision"), decision)
-        return decisions[self.region]
 
-    def _hand_over(self, side: ExchangeSide, decided: dict[str, Optional[Data]]) -> None:
-        """Map what the partner of ``side`` sent (or the carried data) onto it and hand it over."""
-        exchange = self.exchange_of(side)
-        data = decided[side.patch]
+    def _decisions(self, sent_by: dict[str, Any], iteration: int) -> dict[str, _Decision]:
+        """The controller's decision, for each region: what it receives and sends fresh."""
+        controller = self._controller
+        assert controller is not None
+        current: dict[StreamId, Data] = {
+            (region, port, key): data
+            for region, (_when, _loops, streams) in sent_by.items()
+            for (port, key), data in streams.items()
+        }
+        carried = controller.decide(current, iteration)
+        received: dict[str, dict[_Local, Optional[Data]]] = {region: {} for region in self._group}
+        fresh: dict[str, set[_Local]] = {region: set() for region in self._group}
+        if carried is not None:
+            for stream_id, stream in controller.streams.items():
+                partner_region, partner_port = stream.partner
+                into = received[partner_region]
+                if controller.fresh(stream_id):
+                    into[(partner_port, stream.key)] = None
+                    fresh[stream.region].add((stream.port, stream.key))
+                else:
+                    into[(partner_port, stream.key)] = carried[stream_id]
+        return {
+            region: (carried is not None, controller.final, by_stream, frozenset(fresh[region]))
+            for region, by_stream in received.items()
+        }
+
+    def _hand_over(self, port: CoupledPort, decided: dict[_Local, Optional[Data]]) -> None:
+        """Map what the partner sent (or the carried data) onto ``port``; hand each stream over."""
+        for stream in port.receives:
+            received = self._mapped(port, stream, decided[(port.name, stream.key)])
+            observer = execution_observer.current()
+            if observer is not None:
+                observer.coupling_exchanged(self, port, received)
+            stream.method(received)
+
+    def _mapped(self, port: CoupledPort, stream: Stream, data: Optional[Data]) -> Any:
         if data is None:
-            data = self._receive(exchange.partner(self.region)[0], Tag.data(exchange.name))
-        received = side.receives.model_validate(self._mappers[side.patch](data))
-        observer = execution_observer.current()
-        if observer is not None:
-            observer.coupling_exchanged(self, side, received)
-        side.receive(received)
+            tag = Tag.data(self.exchange_of(port).name, stream.key)
+            data = self._receive(self._partner_region(port), tag)
+        return stream.model.model_validate(self._mappers[port.name](data))

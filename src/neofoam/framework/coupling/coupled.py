@@ -1,55 +1,44 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``@coupled``: a boundary condition declares its side of an exchange."""
+"""``@coupled``: a class declares what it sends and receives; its owner binds it to a location."""
 
 from __future__ import annotations
 
 import inspect
 import typing
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, TypeVar
 
-from .data import ExchangeSide, _is_model
+from .data import Stream, check_model
 
 T = TypeVar("T", bound=type)
 F = TypeVar("F", bound=Callable[..., Any])
 
 _ROLE = "__coupled_role__"
+_ROLES = ("sends", "receives")
 
 
 @dataclass(frozen=True)
 class _Declaration:
-    """What ``@coupled`` read off a class, kept on it as ``__coupled__``."""
+    """What ``@coupled`` read off a class, kept on it as ``__coupled__``: ``(method, model)``s."""
 
-    sends: type[Any]
-    receives: type[Any]
-    send: str
-    receive: str
-    coordinates: Optional[str]
+    sends: tuple[tuple[str, type[Any]], ...]
+    receives: tuple[tuple[str, type[Any]], ...]
 
-    def side(self, instance: Any, region: str) -> ExchangeSide:
-        points = getattr(instance, self.coordinates)() if self.coordinates else None
-        return ExchangeSide(
-            region=region,
-            patch=instance.patch,
-            field=instance.field,
-            sends=self.sends,
-            receives=self.receives,
-            send=getattr(instance, self.send),
-            receive=getattr(instance, self.receive),
-            coordinates=points,
-        )
+    def streams(self, instance: Any, role: str) -> tuple[Stream, ...]:
+        """The streams of ``instance`` in ``role``, bound to its methods."""
+        return tuple(Stream(model, getattr(instance, name)) for name, model in getattr(self, role))
 
 
 def _marked(cls: type) -> dict[str, str]:
-    """The methods of ``cls`` (and its bases) marked with a role: ``{role: name}``."""
+    """The methods of ``cls`` (and its bases) marked with a role: ``{name: role}``."""
     roles: dict[str, str] = {}
     for klass in reversed(cls.__mro__):
         for name, member in vars(klass).items():
             role = getattr(member, _ROLE, None)
             if role is not None:
-                roles[role] = name
+                roles[name] = role
     return roles
 
 
@@ -65,74 +54,71 @@ def _model(cls: type, name: str, role: str) -> type[Any]:
     hints = _hints(cls, name)
     if role == "sends":
         model = hints.get("return")
-        where = "its return annotation"
     else:
         params = [p for p in inspect.signature(getattr(cls, name)).parameters if p != "self"]
         model = hints.get(params[0]) if params else None
-        where = "the annotation of its data parameter"
-    if not _is_model(model):
-        raise TypeError(
-            f"{cls.__qualname__}.{name} (@coupled.{role}) declares what the side {role} "
-            f"by {where}, a pydantic model; got {model!r}"
-        )
-    return model  # type: ignore[return-value]
+    return check_model(model, f"{cls.__qualname__}.{name} (@coupled.{role})")
+
+
+def _check_once(cls: type, role: str, declared: list[tuple[str, type[Any]]]) -> None:
+    seen: dict[str, str] = {}
+    for _name, model in declared:
+        for field in model.model_fields:
+            if field in seen:
+                raise TypeError(
+                    f"two @coupled.{role} of {field} in {cls.__name__} ({seen[field]} and "
+                    f"{model.__qualname__}); values that go together share one model"
+                )
+            seen[field] = model.__qualname__
 
 
 class _Coupled:
-    """``@coupled`` on a boundary condition class, and its method markers.
+    """``@coupled`` on a class, and its method markers ``@coupled.sends`` / ``@coupled.receives``.
+
+    A class sends, receives, or both; at most once per data field. It knows no
+    location, geometry or context: its owner binds it with
+    ``coupling(ctx).add(location, instance)``. Checked at decoration.
 
     Example::
 
         @coupled
-        class CoupledHeatFlux(Patch):     # sets self.field and self.patch
-            def __init__(self, ctx, ...):
-                ...
-                Coupling.of(ctx).add(self)
-
-            @coupled.coordinates
-            def points(self) -> Array: ...
-
+        class CoupledHeatFlux:
             @coupled.sends
-            def send(self) -> WallTemperature: ...
+            def wall_temperature(self) -> WallTemperature: ...
 
             @coupled.receives
-            def receive(self, data: WallHeatFlux) -> None: ...
+            def heat_in(self, data: WallHeatFlux) -> None: ...
+
+        coupling(ctx).add(Patch("top"), CoupledHeatFlux())
     """
 
     def __call__(self, cls: T) -> T:
-        roles = _marked(cls)
-        missing = [role for role in ("sends", "receives") if role not in roles]
-        if missing:
+        marked = _marked(cls)
+        if not marked:
             raise TypeError(
-                f"@coupled class {cls.__qualname__} needs a method marked "
-                + " and one marked ".join(f"@coupled.{role}" for role in missing)
+                f"{cls.__name__} is @coupled but marks no @coupled.sends or "
+                "@coupled.receives method"
             )
-        declaration = _Declaration(
-            sends=_model(cls, roles["sends"], "sends"),
-            receives=_model(cls, roles["receives"], "receives"),
-            send=roles["sends"],
-            receive=roles["receives"],
-            coordinates=roles.get("coordinates"),
+        declared: dict[str, list[tuple[str, type[Any]]]] = {role: [] for role in _ROLES}
+        for name, role in marked.items():
+            declared[role].append((name, _model(cls, name, role)))
+        for role in _ROLES:
+            _check_once(cls, role, declared[role])
+        cls.__coupled__ = _Declaration(  # type: ignore[attr-defined]
+            tuple(declared["sends"]), tuple(declared["receives"])
         )
-        cls.__coupled__ = declaration  # type: ignore[attr-defined]
         return cls
 
     @staticmethod
     def sends(func: F) -> F:
-        """Mark the method returning what the side sends; its return annotation is the model."""
+        """Mark a method returning data the instance sends; its return annotation is the model."""
         setattr(func, _ROLE, "sends")
         return func
 
     @staticmethod
     def receives(func: F) -> F:
-        """Mark the method taking what the side receives; its parameter annotation is the model."""
+        """Mark a method taking data the instance receives; its parameter's type is the model."""
         setattr(func, _ROLE, "receives")
-        return func
-
-    @staticmethod
-    def coordinates(func: F) -> F:
-        """Mark the method returning the patch's points, one row each (optional)."""
-        setattr(func, _ROLE, "coordinates")
         return func
 
 

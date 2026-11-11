@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Literal, NamedTuple, Optional
+from typing import Any, Callable, ClassVar, Literal, NamedTuple, Optional
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
@@ -13,12 +13,12 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 from neofoam.core.plugin_system import PluginSystem
 
 from .comm_channel import Data
+from .location import Geometry
 
 
 class SideChange(NamedTuple):
-    """What one side sent in the previous and in the current pass, for a convergence check."""
+    """What one stream sent in the previous and in the current pass, for a convergence check."""
 
-    field: str
     previous: Data
     current: Data
 
@@ -48,38 +48,57 @@ def nearest_neighbor(source: Any, target: Any) -> Any:
     return indices
 
 
-# a mapping bound to both sides' points: data on the source points -> on the target's
+# a mapping bound to both ports' geometries: data on the source -> on the target
 BoundMapping = Callable[[Data], Data]
+
+# the entity kinds of the data models: face, cell, value, probe
+_TRANSFER = (("face", "face"), ("cell", "cell"))
 
 
 @PluginSystem.register(discriminator_variable="mapping", discriminator="type")
 class CouplingMapping(BaseModel):
-    """Maps the data a side sends onto the other side's points; a plugin family.
+    """Maps the data a port sends onto the receiving port's location; a plugin family.
 
-    Bound once, when the receiving op connects, to the partner's points (``source``)
-    and its own (``target``; ``None`` without coordinates). A mapping of one's own
-    subclasses it with a ``type: Literal[...]``, overrides :meth:`bind` and
-    registers (``@CouplingMapping.register``); so do accelerations and convergences.
+    Bound once, when the receiving op connects, to the sender's geometry
+    (``source``) and its own (``target``). ``kinds`` lists the ``(sent, received)``
+    entity kinds it maps (``face``, ``cell``, ``value``, ``probe``). A mapping of
+    one's own subclasses it with a ``type: Literal[...]``, overrides :meth:`bind`
+    and registers (``@CouplingMapping.register``); so do accelerations and convergences.
     """
 
     model_config = ConfigDict(extra="forbid")
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = _TRANSFER
 
-    def bind(self, source: Any, target: Any) -> BoundMapping:
+    def check(self, sent: str, received: str) -> None:
+        """Raise ``ValueError`` unless the mapping maps ``sent`` onto ``received`` entities."""
+        if (sent, received) not in self.kinds:
+            can = ", ".join(f"{a} -> {b}" for a, b in self.kinds)
+            raise ValueError(
+                f"mapping '{getattr(self, 'type', type(self).__name__)}' maps {can}, "
+                f"not {sent} -> {received}"
+            )
+
+    def bind(self, source: Geometry, target: Geometry) -> BoundMapping:
         """The mapping from ``source`` onto ``target``; ``ValueError`` when it cannot map."""
         raise NotImplementedError
 
 
 @CouplingMapping.register
 class IdentityMapping(CouplingMapping):
-    """Hands the data over unchanged: the sides share their points."""
+    """Hands the data over unchanged: the ports share their entities."""
 
     type: Literal["identity"] = "identity"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (
+        *_TRANSFER,
+        ("value", "value"),
+        ("probe", "probe"),
+    )
 
-    def bind(self, source: Any, target: Any) -> BoundMapping:
-        if source is not None and target is not None and len(source) != len(target):
+    def bind(self, source: Geometry, target: Geometry) -> BoundMapping:
+        if source.size is not None and target.size is not None and source.size != target.size:
             raise ValueError(
-                f"mapping '{self.type}' needs as many points on both sides: "
-                f"{len(source)} sent, {len(target)} received"
+                f"mapping '{self.type}' needs as many entities on both ports: "
+                f"{source.size} sent, {target.size} received"
             )
         return _unchanged
 
@@ -88,29 +107,35 @@ def _unchanged(data: Data) -> Data:
     return data
 
 
+def _points(mapping: str, source: Geometry, target: Geometry) -> tuple[Any, Any]:
+    """Both ports' points; ``ValueError`` naming the port without."""
+    if source.points is None or target.points is None:
+        if source.points is None and target.points is None:
+            missing = "neither port has any"
+        else:
+            missing = f"the {'sending' if source.points is None else 'receiving'} port has none"
+        raise ValueError(
+            f"mapping '{mapping}' needs the points of both ports, but {missing}: give its "
+            "mesh geometry or choose mapping 'identity'"
+        )
+    return source.points, target.points
+
+
+def _taken(indices: Any) -> BoundMapping:
+    def mapper(data: Data) -> Data:
+        return {name: np.asarray(values)[indices] for name, values in data.items()}
+
+    return mapper
+
+
 @CouplingMapping.register
 class NearestNeighborMapping(CouplingMapping):
-    """Maps every receiving point to the nearest sending point, found once: points must not move."""
+    """Maps every receiving entity to the nearest sending one, found once: points must not move."""
 
     type: Literal["nearest-neighbor"] = "nearest-neighbor"
 
-    def bind(self, source: Any, target: Any) -> BoundMapping:
-        if source is None or target is None:
-            if source is None and target is None:
-                missing = "neither side has any: give both patches"
-            else:
-                side = "sending" if source is None else "receiving"
-                missing = f"the {side} side has none: give its patch"
-            raise ValueError(
-                f"mapping '{self.type}' needs the coordinates of both sides, but {missing} "
-                "coordinates (@coupled.coordinates) or choose mapping 'identity'"
-            )
-        indices = nearest_neighbor(source, target)
-
-        def mapper(data: Data) -> Data:
-            return {name: np.asarray(values)[indices] for name, values in data.items()}
-
-        return mapper
+    def bind(self, source: Geometry, target: Geometry) -> BoundMapping:
+        return _taken(nearest_neighbor(*_points(self.type, source, target)))
 
 
 def default_mapping() -> CouplingMapping:
@@ -202,9 +227,9 @@ def _unflatten(values: Any, like: list[Data]) -> list[Data]:
 
 @PluginSystem.register(discriminator_variable="convergence", discriminator="type")
 class CouplingConvergence(BaseModel):
-    """Whether a node converged, from every side's change in the last pass; a plugin family.
+    """Whether a node converged, from every stream's change in the last pass; a plugin family.
 
-    ``data`` names the field a measure compares, ``None`` for a measure of all fields.
+    ``data`` names the data field a measure compares (``T``), ``None`` for all of them.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -217,7 +242,7 @@ class CouplingConvergence(BaseModel):
 
 @CouplingConvergence.register
 class RelativeConvergence(CouplingConvergence):
-    """Converged once every array of field ``data`` changes by less than ``limit`` (2-norms).
+    """Converged once every array named ``data`` changes by less than ``limit`` (2-norms).
 
     Example::
 
@@ -233,6 +258,6 @@ class RelativeConvergence(CouplingConvergence):
             np.linalg.norm(np.asarray(change.current[name]) - np.asarray(change.previous[name]))
             <= self.limit * np.linalg.norm(change.current[name])
             for change in changes
-            if change.field == self.data
             for name in change.current
+            if name == self.data
         )

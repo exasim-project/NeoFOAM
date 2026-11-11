@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The leader's controller on hand-made sides: convergence, relaxation, final pass, residuals."""
+"""The leader's controller on hand-made streams: convergence, relaxation, final pass, residuals."""
 
 from __future__ import annotations
 
@@ -19,31 +19,36 @@ from neofoam.framework.coupling import (
     RelativeConvergence,
     SideChange,
 )
-from neofoam.framework.coupling.controller import CouplingController, GroupSide, relative_changes
+from neofoam.framework.coupling.controller import (
+    CouplingController,
+    GroupStream,
+    relative_changes,
+)
 
 
-def test_relative_changes_is_the_largest_relative_change_per_field() -> None:
+def test_relative_changes_is_the_largest_relative_change_per_data_field() -> None:
     changes = [
-        SideChange("T", {"T": np.array([1.0, 0.0])}, {"T": np.array([2.0, 0.0])}),
-        SideChange("T", {"q": np.array([0.0])}, {"q": np.array([0.0])}),
-        SideChange("U", {"U": np.array([1.0])}, {"U": np.array([0.0])}),
+        SideChange({"T": np.array([1.0, 0.0])}, {"T": np.array([2.0, 0.0])}),
+        SideChange({"T": np.array([1.0])}, {"T": np.array([1.0])}),
+        SideChange({"q": np.array([0.0])}, {"q": np.array([0.0])}),
+        SideChange({"U": np.array([1.0])}, {"U": np.array([0.0])}),
     ]
 
-    assert relative_changes(changes) == {"T": 0.5, "U": 1.0}
+    assert relative_changes(changes) == {"T": 0.5, "q": 0.0, "U": 1.0}
 
 
-def _group() -> list[GroupSide]:
+def _group() -> list[GroupStream]:
     return [
-        GroupSide("a", "p", "x", ("b", "p"), "a-b"),
-        GroupSide("b", "p", "x", ("a", "p"), "a-b"),
+        GroupStream("a", "p", "x", ("x",), ("b", "p"), "a-b"),
+        GroupStream("b", "p", "x", ("x",), ("a", "p"), "a-b"),
     ]
 
 
 def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_built() -> None:
     with pytest.raises(
         ValueError,
-        match=r"coupling b.coupling: convergence RelativeConvergence on T, which no side of the "
-        r"node sends \(its sides couple \['x'\]\)",
+        match=r"coupling b.coupling: convergence RelativeConvergence on T, which no port of the "
+        r"node sends \(they send \['x'\]\)",
     ):
         CouplingController(
             _group(),
@@ -51,48 +56,51 @@ def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_buil
             CouplingNode(
                 "coupling", ("a-b",), convergence=(RelativeConvergence(data="T", limit=1e-5),)
             ),
+            ("a", "b"),
         )
 
 
 def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
     controller = CouplingController(
-        _group(), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(never,))
+        _group(), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(never,)), ("a", "b")
     )
     assert controller.residuals == {"x": math.inf}
 
     # the first decision starts the first pass: nothing measured yet
-    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.ones(1)}}, 0)
+    controller.decide({("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}, 0)
     assert controller.residuals == {"x": math.inf}
 
-    controller.decide({("a", "p"): {"x": np.ones(1)}, ("b", "p"): {"x": np.full(1, 2.0)}}, 1)
+    controller.decide(
+        {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.full(1, 2.0)}}, 1
+    )
     assert controller.residuals == {"x": 0.5}
 
 
 def test_relative_changes_keep_a_nan() -> None:
     changes = [
-        SideChange("x", {"x": np.ones(1)}, {"x": np.full(1, 2.0)}),
-        SideChange("x", {"x": np.ones(1)}, {"x": np.full(1, np.nan)}),
+        SideChange({"x": np.ones(1)}, {"x": np.full(1, 2.0)}),
+        SideChange({"x": np.ones(1)}, {"x": np.full(1, np.nan)}),
     ]
 
     assert math.isnan(relative_changes(changes)["x"])
 
 
-def _sides() -> list[GroupSide]:
+def _streams() -> list[GroupStream]:
     """Two exchanges x and y between a and b."""
     return [
-        GroupSide("a", "p", "x", ("b", "p"), "x"),
-        GroupSide("b", "p", "x", ("a", "p"), "x"),
-        GroupSide("a", "q", "y", ("b", "q"), "y"),
-        GroupSide("b", "q", "y", ("a", "q"), "y"),
+        GroupStream("a", "p", "v", ("v",), ("b", "p"), "x"),
+        GroupStream("b", "p", "v", ("v",), ("a", "p"), "x"),
+        GroupStream("a", "q", "v", ("v",), ("b", "q"), "y"),
+        GroupStream("b", "q", "v", ("v",), ("a", "q"), "y"),
     ]
 
 
-def _data(*values: float) -> dict[tuple[str, str], dict[str, Any]]:
-    """The data of the sides of :func:`_sides`, in their order."""
-    return {side.end: {"v": np.array([value])} for side, value in zip(_sides(), values)}
+def _data(*values: float) -> dict[tuple[str, str, str], dict[str, Any]]:
+    """The data of the streams of :func:`_streams`, in their order."""
+    return {stream.id: {"v": np.array([value])} for stream, value in zip(_streams(), values)}
 
 
-def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
+def test_an_acceleration_relaxes_only_the_streams_of_its_exchange() -> None:
     relaxed: list[list[float]] = []
 
     def halve(sent: list[dict[str, Any]], iteration: int) -> list[dict[str, Any]]:
@@ -100,7 +108,7 @@ def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
         return [{"v": data["v"] / 2} for data in sent]
 
     node = CouplingNode("n", ("x", "y"), scheme="parallel", acceleration={"x": halve})
-    controller = CouplingController(_sides(), "b.n", node)
+    controller = CouplingController(_streams(), "b.n", node, ("a", "b"))
 
     carried = controller.decide(_data(1.0, 2.0, 10.0, 20.0), 0)
 
@@ -121,7 +129,7 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
     node = CouplingNode(
         "n", ("x", "y"), convergence=(_Verdict(name="first"), _Verdict(name="second"))
     )
-    controller = CouplingController(_sides(), "b.n", node)
+    controller = CouplingController(_streams(), "b.n", node, ("a", "b"))
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None
 
@@ -134,7 +142,7 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
 
 
 def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> None:
-    controller = CouplingController(_sides(), "b.n", CouplingNode("n", ("x", "y")))
+    controller = CouplingController(_streams(), "b.n", CouplingNode("n", ("x", "y")), ("a", "b"))
 
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 1) is not None
@@ -145,7 +153,7 @@ def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> No
 
 def test_the_controller_tells_which_pass_is_final() -> None:
     node = CouplingNode("coupling", ("a-b",), convergence=(never,), max_iterations=2)
-    controller = CouplingController([], "c.coupling", node)
+    controller = CouplingController([], "c.coupling", node, ("c",))
 
     assert controller.decide({}, 0) == {} and not controller.final
     assert controller.decide({}, 1) == {} and controller.final
@@ -154,3 +162,12 @@ def test_the_controller_tells_which_pass_is_final() -> None:
     # the warning points at the caller outside the framework
     assert warned[0].filename == __file__
     assert not controller.final
+
+
+def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_node() -> None:
+    """``b`` only receives (it sends nothing): its rank comes from the node's group."""
+    streams = [GroupStream("a", "p", "x", ("x",), ("b", "p"), "a-b")]
+
+    controller = CouplingController(streams, "b.n", CouplingNode("n", ("a-b",)), ("a", "b"))
+
+    assert controller.fresh(("a", "p", "x"))
