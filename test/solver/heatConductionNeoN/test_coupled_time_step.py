@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The coupled blocks with one parallel node around each region's whole time step.
+"""The coupled blocks with one parallel loop around each region's whole time step.
 
 The ``wholeStep`` overlay has no ``wraps``: the time-step ops and ``start_step`` are
 ``first``, ``write_output`` ``final``, so the time advances and the fields are written
@@ -66,7 +66,7 @@ def test_coupled_time_step_more_passes_on_the_converged_state_change_nothing(
         assert three["regions"][region]["time"] == one["regions"][region]["time"], region
 
 
-def test_coupled_time_step_held_by_a_serial_node_raises(tmp_path: Path) -> None:
+def test_coupled_time_step_held_by_a_serial_loop_raises(tmp_path: Path) -> None:
     case_dir = mesh_copy("coupledBlocks", tmp_path / "case", "wholeStepSerial")
 
     done = run_worker(case_dir, "multi")
