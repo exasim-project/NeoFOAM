@@ -247,9 +247,11 @@ not fit the run before it starts; an error on any process aborts every process.
 
 Only a region's root (its rank 0) talks to other regions, over an
 ``MpiCommChannel`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
-the whole patches: the root gathers what every process's sides send and
-scatters what they receive; the other processes run a follower op that takes
-the root's decision, and have no comm channel. ``close`` waits at most
+the whole ports: the root gathers each port's geometry once and what every
+process sends of a patch or the cells, and scatters what they receive; a
+``Global`` port sends the root's value and every process receives it. The other
+processes run a follower op that takes the root's decision, and have no comm
+channel. ``close`` waits at most
 ``commChannelTimeout`` for the partners, naming those that did not finish. The
 whole interface on the root is an intermediate step, before a distributed
 exchange (``test/solver/multiRun/test_regions_on_processes.py``).

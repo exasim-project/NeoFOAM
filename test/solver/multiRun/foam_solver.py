@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import pybFoam as pyf
+from framework.coupling.regions import FakeGeometry
 from pybFoam import fvc
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
@@ -100,7 +101,8 @@ def _initialize(self: Any) -> Context:
     init = _create_init(self.region, list(self.argv))
     ctx = init.run()
     self.core_models = init.core_models
-    ctx.models["coupling"] = Coupling(self.coupling)
+    # an uncoupled region: no port asks the geometry
+    ctx.models["coupling"] = Coupling(self.coupling, FakeGeometry())
     return ctx
 
 

@@ -15,12 +15,21 @@ import numpy as np
 from mpi4py import MPI
 
 from neofoam.framework.coupling import (
+    Array,
     CommChannelClosed,
     CouplingDeadlock,
     CouplingTimeout,
+    FaceData,
+    Geometry,
+    Global,
     MpiCommChannel,
+    Patch,
+    Scalar,
+    ValueData,
 )
-from neofoam.framework.coupling.mpi import RegionComm
+from neofoam.framework.coupling.coupled import CoupledPort
+from neofoam.framework.coupling.data import Stream
+from neofoam.framework.coupling.mpi import RegionComm, _Port
 
 WORLD = MPI.COMM_WORLD
 ROOTS = {"a": 0, "b": 1}
@@ -188,9 +197,41 @@ def region_comm() -> None:
         assert "cannot scatter 3 rows" in message
 
 
+class _Flux(FaceData):
+    q: Array
+
+
+class _Heat(ValueData):
+    q: Scalar
+
+
+def ports() -> None:
+    """A port over 3 processes: a patch gathers rows and scatters them back; a Global the root's."""
+    comm = RegionComm(WORLD)
+    rows = WORLD.rank + 1  # 1, 2, 3 faces
+    received: list[Any] = []
+    patch = CoupledPort(
+        "a", "top", Patch("top"), (Stream(_Flux, print),), (Stream(_Flux, received.append),)
+    )
+    points = np.full((rows, 3), float(WORLD.rank))
+    part = _Port(comm, patch, Geometry.of(points, np.ones(rows)))
+    if comm.is_root:
+        assert part.geometry.size == 6 and part.geometry.points[-1, 0] == 2.0, part.geometry
+    whole = part.gather_sent(Stream(_Flux, print), _Flux(q=np.full(rows, float(WORLD.rank))))
+    if comm.is_root:
+        assert whole.q.tolist() == [0.0, 1.0, 1.0, 2.0, 2.0, 2.0], whole.q
+    part.hand_over({"q": _Flux(q=10.0 * whole.q)} if comm.is_root else {})
+    assert received[-1].q.tolist() == [10.0 * WORLD.rank] * rows, received[-1].q
+    value = CoupledPort("a", "Q", Global("Q"), (), (Stream(_Heat, received.append),))
+    part = _Port(comm, value, Geometry(size=1))
+    assert part.gather_sent(Stream(_Heat, print), _Heat(q=WORLD.rank)).q == WORLD.rank
+    part.hand_over({"q": _Heat(q=7.0)} if comm.is_root else {})
+    assert received[-1].q == 7.0, received[-1]
+
+
 SCENARIOS = {
     f.__name__: f
-    for f in (order, timeout, close, close_timeout, abort, pickle, refusals, region_comm)
+    for f in (order, timeout, close, close_timeout, abort, pickle, refusals, region_comm, ports)
 }
 
 

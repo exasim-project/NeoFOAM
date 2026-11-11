@@ -4,10 +4,10 @@
 """Run the multiRun case in the working directory; print a ``#RESULT`` JSON line per process.
 
 Per region on this process: the cell centres, ``T``, the time index and, per
-coupled side, its points and what it sends. ``python mpi_worker.py`` runs on
+coupled port, its points and what it sends. ``python mpi_worker.py`` runs on
 threads, under ``mpirun`` on processes. ``fail:<region>`` makes a
 ``foamDiffusion`` region raise; ``fail-coupled:<region>:<rank>`` makes the
-sides of ``<region>`` raise on global rank ``<rank>`` (a follower) at their
+ports of ``<region>`` raise on global rank ``<rank>`` (a follower) at their
 third send.
 """
 
@@ -44,38 +44,43 @@ def _cells(ctx: Any) -> dict[str, Any]:
         "centres": np.asarray(mesh.C().internalField()).tolist(),
         "T": np.asarray(temperature).tolist(),
         "index": ctx.time.index,
-        "sides": _sides(ctx),
+        "sides": _ports(ctx),
     }
 
 
-def _sides(ctx: Any) -> dict[str, Any]:
-    """Per coupled side of the region on this process: its points and the Array data it sends."""
+def _ports(ctx: Any) -> dict[str, Any]:
+    """Per coupled port of the region on this process: its points and the Array data it sends."""
     coupling = ctx.models.get("coupling")
     if coupling is None or coupling.coupling is None:
         return {}
-    sides = {}
-    for side in coupling.sides:
-        sent = coupling_data._sent(side, "", 0, None)
-        sides[side.label] = {
-            "points": np.asarray(side.coordinates).reshape(-1, 3).tolist(),
+    ports = {}
+    for port in coupling.ports:
+        points = port.location.geometry(coupling.geometry).points
+        sent = {
+            name: values
+            for stream in port.sends
+            for name, values in coupling_data.sent(stream, port, "", (0, None)).items()
+        }
+        ports[port.label] = {
+            "points": np.asarray(points).reshape(-1, 3).tolist(),
             **{name: np.asarray(values).tolist() for name, values in sent.items()},
         }
-    return sides
+    return ports
 
 
 def _fail_coupled(region: str, rank: int) -> None:
-    """Make ``region``'s sides raise on global rank ``rank`` (a follower) at their third send."""
-    sent = coupling_mpi._sent
+    """Make ``region``'s ports raise on global rank ``rank`` (a follower) at their third send."""
+    sent = coupling_mpi.sent
     calls = [0]
 
-    def failing(side: Any, *args: Any) -> Any:
-        if side.region == region and int(os.environ.get("OMPI_COMM_WORLD_RANK", 0)) == rank:
+    def failing(stream: Any, port: Any, *args: Any) -> Any:
+        if port.region == region and int(os.environ.get("OMPI_COMM_WORLD_RANK", 0)) == rank:
             calls[0] += 1
             if calls[0] == 3:
                 raise RuntimeError(f"region {region} fails on rank {rank} as asked")
-        return sent(side, *args)
+        return sent(stream, port, *args)
 
-    coupling_mpi._sent = failing
+    coupling_mpi.sent = failing  # type: ignore[assignment]
 
 
 def main(argv: list[str]) -> dict[str, Any]:

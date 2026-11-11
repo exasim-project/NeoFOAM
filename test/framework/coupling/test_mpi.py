@@ -207,6 +207,7 @@ def test_mpi_comm_channel_belongs_to_its_root() -> None:
         ("pickle", 2),
         ("refusals", 2),
         ("region_comm", 5),
+        ("ports", 3),
     ],
 )
 def test_mpi_comm_channel_under_mpirun(scenario: str, processes: int) -> None:

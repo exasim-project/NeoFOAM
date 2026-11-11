@@ -22,7 +22,9 @@ from pydantic import BaseModel
 from neofoam.framework.operations import IterativeOp
 
 from .comm_channel import DEFAULT_TIMEOUT, CouplingTimeout, _Mailbox, _pickled
-from .data import ExchangeSide, _sent
+from .coupled import CoupledPort
+from .data import Stream, sent
+from .location import Geometry
 from .loop import CouplingOp
 
 if TYPE_CHECKING:
@@ -218,12 +220,17 @@ class RegionComm:
         return self.comm.bcast(value, root=0)
 
     def coupling_op(
-        self, coupling: RegionCoupling, node: CouplingNode, sides: Sequence[ExchangeSide]
+        self,
+        coupling: RegionCoupling,
+        node: CouplingNode,
+        ports: Sequence[CoupledPort],
+        geometries: Mapping[str, Geometry],
     ) -> IterativeOp:
         """The loop of ``node`` here: the coupling op on the root, a follower elsewhere."""
+        parts = [_Port(self, port, geometries[port.name]) for port in ports]
         if self.is_root:
-            return _RootOp(coupling, node, sides, self)
-        return _FollowerOp(node, sides, self)
+            return _RootOp(coupling, node, parts, self)
+        return _FollowerOp(node, parts, self)
 
     def time_step(self, agree: Callable[[Context], None]) -> Callable[[Context], None]:
         """``agree`` on the root; its time step on every process of the region."""
@@ -236,86 +243,126 @@ class RegionComm:
         return step
 
 
-class _Patch:
-    """A side's patch over the region's processes, its rows per process known once gathered."""
+def _spread(port: CoupledPort) -> bool:
+    """Whether the port's rows are spread over the processes: a patch or the cells, no Global."""
+    return not ({"value", "probe"} & set(port.location.entities))
 
-    def __init__(self, comm: RegionComm, side: ExchangeSide) -> None:
+
+class _Port:
+    """A port over the region's processes: on the root its whole geometry, rows per process.
+
+    A patch's or the cells' rows are gathered to the root and scattered back; a
+    Global port sends the root's values and every process receives them.
+    """
+
+    def __init__(self, comm: RegionComm, port: CoupledPort, geometry: Geometry) -> None:
         self._comm = comm
+        self.port = port
         self._counts: Optional[tuple[int, ...]] = None
-        self.points = self.gather(side.coordinates)
+        self.geometry = geometry
+        if _spread(port):
+            points, measures = self.gather(geometry.points), self.gather(geometry.measures)
+            self.geometry = Geometry.of(points, measures) if comm.is_root else geometry
 
     def gather(self, rows: Any) -> Any:
+        """Every process's ``rows`` in rank order on the root (``None`` elsewhere)."""
         gathered = self._comm.gather(rows)
         if gathered is None:
             return None
         full, counts = gathered
-        if self._counts is None:
+        if self._counts is None and counts is not None:
             self._counts = counts
         return full
 
-    def hand_over(self, side: ExchangeSide, whole: Optional[BaseModel]) -> None:
-        """Hand ``side`` its rows of what the whole patch receives (``whole``, on the root)."""
-        rows = {
-            name: self._comm.scatter(None if whole is None else getattr(whole, name), self._counts)
-            for name in side.receives.model_fields
-        }
-        side.receive(side.receives.model_validate(rows))
+    def gather_sent(self, stream: Stream, sent: BaseModel) -> BaseModel:
+        """What the whole port sends of ``stream``: the processes' rows, or the root's value."""
+        if not _spread(self.port):
+            return sent
+        rows = {name: self.gather(getattr(sent, name)) for name in stream.names}
+        whole: BaseModel = stream.model.model_validate(rows)
+        return whole
+
+    def hand_over(self, whole: Mapping[str, BaseModel]) -> None:
+        """Hand each receiving stream its rows of what the whole port receives (on the root)."""
+        for stream in self.port.receives:
+            received = whole.get(stream.key)
+            if _spread(self.port):
+                rows = {
+                    name: self._comm.scatter(
+                        None if received is None else getattr(received, name), self._counts
+                    )
+                    for name in stream.names
+                }
+                stream.method(stream.model.model_validate(rows))
+            else:
+                stream.method(self._comm.bcast(received))
 
 
 class _RootOp(CouplingOp):
-    """The coupling op on a region's root: on the whole patches, its decision broadcast."""
+    """The coupling op on a region's root: on the whole ports, its decision broadcast."""
 
     def __init__(
         self,
         coupling: RegionCoupling,
         node: CouplingNode,
-        sides: Sequence[ExchangeSide],
+        parts: Sequence[_Port],
         comm: RegionComm,
     ) -> None:
         self._comm = comm
-        self._parts = [(side, _Patch(comm, side)) for side in sides]
-        self._whole: dict[str, BaseModel] = {}
-        super().__init__(coupling, node, [self._whole_side(*part) for part in self._parts])
+        self._parts = list(parts)
+        self._whole: dict[str, dict[str, BaseModel]] = {part.port.name: {} for part in parts}
+        super().__init__(
+            coupling,
+            node,
+            [self._whole_port(part) for part in parts],
+            {part.port.name: part.geometry for part in parts},
+        )
 
-    def _whole_side(self, side: ExchangeSide, patch: _Patch) -> ExchangeSide:
-        def send() -> BaseModel:
-            sent = side.send()
-            fields = {name: patch.gather(getattr(sent, name)) for name in side.sends.model_fields}
-            return side.sends.model_validate(fields)
+    def _whole_port(self, part: _Port) -> CoupledPort:
+        whole = self._whole[part.port.name]
 
-        def receive(whole: BaseModel) -> None:
-            self._whole[side.patch] = whole
+        def sends(stream: Stream) -> Stream:
+            return Stream(stream.model, lambda: part.gather_sent(stream, stream.method()))
 
-        return replace(side, send=send, receive=receive, coordinates=patch.points)
+        def receives(stream: Stream) -> Stream:
+            return Stream(stream.model, lambda data: whole.__setitem__(stream.key, data))
+
+        return replace(
+            part.port,
+            sends=tuple(sends(stream) for stream in part.port.sends),
+            receives=tuple(receives(stream) for stream in part.port.receives),
+        )
 
     def _test(self, ctx: Context) -> bool:
         go_on = super()._test(ctx)
         self._comm.bcast((go_on, go_on and ctx.loops[-1].final))
         if go_on:
-            for side, patch in self._parts:
-                patch.hand_over(side, self._whole.pop(side.patch))
+            for part in self._parts:
+                part.hand_over(self._whole[part.port.name])
+                self._whole[part.port.name].clear()
         return go_on
 
 
 class _FollowerOp(IterativeOp):
     """A coupling op's place on a region's other processes: the root decides for them."""
 
-    def __init__(self, node: CouplingNode, sides: Sequence[ExchangeSide], comm: RegionComm) -> None:
+    def __init__(self, node: CouplingNode, parts: Sequence[_Port], comm: RegionComm) -> None:
         super().__init__(self._test)
         self.node = node
         self._comm = comm
-        self._parts = [(side, _Patch(comm, side)) for side in sides]
+        self._parts = list(parts)
 
     def _test(self, ctx: Context) -> bool:
-        iteration = ctx.loops[-1].iteration
-        time = getattr(ctx.time, "value", None)
-        for side, patch in self._parts:
-            sent = _sent(side, self.node.name, iteration, time)
-            for name in side.sends.model_fields:
-                patch.gather(sent[name])
+        when = (ctx.loops[-1].iteration, getattr(ctx.time, "value", None))
+        for part in self._parts:
+            for stream in part.port.sends:
+                data = sent(stream, part.port, self.node.name, when)
+                if _spread(part.port):
+                    for name in stream.names:
+                        part.gather(data[name])
         go_on, final = self._comm.bcast(None)
         if go_on:
             ctx.mark_final(final)
-            for side, patch in self._parts:
-                patch.hand_over(side, None)
+            for part in self._parts:
+                part.hand_over({})
         return bool(go_on)
