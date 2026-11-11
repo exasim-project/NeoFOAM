@@ -109,7 +109,7 @@ class GroupSide:
     patch: str
     field: str
     partner: End
-    exchange: str = ""
+    exchange: str
 
     @property
     def end(self) -> End:

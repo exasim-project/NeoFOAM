@@ -171,11 +171,11 @@ def test_each_node_has_its_own_leader() -> None:
         "b.bc": couple(regions["b"], 1),
         "c.bc": couple(regions["c"]),
     }
-    assert {label: (op.label, op.leader, op.is_leader) for label, op in ops.items()} == {
-        "a.ab": ("a.ab", "b", False),
-        "b.ab": ("b.ab", "b", True),
-        "b.bc": ("b.bc", "c", False),
-        "c.bc": ("c.bc", "c", True),
+    assert {label: (op.label, op.group, op.is_leader) for label, op in ops.items()} == {
+        "a.ab": ("a.ab", ("a", "b"), False),
+        "b.ab": ("b.ab", ("a", "b"), True),
+        "b.bc": ("b.bc", ("b", "c"), False),
+        "c.bc": ("c.bc", ("b", "c"), True),
     }
     assert [op.controller is not None for op in ops.values()] == [False, True, False, True]
     # the group agrees as one: its last region leads it

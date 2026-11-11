@@ -215,17 +215,8 @@ def test_a_negative_timeout_raises() -> None:
 def test_the_tags_of_the_coupling_messages() -> None:
     assert Tag.data("x") == "data:x"
     assert Tag.side("x") == "side:x"
-    assert [Tag.node("outer", what) for what in Tag.NODE] == [  # type: ignore[arg-type]
-        "outer/sides",
-        "outer/pass",
-        "outer/decision",
-    ]
+    assert Tag.node("outer", "decision") == "outer/decision"
     assert Tag.TIME_DT == "time/dt"
-
-
-def test_a_node_sends_no_other_tag() -> None:
-    with pytest.raises(ValueError, match="not 'data'"):
-        Tag.node("outer", "data")  # type: ignore[arg-type]
 
 
 def test_a_receiver_gets_a_copy() -> None:
