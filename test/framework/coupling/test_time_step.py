@@ -234,7 +234,7 @@ def test_a_serial_node_holding_the_time_step_raises() -> None:
         match=r"coupling 'coupling' is serial but holds the time step of its regions; make it "
         r"parallel or place it around named operations \(wraps\.a\.operations\)",
     ):
-        Coupling.of(ctx).check(ops)
+        Coupling.of(ctx).check_graph(ops)
 
 
 @pytest.mark.parametrize(
@@ -249,7 +249,7 @@ def test_a_parallel_node_or_one_around_named_operations_may_hold_the_time_step(
     ctx.time = _Time(1.0)
     ops = _graph(ctx, _time_loop([1.0], [], []), _coupling_loop("a", placement))
 
-    Coupling.of(ctx).check(ops)
+    Coupling.of(ctx).check_graph(ops)
 
 
 def test_a_serial_node_around_a_loop_leaves_the_time_step_outside() -> None:
@@ -262,7 +262,7 @@ def test_a_serial_node_around_a_loop_leaves_the_time_step_outside() -> None:
         _coupling_loop("a", Placement(("inner_loop",))),
     )
 
-    Coupling.of(ctx).check(ops)
+    Coupling.of(ctx).check_graph(ops)
     (loop,) = ops.ops
     assert [op.operation_name for op in loop.sub_operations] == [
         "set_time_step",

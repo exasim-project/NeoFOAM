@@ -315,11 +315,8 @@ class SolverSpec:
         is injected with the live ``ctx`` (so the step can reach the built models
         without the runtime holding a long-lived reference to the context).
 
-        With ``ctx`` of a coupled region, the model operations it returns also hold
-        the operations of the coupling model its solver added
-        (``ctx.models["coupling"]``): the coupling ops and, in a transient case, the
-        time-step op (``Coupling.time_step``). A coupled region whose solver added
-        no coupling model raises ``RuntimeError`` (``SolverRuntime.coupling_model``).
+        With ``ctx``, the model operations also hold those of each
+        :class:`~neofoam.framework.solver.runtime.GraphContribution` of ``ctx.models``.
         """
         if self._execution_graph_func is None:
             raise RuntimeError(f"No execution_graph function registered for solver {self.name}")
@@ -342,13 +339,13 @@ class SolverSpec:
             )
 
         builder, model_ops = self._execution_graph_func(**kwargs)
-        coupling = runtime.coupling_model(ctx)
-        if ctx is None or coupling is None:
+        contributions = [] if ctx is None else runtime.graph_contributions(ctx)
+        if not contributions:
             return builder, model_ops
-        ops = [*model_ops, *coupling.operations()]
-        time_step = coupling.time_step(ctx, [*builder.operations, *model_ops])
-        if time_step is not None:
-            ops.append(time_step)
+        graph = [*builder.operations, *model_ops]
+        ops = [*model_ops]
+        for contribution in contributions:
+            ops += contribution.graph_operations(cast(Context, ctx), graph)
         return builder, Operations(ops)
 
     # ------------------------------------------------------------------
