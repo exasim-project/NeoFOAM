@@ -21,10 +21,10 @@ from neofoam.framework.coupling import (
     InProcessCommChannel,
     MpiCommChannel,
     ParticipantExchanges,
+    RegionComm,
     comm_channel_timeout,
     run_participants,
 )
-from neofoam.framework.coupling.mpi import RegionComm
 from neofoam.framework.solver import Solver, SolverSpec
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig

@@ -21,17 +21,17 @@ from pydantic import BaseModel
 
 from neofoam.framework.operations import IterativeOp
 
-from .comm.channel import DEFAULT_TIMEOUT, CouplingTimeout
-from .comm.in_process import _Mailbox, _pickled
-from .coupled import CoupledPort
-from .data import Stream, sent
-from .iteration._loop_op import CouplingLoopOp
-from .location import Geometry
+from ..coupled import CoupledPort
+from ..data import Stream, sent
+from ..iteration._loop_op import CouplingLoopOp
+from ..location import Geometry
+from .channel import DEFAULT_TIMEOUT, CouplingTimeout
+from .in_process import _Mailbox, _pickled
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .exchanges import CouplingLoop, ParticipantExchanges
+    from ..exchanges import CouplingLoop, ParticipantExchanges
 
 # What travels between roots, pickled: (source region, kind, tag, message).
 _MESSAGE, _CLOSED, _ABORTED = "message", "closed", "aborted"

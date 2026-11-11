@@ -23,7 +23,7 @@ from .strategies.convergence import CouplingConvergence
 from .strategies.mapping import CouplingMapping, default_mapping
 
 if TYPE_CHECKING:
-    from .mpi import RegionComm
+    from .comm.mpi import RegionComm
 
 
 @dataclass(frozen=True)

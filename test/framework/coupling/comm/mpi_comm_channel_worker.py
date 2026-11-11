@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run one scenario of :mod:`neofoam.framework.coupling.mpi` under ``mpirun``, print ``#OK``.
+"""Run one scenario of :mod:`neofoam.framework.coupling.comm.mpi` under ``mpirun``, print ``#OK``.
 
 Rank 0 is the root of region ``a``, rank 1 of ``b``; ``region_comm`` has two
 regions on ranks 0-1 and 2-4. A failed check aborts every rank.
@@ -27,9 +27,9 @@ from neofoam.framework.coupling import (
     Scalar,
     ValueData,
 )
+from neofoam.framework.coupling.comm.mpi import RegionComm, _Port
 from neofoam.framework.coupling.coupled import CoupledPort
 from neofoam.framework.coupling.data import Stream
-from neofoam.framework.coupling.mpi import RegionComm, _Port
 
 WORLD = MPI.COMM_WORLD
 ROOTS = {"a": 0, "b": 1}

@@ -20,7 +20,7 @@ from typing import Any
 import numpy as np
 
 from neofoam.framework.coupling import data as coupling_data
-from neofoam.framework.coupling import mpi as coupling_mpi
+from neofoam.framework.coupling.comm import mpi as coupling_mpi
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from solver.multiRun.foam_solver import FAIL_VARIABLE, foamDiffusion

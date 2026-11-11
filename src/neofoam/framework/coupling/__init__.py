@@ -20,6 +20,7 @@ from .comm.channel import (
     CouplingTimeout,
 )
 from .comm.in_process import InProcessCommChannel
+from .comm.mpi import MpiCommChannel, RegionComm
 from .config import CouplingConfig, comm_channel_timeout
 from .coupled import CoupledPort, coupled
 from .data import Array, CellData, FaceData, ProbeData, Scalar, ValueData
@@ -28,7 +29,6 @@ from .field_port import FieldAccess, FieldPort
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .loop._leader import CouplingNotConvergedWarning
 from .model import Participant, coupling
-from .mpi import MpiCommChannel
 from .run import run_participants
 from .strategies.acceleration import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
 from .strategies.convergence import CouplingConvergence, RelativeConvergence, StreamChange
@@ -81,6 +81,7 @@ __all__ = [
     "ProbeData",
     "ProbeMapping",
     "ParticipantExchanges",
+    "RegionComm",
     "CouplingConfig",
     "RelativeConvergence",
     "Scalar",
