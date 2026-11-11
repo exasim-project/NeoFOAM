@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""What the coupling design does with each case of ``cases/`` (see README.md).
+"""What the coupling design does with each case of ``cases/``.
 
 Each case is a multiRun case of the ``probe`` solver, coupled parallel. A test
 marked ``xfail(strict=True)`` asserts the behaviour we want and fails today with
