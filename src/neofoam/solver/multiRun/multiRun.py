@@ -39,7 +39,13 @@ def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, Region
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
     config = RegionCouplingConfig.load()
-    return region_couplings(regions, config.coupling_exchanges(), comm_channel, config.nodes())
+    return region_couplings(
+        regions,
+        config.coupling_exchanges(),
+        comm_channel,
+        config.nodes(),
+        config.field_ports(),
+    )
 
 
 def run() -> dict[str, Context]:

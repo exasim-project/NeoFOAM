@@ -1,0 +1,21 @@
+# cases/coupled_slabs with a sensor: the field port T_cells reads left's T per
+# cell, volume-mean reduces it to one value on meter's Global port T_left.
+ports:
+  left:
+    - {name: T_cells, field: T}
+exchanges:
+  - name: interface
+    ports: {left: right, right: left}
+  - name: sensor
+    ports: {left: T_cells, meter: T_left}
+    mapping: volume-mean
+couplings:
+  - name: coupling
+    scheme: parallel
+    maxIterations: 100
+    exchanges:
+      - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
+      - sensor
+    convergence:
+      - {type: relative, data: T_sink, limit: 1.0e-12}
+      - {type: relative, data: h, limit: 1.0e-12}

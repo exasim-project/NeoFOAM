@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate, solutionLoop
@@ -19,8 +19,11 @@ from neofoam.framework.coupling import (
     Array,
     Coupling,
     FaceData,
+    Global,
     Patch,
     RegionCoupling,
+    Scalar,
+    ValueData,
     coupled,
     coupling,
 )
@@ -46,12 +49,16 @@ class _ControlDictConfig(TimeControlConfig):
 
 @IOStrategy(YAML("constant/probe.yaml"))
 class ProbeConfig(BaseConfig):
-    """``gains`` keyed ``<patch>.<name>``; each such patch is ``@coupled``."""
+    """``gains`` keyed ``<port>.<name>``; each port is a ``@coupled`` patch, or a Global one.
+
+    ``values``: the Global ports, each with the data field it receives, one value.
+    """
 
     field: Literal["x", "y"] = "x"
     offset: float = 0.0
     gains: dict[str, float] = {}
     coordinates: bool = True
+    values: dict[str, str] = {}
     deltaT: Optional[float] = None
 
 
@@ -97,7 +104,7 @@ class ProbePatch:
 
     def keep(self, data: BaseModel) -> None:
         for name, value in data:
-            self.ctx.models["received"][f"{self.patch}.{name}"] = float(np.asarray(value)[0])
+            self.ctx.models["received"][f"{self.patch}.{name}"] = float(np.ravel(value)[0])
 
 
 def patch_class(field: str, received: str) -> type[ProbePatch]:
@@ -118,6 +125,19 @@ def patch_class(field: str, received: str) -> type[ProbePatch]:
     return _Patch
 
 
+def _value_class(name: str) -> type[ProbePatch]:
+    """The ``@coupled`` Global port that receives one value of the data field ``name``."""
+    received = create_model(  # type: ignore[call-overload]
+        f"Value_{name}", __base__=ValueData, **{name: (Scalar, ...)}
+    )
+
+    def receive(self: ProbePatch, data: Any) -> None:
+        self.keep(data)
+
+    receive.__annotations__ = {"data": received, "return": None}
+    return coupled(type("_Value", (ProbePatch,), {"receive": coupled.receives(receive)}))
+
+
 def add_patches(
     ctx: Context, config: ProbeConfig, region_coupling: Optional[RegionCoupling]
 ) -> None:
@@ -129,12 +149,18 @@ def add_patches(
         history=[],
         coupling=Coupling(region_coupling, ProbeGeometry(config.coordinates)),
     )
+    ctx.models["patches"] = []
     received: dict[str, str] = {}
+    for port, name in config.values.items():
+        instance = _value_class(name)(ctx, config.field, port)
+        coupling(ctx).add(Global(port), instance)
+        ctx.models["patches"].append(instance)
     for key in config.gains:
         patch, name = key.split(".")
+        if patch in config.values:
+            continue
         if received.setdefault(patch, name) != name:
             raise ValueError(f"patch {patch} receives one field, got {received[patch]} and {name}")
-    ctx.models["patches"] = []
     for patch, name in sorted(received.items()):
         instance = patch_class(config.field, name)(ctx, config.field, patch)
         coupling(ctx).add(Patch(patch), instance)
