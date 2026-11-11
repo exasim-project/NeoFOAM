@@ -55,15 +55,12 @@ class SolverState:
 
 
 def core_model(state: Any, spec_name: str) -> Any:
-    """The instantiated core model (a ``ModelRuntime``) of ``state`` whose spec is ``spec_name``.
+    """The core model of ``state`` (a :class:`SolverState`) whose spec is named ``spec_name``.
 
-    ``state`` holds the run's ``core_models`` (a :class:`SolverState`); a solver's
-    execution graph step takes its core models' operations from it.
+    A solver's execution graph step takes its core models' operations from it.
     """
-    from neofoam.framework.model import ModelRuntime  # noqa: PLC0415
-
     return next(
-        m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
     )
 
 

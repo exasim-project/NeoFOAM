@@ -36,7 +36,7 @@ from neofoam.framework.operations import (
     Operations,
     StepBuilder,
 )
-from neofoam.framework.solver import Solver
+from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
@@ -108,13 +108,6 @@ def _core_spec(state: Any, names: set[str]) -> Any:
     return next(m for m in state.core_models if m.name in names)
 
 
-def _core_model(state: Any, spec_name: str) -> Any:
-    """Find an instantiated core-model runtime by its spec name."""
-    return next(
-        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
-    )
-
-
 incompressibleVoF = Solver("incompressibleVoF")
 
 # Declare the full case-authoring schema on the spec, case-free (mirrors
@@ -166,7 +159,7 @@ def execution_graph(
     )
     alpha_ops = Operations(alpha_model.build_operations_for(alpha_model))
     pimple_ops = Operations(pimple_model.build_operations_for(pimple_model))
-    post_ops = Operations(_core_model(self.state, "postProcess").operations)
+    post_ops = Operations(core_model(self.state, "postProcess").operations)
 
     # Solver-owned time-loop operations.
     ops = self.operations
