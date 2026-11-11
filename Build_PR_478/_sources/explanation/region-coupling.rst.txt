@@ -3,23 +3,26 @@ Region coupling
 
 A multi-region case (``multiRun``) runs one solver per region, each with its own
 graph and time loop on its own thread. Regions share nothing but a
-**comm channel**, point to point; coupled patches exchange data over it.
+**comm channel**, point to point; coupled ports exchange data over it.
 
 .. list-table::
    :header-rows: 1
 
    * - part
      - owns
-   * - boundary condition (``@coupled``)
-     - its side: the field it couples, what it sends and receives (a pydantic
-       model per direction), its points. It adds itself to its region's
-       coupling model (``Coupling.of(ctx).add(self)``).
+   * - coupled instance (``@coupled``: a boundary condition, a source)
+     - what it sends and receives, a data model each, in the mesh order of its
+       location; no patch, geometry or context.
+   * - location (``Patch(name)``, ``Cells()``, ``Global(name)``)
+     - the part of the mesh, and so the geometry: face centres and areas, cell
+       centres and volumes, from the region's ``MeshGeometry``.
    * - solver
-     - its coupling model, ``ctx.models["coupling"] = Coupling(self.coupling)``,
-       added in its init before its boundary conditions.
+     - its coupling model, ``ctx.models["coupling"] = Coupling(self.coupling,
+       geometry, fields)``, and the binding of its instances,
+       ``coupling(ctx).add(Patch("top"), bc)``: a **port**.
    * - case (``system/regionCoupling.yaml``)
-     - the **exchanges** (pairs of patches and their mapping) and the
-       **coupling nodes** (``couplings``).
+     - the **field ports** (``ports``), the **exchanges** (pairs of ports and
+       their mapping) and the **coupling nodes** (``couplings``).
    * - framework
      - one coupling op ``<region>.<node>`` per node of a region, placed in the
        region's graph; the node's last region (its **leader**) decides
@@ -32,38 +35,55 @@ Regions that exchanges connect form a **group**; its last region in
 ``regionSolvers`` order agrees the time step. Each region reads its own files
 under ``<region>/`` (``<region>/constant``, ``<region>/0``).
 
-The coupled boundary condition
-------------------------------
+The coupled instance
+--------------------
 
 .. code-block:: python
 
-    class WallTemperature(BaseModel):
-        T: Array             # one value per point; Array fields only
+    class WallTemperature(FaceData):     # one row per face of a Patch
+        T: Array
 
 
-    class WallHeatFlux(BaseModel):
+    class WallHeatFlux(FaceData):
         q: Array
 
 
     @coupled
-    class CoupledHeatFlux(Patch):        # sets self.field and self.patch
-        def __init__(self, ctx, field, patch):
-            super().__init__(ctx, field, patch)
-            Coupling.of(ctx).add(self)
-
-        @coupled.coordinates
-        def points(self) -> Array: ...
-
+    class CoupledHeatFlux(NeoNPatch):
         @coupled.sends
-        def send(self) -> WallTemperature: ...
+        def wall_temperature(self) -> WallTemperature: ...
 
         @coupled.receives
-        def receive(self, data: WallHeatFlux) -> None: ...   # already mapped
+        def heat_in(self, data: WallHeatFlux) -> None: ...   # already mapped
 
-The annotations are the declaration; the side names no partner, loop or
-mapping. ``add`` raises ``ValueError`` when no exchange connects the patch.
+
+    # solver init
+    coupling(ctx).add(Patch("top"), CoupledHeatFlux(...))
+
+The annotations are the declaration (string annotations resolve, so
+``from __future__ import annotations`` is fine). A class sends, receives or
+both, each data field once; ``@coupled`` checks this as the class is defined.
+The base class names the entity of a row: ``FaceData`` lives on a ``Patch``,
+``CellData`` on ``Cells``, ``ValueData`` (``Scalar`` fields) and ``ProbeData``
+(a row per probe point) on a ``Global``. Instances bound to one location merge
+into its port. ``add`` raises ``ValueError`` when no exchange connects the port;
+at start-up an array with another row count than its location raises.
 ``test/solver/multiRun/cases/dirichlet_neumann_slabs`` couples two slabs this
 way (``test/solver/multiRun/slab_solver.py``).
+
+**Field ports.** A region's field on a location needs no Python: the case
+names it, and the solver's ``FieldAccess`` reads or writes it. ``direction``
+is ``out`` (read, the default), ``in`` (write) or ``inout``; an exchange of two
+field ports connects ``out`` to ``in`` or ``inout`` to ``inout``, and a field
+on a location is written by one port (checked as the file loads).
+
+.. code-block:: yaml
+
+    ports:
+      fluid:
+        - {name: T_out, field: T, patch: outlet}             # Patch("outlet"), out
+        - {name: T_cells, field: T}                          # the cells
+        - {name: U_in, field: U, patch: inlet, direction: in}
 
 The case file
 -------------
@@ -71,8 +91,9 @@ The case file
 .. code-block:: yaml
 
     exchanges:
-      - {name: wall-T, sides: {fluid: wall, solid: right}}   # mapping: nearest-neighbor
-      - {sides: {fluid: inlet, pipe: outlet}, mapping: identity}   # name: fluid-pipe
+      - {name: wall-T, ports: {fluid: wall, solid: right}}   # mapping: nearest-neighbor
+      - {ports: {fluid: inlet, pipe: outlet}, mapping: identity}   # name: fluid-pipe
+      - {name: mean, ports: {fluid: T_out, controller: T}, mapping: area-mean}
     couplings:                       # outer to inner; each exchange in exactly one
       - name: wall                   # the ops <region>.wall
         scheme: serial               # serial (default) | parallel
@@ -80,8 +101,9 @@ The case file
         exchanges:
           - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}
           - fluid-pipe               # a plain name: no acceleration
-        convergence:                 # every measure must hold
+        convergence:                 # every measure must hold; data: a data field
           - {type: relative, data: T, limit: 1.0e-6}
+          - {type: relative, data: q, limit: 1.0e-6}
         wraps:                       # per region; default: the whole time step
           fluid: {operations: [solve_T]}
           pipe: {operations: [inner_loop]}   # a loop, held whole
@@ -93,7 +115,30 @@ the whole time step. ``mapping``, ``acceleration`` and ``convergence`` name a
 strategy of the families ``CouplingMapping``, ``CouplingAcceleration`` and
 ``CouplingConvergence`` by ``type``, with its options.
 
-**Serial or parallel.** Parallel: a side receives what its partner sent in the
+An exchange pairs what one port sends with what the other receives by the data
+models' field names, one message per model; each direction needs a pair. The
+mapping moves a model between the locations' entities:
+
+.. list-table::
+   :header-rows: 1
+
+   * - mapping
+     - maps
+   * - ``nearest-neighbor`` (default), ``identity``
+     - faces to faces, cells to cells (``identity``: also values)
+   * - ``area-mean``, ``area-integral``
+     - a patch's faces to one value, weighted by the face areas
+   * - ``volume-mean``, ``volume-integral``
+     - the cells to one value, weighted by the cell volumes
+   * - ``uniform``
+     - one value to every face or cell
+   * - ``probe`` (``{type: probe, points: [[x, y, z], ...]}``)
+     - the cells nearest each point to a row each (``ProbeData``)
+
+The value mappings take scalar fields only. A region's data field (``T``,
+``q``) is in at most one coupling node.
+
+**Serial or parallel.** Parallel: a port receives what its partner sent in the
 pass before. Serial: from a region that steps before its own, what it sent in
 the same pass, so a serial pass waits for the partner's whole pass. Hence a
 serial node may neither enclose a node coupling two of its regions nor hold
@@ -102,7 +147,7 @@ steady region has no time step, so a serial node may wrap it whole.
 
 The file is checked as it loads, by the same ``check_couplings`` as
 ``region_couplings``: unknown keys, types or options, an exchange in no node
-or in two, two exchanges or nodes of one name, a patch in two exchanges, a
+or in two, two exchanges or nodes of one name, a port in two exchanges, a
 ``wraps`` region the node does not couple, and a serial node enclosing a node
 of two of its regions. A serial node holding the time step is found as the
 region's graph is resolved.
@@ -129,16 +174,18 @@ the leader, which sends back the smallest. Ops marked ``first`` (the time-step
 ops, a solver's old-time storage) run in the first pass of a coupling loop
 only.
 
-**A pass.** The first loop test exchanges what each side sends and receives
-and its points, binds the mappings once and builds the leader's controller.
-Each test then sends the sides' data (serial: to later partners at once) and
-the leader's decision, convergence and acceleration included, comes back; on
-another pass each side receives its partner's data, mapped and validated. All
+**A pass.** The first loop test tells each partner what a port sends and its
+geometry, checks the pairs, binds the mappings once and builds the leader's
+controller. Each test then sends the ports' data, a stream per data model
+(serial: to later partners at once), and the leader's decision, convergence
+and acceleration (per exchange, over its streams) included, comes back; on
+another pass each port receives its partner's data, mapped and validated. All
 regions leave the loop on the same pass.
 
 **The final pass.** Once every measure holds, the leader runs one more pass,
 the final one; the last pass ``maxIterations`` allows is final regardless (it
-warns, ``CouplingNotConvergedWarning``). Ops marked ``final`` (such as
+warns, ``CouplingNotConvergedWarning``). ``maxIterations: 1`` is explicit
+coupling: one pass, no warning. Ops marked ``final`` (such as
 ``write_output``) run in the final pass only.
 
 **Failures.** A region that fails closes the comm channel, so none waits for it
@@ -171,7 +218,9 @@ leaves its values to the coupling:
 ``q = k dT/dn`` into its region (``WallHeatFlux``); ``coupledHeatFlux`` takes
 that flux as an explicit source in the cells of its faces and sends its wall
 temperature (``WallTemperature``, both in ``neofoam.solver.regions``). The
-points are the face centres, so the faces need not match. Each region is an
+solver binds each to ``Patch(name)``; ``NeoNGeometry``
+(``neofoam.solver.neon_runtime``) gives the face centres, so the faces need not
+match, and ``NeoNFields`` the field ports' access. Each region is an
 OpenFOAM case of its own under ``<region>/``, beside the case's
 ``system/controlDict.yaml`` and ``system/regionCoupling.yaml``.
 ``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3
@@ -198,9 +247,11 @@ not fit the run before it starts; an error on any process aborts every process.
 
 Only a region's root (its rank 0) talks to other regions, over an
 ``MpiCommChannel`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
-the whole patches: the root gathers what every process's sides send and
-scatters what they receive; the other processes run a follower op that takes
-the root's decision, and have no comm channel. ``close`` waits at most
+the whole ports: the root gathers each port's geometry once and what every
+process sends of a patch or the cells, and scatters what they receive; a
+``Global`` port sends the root's value and every process receives it. The other
+processes run a follower op that takes the root's decision, and have no comm
+channel. ``close`` waits at most
 ``commChannelTimeout`` for the partners, naming those that did not finish. The
 whole interface on the root is an intermediate step, before a distributed
 exchange (``test/solver/multiRun/test_regions_on_processes.py``).
@@ -214,8 +265,12 @@ Extension points
    * - to change
      - extend
    * - mapping
-     - a ``CouplingMapping``: ``bind(source, target)`` once, returning the
+     - a ``CouplingMapping``: ``kinds`` (the entities it maps) and
+       ``bind(source, target)`` once on both ports' ``Geometry``, returning the
        ``data -> data`` map of every pass.
+   * - backend
+     - a ``MeshGeometry`` (face centres and areas, cell centres and volumes)
+       and a ``FieldAccess`` (read and write a field on a location).
    * - acceleration
      - a ``CouplingAcceleration``: ``__call__(carried data, iteration) -> data``.
    * - convergence

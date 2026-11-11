@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/neofoam.framework.coupling.mpi.html">neofoam.framework.coupling.mpi</a></li>
@@ -695,7 +697,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PositiveInt</span><span class="p">,</span> <span class="n">field_validator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TimeControlConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.coupling</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">FaceData</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">YAML</span><span class="p">,</span> <span class="n">IOStrategy</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -784,7 +786,7 @@
 
 <div class="viewcode-block" id="WallTemperature">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.regions.html#neofoam.solver.regions.WallTemperature">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">WallTemperature</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WallTemperature</span><span class="p">(</span><span class="n">FaceData</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""What a Neumann side sends: its wall temperature per face."""</span>
 
     <span class="n">T</span><span class="p">:</span> <span class="n">Array</span></div>
@@ -793,7 +795,7 @@
 
 <div class="viewcode-block" id="WallHeatFlux">
 <a class="viewcode-back" href="../../../reference/api/neofoam.solver.regions.html#neofoam.solver.regions.WallHeatFlux">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">WallHeatFlux</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WallHeatFlux</span><span class="p">(</span><span class="n">FaceData</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""What a Dirichlet side sends: the heat flux per face area into its region."""</span>
 
     <span class="n">q</span><span class="p">:</span> <span class="n">Array</span></div>
