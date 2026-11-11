@@ -57,7 +57,7 @@ pytest.importorskip("neon._neon")  # skip when the NeoN bindings are not built
 
 import neon._neon as nn  # noqa: E402
 
-from neofoam.framework.coupling import FieldPort, RegionCouplingConfig  # noqa: E402
+from neofoam.framework.coupling import CouplingConfig, FieldPort  # noqa: E402
 from neofoam.solver import neon_runtime  # noqa: E402
 from neofoam.solver.neon_runtime import (  # noqa: E402
     _gpu_init_report,
@@ -227,7 +227,7 @@ def test_finalize_does_not_abort_with_neon_object_pinned_by_traceback() -> None:
 
 def _plant_ports(variant: str) -> list[FieldPort]:
     """Region ``plant``'s field ports in the ``coupling.yaml`` of ``variant``."""
-    config = RegionCouplingConfig.load(case_dir=WRITTEN_PATCHES / variant)
+    config = CouplingConfig.load(case_dir=WRITTEN_PATCHES / variant)
     return config.field_ports()["plant"]
 
 
