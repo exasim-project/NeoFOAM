@@ -29,6 +29,7 @@ from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
     Coupling,
+    CouplingNode,
     CouplingNotConvergedWarning,
     Link,
 )
@@ -130,7 +131,8 @@ def test_a_single_pass_is_first_and_final(scheme: Any) -> None:
 
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     transport = RecordingTransport()
-    couplings = region_couplings(list(PATCHES), LINKS, transport)
+    nodes = [CouplingNode("coupling", ("a-b", "b-c"))]
+    couplings = region_couplings(list(PATCHES), LINKS, transport, nodes)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings.get(name))}, region=name)
         for name in PATCHES
