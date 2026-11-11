@@ -42,9 +42,6 @@ class _Request:
     def Test(self) -> bool:  # noqa: N802 - mpi4py's name
         return self._completes
 
-    def Wait(self) -> None:  # noqa: N802 - mpi4py's name
-        pass
-
 
 class FakeChannel:
     """One rank's end of an in-memory channel; ``completes=False``: no send ever completes."""
@@ -164,6 +161,28 @@ def test_mpi_transport_receive_from_an_aborted_partner_raises_transport_closed()
     _within(lambda: b.close("b"))
 
 
+def test_mpi_transport_close_times_out_naming_the_roots_that_did_not_close() -> None:
+    a, _b = _pair(timeout=0.05)
+
+    with pytest.raises(CouplingTimeout) as error:
+        _within(lambda: a.close("a"))
+
+    message = str(error.value)
+    assert "region a waited 0.05 s to close (commChannelTimeout); not closed: b" in message
+    assert "sends not complete: none" in message
+
+
+def test_mpi_transport_close_times_out_naming_the_sends_not_complete() -> None:
+    a, b = _pair(timeout=0.05, completes=False)
+    a.send("a", "b", "x", 1)
+    b.abort(["b"])
+
+    with pytest.raises(CouplingTimeout) as error:
+        _within(lambda: a.close("a"))
+
+    assert "not closed: none; sends not complete: a→b 'x', a→b 'closed'" in str(error.value)
+
+
 def test_mpi_transport_belongs_to_its_root() -> None:
     boxes: dict[int, deque[Any]] = {0: deque(), 1: deque()}
     channel = FakeChannel(1, boxes, threading.Lock(), completes=True)
@@ -184,6 +203,7 @@ def test_mpi_transport_belongs_to_its_root() -> None:
         ("order", 2),
         ("timeout", 2),
         ("close", 2),
+        ("close_timeout", 2),
         ("abort", 2),
         ("pickle", 2),
         ("refusals", 2),

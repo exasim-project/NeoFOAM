@@ -1,14 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run one scenario of the MPI comm channel or the region communicator under ``mpirun``.
+"""Run one scenario of :mod:`neofoam.framework.coupling.mpi` under ``mpirun``, print ``#OK``.
 
-``mpirun -np 2 python mpi_transport_worker.py <scenario>``: rank 0 is the root of
-region ``a``, rank 1 of ``b`` (scenarios ``order``, ``timeout``, ``close``,
-``abort``, ``pickle``, ``refusals``). ``mpirun -np 5 python mpi_transport_worker.py
-region_comm``: two regions on ranks 0-1 and 2-4. Each rank checks what it sees
-and prints ``#OK <scenario>``; a failed check prints its traceback and aborts
-every rank (``MPI_Abort``), so none waits for it.
+Rank 0 is the root of region ``a``, rank 1 of ``b``; ``region_comm`` has two
+regions on ranks 0-1 and 2-4. A failed check aborts every rank.
 """
 
 import sys
@@ -93,6 +89,18 @@ def close() -> None:
         assert comm_channel.receive("a", "b", "last") == "bye"
         message = _raises(CouplingDeadlock, lambda: comm_channel.receive("a", "b", "never"))
         assert "region b waits for 'never' from region a, which finished" in message
+        comm_channel.close("b")
+
+
+def close_timeout() -> None:
+    """A partner that does not close: close gives up after the timeout, naming it."""
+    comm_channel, region = _comm_channel(timeout=0.5)
+    if region == "a":
+        message = _raises(CouplingTimeout, lambda: comm_channel.close("a"))
+        assert "region a waited 0.5 s to close (commChannelTimeout); not closed: b" in message
+        WORLD.Barrier()
+    else:
+        WORLD.Barrier()
         comm_channel.close("b")
 
 
@@ -182,7 +190,10 @@ def region_comm() -> None:
         assert "cannot scatter 3 rows" in message
 
 
-SCENARIOS = {f.__name__: f for f in (order, timeout, close, abort, pickle, refusals, region_comm)}
+SCENARIOS = {
+    f.__name__: f
+    for f in (order, timeout, close, close_timeout, abort, pickle, refusals, region_comm)
+}
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ from pydantic import BaseModel
 
 from neofoam.framework.operations import IterativeOp
 
-from .comm_channel import DEFAULT_TIMEOUT, _Mailbox, _pickled
+from .comm_channel import DEFAULT_TIMEOUT, CouplingTimeout, _Mailbox, _pickled
 from .data import ExchangeSide, _sent
 from .loop import CouplingOp
 
@@ -52,7 +52,8 @@ class MpiTransport(_Mailbox):
     ``roots`` maps each region of the group to its root's rank in it, and
     ``region`` is this root's. A receive fails as one of
     :class:`~neofoam.framework.coupling.InProcessCommChannel`, but a deadlock
-    between processes is told by the timeout only. Not thread safe.
+    between processes is told by the timeout only. :meth:`close` waits at most
+    ``timeout`` seconds for the other roots. Not thread safe.
     """
 
     #: The one MPI tag of the coupling's messages.
@@ -96,20 +97,22 @@ class MpiTransport(_Mailbox):
         return self._take(source, target, tag)
 
     def close(self, region: str) -> None:
-        """This root's region leaves; wait until every other root left and every send completed.
+        """This root's region leaves; wait until every other root closed and every send completed.
 
-        Closing again does nothing.
+        Raises :class:`CouplingTimeout` after ``timeout`` seconds, naming the
+        roots that did not close and the sends not complete. Closing again does nothing.
         """
         self._own(region, "closes")
         if self._left:
             return
         self._left = True
         self._tell(_CLOSED)
-        while self._missing():
-            self._wait(None)
-        for _target, _tag, request in self._sends:
-            request.Wait()
-        self._sends.clear()
+        since = time.monotonic()
+        while self._missing() or self._pending():
+            left = None if self.timeout is None else since + self.timeout - time.monotonic()
+            if left is not None and left <= 0:
+                raise CouplingTimeout(self._close_report())
+            self._wait(left)
 
     def abort(self, regions: Iterable[str]) -> None:
         """``regions`` leave; this root tells the others when its own region is one of them."""
@@ -168,6 +171,14 @@ class MpiTransport(_Mailbox):
                 self._aborted.add(source)
             arrived = True
         return arrived
+
+    def _close_report(self) -> str:
+        sends = ", ".join(f"{self.region}→{target} '{tag}'" for target, tag, _ in self._sends)
+        return self._report(
+            f"a coupling timeout: region {self.region} waited {self.timeout:g} s to close "
+            f"(commChannelTimeout); not closed: {', '.join(self._missing()) or 'none'}; "
+            f"sends not complete: {sends or 'none'}"
+        )
 
 
 class RegionComm:
