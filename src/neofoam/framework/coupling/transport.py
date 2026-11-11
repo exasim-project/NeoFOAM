@@ -42,7 +42,6 @@ class Tag:
     """
 
     TIME_DT = "time/dt"
-    NODE = ("sides", "pass", "decision")
 
     @staticmethod
     def data(exchange: str) -> str:
@@ -56,9 +55,7 @@ class Tag:
 
     @staticmethod
     def node(node: str, what: Literal["sides", "pass", "decision"]) -> str:
-        """``<node>/<what>``; raises ``ValueError`` for a ``what`` not in :attr:`NODE`."""
-        if what not in Tag.NODE:
-            raise ValueError(f"a coupling node sends {', '.join(Tag.NODE)}, not {what!r}")
+        """``<node>/<what>``."""
         return f"{node}/{what}"
 
 

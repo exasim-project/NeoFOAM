@@ -173,11 +173,6 @@ class CouplingOp(IterativeOp):
         return self.region == self._leader
 
     @property
-    def leader(self) -> str:
-        """The region that decides for the node: the last of its regions in stepping order."""
-        return self._leader
-
-    @property
     def group(self) -> tuple[str, ...]:
         """The regions the node's exchanges connect with this region, in stepping order."""
         return self._group

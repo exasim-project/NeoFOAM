@@ -145,13 +145,6 @@ class RegionCoupling:
             dict(link.ends)[self.region] for link in self.links if self.region in dict(link.ends)
         )
 
-    def node(self, name: str) -> CouplingNode:
-        """The node ``name`` of this region."""
-        for node in self.nodes:
-            if node.name == name:
-                return node
-        raise KeyError(f"region {self.region} is in no coupling node '{name}'")
-
     def node_links(self, node: CouplingNode) -> tuple[Link, ...]:
         """The exchanges of ``node`` in this region's group."""
         return tuple(link for link in self.links if link.name in node.exchanges)
@@ -167,10 +160,6 @@ class RegionCoupling:
     def node_group(self, node: CouplingNode) -> tuple[str, ...]:
         """The regions ``node`` connects with this region, itself included, in stepping order."""
         return _group(self.region, self.group, self.node_links(node))
-
-    def node_leader(self, node: CouplingNode) -> str:
-        """The region that decides for ``node``: the last of its regions in stepping order."""
-        return self.node_group(node)[-1]
 
 
 def region_couplings(
