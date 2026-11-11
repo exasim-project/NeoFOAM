@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""How a case couples its regions, ``system/coupling.yaml``: :class:`RegionCouplingConfig`."""
+"""How a case couples its regions, ``system/coupling.yaml``: :class:`CouplingConfig`."""
 
 from functools import partial
 from typing import Annotated, Any, Literal, Optional, Sequence
@@ -150,7 +150,7 @@ class CouplingLoopConfig(BaseModel):
 
 
 @IOStrategy(YAML("system/coupling.yaml"))
-class RegionCouplingConfig(BaseConfig):
+class CouplingConfig(BaseConfig):
     """``system/coupling.yaml``: field ports, the exchanges and the coupling loops.
 
     ``ports`` lists each region's field ports, which an exchange names like the
@@ -221,7 +221,7 @@ class RegionCouplingConfig(BaseConfig):
         )
 
     @model_validator(mode="after")
-    def _check(self) -> "RegionCouplingConfig":
+    def _check(self) -> "CouplingConfig":
         exchanges = self.coupling_exchanges()
         regions = list(
             dict.fromkeys(region for exchange in exchanges for region, _patch in exchange.ends)
@@ -249,6 +249,6 @@ def comm_channel_timeout() -> Optional[float]:
 
         InProcessCommChannel(timeout=comm_channel_timeout())
     """
-    if not RegionCouplingConfig.get_default_path().exists():
+    if not CouplingConfig.get_default_path().exists():
         return DEFAULT_TIMEOUT
-    return RegionCouplingConfig.load().commChannelTimeout or None
+    return CouplingConfig.load().commChannelTimeout or None

@@ -14,9 +14,9 @@ from pathlib import Path
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     CommChannel,
+    CouplingConfig,
     InProcessCommChannel,
     ParticipantExchanges,
-    RegionCouplingConfig,
     comm_channel_timeout,
     run_participants,
 )
@@ -31,9 +31,9 @@ multiRun.config(ControlDictConfig)
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, ParticipantExchanges]:
     """Each region's coupling from ``system/coupling.yaml``; none without it."""
-    if not RegionCouplingConfig.get_default_path().exists():
+    if not CouplingConfig.get_default_path().exists():
         return {}
-    return RegionCouplingConfig.load().participant_exchanges(regions, comm_channel)
+    return CouplingConfig.load().participant_exchanges(regions, comm_channel)
 
 
 def run() -> dict[str, Context]:

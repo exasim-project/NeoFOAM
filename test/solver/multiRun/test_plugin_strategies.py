@@ -21,7 +21,7 @@ import pytest
 from pydantic import ValidationError
 
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.framework.coupling import RegionCouplingConfig
+from neofoam.framework.coupling import CouplingConfig
 from neofoam.solver.multiRun import run
 from solver.multiRun.case_files import copy_case
 
@@ -60,10 +60,10 @@ def test_multiRun_couples_through_the_strategies_of_a_plugin(
         )
 
 
-def test_region_coupling_reads_the_options_of_a_plugin_strategy(
+def test_coupling_config_reads_the_options_of_a_plugin_strategy(
     plugin: ModuleType, tmp_path: Path
 ) -> None:
-    config = RegionCouplingConfig.load(case_dir=_case(tmp_path, "strategies"))
+    config = CouplingConfig.load(case_dir=_case(tmp_path, "strategies"))
 
     mapping: Any = config.exchanges[0].mapping
     acceleration: Any = config.couplings[0].exchanges[0].acceleration
@@ -71,13 +71,13 @@ def test_region_coupling_reads_the_options_of_a_plugin_strategy(
     assert (type(acceleration), acceleration.columns) == (plugin.QuasiNewton, 3)
 
 
-def test_region_coupling_naming_an_unregistered_strategy_raises(tmp_path: Path) -> None:
+def test_coupling_config_naming_an_unregistered_strategy_raises(tmp_path: Path) -> None:
     with pytest.raises(
         ValidationError,
         match=r"exchanges.0.mapping.mapping\n.*Input tag 'fake-rbf' .* expected tags: "
         r"'identity', 'nearest-neighbor'",
     ):
-        RegionCouplingConfig.load(case_dir=_case(tmp_path, "strategies"))
+        CouplingConfig.load(case_dir=_case(tmp_path, "strategies"))
 
 
 def test_a_wrong_option_of_a_plugin_strategy_raises_naming_it(
@@ -88,4 +88,4 @@ def test_a_wrong_option_of_a_plugin_strategy_raises_naming_it(
         match=r"acceleration.fake-iqn.columns\n.*Field required.*\n.*\n.*acceleration.fake-iqn."
         r"column\n.*Extra inputs",
     ):
-        RegionCouplingConfig.load(case_dir=_case(tmp_path, "option_typo"))
+        CouplingConfig.load(case_dir=_case(tmp_path, "option_typo"))

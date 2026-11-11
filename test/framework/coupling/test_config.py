@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``system/coupling.yaml`` read into :class:`RegionCouplingConfig`.
+"""``system/coupling.yaml`` read into :class:`CouplingConfig`.
 
-``cases/region_coupling/minimal`` sets only the required entries, every other
-``cases/region_coupling/<name>`` breaks one rule; a broken chain is
+``cases/coupling_config/minimal`` sets only the required entries, every other
+``cases/coupling_config/<name>`` breaks one rule; a broken chain is
 multiRun's ``cases/couplings/chain`` with one entry changed.
 """
 
@@ -17,10 +17,10 @@ import yaml
 from pydantic import ValidationError
 
 from neofoam.framework.coupling import (
+    CouplingConfig,
     FieldPort,
     InProcessCommChannel,
     NearestNeighborMapping,
-    RegionCouplingConfig,
     comm_channel_timeout,
     participant_exchanges,
 )
@@ -36,8 +36,8 @@ def _chain() -> dict[str, Any]:
     return data
 
 
-def test_region_coupling_config_reads_every_entry() -> None:
-    config = RegionCouplingConfig.load(case_dir=MULTI_RUN / "coupled_slabs")
+def test_coupling_config_reads_every_entry() -> None:
+    config = CouplingConfig.load(case_dir=MULTI_RUN / "coupled_slabs")
 
     assert config.model_dump() == {
         "ports": {},
@@ -67,8 +67,8 @@ def test_region_coupling_config_reads_every_entry() -> None:
     }
 
 
-def test_region_coupling_config_defaults_the_optional_entries() -> None:
-    config = RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / "minimal")
+def test_coupling_config_defaults_the_optional_entries() -> None:
+    config = CouplingConfig.load(case_dir=CASES / "coupling_config" / "minimal")
 
     assert config.model_dump() == {
         "ports": {},
@@ -93,10 +93,8 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
     }
 
 
-def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
-    config = RegionCouplingConfig.load(
-        case_dir=MULTI_RUN.parent / "limitations" / "cases" / "chain"
-    )
+def test_coupling_config_reads_a_list_of_exchanges() -> None:
+    config = CouplingConfig.load(case_dir=MULTI_RUN.parent / "limitations" / "cases" / "chain")
 
     assert [(e.name, e.ports, type(e.mapping)) for e in config.exchanges] == [
         (None, {"a": "to_b", "b": "to_a"}, NearestNeighborMapping),
@@ -139,13 +137,13 @@ def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
         ("sides", r"exchanges.0.ports\n.*Field required.*\n.*\nexchanges.0.sides\n.*Extra"),
     ],
 )
-def test_region_coupling_config_rejects_an_invalid_file(case: str, error: str) -> None:
+def test_coupling_config_rejects_an_invalid_file(case: str, error: str) -> None:
     with pytest.raises(ValidationError, match=error):
-        RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / case)
+        CouplingConfig.load(case_dir=CASES / "coupling_config" / case)
 
 
-def test_region_coupling_config_gives_every_loop_an_acceleration_of_its_own() -> None:
-    config = RegionCouplingConfig.load(case_dir=CHAIN)
+def test_coupling_config_gives_every_loop_an_acceleration_of_its_own() -> None:
+    config = CouplingConfig.load(case_dir=CHAIN)
 
     first, second = config.loops()[0], config.loops()[0]
 
@@ -156,7 +154,7 @@ def test_a_loop_without_a_scheme_is_serial() -> None:
     data = _chain()
     del data["couplings"][1]["scheme"]
 
-    loops = RegionCouplingConfig.model_validate(data).loops()
+    loops = CouplingConfig.model_validate(data).loops()
 
     assert [(loop.name, loop.scheme) for loop in loops] == [
         ("outer", "parallel"),
@@ -169,7 +167,7 @@ def test_a_serial_loop_may_enclose_a_chained_loop() -> None:
     data = _chain()
     data["couplings"][0]["scheme"] = "serial"
 
-    loops = RegionCouplingConfig.model_validate(data).loops()
+    loops = CouplingConfig.model_validate(data).loops()
 
     assert [loop.scheme for loop in loops] == ["serial", "parallel"]
 
@@ -180,7 +178,7 @@ def test_a_serial_loop_enclosing_a_loop_of_two_of_its_regions_raises_as_the_file
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
         r"well; .* make 'fsi' parallel",
     ):
-        RegionCouplingConfig.load(case_dir=MULTI_RUN / "couplings" / "serial_encloses")
+        CouplingConfig.load(case_dir=MULTI_RUN / "couplings" / "serial_encloses")
 
 
 def _broken(path: str, value: Any) -> dict[str, Any]:
@@ -255,19 +253,19 @@ def _broken(path: str, value: Any) -> dict[str, Any]:
         "typo-at-the-top",
     ],
 )
-def test_region_coupling_config_rejects_a_broken_chain(data: dict[str, Any], message: str) -> None:
+def test_coupling_config_rejects_a_broken_chain(data: dict[str, Any], message: str) -> None:
     with pytest.raises(ValidationError, match=message):
-        RegionCouplingConfig.model_validate(data)
+        CouplingConfig.model_validate(data)
 
 
 @pytest.mark.parametrize("seconds", [-1, float("inf")])
-def test_region_coupling_config_rejects_a_broken_comm_channel_timeout(seconds: float) -> None:
+def test_coupling_config_rejects_a_broken_comm_channel_timeout(seconds: float) -> None:
     with pytest.raises(ValidationError, match="commChannelTimeout"):
-        RegionCouplingConfig.model_validate({**_chain(), "commChannelTimeout": seconds})
+        CouplingConfig.model_validate({**_chain(), "commChannelTimeout": seconds})
 
 
-def test_region_coupling_config_reads_the_field_ports() -> None:
-    config = RegionCouplingConfig.load(case_dir=MULTI_RUN / "field_ports")
+def test_coupling_config_reads_the_field_ports() -> None:
+    config = CouplingConfig.load(case_dir=MULTI_RUN / "field_ports")
 
     assert config.field_ports() == {"left": [FieldPort("T_cells", "T")]}
     assert [(e.name, e.ports) for e in config.exchanges] == [
@@ -276,13 +274,13 @@ def test_region_coupling_config_reads_the_field_ports() -> None:
     ]
 
 
-def test_region_coupling_config_checks_the_directions_of_its_field_ports() -> None:
+def test_coupling_config_checks_the_directions_of_its_field_ports() -> None:
     with pytest.raises(ValidationError, match="exchange 'sensor': T_cells is inout and T_in is"):
-        RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / "field_port_directions")
+        CouplingConfig.load(case_dir=CASES / "coupling_config" / "field_port_directions")
 
 
 def test_the_config_gives_each_region_its_coupling_as_participant_exchanges_does() -> None:
-    config = RegionCouplingConfig.load(case_dir=CHAIN)
+    config = CouplingConfig.load(case_dir=CHAIN)
     comm_channel = InProcessCommChannel()
     args = (config.coupling_exchanges(), comm_channel, config.loops(), config.field_ports())
 
@@ -292,7 +290,7 @@ def test_the_config_gives_each_region_its_coupling_as_participant_exchanges_does
 
 
 def test_the_config_s_coupling_of_regions_the_case_does_not_run_raises() -> None:
-    config = RegionCouplingConfig.load(case_dir=CHAIN)
+    config = CouplingConfig.load(case_dir=CHAIN)
 
     with pytest.raises(
         ValueError, match=r"couple the regions \['c'\], which are not in \['a', 'b'\]"
@@ -307,7 +305,7 @@ def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> A
     """
     (tmp_path / "system").mkdir()
     if seconds != "none":
-        config = RegionCouplingConfig.load(case_dir=CHAIN)
+        config = CouplingConfig.load(case_dir=CHAIN)
         if seconds != "default":
             config.commChannelTimeout = seconds
         config.save(case_dir=tmp_path)

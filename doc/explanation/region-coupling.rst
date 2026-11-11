@@ -158,7 +158,7 @@ How it runs
 .. code-block:: text
 
     multiRun.run()                          main thread
-      RegionCouplingConfig.participant_exchanges(...) -> ParticipantExchanges per region
+      CouplingConfig.participant_exchanges(...) -> ParticipantExchanges per region
       run_participants: one thread per region; the first error is raised
         |
         +-- thread "a":  instantiate(region="a", coupling=...).run()
