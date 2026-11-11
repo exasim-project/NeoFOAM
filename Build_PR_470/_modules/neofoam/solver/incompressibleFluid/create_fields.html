@@ -925,9 +925,6 @@
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">writer_backend_steps</span><span class="p">(</span><span class="n">ControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">)))</span>
 
         <span class="c1"># PIMPLE is passed to add_core_models so it lands in models.pressure_velocity.</span>
-        <span class="c1"># Its runtime's run_build synthesises the ``pimple.field(...)`` declarations</span>
-        <span class="c1"># (``U`` / ``p``) *first*, then the ``@build`` steps (``phi``, pimpleControl,</span>
-        <span class="c1"># …) which depend on them.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)])</span>
 
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>

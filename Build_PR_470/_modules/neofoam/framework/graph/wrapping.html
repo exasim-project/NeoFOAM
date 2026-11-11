@@ -659,15 +659,14 @@
 <span class="c1">#</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""A wrapping loop: the resolver places it around operations of the graph.</span>
+<span class="sd">"""Place a contributed wrapping loop around operations of the resolved graph.</span>
 
-<span class="sd">A model or boundary condition contributes a loop operation that repeats part of</span>
-<span class="sd">the solver's time step. Its ``OperationMetadata.wraps``</span>
-<span class="sd">(:class:`~neofoam.framework.types.Placement`) says which part:</span>
+<span class="sd">A model or boundary condition contributes a loop that repeats part of the time</span>
+<span class="sd">step; its ``OperationMetadata.wraps`` (:class:`~neofoam.framework.types.Placement`)</span>
+<span class="sd">says which part:</span>
 
-<span class="sd">- no operations: the whole body of the top scope, the body of the outermost loop</span>
-<span class="sd">  (the time loop). Once a wrapping loop sits there, the next one wraps the whole</span>
-<span class="sd">  body of the innermost of them::</span>
+<span class="sd">- no operations: the whole body of the outermost loop (the time loop), or of the</span>
+<span class="sd">  innermost wrapping loop already placed there::</span>
 
 <span class="sd">    time_loop                       time_loop</span>
 <span class="sd">        start_step                      couple</span>
@@ -676,9 +675,8 @@
 <span class="sd">        write                               update_rho</span>
 <span class="sd">                                            write</span>
 
-<span class="sd">- named operations: those and, with ``downstream``, every operation downstream of</span>
-<span class="sd">  them over ``depends_on`` / ``before`` within their scope (the time-step body or</span>
-<span class="sd">  a loop body). The loop takes the place of the last of them::</span>
+<span class="sd">- named operations: those and every operation downstream of them in their scope;</span>
+<span class="sd">  the loop takes the place of the last of them::</span>
 
 <span class="sd">    time_loop                       time_loop</span>
 <span class="sd">        start_step                      start_step</span>
@@ -687,35 +685,18 @@
 <span class="sd">        write                               update_rho</span>
 <span class="sd">                                        write</span>
 
-<span class="sd">  A name may be a loop inside the outermost one (e.g. a PIMPLE ``inner_loop``):</span>
-<span class="sd">  the wrapping loop holds it whole, as one operation, and downstream of it is</span>
-<span class="sd">  downstream of anything inside it::</span>
+<span class="sd">  A named loop inside the outermost one (e.g. PIMPLE's ``inner_loop``) is held whole.</span>
 
-<span class="sd">    time_loop                       time_loop</span>
-<span class="sd">        set_time_step                   set_time_step</span>
-<span class="sd">        increment_time                  increment_time</span>
-<span class="sd">        inner_loop   ("inner_loop",)    couple</span>
-<span class="sd">            solve_U  --------------&gt;        inner_loop</span>
-<span class="sd">            solve_p                             solve_U</span>
-<span class="sd">        write                                   solve_p</span>
-<span class="sd">                                            write</span>
-
-<span class="sd">Loops are placed in the order given, outer first: a loop whose operations lie</span>
-<span class="sd">inside one placed before nests inside it; one that would have to hold a loop</span>
-<span class="sd">placed before raises.</span>
-
-<span class="sd">An operation marked ``first`` (``OperationMetadata.first``, e.g. the start of a</span>
-<span class="sd">time step) runs only in the first pass of the wrapping loops around it; it may</span>
-<span class="sd">not depend on an operation that runs in every pass of one of them</span>
-<span class="sd">(:func:`check_first`). One marked ``final`` (``OperationMetadata.final``, e.g.</span>
-<span class="sd">writing the results) runs only in their final pass; no operation that runs in</span>
-<span class="sd">an other pass of one of them may depend on it (:func:`check_final`).</span>
+<span class="sd">Loops are placed in the order given, outer first; one that would have to hold a</span>
+<span class="sd">loop placed before it raises. An operation marked ``first`` runs only in the first</span>
+<span class="sd">pass of the wrapping loops around it, one marked ``final`` only in their final</span>
+<span class="sd">pass; :func:`check_passes` rejects dependencies that would read stale data.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">Operation</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Placement</span>
@@ -724,14 +705,8 @@
 <span class="n">Path</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="downstream">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.downstream">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">downstream</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Operation</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The operations of one resolved scope that ``seed`` picks and every one downstream of them.</span>
-
-<span class="sd">    A loop counts with the edges and names of everything inside it. The result</span>
-<span class="sd">    keeps the order of ``ops``.</span>
-<span class="sd">    """</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_downstream</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Operation</span><span class="p">],</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The operations of a resolved scope that ``seed`` picks and all downstream of them."""</span>
     <span class="n">selected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">before_targets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -744,19 +719,15 @@
         <span class="n">selected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
         <span class="n">names</span> <span class="o">|=</span> <span class="n">own</span>
         <span class="n">before_targets</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">before</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">selected</span></div>
-
+    <span class="k">return</span> <span class="n">selected</span>
 
 
 <div class="viewcode-block" id="wrap">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.wrap">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">wrap</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The resolved ``ops`` with ``loop`` placed as ``loop.metadata.wraps`` says.</span>
+<span class="w">    </span><span class="sd">"""The resolved ``ops`` with ``loop`` placed as its ``metadata.wraps`` says.</span>
 
-<span class="sd">    Raises ``ValueError`` when an operation name is unknown or names the</span>
-<span class="sd">    outermost loop, when the named operations lie in more than one scope, when</span>
-<span class="sd">    the loop would have to hold a wrapping loop placed before it, or when no top</span>
-<span class="sd">    scope can be told.</span>
+<span class="sd">    Raises ``ValueError`` when the placement names no, or no single, scope.</span>
 <span class="sd">    """</span>
     <span class="n">placement</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span>
     <span class="k">assert</span> <span class="n">placement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -791,60 +762,45 @@
     <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">op</span><span class="o">.</span><span class="n">depends_on</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">other</span> <span class="k">for</span> <span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">before</span><span class="p">)]</span>
 
 
-<div class="viewcode-block" id="check_final">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.check_final">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_final</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when an operation not marked ``final`` depends on one that is.</span>
+<div class="viewcode-block" id="check_passes">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.check_passes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_passes</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when a dependency inside a shared wrapping loop crosses passes.</span>
 
-<span class="sd">    An operation marked ``final`` (``OperationMetadata.final``) runs only in the</span>
-<span class="sd">    final pass of the wrapping loops around it; one that depends on it (its</span>
-<span class="sd">    ``depends_on``, or the final one's ``before``) and runs in the other passes of</span>
-<span class="sd">    a wrapping loop around both would run before it, or on stale data.</span>
+<span class="sd">    Within a wrapping loop around both, an operation not marked ``final`` may not</span>
+<span class="sd">    depend on one that is, and one marked ``first`` only on one that is too: either</span>
+<span class="sd">    would run before its dependency, or on stale data.</span>
 <span class="sd">    """</span>
-    <span class="n">located</span> <span class="o">=</span> <span class="n">_around</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
+    <span class="n">pairs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_sharing_a_loop</span><span class="p">(</span><span class="n">_around</span><span class="p">(</span><span class="n">ops</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">dependency</span><span class="p">,</span> <span class="n">dependency_op</span><span class="p">,</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dependency_op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> runs in every pass of the wrapping loop </span><span class="si">{</span><span class="n">loop</span><span class="si">}</span><span class="s2">, but depends "</span>
+                <span class="sa">f</span><span class="s2">"on </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">, which runs only in its final pass (final); mark </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"final too or place the loop so that </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is outside it"</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">dependency</span><span class="p">,</span> <span class="n">dependency_op</span><span class="p">,</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">first</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">dependency_op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">first</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> runs only in the first pass of the wrapping loop </span><span class="si">{</span><span class="n">loop</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(first), but depends on </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">, which runs in every pass of it; "</span>
+                <span class="sa">f</span><span class="s2">"mark </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2"> first too or place the loop around it"</span>
+            <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sharing_a_loop</span><span class="p">(</span>
+    <span class="n">located</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Operation</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Each dependency pair inside a wrapping loop around both, with the innermost such loop."""</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">around</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">around</span><span class="p">:</span>
-            <span class="k">continue</span>
         <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="n">_upstream</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">located</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">dependency</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">located</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">dependency_op</span><span class="p">,</span> <span class="n">dependency_around</span> <span class="o">=</span> <span class="n">located</span><span class="p">[</span><span class="n">dependency</span><span class="p">]</span>
             <span class="n">shared</span> <span class="o">=</span> <span class="p">[</span><span class="n">loop</span> <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">around</span> <span class="k">if</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">dependency_around</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">shared</span> <span class="ow">and</span> <span class="n">dependency_op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> runs in every pass of the wrapping loop </span><span class="si">{</span><span class="n">shared</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, but depends "</span>
-                    <span class="sa">f</span><span class="s2">"on </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">, which runs only in its final pass (final); mark </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> "</span>
-                    <span class="sa">f</span><span class="s2">"final too or place the loop so that </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is outside it"</span>
-                <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="check_first">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.graph.wrapping.html#neofoam.framework.graph.wrapping.check_first">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_first</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise ``ValueError`` when an operation marked ``first`` depends on one that is not.</span>
-
-<span class="sd">    An operation marked ``first`` (``OperationMetadata.first``) runs only in the</span>
-<span class="sd">    first pass of the wrapping loops around it; one it depends on (its</span>
-<span class="sd">    ``depends_on``, or the other's ``before``) that runs in every pass of a</span>
-<span class="sd">    wrapping loop around both would leave it on stale data.</span>
-<span class="sd">    """</span>
-    <span class="n">located</span> <span class="o">=</span> <span class="n">_around</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">around</span><span class="p">)</span> <span class="ow">in</span> <span class="n">located</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">first</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">around</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="n">_upstream</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">located</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">dependency</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">located</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">dependency_op</span><span class="p">,</span> <span class="n">dependency_around</span> <span class="o">=</span> <span class="n">located</span><span class="p">[</span><span class="n">dependency</span><span class="p">]</span>
-            <span class="n">shared</span> <span class="o">=</span> <span class="p">[</span><span class="n">loop</span> <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">around</span> <span class="k">if</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">dependency_around</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">shared</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">dependency_op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">first</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> runs only in the first pass of the wrapping loop </span><span class="si">{</span><span class="n">shared</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
-                    <span class="sa">f</span><span class="s2">"(first), but depends on </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2">, which runs in every pass of it; "</span>
-                    <span class="sa">f</span><span class="s2">"mark </span><span class="si">{</span><span class="n">dependency</span><span class="si">}</span><span class="s2"> first too or place the loop around it"</span>
-                <span class="p">)</span></div>
-
+            <span class="k">if</span> <span class="n">shared</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">name</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">dependency</span><span class="p">,</span> <span class="n">dependency_op</span><span class="p">,</span> <span class="n">shared</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_top</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
@@ -903,10 +859,7 @@
     <span class="p">(</span><span class="n">path</span><span class="p">,)</span> <span class="o">=</span> <span class="n">paths</span>
     <span class="n">scope</span> <span class="o">=</span> <span class="n">_scope</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
     <span class="n">seeds</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">located</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
-    <span class="k">if</span> <span class="n">placement</span><span class="o">.</span><span class="n">downstream</span><span class="p">:</span>
-        <span class="n">picked</span> <span class="o">=</span> <span class="n">downstream</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">picked</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">scope</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">]</span>
+    <span class="n">picked</span> <span class="o">=</span> <span class="n">_downstream</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">)</span>
     <span class="n">held</span> <span class="o">=</span> <span class="n">_wrapping_in</span><span class="p">(</span><span class="n">picked</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">held</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -968,7 +921,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_in_scope</span><span class="p">(</span>
     <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""``ops`` with the scope at ``path`` changed by ``change``."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">change</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
     <span class="n">index</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
@@ -983,22 +935,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_wrapped</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">selected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">loop</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place.</span>
-
-<span class="sd">    Raises ``ValueError`` when an operation left before the loop depends on one in it.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place."""</span>
     <span class="n">member_ids</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">}</span>
     <span class="n">last</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">member_ids</span><span class="p">)</span>
+    <span class="c1"># ``selected`` holds all downstream of its members: nothing earlier depends on it.</span>
     <span class="n">earlier</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">scope</span><span class="p">[:</span><span class="n">last</span><span class="p">]</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">member_ids</span><span class="p">]</span>
-    <span class="c1"># Without downstream an operation between the members may depend on one of</span>
-    <span class="c1"># them; running it before the loop would break that edge.</span>
-    <span class="n">after</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">downstream</span><span class="p">(</span><span class="n">scope</span><span class="p">[:</span><span class="n">last</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">member_ids</span><span class="p">)}</span>
-    <span class="n">broken</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">operation_name</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">earlier</span> <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">after</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">broken</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">broken</span><span class="si">}</span><span class="s2"> depend on operations </span><span class="si">{</span><span class="n">loop</span><span class="o">.</span><span class="n">operation_name</span><span class="si">}</span><span class="s2"> wraps but run before "</span>
-            <span class="s2">"it; wrap them too"</span>
-        <span class="p">)</span>
     <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">earlier</span><span class="p">,</span> <span class="n">_filled</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">selected</span><span class="p">),</span> <span class="o">*</span><span class="n">scope</span><span class="p">[</span><span class="n">last</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]]</span>
 </pre></div>
         </article>

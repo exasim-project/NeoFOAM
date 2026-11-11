@@ -890,9 +890,8 @@ model’s family is required; defaults to the model name.</p>
 <dd><p>Decorator to register a model operation.</p>
 <p><code class="docutils literal notranslate"><span class="pre">fallback=True</span></code> marks the op as belonging to the model’s <em>fallback</em>
 backend (partitioned by <a class="reference internal" href="#neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.ModelRuntime.fallback_operations" title="neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.ModelRuntime.fallback_operations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ModelRuntime.fallback_operations()</span></code></a>); by
-default an op is native. <code class="docutils literal notranslate"><span class="pre">first=True</span></code> runs it only in the first pass
-of the wrapping loops around it (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.first</span></code>),
-<code class="docutils literal notranslate"><span class="pre">final=True</span></code> only in their final pass (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.final</span></code>).</p>
+default an op is native. <code class="docutils literal notranslate"><span class="pre">first=True</span></code> (<code class="docutils literal notranslate"><span class="pre">final=True</span></code>) runs it only in the
+first (final) pass of the wrapping loops around it.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -923,7 +922,7 @@ of the wrapping loops around it (<code class="docutils literal notranslate"><spa
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.ModelSpec.wrap_operation">
 <span class="sig-name descname"><span class="pre">wrap_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.wrap_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.ModelSpec.wrap_operation" title="Link to this definition">¶</a></dt>
-<dd><p>Wrap <code class="docutils literal notranslate"><span class="pre">func</span></code> with this spec’s dependency resolution.</p>
+<dd><p>Wrap <code class="docutils literal notranslate"><span class="pre">func</span></code> with the dependency resolution of <code class="docutils literal notranslate"><span class="pre">runtime</span></code>.</p>
 <p>For <code class="docutils literal notranslate"><span class="pre">&#64;operation_collection</span></code> bodies, which bypass the spec’s default
 operation wrapping and must wrap each exposed operation themselves.</p>
 </dd></dl>

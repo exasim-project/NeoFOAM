@@ -706,13 +706,12 @@
     <span class="n">spec</span><span class="p">:</span> <span class="s2">"SolverSpec"</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="c1"># the region of a multi-region case this runtime solves; None for a single region</span>
+    <span class="c1"># None for a single-region case</span>
     <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">SolverState</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SolverState</span><span class="p">)</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">_config_instance</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># resolves the Depends() of this run's initializer and operations, with this</span>
-    <span class="c1"># run's cache: two runtimes of one spec (e.g. two regions) share none</span>
+    <span class="c1"># per run, so two runtimes of one spec (two regions) share no Depends() cache</span>
     <span class="n">dependency_resolver</span><span class="p">:</span> <span class="n">DependencyResolver</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">DependencyResolver</span><span class="p">,</span> <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -753,8 +752,10 @@
 <div class="viewcode-block" id="SolverRuntime.initialize">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.initialize">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Context"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Execute the registered initialization step."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Execute the registered initialization step; the context gets the runtime's region."""</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span>
+        <span class="k">return</span> <span class="n">ctx</span></div>
 
 
 <div class="viewcode-block" id="SolverRuntime.execution_graph">
@@ -774,9 +775,7 @@
 <div class="viewcode-block" id="SolverRuntime.resolve_operations">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.resolve_operations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="s2">"Context"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Operations"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The runnable execution graph: ``execution_graph`` with its model</span>
-<span class="sd">        operations (optional models, ...) merged in by</span>
-<span class="sd">        :class:`~neofoam.framework.graph.DAGResolver`.</span>
+<span class="w">        </span><span class="sd">"""The runnable execution graph: ``execution_graph`` resolved with its model operations.</span>
 
 <span class="sd">        Reported to the installed execution observer before it is returned.</span>
 <span class="sd">        """</span>
@@ -789,13 +788,6 @@
         <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">observer</span><span class="o">.</span><span class="n">operations</span><span class="p">(</span><span class="n">operations</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">operations</span></div>
-
-
-<div class="viewcode-block" id="SolverRuntime.finalize">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.runtime.html#neofoam.framework.solver.runtime.SolverRuntime.finalize">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="s2">"Context"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the registered end-of-run step (if any)."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_run_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>

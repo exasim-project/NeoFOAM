@@ -663,14 +663,13 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.graph.wrapping">
 <span id="neofoam-framework-graph-wrapping"></span><h1>neofoam.framework.graph.wrapping<a class="headerlink" href="#module-neofoam.framework.graph.wrapping" title="Link to this heading">¶</a></h1>
-<p>A wrapping loop: the resolver places it around operations of the graph.</p>
-<p>A model or boundary condition contributes a loop operation that repeats part of
-the solver’s time step. Its <code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code>
-(<a class="reference internal" href="neofoam.framework.types.html#neofoam.framework.types.Placement" title="neofoam.framework.types.Placement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Placement</span></code></a>) says which part:</p>
+<p>Place a contributed wrapping loop around operations of the resolved graph.</p>
+<p>A model or boundary condition contributes a loop that repeats part of the time
+step; its <code class="docutils literal notranslate"><span class="pre">OperationMetadata.wraps</span></code> (<a class="reference internal" href="neofoam.framework.types.html#neofoam.framework.types.Placement" title="neofoam.framework.types.Placement"><code class="xref py py-class docutils literal notranslate"><span class="pre">Placement</span></code></a>)
+says which part:</p>
 <ul>
-<li><p>no operations: the whole body of the top scope, the body of the outermost loop
-(the time loop). Once a wrapping loop sits there, the next one wraps the whole
-body of the innermost of them:</p>
+<li><p>no operations: the whole body of the outermost loop (the time loop), or of the
+innermost wrapping loop already placed there:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">time_loop</span>                       <span class="n">time_loop</span>
     <span class="n">start_step</span>                      <span class="n">couple</span>
     <span class="n">solve_T</span>      <span class="n">Placement</span><span class="p">()</span>            <span class="n">start_step</span>
@@ -680,9 +679,8 @@ body of the innermost of them:</p>
 </pre></div>
 </div>
 </li>
-<li><p>named operations: those and, with <code class="docutils literal notranslate"><span class="pre">downstream</span></code>, every operation downstream of
-them over <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">before</span></code> within their scope (the time-step body or
-a loop body). The loop takes the place of the last of them:</p>
+<li><p>named operations: those and every operation downstream of them in their scope;
+the loop takes the place of the last of them:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">time_loop</span>                       <span class="n">time_loop</span>
     <span class="n">start_step</span>                      <span class="n">start_step</span>
     <span class="n">solve_T</span>      <span class="p">(</span><span class="s2">"solve_T"</span><span class="p">,)</span>       <span class="n">couple</span>
@@ -691,66 +689,27 @@ a loop body). The loop takes the place of the last of them:</p>
                                     <span class="n">write</span>
 </pre></div>
 </div>
-<p>A name may be a loop inside the outermost one (e.g. a PIMPLE <code class="docutils literal notranslate"><span class="pre">inner_loop</span></code>):
-the wrapping loop holds it whole, as one operation, and downstream of it is
-downstream of anything inside it:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">time_loop</span>                       <span class="n">time_loop</span>
-    <span class="n">set_time_step</span>                   <span class="n">set_time_step</span>
-    <span class="n">increment_time</span>                  <span class="n">increment_time</span>
-    <span class="n">inner_loop</span>   <span class="p">(</span><span class="s2">"inner_loop"</span><span class="p">,)</span>    <span class="n">couple</span>
-        <span class="n">solve_U</span>  <span class="o">--------------&gt;</span>        <span class="n">inner_loop</span>
-        <span class="n">solve_p</span>                             <span class="n">solve_U</span>
-    <span class="n">write</span>                                   <span class="n">solve_p</span>
-                                        <span class="n">write</span>
-</pre></div>
-</div>
+<p>A named loop inside the outermost one (e.g. PIMPLE’s <code class="docutils literal notranslate"><span class="pre">inner_loop</span></code>) is held whole.</p>
 </li>
 </ul>
-<p>Loops are placed in the order given, outer first: a loop whose operations lie
-inside one placed before nests inside it; one that would have to hold a loop
-placed before raises.</p>
-<p>An operation marked <code class="docutils literal notranslate"><span class="pre">first</span></code> (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.first</span></code>, e.g. the start of a
-time step) runs only in the first pass of the wrapping loops around it; it may
-not depend on an operation that runs in every pass of one of them
-(<a class="reference internal" href="#neofoam.framework.graph.wrapping.check_first" title="neofoam.framework.graph.wrapping.check_first"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_first()</span></code></a>). One marked <code class="docutils literal notranslate"><span class="pre">final</span></code> (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.final</span></code>, e.g.
-writing the results) runs only in their final pass; no operation that runs in
-an other pass of one of them may depend on it (<a class="reference internal" href="#neofoam.framework.graph.wrapping.check_final" title="neofoam.framework.graph.wrapping.check_final"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_final()</span></code></a>).</p>
+<p>Loops are placed in the order given, outer first; one that would have to hold a
+loop placed before it raises. An operation marked <code class="docutils literal notranslate"><span class="pre">first</span></code> runs only in the first
+pass of the wrapping loops around it, one marked <code class="docutils literal notranslate"><span class="pre">final</span></code> only in their final
+pass; <a class="reference internal" href="#neofoam.framework.graph.wrapping.check_passes" title="neofoam.framework.graph.wrapping.check_passes"><code class="xref py py-func docutils literal notranslate"><span class="pre">check_passes()</span></code></a> rejects dependencies that would read stale data.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="neofoam.framework.graph.wrapping.check_final">
-<span class="sig-prename descclassname"><span class="pre">neofoam.framework.graph.wrapping.</span></span><span class="sig-name descname"><span class="pre">check_final</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/wrapping.html#check_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.wrapping.check_final" title="Link to this definition">¶</a></dt>
-<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an operation not marked <code class="docutils literal notranslate"><span class="pre">final</span></code> depends on one that is.</p>
-<p>An operation marked <code class="docutils literal notranslate"><span class="pre">final</span></code> (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.final</span></code>) runs only in the
-final pass of the wrapping loops around it; one that depends on it (its
-<code class="docutils literal notranslate"><span class="pre">depends_on</span></code>, or the final one’s <code class="docutils literal notranslate"><span class="pre">before</span></code>) and runs in the other passes of
-a wrapping loop around both would run before it, or on stale data.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neofoam.framework.graph.wrapping.check_first">
-<span class="sig-prename descclassname"><span class="pre">neofoam.framework.graph.wrapping.</span></span><span class="sig-name descname"><span class="pre">check_first</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/wrapping.html#check_first"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.wrapping.check_first" title="Link to this definition">¶</a></dt>
-<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an operation marked <code class="docutils literal notranslate"><span class="pre">first</span></code> depends on one that is not.</p>
-<p>An operation marked <code class="docutils literal notranslate"><span class="pre">first</span></code> (<code class="docutils literal notranslate"><span class="pre">OperationMetadata.first</span></code>) runs only in the
-first pass of the wrapping loops around it; one it depends on (its
-<code class="docutils literal notranslate"><span class="pre">depends_on</span></code>, or the other’s <code class="docutils literal notranslate"><span class="pre">before</span></code>) that runs in every pass of a
-wrapping loop around both would leave it on stale data.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neofoam.framework.graph.wrapping.downstream">
-<span class="sig-prename descclassname"><span class="pre">neofoam.framework.graph.wrapping.</span></span><span class="sig-name descname"><span class="pre">downstream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/wrapping.html#downstream"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.wrapping.downstream" title="Link to this definition">¶</a></dt>
-<dd><p>The operations of one resolved scope that <code class="docutils literal notranslate"><span class="pre">seed</span></code> picks and every one downstream of them.</p>
-<p>A loop counts with the edges and names of everything inside it. The result
-keeps the order of <code class="docutils literal notranslate"><span class="pre">ops</span></code>.</p>
+<dt class="sig sig-object py" id="neofoam.framework.graph.wrapping.check_passes">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.graph.wrapping.</span></span><span class="sig-name descname"><span class="pre">check_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/wrapping.html#check_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.wrapping.check_passes" title="Link to this definition">¶</a></dt>
+<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when a dependency inside a shared wrapping loop crosses passes.</p>
+<p>Within a wrapping loop around both, an operation not marked <code class="docutils literal notranslate"><span class="pre">final</span></code> may not
+depend on one that is, and one marked <code class="docutils literal notranslate"><span class="pre">first</span></code> only on one that is too: either
+would run before its dependency, or on stale data.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.framework.graph.wrapping.wrap">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.graph.wrapping.</span></span><span class="sig-name descname"><span class="pre">wrap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ops</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loop</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/graph/wrapping.html#wrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.graph.wrapping.wrap" title="Link to this definition">¶</a></dt>
-<dd><p>The resolved <code class="docutils literal notranslate"><span class="pre">ops</span></code> with <code class="docutils literal notranslate"><span class="pre">loop</span></code> placed as <code class="docutils literal notranslate"><span class="pre">loop.metadata.wraps</span></code> says.</p>
-<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when an operation name is unknown or names the
-outermost loop, when the named operations lie in more than one scope, when
-the loop would have to hold a wrapping loop placed before it, or when no top
-scope can be told.</p>
+<dd><p>The resolved <code class="docutils literal notranslate"><span class="pre">ops</span></code> with <code class="docutils literal notranslate"><span class="pre">loop</span></code> placed as its <code class="docutils literal notranslate"><span class="pre">metadata.wraps</span></code> says.</p>
+<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when the placement names no, or no single, scope.</p>
 </dd></dl>
 
 </section>
@@ -811,9 +770,7 @@ scope can be told.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.framework.graph.wrapping</a><ul>
-<li><a class="reference internal" href="#neofoam.framework.graph.wrapping.check_final"><code class="docutils literal notranslate"><span class="pre">check_final()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.graph.wrapping.check_first"><code class="docutils literal notranslate"><span class="pre">check_first()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.graph.wrapping.downstream"><code class="docutils literal notranslate"><span class="pre">downstream()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.graph.wrapping.check_passes"><code class="docutils literal notranslate"><span class="pre">check_passes()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.graph.wrapping.wrap"><code class="docutils literal notranslate"><span class="pre">wrap()</span></code></a></li>
 </ul>
 </li>

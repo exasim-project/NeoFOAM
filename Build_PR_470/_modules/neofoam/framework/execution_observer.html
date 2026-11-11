@@ -658,20 +658,16 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Hooks through which a tool watches — or pauses — a solver run.</span>
+<span class="sd">"""Hooks through which a tool watches, or pauses, a solver run.</span>
 
-<span class="sd">The framework calls the installed :class:`ExecutionObserver` around every init</span>
-<span class="sd">step, every operation and every loop-predicate evaluation, and hands it the</span>
-<span class="sd">init order and the resolved execution graph before they run. A hook that</span>
-<span class="sd">blocks pauses the run right there, which is how a step-by-step debugger UI</span>
-<span class="sd">(e.g. the ``neofoam_ui`` DAG stepper) drives an unmodified solver.</span>
+<span class="sd">The installed :class:`ExecutionObserver` is called around every init step,</span>
+<span class="sd">operation and loop test, and is handed the init order and the resolved graph</span>
+<span class="sd">before they run. A hook that blocks pauses the run there: that is how a</span>
+<span class="sd">step-by-step debugger UI drives an unmodified solver. Without an observer the</span>
+<span class="sd">hooks cost one ``None`` check.</span>
 
-<span class="sd">No observer is installed by default; the hooks then cost one ``None`` check.</span>
-
-<span class="sd">The observer is per thread (a :class:`~contextvars.ContextVar`): a run observed</span>
-<span class="sd">in one thread does not report to, or block in, a run in another thread, and</span>
-<span class="sd">overlapping ``observe()`` scopes in different threads cannot undo each other.</span>
-<span class="sd">Threads started by an observed run do not inherit the observer.</span>
+<span class="sd">The observer is per thread (a :class:`~contextvars.ContextVar`); threads started</span>
+<span class="sd">by an observed run do not inherit it.</span>
 
 <span class="sd">Example::</span>
 
@@ -694,7 +690,7 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.init_step</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ExecutionObserver"</span><span class="p">,</span> <span class="s2">"current"</span><span class="p">,</span> <span class="s2">"observe"</span><span class="p">,</span> <span class="s2">"set_observer"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"ExecutionObserver"</span><span class="p">,</span> <span class="s2">"current"</span><span class="p">,</span> <span class="s2">"observe"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="ExecutionObserver">
@@ -705,10 +701,7 @@
 <div class="viewcode-block" id="ExecutionObserver.init_steps">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.init_steps">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">init_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The init steps in execution order, before the first one runs.</span>
-
-<span class="sd">        A region's steps carry its name in ``InitStep.region``.</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""The init steps in execution order, before the first one runs."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.before_init_step">
@@ -726,20 +719,13 @@
 <div class="viewcode-block" id="ExecutionObserver.operations">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.operations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operations</span><span class="p">:</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The resolved execution graph of ``ctx``, before the time loop starts.</span>
-
-<span class="sd">        Every region of a multi-region case reports its own graph, from its own</span>
-<span class="sd">        thread; ``ctx.region`` names it.</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""The resolved execution graph of ``ctx``, before the time loop starts; one per region."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.before_operation">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.ExecutionObserver.before_operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">before_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A sequential or conditional ``op`` is about to run on ``ctx``.</span>
-
-<span class="sd">        ``ctx`` is the context the operation runs on (``ctx.region`` names its region).</span>
-<span class="sd">        """</span></div>
+<span class="w">        </span><span class="sd">"""A sequential or conditional ``op`` is about to run on ``ctx``."""</span></div>
 
 
 <div class="viewcode-block" id="ExecutionObserver.after_operation">
@@ -772,16 +758,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">current</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The observer installed in this thread, or ``None``."""</span>
     <span class="k">return</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
-
-
-
-<div class="viewcode-block" id="set_observer">
-<a class="viewcode-back" href="../../../reference/api/neofoam.framework.execution_observer.html#neofoam.framework.execution_observer.set_observer">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">set_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ExecutionObserver</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Install ``observer`` in this thread (``None`` removes it) and return the previous one."""</span>
-    <span class="n">previous</span> <span class="o">=</span> <span class="n">_observer</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-    <span class="n">_observer</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">previous</span></div>
 
 
 

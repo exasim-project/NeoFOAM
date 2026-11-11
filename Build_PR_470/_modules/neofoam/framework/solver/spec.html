@@ -677,7 +677,7 @@
     <span class="n">_discover_configs_from_signature</span><span class="p">,</span>
     <span class="n">_find_config_by_type</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">initializing_region</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">wrap_with_dependency_resolution</span><span class="p">,</span>
 <span class="p">)</span>
@@ -711,7 +711,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Context</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_config_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
@@ -876,14 +875,6 @@
         <span class="k">return</span> <span class="n">func</span></div>
 
 
-<div class="viewcode-block" id="SolverSpec.finalizer">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.finalizer">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">finalizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Decorator to register the end-of-run step ``(self, ctx)`` (close files, ...)."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span> <span class="o">=</span> <span class="n">func</span>
-        <span class="k">return</span> <span class="n">func</span></div>
-
-
 <div class="viewcode-block" id="SolverSpec.operation">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.solver.spec.html#neofoam.framework.solver.spec.SolverSpec.operation">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">operation</span><span class="p">(</span>
@@ -897,9 +888,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Decorator to register a solver operation.</span>
 
-<span class="sd">        ``first=True`` runs it only in the first pass of the wrapping loops around</span>
-<span class="sd">        it (``OperationMetadata.first``), ``final=True`` only in their final pass</span>
-<span class="sd">        (``OperationMetadata.final``).</span>
+<span class="sd">        ``first=True`` (``final=True``) runs it only in the first (final) pass of the</span>
+<span class="sd">        wrapping loops around it.</span>
 <span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -932,14 +922,9 @@
         <span class="n">argv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverRuntime</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver.</span>
+<span class="w">        </span><span class="sd">"""Create a fresh SolverRuntime for one run of this solver, of ``region`` if given.</span>
 
-<span class="sd">        An empty ``argv`` gets a program name: OpenFOAM's ``argList`` reads</span>
-<span class="sd">        ``argv[0]`` unconditionally and segfaults on an empty list (e.g.</span>
-<span class="sd">        ``run()`` called from Python without arguments).</span>
-
-<span class="sd">        ``region`` names the region of a multi-region case the runtime solves;</span>
-<span class="sd">        ``None`` (the default) is a single-region case.</span>
+<span class="sd">        An empty ``argv`` becomes ``["neofoam"]``: ``argList`` segfaults without ``argv[0]``.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">SolverRuntime</span><span class="p">(</span>
             <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
@@ -968,8 +953,7 @@
         <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"argv"</span><span class="p">):</span>
             <span class="n">first_param</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">argv</span>
 
-        <span class="k">with</span> <span class="n">initializing_region</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">region</span><span class="p">):</span>
-            <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">first_param</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">inj_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">first_param</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1024,11 +1008,6 @@
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the registered end-of-run step, if any."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_func</span><span class="p">(</span><span class="bp">self</span><span class="o">=</span><span class="n">runtime</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="n">ctx</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Operation building (called by SolverRuntime.operations)</span>
