@@ -16,7 +16,13 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from neofoam.framework.coupling import FieldPort, NearestNeighborMapping, RegionCouplingConfig
+from neofoam.framework.coupling import (
+    FieldPort,
+    InProcessCommChannel,
+    NearestNeighborMapping,
+    RegionCouplingConfig,
+    participant_exchanges,
+)
 
 CASES = Path(__file__).parent / "cases"
 # the cases multiRun's tests share
@@ -272,3 +278,22 @@ def test_region_coupling_config_reads_the_field_ports() -> None:
 def test_region_coupling_config_checks_the_directions_of_its_field_ports() -> None:
     with pytest.raises(ValidationError, match="exchange 'sensor': T_cells is inout and T_in is"):
         RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / "field_port_directions")
+
+
+def test_the_config_gives_each_region_its_coupling_as_participant_exchanges_does() -> None:
+    config = RegionCouplingConfig.load(case_dir=CHAIN)
+    comm_channel = InProcessCommChannel()
+    args = (config.coupling_exchanges(), comm_channel, config.nodes(), config.field_ports())
+
+    assert config.participant_exchanges(["a", "b", "c"], comm_channel) == participant_exchanges(
+        ["a", "b", "c"], *args
+    )
+
+
+def test_the_config_s_coupling_of_regions_the_case_does_not_run_raises() -> None:
+    config = RegionCouplingConfig.load(case_dir=CHAIN)
+
+    with pytest.raises(
+        ValueError, match=r"couple the regions \['c'\], which are not in \['a', 'b'\]"
+    ):
+        config.participant_exchanges(["a", "b"], InProcessCommChannel())
