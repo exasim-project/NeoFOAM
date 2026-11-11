@@ -69,13 +69,13 @@ def test_only_a_coupled_instance_is_added() -> None:
         model.add(Patch("p"), object())
 
 
-def test_a_region_s_data_field_is_in_at_most_one_node() -> None:
-    nodes = [CouplingLoop("n", ("x",), scheme="parallel"), CouplingLoop("m", ("y",))]
-    regions = contexts(["a", "b"], [X, Y], nodes)
+def test_a_region_s_data_field_is_in_at_most_one_loop() -> None:
+    loops = [CouplingLoop("n", ("x",), scheme="parallel"), CouplingLoop("m", ("y",))]
+    regions = contexts(["a", "b"], [X, Y], loops)
     add_coupled(regions["a"], "p", fixed(data="T"))
     add_coupled(regions["a"], "q", fixed(data="T"))
 
     with pytest.raises(
-        ValueError, match="the data T of region a is coupled in the nodes 'n' and 'm'"
+        ValueError, match="the data T of region a is coupled in the coupling loops 'n' and 'm'"
     ):
         coupling(regions["a"]).operations()

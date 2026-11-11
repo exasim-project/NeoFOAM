@@ -31,9 +31,9 @@ class Tag:
         return f"side:{exchange}"
 
     @staticmethod
-    def node(node: str, what: Literal["sides", "pass", "decision"]) -> str:
-        """A region's streams, its pass and the leader's decision, within coupling node ``node``."""
-        return f"{node}/{what}"
+    def loop(loop: str, what: Literal["sides", "pass", "decision"]) -> str:
+        """A region's streams, its pass and the leader's decision, within coupling loop ``loop``."""
+        return f"{loop}/{what}"
 
 
 class CommChannelError(RuntimeError):

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A region's coupling op: the loop of one coupling node in the region's graph."""
+"""A region's coupling op: one coupling loop in the region's graph."""
 
 from __future__ import annotations
 
@@ -28,9 +28,9 @@ def _path(names: Sequence[Optional[str]]) -> str:
 
 
 class CouplingLoopOp(IterativeOp):
-    """A region's coupling node: a loop whose test exchanges the node's ports' data.
+    """A region's op of a coupling loop: a loop whose test exchanges the loop's ports' data.
 
-    Labelled ``<region>.<node>``. The first test tells each partner what the
+    Labelled ``<region>.<loop>``. The first test tells each partner what the
     port sends and its geometry and checks the pairing; every test sends the
     leader what the ports send, one stream per data model, and hands each port
     its mapped data as the leader decides. ``geometries``: each port's, by name.
@@ -40,18 +40,18 @@ class CouplingLoopOp(IterativeOp):
     def __init__(
         self,
         coupling: ParticipantExchanges,
-        node: CouplingLoop,
+        loop: CouplingLoop,
         ports: Sequence[CoupledPort],
         geometries: Mapping[str, Geometry],
     ) -> None:
         super().__init__(self._test)
         self.region = coupling.region
-        self.node = node
-        self.label = f"{coupling.region}.{node.name}"
+        self.loop = loop
+        self.label = f"{coupling.region}.{loop.name}"
         self._coupling = coupling
         self._comm_channel = coupling.comm_channel
-        self._exchanges = coupling.node_exchanges(node)
-        self._group = coupling.node_group(node)
+        self._exchanges = coupling.loop_exchanges(loop)
+        self._group = coupling.loop_group(loop)
         self._leader = self._group[-1]
         self._by_port = {
             dict(exchange.ends)[self.region]: exchange
@@ -84,12 +84,12 @@ class CouplingLoopOp(IterativeOp):
 
     @property
     def is_leader(self) -> bool:
-        """Whether this op decides for its node: its region steps last of the node's."""
+        """Whether this op decides for its loop: its region steps last of the loop's."""
         return self.region == self._leader
 
     @property
     def group(self) -> tuple[str, ...]:
-        """The regions the node's exchanges connect with this region, in stepping order."""
+        """The regions the loop's exchanges connect with this region, in stepping order."""
         return self._group
 
     @property
@@ -136,7 +136,7 @@ class CouplingLoopOp(IterativeOp):
         for port in self._ports:
             size = self._geometries[port.name].size
             for stream in port.sends:
-                data = sent(stream, port, self.node.name, when)
+                data = sent(stream, port, self.loop.name, when)
                 check_rows(stream, data, size, port)
                 current[(port.name, stream.key)] = data
         return current
@@ -145,10 +145,11 @@ class CouplingLoopOp(IterativeOp):
         return self.exchange_of(port).partner(self.region)[0]
 
     def _enclosing(self, ctx: Context) -> Loops:
-        """``ctx.loops`` without the op's own entry; coupling ops by node name, to compare."""
-        nodes = {f"{self.region}.{node.name}": node.name for node in self._coupling.nodes}
+        """``ctx.loops`` without the op's own entry; coupling ops by loop name, to compare."""
+        loop_names = {f"{self.region}.{loop.name}": loop.name for loop in self._coupling.loops}
         return tuple(
-            (nodes.get(entry.name or "", entry.name), entry.iteration) for entry in ctx.loops[:-1]
+            (loop_names.get(entry.name or "", entry.name), entry.iteration)
+            for entry in ctx.loops[:-1]
         )
 
     def _send(self, target: str, tag: str, message: Any) -> None:
@@ -181,7 +182,7 @@ class CouplingLoopOp(IterativeOp):
                 self._mappers[port.name] = self._bind(exchange, announced, port)
         if self.is_leader:
             self._controller = Leader(
-                self._node_streams(path, streams), self.label, self.node, self._group
+                self._loop_streams(path, streams), self.label, self.loop, self._group
             )
         self._connected = True
 
@@ -197,9 +198,9 @@ class CouplingLoopOp(IterativeOp):
             ) from None
 
     def _tag(self, what: Literal["sides", "pass", "decision"]) -> str:
-        return Tag.node(self.node.name, what)
+        return Tag.loop(self.loop.name, what)
 
-    def _node_streams(self, path: tuple[Optional[str], ...], own: list[Any]) -> list[GroupStream]:
+    def _loop_streams(self, path: tuple[Optional[str], ...], own: list[Any]) -> list[GroupStream]:
         """The leader: every region's streams; ``ValueError`` when their loops differ."""
         received = {
             region: (path, own)
@@ -211,9 +212,9 @@ class CouplingLoopOp(IterativeOp):
         if len(set(paths.values())) > 1:
             where = ", ".join(f"{region}: {_path(there)}" for region, there in paths.items())
             raise ValueError(
-                f"coupling '{self.node.name}' sits in different loops in its regions: {where}; "
-                "a node must run equally often in all its regions – put the exchanges in "
-                "one node or place it alike"
+                f"coupling '{self.loop.name}' sits in different loops in its regions: {where}; "
+                "a coupling loop must run equally often in all its regions – put the exchanges "
+                "in one coupling loop or place it alike"
             )
         other: dict[End, End] = {
             end: exchange.ends[1 - k]

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The final pass of a coupling node, as its leader decides it for every region.
+"""The final pass of a coupling loop, as its leader decides it for every region.
 
-Regions ``a``, ``b``, ``c`` in a row, one node, c leads; ``write`` is marked
+Regions ``a``, ``b``, ``c`` in a row, one loop, c leads; ``write`` is marked
 ``final`` and runs in the final pass only.
 """
 
@@ -81,10 +81,10 @@ class _Region:
 
 
 def _couple(
-    scheme: Literal["serial", "parallel"] = "serial", **node: Any
+    scheme: Literal["serial", "parallel"] = "serial", **loop: Any
 ) -> tuple[dict[str, _Region], tuple[CouplingOutcome, ...]]:
-    """Couple a, b and c in one node and run one time step; the regions and c's outcomes."""
-    regions = contexts(list(PATCHES), EXCHANGES, scheme=scheme, **node)
+    """Couple a, b and c in one loop and run one time step; the regions and c's outcomes."""
+    regions = contexts(list(PATCHES), EXCHANGES, scheme=scheme, **loop)
     tests = {name: _Region(name, fixed) for name, fixed in zip(PATCHES, (1.0, 2.0, 3.0))}
     for name, ctx in regions.items():
         for patch in PATCHES[name]:
@@ -137,8 +137,8 @@ def test_a_single_pass_is_first_and_final_and_explicit(scheme: Any) -> None:
 
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
     comm_channel = RecordingCommChannel()
-    nodes = [CouplingLoop("coupling", ("a-b", "b-c"))]
-    couplings = participant_exchanges(list(PATCHES), EXCHANGES, comm_channel, nodes)
+    loops = [CouplingLoop("coupling", ("a-b", "b-c"))]
+    couplings = participant_exchanges(list(PATCHES), EXCHANGES, comm_channel, loops)
     regions = {name: context(name, couplings.get(name)) for name in PATCHES}
     tests = {name: _Region(name, 1.0) for name in PATCHES}
     for name, ctx in regions.items():

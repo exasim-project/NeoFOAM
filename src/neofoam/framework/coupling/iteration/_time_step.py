@@ -35,7 +35,7 @@ def operation_names(ops: Iterable[Operation]) -> set[str]:
 
 
 def serial_holder(ops: Iterable[Operation], name: str, serial: dict[str, str]) -> Optional[str]:
-    """The node of the outermost loop of ``serial`` (by label) holding operation ``name``."""
+    """The coupling loop of the outermost op of ``serial`` (by label) holding operation ``name``."""
     for op in ops:
         if isinstance(op.func, IterativeOp):
             if op.operation_name in serial and name in operation_names(op.sub_operations):

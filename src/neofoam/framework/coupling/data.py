@@ -214,7 +214,7 @@ def check_rows(stream: Stream, data: Data, size: Optional[int], port: CoupledPor
             )
 
 
-def sent(stream: Stream, port: CoupledPort, node: str, when: tuple[int, Any]) -> Data:
+def sent(stream: Stream, port: CoupledPort, loop: str, when: tuple[int, Any]) -> Data:
     """What ``stream`` sends now, as float copies; ``FloatingPointError`` when not finite.
 
     ``when``: the pass (from 0) and the time.
@@ -232,6 +232,6 @@ def sent(stream: Stream, port: CoupledPort, node: str, when: tuple[int, Any]) ->
             after = f"after pass {iteration}" if iteration else "before the first pass"
             at = "" if time is None else f" (t={time})"
             raise FloatingPointError(
-                f"coupling '{node}': the {name} of {port.label} is not finite {after}{at}"
+                f"coupling '{loop}': the {name} of {port.label} is not finite {after}{at}"
             )
     return data

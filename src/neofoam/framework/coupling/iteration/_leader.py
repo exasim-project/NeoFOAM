@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The leader's part of a coupling node: its :class:`Leader`."""
+"""The leader's part of a coupling loop: its :class:`Leader`."""
 
 from __future__ import annotations
 
@@ -108,7 +108,7 @@ def _state(loops: Loops) -> str:
 
 @dataclass(frozen=True)
 class GroupStream:
-    """What a port of the leader's node sends, as its region told the leader at startup."""
+    """What a port of the leader's loop sends, as its region told the leader at startup."""
 
     region: str
     port: str
@@ -124,11 +124,11 @@ class GroupStream:
 
 
 class Leader:
-    """The leader's part of a coupling node: after each pass, whether another runs and which.
+    """The leader's part of a coupling loop: after each pass, whether another runs and which.
 
     Final pass as :class:`CouplingLoop` describes; warns when more than one of
     ``max_iterations`` ends the loop unconverged (one is explicit coupling). A port
-    receives a stream fresh when the node is serial and its sender steps earlier,
+    receives a stream fresh when the loop is serial and its sender steps earlier,
     else the carried data, relaxed. Not thread safe.
     """
 
@@ -136,21 +136,21 @@ class Leader:
         self,
         streams: Sequence[GroupStream],
         label: str,
-        node: CouplingLoop,
+        loop: CouplingLoop,
         group: Sequence[str],
     ) -> None:
         self.label = label
-        self._name = node.name
+        self._name = loop.name
         self._group = tuple(group)
-        parallel = node.parallel
+        parallel = loop.parallel
         rank = {region: index for index, region in enumerate(group)}
         # the order the loop op lists the streams in: by region, in stepping order
         ordered = list(streams)
         self._order: list[StreamId] = [stream.id for stream in ordered]
         self._streams = {stream.id: stream for stream in ordered}
-        self._convergence = tuple(node.convergence)
-        self._max_iterations = node.max_iterations
-        self._acceleration = dict(node.acceleration)
+        self._convergence = tuple(loop.convergence)
+        self._max_iterations = loop.max_iterations
+        self._acceleration = dict(loop.acceleration)
         # whether a stream's receiver takes what it sent in this pass
         self._fresh = {
             stream.id: not parallel and rank[stream.region] < rank[stream.partner[0]]
@@ -172,12 +172,12 @@ class Leader:
             if data is not None and data not in names:
                 raise ValueError(
                     f"coupling {self.label}: convergence {type(measure).__name__} on {data}, "
-                    f"which no port of the node sends (they send {sorted(names)})"
+                    f"which no port of the loop sends (they send {sorted(names)})"
                 )
 
     @property
     def streams(self) -> dict[StreamId, GroupStream]:
-        """What the node's ports send, by stream, in stepping order."""
+        """What the loop's ports send, by stream, in stepping order."""
         return {stream_id: self._streams[stream_id] for stream_id in self._order}
 
     @property

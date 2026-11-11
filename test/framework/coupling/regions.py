@@ -118,15 +118,15 @@ class FakeGeometry:
 def contexts(
     regions: list[str],
     exchanges: list[Exchange],
-    nodes: Optional[Sequence[CouplingLoop]] = None,
+    loops: Optional[Sequence[CouplingLoop]] = None,
     comm_channel: Optional[InProcessCommChannel] = None,
-    **node: Any,
+    **loop: Any,
 ) -> dict[str, Context]:
-    """A context per region, coupled over ``exchanges`` in ``nodes`` (default: one of ``node``)."""
-    if nodes is None:
-        nodes = [CouplingLoop("coupling", tuple(exchange.name for exchange in exchanges), **node)]
+    """A context per region, coupled over ``exchanges`` in ``loops`` (default: one of ``loop``)."""
+    if loops is None:
+        loops = [CouplingLoop("coupling", tuple(exchange.name for exchange in exchanges), **loop)]
     couplings = participant_exchanges(
-        regions, exchanges, comm_channel or InProcessCommChannel(), nodes=nodes
+        regions, exchanges, comm_channel or InProcessCommChannel(), loops=loops
     )
     return {region: context(region, couplings.get(region)) for region in regions}
 
@@ -199,7 +199,7 @@ def add_coupled(ctx: Context, patch: str, side: Side) -> None:
 
 
 def couple(ctx: Context, index: int = 0) -> CouplingLoopOp:
-    """The region's coupling op of its ``index`` th node."""
+    """The region's coupling op of its ``index`` th loop."""
     op = coupling(ctx).operations()[index].func
     assert isinstance(op, CouplingLoopOp)
     return op

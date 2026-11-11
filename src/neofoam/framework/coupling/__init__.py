@@ -8,7 +8,7 @@ A ``@coupled`` class declares what it sends and receives (``FaceData``,
 (``coupling(ctx).add(Patch("top"), bc)``), which is its port. An
 :class:`Exchange` pairs what one port sends with what the other receives, its
 mapping moves the data between their locations. The region's :class:`Participant`
-model builds one coupling op per :class:`CouplingLoop`; a node's leader (its last
+model builds one coupling op per :class:`CouplingLoop`; a loop's leader (its last
 region in stepping order) decides convergence and the final pass.
 """
 
