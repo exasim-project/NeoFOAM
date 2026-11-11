@@ -4,28 +4,15 @@
 # NB: no ``from __future__ import annotations`` — ``@coupled`` reads the
 # ``sends`` / ``receives`` annotations as live classes.
 
-"""The coupled patches of ``T``, a Dirichlet-Neumann pair on ``calculated`` NeoN patches.
-
-A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
-
-    interface
-    {
-        type        calculated;
-        coupled     coupledTemperature;   // or coupledHeatFlux
-        value       uniform 300;
-    }
-
-NeoN sets no per-face gradient from Python, so the Neumann side applies its heat
-flux as an explicit source in the cells next to its faces.
-"""
+"""Coupled patches of ``T``: a Dirichlet-Neumann pair on ``calculated`` NeoN patches."""
 
 from pathlib import Path
 from typing import Any
 
-import neon._neon as nn  # NeoN Python bindings
+import neon._neon as nn
 import numpy as np
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Coupling, coupled
 from neofoam.solver.regions import WallHeatFlux, WallTemperature, coupled_entries
@@ -97,7 +84,11 @@ class CoupledTemperature(NeoNPatch):
 
 @coupled
 class CoupledHeatFlux(NeoNPatch):
-    """The Neumann side: takes the partner's heat flux, sends its wall temperature."""
+    """The Neumann side: takes the partner's heat flux, sends its wall temperature.
+
+    NeoN sets no per-face gradient from Python, so the heat flux enters as an explicit
+    source in the cells next to the faces.
+    """
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         super().__init__(field, patch, ctx)

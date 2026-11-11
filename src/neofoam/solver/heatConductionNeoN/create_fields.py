@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import pybFoam as pyf
 
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam import neofoam_bindings as nfb
 from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
@@ -45,7 +45,6 @@ def _time_models(region: Optional[str], case_dir: Path) -> tuple[ModelRuntime, M
 
 
 def _runtime_steps(argv: list[str], case_dir: Path) -> list[InitStep]:
-    """The argList, ``Foam::Time`` and NeoN runtime on ``case_dir``, and its mesh."""
     executor = NeoNControlConfig.load(case_dir=case_dir).executor
 
     def create_neon_runtime(ctx: dict[str, Any]) -> Any:
@@ -65,7 +64,6 @@ def _runtime_steps(argv: list[str], case_dir: Path) -> list[InitStep]:
 
 
 def _build_steps(core_models: list[Any], argv: list[str], case_dir: Path) -> list[InitStep]:
-    """The init steps on the loaded ``core_models``."""
     solution_loop_model, field_writer_model, _control, properties = core_models
 
     def inject_writer_hook(ctx: dict[str, Any]) -> NeoNWriteHook:

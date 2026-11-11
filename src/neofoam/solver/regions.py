@@ -66,9 +66,8 @@ class WallHeatFlux(BaseModel):
 def coupled_entries(path: Path, patch_types: Mapping[str, str]) -> dict[str, str]:
     """The coupled patches of the field file ``path``: patch -> its ``coupled`` condition.
 
-    A patch is coupled when its ``coupled`` entry names a condition of
-    ``patch_types``, which maps each condition to the ``type`` its patch must
-    have. Raises ``ValueError`` for another condition or type.
+    ``patch_types`` maps each known condition to the ``type`` its patch must have;
+    another condition or type raises ``ValueError``.
 
     Example::
 
