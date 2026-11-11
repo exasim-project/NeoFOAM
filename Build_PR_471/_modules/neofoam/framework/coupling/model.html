@@ -671,39 +671,17 @@
 
 <span class="sd">"""The coupling of one region as a model: ``ctx.models["coupling"]``, a :class:`Coupling`.</span>
 
-<span class="sd">A solver that supports coupling adds it in its init, before it builds its</span>
-<span class="sd">boundary conditions, with its runtime's</span>
-<span class="sd">:class:`~neofoam.framework.coupling.RegionCoupling` (``None`` when the case does</span>
-<span class="sd">not couple the region)::</span>
+<span class="sd">A solver that supports coupling adds it in its init, before its boundary</span>
+<span class="sd">conditions, and each ``@coupled`` boundary condition adds itself::</span>
 
 <span class="sd">    ctx.models["coupling"] = Coupling(self.coupling)</span>
-
-<span class="sd">A ``@coupled`` boundary condition, or any other ``@coupled`` model, adds itself::</span>
-
-<span class="sd">    @coupled</span>
-<span class="sd">    class CoupledConduction(SlabPatch):</span>
-<span class="sd">        def __init__(self, field, patch, ctx, value):</span>
-<span class="sd">            super().__init__(field, patch, ctx)</span>
-<span class="sd">            Coupling.of(ctx).add(self)</span>
-
-<span class="sd">The region's execution graph then gets the model's operations: one</span>
-<span class="sd">:class:`~neofoam.framework.coupling.loop.CouplingOp` per coupling node of the region</span>
-<span class="sd">(``&lt;region&gt;.&lt;node&gt;``, outer to inner), built once from the sides of the node's</span>
-<span class="sd">exchanges; none in a region the case does not couple.</span>
-
-<span class="sd">In a transient case (the region's ``ctx.time`` is set) the graph also gets the</span>
-<span class="sd">region's time-step op ``&lt;region&gt;.time_step`` (:meth:`Coupling.time_step`): the</span>
-<span class="sd">regions of the group step the smallest time step any of them asks for. It runs</span>
-<span class="sd">after the solutionLoop's ``set_time_step`` and before its ``increment_time``,</span>
-<span class="sd">once per time step (``first``), and reads and writes the time step in the</span>
-<span class="sd">region's context (``ctx.time.delta_t``). It must not end up inside a serial</span>
-<span class="sd">coupling op: :meth:`Coupling.check` raises for the resolved graph (the</span>
-<span class="sd">runtime's ``resolve_operations`` calls it).</span>
+<span class="sd">    ...</span>
+<span class="sd">    Coupling.of(ctx).add(self)</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
@@ -721,13 +699,14 @@
 <div class="viewcode-block" id="Coupling">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Coupling</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The coupling of one region: its :class:`RegionCoupling` and its coupled sides.</span>
+<span class="w">    </span><span class="sd">"""The coupling of one region: its coupled sides and the operations they need.</span>
 
-<span class="sd">    ``coupling`` is ``None`` when the case does not couple the region.</span>
+<span class="sd">    ``coupling`` is ``None`` when the case does not couple the region. Its graph</span>
+<span class="sd">    operations (see :class:`~neofoam.framework.solver.runtime.GraphContribution`)</span>
+<span class="sd">    are one coupling op per node and, in a transient case, the time-step op.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RegionCoupling</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1">#: What the region knows of the case's coupling; None: not coupled.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span> <span class="o">=</span> <span class="n">coupling</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ExchangeSide</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Operations</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -736,10 +715,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.of">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Coupling</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The coupling model of the region ``ctx``.</span>
-
-<span class="sd">        Raises ``ValueError`` when its solver added none (``ctx.models["coupling"]``).</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""The coupling model of the region ``ctx``; ``ValueError`` when its solver added none."""</span>
         <span class="n">coupling</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coupling"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coupling</span><span class="p">,</span> <span class="n">Coupling</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"the solver of region </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> does not support coupling"</span><span class="p">)</span>
@@ -754,12 +730,10 @@
 <div class="viewcode-block" id="Coupling.add">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.add">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Add the side of the ``@coupled`` ``instance`` (a boundary condition or other model).</span>
+<span class="w">        </span><span class="sd">"""Add the side of the ``@coupled`` ``instance``, which sets ``field`` and ``patch``.</span>
 
-<span class="sd">        The instance needs ``field`` (the field it couples) and ``patch``. Raises</span>
-<span class="sd">        ``TypeError`` when it is not ``@coupled`` or lacks one of them,</span>
-<span class="sd">        ``ValueError`` when no exchange connects its patch (also when the case</span>
-<span class="sd">        does not couple the region) or the graph is built.</span>
+<span class="sd">        Raises ``TypeError`` for another instance, ``ValueError`` when no exchange</span>
+<span class="sd">        connects its patch or the graph is built already.</span>
 <span class="sd">        """</span>
         <span class="n">declaration</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="s2">"__coupled__"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -788,13 +762,10 @@
 <div class="viewcode-block" id="Coupling.operations">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.operations">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The region's coupling ops, one per coupling node, outer to inner; built once.</span>
+<span class="w">        </span><span class="sd">"""The region's coupling ops, one per node, outer to inner; built once.</span>
 
-<span class="sd">        Each from the sides on the patches of its node's exchanges, placed as the</span>
-<span class="sd">        node's placement for the region says. None when the case does not couple</span>
-<span class="sd">        the region. Raises ``ValueError`` when an exchange of the region has no</span>
-<span class="sd">        side (also when the region has none at all), a patch two, or the sides of</span>
-<span class="sd">        one field are in two nodes.</span>
+<span class="sd">        Raises ``ValueError`` when an exchange has no side, a patch two, or a</span>
+<span class="sd">        field is in two nodes.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
@@ -823,21 +794,22 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span></div>
 
 
+<div class="viewcode-block" id="Coupling.graph_operations">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.graph_operations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">graph_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The region's coupling ops and, in a transient case, its time-step op."""</span>
+        <span class="n">time_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Operations</span><span class="p">([</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">(),</span> <span class="o">*</span><span class="p">([</span><span class="n">time_step</span><span class="p">]</span> <span class="k">if</span> <span class="n">time_step</span> <span class="k">else</span> <span class="p">[])])</span></div>
+
+
 <div class="viewcode-block" id="Coupling.time_step">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.time_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">time_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The region's time-step op ``&lt;region&gt;.time_step``, or ``None``.</span>
+<span class="w">        </span><span class="sd">"""The op ``&lt;region&gt;.time_step``: the group steps the smallest time step any asks for.</span>
 
-<span class="sd">        ``None`` when the case does not couple the region or the region does not</span>
-<span class="sd">        step in time (``ctx.time`` is ``None``, e.g. a steady region). The op</span>
-<span class="sd">        sends the time step the region asks for (``ctx.time.delta_t``) to the</span>
-<span class="sd">        group's leader, which takes the smallest of the group and sends it back</span>
-<span class="sd">        (tag ``time/dt``); each region writes it into ``ctx.time.delta_t``, where</span>
-<span class="sd">        ``increment_time`` takes it from. It runs after ``set_time_step`` and</span>
-<span class="sd">        before ``increment_time``, once per time step (``first``).</span>
-
-<span class="sd">        Raises ``ValueError`` when ``graph`` (the region's operations, loops with</span>
-<span class="sd">        what they hold) has no ``set_time_step`` or ``increment_time``.</span>
+<span class="sd">        Runs once per time step between ``set_time_step`` and ``increment_time``;</span>
+<span class="sd">        ``None`` for an uncoupled or steady region. Raises ``ValueError`` when</span>
+<span class="sd">        ``graph`` lacks either of them.</span>
 <span class="sd">        """</span>
         <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
         <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">coupling</span><span class="o">.</span><span class="n">group</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">ctx</span><span class="o">.</span><span class="n">time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -856,26 +828,20 @@
                 <span class="n">op_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.time_step"</span><span class="p">,</span>
                 <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="n">SET_TIME_STEP</span><span class="p">],</span>
                 <span class="n">before</span><span class="o">=</span><span class="p">[</span><span class="n">INCREMENT_TIME</span><span class="p">],</span>
-                <span class="c1"># numbered: the resolver runs it right after set_time_step, before</span>
-                <span class="c1"># the operations stepped after increment_time</span>
+                <span class="c1"># numbered: right after set_time_step, before the ops after increment_time</span>
                 <span class="n">operation_number</span><span class="o">=</span><span class="n">OperationNumber</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
                 <span class="n">first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="Coupling.check">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.check">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when the resolved ``graph`` holds the time step in a serial node.</span>
-
-<span class="sd">        A serial pass of a region waits for its partner's whole pass; when that</span>
-<span class="sd">        holds the time-step op, which waits for the region, neither comes back.</span>
-<span class="sd">        """</span>
+<div class="viewcode-block" id="Coupling.check_graph">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.model.html#neofoam.framework.coupling.model.Coupling.check_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when a serial node holds the time step in the resolved ``graph``."""</span>
         <span class="n">coupling</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coupling</span>
         <span class="k">if</span> <span class="n">coupling</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="c1"># the labels of the region's serial coupling ops, and their nodes' names</span>
         <span class="n">serial</span> <span class="o">=</span> <span class="p">{</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">coupling</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span>
             <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">coupling</span><span class="o">.</span><span class="n">nodes</span>
@@ -892,7 +858,6 @@
 
 
 
-<span class="c1"># The solutionLoop operations the time-step op runs between.</span>
 <span class="n">SET_TIME_STEP</span> <span class="o">=</span> <span class="s2">"set_time_step"</span>
 <span class="n">INCREMENT_TIME</span> <span class="o">=</span> <span class="s2">"increment_time"</span>
 
@@ -921,7 +886,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TimeStep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The time-step op of a region: its group steps the smallest time step any region asks for."""</span>
+<span class="w">    </span><span class="sd">"""The time-step op of a region."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coupling</span><span class="p">:</span> <span class="n">RegionCoupling</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_coupling</span> <span class="o">=</span> <span class="n">coupling</span>

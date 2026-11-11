@@ -669,17 +669,7 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""The leader's part of a coupling node: its :class:`CouplingController`.</span>
-
-<span class="sd">The **leader** of a node, the last region in stepping order of the regions the</span>
-<span class="sd">node's exchanges connect, owns the node's controller, which decides after each</span>
-<span class="sd">pass whether the node's data converged, and relaxes the data carried into the</span>
-<span class="sd">next pass, per exchange. It also decides which pass is the node's **final**</span>
-<span class="sd">one: the pass after the one its data converged in, or the last one</span>
-<span class="sd">``max_iterations`` allows. It knows every side of the node by its end</span>
-<span class="sd">(:data:`~neofoam.framework.coupling.data.End`, ``(region, patch)``), as the</span>
-<span class="sd">side's region told the leader (:class:`GroupSide`).</span>
-<span class="sd">"""</span>
+<span class="sd">"""The leader's part of a coupling node: its :class:`CouplingController`."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -688,14 +678,16 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrameType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">execution_observer</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span><span class="p">,</span> <span class="n">_arrays</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingAcceleration</span><span class="p">,</span> <span class="n">CouplingConvergence</span><span class="p">,</span> <span class="n">SideChange</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">End</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">SideChange</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.region</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingNode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
 
 
@@ -717,11 +709,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingOutcome</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""How the coupling loop of one time step ended.</span>
 
-<span class="sd">    ``passes`` is the number of passes it ran, the final one included,</span>
-<span class="sd">    ``converged`` whether the convergence check held (``False``:</span>
-<span class="sd">    ``max_iterations`` stopped it), and ``residuals`` the relative change of</span>
-<span class="sd">    every field's exchanged :data:`Array` data in the last pass (largest over its</span>
-<span class="sd">    sides and arrays; ``inf`` for a field no pass measured).</span>
+<span class="sd">    ``passes`` includes the final one; ``converged`` is ``False`` when</span>
+<span class="sd">    ``max_iterations`` stopped it; ``residuals`` is each field's relative change</span>
+<span class="sd">    in the last pass (``inf`` where no pass measured it).</span>
 <span class="sd">    """</span>
 
     <span class="n">passes</span><span class="p">:</span> <span class="nb">int</span>
@@ -733,22 +723,18 @@
 <div class="viewcode-block" id="CouplingNotConvergedWarning">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingNotConvergedWarning">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingNotConvergedWarning</span><span class="p">(</span><span class="ne">RuntimeWarning</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A coupling loop reached ``max_iterations`` before its exchange converged.</span>
-
-<span class="sd">    It points at the code that ran the coupled solver: the first caller outside</span>
-<span class="sd">    the framework (:func:`_stacklevel`), e.g. the solver's ``run``.</span>
-<span class="sd">    """</span></div>
+<span class="w">    </span><span class="sd">"""A coupling loop reached ``max_iterations`` before it converged."""</span></div>
 
 
 
-<span class="c1"># The framework's directory: the frames a coupling warning passes over.</span>
+<span class="c1"># the frames a coupling warning passes over</span>
 <span class="n">_FRAMEWORK</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)))</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_stacklevel</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The ``stacklevel`` of ``warnings.warn``, called by this function's caller, that</span>
-<span class="sd">    points at the first frame outside the framework (``neofoam.framework``)."""</span>
-    <span class="n">level</span><span class="p">,</span> <span class="n">frame</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""The ``warnings.warn`` stacklevel of the first frame outside ``neofoam.framework``."""</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">frame</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FrameType</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">while</span> <span class="n">frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">_FRAMEWORK</span><span class="p">):</span>
         <span class="n">level</span><span class="p">,</span> <span class="n">frame</span> <span class="o">=</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">frame</span><span class="o">.</span><span class="n">f_back</span>
     <span class="k">return</span> <span class="n">level</span>
@@ -757,11 +743,9 @@
 <div class="viewcode-block" id="relative_changes">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.relative_changes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The relative change of each field's data: ``|current - previous| / |current|``.</span>
+<span class="w">    </span><span class="sd">"""Each field's largest ``|current - previous| / |current|`` over its sides and arrays.</span>
 
-<span class="sd">    Largest over the sides and arrays of the field (no floor: a field's value</span>
-<span class="sd">    is its largest measured change; a NaN stays NaN); the absolute change where</span>
-<span class="sd">    the current data is zero.</span>
+<span class="sd">    The absolute change where the current data is zero; a NaN stays NaN.</span>
 <span class="sd">    """</span>
     <span class="n">residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span><span class="p">:</span>
@@ -779,19 +763,13 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.GroupSide">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">GroupSide</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A side of the leader's node, as its region told the leader at startup.</span>
-
-<span class="sd">    ``arrays`` are the :data:`Array` fields of what it sends; ``partner`` is the</span>
-<span class="sd">    end ``(region, patch)`` of its partner side; ``exchange`` the name of its</span>
-<span class="sd">    exchange.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""A side of the leader's node, as its region told the leader at startup."""</span>
 
     <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">arrays</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">partner</span><span class="p">:</span> <span class="n">End</span>
-    <span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">End</span><span class="p">:</span>
@@ -803,72 +781,29 @@
 <div class="viewcode-block" id="CouplingController">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingController</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The leader's part of a coupling node: decides for the node's regions, per pass.</span>
+<span class="w">    </span><span class="sd">"""The leader's part of a coupling node: after each pass, whether another runs and which.</span>
 
-<span class="sd">    ``sides`` are the sides of the node, its regions in stepping order; ``label``</span>
-<span class="sd">    names the leader's coupling op. After each pass (:meth:`decide`) it gets what</span>
-<span class="sd">    every side sent, and the number of passes the leader's op ran in the time</span>
-<span class="sd">    step (its entry on ``Context.loops``, the one count of passes), and checks</span>
-<span class="sd">    every measure of ``convergence`` on the change of its :data:`Array` data</span>
-<span class="sd">    since the pass before (all must hold; none:</span>
-<span class="sd">    :func:`unchanged`). Once they hold it runs exactly one more pass, the</span>
-<span class="sd">    **final** one (:attr:`final`), and stops after it without checking again;</span>
-<span class="sd">    the last pass ``max_iterations`` allows is final in advance (no pass more;</span>
-<span class="sd">    it checks after it whether the data converged), and with ``max_iterations``</span>
-<span class="sd">    1 the only pass is first and final. Before each pass, the final one too,</span>
-<span class="sd">    it relaxes the :data:`Array` data carried into the next pass with the</span>
-<span class="sd">    ``acceleration`` of the side's exchange (by exchange name; at most one per</span>
-<span class="sd">    exchange, an exchange without one is not relaxed; plain fields pass through</span>
-<span class="sd">    as they are).</span>
+<span class="sd">    :meth:`decide` gets what every side sent; once every convergence measure of</span>
+<span class="sd">    the node holds, exactly one more pass runs, the final one, then it stops;</span>
+<span class="sd">    the last pass ``max_iterations`` allows is final in advance. It relaxes the</span>
+<span class="sd">    carried data with each exchange's acceleration. A side receives fresh data</span>
+<span class="sd">    (sent in this pass) when the node is serial and its partner steps earlier,</span>
+<span class="sd">    else what the controller carried; the sending regions follow this decision.</span>
+<span class="sd">    A finished time step's :class:`CouplingOutcome` goes to :attr:`outcomes` and</span>
+<span class="sd">    the execution observer, and warns when unconverged. Not thread safe.</span>
 
-<span class="sd">    A side receives what its partner sent in this pass when the scheme is serial</span>
-<span class="sd">    (the default) and the partner's region steps before its own; else</span>
-<span class="sd">    (``parallel``, or the partner steps later) what the controller carried from</span>
-<span class="sd">    the pass before. Only the carried data is relaxed. This is the only rule: the</span>
-<span class="sd">    sending regions send their data fresh exactly where the leader decided it.</span>
-
-<span class="sd">    When a time step's coupling ends it appends its :class:`CouplingOutcome` to</span>
-<span class="sd">    :attr:`outcomes` and hands it to the execution observer</span>
-<span class="sd">    (``coupling_finished``); ending at ``max_iterations`` unconverged also warns</span>
-<span class="sd">    (:class:`CouplingNotConvergedWarning`). Not thread safe.</span>
-
-<span class="sd">    Raises ``ValueError`` when a measure of ``convergence`` on a field's data</span>
-<span class="sd">    (``data``) has none to compare: no side of the field, or its sides send no</span>
-<span class="sd">    :data:`Array` data; :meth:`decide` raises ``FloatingPointError`` when the</span>
-<span class="sd">    change of a side is not finite.</span>
-
-<span class="sd">    The leader builds it with its coupling's ``controller`` factory, which it</span>
-<span class="sd">    hands the node (by default :func:`~neofoam.framework.coupling.region.node_controller`:</span>
-<span class="sd">    the node's scheme, convergence, acceleration and max_iterations; one</span>
-<span class="sd">    acceleration per exchange: it keeps the data of its last passes)::</span>
-
-<span class="sd">        def controller(sides, label, *, node):</span>
-<span class="sd">            return CouplingController(</span>
-<span class="sd">                sides,</span>
-<span class="sd">                label,</span>
-<span class="sd">                max_iterations=50,</span>
-<span class="sd">                parallel=node.parallel,</span>
-<span class="sd">                acceleration={"interface": AitkenRelaxation(relaxation=0.5)},</span>
-<span class="sd">            )</span>
+<span class="sd">    Raises ``ValueError`` for a convergence on a field no side sends;</span>
+<span class="sd">    :meth:`decide` raises ``FloatingPointError`` for a non-finite change.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span>
-        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">convergence</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">CouplingConvergence</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
-        <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
-        <span class="n">parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">acceleration</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CouplingAcceleration</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1">#: The name of the leader, the coupling op that owns the controller.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1">#: the label of the leader's coupling op</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
-        <span class="c1">#: Whether a side always receives what its partner sent in the pass before.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parallel</span> <span class="o">=</span> <span class="n">parallel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parallel</span> <span class="o">=</span> <span class="n">parallel</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parallel</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">end</span><span class="p">:</span> <span class="n">side</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">sides</span><span class="p">}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">convergence</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">=</span> <span class="n">max_iterations</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">acceleration</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">convergence</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">max_iterations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">acceleration</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_convergence</span><span class="p">()</span>
         <span class="n">rank</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -878,51 +813,33 @@
             <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CouplingOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># inf for every field with Array data until a pass measured its change:</span>
-        <span class="c1"># nothing counts as converged before it was measured</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">}</span>
+        <span class="c1"># nothing counts as converged before a pass measured it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
-        <span class="c1"># whether the pass started last is the final one, and whether it is final</span>
-        <span class="c1"># because the data converged</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="c1"># what each side carries into the pass (relaxed), by its end</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_convergence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when a measure of the convergence has no data to compare.</span>
-
-<span class="sd">        A measure on the data of a field (its ``data``, e.g. :class:`RelativeConvergence`)</span>
-<span class="sd">        compares the :data:`Array` data the node's sides of that field send (plain</span>
-<span class="sd">        fields are not compared); with none it would hold over nothing.</span>
-<span class="sd">        """</span>
-        <span class="n">sides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` when a measure on a field's ``data`` has no side of it."""</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
         <span class="k">for</span> <span class="n">measure</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">measure</span><span class="p">,</span> <span class="s2">"data"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-                <span class="k">continue</span>
-            <span class="n">of_field</span> <span class="o">=</span> <span class="p">[</span><span class="n">side</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">sides</span> <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="n">data</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">of_field</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: convergence </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">, "</span>
                     <span class="sa">f</span><span class="s2">"which no side of the node sends (its sides couple "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">({</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">side</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">sides</span><span class="p">})</span><span class="si">}</span><span class="s2">)"</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">of_field</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: convergence </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2"> "</span>
-                    <span class="sa">f</span><span class="s2">"has no Array data to compare: the sides of </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2"> send plain fields "</span>
-                    <span class="s2">"only, which no convergence compares"</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sides</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">GroupSide</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The sides of the group by end, its regions in stepping order."""</span>
+<span class="w">        </span><span class="sd">"""The node's sides by end, in stepping order."""</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether the pass :meth:`decide` started last is the time step's final one."""</span>
+<span class="w">        </span><span class="sd">"""Whether the pass :meth:`decide` started last is the final one."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final</span>
 
     <span class="nd">@property</span>
@@ -932,40 +849,29 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">residuals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The relative change of each field's :data:`Array` data in the last pass.</span>
-
-<span class="sd">        ``inf`` for a field no pass of the time step's coupling measured yet.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Each field's relative change in the last pass; ``inf`` before one measured it."""</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CouplingController.fresh">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController.fresh">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">End</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether the side at ``end`` receives what its partner sent in this pass, not carried."""</span>
+<span class="w">        </span><span class="sd">"""Whether the side at ``end`` receives what its partner sent in this pass."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">[</span><span class="n">end</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="CouplingController.decide">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController.decide">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">decide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""The decision before a pass, from what every side sends now (by its end).</span>
+<span class="w">        </span><span class="sd">"""What each side carries into the next pass, by end, or ``None`` once it ended.</span>
 
-<span class="sd">        ``iteration`` is the number of passes the time step's coupling ran</span>
-<span class="sd">        (``LoopEntry.iteration`` of the leader's op): ``0`` before its first.</span>
-<span class="sd">        Returns what each side carries into the pass (relaxed), by its end,</span>
-<span class="sd">        :attr:`final` telling whether it is the final pass, or ``None``: the</span>
-<span class="sd">        time step's coupling ended after its final pass, its outcome recorded.</span>
+<span class="sd">        ``current`` is what every side sends now, ``iteration`` the passes run so far.</span>
 <span class="sd">        """</span>
         <span class="n">current</span> <span class="o">=</span> <span class="p">{</span><span class="n">end</span><span class="p">:</span> <span class="n">current</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span> <span class="o">=</span> <span class="n">current</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">changes</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">end</span><span class="p">:</span> <span class="n">SideChange</span><span class="p">(</span>
-                <span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span>
-                <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">]),</span>
-                <span class="n">_arrays</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="n">current</span><span class="p">[</span><span class="n">end</span><span class="p">]),</span>
-            <span class="p">)</span>
+            <span class="n">end</span><span class="p">:</span> <span class="n">SideChange</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">],</span> <span class="n">current</span><span class="p">[</span><span class="n">end</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">,</span> <span class="n">iteration</span><span class="p">)}</span>
@@ -981,10 +887,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_relative_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">SideChange</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">""":func:`relative_changes` of ``changes`` (by the end of each side).</span>
-
-<span class="sd">        Raises ``FloatingPointError`` when the change of a side is not finite.</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">""":func:`relative_changes`; raises ``FloatingPointError`` for a non-finite one."""</span>
         <span class="n">residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">),</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">relative_changes</span><span class="p">([</span><span class="n">change</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -1023,12 +926,11 @@
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_start_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Start pass ``number`` (from 1) of the time step's coupling: what each side carries."""</span>
+<span class="w">        </span><span class="sd">"""Start pass ``number`` (from 1): what each side carries, relaxed."""</span>
         <span class="k">if</span> <span class="n">number</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="n">final</span>
         <span class="k">for</span> <span class="n">exchange</span><span class="p">,</span> <span class="n">acceleration</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="c1"># the sides of the exchange whose partner receives their data as carried</span>
             <span class="n">carried</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">end</span>
                 <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -1036,10 +938,8 @@
             <span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">carried</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">_arrays</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">[</span><span class="n">end</span><span class="p">]</span><span class="o">.</span><span class="n">arrays</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">])</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">carried</span><span class="p">]</span>
-            <span class="n">relaxed</span> <span class="o">=</span> <span class="n">acceleration</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">number</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">carried</span><span class="p">,</span> <span class="n">relaxed</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">],</span> <span class="o">**</span><span class="n">data</span><span class="p">}</span>
+            <span class="n">relaxed</span> <span class="o">=</span> <span class="n">acceleration</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">carried</span><span class="p">],</span> <span class="n">number</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">carried</span><span class="p">,</span> <span class="n">relaxed</span><span class="p">))</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">)</span></div>
 
 </pre></div>

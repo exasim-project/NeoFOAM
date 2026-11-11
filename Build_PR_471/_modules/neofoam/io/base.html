@@ -685,16 +685,6 @@
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"T"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">"BaseConfig"</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_in_region</span><span class="p">(</span><span class="n">file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The file's path in *region*: the region directory follows the top directory."""</span>
-    <span class="k">if</span> <span class="n">region</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">file</span>
-    <span class="n">top</span><span class="p">,</span> <span class="n">separator</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">separator</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">file</span><span class="si">!r}</span><span class="s2"> has no top directory to hold region </span><span class="si">{</span><span class="n">region</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">top</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">rest</span><span class="si">}</span><span class="s2">"</span>
-
-
 <div class="viewcode-block" id="BaseConfig">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -731,29 +721,20 @@
 <div class="viewcode-block" id="BaseConfig.get_default_path">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.get_default_path">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_path</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Get default file path from ``io_config.file``, inside *region* if given.</span>
-
-<span class="sd">        A region directory follows the top directory, as in a multi-region</span>
-<span class="sd">        OpenFOAM case: ``constant/thermalProperties.yaml`` in region ``left`` is</span>
-<span class="sd">        ``constant/left/thermalProperties.yaml``.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">_in_region</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_get_io</span><span class="p">()</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_default_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get default file path from ``io_config.file``."""</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span> <span class="o">/</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_io</span><span class="p">()</span><span class="o">.</span><span class="n">file</span></div>
 
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Resolve the on-disk path: explicit file, *file* override, or default."""</span>
         <span class="n">case_dir_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">suffix</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">case_dir_path</span>  <span class="c1"># case_dir is an explicit file path</span>
         <span class="k">if</span> <span class="n">file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">case_dir_path</span> <span class="o">/</span> <span class="n">_in_region</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>  <span class="c1"># relative to case_dir</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_default_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">case_dir_path</span> <span class="o">/</span> <span class="n">file</span>  <span class="c1"># override filename, relative to case_dir</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_default_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BaseConfig.load">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.base.html#neofoam.io.base.BaseConfig.load">[docs]</a>
@@ -765,7 +746,6 @@
         <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">validate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"utf-8"</span><span class="p">,</span>
-        <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Load configuration from file via :class:`~neofoam.io.DictFile`.</span>
 
@@ -782,8 +762,6 @@
 <span class="sd">                      ``pydantic.ValidationError`` on failure (default: True)</span>
 <span class="sd">            file: Optional filename override. When provided, resolves relative</span>
 <span class="sd">                  to ``case_dir`` instead of using the registered default path.</span>
-<span class="sd">            region: Optional region of a multi-region case; the file is read</span>
-<span class="sd">                    from the region directory (see :meth:`get_default_path`).</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Configuration instance loaded from file</span>
@@ -793,7 +771,7 @@
 <span class="sd">            KeyError: If a configured subdict path doesn't resolve</span>
 <span class="sd">            pydantic.ValidationError: If validate=True and data has errors</span>
 <span class="sd">        """</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">DictFile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span></div>
 
 
@@ -858,7 +836,6 @@
         <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"."</span><span class="p">,</span>
         <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"utf-8"</span><span class="p">,</span>
         <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Save configuration to file via :class:`~neofoam.io.DictFile`.</span>
 
@@ -871,15 +848,14 @@
 <span class="sd">            encoding: Accepted for compatibility; ``DictFile`` writes UTF-8.</span>
 <span class="sd">            file: Optional filename override. When provided, resolves relative</span>
 <span class="sd">                  to ``case_dir`` instead of using the registered default path.</span>
-<span class="sd">            region: Optional region of a multi-region case (see :meth:`load`).</span>
 <span class="sd">        """</span>
         <span class="n">case_dir_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">suffix</span><span class="p">:</span>  <span class="c1"># Has file extension, treat as explicit path</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir_path</span>
         <span class="k">elif</span> <span class="n">file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir_path</span> <span class="o">/</span> <span class="n">_in_region</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">case_dir_path</span> <span class="o">/</span> <span class="n">file</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">get_default_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">get_default_path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
 
         <span class="n">DictFile</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
 

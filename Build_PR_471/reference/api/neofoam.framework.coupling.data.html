@@ -674,55 +674,16 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.coupling.data">
 <span id="neofoam-framework-coupling-data"></span><h1>neofoam.framework.coupling.data<a class="headerlink" href="#module-neofoam.framework.coupling.data" title="Link to this heading">¶</a></h1>
-<p>What a coupled side exchanges: <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code>, the side, and what it sends.</p>
-<ul class="simple">
-<li><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> marks a field of an exchange model with one value (or row) per
-point of the patch; the mapping maps it onto the receiving side’s points. The
-other fields of an exchange model are plain data, one value for the interface;</p></li>
-<li><p>an <strong>exchange side</strong> (<a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExchangeSide</span></code></a>) is what a boundary condition
-declares on its patch, as its region’s coupling model added it: its region,
-patch and field, what it sends and receives (one pydantic model each) and its
-points; an <strong>end</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">End</span></code>) is its <code class="docutils literal notranslate"><span class="pre">(region,</span> <span class="pre">patch)</span></code>;</p></li>
-<li><p>an <strong>exchange</strong> (<a class="reference internal" href="#neofoam.framework.coupling.data.Exchange" title="neofoam.framework.coupling.data.Exchange"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code></a>) joins a side with the side of another
-region (its partner); the case configures it per patch pair; its <strong>mapping</strong>
-(<a class="reference internal" href="neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping" title="neofoam.framework.coupling.kernels.CouplingMapping"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingMapping</span></code></a>) maps the <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code>
-data the partner sends onto the side’s points;</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_sent()</span></code> takes what a side sends now as plain data and checks that its
-<code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> data is finite; <code class="xref py py-func docutils literal notranslate"><span class="pre">_check_received()</span></code> that a side receives
-what its partner sends.</p></li>
-</ul>
-<dl class="py class">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.data.Exchange">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">Exchange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping" title="neofoam.framework.coupling.kernels.CouplingMapping"><span class="pre">CouplingMapping</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#Exchange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.Exchange" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The exchange of a side, as its region sees it: its name, the partner and the mapping.</p>
-<p>The case configures it per patch pair (<code class="docutils literal notranslate"><span class="pre">system/regionCoupling.yaml</span></code>,
-<code class="docutils literal notranslate"><span class="pre">exchanges:</span></code>). The side receives what the partner side, on patch
-<code class="docutils literal notranslate"><span class="pre">partner[1]</span></code> of region <code class="docutils literal notranslate"><span class="pre">partner[0]</span></code>, sends, mapped onto its points by
-<code class="docutils literal notranslate"><span class="pre">mapping</span></code>.</p>
-</dd></dl>
-
+<p>What a coupled side exchanges: <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> fields, the side, and what it sends.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.data.</span></span><span class="sig-name descname"><span class="pre">ExchangeSide</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sends</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receives</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receive</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/data.html#ExchangeSide"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A coupled side of a region: where it is, what it exchanges and where its points are.</p>
-<p><code class="docutils literal notranslate"><span class="pre">region</span></code> and <code class="docutils literal notranslate"><span class="pre">patch</span></code> are its end of the exchange, <code class="docutils literal notranslate"><span class="pre">field</span></code> the field
-it couples, whose solution its region’s coupling op repeats. <code class="docutils literal notranslate"><span class="pre">sends</span></code> and
-<code class="docutils literal notranslate"><span class="pre">receives</span></code> are pydantic models: <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> fields (one value per point
-of the patch, mapped onto the partner’s points) and plain fields (one value
-for the interface, handed over as they are). The same model both ways is
-the special case of a symmetric exchange. <code class="docutils literal notranslate"><span class="pre">send()</span></code> returns an instance of
-<code class="docutils literal notranslate"><span class="pre">sends</span></code>; <code class="docutils literal notranslate"><span class="pre">receive(data)</span></code> takes an instance of <code class="docutils literal notranslate"><span class="pre">receives</span></code>, already
-mapped onto this side’s points. <code class="docutils literal notranslate"><span class="pre">coordinates</span></code> holds one row per point of
-the patch, or <code class="docutils literal notranslate"><span class="pre">None</span></code>; it is kept as a float numpy array.</p>
-<p>What travels between regions is plain data (it pickles): the plain fields
-are <code class="docutils literal notranslate"><span class="pre">float</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">bool</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code> (or a union of them),
-or a pydantic model of such fields, sent as its <code class="docutils literal notranslate"><span class="pre">model_dump()</span></code>. Raises
-<code class="docutils literal notranslate"><span class="pre">TypeError</span></code> for another field type.</p>
-<p>A boundary condition declares it with
-<a class="reference internal" href="neofoam.framework.coupling.coupled.html#neofoam.framework.coupling.coupled" title="neofoam.framework.coupling.coupled"><code class="xref py py-func docutils literal notranslate"><span class="pre">coupled()</span></code></a>;
-<code class="xref py py-meth docutils literal notranslate"><span class="pre">add()</span></code> builds it (read-only).</p>
+<p>A coupled side of a region: its patch, the field it couples, its models and points.</p>
+<p><code class="docutils literal notranslate"><span class="pre">sends</span></code> and <code class="docutils literal notranslate"><span class="pre">receives</span></code> are pydantic models of <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> fields
+(<code class="docutils literal notranslate"><span class="pre">TypeError</span></code> otherwise); <code class="docutils literal notranslate"><span class="pre">receive</span></code> gets data already mapped onto its
+<code class="docutils literal notranslate"><span class="pre">coordinates</span></code> (one row per point, or <code class="docutils literal notranslate"><span class="pre">None</span></code>). Built by
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">add()</span></code> for a <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> instance.</p>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ExchangeSide</span><span class="p">(</span><span class="s2">"solid"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">,</span> <span class="n">sends</span><span class="o">=</span><span class="n">WallTemperature</span><span class="p">,</span> <span class="n">receives</span><span class="o">=</span><span class="n">WallHeatFlux</span><span class="p">,</span>
              <span class="n">send</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">,</span> <span class="n">receive</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">receive</span><span class="p">,</span> <span class="n">coordinates</span><span class="o">=</span><span class="n">points</span><span class="p">)</span>
@@ -738,13 +699,6 @@ or a pydantic model of such fields, sent as its <code class="docutils literal no
 <dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide.label">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">label</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide.label" title="Link to this definition">¶</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;patch&gt;</span></code>.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.data.ExchangeSide.mapped">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">mapped</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.data.ExchangeSide.mapped" title="Link to this definition">¶</a></dt>
-<dd><p>The fields of what the side receives that the mapping maps (its <code class="xref py py-data docutils literal notranslate"><span class="pre">Array</span></code> fields).</p>
-<p>The others are one value for the interface, handed over as they are.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -813,11 +767,9 @@ or a pydantic model of such fields, sent as its <code class="docutils literal no
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.framework.coupling.data</a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.data.Exchange"><code class="docutils literal notranslate"><span class="pre">Exchange</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide"><code class="docutils literal notranslate"><span class="pre">ExchangeSide</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.end"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.end</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.label"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.label</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.mapped"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.mapped</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.data.ExchangeSide.points"><code class="docutils literal notranslate"><span class="pre">ExchangeSide.points</span></code></a></li>
 </ul>
 </li>

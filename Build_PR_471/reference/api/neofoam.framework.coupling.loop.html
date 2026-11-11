@@ -674,78 +674,27 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.coupling.loop">
 <span id="neofoam-framework-coupling-loop"></span><h1>neofoam.framework.coupling.loop<a class="headerlink" href="#module-neofoam.framework.coupling.loop" title="Link to this heading">¶</a></h1>
-<p>The coupling of a region: its coupling op.</p>
-<p>Vocabulary:</p>
-<ul class="simple">
-<li><p>a <strong>coupled side</strong> (<a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExchangeSide</span></code></a>) is
-what a boundary condition declares on its patch: what it sends and receives
-(one pydantic model each), and its points; an <strong>exchange</strong>
-(<a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.Exchange" title="neofoam.framework.coupling.data.Exchange"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exchange</span></code></a>) joins it with the side of
-another region (its partner), its mapping maps the partner’s data onto the
-side’s points (<a class="reference internal" href="neofoam.framework.coupling.data.html#module-neofoam.framework.coupling.data" title="neofoam.framework.coupling.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">data</span></code></a>);</p></li>
-<li><p>a <strong>coupling node</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingNode</span></code>) is a
-named coupling loop over some exchanges; a region’s <strong>coupling op</strong>
-(<a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp" title="neofoam.framework.coupling.loop.CouplingOp"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingOp</span></code></a>, <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code>) is the node’s loop in the region:
-it wraps where the node’s placement says (by default the whole body of the
-top scope, or of the node before), and the resolver nests the operations that
-solve them inside it. At the start of each pass its loop test hands every side
-of the region in the node what its partner sent, mapped onto the side’s points;</p></li>
-<li><p>the <strong>leader</strong> of a node, the last region in stepping order of the regions
-the node’s exchanges connect, owns the node’s <strong>controller</strong>
-(<a class="reference internal" href="neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController" title="neofoam.framework.coupling.controller.CouplingController"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingController</span></code></a>), which
-decides after each pass whether the node’s data converged and which pass is
-the node’s <strong>final</strong> one. Every region runs the same passes, the final one
-marked final on its loop entry (<code class="docutils literal notranslate"><span class="pre">LoopEntry.final</span></code>), and leaves the node’s
-loop after it;</p></li>
-<li><p>all data between regions goes through the region’s
-<a class="reference internal" href="neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport" title="neofoam.framework.coupling.transport.Transport"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transport</span></code></a>: no region reads
-another region’s objects.</p></li>
-</ul>
-<p>A boundary condition declares its side with <a class="reference internal" href="neofoam.framework.coupling.coupled.html#neofoam.framework.coupling.coupled" title="neofoam.framework.coupling.coupled"><code class="xref py py-func docutils literal notranslate"><span class="pre">coupled()</span></code></a>,
-which adds itself to its region’s coupling model
-(<code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code>); the model builds the coupling op.</p>
+<p>A region’s coupling op: the loop of one coupling node in the region’s graph.</p>
+<p>Each region runs the same passes of a node: at the start of each pass its op’s
+loop test hands every side what its partner sent, mapped onto the side’s
+points, as the node’s leader decided (fresh from this pass or carried). All
+data between regions goes through the transport; no region reads another’s
+objects.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.loop.</span></span><span class="sig-name descname"><span class="pre">CouplingOp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling" title="neofoam.framework.coupling.region.RegionCoupling"><span class="pre">RegionCoupling</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.CouplingNode" title="neofoam.framework.coupling.region.CouplingNode"><span class="pre">CouplingNode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sides</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><span class="pre">ExchangeSide</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#CouplingOp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">IterativeOp</span></code></p>
-<p>A region’s coupling node: a loop whose test exchanges the node’s sides’ data, per pass.</p>
-<p>Built from what the region knows of the case’s coupling (<code class="docutils literal notranslate"><span class="pre">coupling</span></code>: its
-exchanges, the group’s regions, its transport), the <code class="docutils literal notranslate"><span class="pre">node</span></code> (its exchanges)
-and the region’s coupled <code class="docutils literal notranslate"><span class="pre">sides</span></code> of the node (the region’s
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code> builds it, each side on an
-exchange of the node); raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when a patch has two sides, or
-an exchange of the node in the region none. The resolver places it
-as the node’s placement for the region says (<code class="docutils literal notranslate"><span class="pre">metadata.wraps</span></code>). Its label
-is <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code>; its messages to other regions are tagged by node
-(<code class="docutils literal notranslate"><span class="pre">&lt;node&gt;/sides</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;node&gt;/pass</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;node&gt;/decision</span></code>) or by exchange
-(<code class="docutils literal notranslate"><span class="pre">side:&lt;exchange&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">data:&lt;exchange&gt;</span></code>).</p>
-<p>A node runs equally often in all its regions, so it sits in the same loops
-in each: the first test tells the leader the names of the loops enclosing
-the op (<code class="docutils literal notranslate"><span class="pre">Context.loops</span></code>, a coupling op by its node’s name), and every
-test their passes; the leader raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when they differ.</p>
-<p>Its loop test runs before each pass. The first test ever exchanges the
-sides’ models and points with the partner regions and checks each exchange.
-Each test then sends what every side sends now to the node’s leader, and to
-the partner of every side the leader’s decision before named (the partner
-receives it fresh, in the pass of that decision); the leader decides for the
-node and tells every region to go on or stop, and whether the pass is the
-node’s final one, which the test marks on the loop’s entry
-(<code class="docutils literal notranslate"><span class="pre">Context.mark_final</span></code>: an operation marked <code class="docutils literal notranslate"><span class="pre">final</span></code> runs in it). On
-another pass every side gets what the leader decided: what its partner sends
-at its next test (fresh), or what the leader carried, mapped onto its points
-with the exchange’s mapping, validated as its <code class="docutils literal notranslate"><span class="pre">receives</span></code> model, reported to
-the execution observer (<code class="docutils literal notranslate"><span class="pre">coupling_exchanged</span></code>) and handed to its
-<code class="docutils literal notranslate"><span class="pre">receive</span></code>. Not thread safe.</p>
+<p>A region’s coupling node: a loop whose test exchanges the node’s sides’ data.</p>
+<p>Labelled <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code>; placed by the node’s placement for the region.
+The first test exchanges the sides’ models and points with the partners and
+checks them; every test sends the leader what the sides send, gets its
+decision, marks the final pass and hands each side its mapped data.
+Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when a patch has two sides, an exchange none, or the
+regions’ ops sit in different loops or times. Not thread safe.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.controller">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">controller</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController" title="neofoam.framework.coupling.controller.CouplingController"><span class="pre">CouplingController</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.controller" title="Link to this definition">¶</a></dt>
-<dd><p>The leader’s controller, built at its first loop test; <code class="docutils literal notranslate"><span class="pre">None</span></code> elsewhere.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.exchange_of">
-<span class="sig-name descname"><span class="pre">exchange_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">side</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><span class="pre">ExchangeSide</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.Exchange" title="neofoam.framework.coupling.data.Exchange"><span class="pre">Exchange</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#CouplingOp.exchange_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.exchange_of" title="Link to this definition">¶</a></dt>
-<dd><p>The exchange <code class="docutils literal notranslate"><span class="pre">side</span></code> belongs to.</p>
+<dd><p>The leader’s controller, built at its first loop test; <code class="docutils literal notranslate"><span class="pre">None</span></code> in other regions.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -757,37 +706,19 @@ the execution observer (<code class="docutils literal notranslate"><span class="
 <dl class="py property">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.is_leader">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">is_leader</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.is_leader" title="Link to this definition">¶</a></dt>
-<dd><p>Whether this coupling op decides for its node (its region steps last of the node’s).</p>
+<dd><p>Whether this op decides for its node: its region steps last of the node’s.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.label">
-<span class="sig-name descname"><span class="pre">label</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.label" title="Link to this definition">¶</a></dt>
-<dd><p>The name of the operation: <code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;node&gt;</span></code>.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.leader">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">leader</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.leader" title="Link to this definition">¶</a></dt>
-<dd><p>The region that decides for the node: the last of its regions in stepping order.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.node">
-<span class="sig-name descname"><span class="pre">node</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.node" title="Link to this definition">¶</a></dt>
-<dd><p>The coupling node of the op.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.link_of">
+<span class="sig-name descname"><span class="pre">link_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">side</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><span class="pre">ExchangeSide</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.Link" title="neofoam.framework.coupling.region.Link"><span class="pre">Link</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#CouplingOp.link_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.link_of" title="Link to this definition">¶</a></dt>
+<dd><p>The exchange <code class="docutils literal notranslate"><span class="pre">side</span></code> belongs to.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.partner">
 <span class="sig-name descname"><span class="pre">partner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">side</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><span class="pre">ExchangeSide</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/loop.html#CouplingOp.partner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.partner" title="Link to this definition">¶</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">&lt;region&gt;.&lt;patch&gt;</span></code> of the side <code class="docutils literal notranslate"><span class="pre">side</span></code> receives from.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.loop.CouplingOp.region">
-<span class="sig-name descname"><span class="pre">region</span></span><a class="headerlink" href="#neofoam.framework.coupling.loop.CouplingOp.region" title="Link to this definition">¶</a></dt>
-<dd><p>The region of the op.</p>
 </dd></dl>
 
 <dl class="py property">
@@ -858,14 +789,10 @@ the execution observer (<code class="docutils literal notranslate"><span class="
 <li><a class="reference internal" href="#">neofoam.framework.coupling.loop</a><ul>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp"><code class="docutils literal notranslate"><span class="pre">CouplingOp</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.controller"><code class="docutils literal notranslate"><span class="pre">CouplingOp.controller</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.exchange_of"><code class="docutils literal notranslate"><span class="pre">CouplingOp.exchange_of()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.group"><code class="docutils literal notranslate"><span class="pre">CouplingOp.group</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.is_leader"><code class="docutils literal notranslate"><span class="pre">CouplingOp.is_leader</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.label"><code class="docutils literal notranslate"><span class="pre">CouplingOp.label</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.leader"><code class="docutils literal notranslate"><span class="pre">CouplingOp.leader</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.node"><code class="docutils literal notranslate"><span class="pre">CouplingOp.node</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.link_of"><code class="docutils literal notranslate"><span class="pre">CouplingOp.link_of()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.partner"><code class="docutils literal notranslate"><span class="pre">CouplingOp.partner()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.region"><code class="docutils literal notranslate"><span class="pre">CouplingOp.region</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.loop.CouplingOp.sides"><code class="docutils literal notranslate"><span class="pre">CouplingOp.sides</span></code></a></li>
 </ul>
 </li>
