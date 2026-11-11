@@ -3,10 +3,9 @@
 
 """``system/regionCoupling.yaml`` read into :class:`RegionCouplingConfig`.
 
-``cases/coupled_slabs`` sets every entry, ``cases/region_coupling/minimal`` only
-the required ones; every other ``cases/region_coupling/<name>`` breaks one rule.
-``cases/couplings/chain`` couples a - b - c in two nodes; a broken chain is that
-file read with yaml, one entry changed.
+``cases/region_coupling/minimal`` sets only the required entries, every other
+``cases/region_coupling/<name>`` breaks one rule; a broken chain is
+``cases/couplings/chain`` with one entry changed.
 """
 
 import copy

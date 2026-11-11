@@ -4,14 +4,7 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""``probe``: a test-only region solver of one number, ``field = offset + sum(gain * received)``.
-
-``<region>/constant/probe.yaml`` sets ``field`` (``x`` or ``y``), ``offset``,
-``gains`` keyed ``<patch>.<name>`` (``to_b.y: 0.5`` adds half the ``y`` arriving
-over patch ``to_b``), the ``deltaT`` the region asks for, and ``coordinates:
-false`` for patches without points. Every patch of ``gains`` is ``@coupled``.
-Each solve appends ``(time index, value)`` to ``ctx.models["history"]``.
-"""
+"""``probe``: a test-only solver of one number, ``offset + sum(gain * received)``."""
 
 from pathlib import Path
 from typing import Any, Literal, Optional, Union
@@ -45,6 +38,8 @@ class _ControlDictConfig(TimeControlConfig):
 
 @IOStrategy(YAML("constant/probe.yaml"))
 class ProbeConfig(BaseConfig):
+    """``gains`` keyed ``<patch>.<name>``; each such patch is ``@coupled``."""
+
     field: Literal["x", "y"] = "x"
     offset: float = 0.0
     gains: dict[str, float] = {}
@@ -168,7 +163,6 @@ def _initialize(self: Any) -> Context:
 
 @probe.execution_graph_step
 def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
-    """The time loop: set the time step, advance the time, solve the field."""
     loop_ops = Operations(ctx.models["solutionLoop"].operations)
     builder = StepBuilder()
     time_loop = Operation(

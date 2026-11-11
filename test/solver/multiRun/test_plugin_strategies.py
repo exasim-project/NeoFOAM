@@ -3,11 +3,10 @@
 
 """``system/regionCoupling.yaml`` names the mapping and acceleration of a coupling plugin.
 
-The plugin (``fake_plugin.py``) registers with the families as it is imported;
-the fixture imports it and unregisters it after the test, so no other test sees
-its types. ``cases/plugin/<name>`` is laid over ``cases/coupled_slabs``; the
-mapping is the identity (both patches lie at x = 1), so the run reaches the
-steady profile of ``test_coupled_slabs`` within its 1e-8 K.
+The fixture imports ``fake_plugin.py``, which registers on import, and unregisters it
+after the test, so no other test sees its types. The mapping is the identity (both
+patches lie at x = 1), so the run reaches the profile of ``test_coupled_slabs`` within
+its 1e-8 K.
 """
 
 import importlib

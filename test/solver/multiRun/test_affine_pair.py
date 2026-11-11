@@ -3,12 +3,10 @@
 
 """Two probe regions coupled to the fixed point of ``a = 1 + b``, ``b = 0.5 a``: (2, 1).
 
-``cases/affine_pair`` couples them serial around each ``solve_x``: b receives
-a's value of the same pass, so the error halves every pass (``expected.yaml``).
-The relative change of x drops below the limit 1e-6 after pass 20; pass 21 is
-the final one. The second time step starts converged: one pass, then the final
-one. Variants are laid over the case from ``cases/affine_pair_variants``.
-The values are dyadic fractions, exact in floating point, hence atol 1e-15.
+Serial around each ``solve_x``: b receives a's value of the same pass, so the error
+halves every pass and drops below the relative limit 1e-6 after pass 20; pass 21 is the
+final one, the second time step starts converged. The values are dyadic fractions,
+exact in floating point, hence atol 1e-15.
 """
 
 from pathlib import Path
