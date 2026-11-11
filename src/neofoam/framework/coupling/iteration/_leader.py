@@ -143,21 +143,22 @@ class Leader:
         self._name = node.name
         self._group = tuple(group)
         parallel = node.parallel
-        self._streams = {stream.id: stream for stream in streams}
+        rank = {region: index for index, region in enumerate(group)}
+        # the order the loop op lists the streams in: by region, in stepping order
+        ordered = list(streams)
+        self._order: list[StreamId] = [stream.id for stream in ordered]
+        self._streams = {stream.id: stream for stream in ordered}
         self._convergence = tuple(node.convergence)
         self._max_iterations = node.max_iterations
         self._acceleration = dict(node.acceleration)
-        rank = {region: index for index, region in enumerate(group)}
         # whether a stream's receiver takes what it sent in this pass
         self._fresh = {
-            stream_id: not parallel and rank[stream.region] < rank[stream.partner[0]]
-            for stream_id, stream in self._streams.items()
+            stream.id: not parallel and rank[stream.region] < rank[stream.partner[0]]
+            for stream in ordered
         }
         self._outcome: Optional[CouplingOutcome] = None
         # nothing counts as converged before a pass measured it
-        self._unmeasured = {
-            name: math.inf for stream in self._streams.values() for name in stream.names
-        }
+        self._unmeasured = {name: math.inf for stream in ordered for name in stream.names}
         self._check_convergence()
         self._residuals = dict(self._unmeasured)
         self._final = False
@@ -177,7 +178,7 @@ class Leader:
     @property
     def streams(self) -> dict[StreamId, GroupStream]:
         """What the node's ports send, by stream, in stepping order."""
-        return dict(self._streams)
+        return {stream_id: self._streams[stream_id] for stream_id in self._order}
 
     @property
     def final(self) -> bool:
@@ -248,13 +249,13 @@ class Leader:
         self, current: dict[StreamId, Data], iteration: int
     ) -> Optional[dict[StreamId, Data]]:
         """Each stream's carried data for the next pass; ``None`` at the end."""
-        current = {stream_id: current[stream_id] for stream_id in self._streams}
+        current = {stream_id: current[stream_id] for stream_id in self._order}
         if iteration == 0:
             self._carried = current
             return self._start_pass(iteration + 1, final=self._max_iterations <= 1)
         changes = {
             stream_id: SideChange(self._carried[stream_id], current[stream_id])
-            for stream_id in self._streams
+            for stream_id in self._order
         }
         self._residuals = {**self._unmeasured, **self._relative_changes(changes, iteration)}
         if self._final:
@@ -317,8 +318,8 @@ class Leader:
         for exchange_name, acceleration in self._acceleration.items():
             carried = [
                 stream_id
-                for stream_id, stream in self._streams.items()
-                if stream.exchange == exchange_name and not self._fresh[stream_id]
+                for stream_id in self._order
+                if self._streams[stream_id].exchange == exchange_name and not self._fresh[stream_id]
             ]
             if not carried:
                 continue
