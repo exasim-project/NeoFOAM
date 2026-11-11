@@ -229,12 +229,10 @@ against 5 faces, serial with Aitken around ``solve_T``.
 An OpenFOAM solver: incompressibleFluid
 ---------------------------------------
 
-``incompressibleFluid`` (OpenFOAM through pybFoam) runs as a region the same
-way: region ``<region>/`` is the case OpenFOAM runs on (``-case <region>``) and
-every file is read from, on the times of the case's ``system/controlDict.yaml``.
-Its init adds the coupling model, then the coupled patches of ``T``. The patch
-is ``fixedValue`` on the OpenFOAM side, so the energy equation takes its values
-as the wall temperature:
+``incompressibleFluid`` runs as a region the same way: OpenFOAM runs on
+``-case <region>``, on the times of the case's ``system/controlDict.yaml``. Its
+``coupledTemperature`` patch is ``fixedValue``, so the energy equation takes
+the received values as the wall temperature:
 
 .. code-block:: c++
 
@@ -245,45 +243,23 @@ as the wall temperature:
         value       uniform 310;
     }
 
-``coupledTemperature`` is the Dirichlet side, as ``heatConductionNeoN``'s. It
-receives the wall temperature and writes it through the zero-copy numpy view of
-the patch: OpenFOAM disables assigning to a ``fixedValue`` patch. It sends the
-heat flux into the fluid, ``q = rho cp (nu/Pr + alphat) dT/dn`` in W/m^2, from
-``fvc.snGrad(T)`` on the patch. ``rho`` and ``cp`` are optional entries of the
-Boussinesq model (``constant/transportProperties``) and required by a coupled
-patch. A Neumann side on OpenFOAM is not there yet: pybFoam binds no setter for
-a ``fixedGradient`` or ``mixed`` patch.
+It sends ``q = rho cp (nu/Pr + alphat) dT/dn`` into the fluid; ``rho`` and
+``cp`` are entries of the Boussinesq model in ``constant/transportProperties``.
+There is no Neumann side on OpenFOAM: pybFoam binds no setter for a
+``fixedGradient`` or ``mixed`` patch. Neither OpenFOAM's ``fixedValue`` nor
+NeoN's ``calculated`` writes the ``coupled`` entry, so both solvers wrap their
+field writer's hook (``keep_coupled_entries`` in ``neofoam.solver.regions``)
+and a written time restarts coupled. A serial node wraps the fluid's whole
+PIMPLE loop (``wraps: {fluid: {operations: [inner_loop]}}``): ``T`` drives the
+flow.
 
-Neither solver writes the ``coupled`` entry back: OpenFOAM's ``fixedValue`` and
-NeoN's ``calculated`` drop it. The field writer of each wraps its hook in a
-``CoupledEntriesWriteHook`` (``neofoam.solver.coupled_entries``), which adds the
-entries back to each written field file, so a run restarts coupled from any
-written time.
-
-A serial node must leave the time step outside its op, and the PIMPLE step is a
-loop: the node wraps it whole (``wraps: {fluid: {operations: [inner_loop]}}``)
-and repeats it in each pass from the same old times. With buoyancy this is
-needed, since ``T`` drives the flow.
-
-``tutorials/flowOverHeatedPlate`` is preCICE's flow over a heated plate: the
-fluid (Boussinesq, with gravity) over a ``heatConductionNeoN`` plate, coupled at
-the plate's top, serial with Aitken, nearest-neighbor between 161 graded and 100
-uniform faces::
-
-    system/controlDict.yaml        regionSolvers: {fluid: incompressibleFluid, solid: heatConductionNeoN}
-    system/regionCoupling.yaml     sides: {fluid: interface, solid: top}; wraps: {fluid: [inner_loop], solid: [solve_T]}
-    fluid/0/T                      interface: fixedValue, coupled coupledTemperature
-    solid/0/T                      top: calculated, coupled coupledHeatFlux
-
-The fluid is the Dirichlet side, the reverse of preCICE's direction. It is the
-less stable one: the plate's thermal effusivity is about a seventh of the fluid
-wall cells', so a plain pass amplifies an error about sevenfold and diverges.
-Aitken converges each window in about 12 passes (15-16 in the first windows).
-At ``t = 1 s`` the fluid's mean wall temperature is 303.751 K (preCICE's
-reference 303.774 K). The heat through the interface differs by 0.2 % between
-the sides: nearest-neighbor mapping does not conserve it
-(``test/solver/incompressibleFluid/test_heated_plate.py``, the first three time
-steps).
+``tutorials/flowOverHeatedPlate`` (after preCICE's flow over a heated plate)
+couples the fluid over a ``heatConductionNeoN`` plate, serial with Aitken. The
+fluid as the Dirichlet side is the less stable direction: without relaxation
+the passes diverge. At ``t = 1 s`` the fluid's mean wall temperature is
+303.751 K (preCICE's reference 303.774 K). Nearest-neighbor mapping between the
+161 fluid and 100 plate faces does not conserve the heat: the sides differ by
+0.2 %.
 
 Regions on MPI processes
 ------------------------
@@ -301,7 +277,8 @@ entry gives its number of processes, a plain name is one::
 The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in ``participants``
 order. Every region runs OpenFOAM with ``-parallel -world <region>`` on
 ``<region>/processor0`` .. ``processor<n-1>`` (``decomposePar -case <region>``),
-and a NeoN region communicates on that world. Rank 0 refuses a case that does
+and a NeoN region communicates on that world (a region that does not use NeoN,
+like incompressibleFluid, skips that check). Rank 0 refuses a case that does
 not fit the run before it starts; an error on any process aborts every process.
 
 Only a region's root (its rank 0) talks to other regions, over an
