@@ -301,6 +301,7 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -694,7 +695,7 @@
 <div class="viewcode-block" id="unchanged">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.unchanged">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">unchanged</span><span class="p">(</span><span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Converged once no side's data changes by more than round-off between two passes."""</span>
+<span class="w">    </span><span class="sd">"""Converged once no stream's data changes by more than round-off between two passes."""</span>
     <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">change</span><span class="o">.</span><span class="n">previous</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span>
@@ -709,8 +710,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingOutcome</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""How the coupling loop of one time step ended.</span>
 
-<span class="sd">    ``passes`` includes the final one; ``residuals`` is each field's relative change</span>
-<span class="sd">    in the last pass (``inf`` where none measured it).</span>
+<span class="sd">    ``passes`` includes the final one; ``residuals`` is each data field's relative</span>
+<span class="sd">    change in the last pass (``inf`` where none measured it).</span>
 <span class="sd">    """</span>
 
     <span class="n">passes</span><span class="p">:</span> <span class="nb">int</span>
@@ -741,7 +742,7 @@
 <div class="viewcode-block" id="relative_changes">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.relative_changes">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Each field's largest ``|current - previous| / |current|`` over its sides and arrays.</span>
+<span class="w">    </span><span class="sd">"""Each data field's largest ``|current - previous| / |current|`` over its streams.</span>
 
 <span class="sd">    The absolute change where the current data is zero; a NaN stays NaN.</span>
 <span class="sd">    """</span>
@@ -752,27 +753,32 @@
             <span class="n">delta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">current</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">previous</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)))</span>
             <span class="n">norm</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">current</span><span class="p">))</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">/</span> <span class="n">norm</span> <span class="k">if</span> <span class="n">norm</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">delta</span>
-            <span class="n">residuals</span><span class="p">[</span><span class="n">change</span><span class="o">.</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="p">))</span>
+            <span class="n">residuals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">residuals</span></div>
 
 
 
-<div class="viewcode-block" id="GroupSide">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.GroupSide">[docs]</a>
+<span class="c1"># (region, port, data key) of what a port sends</span>
+<span class="n">StreamId</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="GroupStream">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.GroupStream">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">GroupSide</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A side of the leader's node, as its region told the leader at startup."""</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GroupStream</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""What a port of the leader's node sends, as its region told the leader at startup."""</span>
 
     <span class="n">region</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">patch</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">names</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="n">partner</span><span class="p">:</span> <span class="n">End</span>
     <span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">End</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The side's end of its exchange."""</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch</span><span class="p">)</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StreamId</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``(region, port, key)``."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
 
 
 
@@ -781,49 +787,56 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingController</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The leader's part of a coupling node: after each pass, whether another runs and which.</span>
 
-<span class="sd">    Final pass as :class:`CouplingNode` describes; warns when ``max_iterations`` ends</span>
-<span class="sd">    the loop unconverged. A side receives fresh data when the node is serial and</span>
-<span class="sd">    its partner steps earlier, else the carried data, relaxed. Not thread safe.</span>
+<span class="sd">    Final pass as :class:`CouplingNode` describes; warns when more than one of</span>
+<span class="sd">    ``max_iterations`` ends the loop unconverged (one is explicit coupling). A port</span>
+<span class="sd">    receives a stream fresh when the node is serial and its sender steps earlier,</span>
+<span class="sd">    else the carried data, relaxed. Not thread safe.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sides</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupSide</span><span class="p">],</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">streams</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">GroupStream</span><span class="p">],</span>
+        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">node</span><span class="p">:</span> <span class="n">CouplingNode</span><span class="p">,</span>
+        <span class="n">group</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parallel</span> <span class="o">=</span> <span class="n">parallel</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parallel</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">end</span><span class="p">:</span> <span class="n">side</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="n">sides</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_streams</span> <span class="o">=</span> <span class="p">{</span><span class="n">stream</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">stream</span> <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="n">streams</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">convergence</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">max_iterations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">acceleration</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_convergence</span><span class="p">()</span>
-        <span class="n">rank</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">rank</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rank</span><span class="p">))</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="p">{</span><span class="n">region</span><span class="p">:</span> <span class="n">index</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">region</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">group</span><span class="p">)}</span>
+        <span class="c1"># whether a stream's receiver takes what it sent in this pass</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">end</span><span class="p">:</span> <span class="ow">not</span> <span class="n">parallel</span> <span class="ow">and</span> <span class="n">rank</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">&lt;</span> <span class="n">rank</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">region</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="n">stream_id</span><span class="p">:</span> <span class="ow">not</span> <span class="n">parallel</span> <span class="ow">and</span> <span class="n">rank</span><span class="p">[</span><span class="n">stream</span><span class="o">.</span><span class="n">region</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">rank</span><span class="p">[</span><span class="n">stream</span><span class="o">.</span><span class="n">partner</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">stream_id</span><span class="p">,</span> <span class="n">stream</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streams</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CouplingOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># nothing counts as converged before a pass measured it</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span> <span class="k">for</span> <span class="n">stream</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streams</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">stream</span><span class="o">.</span><span class="n">names</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_convergence</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_converged_before_final</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">Data</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_convergence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span><span class="n">side</span><span class="o">.</span><span class="n">field</span> <span class="k">for</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">measure</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">data</span>
-            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">data</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: convergence </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">measure</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">, "</span>
-                    <span class="sa">f</span><span class="s2">"which no side of the node sends (its sides couple "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+                    <span class="sa">f</span><span class="s2">"which no port of the node sends (they send </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">sides</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">GroupSide</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The node's sides by end, in stepping order."""</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">streams</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">GroupStream</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""What the node's ports send, by stream, in stepping order."""</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_streams</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -842,22 +855,24 @@
 
 <div class="viewcode-block" id="CouplingController.fresh">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController.fresh">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="n">End</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Whether the side at ``end`` receives what its partner sent in this pass."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">[</span><span class="n">end</span><span class="p">]</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fresh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">:</span> <span class="n">StreamId</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Whether the receiver of ``stream`` takes what it sent in this pass."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">[</span><span class="n">stream</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="CouplingController.decide">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.controller.html#neofoam.framework.coupling.controller.CouplingController.decide">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">decide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">"""Each side's carried data for the next pass, by end; ``None`` at the end."""</span>
-        <span class="n">current</span> <span class="o">=</span> <span class="p">{</span><span class="n">end</span><span class="p">:</span> <span class="n">current</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="p">}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decide</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">Data</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">Data</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Each stream's carried data for the next pass; ``None`` at the end."""</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="p">{</span><span class="n">stream_id</span><span class="p">:</span> <span class="n">current</span><span class="p">[</span><span class="n">stream_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">stream_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streams</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span> <span class="o">=</span> <span class="n">current</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">changes</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">end</span><span class="p">:</span> <span class="n">SideChange</span><span class="p">(</span><span class="n">side</span><span class="o">.</span><span class="n">field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">],</span> <span class="n">current</span><span class="p">[</span><span class="n">end</span><span class="p">])</span>
-            <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="n">stream_id</span><span class="p">:</span> <span class="n">SideChange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">stream_id</span><span class="p">],</span> <span class="n">current</span><span class="p">[</span><span class="n">stream_id</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">stream_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streams</span>
         <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_relative_changes</span><span class="p">(</span><span class="n">changes</span><span class="p">,</span> <span class="n">iteration</span><span class="p">)}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final</span><span class="p">:</span>
@@ -871,20 +886,22 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_pass</span><span class="p">(</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_relative_changes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">SideChange</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_relative_changes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">SideChange</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">""":func:`relative_changes`; raises ``FloatingPointError`` for a non-finite one."""</span>
         <span class="n">residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">patch</span><span class="p">),</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">_key</span><span class="p">),</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">relative_changes</span><span class="p">([</span><span class="n">change</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">FloatingPointError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: the relative change of the </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> of region "</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2"> patch </span><span class="si">{</span><span class="n">patch</span><span class="si">}</span><span class="s2"> is not finite in pass </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="sa">f</span><span class="s2">"coupling </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">: the relative change of the </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> of "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2"> is not finite in pass </span><span class="si">{</span><span class="n">iteration</span><span class="si">}</span><span class="s2">"</span>
                     <span class="p">)</span>
                 <span class="n">residuals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="n">value</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">residuals</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_converged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_converged</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">changes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">SideChange</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Whether every measure of the convergence holds (none: :func:`unchanged`)."""</span>
         <span class="n">listed</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">changes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convergence</span><span class="p">:</span>
@@ -899,7 +916,7 @@
         <span class="n">observer</span> <span class="o">=</span> <span class="n">execution_observer</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">observer</span><span class="o">.</span><span class="n">coupling_finished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outcome</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">converged</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_iterations</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">residuals</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">outcome</span><span class="o">.</span><span class="n">residuals</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">)</span>
@@ -910,20 +927,20 @@
                 <span class="n">stacklevel</span><span class="o">=</span><span class="n">_stacklevel</span><span class="p">(),</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_start_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">End</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Start pass ``number`` (from 1): what each side carries, relaxed."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_start_pass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">StreamId</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Start pass ``number`` (from 1): what each stream carries, relaxed."""</span>
         <span class="k">if</span> <span class="n">number</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unmeasured</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final</span> <span class="o">=</span> <span class="n">final</span>
-        <span class="k">for</span> <span class="n">exchange</span><span class="p">,</span> <span class="n">acceleration</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">exchange_name</span><span class="p">,</span> <span class="n">acceleration</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acceleration</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">carried</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">end</span>
-                <span class="k">for</span> <span class="n">end</span><span class="p">,</span> <span class="n">side</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sides</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">exchange</span> <span class="o">==</span> <span class="n">exchange</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">[</span><span class="n">side</span><span class="o">.</span><span class="n">partner</span><span class="p">]</span>
+                <span class="n">stream_id</span>
+                <span class="k">for</span> <span class="n">stream_id</span><span class="p">,</span> <span class="n">stream</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_streams</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">stream</span><span class="o">.</span><span class="n">exchange</span> <span class="o">==</span> <span class="n">exchange_name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fresh</span><span class="p">[</span><span class="n">stream_id</span><span class="p">]</span>
             <span class="p">]</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">carried</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">relaxed</span> <span class="o">=</span> <span class="n">acceleration</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="k">for</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">carried</span><span class="p">],</span> <span class="n">number</span><span class="p">)</span>
+            <span class="n">relaxed</span> <span class="o">=</span> <span class="n">acceleration</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">[</span><span class="n">stream_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">stream_id</span> <span class="ow">in</span> <span class="n">carried</span><span class="p">],</span> <span class="n">number</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">carried</span><span class="p">,</span> <span class="n">relaxed</span><span class="p">))</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_carried</span><span class="p">)</span></div>
 

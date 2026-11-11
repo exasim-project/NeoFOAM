@@ -302,6 +302,7 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5 current current-page"><a class="current reference internal" href="#">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -674,23 +675,24 @@
         <article role="main" id="furo-main-content">
           <section id="module-neofoam.framework.coupling.model">
 <span id="neofoam-framework-coupling-model"></span><h1>neofoam.framework.coupling.model<a class="headerlink" href="#module-neofoam.framework.coupling.model" title="Link to this heading">¶</a></h1>
-<p>A region’s coupling model, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>: a <a class="reference internal" href="#neofoam.framework.coupling.model.Coupling" title="neofoam.framework.coupling.model.Coupling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code></a>.</p>
+<p>A region’s coupling model <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;coupling&quot;]</span></code>, a <a class="reference internal" href="#neofoam.framework.coupling.model.Coupling" title="neofoam.framework.coupling.model.Coupling"><code class="xref py py-class docutils literal notranslate"><span class="pre">Coupling</span></code></a>; <a class="reference internal" href="#neofoam.framework.coupling.model.coupling" title="neofoam.framework.coupling.model.coupling"><code class="xref py py-func docutils literal notranslate"><span class="pre">coupling()</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.model.</span></span><span class="sig-name descname"><span class="pre">Coupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling" title="neofoam.framework.coupling.region.RegionCoupling"><span class="pre">RegionCoupling</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.model.</span></span><span class="sig-name descname"><span class="pre">Coupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.region.html#neofoam.framework.coupling.region.RegionCoupling" title="neofoam.framework.coupling.region.RegionCoupling"><span class="pre">RegionCoupling</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.location.html#neofoam.framework.coupling.location.MeshGeometry" title="neofoam.framework.coupling.location.MeshGeometry"><span class="pre">MeshGeometry</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The coupling of one region: its coupled sides and the operations they need.</p>
-<p>A solver that supports coupling adds it in its init, before its boundary
-conditions, and each <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> boundary condition adds itself:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"coupling"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Coupling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coupling</span><span class="p">)</span>
+<p>The coupling of one region: its coupled ports and the operations they need.</p>
+<p>A solver that supports coupling adds it in its init, with its mesh geometry,
+before it binds its coupled instances to their locations:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">"coupling"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Coupling</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coupling</span><span class="p">,</span> <span class="n">FoamGeometry</span><span class="p">(</span><span class="n">mesh</span><span class="p">))</span>
 <span class="o">...</span>
-<span class="n">Coupling</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<span class="n">coupling</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Patch</span><span class="p">(</span><span class="s2">"top"</span><span class="p">),</span> <span class="n">bc</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.add">
-<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.add" title="Link to this definition">¶</a></dt>
-<dd><p>Add the side of the <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> <code class="docutils literal notranslate"><span class="pre">instance</span></code>, before the graph is built.</p>
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.coupling.location.html#neofoam.framework.coupling.location.Patch" title="neofoam.framework.coupling.location.Patch"><span class="pre">Patch</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="neofoam.framework.coupling.location.html#neofoam.framework.coupling.location.Cells" title="neofoam.framework.coupling.location.Cells"><span class="pre">Cells</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="neofoam.framework.coupling.location.html#neofoam.framework.coupling.location.Global" title="neofoam.framework.coupling.location.Global"><span class="pre">Global</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.add" title="Link to this definition">¶</a></dt>
+<dd><p>Bind the <code class="docutils literal notranslate"><span class="pre">&#64;coupled</span></code> <code class="docutils literal notranslate"><span class="pre">instance</span></code> to <code class="docutils literal notranslate"><span class="pre">location</span></code>, before the graph is built.</p>
+<p>Instances on one location merge into its port.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -706,21 +708,15 @@ conditions, and each <code class="docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.of">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling" title="neofoam.framework.coupling.model.Coupling"><span class="pre">Coupling</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling.of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.of" title="Link to this definition">¶</a></dt>
-<dd><p>The coupling model of the region <code class="docutils literal notranslate"><span class="pre">ctx</span></code>; <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when its solver added none.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.operations">
 <span class="sig-name descname"><span class="pre">operations</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="neofoam.framework.operations.html#neofoam.framework.operations.Operations" title="neofoam.framework.operations.Operations"><span class="pre">Operations</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#Coupling.operations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.operations" title="Link to this definition">¶</a></dt>
 <dd><p>The region’s coupling ops, one per node, outer to inner; built once.</p>
 </dd></dl>
 
 <dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.sides">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sides</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.ExchangeSide" title="neofoam.framework.coupling.data.ExchangeSide"><span class="pre">ExchangeSide</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.sides" title="Link to this definition">¶</a></dt>
-<dd><p>The region’s coupled sides, in the order they were added.</p>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.model.Coupling.ports">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ports</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="neofoam.framework.coupling.data.html#neofoam.framework.coupling.data.CoupledPort" title="neofoam.framework.coupling.data.CoupledPort"><span class="pre">CoupledPort</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.coupling.model.Coupling.ports" title="Link to this definition">¶</a></dt>
+<dd><p>The region’s coupled ports, in the order they were added.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -731,6 +727,16 @@ conditions, and each <code class="docutils literal notranslate"><span class="pre
 uncoupled or steady region.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.model.coupling">
+<span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.model.</span></span><span class="sig-name descname"><span class="pre">coupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><span class="pre">Context</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling" title="neofoam.framework.coupling.model.Coupling"><span class="pre">Coupling</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/model.html#coupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.model.coupling" title="Link to this definition">¶</a></dt>
+<dd><p>The coupling model of the region <code class="docutils literal notranslate"><span class="pre">ctx</span></code>; <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when its solver added none.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">coupling</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Patch</span><span class="p">(</span><span class="s2">"top"</span><span class="p">),</span> <span class="n">bc</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -795,12 +801,12 @@ uncoupled or steady region.</p>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.add"><code class="docutils literal notranslate"><span class="pre">Coupling.add()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.check_graph"><code class="docutils literal notranslate"><span class="pre">Coupling.check_graph()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.graph_operations"><code class="docutils literal notranslate"><span class="pre">Coupling.graph_operations()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.of"><code class="docutils literal notranslate"><span class="pre">Coupling.of()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.operations"><code class="docutils literal notranslate"><span class="pre">Coupling.operations()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.sides"><code class="docutils literal notranslate"><span class="pre">Coupling.sides</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.ports"><code class="docutils literal notranslate"><span class="pre">Coupling.ports</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.coupling.model.Coupling.time_step"><code class="docutils literal notranslate"><span class="pre">Coupling.time_step()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.model.coupling"><code class="docutils literal notranslate"><span class="pre">coupling()</span></code></a></li>
 </ul>
 </li>
 </ul>
