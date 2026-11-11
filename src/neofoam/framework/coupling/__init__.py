@@ -28,7 +28,7 @@ from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .model import Participant, coupling
 from .run import run_participants
 from .strategies.acceleration import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
-from .strategies.convergence import CouplingConvergence, RelativeConvergence, SideChange
+from .strategies.convergence import CouplingConvergence, RelativeConvergence, StreamChange
 from .strategies.mapping import (
     AreaIntegralMapping,
     AreaMeanMapping,
@@ -77,7 +77,7 @@ __all__ = [
     "ParticipantExchanges",
     "RelativeConvergence",
     "Scalar",
-    "SideChange",
+    "StreamChange",
     "UniformMapping",
     "ValueData",
     "VolumeIntegralMapping",

@@ -25,7 +25,7 @@ from neofoam.framework.coupling import (
     Participant,
     ParticipantExchanges,
     Patch,
-    SideChange,
+    StreamChange,
     coupled,
     coupling,
 )
@@ -86,7 +86,7 @@ class RecordingCommChannel(InProcessCommChannel):
 
 
 class _Never(CouplingConvergence):
-    def __call__(self, changes: list[SideChange]) -> bool:
+    def __call__(self, changes: list[StreamChange]) -> bool:
         return False
 
 

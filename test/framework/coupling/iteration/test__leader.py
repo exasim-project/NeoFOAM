@@ -18,7 +18,7 @@ from neofoam.framework.coupling import (
     CouplingLoop,
     CouplingNotConvergedWarning,
     RelativeConvergence,
-    SideChange,
+    StreamChange,
 )
 from neofoam.framework.coupling.iteration._leader import (
     CouplingOutcome,
@@ -30,10 +30,10 @@ from neofoam.framework.coupling.iteration._leader import (
 
 def test_relative_changes_is_the_largest_relative_change_per_data_field() -> None:
     changes = [
-        SideChange({"T": np.array([1.0, 0.0])}, {"T": np.array([2.0, 0.0])}),
-        SideChange({"T": np.array([1.0])}, {"T": np.array([1.0])}),
-        SideChange({"q": np.array([0.0])}, {"q": np.array([0.0])}),
-        SideChange({"U": np.array([1.0])}, {"U": np.array([0.0])}),
+        StreamChange({"T": np.array([1.0, 0.0])}, {"T": np.array([2.0, 0.0])}),
+        StreamChange({"T": np.array([1.0])}, {"T": np.array([1.0])}),
+        StreamChange({"q": np.array([0.0])}, {"q": np.array([0.0])}),
+        StreamChange({"U": np.array([1.0])}, {"U": np.array([0.0])}),
     ]
 
     assert relative_changes(changes) == {"T": 0.5, "q": 0.0, "U": 1.0}
@@ -80,8 +80,8 @@ def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None
 
 def test_relative_changes_keep_a_nan() -> None:
     changes = [
-        SideChange({"x": np.ones(1)}, {"x": np.full(1, 2.0)}),
-        SideChange({"x": np.ones(1)}, {"x": np.full(1, np.nan)}),
+        StreamChange({"x": np.ones(1)}, {"x": np.full(1, 2.0)}),
+        StreamChange({"x": np.ones(1)}, {"x": np.full(1, np.nan)}),
     ]
 
     assert math.isnan(relative_changes(changes)["x"])
@@ -125,7 +125,7 @@ def test_a_loop_converges_once_every_measure_of_its_convergence_holds() -> None:
     class _Verdict(CouplingConvergence):
         name: str
 
-        def __call__(self, changes: list[SideChange]) -> bool:
+        def __call__(self, changes: list[StreamChange]) -> bool:
             return verdicts[self.name]
 
     loop = CouplingLoop(

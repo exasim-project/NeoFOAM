@@ -15,7 +15,7 @@ from neofoam.core.plugin_system import PluginSystem
 from ..comm.channel import Data
 
 
-class SideChange(NamedTuple):
+class StreamChange(NamedTuple):
     """What one stream sent in the previous and in the current pass, for a convergence check."""
 
     previous: Data
@@ -32,7 +32,7 @@ class CouplingConvergence(BaseModel):
     model_config = ConfigDict(extra="forbid")
     data: Optional[str] = None
 
-    def __call__(self, changes: list[SideChange]) -> bool:
+    def __call__(self, changes: list[StreamChange]) -> bool:
         """Whether the data converged, from ``changes``."""
         raise NotImplementedError
 
@@ -50,7 +50,7 @@ class RelativeConvergence(CouplingConvergence):
     data: str
     limit: float = Field(gt=0)
 
-    def __call__(self, changes: list[SideChange]) -> bool:
+    def __call__(self, changes: list[StreamChange]) -> bool:
         return all(
             np.linalg.norm(np.asarray(change.current[name]) - np.asarray(change.previous[name]))
             <= self.limit * np.linalg.norm(change.current[name])
