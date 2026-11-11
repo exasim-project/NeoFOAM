@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
 from neofoam.framework.operations import IterativeOp, Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
+from .comm_channel import Tag
 from .data import ExchangeSide
 from .loop import CouplingOp
-from .transport import Tag
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -188,17 +188,17 @@ class _TimeStep:
 
     def __call__(self, ctx: Context) -> None:
         coupling = self._coupling
-        region, leader, transport = coupling.region, coupling.leader, coupling.transport
+        region, leader, comm_channel = coupling.region, coupling.leader, coupling.comm_channel
         asked = ctx.time.delta_t
         if region != leader:
-            transport.send(region, leader, Tag.TIME_DT, asked)
-            agreed = transport.receive(leader, region, Tag.TIME_DT)
+            comm_channel.send(region, leader, Tag.TIME_DT, asked)
+            agreed = comm_channel.receive(leader, region, Tag.TIME_DT)
         else:
             agreed = min(
-                asked if other == region else transport.receive(other, region, Tag.TIME_DT)
+                asked if other == region else comm_channel.receive(other, region, Tag.TIME_DT)
                 for other in coupling.group
             )
             for other in coupling.group:
                 if other != region:
-                    transport.send(region, other, Tag.TIME_DT, agreed)
+                    comm_channel.send(region, other, Tag.TIME_DT, agreed)
         ctx.time.delta_t = agreed

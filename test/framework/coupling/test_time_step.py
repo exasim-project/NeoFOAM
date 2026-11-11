@@ -14,8 +14,8 @@ from functools import partial
 from typing import Literal, Optional
 
 import pytest
+from framework.coupling.regions import comm_channel as comm_channel_of
 from framework.coupling.regions import contexts
-from framework.coupling.regions import transport as transport_of
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Coupling, Link
@@ -123,7 +123,7 @@ def _step(
         )
     run_regions(
         {region: partial(graphs[region].run, regions[region]) for region in asked},
-        transport_of(regions["a"]),
+        comm_channel_of(regions["a"]),
     )
     return regions, logs, solves
 

@@ -13,15 +13,15 @@ from typing import Optional
 
 import pytest
 from framework.coupling.regions import (
-    RecordingTransport,
+    RecordingCommChannel,
     add_coupled,
+    comm_channel,
     contexts,
     couple,
     fixed,
     graph,
     run,
     solve,
-    transport,
     tree,
 )
 
@@ -29,7 +29,7 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Coupling,
     CouplingNode,
-    InProcessTransport,
+    InProcessCommChannel,
     Link,
 )
 from neofoam.framework.coupling.region import run_regions
@@ -41,7 +41,7 @@ X = Link("x", (("a", "p"), ("b", "p")))
 Y = Link("y", (("a", "q"), ("b", "q")))
 
 
-def _two_nodes(transport: Optional[InProcessTransport] = None) -> dict[str, Context]:
+def _two_nodes(comm_channel: Optional[InProcessCommChannel] = None) -> dict[str, Context]:
     """a and b, coupled over x in the outer node and over y in the inner node (parallel)."""
     nodes = [
         CouplingNode("outer", ("x",), scheme="parallel"),
@@ -51,7 +51,7 @@ def _two_nodes(transport: Optional[InProcessTransport] = None) -> dict[str, Cont
             placement={"a": Placement(("solve_y",)), "b": Placement(("solve_y",))},
         ),
     ]
-    regions = contexts(["a", "b"], [X, Y], nodes, transport)
+    regions = contexts(["a", "b"], [X, Y], nodes, comm_channel)
     for name, ctx in regions.items():
         add_coupled(ctx, "p", "x", fixed(1.0, []))
         add_coupled(ctx, "q", "y", fixed(2.0, []))
@@ -79,8 +79,8 @@ def test_an_inner_node_with_its_placement_nests_inside_the_outer_node() -> None:
 
 
 def test_the_messages_of_each_node_are_tagged_by_node() -> None:
-    transport = RecordingTransport()
-    regions = _two_nodes(transport)
+    comm_channel = RecordingCommChannel()
+    regions = _two_nodes(comm_channel)
 
     run(
         {
@@ -89,7 +89,7 @@ def test_the_messages_of_each_node_are_tagged_by_node() -> None:
         }
     )
 
-    tags = set(transport.tags)
+    tags = set(comm_channel.tags)
     assert {"outer/sides", "outer/pass", "outer/decision", "side:x"} <= tags
     assert {"inner/sides", "inner/pass", "inner/decision", "side:y"} <= tags
     assert not tags & {"sides", "pass", "decision"}
@@ -191,7 +191,7 @@ def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
         )
         resolved = DAGResolver().resolve(builder, Coupling.of(ctx).operations()).operations
         tasks[name] = partial(resolved.run, ctx)
-    run_regions(tasks, transport(regions["a"]))
+    run_regions(tasks, comm_channel(regions["a"]))
     return regions
 
 

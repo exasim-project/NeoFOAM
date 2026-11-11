@@ -15,7 +15,7 @@ from typing import Any, Literal, Optional
 import numpy as np
 import pytest
 from framework.coupling.regions import (
-    RecordingTransport,
+    RecordingCommChannel,
     Side,
     add_coupled,
     contexts,
@@ -25,21 +25,21 @@ from framework.coupling.regions import (
     run,
     solve,
 )
-from framework.coupling.regions import transport as transport_of
+from framework.coupling.regions import comm_channel as comm_channel_of
 from pydantic import BaseModel, Field
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     BoundMapping,
+    CommChannelClosed,
     Coupling,
     CouplingMapping,
     CouplingNode,
     CouplingNotConvergedWarning,
     IdentityMapping,
-    InProcessTransport,
+    InProcessCommChannel,
     Link,
-    TransportClosed,
 )
 from neofoam.framework.coupling.controller import (
     CouplingController,
@@ -131,7 +131,7 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     log: list[str] = []
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
     node = CouplingNode("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
-    couplings = region_couplings(["a", "b"], [LINK], InProcessTransport(), nodes=[node])
+    couplings = region_couplings(["a", "b"], [LINK], InProcessCommChannel(), nodes=[node])
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
         for name in ("a", "b")
@@ -152,11 +152,11 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
 def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
     scheme: Literal["serial", "parallel"], sent: int
 ) -> None:
-    transport = RecordingTransport()
+    comm_channel = RecordingCommChannel()
     nodes = [
         CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
-    couplings = region_couplings(["a", "b"], [LINK], transport, nodes=nodes)
+    couplings = region_couplings(["a", "b"], [LINK], comm_channel, nodes=nodes)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
         for name in ("a", "b")
@@ -167,7 +167,7 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
 
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
 
-    assert transport.tags.count("data:a-b") == sent
+    assert comm_channel.tags.count("data:a-b") == sent
 
 
 @pytest.mark.parametrize(
@@ -338,11 +338,11 @@ def test_a_failing_region_ends_every_region_with_its_error() -> None:
 
 def test_a_region_waiting_for_one_that_left_raises() -> None:
     regions = contexts(["a", "b"], [LINK])
-    transport = transport_of(regions["a"])
-    transport.abort(["b"])
+    comm_channel = comm_channel_of(regions["a"])
+    comm_channel.abort(["b"])
 
-    with pytest.raises(TransportClosed, match="region a waits for 'x' from region b"):
-        transport.receive("b", "a", "x")
+    with pytest.raises(CommChannelClosed, match="region a waits for 'x' from region b"):
+        comm_channel.receive("b", "a", "x")
 
 
 class _Reversed(CouplingMapping):

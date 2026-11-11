@@ -18,9 +18,9 @@ from typing import Callable, Literal, Mapping, Sequence, TypeVar
 from neofoam.framework.types import Placement
 
 from . import kernels
+from .comm_channel import CommChannel, CommChannelClosed
 from .data import End
 from .kernels import CouplingAcceleration, CouplingConvergence
-from .transport import Transport, TransportClosed
 
 T = TypeVar("T")
 
@@ -84,7 +84,7 @@ class RegionCoupling:
     region: str
     group: tuple[str, ...]
     links: tuple[Link, ...]
-    transport: Transport
+    comm_channel: CommChannel
     nodes: tuple[CouplingNode, ...] = ()
 
     @property
@@ -124,7 +124,7 @@ class RegionCoupling:
 def region_couplings(
     regions: Sequence[str],
     links: Sequence[Link],
-    transport: Transport,
+    comm_channel: CommChannel,
     nodes: Sequence[CouplingNode],
 ) -> dict[str, RegionCoupling]:
     """The coupling of every region ``links`` connect, by region.
@@ -141,7 +141,9 @@ def region_couplings(
         for member in group:
             touching = {link.name for link in group_links if member in dict(link.ends)}
             member_nodes = tuple(node for node in nodes if touching & set(node.exchanges))
-            couplings[member] = RegionCoupling(member, group, group_links, transport, member_nodes)
+            couplings[member] = RegionCoupling(
+                member, group, group_links, comm_channel, member_nodes
+            )
     return couplings
 
 
@@ -255,12 +257,12 @@ def _group(region: str, regions: Sequence[str], links: Sequence[Link]) -> tuple[
     return tuple(name for name in regions if name in group)
 
 
-def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> dict[str, T]:
+def run_regions(tasks: Mapping[str, Callable[[], T]], comm_channel: CommChannel) -> dict[str, T]:
     """Run every region's task on its own thread; each task's result, by region.
 
     The threads report to the calling thread's execution observer. A failing
-    region aborts the transport for all, so none waits forever; then the first
-    error that is not a :class:`TransportClosed` (a consequence) is raised.
+    region aborts the comm channel for all, so none waits forever; then the first
+    error that is not a :class:`CommChannelClosed` (a consequence) is raised.
     """
     results: dict[str, T] = {}
     errors: list[BaseException] = []
@@ -272,9 +274,9 @@ def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> d
         except BaseException as error:  # re-raised in the calling thread
             with lock:
                 errors.append(error)
-            transport.abort(tasks)
+            comm_channel.abort(tasks)
         finally:
-            transport.close(region)
+            comm_channel.close(region)
 
     threads = [
         threading.Thread(
@@ -282,11 +284,11 @@ def run_regions(tasks: Mapping[str, Callable[[], T]], transport: Transport) -> d
         )
         for region, task in tasks.items()
     ]
-    transport.start(tasks)
+    comm_channel.start(tasks)
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
     if errors:
-        raise next((e for e in errors if not isinstance(e, TransportClosed)), errors[0])
+        raise next((e for e in errors if not isinstance(e, CommChannelClosed)), errors[0])
     return {region: results[region] for region in tasks}

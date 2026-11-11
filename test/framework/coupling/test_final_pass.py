@@ -14,7 +14,7 @@ from typing import Any, Literal
 import numpy as np
 import pytest
 from framework.coupling.regions import (
-    RecordingTransport,
+    RecordingCommChannel,
     Side,
     add_coupled,
     contexts,
@@ -130,9 +130,9 @@ def test_a_single_pass_is_first_and_final(scheme: Any) -> None:
 
 
 def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
-    transport = RecordingTransport()
+    comm_channel = RecordingCommChannel()
     nodes = [CouplingNode("coupling", ("a-b", "b-c"))]
-    couplings = region_couplings(list(PATCHES), LINKS, transport, nodes)
+    couplings = region_couplings(list(PATCHES), LINKS, comm_channel, nodes)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings.get(name))}, region=name)
         for name in PATCHES
@@ -145,7 +145,7 @@ def test_the_leader_sends_every_region_whether_the_pass_is_final() -> None:
 
     decisions = [
         (target, message[0], message[1])
-        for _source, target, tag, message in transport.sent
+        for _source, target, tag, message in comm_channel.sent
         if tag.endswith("/decision")
     ]
     assert decisions == [
