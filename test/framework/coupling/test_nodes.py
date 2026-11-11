@@ -417,3 +417,14 @@ def test_a_region_s_field_is_in_at_most_one_node() -> None:
 
     with pytest.raises(ValueError, match="field T of region a is coupled in the nodes 'n' and 'm'"):
         Coupling.of(regions["a"]).operations()
+
+
+def test_two_exchanges_of_one_name_raise() -> None:
+    twin = Link("x", (("a", "q"), ("b", "q")))
+
+    with pytest.raises(
+        ValueError, match="two exchanges are named 'x'; an exchange's name is unique"
+    ):
+        region_couplings(
+            ["a", "b"], [X, twin], InProcessTransport(), nodes=[CouplingNode("n", ("x",))]
+        )
