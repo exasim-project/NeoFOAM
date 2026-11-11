@@ -8,6 +8,7 @@
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -16,6 +17,7 @@ from neofoam.solver.multiRun.mpi import (
     RegionLayout,
     check_decomposed,
     check_size,
+    check_world,
     import_mpi,
     launched_size,
     under_mpi,
@@ -123,3 +125,16 @@ def test_import_mpi_names_the_extra_without_mpi4py(monkeypatch: pytest.MonkeyPat
 
     with pytest.raises(ImportError, match=r"2 MPI processes, but mpi4py .* neofoam\[mpi\]"):
         import_mpi()
+
+
+def test_check_world_names_a_neon_built_without_mpi_communicator_support(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # such a NeoN binds no default_communicator
+    monkeypatch.setitem(sys.modules, "neon._neon", SimpleNamespace())
+    monkeypatch.delitem(sys.modules, "pybFoam", raising=False)
+
+    with pytest.raises(
+        MpiSetupError, match="region left: NeoN was built without MPI communicator support"
+    ):
+        check_world("left", SimpleNamespace(rank=0, size=1))

@@ -147,6 +147,11 @@ def check_world(region: str, comm: Any) -> None:
             )
     neon = sys.modules.get("neon._neon")
     if neon is not None:
+        if not hasattr(neon, "default_communicator"):
+            raise MpiSetupError(
+                f"region {region}: NeoN was built without MPI communicator support "
+                "(NF_WITH_MPI_SUPPORT); a NeoN region runs under mpirun only with it"
+            )
         default = type(comm).f2py(neon.default_communicator())
         if (default.rank, default.size) != (comm.rank, comm.size):
             raise MpiSetupError(
