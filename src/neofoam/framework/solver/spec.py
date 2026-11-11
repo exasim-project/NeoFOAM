@@ -63,8 +63,7 @@ class SolverSpec:
         # called with the argv on the instantiating (main) thread before the runtime exists:
         # process-wide setup that must not happen on a region's thread
         self.on_instantiate: Optional[Callable[[list[str]], None]] = None
-        # why a region of this solver cannot run on part of the MPI processes, a
-        # sub-communicator of MPI_COMM_WORLD (multiRun refuses it under mpirun); None: it can
+        # why a region of this solver cannot run on part of the MPI processes; None: it can
         self.sub_communicator_limitation: Optional[str] = None
 
     @property

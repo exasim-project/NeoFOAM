@@ -235,66 +235,24 @@ entry gives its number of processes, a plain name is one::
 
     participants:
       left: {solver: mySolver, processes: 2}
-      right: {solver: mySolver, processes: 2}
+      right: mySolver
 
-    mpirun -np 4 python -m neofoam.solver.multiRun
+    mpirun -np 3 python -m neofoam.solver.multiRun
 
-The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in the order of
-``participants`` (``left`` ranks 0-1, ``right`` 2-3), and each process runs
-only its region. Every region runs OpenFOAM with ``-parallel -world <region>``,
-also a region on one process: OpenFOAM's world is the region's block of ranks,
-and the region's case is decomposed into its processes, ``<region>/processor0``
-.. ``processor<n-1>`` (``decomposePar -case <region>``; one part for one
-process). OpenFOAM's ``-world`` split is collective over all processes, so
-every region takes part in it. A NeoN region communicates on its world too:
-``create_adapter_run_time`` makes OpenFOAM's world NeoN's default communicator
-(``neon.set_default_communicator``, which also takes an mpi4py communicator
-from Python, set before), so the region's NeoN ranks are its OpenFOAM ranks,
-the numbers of its processor patches' neighbours, and the root of each region
-logs. Before the run starts every process checks the case, and rank 0 says
-what is wrong before the run aborts: the number of processes is not the sum of
-the regions', a region is not decomposed into its processes, a region's solver
-cannot run on part of the processes (a NeoN built without the default
-communicator communicates on ``MPI_COMM_WORLD``), or the coupling or its
-``commChannelTimeout`` is wrong. An error in a region, on any of its processes,
-prints its traceback and aborts every process (``MPI_Abort``), so no region
-waits for it. Without ``mpirun`` (or on one process) the regions run on
-threads, and ``processes`` is not used
-(``test/solver/multiRun/test_multiRun_mpi.py``).
+The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in ``participants``
+order. Every region runs OpenFOAM with ``-parallel -world <region>`` on
+``<region>/processor0`` .. ``processor<n-1>`` (``decomposePar -case <region>``),
+and a NeoN region communicates on that world. Rank 0 refuses a case that does
+not fit the run before it starts; an error on any process aborts every process.
 
-**Coupled regions on processes.** Only a region's **root**, rank 0 of its
-processes, talks to other regions. The roots exchange today's messages over an
-``MpiTransport`` (``neofoam.framework.coupling.mpi``), on a ``Dup`` of
-``MPI_COMM_WORLD``: every message is one pickle under one MPI tag, its string
-tag inside, and a receive sorts what arrived into a mailbox per ``(source,
-tag)``. MPI does not overtake between two processes, so messages arrive in the
-order they were sent. A receive raises ``CouplingDeadlock`` at once when its
-partner finished, ``CommChannelClosed`` when it failed, and ``CouplingTimeout``
-after ``commChannelTimeout`` (``NEOFOAM_COUPLING_TIMEOUT``), naming what it waits
-for and what arrived but was not received; a deadlock between processes is
-told by that timeout only. A root that finishes tells the other roots and takes
-their messages until each has finished too.
-
-The other processes of a region follow their root over the region's
-``RegionComm`` (``RegionCoupling.comm``). In each loop test of a coupling op
-every process hands its part of each side to the root (its points once, then
-what it sends each pass, in rank order: a process may have no face of the
-patch). The root runs the exchange on the whole patch, as one process would:
-mapping, controller, finiteness check and the observer (``coupling_exchanged``
-and ``coupling_finished`` on the root only). Then it broadcasts the leader's
-decision (another pass? the final one?) and scatters to each process its rows
-of what each side receives; every process marks the final pass, so operations
-marked ``final`` run on all of them. The time-step op agrees on the root and
-broadcasts the time step. A plain (not ``Array``) field of a side is rank 0's
-value, and the root raises if another process has another. A region on one
-process has a ``RegionComm`` of size 1, which does nothing.
-
-Gathering on the root is an intermediate step: it costs a gather and a scatter
-per pass and holds the whole interface on the root. Distributed exchange and
-mapping between the processes of the regions (bounding-box partners, reduced
-residuals, the leader deciding on the root) are to replace it.
-``coupledBlocks`` (``heatConductionNeoN``) runs on 1+1, 1+2 and 2+2 processes,
-its interface split between a region's processes, as on threads.
+Only a region's root (its rank 0) talks to other regions, over an
+``MpiTransport`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
+the whole patches: the root gathers what every process's sides send and
+scatters what they receive; the other processes run a follower op that takes
+the root's decision, and have no comm channel. ``close`` waits at most
+``commChannelTimeout`` for the partners, naming those that did not finish. The
+whole interface on the root is an intermediate step, before a distributed
+exchange (``test/solver/multiRun/test_regions_on_processes.py``).
 
 Extension points
 ----------------

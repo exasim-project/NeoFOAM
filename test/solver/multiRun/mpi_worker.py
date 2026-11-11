@@ -1,26 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run the multiRun case in the working directory; print each region's ``T`` as JSON.
+"""Run the multiRun case in the working directory; print a ``#RESULT`` JSON line per process.
 
-``python mpi_worker.py`` runs it on threads, ``mpirun -np <n> python
-mpi_worker.py`` on processes. Every process prints one stdout line prefixed
-``#RESULT`` (OpenFOAM writes freely to stdout): per region it ran, the cell
-centres and ``T`` of its cells, with the global rank; for a ``foamDiffusion``
-region from OpenFOAM, for a ``heatConductionNeoN`` region the centres from its
-OpenFOAM mesh and ``T`` from NeoN. multiRun finds region
-solvers by package name; the worker makes it find the test solver
-``foamDiffusion`` (:mod:`solver.multiRun.foam_solver`) as well.
-
-A coupled region also prints, per coupled side on this process, the side's
-points and the :data:`~neofoam.framework.coupling.Array` data it sends at the
-end (``sides``, by ``<region>.<patch>``): the interface, e.g. the wall
-temperature of ``coupledBlocks``' left side.
-
-``python mpi_worker.py fail:<region>`` makes ``<region>`` raise in its second
-time step (``foamDiffusion``); ``fail-coupled:<region>:<rank>`` makes the
-coupled sides of ``<region>`` raise on global rank ``<rank>`` as they send for
-the third time (any coupled solver).
+Per region on this process: the cell centres, ``T``, the time index and, per
+coupled side, its points and what it sends. ``python mpi_worker.py`` runs on
+threads, under ``mpirun`` on processes. ``fail:<region>`` makes a
+``foamDiffusion`` region raise; ``fail-coupled:<region>:<rank>`` makes the
+sides of ``<region>`` raise on global rank ``<rank>`` (a follower) at their
+third send.
 """
 
 import importlib

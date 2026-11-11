@@ -185,10 +185,8 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
         }
     }
 
-    // NeoN communicates on OpenFOAM's world: under -world <name> that is the
-    // processes of this world only, and NeoN's ranks are the neighbProcNo of the
-    // processor patches. A communicator set before (from Python) is kept. A NeoN
-    // without a default communicator communicates on MPI_COMM_WORLD.
+    // NeoN's ranks must be the processor patches' neighbProcNo: OpenFOAM's world
+    // (the region's processes under -world); one set from Python is kept.
 #ifdef NF_MPI_DEFAULT_COMMUNICATOR
     if (Foam::UPstream::parRun() && !NeoN::mpi::hasDefaultCommunicator())
     {

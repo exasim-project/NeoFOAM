@@ -4,18 +4,11 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""A test-only region solver on OpenFOAM alone: explicit diffusion of ``T`` on the region's mesh.
+"""A test-only region solver on OpenFOAM alone: explicit diffusion, ``T += D laplacian(T)``.
 
-Each time step ``T += D * laplacian(T)`` with ``D = 0.01 m^2`` (pybFoam's
-``fvc.laplacian``), then ``T``'s boundary conditions are corrected. A region is
-an OpenFOAM case of its own, ``<region>/``, as for ``heatConductionNeoN``; on
-several MPI processes its argList gets ``-parallel -world <region>`` from
-multiRun and reads ``<region>/processorN``, and the boundary correction
-exchanges the processor patches within the region's world. No NeoN, so a
-region of it runs on part of the MPI processes; the run is decomposed the same
-on threads and processes up to round-off.
-
-The region named by ``FOAM_DIFFUSION_FAIL`` raises in its second time step.
+No NeoN, so a region of it runs on part of the MPI processes (``-parallel
+-world <region>``). The region named by ``FOAM_DIFFUSION_FAIL`` raises in its
+second time step.
 """
 
 import os

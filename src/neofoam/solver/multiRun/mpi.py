@@ -1,36 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""multiRun under ``mpirun``: one region per process group, MPI_COMM_WORLD split by the yaml.
+"""multiRun under ``mpirun``: MPI_COMM_WORLD split into the regions of ``regionSolvers``.
 
-``mpirun -np <n> python -m neofoam.solver.multiRun`` runs every region of the
-case on its own processes: ``regionSolvers`` gives each region its
-``processes`` (default 1), in stepping order, and ``n`` is their sum. The
-regions take the ranks of MPI_COMM_WORLD in blocks, in the order of the yaml
-(:class:`RegionLayout`): with ``left: 2`` and ``right: 3`` ranks 0-1 run
-``left`` and ranks 2-4 ``right``. Each rank runs only its region, on its main
-thread.
-
-Every region runs OpenFOAM with ``-parallel -world <region>``, also a region on
-one process: OpenFOAM then splits MPI_COMM_WORLD by the world names, numbering
-the worlds and their ranks in the order of the global ranks. That is the split
-of :class:`RegionLayout` (MPI ``Split`` by the region's index, keyed by the
-global rank), so a region's ranks are the same in both. The split is collective
-over all of MPI_COMM_WORLD, so every region has to take part in it, and its
-case ``<region>/`` is decomposed into ``<region>/processor0`` ..
-``processor<n-1>``, one directory for a region on one process. A NeoN region
-communicates on its world too: ``create_adapter_run_time`` hands it to NeoN as
-its default communicator.
-
-Coupled regions talk through their roots, rank 0 of each region: an
-:class:`~neofoam.framework.coupling.MpiTransport` between the roots (on a
-``Dup`` of MPI_COMM_WORLD), and in each region a
-:class:`~neofoam.framework.coupling.mpi.RegionComm` over which the root gathers its
-processes' side data and scatters what they receive.
-
-mpi4py (the extra ``neofoam[mpi]``) is imported only here, only under MPI: it
-initializes MPI before any OpenFOAM ``argList``. Without MPI (no ``mpirun``, or
-one process) multiRun runs its regions on threads, as always.
+The regions take the ranks in blocks of their ``processes``, in stepping order
+(:class:`RegionLayout`); that is OpenFOAM's split under ``-parallel -world
+<region>``, which every region runs, also one on one process (``processor0``).
+The split is collective over every process, so every region takes part.
+mpi4py (the extra ``neofoam[mpi]``) is imported here only, under MPI only.
 """
 
 import atexit
@@ -45,7 +22,7 @@ from typing import Any
 
 from neofoam.framework.solver import SolverSpec
 
-#: The environment variables in which MPI launchers pass the number of processes.
+# the environment variables in which MPI launchers pass the number of processes
 SIZE_VARIABLES = ("OMPI_COMM_WORLD_SIZE", "PMI_SIZE", "MV2_COMM_WORLD_SIZE")
 
 
@@ -139,12 +116,7 @@ def check_size(layout: RegionLayout, size: int) -> None:
 
 
 def check_decomposed(layout: RegionLayout, case_dir: Path = Path(".")) -> None:
-    """Raise ``MpiSetupError`` unless each region on n processes has n processor directories.
-
-    That is ``<region>/processor0`` .. ``<region>/processor<n-1>``, and no
-    ``<region>/processor<n>``: a region on one process runs ``-parallel`` too,
-    on ``<region>/processor0``.
-    """
+    """Raise ``MpiSetupError`` unless a region on n processes has exactly ``processor0..n-1``."""
     problems = []
     for region, count in layout.processes.items():
         directory = case_dir / region
@@ -168,15 +140,7 @@ def check_decomposed(layout: RegionLayout, case_dir: Path = Path(".")) -> None:
 
 
 def check_sub_communicator(layout: RegionLayout, specs: Mapping[str, SolverSpec]) -> None:
-    """Raise ``MpiSetupError`` for a region whose solver cannot run on part of the MPI processes.
-
-    Under MPI every region runs on part of them, a sub-communicator of
-    MPI_COMM_WORLD, one process or several. The solver's
-    :attr:`~neofoam.framework.solver.SolverSpec.sub_communicator_limitation`
-    says why it cannot (a NeoN built without a default communicator
-    communicates on MPI_COMM_WORLD, so even a region on one process would take
-    the other regions' processes for its own).
-    """
+    """Raise ``MpiSetupError`` for a region whose solver has a ``sub_communicator_limitation``."""
     problems = [
         f"region {region} runs on {count} of the {layout.total} MPI processes, but its solver "
         f"{specs[region].name} cannot run on part of them: "
@@ -189,13 +153,7 @@ def check_sub_communicator(layout: RegionLayout, specs: Mapping[str, SolverSpec]
 
 
 def check_world(region: str, comm: Any) -> None:
-    """Raise ``MpiSetupError`` unless OpenFOAM's and NeoN's world of a region is ``comm``.
-
-    Checked once the region's ``argList`` exists: its ``Pstream`` numbers the
-    processes of OpenFOAM's ``worldComm``, and NeoN's default communicator
-    (set from it by ``create_adapter_run_time``) is checked the same way. A
-    region without a parallel OpenFOAM, or without NeoN, passes that part.
-    """
+    """Raise ``MpiSetupError`` unless OpenFOAM's and NeoN's world of ``region`` is ``comm``."""
     pybfoam = sys.modules.get("pybFoam")
     if pybfoam is not None and pybfoam.Pstream.parRun():
         world = (int(pybfoam.Pstream.myProcNo()), int(pybfoam.Pstream.nProcs()))
@@ -236,18 +194,16 @@ def failure(error: BaseException) -> str:
     return "".join(traceback.format_exception(error))
 
 
-#: What must outlive the run: an OpenFOAM argList finalizes MPI as it is destroyed.
+# what must outlive the run: an OpenFOAM argList finalizes MPI as it is destroyed
 _ALIVE: list[Any] = []
 
 
 def keep_alive(mpi: Any, value: Any) -> None:
-    """Keep ``value`` until the process ends; ``mpi`` is finalized at exit, after a barrier.
+    """Keep ``value`` until ``mpi`` is finalized at exit, then release it.
 
-    An OpenFOAM ``argList`` (held by a region's Context) finalizes MPI in its
-    destructor, even an MPI it did not start; destroyed after MPI is finalized,
-    it leaves MPI alone. ``value`` is released right after: before NeoN's
-    Kokkos is finalized (registered at exit before this, so run after it),
-    which a NeoN field must not outlive.
+    An OpenFOAM ``argList`` finalizes MPI in its destructor unless MPI is
+    finalized already; NeoN fields must go before Kokkos is finalized (an
+    earlier exit handler, so it runs later).
     """
     if not _ALIVE:
         atexit.register(_finalize, mpi)

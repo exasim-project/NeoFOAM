@@ -88,16 +88,9 @@ def run_threads(config: ControlDictConfig) -> dict[str, Context]:
 def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
     """Run this process's region of the case, under MPI; return its final Context.
 
-    Every process first checks the case against the run: the number of
-    processes, the decomposition of each region into its processes (every
-    region runs ``-parallel -world <region>``), that its solver can run on part
-    of the processes, the coupling and its comm channel timeout. If one fails,
-    rank 0 prints why and the run aborts. Then MPI_COMM_WORLD is split into the
-    regions (:class:`~neofoam.solver.multiRun.mpi.RegionLayout`), and each
-    process runs its region. A coupled region talks to the others through its
-    root (:func:`mpi_coupling`). An error on any process prints its traceback
-    and aborts every process (``MPI_Abort``), so no process waits for it. The
-    region's Context outlives the run; MPI is finalized at exit.
+    Every process checks the case first; rank 0 reports what does not fit and
+    the run aborts. An error on any process later aborts every process
+    (``MPI_Abort``), so none waits for it. MPI is finalized at exit.
     """
     mpi = import_mpi()
     world = mpi.COMM_WORLD
@@ -120,7 +113,7 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
     if problems:
         abort_all(world, problems[0])
     region = layout.region_of(world.rank)
-    # the coupling's channel between the regions' roots: no other message meets its own
+    # a channel of its own: no other message meets the coupling's
     channel = world.Dup()
     comm = world.Split(layout.index(region), key=world.rank)
     try:

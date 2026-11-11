@@ -24,12 +24,7 @@ __all__ = [
 
 
 class RegionSolverConfig(BaseModel):
-    """The solver of one region and the MPI ``processes`` it runs on.
-
-    In the yaml a plain solver name stands for one process. ``processes`` counts
-    only under ``mpirun`` (:mod:`~neofoam.solver.multiRun.mpi`); without MPI
-    every region runs on a thread of its own, whatever it says.
-    """
+    """The solver of one region and its MPI ``processes``, used under ``mpirun`` only."""
 
     model_config = ConfigDict(extra="forbid")
 

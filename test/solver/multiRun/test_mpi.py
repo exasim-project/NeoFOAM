@@ -24,7 +24,6 @@ from neofoam.solver.multiRun.mpi import (
     under_mpi,
 )
 from neofoam.solver.neon_runtime import neon_takes_a_communicator
-from neofoam.solver.regions import ControlDictConfig
 
 
 def test_region_layout_puts_the_regions_on_blocks_of_ranks_in_stepping_order() -> None:
