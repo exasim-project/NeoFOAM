@@ -19,7 +19,7 @@ A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
 from typing import Any, Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, Patch, coupling
+from neofoam.framework.coupling import Participant, Patch, coupling
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
 from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.types import OperationMetadata
@@ -55,7 +55,7 @@ def initialize(self: Any) -> Context:
         time_dir = region_case_dir(self.region) / ctx.models["solution_loop"].timeName()
         check_written_patches(self.coupling.field_ports, time_dir)
     runtime = ctx.models["neon_runtime"]
-    ctx.models["coupling"] = Coupling(
+    ctx.models["coupling"] = Participant(
         self.coupling, NeoNGeometry(runtime), NeoNFields(runtime, ctx.fields)
     )
     patches = coupled_patches("T", ctx, region_case_dir(self.region))

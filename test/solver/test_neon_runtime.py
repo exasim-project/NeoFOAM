@@ -57,9 +57,8 @@ pytest.importorskip("neon._neon")  # skip when the NeoN bindings are not built
 
 import neon._neon as nn  # noqa: E402
 
-from neofoam.framework.coupling import FieldPort  # noqa: E402
+from neofoam.framework.coupling import FieldPort, RegionCouplingConfig  # noqa: E402
 from neofoam.solver import neon_runtime  # noqa: E402
-from neofoam.solver.multiRun.configs import RegionCouplingConfig  # noqa: E402
 from neofoam.solver.neon_runtime import (  # noqa: E402
     _gpu_init_report,
     check_written_patches,
