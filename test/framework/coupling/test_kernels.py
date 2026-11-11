@@ -224,13 +224,72 @@ def test_relative_convergence_ignores_other_fields() -> None:
     assert RelativeConvergence(data="T", limit=1e-5)(changes) is True
 
 
+# a patch of three faces at x = 0, 1, 2 with the areas 1, 2, 3, and two cells
+FACES = Geometry.of([[0.0], [1.0], [2.0]], [1.0, 2.0, 3.0])
+CELLS = Geometry.of([[0.0], [1.0]], [1.0, 3.0])
+VALUE = Geometry(size=1)
+
+
+@pytest.mark.parametrize(
+    ("options", "source", "sent", "received"),
+    [
+        ({"type": "area-mean"}, FACES, [1.0, 2.0, 3.0], 14.0 / 6.0),
+        ({"type": "area-integral"}, FACES, [1.0, 2.0, 3.0], 14.0),
+        ({"type": "volume-mean"}, CELLS, [2.0, 6.0], 20.0 / 4.0),
+        ({"type": "volume-integral"}, CELLS, [2.0, 6.0], 20.0),
+    ],
+    ids=["area-mean", "area-integral", "volume-mean", "volume-integral"],
+)
+def test_a_reduction_weighs_each_value_by_its_measure(
+    options: dict[str, str], source: Geometry, sent: list[float], received: float
+) -> None:
+    mapping = cast(Any, CouplingMapping).create(mapping=options).mapping
+
+    reduced = mapping.bind(source, VALUE)({"q": np.array(sent)})
+
+    np.testing.assert_allclose(reduced["q"], received, rtol=1e-14, err_msg=options["type"])
+
+
+@pytest.mark.parametrize("options", [{"type": "area-mean"}, {"type": "uniform"}])
+def test_a_value_mapping_takes_scalar_fields_only(options: dict[str, str]) -> None:
+    mapping = cast(Any, CouplingMapping).create(mapping=options).mapping
+    vector = {"U": np.ones((3, 3))} if options["type"] != "uniform" else {"U": np.ones(3)}
+
+    with pytest.raises(ValueError, match=f"mapping '{options['type']}' takes scalar"):
+        mapping.bind(FACES, FACES)(vector)
+
+
+@pytest.mark.parametrize("target", [FACES, CELLS], ids=["faces", "cells"])
+def test_uniform_puts_one_value_on_every_entity(target: Geometry) -> None:
+    mapping = cast(Any, CouplingMapping).create(mapping={"type": "uniform"}).mapping
+
+    spread = mapping.bind(VALUE, target)({"T": np.array(300.0)})
+
+    assert spread["T"].tolist() == [300.0] * int(target.size or 0)
+
+
+def test_probe_takes_the_value_of_the_cell_nearest_each_point() -> None:
+    mapping = (
+        cast(Any, CouplingMapping)
+        .create(mapping={"type": "probe", "points": [[0.9], [0.2], [0.6]]})
+        .mapping
+    )
+
+    probed = mapping.bind(CELLS, VALUE)({"T": np.array([10.0, 20.0])})
+
+    assert probed["T"].tolist() == [20.0, 10.0, 20.0]
+
+
 @pytest.mark.parametrize(
     ("mapping", "sent", "received", "error"),
     [
         (NearestNeighborMapping(), "face", "value", "maps face -> face, cell -> cell, not face"),
         (IdentityMapping(), "cell", "face", "not cell -> face"),
+        ({"type": "area-mean"}, "cell", "value", "maps face -> value, not cell -> value"),
+        ({"type": "uniform"}, "face", "face", "maps value -> face, value -> cell, not face"),
+        ({"type": "probe", "points": [[0.0]]}, "face", "probe", "maps cell -> probe, not"),
     ],
-    ids=["nearest-neighbor", "identity"],
+    ids=["nearest-neighbor", "identity", "area-mean", "uniform", "probe"],
 )
 def test_a_mapping_checks_the_entities_it_maps(
     mapping: Any, sent: str, received: str, error: str

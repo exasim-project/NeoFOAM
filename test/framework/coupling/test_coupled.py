@@ -21,6 +21,7 @@ from framework.coupling.regions import contexts, couple, graph, run, solve, tree
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
+    CellData,
     Cells,
     Exchange,
     FaceData,
@@ -28,10 +29,16 @@ from neofoam.framework.coupling import (
     IdentityMapping,
     NearestNeighborMapping,
     Patch,
+    ProbeData,
     Scalar,
     ValueData,
     coupled,
     coupling,
+)
+from neofoam.framework.coupling.kernels import (
+    AreaIntegralMapping,
+    ProbeMapping,
+    UniformMapping,
 )
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.types import Placement
@@ -413,6 +420,119 @@ def test_a_chain_of_exchanges_is_one_coupling_group() -> None:
         ("b", "to_c", "T"): True,
         ("c", "to_b", "T"): False,
     }
+
+
+class _HeatFlow(ValueData):
+    q: Scalar
+
+
+@coupled
+class _Meter(_Patch):
+    """Receives one value on a Global port."""
+
+    @coupled.receives
+    def heat(self, data: _HeatFlow) -> None:
+        self.received.append(data)
+
+
+def _sensor_pair(mapping: Any, receiver: str) -> dict[str, Context]:
+    exchange = Exchange("meter", (("plant", "outlet"), ("controller", receiver)), mapping)
+    return contexts(["plant", "controller"], [exchange], max_iterations=1)
+
+
+@coupled
+class _Plate(_Patch):
+    """Sends the heat flux of its faces only."""
+
+    @coupled.sends
+    def flux(self) -> WallHeatFlux:
+        return WallHeatFlux(q=np.array([1.0, 2.0, 3.0]))
+
+
+def test_a_sensor_sends_per_face_and_its_mapping_reduces_it_to_one_value() -> None:
+    """Patch -> Global: the plate's faces with the areas 1, 2, 3 carry 1*1 + 2*2 + 3*3 = 14 W."""
+    regions = _sensor_pair(AreaIntegralMapping(), "Q")
+    plant = regions["plant"]
+    coupling(plant).geometry.areas["outlet"] = np.array([1.0, 2.0, 3.0])  # type: ignore[attr-defined]
+    _bind(plant, "outlet", _Plate, points=None)
+    meter = _Meter(regions["controller"])
+    coupling(regions["controller"]).add(Global("Q"), meter)
+
+    run({name: (ctx, [solve("q", lambda ctx: None)]) for name, ctx in regions.items()})
+
+    assert [data.q for data in meter.received] == [14.0]
+
+
+class _Setpoint(ValueData):
+    q: Scalar
+
+
+@coupled
+class _Controller(_Patch):
+    @coupled.sends
+    def setpoint(self) -> _Setpoint:
+        return _Setpoint(q=5.0)
+
+
+def test_an_actuator_receives_one_value_on_every_face() -> None:
+    """Global -> Patch: ``uniform`` hands the controller's value to each of the three faces."""
+    exchange = Exchange("act", (("controller", "u"), ("plant", "inlet")), UniformMapping())
+    regions = contexts(["controller", "plant"], [exchange], max_iterations=1)
+    coupling(regions["controller"]).add(Global("u"), _Controller(regions["controller"]))
+    actuator = _bind(regions["plant"], "inlet", _Actuator, points=((0.0,), (1.0,), (2.0,)))
+
+    run({name: (ctx, [solve("q", lambda ctx: None)]) for name, ctx in regions.items()})
+
+    assert [data.q.tolist() for data in actuator.received] == [[5.0, 5.0, 5.0]]
+
+
+class _CellTemperature(CellData):
+    T: Array
+
+
+class _Probed(ProbeData):
+    T: Array
+
+
+@coupled
+class _Cells(_Patch):
+    @coupled.sends
+    def temperature(self) -> _CellTemperature:
+        return _CellTemperature(T=np.array([10.0, 20.0, 30.0]))
+
+
+@coupled
+class _Thermocouples(_Patch):
+    @coupled.receives
+    def probed(self, data: _Probed) -> None:
+        self.received.append(data)
+
+
+def test_a_probe_hands_the_cells_nearest_its_points_to_a_global_port() -> None:
+    exchange = Exchange(
+        "tc", (("plant", "cells"), ("controller", "tc")), ProbeMapping(points=[(2.1,), (0.4,)])
+    )
+    regions = contexts(["plant", "controller"], [exchange], max_iterations=1)
+    geometry = coupling(regions["plant"]).geometry
+    geometry.cells = np.array([[0.0], [1.0], [2.0]])  # type: ignore[attr-defined]
+    coupling(regions["plant"]).add(Cells(), _Cells(regions["plant"]))
+    thermocouples = _Thermocouples(regions["controller"])
+    coupling(regions["controller"]).add(Global("tc"), thermocouples)
+
+    run({name: (ctx, [solve("T", lambda ctx: None)]) for name, ctx in regions.items()})
+
+    assert [data.T.tolist() for data in thermocouples.received] == [[30.0, 10.0]]
+
+
+def test_a_mapping_checks_the_data_models_of_its_exchange() -> None:
+    regions = _pair(Exchange("cht", (("solid", "right"), ("fluid", "wall")), UniformMapping()))
+    _bind(regions["solid"], "right", _Wall)
+    _bind(regions["fluid"], "wall", _Flux)
+
+    with pytest.raises(
+        ValueError, match="mapping 'uniform' maps value -> face, value -> cell, not"
+    ):
+        _run(regions)
 
 
 class _MeanTemperature(ValueData):
