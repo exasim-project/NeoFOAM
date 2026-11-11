@@ -14,14 +14,13 @@ injectable stability constraints, and the write decision.
 import os
 import sys
 from pathlib import Path
-from typing import Annotated, Any, Optional, Union
+from typing import Any, Optional, Union
 
 from pybFoam import Info, dictionary
 
 from neofoam import telemetry
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Coupling
-from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -34,6 +33,7 @@ from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
 from neofoam.preprocess import SetFieldsConfig
+from neofoam.solver.regions import region_case_dir
 from neofoam.telemetry import TelemetrySettings
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
@@ -42,7 +42,7 @@ from neofoam.viscosity import viscosityModel
 
 from .configs import ControlDictConfig, TelemetryDictConfig
 from .coupled_patches import coupled_patches
-from .create_fields import create_init, region_case_dir
+from .create_fields import create_init
 from .models.field_writer import keep_coupled_entries
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
@@ -125,15 +125,12 @@ incompressibleFluid.models(incompressibleFluidModel)  # optional: zero or more
 
 
 @incompressibleFluid.initializer
-def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
-    """Initialize using create_init factory with dependency injection.
-
-    On the region's case (the injected runner gets the runtime's region), then
-    the coupling model, then the coupled patches of ``T`` (:mod:`.coupled_patches`),
-    as ``heatConductionNeoN`` does; the field writer adds their ``coupled``
-    entries back to each written ``T``.
-    """
+def initialize(self: Any) -> Context:
+    """The context on the region's case, then the coupling model, then the coupled patches."""
+    init = create_init(region=self.region, argv=list(self.argv))
     ctx = init.run()
+    self.core_models = init.core_models
+    self.optional_models = init.optional_models
     case_dir = region_case_dir(self.region)
     ctx.models["coupling"] = Coupling(self.coupling)
     patches = coupled_patches("T", ctx, case_dir)

@@ -6,13 +6,6 @@
 LOAD    → detect the pressure-velocity algorithm and any optional models
 RESOLVE → wire optional-model dependencies via ConfigContext
 BUILD   → emit lazy InitSteps for mesh, runtime, fields, and transport/turbulence
-
-A region of a multi-region case is a case directory of its own, as for
-``heatConductionNeoN`` (:func:`region_case_dir`): every file is read from
-``<region>/``, and OpenFOAM runs on it (``-case <region>``). Its time loop and
-field writer step on the case's ``system/controlDict.yaml``, as every region of a
-``multiRun`` case does; its ``system/controlDict`` is what OpenFOAM's ``Time``
-reads, and the rest of it (``writeBackend``, adaptive stepping) is the region's.
 """
 
 from pathlib import Path
@@ -39,6 +32,7 @@ from neofoam.framework.model import ModelRuntime, ModelSpec
 from neofoam.framework.tools import tool_graph_steps
 from neofoam.postprocess import postProcess
 from neofoam.solver.multiRun.configs import ControlDictConfig as CaseControlDictConfig
+from neofoam.solver.regions import region_case_dir
 from neofoam.tools.run import detect_tools
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
@@ -132,36 +126,35 @@ def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
     return {m.name: m for m in optional_models}
 
 
-def region_case_dir(region: Optional[str]) -> Path:
-    """The case directory of ``region``: ``<region>/`` of the working directory, or ``.``.
+def _time_models(region: Optional[str], case_dir: Path) -> tuple[ModelRuntime, ModelRuntime]:
+    """The time loop and writer: on the case's ``controlDict.yaml`` for a region."""
+    if region is None:
+        return solutionLoop.instantiate(case_dir, "main"), fieldWriter.instantiate(case_dir, "main")
+    times = CaseControlDictConfig.load(case_dir=Path("."))
+    return (
+        ModelRuntime(spec=solutionLoop, name="solutionLoop_main", config=times),
+        ModelRuntime(spec=fieldWriter, name="fieldWriter_main", config=times),
+    )
 
-    As for ``heatConductionNeoN``: a region of a multi-region case is an OpenFOAM
-    case of its own, ``<region>/{0,constant,system}``, next to the case's
-    ``system/controlDict.yaml`` (``regionSolvers``) and ``system/regionCoupling.yaml``.
-    """
-    return Path(region) if region is not None else Path(".")
 
-
-def create_init(case_dir: Optional[Path] = None, region: Optional[str] = None) -> StagedInitRunner:
+def create_init(
+    case_dir: Optional[Path] = None,
+    *,
+    region: Optional[str] = None,
+    argv: Optional[list[str]] = None,
+) -> StagedInitRunner:
     """Build a fresh :class:`StagedInitRunner` for incompressibleFluid.
 
     The closures over ``runner`` give the resolve/build stages access to
     the live ``argv`` and ``optional_models`` populated by load.
-
-    The case is ``case_dir`` if given, else the directory of the runner's region
-    (:func:`region_case_dir`; ``runner.region``, which the solver sets on an
-    injected runner before it runs). A region steps on the case's times: its time
-    loop and writer read ``system/controlDict.yaml``; a single-region case reads
-    ``system/controlDict``.
+    A ``region`` runs on ``<region>/`` (default of ``case_dir``) and steps on the
+    times of the case's ``system/controlDict.yaml``.
     """
     spec_builder = StagedInitSpec.build("incompressibleFluid")
-
-    def case() -> Path:
-        return Path(case_dir) if case_dir is not None else region_case_dir(runner.region)
+    resolved_case_dir = Path(case_dir) if case_dir is not None else region_case_dir(region)
 
     @spec_builder.load
     def load_config() -> LoadResult:
-        resolved_case_dir = case()
         pressure_model = PressureVelocityAlgorithm.detect_and_create(resolved_case_dir)
         optional_models = incompressibleFluidModel.detect_models(resolved_case_dir)
 
@@ -177,17 +170,7 @@ def create_init(case_dir: Optional[Path] = None, region: Optional[str] = None) -
         # solutionLoop (advances time) and fieldWriter (persists fields) are
         # separate-concern Models, loaded here so their controlDict is validated
         # up front; both are composed by incompressibleFluid.execution_graph.
-        if runner.region is None:
-            solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
-            field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
-        else:
-            times = CaseControlDictConfig.load(case_dir=Path("."))
-            solution_loop_model = ModelRuntime(
-                spec=solutionLoop, name="solutionLoop_main", config=times
-            )
-            field_writer_model = ModelRuntime(
-                spec=fieldWriter, name="fieldWriter_main", config=times
-            )
+        solution_loop_model, field_writer_model = _time_models(region, resolved_case_dir)
 
         # postProcess is a third such Model: it LOADs the case's tables (its
         # ``system/postProcess.py`` script and/or spec file) and is stepped last
@@ -230,7 +213,6 @@ def create_init(case_dir: Optional[Path] = None, region: Optional[str] = None) -
 
     @spec_builder.build
     def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-        resolved_case_dir = case()
         pressure_model = core_models[0]
         transport_config = next(
             (m for m in core_models if isinstance(m, TransportPropertiesConfig)), None
@@ -243,11 +225,8 @@ def create_init(case_dir: Optional[Path] = None, region: Optional[str] = None) -
 
         solution_loop_model = _by_spec("solutionLoop")
         field_writer_model = _by_spec("fieldWriter")
-        # a region runs OpenFOAM on its own case directory
         argv = (
-            list(runner.argv)
-            if runner.region is None
-            else [*runner.argv, "-case", str(resolved_case_dir)]
+            list(runner.argv) if region is None else [*runner.argv, "-case", str(resolved_case_dir)]
         )
 
         def create_foam_arglist(_ctx: dict[str, Any]) -> Any:
@@ -349,5 +328,5 @@ def create_init(case_dir: Optional[Path] = None, region: Optional[str] = None) -
 
         return builder.build()
 
-    runner = StagedInitRunner(spec_builder.finalize(), region=region)
+    runner = StagedInitRunner(spec_builder.finalize(), argv=argv, region=region)
     return runner
