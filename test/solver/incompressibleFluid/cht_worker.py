@@ -12,20 +12,22 @@ import json
 from typing import Any
 
 import numpy as np
+from framework.coupling.regions import Outcomes
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import coupling
-from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.execution_observer import observe
 from neofoam.solver.multiRun import run as run_multi
 
 RESULT_PREFIX = "#RESULT "
 
 
-def _passes(ctx: Context) -> list[int]:
+def _passes(ctx: Context, outcomes: Outcomes) -> list[int]:
     operations = coupling(ctx).operations()
     op = operations[0].func if len(operations) else None
-    if isinstance(op, CouplingOp) and op.controller is not None:
-        return [outcome.passes for outcome in op.controller.outcomes]
+    if isinstance(op, CouplingLoopOp) and op.controller is not None:
+        return [outcome.passes for outcome in outcomes.of(op.controller.label)]
     return []
 
 
@@ -44,9 +46,11 @@ def _fluid(ctx: Context) -> dict[str, Any]:
 
 
 def main() -> dict[str, Any]:
-    regions = run_multi()
+    outcomes = Outcomes()
+    with observe(outcomes):
+        regions = run_multi()
     fluid, solid = regions["fluid"], regions["solid"]
-    passes = {name: _passes(ctx) for name, ctx in regions.items()}
+    passes = {name: _passes(ctx, outcomes) for name, ctx in regions.items()}
     (top,) = solid.models["conduction"].patches
     return {
         "fluid": _fluid(fluid),

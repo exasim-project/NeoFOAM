@@ -21,7 +21,7 @@ from pybFoam import Info, dictionary
 from neofoam import telemetry
 from neofoam.foam.coupling import FoamFields, FoamGeometry
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, Patch, coupling
+from neofoam.framework.coupling import Participant, Patch, coupling
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -133,7 +133,7 @@ def initialize(self: Any) -> Context:
     self.optional_models = init.optional_models
     case_dir = region_case_dir(self.region)
     entries = start_entries(case_dir, ctx.models["solution_loop"].timeName())
-    ctx.models["coupling"] = Coupling(
+    ctx.models["coupling"] = Participant(
         self.coupling, FoamGeometry(ctx.fields["p"].mesh()), FoamFields(ctx.fields)
     )
     patches = coupled_patches("T", ctx, entries)

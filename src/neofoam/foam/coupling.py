@@ -15,7 +15,7 @@ class FoamGeometry:
 
     Example::
 
-        ctx.models["coupling"] = Coupling(coupling, FoamGeometry(mesh), FoamFields(ctx.fields))
+        ctx.models["coupling"] = Participant(coupling, FoamGeometry(mesh), FoamFields(ctx.fields))
     """
 
     def __init__(self, mesh: Any) -> None:
