@@ -426,12 +426,10 @@ def test_an_operation_after_a_final_one_outside_its_loop_resolves() -> None:
     builder = StepBuilder()
     with builder.loop(_loop("time_loop", 1, marks=False)) as time_builder:
         time_builder.step(_logged("solve_T", log))
-        time_builder.step(_logged("write", log, final=True, depends_on=["solve_T"]))
+        time_builder.step(_logged("write", log, final=True))
         time_builder.step(_logged("report", log, depends_on=["write"]))
 
-    _resolve(builder, _loop("couple", 2, Placement(operations=("solve_T",), downstream=False))).run(
-        _context()
-    )
+    _resolve(builder, _loop("couple", 2, Placement(operations=("solve_T",)))).run(_context())
 
     assert log == ["solve_T", "solve_T", "write", "report"]
 
