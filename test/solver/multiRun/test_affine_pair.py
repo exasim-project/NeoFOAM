@@ -18,7 +18,7 @@ from framework.coupling.regions import Outcomes, couple, tree
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import CouplingNotConvergedWarning, NearestNeighborMapping
-from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
+from neofoam.framework.coupling.loop._leader import CouplingOutcome, Leader
 from neofoam.framework.execution_observer import ExecutionObserver, observe
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.operations import Operation, Operations
