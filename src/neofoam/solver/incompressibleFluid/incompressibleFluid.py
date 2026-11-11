@@ -28,7 +28,7 @@ from neofoam.framework.operations import (
     SequentialOp,
     StepBuilder,
 )
-from neofoam.framework.solver import Solver
+from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.postprocess import PostProcessConfig
@@ -80,12 +80,6 @@ def maybe_configure_telemetry(case_dir: Union[Path, str] = ".") -> bool:
 
 
 # model lookup helper: find an instantiated core model by its spec name
-def _core_model(state: Any, spec_name: str) -> Any:
-    return next(
-        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
-    )
-
-
 def _under_turb_corr(op: Operation) -> Operation:
     """Gate a transport/turbulence correction with pimpleFoam's ``turbCorr()``.
 
@@ -150,9 +144,9 @@ def execution_graph(
     # The main iteration loop is the solutionLoop model: its operations
     # (set_time_step / increment_time) and predicate own advancement and deltaT
     # adjustment. Persisting fields is the separate fieldWriter model.
-    loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
-    writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
-    post_ops = Operations(_core_model(self.state, "postProcess").operations)
+    loop_ops = Operations(core_model(self.state, "solutionLoop").operations)
+    writer_ops = Operations(core_model(self.state, "fieldWriter").operations)
+    post_ops = Operations(core_model(self.state, "postProcess").operations)
 
     time_loop_op = Operation(
         func=IterativeOp(SolutionLoopPredicate()),
