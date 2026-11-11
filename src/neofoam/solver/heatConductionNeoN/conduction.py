@@ -13,14 +13,11 @@ from .configs import ThermalPropertiesConfig
 
 
 class ConductionProblem:
-    """Transient heat conduction ``dT/dt = laplacian(alpha, T) + Q/(rho cp)``.
+    """Transient heat conduction ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``.
 
-    ``alpha = k / (rho cp)``. The ``ddt(T)`` and ``laplacian(alpha,T)`` schemes of
-    ``system/fvSchemes`` (Euler, or ``steadyState`` for a steady solve). Each patch
-    of ``patches`` adds its terms to the right-hand side (a coupled Neumann side its
-    heat flux). :meth:`start_step` makes the current ``T`` the old time and
-    :meth:`solve` computes ``T`` one step past it, so a step can be re-solved (a
-    pass of the region's coupling op). One instance per run.
+    Each of ``patches`` adds its terms to the right-hand side. :meth:`solve`
+    always starts from the old time :meth:`start_step` set, so a coupling pass
+    can re-solve the step. One instance per run.
 
     Example::
 
@@ -55,9 +52,7 @@ class ConductionProblem:
             for term in patch.terms():
                 equation = equation - term
         nfb.PDESolverScalar(equation, self.T, self.runtime).solve()
-        # OpenFOAM's fvMatrix::solve corrects the boundary of the solved field, NeoN's
-        # does not: without it a zeroGradient patch keeps the old face value. A coupled
-        # patch is ``calculated``: its values stay.
+        # NeoN's solve, unlike OpenFOAM's, leaves a zeroGradient patch at its old values
         self.T.correct_boundary_conditions()
         for patch in self.patches:
             patch.solved()
