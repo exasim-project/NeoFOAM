@@ -1,18 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""multiRun runs two uncoupled regions in one case, each its own solver on its own thread.
+"""multiRun's coupling of a case and its comm channel timeout.
 
-Every region-capable solver of the package needs NeoN or FEniCSx, so the regions
-run ``slab`` (``slab_solver``), a test-only numpy solver; multiRun finds region
-solvers by package name, so the test makes ``resolve_solver`` of the multiRun
-module return it. ``cases/two_regions`` holds the single-region cases
-``slab_left`` and ``slab_right`` as its regions ``left`` and ``right``, under one
-controlDict with the same time steps. The regions differ in mesh, diffusivity and
-temperatures, so a region that read the other's files or missed a step would not
-reproduce its single-region run. Both runs do the
-same floating-point operations in the same order, hence the round-off tolerance.
-One multiRun run serves every test, hence the module-scoped fixture.
+``cases/couplings/chain`` couples the chain a - b - c in two nodes, outer to inner.
 """
 
 import importlib
@@ -20,64 +11,126 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pytest
 
-from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
-from neofoam.framework.solver.registry import resolve_solver
-from neofoam.solver.multiRun import run
-from solver.multiRun.slab_solver import run_alone, slab
+from neofoam.framework.coupling import (
+    AitkenRelaxation,
+    InProcessCommChannel,
+    RegionCoupling,
+    RelativeConvergence,
+)
+from neofoam.framework.types import Placement
+from neofoam.solver.multiRun.configs import RegionCouplingConfig
 
+MULTI_RUN = importlib.import_module("neofoam.solver.multiRun.multiRun")
 CASES = Path(__file__).parent / "cases"
-# The package exports the multiRun solver under the module's name.
-MULTI_RUN_MODULE = importlib.import_module("neofoam.solver.multiRun.multiRun")
+CHAIN = CASES / "couplings" / "chain"
+REGIONS = ["a", "b", "c"]
 
 
-def _with_slab(name: str) -> Any:
-    return slab if name == "slab" else resolve_solver(name)
+def _couplings(case: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """multiRun's coupling of the regions a, b and c in a copy of ``case``."""
+    shutil.copytree(case, tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
+    result: dict[str, RegionCoupling] = MULTI_RUN.couplings(REGIONS, InProcessCommChannel())
+    return result
 
 
-@pytest.fixture(scope="module")
-def regions(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Context]:
-    run_dir = tmp_path_factory.mktemp("multiRun") / "two_regions"
-    shutil.copytree(CASES / "two_regions", run_dir)
-    with pytest.MonkeyPatch.context() as monkeypatch:
-        monkeypatch.setattr(MULTI_RUN_MODULE, "resolve_solver", _with_slab)
-        monkeypatch.chdir(run_dir)
-        return run()
+def test_couplings_builds_a_node_per_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    couplings = _couplings(CHAIN, tmp_path, monkeypatch)
 
-
-@pytest.mark.parametrize(("region", "case"), [("left", "slab_left"), ("right", "slab_right")])
-def test_multiRun_region_matches_its_single_region_run(
-    regions: dict[str, Context],
-    region: str,
-    case: str,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    shutil.copytree(CASES / case, tmp_path / case)
-    monkeypatch.chdir(tmp_path / case)
-    alone = run_alone()
-
-    np.testing.assert_allclose(
-        regions[region].fields["T"],
-        alone.fields["T"],
-        rtol=1e-14,
-        err_msg=f"region {region} vs case {case}",
-    )
-
-
-def test_multiRun_regions_step_the_same_times(regions: dict[str, Context]) -> None:
-    assert [(ctx.region, ctx.time.index) for ctx in regions.values()] == [
-        ("left", 10),
-        ("right", 10),
+    assert [node.name for node in couplings["b"].nodes] == ["outer", "inner"]
+    assert [node.name for node in couplings["a"].nodes] == ["inner"]
+    assert [node.name for node in couplings["c"].nodes] == ["outer"]
+    outer, inner = couplings["b"].nodes
+    assert (outer.exchanges, outer.max_iterations, outer.scheme) == (("b-c",), 7, "parallel")
+    assert (inner.exchanges, inner.max_iterations) == (("a-b",), 100)
+    assert isinstance(outer.acceleration["b-c"], AitkenRelaxation)
+    assert inner.acceleration == {}
+    assert [(type(c), c.data, c.limit) for c in outer.convergence] == [
+        (RelativeConvergence, "x", 1e-6),
+        (RelativeConvergence, "y", 1e-3),
     ]
+    assert inner.placement == {"b": Placement(("solve_x",))}
+    assert inner.placement_of("a") == Placement()
+    assert outer.placement_of("b") == Placement()
 
 
-def test_multiRun_regions_the_case_does_not_couple_run_without_coupling_ops(
-    regions: dict[str, Context],
+def test_couplings_of_a_region_the_case_does_not_run_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """slab adds its coupling model; without regionCoupling.yaml nothing couples."""
-    for ctx in regions.values():
-        assert len(Coupling.of(ctx).operations()) == 0
+    shutil.copytree(CHAIN, tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
+
+    with pytest.raises(ValueError, match=r"couple the regions \['c'\], which are not in"):
+        MULTI_RUN.couplings(["a", "b"], InProcessCommChannel())
+
+
+def _timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any = "none", env: Any = None
+) -> Any:
+    """multiRun's comm channel timeout, the chain's ``transportTimeout`` set to ``seconds``.
+
+    ``"none"``: no case file; ``"default"``: the file as it is.
+    """
+    (tmp_path / "system").mkdir()
+    if seconds != "none":
+        config = RegionCouplingConfig.load(case_dir=CHAIN)
+        if seconds != "default":
+            config.transportTimeout = seconds
+        config.save(case_dir=tmp_path)
+    monkeypatch.chdir(tmp_path)
+    if env is None:
+        monkeypatch.delenv(MULTI_RUN.TIMEOUT_VARIABLE, raising=False)
+    else:
+        monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, env)
+    return MULTI_RUN.transport_timeout()
+
+
+@pytest.mark.parametrize(
+    ("seconds", "timeout"),
+    [("none", 600.0), ("default", 600.0), (5, 5.0), (0, None), (None, None)],
+    ids=["no-file", "default", "seconds", "zero", "null"],
+)
+def test_the_transport_timeout_is_the_file_s(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any, timeout: Any
+) -> None:
+    assert _timeout(tmp_path, monkeypatch, seconds) == timeout
+
+
+@pytest.mark.parametrize(("env", "timeout"), [("2.5", 2.5), ("0", None)])
+def test_the_environment_variable_overrides_the_file_s_transport_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str, timeout: Any
+) -> None:
+    assert _timeout(tmp_path, monkeypatch, 5, env) == timeout
+
+
+@pytest.mark.parametrize("env", ["soon", "-1", "inf"])
+def test_a_broken_environment_variable_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str
+) -> None:
+    with pytest.raises(ValueError, match="NEOFOAM_COUPLING_TIMEOUT=.*at least 0"):
+        _timeout(tmp_path, monkeypatch, env=env)
+
+
+def test_run_hands_the_transport_timeout_to_the_transport(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    timeouts: list[Any] = []
+
+    class _Stop(Exception):
+        pass
+
+    def comm_channel(timeout: Any) -> None:
+        timeouts.append(timeout)
+        raise _Stop
+
+    shutil.copytree(CASES.parent / "limitations" / "cases" / "pair", tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
+    monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, "3")
+    monkeypatch.setattr(MULTI_RUN, "InProcessCommChannel", comm_channel)
+
+    with pytest.raises(_Stop):
+        MULTI_RUN.run()
+
+    assert timeouts == [3.0]

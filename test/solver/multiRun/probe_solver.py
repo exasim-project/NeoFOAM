@@ -4,20 +4,13 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""``probe`` — a test-only region solver to probe the coupling design with trivial math.
+"""``probe``: a test-only region solver of one number, ``field = offset + sum(gain * received)``.
 
-Each region solves one field, ``x`` or ``y`` (``solve_x`` / ``solve_y``), as::
-
-    field = offset + sum(gain * received)
-
-``constant/<region>/probe.yaml`` sets ``field``, ``offset`` and ``gains``, keyed
-``<patch>.<name>``: e.g. ``to_b.y: 0.5`` adds half of the ``y`` that arrives over
-patch ``to_b``. Every patch named in ``gains`` is a ``@coupled`` patch: it sends
-its field (:class:`X` or :class:`Y`) and receives the ``<name>`` of its gains,
-which it keeps.
-
-The knob ``coordinates: false`` gives the patches no points, on purpose. Every
-solve appends the new value to ``ctx.models["history"]``.
+``<region>/constant/probe.yaml`` sets ``field`` (``x`` or ``y``), ``offset``,
+``gains`` keyed ``<patch>.<name>`` (``to_b.y: 0.5`` adds half the ``y`` arriving
+over patch ``to_b``), the ``deltaT`` the region asks for, and ``coordinates:
+false`` for patches without points. Every patch of ``gains`` is ``@coupled``.
+Each solve appends ``(time index, value)`` to ``ctx.models["history"]``.
 """
 
 from pathlib import Path
@@ -29,7 +22,7 @@ from pydantic import BaseModel
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate, solutionLoop
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Array, Coupling, coupled
+from neofoam.framework.coupling import Array, Coupling, RegionCoupling, coupled
 from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
@@ -56,29 +49,26 @@ class ProbeConfig(BaseConfig):
     offset: float = 0.0
     gains: dict[str, float] = {}
     coordinates: bool = True
+    deltaT: Optional[float] = None
 
 
 class X(BaseModel):
-    """What a region that solves ``x`` exchanges: its value."""
+    """What a region that solves ``x`` exchanges."""
 
     x: Array
 
 
 class Y(BaseModel):
-    """What a region that solves ``y`` exchanges: its value."""
+    """What a region that solves ``y`` exchanges."""
 
     y: Array
 
 
-#: The exchange model of each field a region can solve.
 EXCHANGE: dict[str, Union[type[X], type[Y]]] = {"x": X, "y": Y}
 
 
 class ProbePatch:
-    """A coupled patch of the region: keeps what arrives as ``<patch>.<name>``.
-
-    :func:`patch_class` makes the ``@coupled`` class for what it sends and receives.
-    """
+    """A coupled patch of the region: keeps what arrives as ``<patch>.<name>``."""
 
     def __init__(self, ctx: Context, field: str, patch: str, coordinates: bool) -> None:
         self.ctx, self.field, self.patch = ctx, field, patch
@@ -94,7 +84,7 @@ class ProbePatch:
 
 
 def patch_class(field: str, received: str) -> type[ProbePatch]:
-    """The coupled patch of a region solving ``field`` that receives the partner's ``received``."""
+    """The ``@coupled`` patch of a region solving ``field`` that receives ``received``."""
     Sent, Received = EXCHANGE[field], EXCHANGE[received]
 
     @coupled
@@ -113,6 +103,30 @@ def patch_class(field: str, received: str) -> type[ProbePatch]:
 
     _Patch.__qualname__ = f"ProbePatch[{Sent.__name__} -> {Received.__name__}]"
     return _Patch
+
+
+def add_patches(ctx: Context, config: ProbeConfig, coupling: Optional[RegionCoupling]) -> None:
+    """The region's field, its coupling model and a coupled patch per patch of ``gains``."""
+    ctx.fields[config.field] = np.zeros(1)
+    ctx.models.update(probe=config, received={}, history=[], coupling=Coupling(coupling))
+    received: dict[str, str] = {}
+    for key in config.gains:
+        patch, name = key.split(".")
+        if received.setdefault(patch, name) != name:
+            raise ValueError(f"patch {patch} receives one field, got {received[patch]} and {name}")
+    ctx.models["patches"] = [
+        patch_class(config.field, name)(ctx, config.field, patch, config.coordinates)
+        for patch, name in sorted(received.items())
+    ]
+
+
+def solve(ctx: Context, index: int) -> None:
+    """``field = offset + sum(gain * received)``, recorded as ``(index, value)``."""
+    config = ctx.models["probe"]
+    received = ctx.models["received"]
+    value = config.offset + sum(g * received.get(key, 0.0) for key, g in config.gains.items())
+    ctx.fields[config.field] = np.full(1, value)
+    ctx.models["history"].append((index, value))
 
 
 probe = Solver("probe")
@@ -146,26 +160,15 @@ def _initialize(self: Any) -> Context:
     ctx = init.run()
     self.core_models = init.core_models
     config = ProbeConfig.load(case_dir=Path(self.region or "."))
-    ctx.fields[config.field] = np.zeros(1)
-    ctx.models.update(probe=config, received={}, history=[], coupling=Coupling(self.coupling))
-    received: dict[str, str] = {}
-    for key in config.gains:
-        patch, name = key.split(".")
-        if received.setdefault(patch, name) != name:
-            raise ValueError(f"patch {patch} receives one field, got {received[patch]} and {name}")
-    ctx.models["patches"] = [
-        patch_class(config.field, name)(ctx, config.field, patch, config.coordinates)
-        for patch, name in sorted(received.items())
-    ]
+    add_patches(ctx, config, self.coupling)
+    if config.deltaT is not None:
+        ctx.models["solution_loop"].set_delta_t(config.deltaT, adjust=False)
     return ctx
 
 
 @probe.execution_graph_step
 def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
-    """The time loop: set the time step, advance the time, solve the field.
-
-    A coupled region's time-step op agrees the time step in between.
-    """
+    """The time loop: set the time step, advance the time, solve the field."""
     loop_ops = Operations(ctx.models["solutionLoop"].operations)
     builder = StepBuilder()
     time_loop = Operation(
@@ -178,21 +181,11 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
     return builder, Operations()
 
 
-def _solve(ctx: Context) -> None:
-    config = ctx.models["probe"]
-    received = ctx.models["received"]
-    value = config.offset + sum(g * received.get(key, 0.0) for key, g in config.gains.items())
-    ctx.fields[config.field] = np.full(1, value)
-    ctx.models["history"].append(value)
-
-
 @probe.operation()
 def solve_x(self: Any, ctx: Context) -> None:
-    """``x = offset + sum(gain * received)``."""
-    _solve(ctx)
+    solve(ctx, ctx.time.index)
 
 
 @probe.operation()
 def solve_y(self: Any, ctx: Context) -> None:
-    """``y = offset + sum(gain * received)``."""
-    _solve(ctx)
+    solve(ctx, ctx.time.index)

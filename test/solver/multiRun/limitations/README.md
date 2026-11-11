@@ -1,14 +1,14 @@
 # Limitations of the region coupling
 
-Tiny multiRun cases of the test-only solver `probe` (`probe_solver.py`): every
+Tiny multiRun cases of the test-only solver `probe` (`../probe_solver.py`): every
 region solves one number, `field = offset + sum(gain * received)`, and couples
 the patches named in its `gains` with `@coupled` boundary conditions (it sends its
 field as the pydantic model `X` or `Y` and receives the partner's). Every region
 runs its own graph on its own thread; its `solve_<field>` runs inside its coupling op
 `<region>.coupling`, whose loop test hands the region's sides the partner's data,
-mapped. `system/regionCoupling.yaml` lists the `exchanges`; exchanges that share a
-region form one group, led by its last region. The cases couple parallel (the
-default scheme). No mesh, no physics.
+mapped. `system/regionCoupling.yaml` lists the `exchanges` and one parallel
+coupling node; exchanges that share a region form one group, led by its last
+region. No mesh, no physics.
 
 Run a case like any multiRun case (the runner only hands multiRun the `probe`
 solver, which is not a package under `neofoam.solver`):

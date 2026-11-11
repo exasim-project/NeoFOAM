@@ -4,19 +4,12 @@
 # NB: no ``from __future__ import annotations`` — operations take ``ctx: Context``
 # and the dependency resolver matches ``param.annotation is Context``.
 
-"""A test-only region solver: implicit 1D heat conduction in a slab, in numpy.
+"""``slab``: a test-only region solver of implicit 1D heat conduction, in numpy.
 
-The heat capacity is one, so ``diffusivity`` is also the conductivity. Each face
-of the slab (patch ``left`` / ``right``) is a mixed condition: the heat flux into
-its cell is ``h_own * value_fraction * (ref_value - T_cell)``, with ``h_own`` the
-conductance between the face and the cell centre. A fixed temperature is
-``value_fraction = 1``. A face may also take a fixed heat flux ``heat_in`` into
-its cell. Three conditions couple a face to a patch of another region:
-``coupledConduction`` (both ways a sink temperature and conductance,
-:class:`CoupledConduction`), and the Dirichlet-Neumann pair
-``coupledTemperature`` (takes the partner's wall temperature, sends its heat
-flux, :class:`CoupledTemperature`) and ``coupledHeatFlux`` (takes that heat flux,
-sends its wall temperature, :class:`CoupledHeatFlux`).
+Heat capacity one, so ``diffusivity`` is the conductivity. Each face (patch
+``left`` / ``right``) is a mixed condition, plus an optional heat flux
+``heat_in``; ``coupledConduction``, ``coupledTemperature`` and ``coupledHeatFlux``
+couple it to a patch of another region.
 """
 
 from pathlib import Path
@@ -55,7 +48,7 @@ class _SlabConfig(BaseConfig):
     cells: int
     length: float
     diffusivity: float
-    # position of the left face; places the patches of coupled regions
+    # x of the left face
     origin: float = 0.0
 
 
@@ -86,7 +79,6 @@ class SlabPatch:
         self.coordinates = np.array([[face]])
         self.ref_value = np.zeros(1)
         self.value_fraction = np.ones(1)
-        # heat flux through the face into the cell, besides the mixed condition
         self.heat_in = 0.0
 
     def h_own(self) -> float:
@@ -124,10 +116,7 @@ class Conduction(BaseModel):
 
 @coupled
 class CoupledConduction(SlabPatch):
-    """A face conducting heat to the patch of another region it is coupled with.
-
-    Both ways it exchanges :class:`Conduction`: its sink temperature and conductance.
-    """
+    """A face conducting heat to its partner; both ways a sink temperature and conductance."""
 
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
@@ -149,20 +138,20 @@ class CoupledConduction(SlabPatch):
 
 
 class WallTemperature(BaseModel):
-    """What the Neumann side of a Dirichlet-Neumann coupling sends: its wall temperature."""
+    """What the Neumann side sends."""
 
     T: Array
 
 
 class WallHeatFlux(BaseModel):
-    """What the Dirichlet side sends: the heat flux through the wall into its own slab."""
+    """What the Dirichlet side sends: the heat flux through the wall into its slab."""
 
     q: Array
 
 
 @coupled
 class CoupledTemperature(SlabPatch):
-    """The Dirichlet side: its face takes the partner's wall temperature, it sends its heat flux."""
+    """The Dirichlet side: takes the partner's wall temperature, sends its heat flux."""
 
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
@@ -184,8 +173,7 @@ class CoupledTemperature(SlabPatch):
 
 @coupled
 class CoupledHeatFlux(SlabPatch):
-    """The Neumann side: the heat flux into the partner's slab leaves its own; it sends its wall
-    temperature."""
+    """The Neumann side: takes the partner's heat flux, sends its wall temperature."""
 
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
@@ -225,7 +213,7 @@ slab = Solver("slab")
 
 
 def _create_init(region: Optional[str]) -> StagedInitRunner:
-    """The loop on the shared controlDict, the slab and its temperature from the region."""
+    """The loop on the shared controlDict, the slab and temperature of the region."""
     spec_builder = StagedInitSpec.build("slab")
     case_dir = Path(".")
 
@@ -258,8 +246,7 @@ def _create_init(region: Optional[str]) -> StagedInitRunner:
 
 @slab.initializer
 def _initialize(self: Any) -> Context:
-    """The context, then its patches; a coupled one adds itself to the region's
-    coupling model."""
+    """The context, then its patches; a coupled one adds itself to the coupling model."""
     init = _create_init(self.region)
     ctx = init.run()
     self.core_models = init.core_models
@@ -290,10 +277,7 @@ def _execution_graph(self: Any, ctx: Context) -> tuple[StepBuilder, Operations]:
 
 @slab.operation(first=True)
 def store_old_time(self: Any, ctx: Context) -> None:
-    """Keep the temperature of the last time step; a coupling loop solves from it again.
-
-    Marked ``first``: inside a coupling loop it runs once per time step.
-    """
+    """Keep the old time's temperature; ``first``: once per time step in a coupling loop."""
     ctx.fields["T_old"] = ctx.fields["T"].copy()
 
 
@@ -315,8 +299,3 @@ def solve_T(self: Any, ctx: Context) -> None:
         matrix[patch.cell, patch.cell] += h
         rhs[patch.cell] += h * patch.ref_value[0] + patch.heat_in
     ctx.fields["T"] = np.linalg.solve(matrix, rhs)
-
-
-def run_alone() -> Context:
-    """Run the single-region case in the working directory; return the final Context."""
-    return slab.instantiate().run()
