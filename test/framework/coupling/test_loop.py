@@ -84,6 +84,16 @@ def _never(changes: list[SideChange]) -> bool:
     return False
 
 
+class _Recording(InProcessTransport):
+    def __init__(self) -> None:
+        super().__init__()
+        self.tags: list[str] = []
+
+    def send(self, source: str, target: str, tag: str, message: Any) -> None:
+        self.tags.append(tag)
+        super().send(source, target, tag, message)
+
+
 def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
     """Couple ``a`` and ``b`` over patch ``p``, run one time step; their coupling ops."""
     regions = contexts(["a", "b"], [LINK], **loop)
@@ -149,72 +159,27 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     assert ("receive_b 0.0" in log) is parallel
 
 
-@pytest.mark.parametrize("parallel", [False, True], ids=["serial", "parallel"])
+@pytest.mark.parametrize(("scheme", "sent"), [("serial", 2), ("parallel", 0)])
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
-def test_coupling_op_sends_fresh_data_as_the_leader_decided_not_by_the_node_scheme(
-    parallel: bool,
+def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
+    scheme: Literal["serial", "parallel"], sent: int
 ) -> None:
-    # the node's scheme says the opposite of the controller's: the regions follow the leader
-    log: list[str] = []
-    a, b = _Side("a", log), _Side("b", log)
-    node = CouplingNode(
-        "coupling",
-        ("a-b",),
-        scheme="serial" if parallel else "parallel",
-        convergence=(_never,),
-        max_iterations=2,
-    )
-
-    def controller(sides: Any, label: str, /, *, node: CouplingNode) -> CouplingController:
-        return CouplingController(
-            sides, label, convergence=node.convergence, max_iterations=2, parallel=parallel
-        )
-
-    transport = InProcessTransport()
-    couplings = region_couplings(["a", "b"], [LINK], transport, nodes=[node], controller=controller)
+    transport = _Recording()
+    nodes = [
+        CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(_never,), max_iterations=2)
+    ]
+    couplings = region_couplings(["a", "b"], [LINK], transport, nodes=nodes)
     regions = {
         name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
         for name in ("a", "b")
     }
+    a, b = _Side("a", []), _Side("b", [])
     for side in (a, b):
         add_coupled(regions[side.name], "p", "x", side.side())
-    sent: list[str] = []
-    send = transport.send
-
-    def recording(source: str, target: str, tag: str, message: Any) -> None:
-        sent.append(tag)
-        send(source, target, tag, message)
-
-    transport.send = recording  # type: ignore[method-assign]
 
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
 
-    if parallel:
-        assert [entry for entry in log if entry.endswith("a") or "_a " in entry] == [
-            "receive_a 0.0",
-            "solve_a",
-            "receive_a 1.0",
-            "solve_a",
-        ]
-        assert [entry for entry in log if entry.endswith("b") or "_b " in entry] == [
-            "receive_b 0.0",
-            "solve_b",
-            "receive_b 1.0",
-            "solve_b",
-        ]
-    else:
-        assert log == [
-            "receive_a 0.0",
-            "solve_a",
-            "receive_b 1.0",
-            "solve_b",
-            "receive_a 1.0",
-            "solve_a",
-            "receive_b 2.0",
-            "solve_b",
-        ]
-    # a sends its data to b once per pass b receives it fresh, never else
-    assert sent.count("data:a-b") == (0 if parallel else 2)
+    assert transport.tags.count("data:a-b") == sent
 
 
 @pytest.mark.parametrize(
@@ -616,12 +581,18 @@ def test_a_convergence_over_no_data_raises_as_the_controller_is_built(
 ) -> None:
     with pytest.raises(ValueError, match=error):
         CouplingController(
-            _group(arrays), "b.coupling", convergence=[RelativeConvergence(data=data, limit=1e-5)]
+            _group(arrays),
+            "b.coupling",
+            CouplingNode(
+                "coupling", ("a-b",), convergence=(RelativeConvergence(data=data, limit=1e-5),)
+            ),
         )
 
 
 def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
-    controller = CouplingController(_group(("x",)), "b.coupling", convergence=[_never])
+    controller = CouplingController(
+        _group(("x",)), "b.coupling", CouplingNode("coupling", ("a-b",), convergence=(_never,))
+    )
     assert controller.residuals == {"x": math.inf}
 
     # the first decision starts the first pass: nothing measured yet

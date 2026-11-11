@@ -23,6 +23,7 @@ from neofoam.framework.context import Context, LoopEntry
 from neofoam.framework.coupling import (
     Array,
     Coupling,
+    CouplingNode,
     CouplingNotConvergedWarning,
     InProcessTransport,
     Link,
@@ -171,7 +172,8 @@ def test_the_controller_relaxes_the_data_carried_into_the_final_pass() -> None:
 
 
 def test_the_controller_tells_which_pass_is_final() -> None:
-    controller = CouplingController([], "c.coupling", convergence=[_never], max_iterations=2)
+    node = CouplingNode("coupling", ("a-b",), convergence=(_never,), max_iterations=2)
+    controller = CouplingController([], "c.coupling", node)
 
     assert controller.decide({}, 0) == {} and not controller.final
     assert controller.decide({}, 1) == {} and controller.final

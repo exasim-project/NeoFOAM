@@ -90,7 +90,7 @@ def _tree(ops: list[Operation]) -> list[Any]:
 def _two_nodes(transport: Optional[InProcessTransport] = None) -> dict[str, Context]:
     """a and b, coupled over x in the outer node and over y in the inner node (parallel)."""
     nodes = [
-        CouplingNode("outer", ("x",)),
+        CouplingNode("outer", ("x",), scheme="parallel"),
         CouplingNode(
             "inner",
             ("y",),
@@ -282,14 +282,14 @@ def test_a_serial_node_may_enclose_a_node_sharing_one_region() -> None:
 
     couplings = region_couplings(["a", "b", "c"], links, InProcessTransport(), nodes=nodes)
 
-    assert [node.scheme for node in couplings["b"].nodes] == ["serial", "parallel"]
+    assert [node.scheme for node in couplings["b"].nodes] == ["serial", "serial"]
 
 
-def test_a_node_is_parallel_by_default() -> None:
+def test_a_node_is_serial_by_default() -> None:
     couplings = region_couplings(["a", "b"], [X, Y], InProcessTransport())
 
     (node,) = couplings["a"].nodes
-    assert (node.name, node.scheme, node.parallel) == ("coupling", "parallel", True)
+    assert (node.name, node.scheme, node.parallel) == ("coupling", "serial", False)
 
 
 def _sides() -> list[GroupSide]:
@@ -314,7 +314,8 @@ def test_an_acceleration_relaxes_only_the_sides_of_its_exchange() -> None:
         relaxed.append([float(data["v"][0]) for data in sent])
         return [{"v": data["v"] / 2} for data in sent]
 
-    controller = CouplingController(_sides(), "b.n", parallel=True, acceleration={"x": halve})
+    node = CouplingNode("n", ("x", "y"), scheme="parallel", acceleration={"x": halve})
+    controller = CouplingController(_sides(), "b.n", node)
 
     carried = controller.decide(_data(1.0, 2.0, 10.0, 20.0), 0)
 
@@ -332,9 +333,8 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
 
         return converged
 
-    controller = CouplingController(
-        _sides(), "b.n", convergence=[measure("first"), measure("second")], max_iterations=10
-    )
+    node = CouplingNode("n", ("x", "y"), convergence=(measure("first"), measure("second")))
+    controller = CouplingController(_sides(), "b.n", node)
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None
 
@@ -348,7 +348,7 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
 
 
 def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> None:
-    controller = CouplingController(_sides(), "b.n", max_iterations=10)
+    controller = CouplingController(_sides(), "b.n", CouplingNode("n", ("x", "y")))
 
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 1) is not None
@@ -411,7 +411,8 @@ def test_region_couplings_check_the_nodes(nodes: list[CouplingNode], error: str)
 
 
 def test_a_region_s_field_is_in_at_most_one_node() -> None:
-    regions = _contexts(["a", "b"], [X, Y], [CouplingNode("n", ("x",)), CouplingNode("m", ("y",))])
+    nodes = [CouplingNode("n", ("x",), scheme="parallel"), CouplingNode("m", ("y",))]
+    regions = _contexts(["a", "b"], [X, Y], nodes)
     add_coupled(regions["a"], "p", "T", _side(1.0, []))
     add_coupled(regions["a"], "q", "T", _side(1.0, []))
 
