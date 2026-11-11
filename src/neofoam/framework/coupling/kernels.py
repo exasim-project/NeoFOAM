@@ -74,7 +74,7 @@ class CouplingMapping(BaseModel):
 
     Example::
 
-        mapper = exchange.mapping.bind(partner_points, points)
+        mapper = link.mapping.bind(partner_points, points)
         mapped = mapper({"T": values})
     """
 
