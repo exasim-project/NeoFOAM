@@ -5,22 +5,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Optional, Sequence
 
-from neofoam.framework.operations import Operation, Operations, SequentialOp
+from neofoam.framework.operations import IterativeOp, Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from . import field_port
 from .coupled import CoupledPort
 from .data import base_name
 from .field_port import FieldAccess
-from .location import Location, MeshGeometry
+from .location import Geometry, Location, MeshGeometry
 from .loop._loop_op import CouplingLoopOp
-
-if TYPE_CHECKING:
-    from neofoam.framework.context import Context
-
-    from .exchanges import ParticipantExchanges
 from .loop._time_step import (
     INCREMENT_TIME,
     SET_TIME_STEP,
@@ -28,6 +23,11 @@ from .loop._time_step import (
     operation_names,
     serial_holder,
 )
+
+if TYPE_CHECKING:
+    from neofoam.framework.context import Context
+
+    from .exchanges import CouplingLoop, ParticipantExchanges
 
 
 class Participant:
@@ -122,9 +122,10 @@ class Participant:
         geometries = {port.name: port.location.geometry(self.geometry) for port in self.ports}
         ops: list[Operation] = []
         for loop in coupling.loops:
-            couple = CouplingLoopOp(coupling, loop, by_loop[loop.name], geometries)
+            couple = _coupling_op(coupling, loop, by_loop[loop.name], geometries)
             metadata = OperationMetadata(
-                op_name=couple.label, wraps=loop.placement_of(coupling.region)
+                op_name=f"{coupling.region}.{loop.name}",
+                wraps=loop.placement_of(coupling.region),
             )
             ops.append(Operation(func=couple, metadata=metadata))
         return Operations(ops)
@@ -167,8 +168,11 @@ class Participant:
                 f"but its graph has no {missing}; the coupled regions agree on the time step "
                 f"between the solutionLoop's {SET_TIME_STEP} and {INCREMENT_TIME}"
             )
+        step: Callable[[Context], None] = TimeStep(coupling)
+        if coupling.comm is not None:
+            step = coupling.comm.time_step(step)
         return Operation(
-            func=SequentialOp(TimeStep(coupling)),
+            func=SequentialOp(step),
             metadata=OperationMetadata(
                 op_name=f"{coupling.region}.time_step",
                 depends_on=[SET_TIME_STEP],
@@ -196,6 +200,18 @@ class Participant:
                 f"parallel or place it around named operations "
                 f"(wraps.{coupling.region}.operations)"
             )
+
+
+def _coupling_op(
+    coupling: ParticipantExchanges,
+    loop: CouplingLoop,
+    ports: Sequence[CoupledPort],
+    geometries: Mapping[str, Geometry],
+) -> IterativeOp:
+    """The loop of ``loop``; on several MPI processes the region's communicator builds it."""
+    if coupling.comm is None:
+        return CouplingLoopOp(coupling, loop, ports, geometries)
+    return coupling.comm.coupling_op(coupling, loop, ports, geometries)
 
 
 def coupling(ctx: Context) -> Participant:

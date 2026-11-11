@@ -3,21 +3,15 @@
 
 """The MPI comm channel between region roots, and a region's processes (:class:`RegionComm`).
 
-Without MPI, :class:`MpiTransport` runs over an in-memory channel between two
-threads (``FakeChannel``: ``isend``, ``iprobe`` and ``recv`` of one tag, in
-order per pair as MPI's), and :class:`RegionComm` of one process hands back
-what it gets. Under ``mpirun`` ``mpi_transport_worker.py`` runs each scenario
-on real processes: order and mailbox by tag, the timeout, a partner that closed
-or aborted, pickling, and the gather and scatter of a region with uneven rows
-and an empty process. Each ``mpirun`` runs in a subprocess with a timeout, so a
-hang fails it; those tests need mpi4py and ``mpirun`` and skip without them.
+Without MPI the comm channel runs over an in-memory channel (``FakeChannel``, in
+order per pair as MPI); a comm channel call that should return is run under a
+hang guard (``_within``). Under ``mpirun`` ``mpi_transport_worker.py`` runs each
+scenario on real processes, in a subprocess with a timeout.
 """
 
 from __future__ import annotations
 
-import importlib.util
 import os
-import shutil
 import subprocess
 import sys
 import threading
@@ -27,6 +21,7 @@ from typing import Any, Callable, Optional
 
 import numpy as np
 import pytest
+from _mpirun import mpirun, needs_mpi
 
 from neofoam.framework.coupling import (
     CommChannelClosed,
@@ -34,33 +29,38 @@ from neofoam.framework.coupling import (
     CouplingTimeout,
     MpiTransport,
 )
-from neofoam.framework.coupling.mpi import FollowerTransport, RegionComm
 
-HERE = Path(__file__).parent
-WORKER = HERE / "mpi_transport_worker.py"
-TIMEOUT = 120
+WORKER = Path(__file__).parent / "mpi_transport_worker.py"
+# seconds: a hang guard, never reached by a passing test
+HANG = 30.0
 
 
 class _Request:
+    def __init__(self, completes: bool) -> None:
+        self._completes = completes
+
     def Test(self) -> bool:  # noqa: N802 - mpi4py's name
-        return True
+        return self._completes
 
     def Wait(self) -> None:  # noqa: N802 - mpi4py's name
         pass
 
 
 class FakeChannel:
-    """One rank's end of an in-memory channel: what mpi4py's lowercase point to point does."""
+    """One rank's end of an in-memory channel; ``completes=False``: no send ever completes."""
 
-    def __init__(self, rank: int, boxes: dict[int, deque[Any]], lock: threading.Lock) -> None:
+    def __init__(
+        self, rank: int, boxes: dict[int, deque[Any]], lock: threading.Lock, completes: bool
+    ) -> None:
         self.rank = rank
         self._boxes = boxes
         self._lock = lock
+        self._completes = completes
 
     def isend(self, payload: bytes, dest: int, tag: int) -> _Request:
         with self._lock:
             self._boxes[dest].append(payload)
-        return _Request()
+        return _Request(self._completes)
 
     def iprobe(self, tag: int) -> bool:
         with self._lock:
@@ -72,18 +72,20 @@ class FakeChannel:
         return payload
 
 
-def _pair(timeout: Optional[float] = 5.0) -> tuple[MpiTransport, MpiTransport]:
+def _pair(
+    timeout: Optional[float] = HANG, completes: bool = True
+) -> tuple[MpiTransport, MpiTransport]:
     boxes: dict[int, deque[Any]] = {0: deque(), 1: deque()}
     lock = threading.Lock()
     roots = {"a": 0, "b": 1}
     return (
-        MpiTransport(FakeChannel(0, boxes, lock), roots, "a", timeout=timeout),
-        MpiTransport(FakeChannel(1, boxes, lock), roots, "b", timeout=timeout),
+        MpiTransport(FakeChannel(0, boxes, lock, completes), roots, "a", timeout=timeout),
+        MpiTransport(FakeChannel(1, boxes, lock, completes), roots, "b", timeout=timeout),
     )
 
 
-def _both(a: Callable[[], None], b: Callable[[], None]) -> None:
-    """Run ``a`` and ``b`` on threads of their own; raise the first error."""
+def _within(*tasks: Callable[[], None]) -> None:
+    """Run ``tasks`` on threads of their own; fail if one hangs, raise the first error."""
     errors: list[BaseException] = []
 
     def run(task: Callable[[], None]) -> None:
@@ -92,17 +94,17 @@ def _both(a: Callable[[], None], b: Callable[[], None]) -> None:
         except BaseException as error:
             errors.append(error)
 
-    threads = [threading.Thread(target=run, args=(task,)) for task in (a, b)]
+    threads = [threading.Thread(target=run, args=(task,), daemon=True) for task in tasks]
     for thread in threads:
         thread.start()
     for thread in threads:
-        thread.join(timeout=30)
-    assert not any(thread.is_alive() for thread in threads), "a comm channel hangs"
+        thread.join(timeout=HANG)
+    assert not any(thread.is_alive() for thread in threads), "a comm channel call hangs"
     if errors:
         raise errors[0]
 
 
-def test_messages_arrive_by_tag_in_the_order_they_were_sent() -> None:
+def test_mpi_transport_delivers_by_tag_in_the_order_sent() -> None:
     a, b = _pair()
     for i in range(6):
         a.send("a", "b", "odd" if i % 2 else "even", {"i": i, "v": np.full(2, float(i))})
@@ -114,7 +116,7 @@ def test_messages_arrive_by_tag_in_the_order_they_were_sent() -> None:
     assert even == [0, 2, 4]
 
 
-def test_a_receive_times_out_naming_what_waits_and_what_arrived() -> None:
+def test_mpi_transport_receive_times_out_naming_the_messages_not_received() -> None:
     a, b = _pair(timeout=0.05)
     a.send("a", "b", "extra", 1)
     a.send("a", "b", "extra", 2)
@@ -127,14 +129,14 @@ def test_a_receive_times_out_naming_what_waits_and_what_arrived() -> None:
     assert "undelivered messages: a→b 'extra' (2)" in message
 
 
-def test_a_message_that_does_not_pickle_fails_at_its_send() -> None:
+def test_mpi_transport_refuses_a_message_that_does_not_pickle() -> None:
     a, _b = _pair()
 
     with pytest.raises(TypeError, match="the message 'f' from region a to region b is not plain"):
         a.send("a", "b", "f", lambda: 1)
 
 
-def test_a_partner_that_closed_fails_a_receive_at_once_after_what_it_sent() -> None:
+def test_mpi_transport_receive_from_a_closed_partner_raises_after_what_it_sent() -> None:
     a, b = _pair(timeout=None)
     seen: list[Any] = []
 
@@ -148,23 +150,23 @@ def test_a_partner_that_closed_fails_a_receive_at_once_after_what_it_sent() -> N
             b.receive("a", "b", "never")
         b.close("b")
 
-    _both(first, second)
+    _within(first, second)
 
     assert seen == ["bye"]
 
 
-def test_a_partner_that_aborted_closes_the_comm_channel() -> None:
+def test_mpi_transport_receive_from_an_aborted_partner_raises_transport_closed() -> None:
     a, b = _pair(timeout=None)
     a.abort(["a"])
 
     with pytest.raises(CommChannelClosed, match="which left the coupling"):
         b.receive("a", "b", "never")
-    b.close("b")
+    _within(lambda: b.close("b"))
 
 
-def test_a_comm_channel_is_its_roots_alone() -> None:
+def test_mpi_transport_belongs_to_its_root() -> None:
     boxes: dict[int, deque[Any]] = {0: deque(), 1: deque()}
-    channel = FakeChannel(1, boxes, threading.Lock())
+    channel = FakeChannel(1, boxes, threading.Lock(), completes=True)
 
     with pytest.raises(ValueError, match="only a region's root talks to the other regions"):
         MpiTransport(channel, {"a": 0, "b": 1}, "a")
@@ -173,42 +175,6 @@ def test_a_comm_channel_is_its_roots_alone() -> None:
     comm_channel = MpiTransport(channel, {"a": 0, "b": 1}, "b")
     with pytest.raises(ValueError, match="the MPI comm channel of region b sends as region a"):
         comm_channel.send("a", "b", "x", 1)
-
-
-def test_a_follower_talks_to_no_region() -> None:
-    follower = FollowerTransport("left")
-
-    with pytest.raises(RuntimeError, match="only the region's root talks to other regions"):
-        follower.send("left", "right", "x", 1)
-    with pytest.raises(RuntimeError, match="cannot receive 'x' from region right"):
-        follower.receive("right", "left", "x")
-    follower.close("left")
-
-
-def test_a_region_on_one_process_hands_back_what_it_gets() -> None:
-    comm = RegionComm()
-    local = np.arange(6.0).reshape(2, 3)
-
-    gathered = comm.gather(local)
-
-    assert (comm.size, comm.rank, comm.is_root) == (1, 0, True)
-    assert gathered is not None and gathered[0] is local and gathered[1] == (2,)
-    assert comm.gather(None) == (None, None)
-    assert comm.scatter(local, (2,)) is local
-    assert comm.bcast("x") == "x"
-    assert comm.agree("q", 1.0) == 1.0
-
-
-def _mpirun() -> Optional[str]:
-    """The ``mpirun`` next to the interpreter (its environment's MPI), else the one on PATH."""
-    beside = Path(sys.executable).parent / "mpirun"
-    return str(beside) if beside.exists() else shutil.which("mpirun")
-
-
-needs_mpi = pytest.mark.skipif(
-    importlib.util.find_spec("mpi4py") is None or _mpirun() is None,
-    reason="needs mpi4py and mpirun (the extra neofoam[mpi])",
-)
 
 
 @needs_mpi
@@ -224,12 +190,12 @@ needs_mpi = pytest.mark.skipif(
         ("region_comm", 5),
     ],
 )
-def test_mpi(scenario: str, processes: int) -> None:
+def test_mpi_transport_under_mpirun(scenario: str, processes: int) -> None:
     run = subprocess.run(
-        [str(_mpirun()), "-np", str(processes), sys.executable, str(WORKER), scenario],
+        [str(mpirun()), "-np", str(processes), sys.executable, str(WORKER), scenario],
         capture_output=True,
         text=True,
-        timeout=TIMEOUT,
+        timeout=120,
         env={**os.environ, "OMPI_MCA_rmaps_base_oversubscribe": "1"},
     )
 

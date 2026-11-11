@@ -11,17 +11,19 @@ time step: both need the partner back inside the iteration.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Literal, Mapping, Optional, Sequence
 
 from neofoam.framework.types import Placement
 
 from .comm.channel import CommChannel
 from .data import End
 from .field_port import FieldPort, check_field_ports
-from .mpi import RegionComm
 from .strategies.acceleration import CouplingAcceleration
 from .strategies.convergence import CouplingConvergence
 from .strategies.mapping import CouplingMapping, default_mapping
+
+if TYPE_CHECKING:
+    from .mpi import RegionComm
 
 
 @dataclass(frozen=True)
@@ -78,17 +80,24 @@ class ParticipantExchanges:
     """What region ``region`` knows of its case's coupling, built by :func:`participant_exchanges`.
 
     ``group``: the regions coupled with it in stepping order; ``exchanges``: the
-    group's exchanges; ``loops``: those with an exchange of this region, outer to inner;
-    ``comm``: the region's MPI processes (one on threads).
+    group's exchanges; ``loops``: those with an exchange of this region, outer to inner.
+    Under MPI ``comm_channel`` is ``None`` on a process that is not its region's root
+    and ``comm`` holds the processes of a region on several.
     """
 
     region: str
     group: tuple[str, ...]
     exchanges: tuple[Exchange, ...]
-    comm_channel: CommChannel
+    comm_channel: Optional[CommChannel]
     loops: tuple[CouplingLoop, ...] = ()
     field_ports: tuple[FieldPort, ...] = ()
-    comm: RegionComm = field(default_factory=RegionComm)
+    comm: Optional[RegionComm] = None
+
+    def require_transport(self) -> CommChannel:
+        """The comm channel; ``ValueError`` on an MPI process that is not its region's root."""
+        if self.comm_channel is None:
+            raise ValueError(f"region {self.region} has no comm channel on this process")
+        return self.comm_channel
 
     @property
     def leader(self) -> str:
@@ -129,7 +138,7 @@ class ParticipantExchanges:
 def participant_exchanges(
     regions: Sequence[str],
     exchanges: Sequence[Exchange],
-    comm_channel: CommChannel,
+    comm_channel: Optional[CommChannel],
     loops: Sequence[CouplingLoop],
     field_ports: Optional[Mapping[str, Sequence[FieldPort]]] = None,
 ) -> dict[str, ParticipantExchanges]:
@@ -145,7 +154,7 @@ def participant_exchanges(
 def build_participant_exchanges(
     regions: Sequence[str],
     exchanges: Sequence[Exchange],
-    comm_channel: CommChannel,
+    comm_channel: Optional[CommChannel],
     loops: Sequence[CouplingLoop],
     field_ports: Optional[Mapping[str, Sequence[FieldPort]]] = None,
 ) -> dict[str, ParticipantExchanges]:

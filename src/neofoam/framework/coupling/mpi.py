@@ -3,27 +3,18 @@
 
 """Coupling across MPI processes: :class:`MpiTransport` between regions, :class:`RegionComm` within.
 
-Under ``mpirun`` every region runs on processes of its own (multiRun splits
-MPI_COMM_WORLD by region). Only a region's **root**, rank 0 of its
-communicator, talks to the other regions: the roots exchange the coupling's
-messages over an :class:`MpiTransport`, with today's protocol. The other
-processes of a region (its **followers**) hand their part of each side to the
-root and get theirs back, over the region's :class:`RegionComm`: the root
-gathers what every process sends, runs the exchange, scatters what each process
-receives and broadcasts the leader's decision and the agreed time step. A
-region on one process has a :class:`RegionComm` of size 1, which does nothing:
-the coupling of threads.
-
-Both take an mpi4py communicator (duck-typed: mpi4py is imported by the
-launcher only, the extra ``neofoam[mpi]``).
+Only a region's root, rank 0 of its communicator, talks to other regions. Its
+coupling ops run on the whole patches: what the sides of every process send is
+gathered to the root, what they receive is scattered back. The other processes
+run a follower op in place of each coupling op. Communicators are mpi4py's,
+duck-typed (the launcher imports mpi4py).
 
 Example::
 
     channel = MPI.COMM_WORLD.Dup()                       # every process
     comm = MPI.COMM_WORLD.Split(color, key=world.rank)    # the region's processes
-    comm_channel = (MpiTransport(channel, {"left": 0, "right": 2}, region)
-                 if comm.rank == 0 else FollowerTransport(region))
-    region_comm = RegionComm(comm)
+    comm_channel = MpiTransport(channel, {"left": 0, "right": 2}, region) if comm.rank == 0 else None
+    coupling = replace(coupling, comm_channel=comm_channel, comm=RegionComm(comm))
 """
 
 from __future__ import annotations
@@ -31,26 +22,31 @@ from __future__ import annotations
 import pickle
 import time
 from collections import defaultdict, deque
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from dataclasses import replace
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Mapping, Optional, Sequence
 
 import numpy as np
+from pydantic import BaseModel
 
-from .comm_channel import (
-    DEFAULT_TIMEOUT,
-    CommChannel,
-    CommChannelClosed,
-    CouplingDeadlock,
-    CouplingTimeout,
-)
+from neofoam.framework.operations import IterativeOp
+
+from .comm_channel import DEFAULT_TIMEOUT, CommChannelClosed, CouplingDeadlock, CouplingTimeout
+from .data import ExchangeSide, _sent
+from .loop import CouplingOp
+
+if TYPE_CHECKING:
+    from neofoam.framework.context import Context
+
+    from .region import CouplingNode, RegionCoupling
 
 # What travels between roots, pickled: (source region, kind, tag, message).
 _MESSAGE, _CLOSED, _ABORTED = "message", "closed", "aborted"
 
-# How long a waiting receive sleeps between two polls, in seconds: doubling from the first.
+# Seconds a waiting root sleeps between two polls: doubling from the first.
 _FIRST_PAUSE, _LONGEST_PAUSE = 1e-5, 1e-3
 
 
-class MpiTransport(CommChannel):
+class MpiTransport:
     """A comm channel between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.
 
     ``channel`` is a communicator of every process of the run (a ``Dup`` of
@@ -103,6 +99,9 @@ class MpiTransport(CommChannel):
         self._aborted: set[str] = set()
         self._requests: list[Any] = []
         self._left = False
+
+    def start(self, regions: Iterable[str]) -> None:
+        pass
 
     def send(self, source: str, target: str, tag: str, message: Any) -> None:
         self._own(source, "sends as")
@@ -243,69 +242,27 @@ class MpiTransport(CommChannel):
         return "\n".join(lines)
 
 
-class FollowerTransport(CommChannel):
-    """The comm channel of a region's follower (not its root): it talks to no other region.
-
-    Its coupling goes over the region's :class:`RegionComm` to the root; a send
-    or receive raises ``RuntimeError``, :meth:`close` does nothing.
-    """
-
-    def __init__(self, region: str) -> None:
-        self.region = region
-
-    def send(self, source: str, target: str, tag: str, message: Any) -> None:
-        raise RuntimeError(self._refusal(f"send '{tag}' to region {target}"))
-
-    def receive(self, source: str, target: str, tag: str) -> Any:
-        raise RuntimeError(self._refusal(f"receive '{tag}' from region {source}"))
-
-    def close(self, region: str) -> None:
-        pass
-
-    def _refusal(self, what: str) -> str:
-        return (
-            f"a process of region {self.region} that is not its root cannot {what}; only the "
-            "region's root talks to other regions"
-        )
-
-
 class RegionComm:
-    """The processes of one region, for its coupling: the root gathers, scatters and broadcasts.
+    """The processes of a region on several, for its coupling: the root speaks for them.
 
-    ``comm`` is the region's mpi4py communicator, ``None`` for a region on one
-    process: then every method hands back what it gets (size 1, the coupling of
-    threads). Rank 0 is the root. Every method is collective: each process of
-    the region calls it, in the same order.
+    ``comm`` is the region's mpi4py communicator; rank 0 is the root. Every
+    method is collective: each process of the region calls it, in the same order.
     """
 
-    def __init__(self, comm: Any = None) -> None:
+    def __init__(self, comm: Any) -> None:
         self.comm = comm
-
-    @property
-    def size(self) -> int:
-        """The number of processes of the region."""
-        return 1 if self.comm is None else int(self.comm.size)
-
-    @property
-    def rank(self) -> int:
-        """This process's rank in the region."""
-        return 0 if self.comm is None else int(self.comm.rank)
 
     @property
     def is_root(self) -> bool:
         """Whether this process is the region's root, rank 0."""
-        return self.rank == 0
+        return int(self.comm.rank) == 0
 
     def gather(self, local: Any) -> Optional[tuple[Any, Optional[tuple[int, ...]]]]:
-        """Every process's rows of ``local`` (axis 0), in rank order, on the root.
+        """Every process's rows of ``local`` in rank order, with the rows of each, on the root.
 
-        Returns ``(full, counts)`` on the root (``counts``: the rows of each
-        process, 0 allowed), ``None`` elsewhere. ``local`` ``None`` on every
-        process gives ``(None, None)``; raises ``ValueError`` when some
-        processes pass ``None`` and others do not.
+        ``None`` on the other processes; ``(None, None)`` when every process
+        passes ``None``. Raises ``ValueError`` when only some do.
         """
-        if self.size == 1:
-            return local, None if local is None else (len(local),)
         parts = self.comm.gather(None if local is None else np.asarray(local, dtype=float), root=0)
         if not self.is_root:
             return None
@@ -319,54 +276,121 @@ class RegionComm:
         return (np.concatenate(filled) if filled else parts[0]), counts
 
     def scatter(self, full: Any, counts: Optional[Sequence[int]]) -> Any:
-        """Each process's rows of the root's ``full`` (axis 0): ``counts[rank]`` of them, in order.
-
-        ``full`` and ``counts`` matter on the root only. Raises ``ValueError`` on
-        the root when ``counts`` do not add up to the rows of ``full``.
-        """
-        if self.size == 1:
-            return full
+        """Each process's ``counts[rank]`` rows of the root's ``full``, in order."""
         parts = None
         if self.is_root:
             full = np.asarray(full, dtype=float)
-            if counts is None or len(counts) != self.size or sum(counts) != len(full):
+            if counts is None or len(counts) != self.comm.size or sum(counts) != len(full):
                 raise ValueError(
-                    f"cannot scatter {len(full)} rows over the region's {self.size} processes "
-                    f"by the counts {counts}"
+                    f"cannot scatter {len(full)} rows over the region's {self.comm.size} "
+                    f"processes by the counts {counts}"
                 )
             parts = np.split(full, np.cumsum(counts)[:-1])
         return self.comm.scatter(parts, root=0)
 
     def bcast(self, value: Any) -> Any:
         """The root's ``value``, on every process."""
-        if self.size == 1:
-            return value
         return self.comm.bcast(value, root=0)
 
-    def agree(self, what: str, value: Any) -> Any:
-        """``value`` of rank 0, checked equal on every process (on the root).
+    def coupling_op(
+        self, coupling: RegionCoupling, node: CouplingNode, sides: Sequence[ExchangeSide]
+    ) -> IterativeOp:
+        """The loop of ``node`` here: the coupling op on the root, a follower elsewhere."""
+        if self.is_root:
+            return _RootOp(coupling, node, sides, self)
+        return _FollowerOp(node, sides, self)
 
-        For a value that is one for the whole region (a plain field of a side).
-        Raises ``ValueError`` on the root, naming ``what``, when a process has
-        another value; returns ``value`` elsewhere.
-        """
-        if self.size == 1:
-            return value
-        values = self.comm.gather(value, root=0)
-        if not self.is_root:
-            return value
-        differ = [rank for rank, other in enumerate(values) if not _same(other, values[0])]
-        if differ:
-            found = ", ".join(f"rank {rank}: {other!r}" for rank, other in enumerate(values))
-            raise ValueError(
-                f"{what} differs between the processes of its region ({found}); a field that "
-                "is not Array is one value for the interface, the same on every process"
-            )
-        return values[0]
+    def time_step(self, agree: Callable[[Context], None]) -> Callable[[Context], None]:
+        """``agree`` on the root; its time step on every process of the region."""
+
+        def step(ctx: Context) -> None:
+            if self.is_root:
+                agree(ctx)
+            ctx.time.delta_t = self.bcast(ctx.time.delta_t)
+
+        return step
 
 
-def _same(first: Any, second: Any) -> bool:
-    """Whether two plain values are equal; NaN equals NaN."""
-    if isinstance(first, float) and isinstance(second, float):
-        return first == second or (first != first and second != second)
-    return bool(first == second)
+class _Patch:
+    """A side's patch over the region's processes, its rows per process known once gathered."""
+
+    def __init__(self, comm: RegionComm, side: ExchangeSide) -> None:
+        self._comm = comm
+        self._counts: Optional[tuple[int, ...]] = None
+        self.points = self.gather(side.coordinates)
+
+    def gather(self, rows: Any) -> Any:
+        gathered = self._comm.gather(rows)
+        if gathered is None:
+            return None
+        full, counts = gathered
+        if self._counts is None:
+            self._counts = counts
+        return full
+
+    def hand_over(self, side: ExchangeSide, whole: Optional[BaseModel]) -> None:
+        """Hand ``side`` its rows of what the whole patch receives (``whole``, on the root)."""
+        rows = {
+            name: self._comm.scatter(None if whole is None else getattr(whole, name), self._counts)
+            for name in side.receives.model_fields
+        }
+        side.receive(side.receives.model_validate(rows))
+
+
+class _RootOp(CouplingOp):
+    """The coupling op on a region's root: on the whole patches, its decision broadcast."""
+
+    def __init__(
+        self,
+        coupling: RegionCoupling,
+        node: CouplingNode,
+        sides: Sequence[ExchangeSide],
+        comm: RegionComm,
+    ) -> None:
+        self._comm = comm
+        self._parts = [(side, _Patch(comm, side)) for side in sides]
+        self._whole: dict[str, BaseModel] = {}
+        super().__init__(coupling, node, [self._whole_side(*part) for part in self._parts])
+
+    def _whole_side(self, side: ExchangeSide, patch: _Patch) -> ExchangeSide:
+        def send() -> BaseModel:
+            sent = side.send()
+            fields = {name: patch.gather(getattr(sent, name)) for name in side.sends.model_fields}
+            return side.sends.model_validate(fields)
+
+        def receive(whole: BaseModel) -> None:
+            self._whole[side.patch] = whole
+
+        return replace(side, send=send, receive=receive, coordinates=patch.points)
+
+    def _test(self, ctx: Context) -> bool:
+        go_on = super()._test(ctx)
+        self._comm.bcast((go_on, go_on and ctx.loops[-1].final))
+        if go_on:
+            for side, patch in self._parts:
+                patch.hand_over(side, self._whole.pop(side.patch))
+        return go_on
+
+
+class _FollowerOp(IterativeOp):
+    """A coupling op's place on a region's other processes: the root decides for them."""
+
+    def __init__(self, node: CouplingNode, sides: Sequence[ExchangeSide], comm: RegionComm) -> None:
+        super().__init__(self._test)
+        self.node = node
+        self._comm = comm
+        self._parts = [(side, _Patch(comm, side)) for side in sides]
+
+    def _test(self, ctx: Context) -> bool:
+        iteration = ctx.loops[-1].iteration
+        time = getattr(ctx.time, "value", None)
+        for side, patch in self._parts:
+            sent = _sent(side, self.node.name, iteration, time)
+            for name in side.sends.model_fields:
+                patch.gather(sent[name])
+        go_on, final = self._comm.bcast(None)
+        if go_on:
+            ctx.mark_final(final)
+            for side, patch in self._parts:
+                patch.hand_over(side, None)
+        return bool(go_on)

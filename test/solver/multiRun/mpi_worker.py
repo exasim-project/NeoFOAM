@@ -32,7 +32,7 @@ from typing import Any
 import numpy as np
 
 from neofoam.framework.coupling import data as coupling_data
-from neofoam.framework.coupling import loop as coupling_loop
+from neofoam.framework.coupling import mpi as coupling_mpi
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.multiRun import run
 from solver.multiRun.foam_solver import FAIL_VARIABLE, foamDiffusion
@@ -67,30 +67,27 @@ def _sides(ctx: Any) -> dict[str, Any]:
         return {}
     sides = {}
     for side in coupling.sides:
-        sent = coupling_loop._sent(side)
+        sent = coupling_data._sent(side, "", 0, None)
         sides[side.label] = {
             "points": np.asarray(side.coordinates).reshape(-1, 3).tolist(),
-            **{
-                name: np.asarray(sent[name]).tolist()
-                for name in coupling_data._array_names(side.sends)
-            },
+            **{name: np.asarray(values).tolist() for name, values in sent.items()},
         }
     return sides
 
 
 def _fail_coupled(region: str, rank: int) -> None:
-    """Make the coupled sides of ``region`` raise on global rank ``rank`` at their third send."""
-    sent = coupling_loop._sent
+    """Make ``region``'s sides raise on global rank ``rank`` (a follower) at their third send."""
+    sent = coupling_mpi._sent
     calls = [0]
 
-    def failing(side: Any) -> Any:
+    def failing(side: Any, *args: Any) -> Any:
         if side.region == region and int(os.environ.get("OMPI_COMM_WORLD_RANK", 0)) == rank:
             calls[0] += 1
             if calls[0] == 3:
                 raise RuntimeError(f"region {region} fails on rank {rank} as asked")
-        return sent(side)
+        return sent(side, *args)
 
-    coupling_loop._sent = failing
+    coupling_mpi._sent = failing
 
 
 def main(argv: list[str]) -> dict[str, Any]:

@@ -153,7 +153,7 @@ def region_comm() -> None:
         first = WORLD.rank
         parts = [
             (rank * 100 + np.arange(n * 3.0)).reshape(n, 3)
-            for rank, n in zip(range(first, first + comm.size), expected_counts)
+            for rank, n in zip(range(first, first + len(expected_counts)), expected_counts)
             if n
         ]
         np.testing.assert_array_equal(full, np.concatenate(parts))
@@ -169,15 +169,6 @@ def region_comm() -> None:
     if comm.is_root:
         assert flat is not None and flat[1] == expected_counts
     assert comm.bcast(("decision", color) if comm.is_root else None) == ("decision", color)
-    # plain values: rank 0's, checked equal
-    assert comm.agree("the same", 1.5) == 1.5
-    assert comm.agree("NaN", float("nan")) != 0
-    if comm.is_root:
-        message = _raises(ValueError, lambda: comm.agree("the q", float(comm.rank)))
-        assert "the q differs between the processes of its region" in message
-        assert "rank 1: 1.0" in message
-    else:
-        comm.agree("the q", float(comm.rank))
     # no points anywhere, or on some processes only
     nothing = comm.gather(None)
     assert nothing == ((None, None) if comm.is_root else None)

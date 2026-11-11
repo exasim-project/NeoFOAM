@@ -207,7 +207,7 @@ class CouplingConfig(BaseConfig):
         return [loop.coupling_loop() for loop in self.couplings]
 
     def participant_exchanges(
-        self, regions: Sequence[str], comm_channel: CommChannel
+        self, regions: Sequence[str], comm_channel: Optional[CommChannel]
     ) -> dict[str, ParticipantExchanges]:
         """Each region's coupling, as :func:`participant_exchanges` builds it from the file.
 

@@ -24,7 +24,7 @@ from neofoam.framework.coupling import (
     comm_channel_timeout,
     run_participants,
 )
-from neofoam.framework.coupling.mpi import FollowerTransport, RegionComm
+from neofoam.framework.coupling.mpi import RegionComm
 from neofoam.framework.solver import Solver, SolverSpec
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig
@@ -48,7 +48,9 @@ multiRun = Solver("multiRun")
 multiRun.config(ControlDictConfig)
 
 
-def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, ParticipantExchanges]:
+def couplings(
+    regions: list[str], comm_channel: Optional[CommChannel]
+) -> dict[str, ParticipantExchanges]:
     """Each region's coupling from ``system/coupling.yaml``; none without it."""
     if not CouplingConfig.get_default_path().exists():
         return {}
@@ -110,7 +112,7 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
         specs = {region: resolve_solver(name) for region, name in config.solvers().items()}
         check_sub_communicator(layout, specs)
         region = layout.region_of(world.rank)
-        planned = couplings(list(config.participants), FollowerTransport(region)).get(region)
+        planned = couplings(list(config.participants), None).get(region)
         timeout = comm_channel_timeout()
     except Exception as error:
         problem = failure(error)
@@ -130,7 +132,7 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
         keep_alive(mpi, ctx)
         check_world(region, comm)
         runtime.resolve_operations(ctx).run(ctx)
-        if coupling is not None:
+        if coupling is not None and coupling.comm_channel is not None:
             coupling.comm_channel.close(region)
     except BaseException as error:
         abort(world, f"region {region} (rank {comm.rank} of {comm.size}) failed:\n{failure(error)}")
@@ -147,18 +149,14 @@ def mpi_coupling(
 ) -> Optional[ParticipantExchanges]:
     """The coupling of a region on MPI processes, from ``planned``; ``None`` if not coupled.
 
-    On the region's root (rank 0 of ``comm``) an
-    :class:`~neofoam.framework.coupling.MpiTransport` over ``channel`` to the
-    roots of the region's group, with ``timeout``; on its other processes a
-    :class:`~neofoam.framework.coupling.mpi.FollowerTransport`, which talks to no
-    region. Each has the region's processes as its ``comm``
-    (:class:`~neofoam.framework.coupling.mpi.RegionComm`).
+    The region's root talks to the group's roots over ``channel``; its other
+    processes have no comm channel.
     """
     if planned is None:
         return None
-    region = planned.region
-    comm_channel: CommChannel = FollowerTransport(region)
+    comm_channel = None
     if comm.rank == 0:
         roots = {other: layout.first(other) for other in planned.group}
-        comm_channel = MpiTransport(channel, roots, region, timeout=timeout)
-    return dataclasses.replace(planned, comm_channel=comm_channel, comm=RegionComm(comm))
+        comm_channel = MpiTransport(channel, roots, planned.region, timeout=timeout)
+    region_comm = RegionComm(comm) if comm.size > 1 else None
+    return dataclasses.replace(planned, comm_channel=comm_channel, comm=region_comm)
