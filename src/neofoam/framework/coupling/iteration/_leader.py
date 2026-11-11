@@ -69,12 +69,21 @@ def relative_changes(changes: list[SideChange]) -> dict[str, float]:
     residuals: dict[str, float] = {}
     for change in changes:
         for name, current in change.current.items():
-            current = np.asarray(current, dtype=float)
-            delta = float(np.linalg.norm(current - np.asarray(change.previous[name], dtype=float)))
-            norm = float(np.linalg.norm(current))
-            value = delta / norm if norm > 0 else delta
-            residuals[name] = float(np.maximum(residuals.get(name, value), value))
+            _keep_largest(residuals, name, _relative_change(current, change.previous[name]))
     return residuals
+
+
+def _relative_change(current: Any, previous: Any) -> float:
+    """``|current - previous| / |current|``; the absolute change where ``current`` is zero."""
+    current = np.asarray(current, dtype=float)
+    delta = float(np.linalg.norm(current - np.asarray(previous, dtype=float)))
+    norm = float(np.linalg.norm(current))
+    return delta / norm if norm > 0 else delta
+
+
+def _keep_largest(residuals: dict[str, float], name: str, value: float) -> None:
+    """Keep the larger of ``value`` and the residual of ``name``; ``np.maximum`` keeps a NaN."""
+    residuals[name] = float(np.maximum(residuals.get(name, value), value))
 
 
 # (region, port, data key) of what a port sends
@@ -264,13 +273,14 @@ class Leader:
         """:func:`relative_changes`; raises ``FloatingPointError`` for a non-finite one."""
         residuals: dict[str, float] = {}
         for (region, port, _key), change in changes.items():
-            for name, value in relative_changes([change]).items():
+            for name, current in change.current.items():
+                value = _relative_change(current, change.previous[name])
                 if not math.isfinite(value):
                     raise FloatingPointError(
                         f"coupling {self.label}: the relative change of the {name} of "
                         f"{region}.{port} is not finite in pass {iteration}"
                     )
-                residuals[name] = float(np.maximum(residuals.get(name, value), value))
+                _keep_largest(residuals, name, value)
         return residuals
 
     def _converged(self, changes: dict[StreamId, SideChange]) -> bool:
