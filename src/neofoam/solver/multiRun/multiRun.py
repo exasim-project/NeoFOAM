@@ -9,8 +9,6 @@ solver instantiated with ``region=``. Regions share nothing but a
 listed in ``system/regionCoupling.yaml`` exchange their data.
 """
 
-import math
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -28,37 +26,14 @@ multiRun = Solver("multiRun")
 multiRun.config(ControlDictConfig)
 
 
-#: Overrides ``transportTimeout`` of ``system/regionCoupling.yaml``, in seconds.
-TIMEOUT_VARIABLE = "NEOFOAM_COUPLING_TIMEOUT"
-
-
 def transport_timeout() -> Optional[float]:
     """How long a region waits for a message, in seconds; ``None``: without end.
 
-    ``NEOFOAM_COUPLING_TIMEOUT``, else the case's ``transportTimeout``, else 600
-    seconds; ``0`` waits without end. Raises ``ValueError`` for a variable that
-    is no number of seconds of at least 0.
+    The case's ``transportTimeout``, else 600 seconds; ``0`` waits without end.
     """
-    value = os.environ.get(TIMEOUT_VARIABLE)
-    if value is not None:
-        return _seconds(value) or None
     if not RegionCouplingConfig.get_default_path().exists():
         return DEFAULT_TIMEOUT
     return RegionCouplingConfig.load().transportTimeout or None
-
-
-def _seconds(value: str) -> float:
-    """``value`` as a finite number of seconds of at least 0."""
-    try:
-        seconds = float(value)
-    except ValueError:
-        seconds = math.nan
-    if not (math.isfinite(seconds) and seconds >= 0):
-        raise ValueError(
-            f"{TIMEOUT_VARIABLE}={value!r}: the comm channel timeout is a number of seconds, "
-            "at least 0 (0: no timeout)"
-        )
-    return seconds
 
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
