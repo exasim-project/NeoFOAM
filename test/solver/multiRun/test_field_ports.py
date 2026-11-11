@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A field port of ``system/regionCoupling.yaml`` is a sensor: no Python, the yaml names it.
+"""A field port of ``system/coupling.yaml`` is a sensor: no Python, the yaml names it.
 
 ``cases/field_ports`` is ``cases/coupled_slabs`` with a third region, the probe
 ``meter``. The field port ``T_cells`` reads slab ``left``'s temperature per cell,

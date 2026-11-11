@@ -6,7 +6,7 @@
 ``system/controlDict.yaml`` lists the region solvers; each region is an ordinary
 solver instantiated with ``region=``. Regions share nothing but a
 :class:`~neofoam.framework.coupling.CommChannel`, over which the coupled patches
-listed in ``system/regionCoupling.yaml`` exchange their data.
+listed in ``system/coupling.yaml`` exchange their data.
 """
 
 from pathlib import Path
@@ -30,7 +30,7 @@ multiRun.config(ControlDictConfig)
 
 
 def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, ParticipantExchanges]:
-    """Each region's coupling from ``system/regionCoupling.yaml``; none without it."""
+    """Each region's coupling from ``system/coupling.yaml``; none without it."""
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
     return RegionCouplingConfig.load().participant_exchanges(regions, comm_channel)
@@ -45,12 +45,12 @@ def run() -> dict[str, Context]:
         python -m neofoam.solver.multiRun
     """
     config = ControlDictConfig.load(case_dir=Path("."))
-    regions = list(config.regionSolvers)
+    regions = list(config.participants)
     comm_channel = InProcessCommChannel(timeout=comm_channel_timeout())
     coupling = couplings(regions, comm_channel)
     runtimes = {
         region: resolve_solver(name).instantiate(region=region, coupling=coupling.get(region))
-        for region, name in config.regionSolvers.items()
+        for region, name in config.participants.items()
     }
     return run_participants(
         {region: runtime.run for region, runtime in runtimes.items()}, comm_channel

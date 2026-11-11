@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``system/regionCoupling.yaml`` read into :class:`RegionCouplingConfig`.
+"""``system/coupling.yaml`` read into :class:`RegionCouplingConfig`.
 
 ``cases/region_coupling/minimal`` sets only the required entries, every other
 ``cases/region_coupling/<name>`` breaks one rule; a broken chain is
@@ -32,7 +32,7 @@ CHAIN = MULTI_RUN / "couplings" / "chain"
 
 
 def _chain() -> dict[str, Any]:
-    data: dict[str, Any] = yaml.safe_load((CHAIN / "system" / "regionCoupling.yaml").read_text())
+    data: dict[str, Any] = yaml.safe_load((CHAIN / "system" / "coupling.yaml").read_text())
     return data
 
 
