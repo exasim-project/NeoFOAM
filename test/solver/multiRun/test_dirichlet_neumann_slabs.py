@@ -60,10 +60,10 @@ def test_dirichlet_neumann_slabs_converge_in_a_few_aitken_passes(
     case: tuple[dict[str, Context], Outcomes],
 ) -> None:
     regions, outcomes = case
-    controller = couple(regions["right"]).controller
-    assert controller is not None
+    leader = couple(regions["right"]).controller
+    assert leader is not None
 
-    assert [(o.passes, o.converged) for o in outcomes.of(controller.label)] == [
+    assert [(o.passes, o.converged) for o in outcomes.of(leader.label)] == [
         (5, True),
         (5, True),
     ]
