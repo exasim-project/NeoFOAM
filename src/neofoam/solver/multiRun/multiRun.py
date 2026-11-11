@@ -25,7 +25,6 @@ from neofoam.framework.coupling import (
     InProcessCommChannel,
     Link,
     RegionCoupling,
-    load_plugins,
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.region import region_couplings, run_regions
@@ -112,9 +111,7 @@ def _node(config: CouplingNodeConfig) -> CouplingNode:
             if exchange.acceleration is not None
         },
         placement={
-            region: Placement(
-                None if wraps.operations is None else tuple(wraps.operations), wraps.downstream
-            )
+            region: Placement(None if wraps.operations is None else tuple(wraps.operations))
             for region, wraps in config.wraps.items()
         },
     )
@@ -123,17 +120,11 @@ def _node(config: CouplingNodeConfig) -> CouplingNode:
 def run() -> dict[str, Context]:
     """Run the multi-region case in the working directory; return each region's final Context.
 
-    The coupling plugins are loaded first, before any region starts
-    (:func:`~neofoam.framework.coupling.load_plugins`; reading
-    ``system/regionCoupling.yaml`` loads them too, once), so the case's file may
-    name their strategies.
-
     Example::
 
         cd <case>
         python -m neofoam.solver.multiRun
     """
-    load_plugins()
     config = ControlDictConfig.load(case_dir=Path("."))
     regions = list(config.regionSolvers)
     comm_channel = InProcessCommChannel(timeout=transport_timeout())

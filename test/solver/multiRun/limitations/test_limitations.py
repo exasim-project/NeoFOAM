@@ -82,7 +82,7 @@ def test_chain_reaches_the_fixed_point_in_one_coupling_loop(
     couplings = {region: _coupling(ctx) for region, ctx in regions.items()}
     # b's coupling op hands both its sides their data
     assert [
-        (op.label, [(s.patch, op.exchange_of(s).name) for s in op.sides], op.is_leader)
+        (op.label, [(s.patch, op.link_of(s).name) for s in op.sides], op.is_leader)
         for op in couplings.values()
     ] == [
         ("a.coupling", [("to_b", "a-b")], False),
@@ -101,7 +101,7 @@ def test_two_interfaces_reach_the_fixed_point_in_one_loop(monkeypatch: pytest.Mo
     # one loop of both exchanges (nested loops took 113): 39 passes, then the final pass
     assert _solves(regions) == {"a": 40, "b": 40}
     a = _coupling(regions["a"])
-    assert [a.exchange_of(side).name for side in a.sides] == ["a-b", "a-b-2"]
+    assert [a.link_of(side).name for side in a.sides] == ["a-b", "a-b-2"]
 
 
 # --- a scalar exchange without coordinates ----------------------------------------------------

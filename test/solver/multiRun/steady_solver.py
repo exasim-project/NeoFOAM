@@ -77,7 +77,7 @@ steady = Solver("steady")
 
 @steady.initializer
 def _initialize(self: Any) -> Context:
-    config = _SteadyConfig.load(case_dir=Path("."), region=self.region)
+    config = _SteadyConfig.load(case_dir=Path(self.region or "."))
     ctx = Context(fields={"x": np.zeros(1)}, models={"steady": config, "history": [], "outer": 0})
     ctx.models["coupling"] = Coupling(self.coupling)
     ctx.models["interface"] = Interface(ctx)

@@ -1,0 +1,12 @@
+# Laid over cases/coupled_slabs: the mapping and acceleration of fake_plugin.py, with options.
+exchanges:
+  - name: interface
+    sides: {left: right, right: left}
+    mapping: {type: fake-rbf, radius: 0.25}
+couplings:
+  - name: coupling
+    scheme: parallel
+    exchanges:
+      - {name: interface, acceleration: {type: fake-iqn, relaxation: 0.7, columns: 3}}
+    convergence:
+      - {type: relative, data: T, limit: 1.0e-12}
