@@ -678,7 +678,7 @@
 <span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.sorter</span><span class="w"> </span><span class="kn">import</span> <span class="n">NetworkxTopologicalSorter</span><span class="p">,</span> <span class="n">TopologicalSorter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.wrapping</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_final</span><span class="p">,</span> <span class="n">check_first</span><span class="p">,</span> <span class="n">wrap</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.wrapping</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_passes</span><span class="p">,</span> <span class="n">wrap</span>
 
 
 <div class="viewcode-block" id="CyclicDependencyError">
@@ -859,12 +859,10 @@
 <span class="sd">    loop in the same scope. Loops carry no edges, so interleaving them by builder</span>
 <span class="sd">    index is always dependency-safe.</span>
 
-<span class="sd">    The first ``stepped`` entries of ``tagged`` are the builder's (default: all);</span>
-<span class="sd">    the rest, the model ops, have no place of their own beside a loop. A loop</span>
-<span class="sd">    goes after the last op of its scope stepped before it, unless one stepped</span>
-<span class="sd">    after it sorts earlier, in which case it goes ahead of that one. A model op</span>
-<span class="sd">    that sorts ahead of an op stepped before the loop therefore stays ahead of</span>
-<span class="sd">    the loop; one that sorts after them all follows it.</span>
+<span class="sd">    Only the first ``stepped`` entries of ``tagged`` (the builder's; default all)</span>
+<span class="sd">    place a loop: it goes after the last op of its scope stepped before it, or</span>
+<span class="sd">    ahead of the first one stepped after it if that sorts earlier. Model ops have</span>
+<span class="sd">    no place of their own beside a loop.</span>
 <span class="sd">    """</span>
     <span class="c1"># Builder insertion order: position in the pre-order ``tagged`` list.</span>
     <span class="n">order</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">(</span><span class="n">op</span><span class="p">):</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tagged</span><span class="p">)}</span>
@@ -894,10 +892,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">):</span>
             <span class="n">loops_by_scope</span><span class="p">[</span><span class="n">scope</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
 
-    <span class="c1"># Merge loops into each scope's sequential ops by builder order. The</span>
-    <span class="c1"># sequential ops keep their topological order; each loop is inserted after</span>
-    <span class="c1"># the last op stepped before it, or ahead of the first op stepped after it</span>
-    <span class="c1"># if that sorts earlier. Model ops (index ``stepped`` and up) do not move it.</span>
+    <span class="c1"># Merge loops into each scope's sequential ops, which keep their topological order.</span>
     <span class="n">n_stepped</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tagged</span><span class="p">)</span> <span class="k">if</span> <span class="n">stepped</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">stepped</span>
     <span class="n">by_scope</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">seq_by_scope</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">loops_by_scope</span><span class="p">):</span>
@@ -923,12 +918,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_rebuild_builder</span><span class="p">(</span><span class="n">sorted_scopes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">StepBuilder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Reconstruct a ``StepBuilder`` from sorted scope data.</span>
-
-<span class="sd">    Starts at ``root`` and fills every loop with the sorted operations of its</span>
-<span class="sd">    scope (named after the loop), recursively; sequential operations stay in</span>
-<span class="sd">    their scope beside the loops, at any depth.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""A ``StepBuilder`` from ``root``, each loop filled with its sorted scope, recursively."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">rebuild</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">[</span>
@@ -966,13 +956,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StepBuilder</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The operations of ``builder`` and ``additional_ops``, ordered in their scopes.</span>
 
-<span class="sd">        An additional wrapping loop (``metadata.wraps``) is placed afterwards,</span>
-<span class="sd">        in the order given, around the whole body of the top scope or the</span>
-<span class="sd">        operations it names (:func:`~.wrapping.wrap`). Raises ``ValueError`` when</span>
-<span class="sd">        an operation marked ``first`` then depends on one in a wrapping loop</span>
-<span class="sd">        around both that is not (:func:`~.wrapping.check_first`), or when one</span>
-<span class="sd">        not marked ``final`` depends on one in a wrapping loop around both that</span>
-<span class="sd">        is (:func:`~.wrapping.check_final`).</span>
+<span class="sd">        Additional wrapping loops (``metadata.wraps``) are placed afterwards, in</span>
+<span class="sd">        the order given (:func:`~.wrapping.wrap`, :func:`~.wrapping.check_passes`).</span>
 <span class="sd">        """</span>
         <span class="n">wrapping</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">additional_ops</span> <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
         <span class="n">rest</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">([</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">additional_ops</span> <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">])</span>
@@ -984,8 +969,7 @@
         <span class="n">ops</span> <span class="o">=</span> <span class="n">_rebuild_builder</span><span class="p">(</span><span class="n">sorted_scopes</span><span class="p">)</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">ops</span>
         <span class="k">for</span> <span class="n">loop</span> <span class="ow">in</span> <span class="n">wrapping</span><span class="p">:</span>
             <span class="n">ops</span> <span class="o">=</span> <span class="n">wrap</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">loop</span><span class="p">)</span>
-        <span class="n">check_final</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
-        <span class="n">check_first</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
+        <span class="n">check_passes</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">StepBuilder</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span></div>
 </div>
 
