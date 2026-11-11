@@ -305,21 +305,21 @@ def test_coupling_op_public_read_api() -> None:
         "solid.right",
     )
     assert solid_op.exchange_of(solid_port) is CHT
-    # the leader builds its controller at its first loop test
+    # the leading region builds its Leader at its first loop test
     assert (solid_op.controller, fluid_op.controller) == (None, None)
 
     outcomes = Outcomes()
     with observe(outcomes):
         _run(regions)
 
-    controller = fluid_op.controller
-    assert solid_op.controller is None and controller is not None
+    leader = fluid_op.controller
+    assert solid_op.controller is None and leader is not None
     # serial: the fluid receives what the solid, stepping first, sent in this pass
-    assert (controller.label, [controller.fresh(s) for s in controller.streams]) == (
+    assert (leader.label, [leader.fresh(s) for s in leader.streams]) == (
         "fluid.coupling",
         [True, False],
     )
-    assert [(stream_id, s.partner) for stream_id, s in controller.streams.items()] == [
+    assert [(stream_id, s.partner) for stream_id, s in leader.streams.items()] == [
         (("solid", "right", "T"), ("fluid", "wall")),
         (("fluid", "wall", "q"), ("solid", "right")),
     ]
@@ -420,10 +420,10 @@ def test_a_chain_of_exchanges_is_one_coupling_group() -> None:
         ["to_b"],
     ]
     assert [op.is_leader for op in ops.values()] == [False, False, True]
-    controller = ops["c"].controller
-    assert controller is not None
+    leader = ops["c"].controller
+    assert leader is not None
     # serial: a stream is received fresh when its sender steps before its receiver
-    assert {stream: controller.fresh(stream) for stream in controller.streams} == {
+    assert {stream: leader.fresh(stream) for stream in leader.streams} == {
         ("a", "to_b", "T"): True,
         ("b", "to_a", "T"): False,
         ("b", "to_c", "T"): True,

@@ -99,10 +99,10 @@ def _couple(a: _CoupledInstance, b: _CoupledInstance, **loop: Any) -> dict[str, 
     return {name: couple(ctx) for name, ctx in regions.items()}
 
 
-def _controller(ops: dict[str, CouplingLoopOp]) -> Leader:
-    controller = ops["b"].controller
-    assert controller is not None
-    return controller
+def _leader(ops: dict[str, CouplingLoopOp]) -> Leader:
+    leader = ops["b"].controller
+    assert leader is not None
+    return leader
 
 
 @pytest.mark.filterwarnings("ignore::neofoam.framework.coupling.CouplingNotConvergedWarning")
@@ -135,7 +135,7 @@ def test_coupling_op_parallel_ports_receive_what_the_other_sent_in_the_pass_befo
 
 
 @pytest.mark.parametrize("parallel", [False, True], ids=["serial", "parallel"])
-def test_coupling_op_default_controller_takes_the_scheme_of_the_loop(parallel: bool) -> None:
+def test_coupling_op_default_leader_takes_the_scheme_of_the_loop(parallel: bool) -> None:
     log: list[str] = []
     a, b = _CoupledInstance("a", log, fixed=1.0), _CoupledInstance("b", log, fixed=2.0)
     loop = CouplingLoop("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
@@ -151,11 +151,11 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_loop(parallel: b
         }
     )
 
-    controller = _controller({name: couple(ctx) for name, ctx in regions.items()})
+    leader = _leader({name: couple(ctx) for name, ctx in regions.items()})
     # serial: b receives what a, stepping first, sent in this pass; parallel: neither fresh
-    assert [controller.fresh(stream) for stream in controller.streams] == [not parallel, False]
-    assert not hasattr(controller, "parallel")
-    assert controller.outcome is not None and controller.outcome.converged
+    assert [leader.fresh(stream) for stream in leader.streams] == [not parallel, False]
+    assert not hasattr(leader, "parallel")
+    assert leader.outcome is not None and leader.outcome.converged
     assert ("receive_b 0.0" in log) is parallel
 
 
@@ -239,11 +239,11 @@ def test_the_leader_records_the_outcome_of_a_converged_loop() -> None:
             max_iterations=10,
         )
 
-    controller = _controller(ops)
+    leader = _leader(ops)
     assert outcomes.of("b.coupling") == (
         CouplingOutcome(passes=3, converged=True, residuals={"x": 0.0}),
     )
-    assert controller.label == "b.coupling"
+    assert leader.label == "b.coupling"
     assert ops["a"].controller is None
 
 
@@ -259,7 +259,7 @@ def test_the_leader_warns_and_records_when_max_iterations_ends_the_loop() -> Non
             )
 
     # the last pass took both ports from 2 to 3
-    assert outcomes.of(_controller(ops).label) == (
+    assert outcomes.of(_leader(ops).label) == (
         CouplingOutcome(passes=3, converged=False, residuals={"x": 1 / 3}),
     )
 
@@ -282,7 +282,7 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
             max_iterations=10,
         )
 
-    assert finished == [("b.coupling", _controller(ops).outcome)]
+    assert finished == [("b.coupling", _leader(ops).outcome)]
     # serial: a gets b's carried value (0, then 2), b gets a's fresh one
     assert exchanged == [
         ("a.coupling", "b.p", 0.0),
@@ -425,7 +425,7 @@ def test_coupling_op_keeps_a_copy_of_the_data_an_instance_sends() -> None:
     ops = {name: couple(ctx) for name, ctx in regions.items()}
 
     # x: 1, 2, 3, 3: unchanged after the fourth pass, then the final pass
-    assert outcomes.of(_controller(ops).label) == (
+    assert outcomes.of(_leader(ops).label) == (
         CouplingOutcome(passes=5, converged=True, residuals={"x": 0.0}),
     )
 
