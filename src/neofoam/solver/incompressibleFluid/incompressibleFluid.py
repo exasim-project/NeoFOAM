@@ -145,8 +145,7 @@ def execution_graph(
 
     builder = StepBuilder()
 
-    # The pressure-velocity algorithm (pimple) is the first core model: a
-    # runtime whose config holds this run's algorithm_type / use_boussinesq.
+    # The pressure-velocity algorithm (pimple) is the first core model.
     algo_ops = Operations(self.state.core_models[0].operations)
 
     # The main iteration loop is the solutionLoop model: its operations

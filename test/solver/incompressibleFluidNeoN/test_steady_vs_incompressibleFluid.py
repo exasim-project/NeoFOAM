@@ -35,11 +35,10 @@ Two comparisons with different discriminating power:
    See ``MODELS`` and report/steady-turbulence-wall-functions.md.
 
 A third test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
-the native ``simpleFoam`` binary after 50 iterations: per-field relative L2
-difference at most ``1e-10``. Not bitwise, because pybFoam is built with FMA on
-an ``x86-64-v3`` toolchain and the prebuilt OpenFOAM is not; that round-off is at
-most 9.3e-12, while a 1e-6 relative change to the U relaxation factor or ``nu``
-gives 6.5e-8 or more. A pointwise bound fails in near-zero cells.
+native ``simpleFoam`` after 50 iterations, relative L2 at most ``1e-10``. Not bitwise
+(pybFoam has FMA on ``x86-64-v3``, prebuilt OpenFOAM not): round-off is at most
+9.3e-12, a 1e-6 change to the U relaxation factor or ``nu`` gives 6.5e-8 or more. A
+pointwise bound fails in near-zero cells.
 
 A fourth covers the *SIMPLEC* branch (``consistent yes``): the same case with
 ``solution/simplec/fvSolution`` overlaid on both solvers, again at two
