@@ -272,10 +272,8 @@ class CouplingOp(IterativeOp):
                 ) from None
             self._mappers[side.patch] = mapper
         if self.is_leader:
-            self._controller = self._coupling.controller(
-                self._node_sides(path, sides),
-                self.label,
-                node=self.node,
+            self._controller = CouplingController(
+                self._node_sides(path, sides), self.label, self.node
             )
         self._connected = True
 

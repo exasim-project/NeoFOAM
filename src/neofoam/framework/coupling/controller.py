@@ -27,7 +27,8 @@ import numpy as np
 from neofoam.framework import execution_observer
 
 from .data import End, _arrays
-from .kernels import CouplingAcceleration, CouplingConvergence, SideChange
+from .kernels import SideChange
+from .region import CouplingNode
 from .transport import Data
 
 
@@ -136,8 +137,8 @@ class CouplingController:
     exchange, an exchange without one is not relaxed; plain fields pass through
     as they are).
 
-    A side receives what its partner sent in this pass when the scheme is serial
-    (the default) and the partner's region steps before its own; else
+    A side receives what its partner sent in this pass when the node is serial
+    and the partner's region steps before its own; else
     (``parallel``, or the partner steps later) what the controller carried from
     the pass before. Only the carried data is relaxed. This is the only rule: the
     sending regions send their data fresh exactly where the leader decided it.
@@ -151,39 +152,17 @@ class CouplingController:
     (``data``) has none to compare: no side of the field, or its sides send no
     :data:`Array` data; :meth:`decide` raises ``FloatingPointError`` when the
     change of a side is not finite.
-
-    The leader builds it with its coupling's ``controller`` factory, which it
-    hands the node (by default :func:`~neofoam.framework.coupling.region.node_controller`:
-    the node's scheme, convergence, acceleration and max_iterations; one
-    acceleration per exchange: it keeps the data of its last passes)::
-
-        def controller(sides, label, *, node):
-            return CouplingController(
-                sides,
-                label,
-                max_iterations=50,
-                parallel=node.parallel,
-                acceleration={"interface": AitkenRelaxation(relaxation=0.5)},
-            )
     """
 
-    def __init__(
-        self,
-        sides: Sequence[GroupSide],
-        label: str,
-        convergence: Sequence[CouplingConvergence] = (),
-        max_iterations: int = 100,
-        parallel: bool = False,
-        acceleration: Optional[dict[str, CouplingAcceleration]] = None,
-    ) -> None:
+    def __init__(self, sides: Sequence[GroupSide], label: str, node: CouplingNode) -> None:
         #: The name of the leader, the coupling op that owns the controller.
         self.label = label
         #: Whether a side always receives what its partner sent in the pass before.
-        self.parallel = parallel
+        self.parallel = parallel = node.parallel
         self._sides = {side.end: side for side in sides}
-        self._convergence = tuple(convergence)
-        self._max_iterations = max_iterations
-        self._acceleration = dict(acceleration or {})
+        self._convergence = tuple(node.convergence)
+        self._max_iterations = node.max_iterations
+        self._acceleration = dict(node.acceleration)
         self._check_convergence()
         rank: dict[str, int] = {}
         for side in self._sides.values():

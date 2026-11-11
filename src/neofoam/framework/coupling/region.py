@@ -21,8 +21,8 @@ they agree on the time step (``Coupling.time_step``) and its last region in
 stepping order leads that. The regions a node's exchanges connect form the node's group; its
 last region in stepping order leads the node (decides when it converged).
 
-Each node has its scheme (``CouplingNode.scheme``): ``parallel`` (the default)
-or ``serial``. A serial pass of a region waits for the whole pass of the regions
+Each node has its scheme (``CouplingNode.scheme``): ``serial`` (the default)
+or ``parallel``. A serial pass of a region waits for the whole pass of the regions
 that step before it, so a serial node may neither enclose a node coupling two of
 its regions as well (:func:`region_couplings` raises) nor hold the time step of
 its regions (``Coupling.check`` raises): both need the partner to come back
@@ -41,12 +41,11 @@ from __future__ import annotations
 import contextvars
 import threading
 from dataclasses import dataclass, field
-from typing import Callable, Literal, Mapping, Optional, Protocol, Sequence, TypeVar
+from typing import Callable, Literal, Mapping, Optional, Sequence, TypeVar
 
 from neofoam.framework.types import Placement
 
 from . import kernels
-from .controller import CouplingController, GroupSide
 from .data import End
 from .kernels import CouplingAcceleration, CouplingConvergence
 from .transport import Transport, TransportClosed
@@ -102,7 +101,7 @@ class CouplingNode:
     convergence: tuple[CouplingConvergence, ...] = ()
     acceleration: Mapping[str, CouplingAcceleration] = field(default_factory=dict)
     placement: Mapping[str, Placement] = field(default_factory=dict)
-    scheme: Literal["serial", "parallel"] = "parallel"
+    scheme: Literal["serial", "parallel"] = "serial"
 
     @property
     def parallel(self) -> bool:
@@ -114,47 +113,19 @@ class CouplingNode:
         return self.placement.get(region, Placement())
 
 
-class ControllerFactory(Protocol):
-    """Builds a node leader's controller from the node's sides, the leader's label and the node.
-
-    ``node`` holds the node's scheme (the controller decides with it which sides
-    receive fresh or carried data), convergence, acceleration and max_iterations.
-    """
-
-    def __call__(
-        self, sides: Sequence[GroupSide], label: str, /, *, node: CouplingNode
-    ) -> CouplingController: ...
-
-
-def node_controller(
-    sides: Sequence[GroupSide], label: str, /, *, node: CouplingNode
-) -> CouplingController:
-    """The default :class:`ControllerFactory`: a controller as ``node`` describes it."""
-    return CouplingController(
-        sides,
-        label,
-        convergence=node.convergence,
-        max_iterations=node.max_iterations,
-        parallel=node.parallel,
-        acceleration=dict(node.acceleration),
-    )
-
-
 @dataclass(frozen=True)
 class RegionCoupling:
     """What region ``region`` knows of the coupling of its case.
 
     ``group`` holds the regions coupled with it, itself included, in stepping
     order; ``links`` the exchanges of the group; ``nodes`` the nodes with an
-    exchange of this region, outer to inner. The leader of each node builds its
-    controller with ``controller``, handing it the node.
+    exchange of this region, outer to inner.
     """
 
     region: str
     group: tuple[str, ...]
     links: tuple[Link, ...]
     transport: Transport
-    controller: ControllerFactory = node_controller
     nodes: tuple[CouplingNode, ...] = ()
 
     @property
@@ -206,7 +177,6 @@ def region_couplings(
     regions: Sequence[str],
     links: Sequence[Link],
     transport: Transport,
-    controller: ControllerFactory = node_controller,
     nodes: Optional[Sequence[CouplingNode]] = None,
 ) -> dict[str, RegionCoupling]:
     """The coupling of every region ``links`` connect, by region; ``regions`` in stepping order.
@@ -257,9 +227,7 @@ def region_couplings(
         for member in group:
             touching = {link.name for link in group_links if member in dict(link.ends)}
             member_nodes = tuple(node for node in nodes if touching & set(node.exchanges))
-            couplings[member] = RegionCoupling(
-                member, group, group_links, transport, controller, member_nodes
-            )
+            couplings[member] = RegionCoupling(member, group, group_links, transport, member_nodes)
     return couplings
 
 
