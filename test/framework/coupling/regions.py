@@ -131,11 +131,11 @@ def contexts(
     return {region: context(region, couplings.get(region)) for region in regions}
 
 
-def context(region: str, region_coupling: Optional[ParticipantExchanges]) -> Context:
+def context(region: str, coupling: Optional[ParticipantExchanges]) -> Context:
     """The context of ``region``, with its coupling model on a fake geometry."""
     return Context(
         fields={},
-        models={"coupling": Participant(region_coupling, FakeGeometry())},
+        models={"coupling": Participant(coupling, FakeGeometry())},
         region=region,
     )
 
