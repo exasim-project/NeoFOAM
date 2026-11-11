@@ -25,6 +25,8 @@ from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
 from .kernels import (
     AitkenRelaxation,
+    AreaIntegralMapping,
+    AreaMeanMapping,
     BoundMapping,
     ConstantRelaxation,
     CouplingAcceleration,
@@ -32,8 +34,12 @@ from .kernels import (
     CouplingMapping,
     IdentityMapping,
     NearestNeighborMapping,
+    ProbeMapping,
     RelativeConvergence,
     SideChange,
+    UniformMapping,
+    VolumeIntegralMapping,
+    VolumeMeanMapping,
 )
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .model import Coupling, coupling
@@ -41,6 +47,8 @@ from .region import CouplingNode, Exchange, RegionCoupling
 
 __all__ = [
     "AitkenRelaxation",
+    "AreaIntegralMapping",
+    "AreaMeanMapping",
     "Array",
     "BoundMapping",
     "CellData",
@@ -68,11 +76,15 @@ __all__ = [
     "NearestNeighborMapping",
     "Patch",
     "ProbeData",
+    "ProbeMapping",
     "RegionCoupling",
     "RelativeConvergence",
     "Scalar",
     "SideChange",
+    "UniformMapping",
     "ValueData",
+    "VolumeIntegralMapping",
+    "VolumeMeanMapping",
     "coupled",
     "coupling",
 ]

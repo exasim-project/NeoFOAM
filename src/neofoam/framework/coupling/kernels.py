@@ -138,6 +138,124 @@ class NearestNeighborMapping(CouplingMapping):
         return _taken(nearest_neighbor(*_points(self.type, source, target)))
 
 
+def _scalars(mapping: str, data: Data) -> Data:
+    """``data`` as 1-d arrays; ``ValueError`` for a vector field."""
+    arrays = {name: np.asarray(values, dtype=float) for name, values in data.items()}
+    for name, values in arrays.items():
+        if values.ndim != 1:
+            raise ValueError(
+                f"mapping '{mapping}' takes scalar fields; {name} has the shape {values.shape}"
+            )
+    return arrays
+
+
+def _measures(mapping: str, source: Geometry, what: str) -> Any:
+    if source.measures is None:
+        raise ValueError(f"mapping '{mapping}' needs the {what} of the sending port; it has none")
+    return source.measures
+
+
+class _Reduction(CouplingMapping):
+    """Reduces the values of every entity to one, weighted by their measures."""
+
+    mean: ClassVar[bool] = False
+    measure: ClassVar[str] = ""
+
+    def bind(self, source: Geometry, target: Geometry) -> BoundMapping:
+        name = getattr(self, "type")
+        weights = np.asarray(_measures(name, source, self.measure), dtype=float)
+        total = float(weights.sum()) if self.mean else 1.0
+
+        def mapper(data: Data) -> Data:
+            return {
+                field: np.array(float(values @ weights) / total)
+                for field, values in _scalars(name, data).items()
+            }
+
+        return mapper
+
+
+@CouplingMapping.register
+class AreaMeanMapping(_Reduction):
+    """The area-weighted mean of a patch's values: ``sum(q A) / sum(A)``."""
+
+    type: Literal["area-mean"] = "area-mean"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (("face", "value"),)
+    mean: ClassVar[bool] = True
+    measure: ClassVar[str] = "face areas"
+
+
+@CouplingMapping.register
+class AreaIntegralMapping(_Reduction):
+    """The integral of a patch's values over its faces: ``sum(q A)``."""
+
+    type: Literal["area-integral"] = "area-integral"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (("face", "value"),)
+    measure: ClassVar[str] = "face areas"
+
+
+@CouplingMapping.register
+class VolumeMeanMapping(_Reduction):
+    """The volume-weighted mean of the cells' values: ``sum(s V) / sum(V)``."""
+
+    type: Literal["volume-mean"] = "volume-mean"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (("cell", "value"),)
+    mean: ClassVar[bool] = True
+    measure: ClassVar[str] = "cell volumes"
+
+
+@CouplingMapping.register
+class VolumeIntegralMapping(_Reduction):
+    """The integral of the cells' values over their volumes: ``sum(s V)``."""
+
+    type: Literal["volume-integral"] = "volume-integral"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (("cell", "value"),)
+    measure: ClassVar[str] = "cell volumes"
+
+
+@CouplingMapping.register
+class UniformMapping(CouplingMapping):
+    """One value on every face or cell of the receiving port."""
+
+    type: Literal["uniform"] = "uniform"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (("value", "face"), ("value", "cell"))
+
+    def bind(self, source: Geometry, target: Geometry) -> BoundMapping:
+        size = target.size
+        if size is None:
+            raise ValueError(f"mapping '{self.type}' needs the size of the receiving port")
+
+        def mapper(data: Data) -> Data:
+            arrays = {name: np.asarray(values, dtype=float) for name, values in data.items()}
+            for name, values in arrays.items():
+                if values.ndim != 0:
+                    raise ValueError(
+                        f"mapping '{self.type}' takes scalar values; {name} has the shape "
+                        f"{values.shape}"
+                    )
+            return {name: np.full(size, float(values)) for name, values in arrays.items()}
+
+        return mapper
+
+
+@CouplingMapping.register
+class ProbeMapping(CouplingMapping):
+    """The values of the cells nearest to ``points``, one row per point (no interpolation).
+
+    Example::
+
+        mapping: {type: probe, points: [[0.1, 0.01, 0], [0.2, 0.01, 0]]}
+    """
+
+    type: Literal["probe"] = "probe"
+    kinds: ClassVar[tuple[tuple[str, str], ...]] = (("cell", "probe"),)
+    points: list[tuple[float, ...]] = Field(min_length=1)
+
+    def bind(self, source: Geometry, target: Geometry) -> BoundMapping:
+        points = np.asarray(self.points, dtype=float)
+        return _taken(nearest_neighbor(*_points(self.type, source, Geometry.of(points, None))))
+
+
 def default_mapping() -> CouplingMapping:
     """The mapping of an exchange that names none."""
     return NearestNeighborMapping()
