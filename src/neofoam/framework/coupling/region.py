@@ -17,10 +17,11 @@ from typing import Callable, Literal, Mapping, Sequence, TypeVar
 
 from neofoam.framework.types import Placement
 
-from . import kernels
 from .comm.channel import CommChannel, CommChannelClosed
 from .data import End
-from .kernels import CouplingAcceleration, CouplingConvergence
+from .strategies.acceleration import CouplingAcceleration
+from .strategies.convergence import CouplingConvergence
+from .strategies.mapping import CouplingMapping, default_mapping
 
 T = TypeVar("T")
 
@@ -36,7 +37,7 @@ class Exchange:
 
     name: str
     ends: tuple[End, End]
-    mapping: kernels.CouplingMapping = field(default_factory=kernels.default_mapping)
+    mapping: CouplingMapping = field(default_factory=default_mapping)
 
     def partner(self, region: str) -> End:
         """The end of the exchange that is not in ``region``."""

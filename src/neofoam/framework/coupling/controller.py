@@ -19,8 +19,8 @@ from neofoam.framework import execution_observer
 
 from .comm.channel import Data
 from .data import End
-from .kernels import SideChange
 from .region import CouplingNode
+from .strategies.convergence import SideChange
 
 
 def unchanged(changes: list[SideChange]) -> bool:

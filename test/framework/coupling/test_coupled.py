@@ -35,12 +35,12 @@ from neofoam.framework.coupling import (
     coupled,
     coupling,
 )
-from neofoam.framework.coupling.kernels import (
+from neofoam.framework.coupling.loop import CouplingOp
+from neofoam.framework.coupling.strategies.mapping import (
     AreaIntegralMapping,
     ProbeMapping,
     UniformMapping,
 )
-from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.types import Placement
 
 

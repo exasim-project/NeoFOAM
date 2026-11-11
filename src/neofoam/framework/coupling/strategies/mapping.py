@@ -1,27 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Coupling strategies: mapping, acceleration and convergence of the exchanged data."""
+"""Mappings of the exchanged data onto the receiving port's location: :class:`CouplingMapping`."""
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar, Literal, NamedTuple, Optional
+from typing import Any, Callable, ClassVar, Literal
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
+from pydantic import BaseModel, ConfigDict, Field
 
 from neofoam.core.plugin_system import PluginSystem
 
-from .comm.channel import Data
-from .location import Geometry
-
-
-class SideChange(NamedTuple):
-    """What one stream sent in the previous and in the current pass, for a convergence check."""
-
-    previous: Data
-    current: Data
-
+from ..comm.channel import Data
+from ..location import Geometry
 
 # elements of the target-by-source distance block computed at once
 _BLOCK_ELEMENTS = 1 << 20
@@ -50,6 +42,7 @@ def nearest_neighbor(source: Any, target: Any) -> Any:
 
 # a mapping bound to both ports' geometries: data on the source -> on the target
 BoundMapping = Callable[[Data], Data]
+
 
 # the entity kinds of the data models: face, cell, value, probe
 _TRANSFER = (("face", "face"), ("cell", "cell"))
@@ -259,128 +252,3 @@ class ProbeMapping(CouplingMapping):
 def default_mapping() -> CouplingMapping:
     """The mapping of an exchange that names none."""
     return NearestNeighborMapping()
-
-
-@PluginSystem.register(discriminator_variable="acceleration", discriminator="type")
-class CouplingAcceleration(BaseModel):
-    """Relaxes the data carried into a pass, per exchange; a plugin family.
-
-    It keeps state across passes: give each exchange its own.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
-        """The relaxed ``sent`` for pass ``iteration``."""
-        raise NotImplementedError
-
-
-@CouplingAcceleration.register
-class ConstantRelaxation(CouplingAcceleration):
-    """``x = x_last + relaxation * (sent - x_last)``.
-
-    The first data of every time step (pass 1) passes unchanged.
-    """
-
-    type: Literal["constant"] = "constant"
-    relaxation: float = Field(gt=0, le=1)
-    _last: Optional[Any] = PrivateAttr(default=None)
-
-    def __call__(self, sent: list[Data], iteration: int) -> list[Data]:
-        values = _flatten(sent)
-        if iteration == 1:
-            self._last = None
-        if self._last is not None:
-            residual = values - self._last
-            values = self._last + self._factor(residual, iteration) * residual
-        self._last = values
-        return _unflatten(values, sent)
-
-    def _factor(self, residual: Any, iteration: int) -> float:
-        return self.relaxation
-
-
-@CouplingAcceleration.register
-class AitkenRelaxation(ConstantRelaxation):
-    """Under-relaxes by Aitken's dynamic factor; for when a fixed factor converges slowly.
-
-    The first pass of a time step uses ``relaxation``.
-
-    Example::
-
-        CouplingNode("n", ("i",), acceleration={"i": AitkenRelaxation(relaxation=0.5)})
-    """
-
-    type: Literal["aitken"] = "aitken"  # type: ignore[assignment]
-    _residual: Optional[Any] = PrivateAttr(default=None)
-    _omega: float = PrivateAttr(default=0.0)
-
-    def _factor(self, residual: Any, iteration: int) -> float:
-        previous = self._residual if iteration > 1 else None
-        self._residual = residual
-        # a round-off previous residual would drive the factor to zero and stall the loop
-        if previous is None or np.linalg.norm(previous) <= 1e-6 * np.linalg.norm(residual):
-            self._omega = self.relaxation
-            return self._omega
-        change = residual - previous
-        squared = float(change @ change)
-        if squared > 0.0:
-            self._omega *= -float(previous @ change) / squared
-        return self._omega
-
-
-def _flatten(sent: list[Data]) -> Any:
-    arrays = [np.ravel(data[name]) for data in sent for name in sorted(data)]
-    return np.concatenate(arrays) if arrays else np.zeros(0)
-
-
-def _unflatten(values: Any, like: list[Data]) -> list[Data]:
-    result: list[Data] = []
-    start = 0
-    for data in like:
-        unflattened: Data = {}
-        for name in sorted(data):
-            shape = np.shape(data[name])
-            size = int(np.prod(shape))
-            unflattened[name] = values[start : start + size].reshape(shape)
-            start += size
-        result.append(unflattened)
-    return result
-
-
-@PluginSystem.register(discriminator_variable="convergence", discriminator="type")
-class CouplingConvergence(BaseModel):
-    """Whether a node converged, from every stream's change in the last pass; a plugin family.
-
-    ``data`` names the data field a measure compares (``T``), ``None`` for all of them.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-    data: Optional[str] = None
-
-    def __call__(self, changes: list[SideChange]) -> bool:
-        """Whether the data converged, from ``changes``."""
-        raise NotImplementedError
-
-
-@CouplingConvergence.register
-class RelativeConvergence(CouplingConvergence):
-    """Converged once every array named ``data`` changes by less than ``limit`` (2-norms).
-
-    Example::
-
-        CouplingNode("n", ("interface",), convergence=(RelativeConvergence(data="T", limit=1e-5),))
-    """
-
-    type: Literal["relative"] = "relative"
-    data: str
-    limit: float = Field(gt=0)
-
-    def __call__(self, changes: list[SideChange]) -> bool:
-        return all(
-            np.linalg.norm(np.asarray(change.current[name]) - np.asarray(change.previous[name]))
-            <= self.limit * np.linalg.norm(change.current[name])
-            for change in changes
-            for name in change.current
-            if name == self.data
-        )

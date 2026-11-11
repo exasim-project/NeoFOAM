@@ -1,13 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The numpy kernels of a coupling, each on a few hand-checked values.
-
-The relaxations are fed the fixed-point iteration ``x -> 0.5 * x + 1`` (fixed
-point 2), the way a coupling feeds them: what the other side sends back for the
-value last delivered. Aitken's factor is exact for a linear map of one value, so
-its second relaxed pass lands on the fixed point (to round-off, hence 1e-12).
-"""
+"""The mappings of a coupling, each on a few hand-checked values."""
 
 import tracemalloc
 from typing import Any, cast
@@ -16,17 +10,13 @@ import numpy as np
 import pytest
 
 from neofoam.framework.coupling import (
-    AitkenRelaxation,
-    ConstantRelaxation,
     CouplingMapping,
     IdentityMapping,
     NearestNeighborMapping,
-    RelativeConvergence,
-    SideChange,
-    kernels,
 )
-from neofoam.framework.coupling.kernels import nearest_neighbor
 from neofoam.framework.coupling.location import Geometry
+from neofoam.framework.coupling.strategies import mapping as mapping_module
+from neofoam.framework.coupling.strategies.mapping import nearest_neighbor
 
 
 def _points(coordinates: Any) -> Geometry:
@@ -34,77 +24,11 @@ def _points(coordinates: Any) -> Geometry:
     return Geometry() if coordinates is None else Geometry.of(coordinates, None)
 
 
-def _passes(relaxation: ConstantRelaxation, count: int) -> list[float]:
-    """The values delivered in ``count`` passes of one time step, starting from 0."""
-    delivered = [float(relaxation([{"x": np.zeros(1)}], 1)[0]["x"][0])]
-    for iteration in range(2, count + 1):
-        sent_back = 0.5 * delivered[-1] + 1.0
-        delivered.append(float(relaxation([{"x": np.full(1, sent_back)}], iteration)[0]["x"][0]))
-    return delivered
-
-
 def test_nearest_neighbor_picks_the_closest_source_point() -> None:
     source = np.array([[0.0, 0.0], [1.0, 0.0], [2.0, 0.0]])
     target = np.array([[1.9, 0.1], [0.2, 0.0], [1.1, -0.3]])
 
     assert nearest_neighbor(source, target).tolist() == [2, 0, 1]
-
-
-def test_constant_relaxation_moves_by_the_factor() -> None:
-    delivered = _passes(ConstantRelaxation(relaxation=0.5), 3)
-
-    np.testing.assert_allclose(delivered, [0.0, 0.5, 0.875], rtol=1e-15, err_msg="omega 0.5")
-
-
-def test_aitken_relaxation_reaches_the_fixed_point_of_a_linear_map() -> None:
-    delivered = _passes(AitkenRelaxation(relaxation=0.5), 3)
-
-    np.testing.assert_allclose(delivered, [0.0, 0.5, 2.0], rtol=1e-12, err_msg="Aitken")
-
-
-def test_aitken_relaxation_restarts_from_initial_each_time_step() -> None:
-    relaxation = AitkenRelaxation(relaxation=0.5)
-    _passes(relaxation, 3)
-
-    first_pass = relaxation([{"x": np.full(1, 4.0)}], 1)[0]["x"]
-
-    np.testing.assert_allclose(first_pass, [4.0], rtol=0, atol=0, err_msg="unchanged, no 2 kept")
-
-
-@pytest.mark.parametrize(
-    "relaxation",
-    [ConstantRelaxation(relaxation=0.5), AitkenRelaxation(relaxation=0.5)],
-    ids=["constant", "aitken"],
-)
-def test_relaxation_passes_the_first_data_of_every_time_step_unchanged(
-    relaxation: ConstantRelaxation,
-) -> None:
-    _passes(relaxation, 3)
-
-    first_pass = relaxation([{"x": np.full(1, 7.0)}], 1)[0]["x"]
-
-    np.testing.assert_array_equal(first_pass, [7.0], err_msg=type(relaxation).__name__)
-
-
-def test_aitken_relaxation_restarts_after_a_round_off_residual() -> None:
-    relaxation = AitkenRelaxation(relaxation=0.5)
-    relaxation([{"x": np.full(1, 2.0)}], 1)
-    relaxation([{"x": np.full(1, 2.0)}], 2)
-
-    relaxed = relaxation([{"x": np.full(1, 4.0)}], 3)[0]["x"]
-
-    np.testing.assert_allclose(relaxed, [3.0], rtol=1e-12, err_msg="2 + 0.5 * (4 - 2)")
-
-
-def test_relaxation_keeps_the_names_and_shapes_of_the_data() -> None:
-    sent = [{"T_sink": np.zeros(2), "h": np.ones(2)}, {"T_sink": np.full(2, 3.0)}]
-
-    relaxed = ConstantRelaxation(relaxation=0.5)(sent, 1)
-
-    assert [{name: values.tolist() for name, values in data.items()} for data in relaxed] == [
-        {"T_sink": [0.0, 0.0], "h": [1.0, 1.0]},
-        {"T_sink": [3.0, 3.0]},
-    ]
 
 
 def test_nearest_neighbor_mapping_maps_each_target_point_to_its_nearest_source() -> None:
@@ -126,7 +50,7 @@ def test_nearest_neighbor_mapping_finds_the_neighbors_once_at_bind(
         searched.append(len(target))
         return nearest_neighbor(source, target)
 
-    monkeypatch.setattr(kernels, "nearest_neighbor", counted)
+    monkeypatch.setattr(mapping_module, "nearest_neighbor", counted)
     mapper = NearestNeighborMapping().bind(_points([[0.0], [1.0]]), _points([[0.9], [0.2], [1.1]]))
 
     passes = [mapper({"T": np.array([1.0, 2.0]) * k})["T"].tolist() for k in (1.0, 2.0, 3.0)]
@@ -146,7 +70,7 @@ def test_nearest_neighbor_in_blocks_equals_all_pairs_at_once(
     seed: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # blocks of a few target rows, so that the blocks' seams are tested
-    monkeypatch.setattr(kernels, "_BLOCK_ELEMENTS", 3 * 50 * 7)
+    monkeypatch.setattr(mapping_module, "_BLOCK_ELEMENTS", 3 * 50 * 7)
     rng = np.random.default_rng(seed)
     source = rng.random((50, 3))
     target = rng.random((333, 3))
@@ -157,7 +81,7 @@ def test_nearest_neighbor_in_blocks_equals_all_pairs_at_once(
 
 
 def test_nearest_neighbor_takes_the_lowest_index_on_a_tie(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(kernels, "_BLOCK_ELEMENTS", 2 * 9)
+    monkeypatch.setattr(mapping_module, "_BLOCK_ELEMENTS", 2 * 9)
     # points on a grid: every target point is as far from two or four source points
     source = np.array([[x, y] for x in range(3) for y in range(3)], dtype=float)
     target = np.array([[x + 0.5, y + 0.5] for x in range(2) for y in range(2)] + [[0.5, 0.0]])
@@ -220,28 +144,13 @@ def test_identity_mapping_needs_as_many_entities_on_both_ports() -> None:
         IdentityMapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0], [2.0]]))
 
 
-@pytest.mark.parametrize(
-    ("current", "converged"),
-    [(100.0 + 1e-4, True), (100.0 + 1e-2, False)],
-    ids=["change 1e-6 relative", "change 1e-4 relative"],
-)
-def test_relative_convergence_compares_the_change_with_the_limit(
-    current: float, converged: bool
-) -> None:
-    change = SideChange({"T_sink": np.array([100.0])}, {"T_sink": np.array([current])})
-
-    assert RelativeConvergence(data="T_sink", limit=1e-5)([change]) is converged
-
-
-def test_relative_convergence_ignores_other_fields() -> None:
-    changes: list[Any] = [SideChange({"u": np.array([1.0])}, {"u": np.array([2.0])})]
-
-    assert RelativeConvergence(data="T", limit=1e-5)(changes) is True
-
-
 # a patch of three faces at x = 0, 1, 2 with the areas 1, 2, 3, and two cells
 FACES = Geometry.of([[0.0], [1.0], [2.0]], [1.0, 2.0, 3.0])
+
+
 CELLS = Geometry.of([[0.0], [1.0]], [1.0, 3.0])
+
+
 VALUE = Geometry(size=1)
 
 

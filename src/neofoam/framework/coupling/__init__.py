@@ -23,27 +23,23 @@ from .comm.in_process import InProcessCommChannel
 from .controller import CouplingNotConvergedWarning
 from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
-from .kernels import (
-    AitkenRelaxation,
+from .location import Cells, Geometry, Global, MeshGeometry, Patch
+from .model import Coupling, coupling
+from .region import CouplingNode, Exchange, RegionCoupling
+from .strategies.acceleration import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
+from .strategies.convergence import CouplingConvergence, RelativeConvergence, SideChange
+from .strategies.mapping import (
     AreaIntegralMapping,
     AreaMeanMapping,
     BoundMapping,
-    ConstantRelaxation,
-    CouplingAcceleration,
-    CouplingConvergence,
     CouplingMapping,
     IdentityMapping,
     NearestNeighborMapping,
     ProbeMapping,
-    RelativeConvergence,
-    SideChange,
     UniformMapping,
     VolumeIntegralMapping,
     VolumeMeanMapping,
 )
-from .location import Cells, Geometry, Global, MeshGeometry, Patch
-from .model import Coupling, coupling
-from .region import CouplingNode, Exchange, RegionCoupling
 
 __all__ = [
     "AitkenRelaxation",
