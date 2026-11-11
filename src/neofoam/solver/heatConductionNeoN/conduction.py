@@ -16,7 +16,7 @@ class ConductionProblem:
     """Transient heat conduction ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``.
 
     :meth:`solve` always starts from the old time :meth:`start_step` set, so a coupling
-    pass can re-solve the step; each of ``patches`` adds its terms. One per run.
+    iteration can re-solve the step; each of ``patches`` adds its terms. One per run.
 
     Example::
 

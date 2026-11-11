@@ -108,9 +108,9 @@ def test_coupled_blocks_write_the_interface_temperature(
     )
 
 
-def test_coupled_blocks_aitken_converges_in_a_few_passes(blocks: dict[str, Any]) -> None:
-    # right steps last and leads; the final pass included
-    assert blocks["passes"] == {"right": [5, 6]}
+def test_coupled_blocks_aitken_converges_in_a_few_iterations(blocks: dict[str, Any]) -> None:
+    # right steps last and leads; the final iteration included
+    assert blocks["iterations"] == {"right": [5, 6]}
 
 
 def test_coupled_blocks_tutorial_is_this_case() -> None:

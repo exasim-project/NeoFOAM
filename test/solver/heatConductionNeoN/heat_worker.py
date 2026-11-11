@@ -52,11 +52,11 @@ def _region(ctx: Context) -> dict[str, Any]:
     }
 
 
-def _passes(ctx: Context, outcomes: Outcomes) -> list[int]:
+def _iterations(ctx: Context, outcomes: Outcomes) -> list[int]:
     operations = coupling(ctx).operations()
     op = operations[0].func if len(operations) else None
     if isinstance(op, CouplingLoopOp) and op.controller is not None:
-        return [outcome.passes for outcome in outcomes.of(op.controller.label)]
+        return [outcome.iterations for outcome in outcomes.of(op.controller.label)]
     return []
 
 
@@ -121,10 +121,10 @@ def main(mode: str) -> dict[str, Any]:
     outcomes = Outcomes()
     with observe(outcomes):
         regions = run_multi()
-    passes = {name: _passes(ctx, outcomes) for name, ctx in regions.items()}
+    iterations = {name: _iterations(ctx, outcomes) for name, ctx in regions.items()}
     return {
         "regions": {name: _region(ctx) for name, ctx in regions.items()},
-        "passes": {name: counts for name, counts in passes.items() if counts},
+        "iterations": {name: counts for name, counts in iterations.items() if counts},
     }
 
 

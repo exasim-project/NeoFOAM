@@ -5,8 +5,8 @@
 
 The ``wholeStep`` overlay has no ``wraps``: the time-step ops and ``start_step`` are
 ``first``, ``write_output`` ``final``, so the time advances and the fields are written
-once per step however many passes it takes. ``convergedStart`` starts from the steady
-profile, where more passes change nothing beyond the linear solver's round-off (1e-9 K).
+once per step however many iterations it takes. ``convergedStart`` starts from the steady
+profile, where more iterations change nothing beyond the linear solver's round-off (1e-9 K).
 """
 
 from pathlib import Path
@@ -19,19 +19,19 @@ from solver.heatConductionNeoN.test_coupled_blocks import ATOL_K, STEADY_T
 END_TIME, DELTA_T = 2.0e6, 1.0e6
 
 
-def test_coupled_time_step_advances_once_however_many_passes(tmp_path: Path) -> None:
+def test_coupled_time_step_advances_once_however_many_iterations(tmp_path: Path) -> None:
     case_dir = mesh_copy("coupledBlocks", tmp_path / "case", "wholeStep")
 
     computed = result(case_dir, "multi")
 
-    # right leads: maxIterations 3 passes in each of the two time steps
-    assert computed["passes"] == {"right": [3, 3]}
+    # right leads: maxIterations 3 iterations in each of the two time steps
+    assert computed["iterations"] == {"right": [3, 3]}
     for region in ("left", "right"):
         time = computed["regions"][region]["time"]
         assert (time["value"], time["index"], time["deltaT"]) == (END_TIME, 2, DELTA_T), region
 
 
-def test_coupled_time_step_writes_once_however_many_passes(tmp_path: Path) -> None:
+def test_coupled_time_step_writes_once_however_many_iterations(tmp_path: Path) -> None:
     case_dir = mesh_copy("coupledBlocks", tmp_path / "case", "wholeStep")
 
     done = run_worker(case_dir, "multi")
@@ -45,11 +45,12 @@ def test_coupled_time_step_writes_once_however_many_passes(tmp_path: Path) -> No
         assert (case_dir / region / f"{END_TIME:g}" / "T").is_file(), region
 
 
-def test_coupled_time_step_more_passes_on_the_converged_state_change_nothing(
+def test_coupled_time_step_more_iterations_on_the_converged_state_change_nothing(
     tmp_path: Path,
 ) -> None:
     one = result(
-        mesh_copy("coupledBlocks", tmp_path / "one", "wholeStepOnePass", "convergedStart"), "multi"
+        mesh_copy("coupledBlocks", tmp_path / "one", "wholeStepOneIteration", "convergedStart"),
+        "multi",
     )
     three = result(
         mesh_copy("coupledBlocks", tmp_path / "three", "wholeStep", "convergedStart"), "multi"
@@ -58,10 +59,10 @@ def test_coupled_time_step_more_passes_on_the_converged_state_change_nothing(
     for region in ("left", "right"):
         one_T, three_T = one["regions"][region]["T"], three["regions"][region]["T"]
         np.testing.assert_allclose(
-            one_T, STEADY_T[region], rtol=0, atol=ATOL_K, err_msg=f"{region}: one pass"
+            one_T, STEADY_T[region], rtol=0, atol=ATOL_K, err_msg=f"{region}: one iteration"
         )
         np.testing.assert_allclose(
-            three_T, one_T, rtol=0, atol=1e-9, err_msg=f"{region}: three passes against one"
+            three_T, one_T, rtol=0, atol=1e-9, err_msg=f"{region}: three iterations against one"
         )
         assert three["regions"][region]["time"] == one["regions"][region]["time"], region
 
