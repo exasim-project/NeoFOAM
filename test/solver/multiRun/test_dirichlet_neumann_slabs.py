@@ -49,7 +49,7 @@ def test_dirichlet_neumann_slabs_reach_the_steady_profile(
     )
 
 
-def test_dirichlet_neumann_slabs_couple_a_heat_flux_with_a_temperature_side(
+def test_dirichlet_neumann_slabs_couple_a_heat_flux_with_a_temperature_port(
     regions: dict[str, Context],
 ) -> None:
     assert isinstance(regions["left"].models["patches"][1], CoupledHeatFlux)
