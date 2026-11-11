@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Case config of multiRun: the region solvers and how their regions are coupled."""
+"""Case config of multiRun: how its regions are coupled (``system/regionCoupling.yaml``)."""
 
 from functools import partial
 from typing import Annotated, Any, Literal, Optional
@@ -17,7 +17,6 @@ from pydantic import (
     model_validator,
 )
 
-from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.framework.coupling import (
     CouplingAcceleration,
     CouplingConvergence,
@@ -61,26 +60,6 @@ ConvergenceConfig = Annotated[
     BeforeValidator(partial(_created, CouplingConvergence, "convergence")),
     _schema("convergence measure"),
 ]
-
-
-@IOStrategy(YAML("system/controlDict.yaml"))
-class ControlDictConfig(TimeControlConfig):
-    """``system/controlDict.yaml``: the time control of every region, and its solvers.
-
-    ``regionSolvers`` maps each region to its solver, in stepping order; a region
-    reads its own files under ``<region>/``.
-
-    Example::
-
-        endTime: 10.0
-        deltaT: 1.0
-        regionSolvers:
-          fluid: myFluidSolver
-          solid: mySolidSolver
-    """
-
-    # The i18n prefix labels the wizard's "add a region" row (neofoam.ui.form_schema).
-    regionSolvers: dict[str, str] = Field(min_length=1, json_schema_extra={"i18n": "nf.region"})
 
 
 class ExchangeConfig(BaseModel):
