@@ -19,8 +19,9 @@ from typing import Any, Optional, Union
 from pybFoam import Info, dictionary
 
 from neofoam import telemetry
+from neofoam.foam.coupling import FoamFields, FoamGeometry
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling import Coupling, Patch, coupling
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -132,8 +133,13 @@ def initialize(self: Any) -> Context:
     self.optional_models = init.optional_models
     case_dir = region_case_dir(self.region)
     entries = start_entries(case_dir, ctx.models["solution_loop"].timeName())
-    ctx.models["coupling"] = Coupling(self.coupling)
-    ctx.models["coupled_patches"] = coupled_patches("T", ctx, entries)
+    ctx.models["coupling"] = Coupling(
+        self.coupling, FoamGeometry(ctx.fields["p"].mesh()), FoamFields(ctx.fields)
+    )
+    patches = coupled_patches("T", ctx, entries)
+    for patch, bc in patches.items():
+        coupling(ctx).add(Patch(patch), bc)
+    ctx.models["coupled_patches"] = list(patches.values())
     if entries:
         time = ctx.fields["T"].mesh().time()
         keep_coupled_entries(ctx.models["writer"], time, case_dir, {"T": entries})

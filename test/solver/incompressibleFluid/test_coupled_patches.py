@@ -5,8 +5,9 @@
 
 ``cases/heatedChannel``: region ``fluid/`` only (4 x 3 cells, Boussinesq), ``T``
 300 K inside and 310 K on ``interface``; its own ``system/controlDict`` (endTime 5)
-differs from the case's times (0.02). The region is initialized uncoupled and
-``Coupling.add`` stubbed: the coupled run is ``test_heated_plate.py``. Face
+differs from the case's times (0.02). The region is initialized uncoupled; a
+coupled patch is built without its binding: the coupled run is
+``test_heated_plate.py``. Face
 centres and heat fluxes are closed-form on this uniform mesh, so they hold to
 round-off (``RTOL``).
 """
@@ -21,7 +22,8 @@ from typing import Any, Iterator
 import numpy as np
 import pytest
 
-from neofoam.framework.coupling import Coupling
+from neofoam.foam.coupling import FoamFields, FoamGeometry
+from neofoam.framework.coupling import Cells, Patch
 from neofoam.solver.incompressibleFluid.coupled_patches import (
     PATCH_TYPES,
     CoupledTemperature,
@@ -29,7 +31,7 @@ from neofoam.solver.incompressibleFluid.coupled_patches import (
     start_entries,
 )
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
-from neofoam.solver.regions import coupled_entries
+from neofoam.solver.regions import WallTemperature, coupled_entries
 
 CASE = Path(__file__).parent / "cases" / "heatedChannel"
 ENTRIES = Path(__file__).parents[1] / "cases" / "coupledEntries"
@@ -60,13 +62,10 @@ def region(tmp_path_factory: pytest.TempPathFactory) -> Iterator[dict[str, Any]]
 
 
 @pytest.fixture
-def patch(region: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> Iterator[CoupledTemperature]:
+def patch(region: dict[str, Any]) -> Iterator[CoupledTemperature]:
     """A coupled patch on ``interface``, its 0/T values put back after the test."""
-    added: list[Any] = []
-    monkeypatch.setattr(Coupling, "add", lambda self, side: added.append(side))
     ctx = region["ctx"]
     side = CoupledTemperature("T", "interface", ctx)
-    assert added == [side]
     yield side
     side.set_wall_T(np.full(4, 310.0))
     np.asarray(ctx.fields["alphat"]["interface"])[:] = 0.0
@@ -104,8 +103,8 @@ def test_fluid_region_uncoupled_has_no_coupled_patches(region: dict[str, Any]) -
     assert type(ctx.models["writer"].hook).__name__ == "RuntimeWriteHook"
 
 
-def test_coupled_temperature_points_are_the_face_centres(patch: CoupledTemperature) -> None:
-    points = np.asarray(patch.points())
+def test_foam_geometry_gives_the_face_centres_of_a_patch(region: dict[str, Any]) -> None:
+    points = FoamGeometry(region["ctx"].fields["T"].mesh()).face_centres("interface")
 
     np.testing.assert_allclose(
         points[:, 0], [0.125, 0.375, 0.625, 0.875], rtol=RTOL, err_msg="interface x"
@@ -118,7 +117,7 @@ def test_coupled_temperature_receives_the_fixed_value(
 ) -> None:
     T = region["ctx"].fields["T"]
     values = np.array([301.0, 302.0, 303.0, 304.0])
-    patch.receive(patch.__coupled__.receives(T=values))
+    patch.receive(WallTemperature(T=values))
     np.testing.assert_array_equal(np.asarray(T["interface"]), values)
     T.correctBoundaryConditions()  # a fixedValue patch keeps them
     np.testing.assert_array_equal(patch.wall_T(), values)
@@ -150,7 +149,6 @@ def test_coupled_temperature_requires_rho_and_cp(
     region: dict[str, Any], monkeypatch: pytest.MonkeyPatch, unset: tuple[str, ...], message: str
 ) -> None:
     ctx = region["ctx"]
-    monkeypatch.setattr(Coupling, "add", lambda self, side: None)
     runtime = next(
         m for m in ctx.models.values() if getattr(m, "config", None) is _boussinesq_config(ctx)
     )
@@ -187,3 +185,23 @@ def test_start_entries_of_a_fluid_without_T_are_none(tmp_path: Path) -> None:
     (tmp_path / "0").mkdir()
 
     assert start_entries(tmp_path, "0") == {}
+
+
+def test_foam_fields_read_a_patch_and_the_cells(region: dict[str, Any]) -> None:
+    fields = FoamFields(region["ctx"].fields)
+
+    assert fields.read("T", Patch("interface")).tolist() == [310.0] * 4
+    assert fields.read("T", Cells()).tolist() == [300.0] * 12
+
+
+def test_foam_fields_write_a_patch_and_the_cells(region: dict[str, Any]) -> None:
+    fields = FoamFields(region["ctx"].fields)
+
+    fields.write("T", Patch("interface"), [301.0, 302.0, 303.0, 304.0])
+    fields.write("T", Cells(), np.arange(12.0))
+
+    written = (fields.read("T", Patch("interface")), fields.read("T", Cells()))
+    fields.write("T", Patch("interface"), np.full(4, 310.0))
+    fields.write("T", Cells(), np.full(12, 300.0))
+    assert written[0].tolist() == [301.0, 302.0, 303.0, 304.0]
+    assert written[1].tolist() == [float(cell) for cell in range(12)]

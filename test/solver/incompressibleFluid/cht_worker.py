@@ -14,7 +14,7 @@ from typing import Any
 import numpy as np
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling import coupling
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.solver.multiRun import run as run_multi
 
@@ -22,7 +22,7 @@ RESULT_PREFIX = "#RESULT "
 
 
 def _passes(ctx: Context) -> list[int]:
-    operations = Coupling.of(ctx).operations()
+    operations = coupling(ctx).operations()
     op = operations[0].func if len(operations) else None
     if isinstance(op, CouplingOp) and op.controller is not None:
         return [outcome.passes for outcome in op.controller.outcomes]
@@ -34,7 +34,7 @@ def _fluid(ctx: Context) -> dict[str, Any]:
     return {
         patch.patch: {
             "type": type(patch).__name__,
-            "points": np.asarray(patch.points()).tolist(),
+            "points": np.asarray(coupling(ctx).geometry.face_centres(patch.patch)).tolist(),
             "areas": np.asarray(mesh.magSf()[patch.patch]).tolist(),
             "wall_T": np.asarray(patch.wall_T()).tolist(),
             "q": np.asarray(patch.heat_flux()).tolist(),

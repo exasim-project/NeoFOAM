@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-# NB: no ``from __future__ import annotations`` — ``@coupled`` reads the
-# ``sends`` / ``receives`` annotations as live classes.
-
 """The coupled patches of the fluid's ``T``: the Dirichlet side on an OpenFOAM ``fixedValue`` patch.
 
 A patch of ``0/T`` is coupled by its entry ``coupled coupledTemperature;``.
 """
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Mapping, Optional
@@ -16,7 +15,7 @@ import numpy as np
 from pybFoam import fvc
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, coupled
+from neofoam.framework.coupling import coupled
 from neofoam.solver.regions import WallHeatFlux, WallTemperature, coupled_entries
 
 from .models.boussinesq import BoussinesqConfig, boussinesq
@@ -32,14 +31,12 @@ def _boussinesq_config(ctx: Context) -> Optional[BoussinesqConfig]:
 
 
 class FoamPatch:
-    """A patch of the OpenFOAM field ``field``: its faces and their centres."""
+    """A patch of the OpenFOAM field ``field``."""
 
     def __init__(self, field: str, patch: str, ctx: Context) -> None:
         self.field = field
         self.patch = patch
         self.ctx = ctx
-        mesh = ctx.fields[field].mesh()
-        self.centres = np.array(np.asarray(mesh.Cf()[patch]))
 
     def wall_T(self) -> Any:
         """The values of the patch, a copy."""
@@ -74,7 +71,6 @@ class CoupledTemperature(FoamPatch):
         super().__init__(field, patch, ctx)
         self.rho_cp = float(config.rho) * float(config.cp)  # type: ignore[arg-type]
         self.Pr = float(config.Pr)
-        Coupling.of(ctx).add(self)
 
     def heat_flux(self) -> Any:
         """The heat flux through each face into the fluid, ``rho cp (nu/Pr + alphat) dT/dn``."""
@@ -85,10 +81,6 @@ class CoupledTemperature(FoamPatch):
         nu_wall = np.array(np.asarray(nu()[self.patch]))
         alphat = np.array(np.asarray(self.ctx.fields["alphat"][self.patch]))
         return self.rho_cp * (nu_wall / self.Pr + alphat) * gradient
-
-    @coupled.coordinates
-    def points(self) -> Any:
-        return self.centres
 
     @coupled.sends
     def send(self) -> WallHeatFlux:
@@ -113,6 +105,8 @@ def start_entries(case_dir: Path, time_name: str) -> dict[str, str]:
     return coupled_entries(path, PATCH_TYPES) if path.is_file() else {}
 
 
-def coupled_patches(field: str, ctx: Context, entries: Mapping[str, str]) -> list[FoamPatch]:
-    """The coupled patches of ``field``; ``entries``: patch -> condition (``coupled_entries``)."""
-    return [COUPLED_PATCHES[condition](field, patch, ctx) for patch, condition in entries.items()]
+def coupled_patches(field: str, ctx: Context, entries: Mapping[str, str]) -> dict[str, FoamPatch]:
+    """The coupled patches of ``field`` by patch; ``entries``: patch -> condition."""
+    return {
+        patch: COUPLED_PATCHES[condition](field, patch, ctx) for patch, condition in entries.items()
+    }
