@@ -32,7 +32,7 @@ from neofoam.framework.coupling import (
     InProcessCommChannel,
     coupling,
 )
-from neofoam.framework.coupling.run import run_regions
+from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import IterativeOp, Operation, StepBuilder
 from neofoam.framework.types import OperationMetadata, Placement
@@ -192,7 +192,7 @@ def _nested(passes: dict[str, tuple[int, int]]) -> dict[str, Context]:
         )
         resolved = DAGResolver().resolve(builder, coupling(ctx).operations()).operations
         tasks[name] = partial(resolved.run, ctx)
-    run_regions(tasks, comm_channel(regions["a"]))
+    run_participants(tasks, comm_channel(regions["a"]))
     return regions
 
 

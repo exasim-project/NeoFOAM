@@ -19,7 +19,7 @@ from framework.coupling.regions import contexts
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Exchange, coupling
-from neofoam.framework.coupling.run import run_regions
+from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
     IterativeOp,
@@ -121,7 +121,7 @@ def _step(
         graphs[region] = _graph(
             ctx, _time_loop(asked[region], logs[region], solves[region]), *loops
         )
-    run_regions(
+    run_participants(
         {region: partial(graphs[region].run, regions[region]) for region in asked},
         comm_channel_of(regions["a"]),
     )

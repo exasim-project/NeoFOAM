@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The regions of a coupled case run, each on a thread of its own: :func:`run_regions`."""
+"""The regions of a coupled case run, each on a thread of its own: :func:`run_participants`."""
 
 from __future__ import annotations
 
@@ -14,7 +14,9 @@ from .comm.channel import CommChannel, CommChannelClosed
 T = TypeVar("T")
 
 
-def run_regions(tasks: Mapping[str, Callable[[], T]], comm_channel: CommChannel) -> dict[str, T]:
+def run_participants(
+    tasks: Mapping[str, Callable[[], T]], comm_channel: CommChannel
+) -> dict[str, T]:
     """Run every region's task on its own thread; each task's result, by region.
 
     The threads report to the calling thread's execution observer. A failing

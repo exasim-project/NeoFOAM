@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""run_regions runs every region on a thread of its own and raises the first real error."""
+"""run_participants runs every region on a thread of its own and raises the first real error."""
 
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ from neofoam.framework.coupling import (
     CouplingDeadlock,
     InProcessCommChannel,
 )
-from neofoam.framework.coupling.run import run_regions
+from neofoam.framework.coupling.run import run_participants
 
 
-def test_run_regions_raises_the_deadlock() -> None:
+def test_run_participants_raises_the_deadlock() -> None:
     comm_channel = InProcessCommChannel()
 
     with pytest.raises(CouplingDeadlock, match="a waits for 'x' from b"):
-        run_regions(
+        run_participants(
             {
                 "a": lambda: comm_channel.receive("b", "a", "x"),
                 "b": lambda: comm_channel.receive("a", "b", "y"),
@@ -29,7 +29,7 @@ def test_run_regions_raises_the_deadlock() -> None:
         )
 
 
-def test_run_regions_raises_the_error_before_a_comm_channel_closed_of_another_region() -> None:
+def test_run_participants_raises_the_error_before_a_comm_channel_closed_of_another_region() -> None:
     comm_channel = InProcessCommChannel(timeout=TIMEOUT)
 
     def closed() -> None:
@@ -42,4 +42,4 @@ def test_run_regions_raises_the_error_before_a_comm_channel_closed_of_another_re
         raise CouplingDeadlock("b deadlocked")
 
     with pytest.raises(CouplingDeadlock, match="b deadlocked"):
-        run_regions({"a": closed, "b": deadlock}, comm_channel)
+        run_participants({"a": closed, "b": deadlock}, comm_channel)

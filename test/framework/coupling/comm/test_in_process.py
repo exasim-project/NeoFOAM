@@ -3,7 +3,7 @@
 
 """The in-process comm channel tells a deadlock at once and times out as a fallback.
 
-Regions ``a``, ``b`` (and ``c``) are plain tasks run by :func:`run_regions`,
+Regions ``a``, ``b`` (and ``c``) are plain tasks run by :func:`run_participants`,
 each receiving from or sending to the others on the comm channel directly.
 """
 
@@ -24,7 +24,7 @@ from neofoam.framework.coupling import (
     CouplingTimeout,
     InProcessCommChannel,
 )
-from neofoam.framework.coupling.run import run_regions
+from neofoam.framework.coupling.run import run_participants
 
 
 def _until_waiting(comm_channel: InProcessCommChannel, region: str) -> None:
@@ -42,7 +42,7 @@ def _waits(lines: str) -> list[str]:
 def _errors(
     comm_channel: InProcessCommChannel, tasks: dict[str, Callable[[], Any]]
 ) -> dict[str, Any]:
-    """Run ``tasks`` on their own threads as run_regions does; the error each raised, by region."""
+    """Run ``tasks`` on threads as run_participants does; the error each raised, by region."""
     errors: dict[str, Any] = {}
 
     def run(region: str, task: Callable[[], Any]) -> None:
@@ -153,7 +153,7 @@ def test_a_region_waiting_while_its_partner_computes_waits() -> None:
         _until_waiting(comm_channel, "a")
         comm_channel.send("b", "a", "x", 1.0)
 
-    run_regions(
+    run_participants(
         {
             "a": lambda: received.append(comm_channel.receive("b", "a", "x")),
             "b": b,
@@ -176,7 +176,7 @@ def test_a_receive_waiting_longer_than_the_timeout_raises_with_a_report() -> Non
 
     # b computes (in no receive) until a gave up: no deadlock to tell
     with pytest.raises(CouplingTimeout) as raised:
-        run_regions({"a": a, "b": released.wait}, comm_channel)
+        run_participants({"a": a, "b": released.wait}, comm_channel)
 
     report = str(raised.value)
     assert report.startswith(
