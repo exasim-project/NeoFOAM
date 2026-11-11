@@ -118,8 +118,7 @@ def execution_graph(
 
     builder = StepBuilder()
 
-    # The pressure-velocity algorithm (pimpleNeoN) is the first core model: a
-    # runtime whose config holds this run's algorithm_type.
+    # The pressure-velocity algorithm (pimpleNeoN) is the first core model.
     algo_ops = Operations(self.state.core_models[0].operations)
 
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)

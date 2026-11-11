@@ -24,13 +24,8 @@ from .simpleAlgorithm import simpleNeoN
 
 @dataclass(frozen=True)
 class PressureVelocitySettingsNeoN:
-    """One run's pressure-velocity settings: the ``config`` of its runtime.
+    """One run's settings, kept off the spec that regions and runs share."""
 
-    Kept off the module-level spec, so two regions or two runs selecting the
-    same spec never see each other's settings.
-    """
-
-    #: The ``system/fvSolution`` block the case selects: ``PIMPLE``, ``PISO`` or ``SIMPLE``.
     algorithm_type: str
 
 

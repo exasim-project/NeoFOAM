@@ -77,10 +77,7 @@ def compare_fields_numerically(
 
 
 def relative_l2_error(result: np.ndarray, reference: np.ndarray) -> float:
-    """Relative L2 difference ``||result - reference||_2 / ||reference||_2``.
-
-    Taken over every cell and, for a vector or tensor field, every component.
-    """
+    """Relative L2 difference to ``reference`` over every cell and component."""
     assert result.shape == reference.shape, f"shape {result.shape} vs {reference.shape}"
     return float(np.linalg.norm(result - reference) / np.linalg.norm(reference))
 
@@ -97,8 +94,7 @@ def setup_case(
 
     ``run_setfields=True`` invokes ``setFields`` after blockMesh — needed
     by cases like hotRoom that initialize a temperature blob via
-    ``system/setFieldsDict``. ``write_precision`` overrides the case's
-    ``writePrecision`` (left as is when ``None``).
+    ``system/setFieldsDict``.
     """
     if test_case.exists():
         shutil.rmtree(test_case)

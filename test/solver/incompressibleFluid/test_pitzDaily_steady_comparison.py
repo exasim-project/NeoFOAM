@@ -18,13 +18,11 @@ The history behind this test — the SIMPLE gap it originally captured as an
 ``xfail`` — is described in
 ``report/incompressibleFluid-steady-state-limitations.md``.
 
-Tolerance: per-field relative L2 difference ``||framework - native|| / ||native||``
-at most ``1e-9`` after five SIMPLE iterations, written at ``writePrecision 17``.
-The runs are not bitwise equal on an ``x86-64-v3`` toolchain: pybFoam is built
-with FMA there, the prebuilt simpleFoam is not. With the tutorial's ``relTol 0.1``
-that round-off grows ~2x per iteration, so after fifty iterations it is as large
-as a real 1e-6 change to the algorithm. At five it is at most 1.5e-11, while a
-1e-6 relative change to the U relaxation factor or ``nu`` gives 6.9e-7 or more.
+Tolerance: relative L2 at most ``1e-9`` after five SIMPLE iterations at
+``writePrecision 17``. Not bitwise: pybFoam is built with FMA on ``x86-64-v3``, the
+prebuilt simpleFoam is not, and ``relTol 0.1`` grows that round-off ~2x per
+iteration. At five it is at most 1.5e-11; a 1e-6 relative change to the U relaxation
+factor or ``nu`` gives 6.9e-7 or more.
 """
 
 import shutil
