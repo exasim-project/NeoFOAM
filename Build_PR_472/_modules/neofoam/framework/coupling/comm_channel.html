@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -686,7 +688,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span>
 
-<span class="c1"># What a side sends, by field name: one value (or row) per point of its patch.</span>
+<span class="c1"># What a port sends of one data model, by field name: a row per entity, or a value.</span>
 <span class="n">Data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 
 <span class="c1"># Seconds a receive of an InProcessCommChannel waits by default.</span>
@@ -703,16 +705,16 @@
 <div class="viewcode-block" id="Tag.data">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag.data">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""What a side sends, each pass."""</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="n">exchange</span><span class="si">}</span><span class="s2">"</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""What a port sends of one data model (by its ``key``), each pass."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"data:</span><span class="si">{</span><span class="n">exchange</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 <div class="viewcode-block" id="Tag.side">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag.side">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">side</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A side's models and points, sent to its partner once."""</span>
+<span class="w">        </span><span class="sd">"""What a port sends and its geometry, told its partner once."""</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"side:</span><span class="si">{</span><span class="n">exchange</span><span class="si">}</span><span class="s2">"</span></div>
 
 
@@ -720,7 +722,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag.node">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sides"</span><span class="p">,</span> <span class="s2">"pass"</span><span class="p">,</span> <span class="s2">"decision"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A region's sides, its pass and the leader's decision, within coupling node ``node``."""</span>
+<span class="w">        </span><span class="sd">"""A region's streams, its pass and the leader's decision, within coupling node ``node``."""</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2">"</span></div>
 </div>
 

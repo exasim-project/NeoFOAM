@@ -300,7 +300,9 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.field_port.html">neofoam.framework.coupling.field_port</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.kernels.html">neofoam.framework.coupling.kernels</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.location.html">neofoam.framework.coupling.location</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
@@ -680,7 +682,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">PrivateAttr</span>
@@ -688,14 +690,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.comm_channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.location</span><span class="w"> </span><span class="kn">import</span> <span class="n">Geometry</span>
 
 
 <div class="viewcode-block" id="SideChange">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.SideChange">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SideChange</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""What one side sent in the previous and in the current pass, for a convergence check."""</span>
+<span class="w">    </span><span class="sd">"""What one stream sent in the previous and in the current pass, for a convergence check."""</span>
 
-    <span class="n">field</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">previous</span><span class="p">:</span> <span class="n">Data</span>
     <span class="n">current</span><span class="p">:</span> <span class="n">Data</span></div>
 
@@ -729,27 +731,44 @@
 
 
 
-<span class="c1"># a mapping bound to both sides' points: data on the source points -&gt; on the target's</span>
+<span class="c1"># a mapping bound to both ports' geometries: data on the source -&gt; on the target</span>
 <span class="n">BoundMapping</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Data</span><span class="p">],</span> <span class="n">Data</span><span class="p">]</span>
+
+<span class="c1"># the entity kinds of the data models: face, cell, value, probe</span>
+<span class="n">_TRANSFER</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"face"</span><span class="p">,</span> <span class="s2">"face"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"cell"</span><span class="p">,</span> <span class="s2">"cell"</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="CouplingMapping">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping">[docs]</a>
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"mapping"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingMapping</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Maps the data a side sends onto the other side's points; a plugin family.</span>
+<span class="w">    </span><span class="sd">"""Maps the data a port sends onto the receiving port's location; a plugin family.</span>
 
-<span class="sd">    Bound once, when the receiving op connects, to the partner's points (``source``)</span>
-<span class="sd">    and its own (``target``; ``None`` without coordinates). A mapping of one's own</span>
-<span class="sd">    subclasses it with a ``type: Literal[...]``, overrides :meth:`bind` and</span>
-<span class="sd">    registers (``@CouplingMapping.register``); so do accelerations and convergences.</span>
+<span class="sd">    Bound once, when the receiving op connects, to the sender's geometry</span>
+<span class="sd">    (``source``) and its own (``target``). ``kinds`` lists the ``(sent, received)``</span>
+<span class="sd">    entity kinds it maps (``face``, ``cell``, ``value``, ``probe``). A mapping of</span>
+<span class="sd">    one's own subclasses it with a ``type: Literal[...]``, overrides :meth:`bind`</span>
+<span class="sd">    and registers (``@CouplingMapping.register``); so do accelerations and convergences.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_TRANSFER</span>
+
+<div class="viewcode-block" id="CouplingMapping.check">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping.check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">received</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise ``ValueError`` unless the mapping maps ``sent`` onto ``received`` entities."""</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">sent</span><span class="p">,</span> <span class="n">received</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kinds</span><span class="p">:</span>
+            <span class="n">can</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kinds</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="s1">'type'</span><span class="p">,</span><span class="w"> </span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span><span class="si">}</span><span class="s2">' maps </span><span class="si">{</span><span class="n">can</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"not </span><span class="si">{</span><span class="n">sent</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">received</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="CouplingMapping.bind">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingMapping.bind">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The mapping from ``source`` onto ``target``; ``ValueError`` when it cannot map."""</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </div>
@@ -760,17 +779,22 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.IdentityMapping">[docs]</a>
 <span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">IdentityMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Hands the data over unchanged: the sides share their points."""</span>
+<span class="w">    </span><span class="sd">"""Hands the data over unchanged: the ports share their entities."""</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"identity"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"identity"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="o">*</span><span class="n">_TRANSFER</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"probe"</span><span class="p">,</span> <span class="s2">"probe"</span><span class="p">),</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="IdentityMapping.bind">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.IdentityMapping.bind">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span><span class="o">.</span><span class="n">size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">source</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' needs as many points on both sides: "</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="si">}</span><span class="s2"> sent, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2"> received"</span>
+                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' needs as many entities on both ports: "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> sent, </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> received"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">_unchanged</span></div>
 </div>
@@ -781,33 +805,181 @@
     <span class="k">return</span> <span class="n">data</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_points</span><span class="p">(</span><span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Both ports' points; ``ValueError`` naming the port without."""</span>
+    <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">points</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target</span><span class="o">.</span><span class="n">points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">points</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span><span class="o">.</span><span class="n">points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="s2">"neither port has any"</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="s1">'sending'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">source</span><span class="o">.</span><span class="n">points</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'receiving'</span><span class="si">}</span><span class="s2"> port has none"</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="n">mapping</span><span class="si">}</span><span class="s2">' needs the points of both ports, but </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">: give its "</span>
+            <span class="s2">"mesh geometry or choose mapping 'identity'"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">source</span><span class="o">.</span><span class="n">points</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">points</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_taken</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mapper</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">)[</span><span class="n">indices</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">return</span> <span class="n">mapper</span>
+
+
 <div class="viewcode-block" id="NearestNeighborMapping">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.NearestNeighborMapping">[docs]</a>
 <span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NearestNeighborMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Maps every receiving point to the nearest sending point, found once: points must not move."""</span>
+<span class="w">    </span><span class="sd">"""Maps every receiving entity to the nearest sending one, found once: points must not move."""</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"nearest-neighbor"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"nearest-neighbor"</span>
 
 <div class="viewcode-block" id="NearestNeighborMapping.bind">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.NearestNeighborMapping.bind">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">missing</span> <span class="o">=</span> <span class="s2">"neither side has any: give both patches"</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">side</span> <span class="o">=</span> <span class="s2">"sending"</span> <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"receiving"</span>
-                <span class="n">missing</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"the </span><span class="si">{</span><span class="n">side</span><span class="si">}</span><span class="s2"> side has none: give its patch"</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_taken</span><span class="p">(</span><span class="n">nearest_neighbor</span><span class="p">(</span><span class="o">*</span><span class="n">_points</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)))</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scalars</span><span class="p">(</span><span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``data`` as 1-d arrays; ``ValueError`` for a vector field."""</span>
+    <span class="n">arrays</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' needs the coordinates of both sides, but </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="s2">"coordinates (@coupled.coordinates) or choose mapping 'identity'"</span>
+                <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="n">mapping</span><span class="si">}</span><span class="s2">' takes scalar fields; </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has the shape </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">nearest_neighbor</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">arrays</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_measures</span><span class="p">(</span><span class="n">mapping</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">measures</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="n">mapping</span><span class="si">}</span><span class="s2">' needs the </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> of the sending port; it has none"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">source</span><span class="o">.</span><span class="n">measures</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_Reduction</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reduces the values of every entity to one, weighted by their measures."""</span>
+
+    <span class="n">mean</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">measure</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"type"</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_measures</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="k">else</span> <span class="mf">1.0</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">mapper</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">)[</span><span class="n">indices</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="n">field</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">values</span> <span class="o">@</span> <span class="n">weights</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">_scalars</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">mapper</span>
+
+
+<div class="viewcode-block" id="AreaMeanMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.AreaMeanMapping">[docs]</a>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AreaMeanMapping</span><span class="p">(</span><span class="n">_Reduction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The area-weighted mean of a patch's values: ``sum(q A) / sum(A)``."""</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"area-mean"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"area-mean"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"face"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">),)</span>
+    <span class="n">mean</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">measure</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"face areas"</span></div>
+
+
+
+<div class="viewcode-block" id="AreaIntegralMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.AreaIntegralMapping">[docs]</a>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AreaIntegralMapping</span><span class="p">(</span><span class="n">_Reduction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The integral of a patch's values over its faces: ``sum(q A)``."""</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"area-integral"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"area-integral"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"face"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">),)</span>
+    <span class="n">measure</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"face areas"</span></div>
+
+
+
+<div class="viewcode-block" id="VolumeMeanMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.VolumeMeanMapping">[docs]</a>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">VolumeMeanMapping</span><span class="p">(</span><span class="n">_Reduction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The volume-weighted mean of the cells' values: ``sum(s V) / sum(V)``."""</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"volume-mean"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"volume-mean"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"cell"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">),)</span>
+    <span class="n">mean</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">measure</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"cell volumes"</span></div>
+
+
+
+<div class="viewcode-block" id="VolumeIntegralMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.VolumeIntegralMapping">[docs]</a>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">VolumeIntegralMapping</span><span class="p">(</span><span class="n">_Reduction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The integral of the cells' values over their volumes: ``sum(s V)``."""</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"volume-integral"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"volume-integral"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"cell"</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">),)</span>
+    <span class="n">measure</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"cell volumes"</span></div>
+
+
+
+<div class="viewcode-block" id="UniformMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.UniformMapping">[docs]</a>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UniformMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One value on every face or cell of the receiving port."""</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"uniform"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"uniform"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"face"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="s2">"cell"</span><span class="p">))</span>
+
+<div class="viewcode-block" id="UniformMapping.bind">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.UniformMapping.bind">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' needs the size of the receiving port"</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">mapper</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">Data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Data</span><span class="p">:</span>
+            <span class="n">arrays</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"mapping '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2">' takes scalar values; </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has the shape "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">values</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">arrays</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
         <span class="k">return</span> <span class="n">mapper</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProbeMapping">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.ProbeMapping">[docs]</a>
+<span class="nd">@CouplingMapping</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProbeMapping</span><span class="p">(</span><span class="n">CouplingMapping</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The values of the cells nearest to ``points``, one row per point (no interpolation).</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        mapping: {type: probe, points: [[0.1, 0.01, 0], [0.2, 0.01, 0]]}</span>
+<span class="sd">    """</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"probe"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"probe"</span>
+    <span class="n">kinds</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">((</span><span class="s2">"cell"</span><span class="p">,</span> <span class="s2">"probe"</span><span class="p">),)</span>
+    <span class="n">points</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProbeMapping.bind">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.ProbeMapping.bind">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Geometry</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoundMapping</span><span class="p">:</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_taken</span><span class="p">(</span><span class="n">nearest_neighbor</span><span class="p">(</span><span class="o">*</span><span class="n">_points</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">Geometry</span><span class="o">.</span><span class="n">of</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="kc">None</span><span class="p">))))</span></div>
 </div>
 
 
@@ -841,7 +1013,10 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.ConstantRelaxation">[docs]</a>
 <span class="nd">@CouplingAcceleration</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConstantRelaxation</span><span class="p">(</span><span class="n">CouplingAcceleration</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""``x = x_last + relaxation * (sent - x_last)``; first data passes unchanged."""</span>
+<span class="w">    </span><span class="sd">"""``x = x_last + relaxation * (sent - x_last)``.</span>
+
+<span class="sd">    The first data of every time step (pass 1) passes unchanged.</span>
+<span class="sd">    """</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"constant"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"constant"</span>
     <span class="n">relaxation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -849,6 +1024,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sent</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">],</span> <span class="n">iteration</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Data</span><span class="p">]:</span>
         <span class="n">values</span> <span class="o">=</span> <span class="n">_flatten</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">residual</span> <span class="o">=</span> <span class="n">values</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last</span>
             <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factor</span><span class="p">(</span><span class="n">residual</span><span class="p">,</span> <span class="n">iteration</span><span class="p">)</span> <span class="o">*</span> <span class="n">residual</span>
@@ -915,9 +1092,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.CouplingConvergence">[docs]</a>
 <span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">"convergence"</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">"type"</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CouplingConvergence</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Whether a node converged, from every side's change in the last pass; a plugin family.</span>
+<span class="w">    </span><span class="sd">"""Whether a node converged, from every stream's change in the last pass; a plugin family.</span>
 
-<span class="sd">    ``data`` names the field a measure compares, ``None`` for a measure of all fields.</span>
+<span class="sd">    ``data`` names the data field a measure compares (``T``), ``None`` for all of them.</span>
 <span class="sd">    """</span>
 
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
@@ -933,7 +1110,7 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.kernels.html#neofoam.framework.coupling.kernels.RelativeConvergence">[docs]</a>
 <span class="nd">@CouplingConvergence</span><span class="o">.</span><span class="n">register</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RelativeConvergence</span><span class="p">(</span><span class="n">CouplingConvergence</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Converged once every array of field ``data`` changes by less than ``limit`` (2-norms).</span>
+<span class="w">    </span><span class="sd">"""Converged once every array named ``data`` changes by less than ``limit`` (2-norms).</span>
 
 <span class="sd">    Example::</span>
 
@@ -949,8 +1126,8 @@
             <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">previous</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
             <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">limit</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">change</span><span class="o">.</span><span class="n">current</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">change</span> <span class="ow">in</span> <span class="n">changes</span>
-            <span class="k">if</span> <span class="n">change</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">change</span><span class="o">.</span><span class="n">current</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
         <span class="p">)</span></div>
 
 </pre></div>
