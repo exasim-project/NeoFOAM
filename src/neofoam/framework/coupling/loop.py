@@ -13,8 +13,8 @@ from neofoam.framework.operations import IterativeOp
 from .comm.channel import Data, Tag
 from .controller import CouplingController, GroupStream, StreamId
 from .data import CoupledPort, End, Stream, check_received, check_rows, sent
-from .kernels import BoundMapping
 from .location import Geometry
+from .strategies.mapping import BoundMapping
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
