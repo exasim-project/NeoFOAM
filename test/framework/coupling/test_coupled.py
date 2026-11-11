@@ -23,6 +23,7 @@ from neofoam.framework.coupling import (
     Array,
     CellData,
     Cells,
+    CoupledPort,
     Exchange,
     FaceData,
     Global,
@@ -35,6 +36,7 @@ from neofoam.framework.coupling import (
     coupled,
     coupling,
 )
+from neofoam.framework.coupling.data import Stream
 from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
 from neofoam.framework.coupling.strategies.mapping import (
     AreaIntegralMapping,
@@ -572,3 +574,27 @@ def test_identity_maps_the_data_of_ports_without_points() -> None:
     _run(regions)
 
     assert [data.q.tolist() for data in wall.received] == [[-1.0, -2.0]]
+
+
+class _Q(ValueData):
+    q: Scalar
+
+
+def _port(location: object, *sends: type) -> CoupledPort:
+    return CoupledPort("a", location, tuple(Stream(model, print) for model in sends))
+
+
+def test_a_port_merges_the_streams_of_another_instance() -> None:
+    merged = _port(Patch("top"), WallTemperature).merged(_port(Patch("top"), _Q))
+
+    assert [stream.model.__name__ for stream in merged.sends] == ["WallTemperature", "_Q"]
+
+
+def test_a_port_sends_a_data_field_once() -> None:
+    with pytest.raises(ValueError, match=r"two @coupled.sends of T on a.top"):
+        _port(Patch("top"), WallTemperature).merged(_port(Patch("top"), WallTemperature))
+
+
+def test_a_port_name_names_one_location() -> None:
+    with pytest.raises(ValueError, match=r"a.cells is bound to Cells\(name='cells'\) and Global"):
+        _port(Cells(), WallTemperature).merged(_port(Global("cells"), _Q))

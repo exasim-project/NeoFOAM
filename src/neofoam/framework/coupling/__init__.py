@@ -20,8 +20,8 @@ from .comm.channel import (
     CouplingTimeout,
 )
 from .comm.in_process import InProcessCommChannel
-from .coupled import coupled
-from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
+from .coupled import CoupledPort, coupled
+from .data import Array, CellData, FaceData, ProbeData, Scalar, ValueData
 from .exchanges import CouplingLoop, Exchange, ParticipantExchanges, participant_exchanges
 from .iteration._leader import CouplingNotConvergedWarning
 from .location import Cells, Geometry, Global, MeshGeometry, Patch

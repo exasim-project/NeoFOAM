@@ -11,7 +11,8 @@ from neofoam.framework import execution_observer
 from neofoam.framework.operations import IterativeOp
 
 from ..comm.channel import Data, Tag
-from ..data import CoupledPort, End, Stream, check_received, check_rows, sent
+from ..coupled import CoupledPort
+from ..data import End, Stream, check_received, check_rows, sent
 from ..location import Geometry
 from ..strategies.mapping import BoundMapping
 from ._leader import Decision, GroupStream, Leader, LocalStream, Loops

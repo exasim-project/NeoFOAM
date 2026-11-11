@@ -1,17 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""What a port exchanges: data models of :data:`Array` or :data:`Scalar` fields, the port."""
+"""What a port exchanges: data models of :data:`Array` or :data:`Scalar` fields, their streams."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Annotated, Any, Callable, ClassVar, Optional
+from typing import TYPE_CHECKING, Annotated, Any, Callable, ClassVar, Optional
 
 import numpy as np
 from pydantic import BaseModel, PlainValidator
 
 from .comm.channel import Data
+
+if TYPE_CHECKING:
+    from .coupled import CoupledPort
 
 # (region, port)
 End = tuple[str, str]
@@ -123,63 +126,6 @@ class Stream:
     @property
     def names(self) -> tuple[str, ...]:
         return tuple(self.model.model_fields)
-
-
-@dataclass(frozen=True)
-class CoupledPort:
-    """A coupled location of a region: what it sends and receives there, by data key.
-
-    Built by :meth:`~neofoam.framework.coupling.Participant.add`; several instances
-    on one location merge into one port.
-    """
-
-    region: str
-    location: Any
-    sends: tuple[Stream, ...] = ()
-    receives: tuple[Stream, ...] = ()
-
-    @property
-    def name(self) -> str:
-        """The port's name, its location's."""
-        return str(self.location.name)
-
-    @property
-    def end(self) -> End:
-        """The port's end of its exchange."""
-        return (self.region, self.name)
-
-    @property
-    def label(self) -> str:
-        """``<region>.<port>``."""
-        return f"{self.region}.{self.name}"
-
-    @property
-    def names(self) -> set[str]:
-        """The data field names the port sends or receives."""
-        return {name for stream in (*self.sends, *self.receives) for name in stream.names}
-
-    def merged(self, other: CoupledPort) -> CoupledPort:
-        """This port with ``other``'s streams; ``ValueError`` when a field name repeats."""
-        if other.location != self.location:
-            raise ValueError(
-                f"{self.label} is bound to {self.location} and {other.location}; a port's "
-                "name names one location"
-            )
-        for role in ("sends", "receives"):
-            mine = {name for stream in getattr(self, role) for name in stream.names}
-            for stream in getattr(other, role):
-                twice = sorted(mine & set(stream.names))
-                if twice:
-                    raise ValueError(
-                        f"two @coupled.{role} of {', '.join(twice)} on {self.label}; a port "
-                        f"{role} each data field once"
-                    )
-        return CoupledPort(
-            self.region,
-            self.location,
-            self.sends + other.sends,
-            self.receives + other.receives,
-        )
 
 
 def check_received(name: str, announced: dict[str, Any], port: CoupledPort) -> None:
