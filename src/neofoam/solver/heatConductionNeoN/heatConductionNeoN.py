@@ -15,9 +15,9 @@ time step. ``multiRun`` couples its regions through the coupled patches of ``T``
 from typing import Any, Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, RegionCoupling
+from neofoam.framework.coupling import Coupling
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
-from neofoam.framework.solver import SolverRuntime, SolverSpec, core_model
+from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.types import OperationMetadata
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import SolutionLoopPredicate
 from neofoam.solver.neon_runtime import NeoNControlConfig, ensure_neon_initialized
@@ -27,23 +27,9 @@ from .configs import ControlDictConfig, ThermalPropertiesConfig
 from .coupled_patches import coupled_patches
 from .create_fields import create_init
 
-
-class _NeoNSolverSpec(SolverSpec):
-    """A solver whose runtimes need NeoN: instantiating one brings NeoN up."""
-
-    def instantiate(
-        self,
-        argv: Optional[list[Any]] = None,
-        region: Optional[str] = None,
-        coupling: Optional[RegionCoupling] = None,
-    ) -> SolverRuntime:
-        # not in the initializer: Kokkos is finalized on the thread that initialized it,
-        # and multiRun instantiates every region on the main thread, runs it on its own
-        ensure_neon_initialized([str(arg) for arg in argv] if argv else [self.name])
-        return super().instantiate(argv=argv, region=region, coupling=coupling)
-
-
-heatConductionNeoN = _NeoNSolverSpec("heatConductionNeoN")
+heatConductionNeoN = Solver("heatConductionNeoN")
+# Kokkos is finalized on its initializing thread; multiRun instantiates on the main one
+heatConductionNeoN.on_instantiate = ensure_neon_initialized
 
 heatConductionNeoN.config(ControlDictConfig)
 heatConductionNeoN.config(NeoNControlConfig)

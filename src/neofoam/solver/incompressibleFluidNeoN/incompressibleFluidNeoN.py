@@ -44,6 +44,8 @@ from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.solution_loop import SolutionLoopPredicate
 
 incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
+# Kokkos is finalized on its initializing thread; multiRun instantiates on the main one
+incompressibleFluidNeoN.on_instantiate = ensure_neon_initialized
 
 # Declare the full config schema on the spec, case-free: the solver's own
 # configs plus the model families it owns. Viscosity carries no Python config
@@ -157,7 +159,7 @@ def run(
     If ``log_file`` is given, fd 1 (stdout) is redirected to that file for the
     duration of the solve.
     """
-    ensure_neon_initialized(list(argv) if argv else ["incompressibleFluidNeoN"])
+    runtime = incompressibleFluidNeoN.instantiate(argv=argv or [])
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None
@@ -170,7 +172,7 @@ def run(
         os.close(log_fd)
 
     try:
-        ctx = incompressibleFluidNeoN.instantiate(argv=argv or []).run()
+        ctx = runtime.run()
 
         print("End")
         return ctx
