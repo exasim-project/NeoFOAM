@@ -18,8 +18,8 @@ says which part:
         write                               update_rho
                                             write
 
-- named operations: those and, with ``downstream``, every operation downstream of
-  them in their scope; the loop takes the place of the last of them::
+- named operations: those and every operation downstream of them in their scope;
+  the loop takes the place of the last of them::
 
     time_loop                       time_loop
         start_step                      start_step
@@ -206,10 +206,7 @@ def _selected(
     (path,) = paths
     scope = _scope(ops, path)
     seeds = {id(located[name][1]) for name in names}
-    if placement.downstream:
-        picked = _downstream(scope, lambda op: id(op) in seeds)
-    else:
-        picked = [op for op in scope if id(op) in seeds]
+    picked = _downstream(scope, lambda op: id(op) in seeds)
     held = _wrapping_in(picked)
     if held:
         raise ValueError(
@@ -289,14 +286,6 @@ def _wrapped(scope: list[Operation], selected: list[Operation], loop: Operation)
     """``scope`` with the ``selected`` operations moved into ``loop``, at the last one's place."""
     member_ids = {id(op) for op in selected}
     last = max(index for index, op in enumerate(scope) if id(op) in member_ids)
+    # ``selected`` holds all downstream of its members: nothing earlier depends on it.
     earlier = [op for op in scope[:last] if id(op) not in member_ids]
-    # Without downstream an operation between the members may depend on one of
-    # them; running it before the loop would break that edge.
-    after = {id(op) for op in _downstream(scope[:last], lambda op: id(op) in member_ids)}
-    broken = [op.operation_name for op in earlier if id(op) in after]
-    if broken:
-        raise ValueError(
-            f"{broken} depend on operations {loop.operation_name} wraps but run before "
-            "it; wrap them too"
-        )
     return [*earlier, _filled(loop, selected), *scope[last + 1 :]]

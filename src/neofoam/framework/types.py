@@ -69,12 +69,11 @@ class Placement:
     """Where the resolver places a wrapping loop (``OperationMetadata.wraps``).
 
     Without ``operations`` the loop wraps the whole time-step body; with them, the
-    named operations and, if ``downstream``, everything downstream of them in their
-    scope (:mod:`~neofoam.framework.graph.wrapping`).
+    named operations and everything downstream of them in their scope
+    (:mod:`~neofoam.framework.graph.wrapping`).
     """
 
     operations: tuple[str, ...] | None = None
-    downstream: bool = True
 
 
 @dataclass
