@@ -3,10 +3,10 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../genindex.html"><link rel="search" title="Search" href="../../../../search.html">
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/_modules/neofoam/framework/coupling/transport.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/_modules/neofoam/framework/coupling/comm_channel.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>neofoam.framework.coupling.transport - NeoFOAM documentation</title>
+        <title>neofoam.framework.coupling.comm_channel - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
@@ -296,6 +296,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -303,7 +304,6 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.transport.html">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -672,22 +672,11 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for neofoam.framework.coupling.transport</h1><div class="highlight"><pre>
+          <h1>Source code for neofoam.framework.coupling.comm_channel</h1><div class="highlight"><pre>
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""How data travels between coupled regions: the :class:`Transport`, the only thing they share.</span>
-
-<span class="sd">Point to point, as MPI: a send never blocks, a receive blocks until the message</span>
-<span class="sd">is there; messages of one ``(source, target, tag)`` arrive in order. Messages are</span>
-<span class="sd">plain data (they pickle), their tags built by :class:`Tag` alone.</span>
-
-<span class="sd">Example::</span>
-
-<span class="sd">    transport = InProcessTransport()</span>
-<span class="sd">    transport.send("left", "right", "interface", {"T": np.ones(3)})</span>
-<span class="sd">    transport.receive("left", "right", "interface")    # in right's thread</span>
-<span class="sd">"""</span>
+<span class="sd">"""The :class:`CommChannel` between coupled regions, the only thing they share."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -700,19 +689,19 @@
 <span class="c1"># What a side sends, by field name: one value (or row) per point of its patch.</span>
 <span class="n">Data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 
-<span class="c1"># Seconds a receive of an InProcessTransport waits by default.</span>
+<span class="c1"># Seconds a receive of an InProcessCommChannel waits by default.</span>
 <span class="n">DEFAULT_TIMEOUT</span> <span class="o">=</span> <span class="mf">600.0</span>
 
 
 <div class="viewcode-block" id="Tag">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag">[docs]</a>
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Tag</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The tags of the coupling's messages, the one place that builds them."""</span>
 
     <span class="n">TIME_DT</span> <span class="o">=</span> <span class="s2">"time/dt"</span>
 
 <div class="viewcode-block" id="Tag.data">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag.data">[docs]</a>
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag.data">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""What a side sends, each pass."""</span>
@@ -720,7 +709,7 @@
 
 
 <div class="viewcode-block" id="Tag.side">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag.side">[docs]</a>
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag.side">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">side</span><span class="p">(</span><span class="n">exchange</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""A side's models and points, sent to its partner once."""</span>
@@ -728,7 +717,7 @@
 
 
 <div class="viewcode-block" id="Tag.node">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Tag.node">[docs]</a>
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.Tag.node">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"sides"</span><span class="p">,</span> <span class="s2">"pass"</span><span class="p">,</span> <span class="s2">"decision"</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""A region's sides, its pass and the leader's decision, within coupling node ``node``."""</span>
@@ -737,92 +726,99 @@
 
 
 
-<div class="viewcode-block" id="CouplingTransportError">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.CouplingTransportError">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CouplingTransportError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<div class="viewcode-block" id="CommChannelError">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannelError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CommChannelError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A message between coupled regions cannot arrive."""</span></div>
 
 
 
-<div class="viewcode-block" id="TransportClosed">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.TransportClosed">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">TransportClosed</span><span class="p">(</span><span class="n">CouplingTransportError</span><span class="p">):</span>
+<div class="viewcode-block" id="CommChannelClosed">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannelClosed">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CommChannelClosed</span><span class="p">(</span><span class="n">CommChannelError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A region waits for a message from a region that left the coupling."""</span></div>
 
 
 
 <div class="viewcode-block" id="CouplingDeadlock">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.CouplingDeadlock">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CouplingDeadlock</span><span class="p">(</span><span class="n">CouplingTransportError</span><span class="p">):</span>
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CouplingDeadlock">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CouplingDeadlock</span><span class="p">(</span><span class="n">CommChannelError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Every running region waits for a message no region will send."""</span></div>
 
 
 
 <div class="viewcode-block" id="CouplingTimeout">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.CouplingTimeout">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">CouplingTimeout</span><span class="p">(</span><span class="n">CouplingTransportError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A region waited for a message longer than the transport's timeout."""</span></div>
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CouplingTimeout">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CouplingTimeout</span><span class="p">(</span><span class="n">CommChannelError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A region waited for a message longer than the comm channel's timeout."""</span></div>
 
 
 
-<div class="viewcode-block" id="Transport">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Transport</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Messages between the regions of a coupled case, by ``(source, target, tag)``."""</span>
+<div class="viewcode-block" id="CommChannel">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CommChannel</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Messages between the regions of a coupled case, by ``(source, target, tag)``.</span>
 
-<div class="viewcode-block" id="Transport.send">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport.send">[docs]</a>
+<span class="sd">    Point to point, as MPI: messages of one ``(source, target, tag)`` arrive in</span>
+<span class="sd">    order; they are plain data (they pickle), their tags built by :class:`Tag`.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="CommChannel.send">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannel.send">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Send ``message`` from region ``source`` to region ``target``; never blocks."""</span></div>
 
 
-<div class="viewcode-block" id="Transport.receive">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport.receive">[docs]</a>
+<div class="viewcode-block" id="CommChannel.receive">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannel.receive">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The next message ``source`` sent ``target`` under ``tag``; blocks until it is there.</span>
 
-<span class="sd">        Raises :class:`TransportClosed` when ``source`` left and no such message</span>
-<span class="sd">        waits, or another :class:`CouplingTransportError` when it cannot come.</span>
+<span class="sd">        Raises :class:`CommChannelClosed` when ``source`` left and no such message</span>
+<span class="sd">        waits, or another :class:`CommChannelError` when it cannot come.</span>
 <span class="sd">        """</span></div>
 
 
-<div class="viewcode-block" id="Transport.close">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport.close">[docs]</a>
+<div class="viewcode-block" id="CommChannel.close">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannel.close">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Region ``region`` leaves the coupling (it finished or failed)."""</span></div>
 
 
-<div class="viewcode-block" id="Transport.start">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport.start">[docs]</a>
+<div class="viewcode-block" id="CommChannel.start">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannel.start">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The regions ``regions`` run now, each until it leaves (:meth:`close`)."""</span></div>
 
 
-<div class="viewcode-block" id="Transport.abort">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.Transport.abort">[docs]</a>
+<div class="viewcode-block" id="CommChannel.abort">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.CommChannel.abort">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""A region failed: every region of ``regions`` leaves the coupling."""</span></div>
 </div>
 
 
 
-<div class="viewcode-block" id="InProcessTransport">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.transport.html#neofoam.framework.coupling.transport.InProcessTransport">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InProcessTransport</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A transport between regions running in threads of one process: a mailbox per tag.</span>
+<div class="viewcode-block" id="InProcessCommChannel">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html#neofoam.framework.coupling.comm_channel.InProcessCommChannel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InProcessCommChannel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A comm channel between regions running in threads of one process: a mailbox per tag.</span>
 
-<span class="sd">    Each message is pickled and unpickled, as between processes: the receiver</span>
-<span class="sd">    gets its own copy, and a message that is not plain data raises ``TypeError``.</span>
+<span class="sd">    Messages are pickled, as between processes: the receiver gets its own copy.</span>
 <span class="sd">    Once :meth:`start` named the running regions, a receive raises</span>
-<span class="sd">    :class:`CouplingDeadlock` as soon as every running region waits for a message</span>
-<span class="sd">    that is not there, or waits for a region that finished; it raises</span>
-<span class="sd">    :class:`TransportClosed` for a region that left by :meth:`abort`, and</span>
-<span class="sd">    :class:`CouplingTimeout` after ``timeout`` seconds (``None`` or ``0``: no end).</span>
+<span class="sd">    :class:`CouplingDeadlock` as soon as every running region waits in vain, and</span>
+<span class="sd">    :class:`CouplingTimeout` after ``timeout`` seconds (``None`` or ``0``: never).</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        comm_channel = InProcessCommChannel()</span>
+<span class="sd">        comm_channel.send("left", "right", "interface", {"T": np.ones(3)})</span>
+<span class="sd">        comm_channel.receive("left", "right", "interface")    # in right's thread</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">timeout</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a transport timeout is at least 0 seconds, not </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a comm channel timeout is at least 0 seconds, not </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span> <span class="ow">or</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">deque</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">deque</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_closed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -863,7 +859,7 @@
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deadlock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="n">CouplingDeadlock</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_deadlock</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aborted</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="n">TransportClosed</span><span class="p">(</span>
+                        <span class="k">raise</span> <span class="n">CommChannelClosed</span><span class="p">(</span>
                             <span class="sa">f</span><span class="s2">"region </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> waits for '</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">' from region </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">, "</span>
                             <span class="s2">"which left the coupling"</span>
                         <span class="p">)</span>
@@ -889,7 +885,7 @@
                         <span class="k">raise</span> <span class="n">CouplingTimeout</span><span class="p">(</span>
                             <span class="bp">self</span><span class="o">.</span><span class="n">_report</span><span class="p">(</span>
                                 <span class="sa">f</span><span class="s2">"a coupling timeout: region </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> waited </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> s "</span>
-                                <span class="sa">f</span><span class="s2">"for '</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">' from region </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> (transportTimeout)"</span>
+                                <span class="sa">f</span><span class="s2">"for '</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">' from region </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> (commChannelTimeout)"</span>
                             <span class="p">)</span>
                         <span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_changed</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>

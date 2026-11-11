@@ -297,6 +297,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.comm_channel.html">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -304,7 +305,6 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.transport.html">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -718,15 +718,7 @@ PISO would join the list as it is ported.</p>
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.incompressibleFluid.models.pressure_velocity.base.</span></span><span class="sig-name descname"><span class="pre">PressureVelocitySettings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_boussinesq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/solver/incompressibleFluid/models/pressure_velocity/base.html#PressureVelocitySettings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>One run’s pressure-velocity settings: the <code class="docutils literal notranslate"><span class="pre">config</span></code> of its runtime.</p>
-<p>Kept off the module-level spec, so two regions or two runs selecting the
-same spec never see each other’s settings.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings.algorithm_type">
-<span class="sig-name descname"><span class="pre">algorithm_type</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings.algorithm_type" title="Link to this definition">¶</a></dt>
-<dd><p>The <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> block the run reads: <code class="docutils literal notranslate"><span class="pre">PIMPLE</span></code>, <code class="docutils literal notranslate"><span class="pre">PISO</span></code> or <code class="docutils literal notranslate"><span class="pre">SIMPLE</span></code>.</p>
-</dd></dl>
-
+<p>One run’s settings, kept off the spec that regions and runs share.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings.use_boussinesq">
 <span class="sig-name descname"><span class="pre">use_boussinesq</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings.use_boussinesq" title="Link to this definition">¶</a></dt>
@@ -800,7 +792,6 @@ same spec never see each other’s settings.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings"><code class="docutils literal notranslate"><span class="pre">PressureVelocitySettings</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings.algorithm_type"><code class="docutils literal notranslate"><span class="pre">PressureVelocitySettings.algorithm_type</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.solver.incompressibleFluid.models.pressure_velocity.base.PressureVelocitySettings.use_boussinesq"><code class="docutils literal notranslate"><span class="pre">PressureVelocitySettings.use_boussinesq</span></code></a></li>
 </ul>
 </li>

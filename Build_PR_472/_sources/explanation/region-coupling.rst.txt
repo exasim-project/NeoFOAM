@@ -3,7 +3,7 @@ Region coupling
 
 A multi-region case (``multiRun``) runs one solver per region, each with its own
 graph and time loop on its own thread. Regions share nothing but a
-**transport**, a point-to-point channel; coupled patches exchange data over it.
+**comm channel**, point to point; coupled patches exchange data over it.
 
 .. list-table::
    :header-rows: 1
@@ -25,7 +25,7 @@ graph and time loop on its own thread. Regions share nothing but a
        region's graph; the node's last region (its **leader**) decides
        convergence.
    * - ``multiRun``
-     - reads ``regionSolvers`` and the case file, creates the transport, runs
+     - reads ``regionSolvers`` and the case file, creates the comm channel, runs
        every region on its own thread.
 
 Regions that exchanges connect form a **group**; its last region in
@@ -85,7 +85,7 @@ The case file
         wraps:                       # per region; default: the whole time step
           fluid: {operations: [solve_T]}
           pipe: {operations: [inner_loop]}   # a loop, held whole
-    transportTimeout: 600            # seconds; 0 or null: no timeout
+    commChannelTimeout: 600          # seconds; 0 or null: no timeout
 
 ``wraps`` places the node's op around the named operations and everything
 downstream of them; without it the op wraps the body of the node before it, or
@@ -121,7 +121,7 @@ How it runs
         |     transient, a.time_step between set_time_step and increment_time
         +-- thread "b" (leader): the same; its op owns the controller
                      ^
-                     |   Transport: send / receive (source, target, tag)
+                     |   CommChannel: send / receive (source, target, tag)
                      v
 
 **The time step.** Every region of a group sends the time step it asks for to
@@ -141,9 +141,9 @@ the final one; the last pass ``maxIterations`` allows is final regardless (it
 warns, ``CouplingNotConvergedWarning``). Ops marked ``final`` (such as
 ``write_output``) run in the final pass only.
 
-**Failures.** A region that fails closes the transport, so none waits for it
+**Failures.** A region that fails closes the comm channel, so none waits for it
 forever. A deadlock raises ``CouplingDeadlock`` at once; as a fallback a receive
-raises ``CouplingTimeout`` after ``transportTimeout`` seconds.
+raises ``CouplingTimeout`` after ``commChannelTimeout`` seconds.
 
 **Observers.** Every region reports to the execution observer from its own
 thread (``coupling_exchanged``, ``coupling_finished``, its graph), so hooks
@@ -165,8 +165,8 @@ Extension points
      - a ``CouplingAcceleration``: ``__call__(carried data, iteration) -> data``.
    * - convergence
      - a ``CouplingConvergence``: ``__call__(list of SideChange) -> bool``.
-   * - transport
-     - a ``Transport`` (a Protocol): ``send`` (never blocks), ``receive``
+   * - comm channel
+     - a ``CommChannel`` (a Protocol): ``send`` (never blocks), ``receive``
        (blocks; in order per tag), ``close``, ``start``, ``abort``.
 
 A strategy is a pydantic model with a ``type: Literal[...]`` that registers

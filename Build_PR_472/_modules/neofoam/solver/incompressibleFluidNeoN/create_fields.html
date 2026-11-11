@@ -296,6 +296,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -303,7 +304,6 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.loop.html">neofoam.framework.coupling.loop</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.transport.html">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -899,8 +899,7 @@
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_loop_backend_steps</span><span class="p">())</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_writer_backend_steps</span><span class="p">())</span>
 
-        <span class="c1"># PIMPLE lands in models.pressure_velocity. Not via add_core_models: its</span>
-        <span class="c1"># runtime's run_build would synthesize the field declarations, a</span>
+        <span class="c1"># Not add_core_models: its run_build would synthesize the field declarations, a</span>
         <span class="c1"># pybFoam-only path; the spec's @build emits the NeoN U/p/phi reads itself.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pressure_model</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
