@@ -237,9 +237,7 @@ def test_coupling_op_public_read_api() -> None:
         "fluid.wall",
         "solid.right",
     )
-    exchange = solid_op.exchange_of(solid_side)
-    assert (exchange.name, exchange.partner) == ("cht", ("fluid", "wall"))
-    assert isinstance(exchange.mapping, NearestNeighborMapping)
+    assert solid_op.link_of(solid_side) is CHT
     # the leader builds its controller at its first loop test
     assert (solid_op.controller, fluid_op.controller) == (None, None)
 

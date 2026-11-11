@@ -11,7 +11,6 @@ from typing import Annotated, Any, Callable, Optional
 import numpy as np
 from pydantic import BaseModel, PlainValidator
 
-from .kernels import CouplingMapping
 from .transport import Data
 
 # (region, patch)
@@ -91,15 +90,6 @@ class ExchangeSide:
     def label(self) -> str:
         """``<region>.<patch>``."""
         return f"{self.region}.{self.patch}"
-
-
-@dataclass(frozen=True)
-class Exchange:
-    """The exchange of a side as its region sees it: its name, partner end and mapping."""
-
-    name: str
-    partner: End
-    mapping: CouplingMapping
 
 
 def _check_received(name: str, announced: dict[str, Any], side: ExchangeSide) -> None:

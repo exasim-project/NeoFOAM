@@ -278,12 +278,7 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
         "b.p",
         False,
     )
-    exchange = op.exchange_of(side)
-    assert (exchange.name, exchange.partner, exchange.mapping.type) == (
-        "a-b",
-        ("b", "p"),
-        "identity",
-    )
+    assert op.link_of(side) is LINK
 
 
 def test_a_coupled_region_without_a_side_raises() -> None:
