@@ -20,19 +20,19 @@ graph and time loop on its own thread. Regions share nothing but a
      - its coupling model, ``ctx.models["coupling"] = Participant(self.coupling,
        geometry, fields)``, and the binding of its instances,
        ``coupling(ctx).add(Patch("top"), bc)``: a **port**.
-   * - case (``system/regionCoupling.yaml``)
+   * - case (``system/coupling.yaml``)
      - the **field ports** (``ports``), the **exchanges** (pairs of ports and
-       their mapping) and the **coupling nodes** (``couplings``).
+       their mapping) and the **coupling loops** (``couplings``).
    * - framework
-     - one coupling op ``<region>.<node>`` per node of a region, placed in the
-       region's graph; the node's last region (its **leader**) decides
+     - one coupling op ``<region>.<loop>`` per loop of a region, placed in the
+       region's graph; the loop's last region (its **leader**) decides
        convergence.
    * - ``multiRun``
-     - reads ``regionSolvers`` and the case file, creates the comm channel, runs
+     - reads ``participants`` and the case file, creates the comm channel, runs
        every region on its own thread (under ``mpirun``: on its own processes).
 
 Regions that exchanges connect form a **group**; its last region in
-``regionSolvers`` order agrees the time step. Each region reads its own files
+``participants`` order agrees the time step. Each region reads its own files
 under ``<region>/`` (``<region>/constant``, ``<region>/0``).
 
 The coupled instance
@@ -109,8 +109,8 @@ The case file
           pipe: {operations: [inner_loop]}   # a loop, held whole
     commChannelTimeout: 600          # seconds; 0 or null: no timeout
 
-``wraps`` places the node's op around the named operations and everything
-downstream of them; without it the op wraps the body of the node before it, or
+``wraps`` places the loop's op around the named operations and everything
+downstream of them; without it the op wraps the body of the loop before it, or
 the whole time step. ``mapping``, ``acceleration`` and ``convergence`` name a
 strategy of the families ``CouplingMapping``, ``CouplingAcceleration`` and
 ``CouplingConvergence`` by ``type``, with its options.
@@ -136,20 +136,20 @@ mapping moves a model between the locations' entities:
      - the cells nearest each point to a row each (``ProbeData``)
 
 The value mappings take scalar fields only. A region's data field (``T``,
-``q``) is in at most one coupling node.
+``q``) is in at most one coupling loop.
 
 **Serial or parallel.** Parallel: a port receives what its partner sent in the
-pass before. Serial: from a region that steps before its own, what it sent in
-the same pass, so a serial pass waits for the partner's whole pass. Hence a
-serial node may neither enclose a node coupling two of its regions nor hold
-their time step: place it around named operations or make it parallel. A
-steady region has no time step, so a serial node may wrap it whole.
+iteration before. Serial: from a region that steps before its own, what it sent in
+the same iteration, so a serial iteration waits for the partner's whole iteration. Hence a
+serial coupling loop may neither enclose a loop coupling two of its regions
+nor hold their time step: place it around named operations or make it
+parallel. A steady region has no time step, so a serial loop may wrap it whole.
 
 The file is checked as it loads, by the same ``check_exchanges`` as
-``participant_exchanges``: unknown keys, types or options, an exchange in no node
-or in two, two exchanges or nodes of one name, a port in two exchanges, a
-``wraps`` region the node does not couple, and a serial node enclosing a node
-of two of its regions. A serial node holding the time step is found as the
+``participant_exchanges``: unknown keys, types or options, an exchange in no loop
+or in two, two exchanges or loops of one name, a port in two exchanges, a
+``wraps`` region the loop does not couple, and a serial loop enclosing a loop
+of two of its regions. A serial loop holding the time step is found as the
 region's graph is resolved.
 
 How it runs
@@ -158,7 +158,7 @@ How it runs
 .. code-block:: text
 
     multiRun.run()                          main thread
-      RegionCouplingConfig.participant_exchanges(...) -> ParticipantExchanges per region
+      CouplingConfig.participant_exchanges(...) -> ParticipantExchanges per region
       run_participants: one thread per region; the first error is raised
         |
         +-- thread "a":  instantiate(region="a", coupling=...).run()
@@ -171,21 +171,22 @@ How it runs
 
 **The time step.** Every region of a group sends the time step it asks for to
 the leader, which sends back the smallest. Ops marked ``first`` (the time-step
-ops, a solver's old-time storage) run in the first pass of a coupling loop
+ops, a solver's old-time storage) run in the first iteration of a coupling loop
 only.
 
-**A pass.** The first loop test tells each partner what a port sends and its
-geometry, checks the pairs, binds the mappings once and builds the leader. Each test then sends the ports' data, a stream per data model
+**An iteration.** An iteration of a coupling loop is a pass of its loop op, the
+entry of ``ctx.loops`` it counts. The first loop test tells each partner what a
+port sends and its geometry, checks the pairs, binds the mappings once and builds the leader. Each test then sends the ports' data, a stream per data model
 (serial: to later partners at once), and the leader's decision, convergence
 and acceleration (per exchange, over its streams) included, comes back; on
-another pass each port receives its partner's data, mapped and validated. All
-regions leave the loop on the same pass.
+another iteration each port receives its partner's data, mapped and validated. All
+regions leave the loop on the same iteration.
 
-**The final pass.** Once every measure holds, the leader runs one more pass,
-the final one; the last pass ``maxIterations`` allows is final regardless (it
+**The final iteration.** Once every measure holds, the leader runs one more iteration,
+the final one; the last iteration ``maxIterations`` allows is final regardless (it
 warns, ``CouplingNotConvergedWarning``). ``maxIterations: 1`` is explicit
-coupling: one pass, no warning. Ops marked ``final`` (such as
-``write_output``) run in the final pass only.
+coupling: one iteration, no warning. Ops marked ``final`` (such as
+``write_output``) run in the final iteration only.
 
 **Failures.** A region that fails closes the comm channel, so none waits for it
 forever. A deadlock raises ``CouplingDeadlock`` at once; as a fallback a receive
@@ -221,7 +222,7 @@ solver binds each to ``Patch(name)``; ``NeoNGeometry``
 (``neofoam.solver.neon_runtime``) gives the face centres, so the faces need not
 match, and ``NeoNFields`` the field ports' access. Each region is an
 OpenFOAM case of its own under ``<region>/``, beside the case's
-``system/controlDict.yaml`` and ``system/regionCoupling.yaml``.
+``system/controlDict.yaml`` and ``system/coupling.yaml``.
 ``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3
 against 5 faces, serial with Aitken around ``solve_T``.
 
@@ -232,13 +233,13 @@ Under ``mpirun`` each region runs on processes of its own instead of a thread
 (``neofoam.solver.multiRun._launch``; mpi4py, the extra ``neofoam[mpi]``). A region
 entry gives its number of processes, a plain name is one::
 
-    regionSolvers:
+    participants:
       left: {solver: mySolver, processes: 2}
       right: mySolver
 
     mpirun -np 3 python -m neofoam.solver.multiRun
 
-The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in ``regionSolvers``
+The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in ``participants``
 order. Every region runs OpenFOAM with ``-parallel -world <region>`` on
 ``<region>/processor0`` .. ``processor<n-1>`` (``decomposePar -case <region>``),
 and a NeoN region communicates on that world. Rank 0 refuses a case that does
@@ -266,14 +267,14 @@ Extension points
    * - mapping
      - a ``CouplingMapping``: ``kinds`` (the entities it maps) and
        ``bind(source, target)`` once on both ports' ``Geometry``, returning the
-       ``data -> data`` map of every pass.
+       ``data -> data`` map of every iteration.
    * - backend
      - a ``MeshGeometry`` (face centres and areas, cell centres and volumes)
        and a ``FieldAccess`` (read and write a field on a location).
    * - acceleration
      - a ``CouplingAcceleration``: ``__call__(carried data, iteration) -> data``.
    * - convergence
-     - a ``CouplingConvergence``: ``__call__(list of SideChange) -> bool``.
+     - a ``CouplingConvergence``: ``__call__(list of StreamChange) -> bool``.
    * - comm channel
      - a ``CommChannel`` (a Protocol): ``send`` (never blocks), ``receive``
        (blocks; in order per tag), ``close``, ``start``, ``abort``.
