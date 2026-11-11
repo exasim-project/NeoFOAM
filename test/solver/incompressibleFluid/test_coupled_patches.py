@@ -3,14 +3,12 @@
 
 """The fluid as a region of a multi-region case, and its coupled patch of ``T``.
 
-``cases/heatedChannel``: region ``fluid/`` only (1 x 0.3, 4 x 3 cells, Boussinesq,
-laminar), ``T`` 300 K inside and 310 K on the wall ``interface`` at y = 0. Its
-``system/controlDict`` has times of its own (endTime 5, deltaT 1); the region
-steps on those of the case's ``system/controlDict.yaml`` (0.02, 0.01).
-
-The region is initialized uncoupled; :class:`CoupledTemperature` is built on it
-with ``Coupling.add`` stubbed (adding a side needs a coupled case: the coupled
-run is ``test_heated_plate.py``).
+``cases/heatedChannel``: region ``fluid/`` only (4 x 3 cells, Boussinesq), ``T``
+300 K inside and 310 K on ``interface``; its own ``system/controlDict`` (endTime 5)
+differs from the case's times (0.02). The region is initialized uncoupled and
+``Coupling.add`` stubbed: the coupled run is ``test_heated_plate.py``. Face
+centres and heat fluxes are closed-form on this uniform mesh, so they hold to
+round-off (``RTOL``).
 """
 
 import os
@@ -36,6 +34,7 @@ CASE = Path(__file__).parent / "cases" / "heatedChannel"
 ENTRIES = Path(__file__).parents[1] / "cases" / "coupledEntries"
 RHO_CP, NU, PR = 5000.0, 2e-4, 0.01
 DELTA_COEFF = 1.0 / 0.05  # the wall cells are 0.1 high
+RTOL = 1e-12
 
 
 @pytest.fixture(scope="module")
@@ -72,14 +71,13 @@ def patch(region: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> Iterator[C
     np.asarray(ctx.fields["alphat"]["interface"])[:] = 0.0
 
 
-# --- the region reads its own case directory ---------------------------------
-
-
-def test_the_region_reads_its_case_directory(region: dict[str, Any]) -> None:
+def test_fluid_region_reads_its_case_directory(region: dict[str, Any]) -> None:
     ctx = region["ctx"]
     assert ctx.region == "fluid"
     assert ctx.fields["T"].mesh().nCells() == 12  # fluid/constant/polyMesh
-    np.testing.assert_allclose(np.asarray(ctx.fields["T"]["interface"]), 310.0)
+    np.testing.assert_allclose(
+        np.asarray(ctx.fields["T"]["interface"]), 310.0, rtol=0, atol=0, err_msg="fluid/0/T"
+    )
     # fluid/system/fvSolution, fluid/constant/transportProperties
     assert ctx.models["pressure_velocity"].config.case_dir == Path("fluid")
     config = _boussinesq_config(ctx)
@@ -88,7 +86,7 @@ def test_the_region_reads_its_case_directory(region: dict[str, Any]) -> None:
     assert not (region["case_dir"] / "constant").exists()
 
 
-def test_the_region_steps_on_the_times_of_the_case(region: dict[str, Any]) -> None:
+def test_fluid_region_steps_on_the_times_of_the_case(region: dict[str, Any]) -> None:
     loops = [
         model
         for model in region["runtime"].state.core_models
@@ -99,22 +97,22 @@ def test_the_region_steps_on_the_times_of_the_case(region: dict[str, Any]) -> No
         assert (model.config.endTime, model.config.deltaT) == (0.02, 0.01)
 
 
-def test_an_uncoupled_region_has_no_coupled_patches(region: dict[str, Any]) -> None:
+def test_fluid_region_uncoupled_has_no_coupled_patches(region: dict[str, Any]) -> None:
     ctx = region["ctx"]
     assert ctx.models["coupled_patches"] == []
     assert type(ctx.models["writer"].hook).__name__ == "RuntimeWriteHook"
 
 
-# --- the coupled patch ---------------------------------------------------------
-
-
-def test_the_points_are_the_face_centres(patch: CoupledTemperature) -> None:
+def test_coupled_temperature_points_are_the_face_centres(patch: CoupledTemperature) -> None:
     points = np.asarray(patch.points())
-    np.testing.assert_allclose(points[:, 0], [0.125, 0.375, 0.625, 0.875])
-    np.testing.assert_allclose(points[:, 1:], [[0.0, 0.05]] * 4)
+
+    np.testing.assert_allclose(
+        points[:, 0], [0.125, 0.375, 0.625, 0.875], rtol=RTOL, err_msg="interface x"
+    )
+    np.testing.assert_allclose(points[:, 1:], [[0.0, 0.05]] * 4, atol=RTOL, err_msg="interface yz")
 
 
-def test_the_received_wall_temperature_is_the_fixed_value(
+def test_coupled_temperature_receives_the_fixed_value(
     patch: CoupledTemperature, region: dict[str, Any]
 ) -> None:
     T = region["ctx"].fields["T"]
@@ -125,24 +123,29 @@ def test_the_received_wall_temperature_is_the_fixed_value(
     np.testing.assert_array_equal(patch.wall_T(), values)
 
 
-def test_the_heat_flux_into_the_fluid(patch: CoupledTemperature, region: dict[str, Any]) -> None:
+def test_coupled_temperature_sends_the_heat_flux_into_the_fluid(
+    patch: CoupledTemperature, region: dict[str, Any]
+) -> None:
     # rho cp (nu/Pr + alphat) (T_wall - T_cell) deltaCoeffs: 5000 * 0.02 * 10 * 20
     sent = patch.send()
-    np.testing.assert_allclose(sent.q, RHO_CP * NU / PR * 10.0 * DELTA_COEFF, rtol=1e-12)
+    np.testing.assert_allclose(
+        sent.q, RHO_CP * NU / PR * 10.0 * DELTA_COEFF, rtol=RTOL, err_msg="initial q"
+    )
     assert np.all(sent.q > 0)  # the wall is the hotter: into the fluid
     patch.set_wall_T([290.0, 300.0, 305.0, 310.0])
     np.asarray(region["ctx"].fields["alphat"]["interface"])[:] = 0.01
     np.testing.assert_allclose(
         patch.heat_flux(),
         RHO_CP * (NU / PR + 0.01) * np.array([-10.0, 0.0, 5.0, 10.0]) * DELTA_COEFF,
-        rtol=1e-12,
+        rtol=RTOL,
+        err_msg="q with alphat",
     )
 
 
 @pytest.mark.parametrize(
     ("unset", "message"), [(("rho",), "set rho "), (("rho", "cp"), "set rho and cp ")]
 )
-def test_rho_and_cp_are_required(
+def test_coupled_temperature_requires_rho_and_cp(
     region: dict[str, Any], monkeypatch: pytest.MonkeyPatch, unset: tuple[str, ...], message: str
 ) -> None:
     ctx = region["ctx"]
@@ -155,13 +158,10 @@ def test_rho_and_cp_are_required(
         CoupledTemperature("T", "interface", ctx)
 
 
-def test_the_boussinesq_model_is_required() -> None:
+def test_coupled_temperature_requires_the_boussinesq_model() -> None:
     ctx = SimpleNamespace(models={}, fields={})
     with pytest.raises(ValueError, match="needs the boussinesq model"):
         CoupledTemperature("T", "interface", ctx)  # type: ignore[arg-type]
-
-
-# --- the boundary defines the coupling ------------------------------------------
 
 
 def test_coupled_entries_of_the_fluid_are_fixed_value_patches() -> None:
