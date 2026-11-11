@@ -1,0 +1,237 @@
+Region coupling
+===============
+
+A multi-region case (``multiRun``) runs one solver per region, each with its own
+graph and time loop on its own thread. Regions share nothing but a
+**transport**, a point-to-point channel; coupled patches exchange data over it.
+
+.. list-table::
+   :header-rows: 1
+
+   * - part
+     - owns
+   * - boundary condition (``@coupled``)
+     - its side: the field it couples, what it sends and receives (a pydantic
+       model per direction), its points. It adds itself to its region's
+       coupling model (``Coupling.of(ctx).add(self)``).
+   * - solver
+     - its coupling model, ``ctx.models["coupling"] = Coupling(self.coupling)``,
+       added in its init before its boundary conditions.
+   * - case (``system/regionCoupling.yaml``)
+     - the **exchanges** (pairs of patches and their mapping) and the
+       **coupling nodes** (``couplings``).
+   * - framework
+     - one coupling op ``<region>.<node>`` per node of a region, placed in the
+       region's graph; the node's last region (its **leader**) decides
+       convergence.
+   * - ``multiRun``
+     - reads ``regionSolvers`` and the case file, creates the transport, runs
+       every region on its own thread (under ``mpirun``: on its own processes).
+
+Regions that exchanges connect form a **group**; its last region in
+``regionSolvers`` order agrees the time step. Each region reads its own files
+under ``<region>/`` (``<region>/constant``, ``<region>/0``).
+
+The coupled boundary condition
+------------------------------
+
+.. code-block:: python
+
+    class WallTemperature(BaseModel):
+        T: Array             # one value per point; Array fields only
+
+
+    class WallHeatFlux(BaseModel):
+        q: Array
+
+
+    @coupled
+    class CoupledHeatFlux(Patch):        # sets self.field and self.patch
+        def __init__(self, ctx, field, patch):
+            super().__init__(ctx, field, patch)
+            Coupling.of(ctx).add(self)
+
+        @coupled.coordinates
+        def points(self) -> Array: ...
+
+        @coupled.sends
+        def send(self) -> WallTemperature: ...
+
+        @coupled.receives
+        def receive(self, data: WallHeatFlux) -> None: ...   # already mapped
+
+The annotations are the declaration; the side names no partner, loop or
+mapping. ``add`` raises ``ValueError`` when no exchange connects the patch.
+``test/solver/multiRun/cases/dirichlet_neumann_slabs`` couples two slabs this
+way (``test/solver/multiRun/slab_solver.py``).
+
+The case file
+-------------
+
+.. code-block:: yaml
+
+    exchanges:
+      - {name: wall-T, sides: {fluid: wall, solid: right}}   # mapping: nearest-neighbor
+      - {sides: {fluid: inlet, pipe: outlet}, mapping: identity}   # name: fluid-pipe
+    couplings:                       # outer to inner; each exchange in exactly one
+      - name: wall                   # the ops <region>.wall
+        scheme: serial               # serial (default) | parallel
+        maxIterations: 50            # default 100
+        exchanges:
+          - {name: wall-T, acceleration: {type: aitken, relaxation: 0.5}}
+          - fluid-pipe               # a plain name: no acceleration
+        convergence:                 # every measure must hold
+          - {type: relative, data: T, limit: 1.0e-6}
+        wraps:                       # per region; default: the whole time step
+          fluid: {operations: [solve_T]}
+          pipe: {operations: [inner_loop]}   # a loop, held whole
+    transportTimeout: 600            # seconds; 0 or null: no timeout
+
+``wraps`` places the node's op around the named operations and everything
+downstream of them; without it the op wraps the body of the node before it, or
+the whole time step. ``mapping``, ``acceleration`` and ``convergence`` name a
+strategy of the families ``CouplingMapping``, ``CouplingAcceleration`` and
+``CouplingConvergence`` by ``type``, with its options.
+
+**Serial or parallel.** Parallel: a side receives what its partner sent in the
+pass before. Serial: from a region that steps before its own, what it sent in
+the same pass, so a serial pass waits for the partner's whole pass. Hence a
+serial node may neither enclose a node coupling two of its regions nor hold
+their time step: place it around named operations or make it parallel. A
+steady region has no time step, so a serial node may wrap it whole.
+
+The file is checked as it loads, by the same ``check_couplings`` as
+``region_couplings``: unknown keys, types or options, an exchange in no node
+or in two, two exchanges or nodes of one name, a patch in two exchanges, a
+``wraps`` region the node does not couple, and a serial node enclosing a node
+of two of its regions. A serial node holding the time step is found as the
+region's graph is resolved.
+
+How it runs
+-----------
+
+.. code-block:: text
+
+    multiRun.run()                          main thread
+      region_couplings(...) -> RegionCoupling per coupled region
+      run_regions: one thread per region; the first error is raised
+        |
+        +-- thread "a":  instantiate(region="a", coupling=...).run()
+        |     the coupling model adds a.coupling (placed by its wraps) and,
+        |     transient, a.time_step between set_time_step and increment_time
+        +-- thread "b" (leader): the same; its op owns the controller
+                     ^
+                     |   Transport: send / receive (source, target, tag)
+                     v
+
+**The time step.** Every region of a group sends the time step it asks for to
+the leader, which sends back the smallest. Ops marked ``first`` (the time-step
+ops, a solver's old-time storage) run in the first pass of a coupling loop
+only.
+
+**A pass.** The first loop test exchanges what each side sends and receives
+and its points, binds the mappings once and builds the leader's controller.
+Each test then sends the sides' data (serial: to later partners at once) and
+the leader's decision, convergence and acceleration included, comes back; on
+another pass each side receives its partner's data, mapped and validated. All
+regions leave the loop on the same pass.
+
+**The final pass.** Once every measure holds, the leader runs one more pass,
+the final one; the last pass ``maxIterations`` allows is final regardless (it
+warns, ``CouplingNotConvergedWarning``). Ops marked ``final`` (such as
+``write_output``) run in the final pass only.
+
+**Failures.** A region that fails closes the transport, so none waits for it
+forever. A deadlock raises ``CouplingDeadlock`` at once; as a fallback a receive
+raises ``CouplingTimeout`` after ``transportTimeout`` seconds.
+
+**Observers.** Every region reports to the execution observer from its own
+thread (``coupling_exchanged``, ``coupling_finished``, its graph), so hooks
+must be thread safe; a hook that blocks pauses its region and those coupled
+with it.
+
+A NeoN solver: heatConductionNeoN
+---------------------------------
+
+``heatConductionNeoN`` solves ``dT/dt = laplacian(k/(rho cp), T) + Q/(rho cp)``
+on NeoN (``constant/thermalProperties``). A patch of ``0/T`` is coupled when its
+``coupled`` entry names the condition; its ``type`` is ``calculated``, so NeoN
+leaves its values to the coupling:
+
+.. code-block:: c++
+
+    interface
+    {
+        type        calculated;
+        coupled     coupledTemperature;   // Dirichlet side; or coupledHeatFlux
+        value       uniform 350;
+    }
+
+``coupledTemperature`` takes the wall temperature and sends the heat flux
+``q = k dT/dn`` into its region (``WallHeatFlux``); ``coupledHeatFlux`` takes
+that flux as an explicit source in the cells of its faces and sends its wall
+temperature (``WallTemperature``, both in ``neofoam.solver.regions``). The
+points are the face centres, so the faces need not match. Each region is an
+OpenFOAM case of its own under ``<region>/``, beside the case's
+``system/controlDict.yaml`` and ``system/regionCoupling.yaml``.
+``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3
+against 5 faces, serial with Aitken around ``solve_T``.
+
+Regions on MPI processes
+------------------------
+
+Under ``mpirun`` each region runs on processes of its own instead of a thread
+(``neofoam.solver.multiRun.mpi``; mpi4py, the extra ``neofoam[mpi]``). A region
+entry gives its number of processes, a plain name is one::
+
+    regionSolvers:
+      left: {solver: mySolver, processes: 2}
+      right: mySolver
+
+    mpirun -np 3 python -m neofoam.solver.multiRun
+
+The regions take the ranks of ``MPI_COMM_WORLD`` in blocks, in ``regionSolvers``
+order. Every region runs OpenFOAM with ``-parallel -world <region>`` on
+``<region>/processor0`` .. ``processor<n-1>`` (``decomposePar -case <region>``),
+and a NeoN region communicates on that world. Rank 0 refuses a case that does
+not fit the run before it starts; an error on any process aborts every process.
+
+Only a region's root (its rank 0) talks to other regions, over an
+``MpiTransport`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
+the whole patches: the root gathers what every process's sides send and
+scatters what they receive; the other processes run a follower op that takes
+the root's decision, and have no transport. ``close`` waits at most
+``transportTimeout`` for the partners, naming those that did not finish. The
+whole interface on the root is an intermediate step, before a distributed
+exchange (``test/solver/multiRun/test_regions_on_processes.py``).
+
+Extension points
+----------------
+
+.. list-table::
+   :header-rows: 1
+
+   * - to change
+     - extend
+   * - mapping
+     - a ``CouplingMapping``: ``bind(source, target)`` once, returning the
+       ``data -> data`` map of every pass.
+   * - acceleration
+     - a ``CouplingAcceleration``: ``__call__(carried data, iteration) -> data``.
+   * - convergence
+     - a ``CouplingConvergence``: ``__call__(list of SideChange) -> bool``.
+   * - transport
+     - a ``Transport`` (a Protocol): ``send`` (never blocks), ``receive``
+       (blocks; in order per tag), ``close``, ``start``, ``abort``.
+
+A strategy is a pydantic model with a ``type: Literal[...]`` that registers
+with its family as its module is imported; the case file then names it:
+
+.. code-block:: python
+
+    @CouplingMapping.register
+    class RadialBasisMapping(CouplingMapping):
+        type: Literal["rbf"] = "rbf"
+        support_radius: float = Field(gt=0)
+
+        def bind(self, source, target): ...
