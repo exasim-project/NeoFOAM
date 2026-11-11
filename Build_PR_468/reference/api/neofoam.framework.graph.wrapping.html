@@ -688,18 +688,7 @@ the loop takes the place of the last of them:</p>
                                     <span class="n">write</span>
 </pre></div>
 </div>
-<p>A named loop inside the outermost one (e.g. PIMPLE’s <code class="docutils literal notranslate"><span class="pre">inner_loop</span></code>) is held
-whole:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">time_loop</span>                       <span class="n">time_loop</span>
-    <span class="n">set_time_step</span>                   <span class="n">set_time_step</span>
-    <span class="n">increment_time</span>                  <span class="n">increment_time</span>
-    <span class="n">inner_loop</span>   <span class="p">(</span><span class="s2">"inner_loop"</span><span class="p">,)</span>    <span class="n">couple</span>
-        <span class="n">solve_U</span>  <span class="o">--------------&gt;</span>        <span class="n">inner_loop</span>
-        <span class="n">solve_p</span>                             <span class="n">solve_U</span>
-    <span class="n">write</span>                                   <span class="n">solve_p</span>
-                                        <span class="n">write</span>
-</pre></div>
-</div>
+<p>A named loop inside the outermost one (e.g. PIMPLE’s <code class="docutils literal notranslate"><span class="pre">inner_loop</span></code>) is held whole.</p>
 </li>
 </ul>
 <p>Loops are placed in the order given, outer first; one that would have to hold a

@@ -880,8 +880,7 @@
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_loop_backend_steps</span><span class="p">())</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">neon_writer_backend_steps</span><span class="p">())</span>
 
-        <span class="c1"># PIMPLE lands in models.pressure_velocity. Not via add_core_models: its</span>
-        <span class="c1"># runtime's run_build would synthesize the field declarations, a</span>
+        <span class="c1"># Not add_core_models: its run_build would synthesize the field declarations, a</span>
         <span class="c1"># pybFoam-only path; the spec's @build emits the NeoN U/p/phi reads itself.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add_model</span><span class="p">(</span><span class="s2">"pressure_velocity"</span><span class="p">,</span> <span class="n">pressure_model</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pressure_model</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

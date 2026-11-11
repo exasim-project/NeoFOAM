@@ -684,17 +684,7 @@
 <span class="sd">        write                               update_rho</span>
 <span class="sd">                                        write</span>
 
-<span class="sd">  A named loop inside the outermost one (e.g. PIMPLE's ``inner_loop``) is held</span>
-<span class="sd">  whole::</span>
-
-<span class="sd">    time_loop                       time_loop</span>
-<span class="sd">        set_time_step                   set_time_step</span>
-<span class="sd">        increment_time                  increment_time</span>
-<span class="sd">        inner_loop   ("inner_loop",)    couple</span>
-<span class="sd">            solve_U  --------------&gt;        inner_loop</span>
-<span class="sd">            solve_p                             solve_U</span>
-<span class="sd">        write                                   solve_p</span>
-<span class="sd">                                            write</span>
+<span class="sd">  A named loop inside the outermost one (e.g. PIMPLE's ``inner_loop``) is held whole.</span>
 
 <span class="sd">Loops are placed in the order given, outer first; one that would have to hold a</span>
 <span class="sd">loop placed before it raises. An operation marked ``first`` runs only in the first</span>
@@ -930,7 +920,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_in_scope</span><span class="p">(</span>
     <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">change</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""``ops`` with the scope at ``path`` changed by ``change``."""</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">change</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span>
     <span class="n">index</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
