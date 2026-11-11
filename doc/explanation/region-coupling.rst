@@ -222,7 +222,7 @@ solver binds each to ``Patch(name)``; ``NeoNGeometry``
 (``neofoam.solver.neon_runtime``) gives the face centres, so the faces need not
 match, and ``NeoNFields`` the field ports' access. Each region is an
 OpenFOAM case of its own under ``<region>/``, beside the case's
-``system/controlDict.yaml`` and ``system/regionCoupling.yaml``.
+``system/controlDict.yaml`` and ``system/coupling.yaml``.
 ``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3
 against 5 faces, serial with Aitken around ``solve_T``.
 
