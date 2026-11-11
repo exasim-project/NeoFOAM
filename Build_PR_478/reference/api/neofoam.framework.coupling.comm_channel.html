@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.decorator" href="neofoam.framework.decorator.html"><link rel="prev" title="neofoam.framework.coupling.region" href="neofoam.framework.coupling.region.html">
-        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.framework.coupling.transport.html">
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.coupling.controller" href="neofoam.framework.coupling.controller.html"><link rel="prev" title="neofoam.framework.coupling" href="neofoam.framework.coupling.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.framework.coupling.comm_channel.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>neofoam.framework.coupling.transport - NeoFOAM documentation</title>
+        <title>neofoam.framework.coupling.comm_channel - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
@@ -297,6 +297,7 @@
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 current has-children"><a class="reference internal" href="neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" checked="" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l5 current current-page"><a class="current reference internal" href="#">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -305,7 +306,6 @@
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.mpi.html">neofoam.framework.coupling.mpi</a></li>
 <li class="toctree-l5"><a class="reference internal" href="neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5 current current-page"><a class="current reference internal" href="#">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -671,7 +671,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../../_sources/reference/api/neofoam.framework.coupling.transport.rst.txt" title="View this page">
+  <a class="muted-link" href="../../_sources/reference/api/neofoam.framework.coupling.comm_channel.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -689,122 +689,118 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="module-neofoam.framework.coupling.transport">
-<span id="neofoam-framework-coupling-transport"></span><h1>neofoam.framework.coupling.transport<a class="headerlink" href="#module-neofoam.framework.coupling.transport" title="Link to this heading">¶</a></h1>
-<p>How data travels between coupled regions: the <a class="reference internal" href="#neofoam.framework.coupling.transport.Transport" title="neofoam.framework.coupling.transport.Transport"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transport</span></code></a>, the only thing they share.</p>
-<p>Point to point, as MPI: a send never blocks, a receive blocks until the message
-is there; messages of one <code class="docutils literal notranslate"><span class="pre">(source,</span> <span class="pre">target,</span> <span class="pre">tag)</span></code> arrive in order. Messages are
-plain data (they pickle), their tags built by <a class="reference internal" href="#neofoam.framework.coupling.transport.Tag" title="neofoam.framework.coupling.transport.Tag"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tag</span></code></a> alone.</p>
-<p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">transport</span> <span class="o">=</span> <span class="n">InProcessTransport</span><span class="p">()</span>
-<span class="n">transport</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">"left"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">,</span> <span class="s2">"interface"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"T"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">)})</span>
-<span class="n">transport</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="s2">"left"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">,</span> <span class="s2">"interface"</span><span class="p">)</span>    <span class="c1"># in right's thread</span>
-</pre></div>
-</div>
-<dl class="py exception">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.CouplingDeadlock">
-<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">CouplingDeadlock</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#CouplingDeadlock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.CouplingDeadlock" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTransportError" title="neofoam.framework.coupling.transport.CouplingTransportError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code></a></p>
-<p>Every running region waits for a message no region will send.</p>
-</dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.CouplingTimeout">
-<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">CouplingTimeout</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#CouplingTimeout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.CouplingTimeout" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTransportError" title="neofoam.framework.coupling.transport.CouplingTransportError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code></a></p>
-<p>A region waited for a message longer than the transport’s timeout.</p>
-</dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.CouplingTransportError">
-<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">CouplingTransportError</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#CouplingTransportError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.CouplingTransportError" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
-<p>A message between coupled regions cannot arrive.</p>
-</dd></dl>
-
+          <section id="module-neofoam.framework.coupling.comm_channel">
+<span id="neofoam-framework-coupling-comm-channel"></span><h1>neofoam.framework.coupling.comm_channel<a class="headerlink" href="#module-neofoam.framework.coupling.comm_channel" title="Link to this heading">¶</a></h1>
+<p>The <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel" title="neofoam.framework.coupling.comm_channel.CommChannel"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommChannel</span></code></a> between coupled regions, the only thing they share.</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.InProcessTransport">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">InProcessTransport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">600.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#InProcessTransport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.InProcessTransport" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Mailbox</span></code></p>
-<p>A transport between regions running in threads of one process: a mailbox per tag.</p>
-<p>Each message is pickled and unpickled, as between processes: the receiver
-gets its own copy, and a message that is not plain data raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.
-Once <code class="xref py py-meth docutils literal notranslate"><span class="pre">start()</span></code> named the running regions, a receive raises
-<a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingDeadlock" title="neofoam.framework.coupling.transport.CouplingDeadlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code></a> as soon as every running region waits for a message
-that is not there, or waits for a region that finished; it raises
-<a class="reference internal" href="#neofoam.framework.coupling.transport.TransportClosed" title="neofoam.framework.coupling.transport.TransportClosed"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransportClosed</span></code></a> for a region that left by <code class="xref py py-meth docutils literal notranslate"><span class="pre">abort()</span></code>, and
-<a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTimeout" title="neofoam.framework.coupling.transport.CouplingTimeout"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTimeout</span></code></a> after <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds (<code class="docutils literal notranslate"><span class="pre">None</span></code> or <code class="docutils literal notranslate"><span class="pre">0</span></code>: no end).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Tag">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">Tag</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Tag" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The tags of the coupling’s messages, the one place that builds them.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Tag.data">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exchange</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Tag.data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Tag.data" title="Link to this definition">¶</a></dt>
-<dd><p>What a side sends, each pass.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Tag.node">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">what</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'sides'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pass'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'decision'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Tag.node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Tag.node" title="Link to this definition">¶</a></dt>
-<dd><p>A region’s sides, its pass and the leader’s decision, within coupling node <code class="docutils literal notranslate"><span class="pre">node</span></code>.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Tag.side">
-<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exchange</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Tag.side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Tag.side" title="Link to this definition">¶</a></dt>
-<dd><p>A side’s models and points, sent to its partner once.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Transport">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">Transport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Transport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Transport" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">CommChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannel" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></p>
 <p>Messages between the regions of a coupled case, by <code class="docutils literal notranslate"><span class="pre">(source,</span> <span class="pre">target,</span> <span class="pre">tag)</span></code>.</p>
+<p>Point to point, as MPI: messages of one <code class="docutils literal notranslate"><span class="pre">(source,</span> <span class="pre">target,</span> <span class="pre">tag)</span></code> arrive in
+order; they are plain data (they pickle), their tags built by <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.Tag" title="neofoam.framework.coupling.comm_channel.Tag"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tag</span></code></a>.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Transport.abort">
-<span class="sig-name descname"><span class="pre">abort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Transport.abort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Transport.abort" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannel.abort">
+<span class="sig-name descname"><span class="pre">abort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannel.abort"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannel.abort" title="Link to this definition">¶</a></dt>
 <dd><p>A region failed: every region of <code class="docutils literal notranslate"><span class="pre">regions</span></code> leaves the coupling.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Transport.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Transport.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Transport.close" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannel.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannel.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannel.close" title="Link to this definition">¶</a></dt>
 <dd><p>Region <code class="docutils literal notranslate"><span class="pre">region</span></code> leaves the coupling (it finished or failed).</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Transport.receive">
-<span class="sig-name descname"><span class="pre">receive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Transport.receive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Transport.receive" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannel.receive">
+<span class="sig-name descname"><span class="pre">receive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannel.receive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannel.receive" title="Link to this definition">¶</a></dt>
 <dd><p>The next message <code class="docutils literal notranslate"><span class="pre">source</span></code> sent <code class="docutils literal notranslate"><span class="pre">target</span></code> under <code class="docutils literal notranslate"><span class="pre">tag</span></code>; blocks until it is there.</p>
-<p>Raises <a class="reference internal" href="#neofoam.framework.coupling.transport.TransportClosed" title="neofoam.framework.coupling.transport.TransportClosed"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransportClosed</span></code></a> when <code class="docutils literal notranslate"><span class="pre">source</span></code> left and no such message
-waits, or another <a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTransportError" title="neofoam.framework.coupling.transport.CouplingTransportError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code></a> when it cannot come.</p>
+<p>Raises <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelClosed" title="neofoam.framework.coupling.comm_channel.CommChannelClosed"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommChannelClosed</span></code></a> when <code class="docutils literal notranslate"><span class="pre">source</span></code> left and no such message
+waits, or another <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelError" title="neofoam.framework.coupling.comm_channel.CommChannelError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommChannelError</span></code></a> when it cannot come.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Transport.send">
-<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Transport.send"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Transport.send" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannel.send">
+<span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannel.send"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannel.send" title="Link to this definition">¶</a></dt>
 <dd><p>Send <code class="docutils literal notranslate"><span class="pre">message</span></code> from region <code class="docutils literal notranslate"><span class="pre">source</span></code> to region <code class="docutils literal notranslate"><span class="pre">target</span></code>; never blocks.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.Transport.start">
-<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#Transport.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.Transport.start" title="Link to this definition">¶</a></dt>
-<dd><p>The regions <code class="docutils literal notranslate"><span class="pre">regions</span></code> run now, each until it leaves (<a class="reference internal" href="#neofoam.framework.coupling.transport.Transport.close" title="neofoam.framework.coupling.transport.Transport.close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">close()</span></code></a>).</p>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannel.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannel.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannel.start" title="Link to this definition">¶</a></dt>
+<dd><p>The regions <code class="docutils literal notranslate"><span class="pre">regions</span></code> run now, each until it leaves (<a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel.close" title="neofoam.framework.coupling.comm_channel.CommChannel.close"><code class="xref py py-meth docutils literal notranslate"><span class="pre">close()</span></code></a>).</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py exception">
-<dt class="sig sig-object py" id="neofoam.framework.coupling.transport.TransportClosed">
-<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.transport.</span></span><span class="sig-name descname"><span class="pre">TransportClosed</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/transport.html#TransportClosed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.transport.TransportClosed" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTransportError" title="neofoam.framework.coupling.transport.CouplingTransportError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTransportError</span></code></a></p>
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannelClosed">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">CommChannelClosed</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannelClosed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannelClosed" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelError" title="neofoam.framework.coupling.comm_channel.CommChannelError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommChannelError</span></code></a></p>
 <p>A region waits for a message from a region that left the coupling.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CommChannelError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">CommChannelError</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CommChannelError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CommChannelError" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>A message between coupled regions cannot arrive.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CouplingDeadlock">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">CouplingDeadlock</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CouplingDeadlock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CouplingDeadlock" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelError" title="neofoam.framework.coupling.comm_channel.CommChannelError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommChannelError</span></code></a></p>
+<p>Every running region waits for a message no region will send.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.CouplingTimeout">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">CouplingTimeout</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#CouplingTimeout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.CouplingTimeout" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelError" title="neofoam.framework.coupling.comm_channel.CommChannelError"><code class="xref py py-class docutils literal notranslate"><span class="pre">CommChannelError</span></code></a></p>
+<p>A region waited for a message longer than the comm channel’s timeout.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.InProcessCommChannel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">InProcessCommChannel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">600.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#InProcessCommChannel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.InProcessCommChannel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Mailbox</span></code></p>
+<p>A comm channel between regions running in threads of one process: a mailbox per tag.</p>
+<p>Messages are pickled, as between processes: the receiver gets its own copy.
+Once <code class="xref py py-meth docutils literal notranslate"><span class="pre">start()</span></code> named the running regions, a receive raises
+<a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CouplingDeadlock" title="neofoam.framework.coupling.comm_channel.CouplingDeadlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code></a> as soon as every running region waits in vain, and
+<a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CouplingTimeout" title="neofoam.framework.coupling.comm_channel.CouplingTimeout"><code class="xref py py-class docutils literal notranslate"><span class="pre">CouplingTimeout</span></code></a> after <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds (<code class="docutils literal notranslate"><span class="pre">None</span></code> or <code class="docutils literal notranslate"><span class="pre">0</span></code>: never).</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">comm_channel</span> <span class="o">=</span> <span class="n">InProcessCommChannel</span><span class="p">()</span>
+<span class="n">comm_channel</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">"left"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">,</span> <span class="s2">"interface"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"T"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">)})</span>
+<span class="n">comm_channel</span><span class="o">.</span><span class="n">receive</span><span class="p">(</span><span class="s2">"left"</span><span class="p">,</span> <span class="s2">"right"</span><span class="p">,</span> <span class="s2">"interface"</span><span class="p">)</span>    <span class="c1"># in right's thread</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.Tag">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.coupling.comm_channel.</span></span><span class="sig-name descname"><span class="pre">Tag</span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#Tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.Tag" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The tags of the coupling’s messages, the one place that builds them.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.Tag.data">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exchange</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#Tag.data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.Tag.data" title="Link to this definition">¶</a></dt>
+<dd><p>What a side sends, each pass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.Tag.node">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">what</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'sides'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'pass'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'decision'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#Tag.node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.Tag.node" title="Link to this definition">¶</a></dt>
+<dd><p>A region’s sides, its pass and the leader’s decision, within coupling node <code class="docutils literal notranslate"><span class="pre">node</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.coupling.comm_channel.Tag.side">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">side</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exchange</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/coupling/comm_channel.html#Tag.side"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.coupling.comm_channel.Tag.side" title="Link to this definition">¶</a></dt>
+<dd><p>A side’s models and points, sent to its partner once.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -814,23 +810,23 @@ waits, or another <a class="reference internal" href="#neofoam.framework.couplin
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="neofoam.framework.decorator.html">
+          <a class="next-page" href="neofoam.framework.coupling.controller.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">neofoam.framework.decorator</div>
+                <div class="title">neofoam.framework.coupling.controller</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="neofoam.framework.coupling.region.html">
+          <a class="prev-page" href="neofoam.framework.coupling.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">neofoam.framework.coupling.region</div>
+                <div class="title">neofoam.framework.coupling</div>
                 
               </div>
             </a>
@@ -864,26 +860,26 @@ waits, or another <a class="reference internal" href="#neofoam.framework.couplin
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">neofoam.framework.coupling.transport</a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingDeadlock"><code class="docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTimeout"><code class="docutils literal notranslate"><span class="pre">CouplingTimeout</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.CouplingTransportError"><code class="docutils literal notranslate"><span class="pre">CouplingTransportError</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.InProcessTransport"><code class="docutils literal notranslate"><span class="pre">InProcessTransport</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Tag"><code class="docutils literal notranslate"><span class="pre">Tag</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Tag.data"><code class="docutils literal notranslate"><span class="pre">Tag.data()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Tag.node"><code class="docutils literal notranslate"><span class="pre">Tag.node()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Tag.side"><code class="docutils literal notranslate"><span class="pre">Tag.side()</span></code></a></li>
+<li><a class="reference internal" href="#">neofoam.framework.coupling.comm_channel</a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel"><code class="docutils literal notranslate"><span class="pre">CommChannel</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel.abort"><code class="docutils literal notranslate"><span class="pre">CommChannel.abort()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel.close"><code class="docutils literal notranslate"><span class="pre">CommChannel.close()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel.receive"><code class="docutils literal notranslate"><span class="pre">CommChannel.receive()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel.send"><code class="docutils literal notranslate"><span class="pre">CommChannel.send()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannel.start"><code class="docutils literal notranslate"><span class="pre">CommChannel.start()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Transport"><code class="docutils literal notranslate"><span class="pre">Transport</span></code></a><ul>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Transport.abort"><code class="docutils literal notranslate"><span class="pre">Transport.abort()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Transport.close"><code class="docutils literal notranslate"><span class="pre">Transport.close()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Transport.receive"><code class="docutils literal notranslate"><span class="pre">Transport.receive()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Transport.send"><code class="docutils literal notranslate"><span class="pre">Transport.send()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.Transport.start"><code class="docutils literal notranslate"><span class="pre">Transport.start()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelClosed"><code class="docutils literal notranslate"><span class="pre">CommChannelClosed</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CommChannelError"><code class="docutils literal notranslate"><span class="pre">CommChannelError</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CouplingDeadlock"><code class="docutils literal notranslate"><span class="pre">CouplingDeadlock</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.CouplingTimeout"><code class="docutils literal notranslate"><span class="pre">CouplingTimeout</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.InProcessCommChannel"><code class="docutils literal notranslate"><span class="pre">InProcessCommChannel</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.Tag"><code class="docutils literal notranslate"><span class="pre">Tag</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.Tag.data"><code class="docutils literal notranslate"><span class="pre">Tag.data()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.Tag.node"><code class="docutils literal notranslate"><span class="pre">Tag.node()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.coupling.comm_channel.Tag.side"><code class="docutils literal notranslate"><span class="pre">Tag.side()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#neofoam.framework.coupling.transport.TransportClosed"><code class="docutils literal notranslate"><span class="pre">TransportClosed</span></code></a></li>
 </ul>
 </li>
 </ul>

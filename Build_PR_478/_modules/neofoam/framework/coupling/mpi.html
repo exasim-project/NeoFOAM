@@ -296,6 +296,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.context.html">neofoam.framework.context</a></li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.html">neofoam.framework.coupling</a><input aria-label="Toggle navigation of neofoam.framework.coupling" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.comm_channel.html">neofoam.framework.coupling.comm_channel</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.controller.html">neofoam.framework.coupling.controller</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.coupled.html">neofoam.framework.coupling.coupled</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.data.html">neofoam.framework.coupling.data</a></li>
@@ -304,7 +305,6 @@
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.model.html">neofoam.framework.coupling.model</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.mpi.html">neofoam.framework.coupling.mpi</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.region.html">neofoam.framework.coupling.region</a></li>
-<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/neofoam.framework.coupling.transport.html">neofoam.framework.coupling.transport</a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
@@ -686,20 +686,12 @@
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2026 NeoFOAM authors</span>
 
-<span class="sd">"""Coupling across MPI processes: :class:`MpiTransport` between regions, :class:`RegionComm` within.</span>
+<span class="sd">"""Coupling on MPI processes: :class:`MpiCommChannel` between regions, :class:`RegionComm` within.</span>
 
-<span class="sd">Only a region's root, rank 0 of its communicator, talks to other regions. Its</span>
-<span class="sd">coupling ops run on the whole patches: what the sides of every process send is</span>
-<span class="sd">gathered to the root, what they receive is scattered back. The other processes</span>
-<span class="sd">run a follower op in place of each coupling op. Communicators are mpi4py's,</span>
-<span class="sd">duck-typed (the launcher imports mpi4py).</span>
-
-<span class="sd">Example::</span>
-
-<span class="sd">    channel = MPI.COMM_WORLD.Dup()                       # every process</span>
-<span class="sd">    comm = MPI.COMM_WORLD.Split(color, key=world.rank)    # the region's processes</span>
-<span class="sd">    transport = MpiTransport(channel, {"left": 0, "right": 2}, region) if comm.rank == 0 else None</span>
-<span class="sd">    coupling = replace(coupling, transport=transport, comm=RegionComm(comm))</span>
+<span class="sd">Only a region's root, rank 0 of its communicator, talks to other regions: its coupling</span>
+<span class="sd">ops run on the whole patches, gathered from its processes and scattered back, while</span>
+<span class="sd">the others run a follower op. Communicators are mpi4py's, duck-typed: only the</span>
+<span class="sd">launcher imports mpi4py.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -714,9 +706,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">IterativeOp</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.comm_channel</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span> <span class="n">CouplingTimeout</span><span class="p">,</span> <span class="n">_Mailbox</span><span class="p">,</span> <span class="n">_pickled</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExchangeSide</span><span class="p">,</span> <span class="n">_sent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.loop</span><span class="w"> </span><span class="kn">import</span> <span class="n">CouplingOp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.transport</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span> <span class="n">CouplingTimeout</span><span class="p">,</span> <span class="n">_Mailbox</span><span class="p">,</span> <span class="n">_pickled</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
@@ -730,25 +722,21 @@
 <span class="n">_FIRST_PAUSE</span><span class="p">,</span> <span class="n">_LONGEST_PAUSE</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span> <span class="mf">1e-3</span>
 
 
-<div class="viewcode-block" id="MpiTransport">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.mpi.html#neofoam.framework.coupling.mpi.MpiTransport">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MpiTransport</span><span class="p">(</span><span class="n">_Mailbox</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""A transport between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.</span>
+<div class="viewcode-block" id="MpiCommChannel">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.mpi.html#neofoam.framework.coupling.mpi.MpiCommChannel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MpiCommChannel</span><span class="p">(</span><span class="n">_Mailbox</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A comm channel between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.</span>
 
-<span class="sd">    ``channel`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD),</span>
-<span class="sd">    ``roots`` maps each region of the group to its root's rank in it, and</span>
-<span class="sd">    ``region`` is this root's. A receive fails as one of</span>
-<span class="sd">    :class:`~neofoam.framework.coupling.InProcessTransport`, but a deadlock</span>
-<span class="sd">    between processes is told by the timeout only. :meth:`close` waits at most</span>
-<span class="sd">    ``timeout`` seconds for the other roots. Not thread safe.</span>
+<span class="sd">    ``comm`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD); ``roots``</span>
+<span class="sd">    maps each region of the group to its root's rank in it. A deadlock between processes</span>
+<span class="sd">    shows as a timeout only. Not thread safe.</span>
 <span class="sd">    """</span>
 
-    <span class="c1">#: The one MPI tag of the coupling's messages.</span>
     <span class="n">TAG</span> <span class="o">=</span> <span class="mi">7</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">channel</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">comm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">roots</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
         <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">DEFAULT_TIMEOUT</span><span class="p">,</span>
@@ -756,15 +744,14 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">region</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"region </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2"> has no root among </span><span class="si">{</span><span class="nb">dict</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">roots</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">!=</span> <span class="n">channel</span><span class="o">.</span><span class="n">rank</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">roots</span><span class="p">[</span><span class="n">region</span><span class="p">]</span> <span class="o">!=</span> <span class="n">comm</span><span class="o">.</span><span class="n">rank</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"region </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">'s root is rank </span><span class="si">{</span><span class="n">roots</span><span class="p">[</span><span class="n">region</span><span class="p">]</span><span class="si">}</span><span class="s2">, not this process "</span>
-                <span class="sa">f</span><span class="s2">"(rank </span><span class="si">{</span><span class="n">channel</span><span class="o">.</span><span class="n">rank</span><span class="si">}</span><span class="s2">); only a region's root talks to the other regions"</span>
+                <span class="sa">f</span><span class="s2">"(rank </span><span class="si">{</span><span class="n">comm</span><span class="o">.</span><span class="n">rank</span><span class="si">}</span><span class="s2">); only a region's root talks to the other regions"</span>
             <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">comm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">roots</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">region</span> <span class="o">=</span> <span class="n">region</span>
-        <span class="c1"># (target, tag, request) of every send not known to be complete</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sends</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_left</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pause</span> <span class="o">=</span> <span class="n">_FIRST_PAUSE</span>
@@ -783,13 +770,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_drain</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_take</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MpiTransport.close">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.mpi.html#neofoam.framework.coupling.mpi.MpiTransport.close">[docs]</a>
+<div class="viewcode-block" id="MpiCommChannel.close">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.mpi.html#neofoam.framework.coupling.mpi.MpiCommChannel.close">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""This root's region leaves; wait until every other root closed and every send completed.</span>
 
-<span class="sd">        Raises :class:`CouplingTimeout` after ``timeout`` seconds, naming the</span>
-<span class="sd">        roots that did not close and the sends not complete. Closing again does nothing.</span>
+<span class="sd">        Raises :class:`CouplingTimeout` after ``timeout`` s; closing twice is a no-op.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_own</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="s2">"closes"</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_left</span><span class="p">:</span>
@@ -804,8 +790,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_wait</span><span class="p">(</span><span class="n">left</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="MpiTransport.abort">
-<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.mpi.html#neofoam.framework.coupling.mpi.MpiTransport.abort">[docs]</a>
+<div class="viewcode-block" id="MpiCommChannel.abort">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.coupling.mpi.html#neofoam.framework.coupling.mpi.MpiCommChannel.abort">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">abort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regions</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""``regions`` leave; this root tells the others when its own region is one of them."""</span>
         <span class="n">regions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">regions</span><span class="p">)</span>
@@ -825,19 +811,19 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_own</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">what</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">region</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"the MPI transport of region </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> region </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">; each "</span>
+                <span class="sa">f</span><span class="s2">"the MPI comm channel of region </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">what</span><span class="si">}</span><span class="s2"> region </span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">; each "</span>
                 <span class="s2">"region's root has its own"</span>
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_tell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Tell every other root that this region left (``kind``: closed or aborted)."""</span>
+<span class="w">        </span><span class="sd">"""Tell every other root that this region left."""</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">other</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_post</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">isend</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="n">target</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">)</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">isend</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">[</span><span class="n">target</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sends</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">target</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">request</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">()</span>
 
@@ -854,8 +840,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_drain</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Take every message that arrived into the mailboxes; whether one arrived."""</span>
         <span class="n">arrived</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">iprobe</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">):</span>
-            <span class="n">source</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">))</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">iprobe</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">):</span>
+            <span class="n">source</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">TAG</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">_MESSAGE</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_messages</span><span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="p">,</span> <span class="n">tag</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
             <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="n">_CLOSED</span><span class="p">:</span>
@@ -869,7 +855,7 @@
         <span class="n">sends</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">→</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> '</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">'"</span> <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sends</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_report</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"a coupling timeout: region </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2"> waited </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> s to close "</span>
-            <span class="sa">f</span><span class="s2">"(transportTimeout); not closed: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_missing</span><span class="p">())</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">; "</span>
+            <span class="sa">f</span><span class="s2">"(commChannelTimeout); not closed: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_missing</span><span class="p">())</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">; "</span>
             <span class="sa">f</span><span class="s2">"sends not complete: </span><span class="si">{</span><span class="n">sends</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span></div>
 
