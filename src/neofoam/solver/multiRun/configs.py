@@ -23,6 +23,7 @@ from neofoam.framework.coupling import (
     CouplingMapping,
     CouplingNode,
     Exchange,
+    FieldPort,
 )
 from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.kernels import default_mapping
@@ -70,6 +71,23 @@ class ExchangeConfig(BaseModel):
     name: Optional[str] = None
     ports: dict[str, str] = Field(min_length=2, max_length=2)
     mapping: MappingConfig = Field(default_factory=default_mapping)
+
+
+class FieldPortConfig(BaseModel):
+    """A field port of ``ports:``: the region's ``field`` on ``patch`` (none: its cells).
+
+    ``direction`` ``out`` reads it (the default), ``in`` writes it, ``inout`` both.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    field: str
+    patch: Optional[str] = None
+    direction: Literal["out", "in", "inout"] = "out"
+
+    def field_port(self) -> FieldPort:
+        return FieldPort(self.name, self.field, self.patch, self.direction)
 
 
 class NodeExchangeConfig(BaseModel):
@@ -130,16 +148,22 @@ class CouplingNodeConfig(BaseModel):
 
 @IOStrategy(YAML("system/regionCoupling.yaml"))
 class RegionCouplingConfig(BaseConfig):
-    """``system/regionCoupling.yaml``: the exchanges between regions and the coupling nodes.
+    """``system/regionCoupling.yaml``: field ports, the exchanges and the coupling nodes.
 
-    ``couplings`` lists the nodes outer to inner, each exchange in one; checked on load.
+    ``ports`` lists each region's field ports, which an exchange names like the
+    ports of its coupled patches. ``couplings`` lists the nodes outer to inner,
+    each exchange in one; checked on load.
     ``commChannelTimeout`` is in seconds, ``0`` or ``null`` without end. Without the file
     no region is coupled.
 
     Example::
 
+        ports:
+          fluid:
+            - {name: T_out, field: T, patch: outlet}   # direction: out
         exchanges:
           - {name: wall, ports: {fluid: wall, solid: right}, mapping: nearest-neighbor}
+          - {name: mean_T, ports: {fluid: T_out, controller: T_meas}, mapping: area-mean}
         couplings:
           - name: thermal
             scheme: serial
@@ -154,6 +178,7 @@ class RegionCouplingConfig(BaseConfig):
 
     model_config = ConfigDict(extra="forbid")
 
+    ports: dict[str, list[FieldPortConfig]] = Field(default_factory=dict)
     exchanges: list[ExchangeConfig] = Field(min_length=1)
     couplings: list[CouplingNodeConfig] = Field(min_length=1)
     commChannelTimeout: Optional[float] = Field(default=DEFAULT_TIMEOUT, ge=0, allow_inf_nan=False)
@@ -168,6 +193,12 @@ class RegionCouplingConfig(BaseConfig):
             exchanges.append(Exchange(name, (first, second), config.mapping))
         return exchanges
 
+    def field_ports(self) -> dict[str, list[FieldPort]]:
+        """Each region's field ports."""
+        return {
+            region: [port.field_port() for port in ports] for region, ports in self.ports.items()
+        }
+
     def nodes(self) -> list[CouplingNode]:
         """The coupling nodes, outer to inner."""
         return [node.coupling_node() for node in self.couplings]
@@ -178,7 +209,7 @@ class RegionCouplingConfig(BaseConfig):
         regions = list(
             dict.fromkeys(region for exchange in exchanges for region, _patch in exchange.ends)
         )
-        check_couplings(regions, exchanges, self.nodes())
+        check_couplings(regions, exchanges, self.nodes(), self.field_ports())
         return self
 
 

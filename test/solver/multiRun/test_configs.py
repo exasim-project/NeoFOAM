@@ -16,7 +16,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from neofoam.framework.coupling import NearestNeighborMapping
+from neofoam.framework.coupling import FieldPort, NearestNeighborMapping
 from neofoam.solver.multiRun.configs import RegionCouplingConfig
 
 CASES = Path(__file__).parent / "cases"
@@ -32,6 +32,7 @@ def test_region_coupling_config_reads_every_entry() -> None:
     config = RegionCouplingConfig.load(case_dir=CASES / "coupled_slabs")
 
     assert config.model_dump() == {
+        "ports": {},
         "exchanges": [
             {
                 "name": "interface",
@@ -62,6 +63,7 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
     config = RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / "minimal")
 
     assert config.model_dump() == {
+        "ports": {},
         "exchanges": [
             {
                 "name": None,
@@ -252,3 +254,18 @@ def test_region_coupling_config_rejects_a_broken_chain(data: dict[str, Any], mes
 def test_region_coupling_config_rejects_a_broken_comm_channel_timeout(seconds: float) -> None:
     with pytest.raises(ValidationError, match="commChannelTimeout"):
         RegionCouplingConfig.model_validate({**_chain(), "commChannelTimeout": seconds})
+
+
+def test_region_coupling_config_reads_the_field_ports() -> None:
+    config = RegionCouplingConfig.load(case_dir=CASES / "field_ports")
+
+    assert config.field_ports() == {"left": [FieldPort("T_cells", "T")]}
+    assert [(e.name, e.ports) for e in config.exchanges] == [
+        ("interface", {"left": "right", "right": "left"}),
+        ("sensor", {"left": "T_cells", "meter": "T_left"}),
+    ]
+
+
+def test_region_coupling_config_checks_the_directions_of_its_field_ports() -> None:
+    with pytest.raises(ValidationError, match="exchange 'sensor': T_cells is inout and T_in is"):
+        RegionCouplingConfig.load(case_dir=CASES / "region_coupling" / "field_port_directions")

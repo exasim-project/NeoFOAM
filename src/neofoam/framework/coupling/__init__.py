@@ -23,6 +23,7 @@ from .comm.in_process import InProcessCommChannel
 from .coupled import CoupledPort, coupled
 from .data import Array, CellData, FaceData, ProbeData, Scalar, ValueData
 from .exchanges import CouplingLoop, Exchange, ParticipantExchanges, participant_exchanges
+from .field_port import FieldAccess, FieldPort
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .loop._leader import CouplingNotConvergedWarning
 from .model import Participant, coupling
@@ -65,6 +66,8 @@ __all__ = [
     "CouplingTimeout",
     "Exchange",
     "FaceData",
+    "FieldAccess",
+    "FieldPort",
     "Geometry",
     "Global",
     "IdentityMapping",

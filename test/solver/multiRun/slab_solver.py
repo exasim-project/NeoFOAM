@@ -113,6 +113,28 @@ class SlabGeometry:
         return np.full(self.config.cells, self.config.length / self.config.cells)
 
 
+class SlabFields:
+    """The slab's field access: its cells' values, or a patch's wall value, set as a Dirichlet."""
+
+    def __init__(self, ctx: Context) -> None:
+        self.ctx = ctx
+
+    def _patch(self, name: str) -> SlabPatch:
+        patches: list[SlabPatch] = self.ctx.models["patches"]
+        return next(patch for patch in patches if patch.patch == name)
+
+    def read(self, field: str, location: Any) -> Any:
+        if isinstance(location, Patch):
+            return self._patch(location.name).wall_T()
+        return self.ctx.fields[field]
+
+    def write(self, field: str, location: Any, values: Any) -> None:
+        if isinstance(location, Patch):
+            self._patch(location.name).set_mixed(ref_value=values, value_fraction=[1.0])
+        else:
+            self.ctx.fields[field] = np.asarray(values, dtype=float)
+
+
 class FixedTemperature(SlabPatch):
     def __init__(self, field: str, patch: str, ctx: Context, value: float) -> None:
         super().__init__(field, patch, ctx)
@@ -247,7 +269,9 @@ def _initialize(self: Any) -> Context:
     ctx = init.run()
     self.core_models = init.core_models
     temperature = ctx.models["temperature"]
-    ctx.models["coupling"] = Coupling(self.coupling, SlabGeometry(ctx.models["slab"]))
+    ctx.models["coupling"] = Coupling(
+        self.coupling, SlabGeometry(ctx.models["slab"]), SlabFields(ctx)
+    )
     ctx.models["patches"] = [
         _patch("left", temperature.left, ctx),
         _patch("right", temperature.right, ctx),

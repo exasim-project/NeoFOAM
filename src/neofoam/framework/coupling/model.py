@@ -10,8 +10,10 @@ from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
+from . import field_port
 from .coupled import CoupledPort
 from .data import base_name
+from .field_port import FieldAccess
 from .location import Location, MeshGeometry
 from .loop._loop_op import CouplingLoopOp
 
@@ -39,11 +41,31 @@ class Participant:
         coupling(ctx).add(Patch("top"), bc)
     """
 
-    def __init__(self, coupling: Optional[ParticipantExchanges], geometry: MeshGeometry) -> None:
+    def __init__(
+        self,
+        coupling: Optional[ParticipantExchanges],
+        geometry: MeshGeometry,
+        fields: Optional[FieldAccess] = None,
+    ) -> None:
         self.coupling = coupling
         self.geometry = geometry
         self._ports: dict[str, CoupledPort] = {}
         self._operations: Optional[Operations] = None
+        self._bind_field_ports(fields)
+
+    def _bind_field_ports(self, fields: Optional[FieldAccess]) -> None:
+        """Bind the region's field ports of the yaml through the solver's ``fields``."""
+        coupling = self.coupling
+        if coupling is None or not coupling.field_ports:
+            return
+        if fields is None:
+            raise ValueError(
+                f"region {coupling.region} has the field ports "
+                f"{[port.name for port in coupling.field_ports]} (system/coupling.yaml: "
+                "ports), but its solver gives no field access"
+            )
+        for port in coupling.field_ports:
+            self._bind(port.name, port.location, field_port.instance(port, fields))
 
     @property
     def ports(self) -> tuple[CoupledPort, ...]:
@@ -53,13 +75,17 @@ class Participant:
     def add(self, location: Location, instance: Any) -> None:
         """Bind the ``@coupled`` ``instance`` to ``location``, before the graph is built.
 
-        Instances on one location merge into its port.
+        Instances on one location merge into its port, named after the location.
         """
+        self._bind(location.name, location, instance)
+
+    def _bind(self, name: str, location: Location, instance: Any) -> None:
         declaration = getattr(type(instance), "__coupled__", None)
         if declaration is None:
             raise TypeError(f"{type(instance).__qualname__} is not @coupled")
         port = CoupledPort(
-            self._region(location),
+            self._region(name),
+            name,
             location,
             declaration.streams(instance, "sends"),
             declaration.streams(instance, "receives"),
@@ -70,16 +96,16 @@ class Participant:
         known = self._ports.get(port.name)
         self._ports[port.name] = port if known is None else known.merged(port)
 
-    def _region(self, location: Location) -> str:
+    def _region(self, name: str) -> str:
         coupling = self.coupling
         if coupling is None:
             raise ValueError(
-                f"no exchange connects the port {location.name}: the case does not couple its "
+                f"no exchange connects the port {name}: the case does not couple its "
                 "region (system/coupling.yaml: exchanges)"
             )
-        if location.name not in coupling.ports:
+        if name not in coupling.ports:
             raise ValueError(
-                f"no exchange connects the port {coupling.region}.{location.name}; a coupled "
+                f"no exchange connects the port {coupling.region}.{name}; a coupled "
                 "instance needs its exchange (system/coupling.yaml: exchanges)"
             )
         return coupling.region

@@ -127,21 +127,17 @@ coupled = _Coupled()
 
 @dataclass(frozen=True)
 class CoupledPort:
-    """A coupled location of a region: what it sends and receives there, by data key.
+    """A named coupled location of a region: what it sends and receives there, by data key.
 
-    Built by :meth:`~neofoam.framework.coupling.Participant.add`; several instances
-    on one location merge into one port.
+    Built by :meth:`~neofoam.framework.coupling.Participant.add`, named after its
+    location, or for a field port of the yaml; several instances on one port merge.
     """
 
     region: str
+    name: str
     location: Any
     sends: tuple[Stream, ...] = ()
     receives: tuple[Stream, ...] = ()
-
-    @property
-    def name(self) -> str:
-        """The port's name, its location's."""
-        return str(self.location.name)
 
     @property
     def end(self) -> End:
@@ -176,6 +172,7 @@ class CoupledPort:
                     )
         return CoupledPort(
             self.region,
+            self.name,
             self.location,
             self.sends + other.sends,
             self.receives + other.receives,
