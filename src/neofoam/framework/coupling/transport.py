@@ -35,9 +35,8 @@ import copy
 import pickle as pickling
 import threading
 import time
-from abc import ABC, abstractmethod
 from collections import defaultdict, deque
-from typing import Any, Iterable, Literal, Optional
+from typing import Any, Iterable, Literal, Optional, Protocol
 
 # What a side sends, by name: arrays with one entry per point of its patch, or one
 # value for the whole interface.
@@ -95,39 +94,30 @@ class CouplingTimeout(CouplingTransportError):
     """A region waited for a message longer than the transport's timeout."""
 
 
-class Transport(ABC):
+class Transport(Protocol):
     """Messages between the regions of a coupled case, by ``(source, target, tag)``."""
 
-    @abstractmethod
     def send(self, source: str, target: str, tag: str, message: Any) -> None:
         """Send ``message`` from region ``source`` to region ``target``; never blocks."""
 
-    @abstractmethod
     def receive(self, source: str, target: str, tag: str) -> Any:
         """The next message ``source`` sent ``target`` under ``tag``; blocks until it is there.
 
-        Raises :class:`TransportClosed` when ``source`` left (:meth:`close`) and
-        no such message is waiting, or another :class:`CouplingTransportError`
-        when the message cannot come (:class:`InProcessTransport`).
+        Raises :class:`TransportClosed` when ``source`` left and no such message
+        waits, or another :class:`CouplingTransportError` when it cannot come.
         """
 
-    @abstractmethod
     def close(self, region: str) -> None:
         """Region ``region`` leaves the coupling (it finished or failed)."""
 
     def start(self, regions: Iterable[str]) -> None:
-        """The regions ``regions`` run now, each until it leaves (:meth:`close`).
-
-        A transport may watch them for a deadlock; by default it does nothing.
-        """
+        """The regions ``regions`` run now, each until it leaves (:meth:`close`)."""
 
     def abort(self, regions: Iterable[str]) -> None:
-        """A region failed: every region of ``regions`` leaves the coupling (:meth:`close`)."""
-        for region in regions:
-            self.close(region)
+        """A region failed: every region of ``regions`` leaves the coupling."""
 
 
-class InProcessTransport(Transport):
+class InProcessTransport:
     """A transport between regions running in threads of one process: a mailbox per tag.
 
     Sends a copy, as a message would: a receiver that changes its data in place
