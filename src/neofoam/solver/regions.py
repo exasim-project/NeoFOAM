@@ -15,7 +15,7 @@ from neofoam.io import YAML, IOStrategy
 
 __all__ = [
     "ControlDictConfig",
-    "RegionSolverConfig",
+    "ParticipantConfig",
     "WallHeatFlux",
     "WallTemperature",
     "coupled_entries",
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 
-class RegionSolverConfig(BaseModel):
+class ParticipantConfig(BaseModel):
     """The solver of one region and its MPI ``processes``, used under ``mpirun`` only."""
 
     model_config = ConfigDict(extra="forbid")
@@ -50,7 +50,7 @@ class ControlDictConfig(TimeControlConfig):
     """
 
     # The i18n prefix labels the wizard's "add a region" row (neofoam.ui.form_schema).
-    participants: dict[str, RegionSolverConfig] = Field(
+    participants: dict[str, ParticipantConfig] = Field(
         min_length=1, json_schema_extra={"i18n": "nf.region"}
     )
 
