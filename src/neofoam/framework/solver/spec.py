@@ -35,7 +35,7 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 from .runtime import SolverRuntime
 
 if TYPE_CHECKING:
-    from neofoam.framework.coupling.region import RegionCoupling
+    from neofoam.framework.coupling.exchanges import RegionCoupling
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 

@@ -21,7 +21,7 @@ import pytest
 from framework.solver.region_counter import counter
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import CouplingNode, Exchange, InProcessCommChannel
-from neofoam.framework.coupling.region import region_couplings
+from neofoam.framework.coupling.exchanges import region_couplings
 from neofoam.framework.initialization.depends import Depends
 from neofoam.framework.operations import Operation, Operations, SequentialOp, StepBuilder
 from neofoam.framework.solver import Solver

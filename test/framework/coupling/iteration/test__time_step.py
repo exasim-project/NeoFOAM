@@ -19,7 +19,7 @@ from framework.coupling.regions import contexts
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Exchange, coupling
-from neofoam.framework.coupling.region import run_regions
+from neofoam.framework.coupling.run import run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
     IterativeOp,

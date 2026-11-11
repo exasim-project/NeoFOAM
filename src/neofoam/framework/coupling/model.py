@@ -17,7 +17,7 @@ from .location import Location, MeshGeometry
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from .region import RegionCoupling
+    from .exchanges import RegionCoupling
 from .iteration._time_step import (
     INCREMENT_TIME,
     SET_TIME_STEP,

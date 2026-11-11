@@ -19,7 +19,7 @@ from ._leader import CouplingController, GroupStream, StreamId
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from ..region import CouplingNode, Exchange, RegionCoupling
+    from ..exchanges import CouplingNode, Exchange, RegionCoupling
 
 
 # the loops enclosing a coupling op, outermost first: (name, iteration from 0)

@@ -24,7 +24,7 @@ from neofoam.framework.coupling import (
     CouplingTimeout,
     InProcessCommChannel,
 )
-from neofoam.framework.coupling.region import run_regions
+from neofoam.framework.coupling.run import run_regions
 
 
 def _until_waiting(comm_channel: InProcessCommChannel, region: str) -> None:

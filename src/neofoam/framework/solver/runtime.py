@@ -17,7 +17,7 @@ from neofoam.framework.dependency_resolver import DependencyResolver
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
-    from neofoam.framework.coupling.region import RegionCoupling
+    from neofoam.framework.coupling.exchanges import RegionCoupling
     from neofoam.framework.operations import (
         Operation,
         OperationCollection,
