@@ -17,7 +17,7 @@ from framework.coupling.regions import Outcomes
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Cells, Patch, coupling
-from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
+from neofoam.framework.coupling.loop._loop_op import CouplingLoopOp
 from neofoam.framework.execution_observer import observe
 from neofoam.solver.heatConductionNeoN import heatConductionNeoN
 from neofoam.solver.heatConductionNeoN import run as run_single
