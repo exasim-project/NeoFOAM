@@ -17,10 +17,10 @@ from neofoam.framework.coupling import (
     AitkenRelaxation,
     InProcessCommChannel,
     ParticipantExchanges,
+    RegionCouplingConfig,
     RelativeConvergence,
 )
 from neofoam.framework.types import Placement
-from neofoam.solver.multiRun.configs import RegionCouplingConfig
 
 MULTI_RUN = importlib.import_module("neofoam.solver.multiRun.multiRun")
 CASES = Path(__file__).parent / "cases"

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Case config of multiRun: how its regions are coupled (``system/regionCoupling.yaml``)."""
+"""How a case couples its regions, ``system/regionCoupling.yaml``: :class:`RegionCouplingConfig`."""
 
 from functools import partial
 from typing import Annotated, Any, Literal, Optional
@@ -17,19 +17,15 @@ from pydantic import (
     model_validator,
 )
 
-from neofoam.framework.coupling import (
-    CouplingAcceleration,
-    CouplingConvergence,
-    CouplingLoop,
-    CouplingMapping,
-    Exchange,
-    FieldPort,
-)
-from neofoam.framework.coupling.comm.channel import DEFAULT_TIMEOUT
-from neofoam.framework.coupling.exchanges import check_exchanges
-from neofoam.framework.coupling.strategies.mapping import default_mapping
 from neofoam.framework.types import Placement
 from neofoam.io import YAML, BaseConfig, IOStrategy
+
+from .comm.channel import DEFAULT_TIMEOUT
+from .exchanges import CouplingLoop, Exchange, check_exchanges
+from .field_port import FieldPort
+from .strategies.acceleration import CouplingAcceleration
+from .strategies.convergence import CouplingConvergence
+from .strategies.mapping import CouplingMapping, default_mapping
 
 
 def _created(family: Any, variable: str, value: Any) -> Any:

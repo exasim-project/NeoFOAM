@@ -13,15 +13,18 @@ from pathlib import Path
 from typing import Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import CommChannel, InProcessCommChannel, ParticipantExchanges
+from neofoam.framework.coupling import (
+    CommChannel,
+    InProcessCommChannel,
+    ParticipantExchanges,
+    RegionCouplingConfig,
+)
 from neofoam.framework.coupling.comm.channel import DEFAULT_TIMEOUT
 from neofoam.framework.coupling.exchanges import participant_exchanges
 from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.solver import Solver
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig
-
-from .configs import RegionCouplingConfig
 
 multiRun = Solver("multiRun")
 

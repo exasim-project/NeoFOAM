@@ -21,8 +21,8 @@ import pytest
 from pydantic import ValidationError
 
 from neofoam.core.plugin_system import PluginSystem
+from neofoam.framework.coupling import RegionCouplingConfig
 from neofoam.solver.multiRun import run
-from neofoam.solver.multiRun.configs import RegionCouplingConfig
 from solver.multiRun.case_files import copy_case
 
 PLUGIN = "solver.multiRun.fake_plugin"

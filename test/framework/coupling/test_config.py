@@ -5,7 +5,7 @@
 
 ``cases/region_coupling/minimal`` sets only the required entries, every other
 ``cases/region_coupling/<name>`` breaks one rule; a broken chain is
-``cases/couplings/chain`` with one entry changed.
+multiRun's ``cases/couplings/chain`` with one entry changed.
 """
 
 import copy
@@ -16,11 +16,12 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from neofoam.framework.coupling import FieldPort, NearestNeighborMapping
-from neofoam.solver.multiRun.configs import RegionCouplingConfig
+from neofoam.framework.coupling import FieldPort, NearestNeighborMapping, RegionCouplingConfig
 
 CASES = Path(__file__).parent / "cases"
-CHAIN = CASES / "couplings" / "chain"
+# the cases multiRun's tests share
+MULTI_RUN = Path(__file__).parents[2] / "solver" / "multiRun" / "cases"
+CHAIN = MULTI_RUN / "couplings" / "chain"
 
 
 def _chain() -> dict[str, Any]:
@@ -29,7 +30,7 @@ def _chain() -> dict[str, Any]:
 
 
 def test_region_coupling_config_reads_every_entry() -> None:
-    config = RegionCouplingConfig.load(case_dir=CASES / "coupled_slabs")
+    config = RegionCouplingConfig.load(case_dir=MULTI_RUN / "coupled_slabs")
 
     assert config.model_dump() == {
         "ports": {},
@@ -86,7 +87,9 @@ def test_region_coupling_config_defaults_the_optional_entries() -> None:
 
 
 def test_region_coupling_config_reads_a_list_of_exchanges() -> None:
-    config = RegionCouplingConfig.load(case_dir=CASES.parent / "limitations" / "cases" / "chain")
+    config = RegionCouplingConfig.load(
+        case_dir=MULTI_RUN.parent / "limitations" / "cases" / "chain"
+    )
 
     assert [(e.name, e.ports, type(e.mapping)) for e in config.exchanges] == [
         (None, {"a": "to_b", "b": "to_a"}, NearestNeighborMapping),
@@ -170,7 +173,7 @@ def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises_as_the_file
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
         r"well; .* make 'fsi' parallel",
     ):
-        RegionCouplingConfig.load(case_dir=CASES / "couplings" / "serial_encloses")
+        RegionCouplingConfig.load(case_dir=MULTI_RUN / "couplings" / "serial_encloses")
 
 
 def _broken(path: str, value: Any) -> dict[str, Any]:
@@ -257,7 +260,7 @@ def test_region_coupling_config_rejects_a_broken_comm_channel_timeout(seconds: f
 
 
 def test_region_coupling_config_reads_the_field_ports() -> None:
-    config = RegionCouplingConfig.load(case_dir=CASES / "field_ports")
+    config = RegionCouplingConfig.load(case_dir=MULTI_RUN / "field_ports")
 
     assert config.field_ports() == {"left": [FieldPort("T_cells", "T")]}
     assert [(e.name, e.ports) for e in config.exchanges] == [
