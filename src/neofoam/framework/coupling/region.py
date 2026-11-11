@@ -229,7 +229,10 @@ def region_couplings(
             f"the exchanges couple the regions {named}, which are not in {list(regions)}"
         )
     owner: dict[End, str] = {}
+    names = [link.name for link in links]
     for link in links:
+        if names.count(link.name) > 1:
+            raise ValueError(f"two exchanges are named '{link.name}'; an exchange's name is unique")
         first, second = link.ends
         if first[0] == second[0]:
             raise ValueError(f"exchange '{link.name}' joins two patches of region {first[0]}")
