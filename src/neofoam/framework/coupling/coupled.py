@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``@coupled``: a class declares what it sends and receives; its owner binds it to a location."""
+"""``@coupled``: what a class sends and receives; :class:`CoupledPort`, where its owner binds it."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import typing
 from dataclasses import dataclass
 from typing import Any, Callable, TypeVar
 
-from .data import Stream, check_model
+from .data import End, Stream, check_model
 
 T = TypeVar("T", bound=type)
 F = TypeVar("F", bound=Callable[..., Any])
@@ -123,3 +123,60 @@ class _Coupled:
 
 
 coupled = _Coupled()
+
+
+@dataclass(frozen=True)
+class CoupledPort:
+    """A coupled location of a region: what it sends and receives there, by data key.
+
+    Built by :meth:`~neofoam.framework.coupling.Participant.add`; several instances
+    on one location merge into one port.
+    """
+
+    region: str
+    location: Any
+    sends: tuple[Stream, ...] = ()
+    receives: tuple[Stream, ...] = ()
+
+    @property
+    def name(self) -> str:
+        """The port's name, its location's."""
+        return str(self.location.name)
+
+    @property
+    def end(self) -> End:
+        """The port's end of its exchange."""
+        return (self.region, self.name)
+
+    @property
+    def label(self) -> str:
+        """``<region>.<port>``."""
+        return f"{self.region}.{self.name}"
+
+    @property
+    def names(self) -> set[str]:
+        """The data field names the port sends or receives."""
+        return {name for stream in (*self.sends, *self.receives) for name in stream.names}
+
+    def merged(self, other: CoupledPort) -> CoupledPort:
+        """This port with ``other``'s streams; ``ValueError`` when a field name repeats."""
+        if other.location != self.location:
+            raise ValueError(
+                f"{self.label} is bound to {self.location} and {other.location}; a port's "
+                "name names one location"
+            )
+        for role in ("sends", "receives"):
+            mine = {name for stream in getattr(self, role) for name in stream.names}
+            for stream in getattr(other, role):
+                twice = sorted(mine & set(stream.names))
+                if twice:
+                    raise ValueError(
+                        f"two @coupled.{role} of {', '.join(twice)} on {self.label}; a port "
+                        f"{role} each data field once"
+                    )
+        return CoupledPort(
+            self.region,
+            self.location,
+            self.sends + other.sends,
+            self.receives + other.receives,
+        )

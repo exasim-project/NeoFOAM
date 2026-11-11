@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Any, Iterable, Optional, Sequence
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from .data import CoupledPort, base_name
+from .coupled import CoupledPort
+from .data import base_name
 from .iteration._loop_op import CouplingLoopOp
 from .location import Location, MeshGeometry
 

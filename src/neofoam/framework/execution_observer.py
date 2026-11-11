@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
     from neofoam.framework.context import Context
-    from neofoam.framework.coupling.data import CoupledPort
+    from neofoam.framework.coupling.coupled import CoupledPort
     from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
     from neofoam.framework.coupling.iteration._loop_op import CouplingLoopOp
     from neofoam.framework.initialization.init_step import InitStep

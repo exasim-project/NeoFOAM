@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Data models hold Array (or Scalar) fields only; a port merges the streams of its instances."""
+"""Data models hold Array (or Scalar) fields only; a model's key is its field names."""
 
 from __future__ import annotations
 
 import pytest
 from pydantic import BaseModel
 
-from neofoam.framework.coupling import Array, Cells, FaceData, Global, Patch, Scalar, ValueData
-from neofoam.framework.coupling.data import CoupledPort, Stream, check_model, key
+from neofoam.framework.coupling import Array, FaceData, Scalar, ValueData
+from neofoam.framework.coupling.data import check_model, key
 
 
 class WallTemperature(FaceData):
@@ -58,23 +58,3 @@ class _Pair(FaceData):
 
 def test_a_model_s_key_is_its_sorted_field_names() -> None:
     assert (key(WallTemperature), key(_Pair)) == ("T", "T_sink,h")
-
-
-def _port(location: object, *sends: type) -> CoupledPort:
-    return CoupledPort("a", location, tuple(Stream(model, print) for model in sends))
-
-
-def test_a_port_merges_the_streams_of_another_instance() -> None:
-    merged = _port(Patch("top"), WallTemperature).merged(_port(Patch("top"), _Value))
-
-    assert [stream.model.__name__ for stream in merged.sends] == ["WallTemperature", "_Value"]
-
-
-def test_a_port_sends_a_data_field_once() -> None:
-    with pytest.raises(ValueError, match=r"two @coupled.sends of T on a.top"):
-        _port(Patch("top"), WallTemperature).merged(_port(Patch("top"), WallTemperature))
-
-
-def test_a_port_name_names_one_location() -> None:
-    with pytest.raises(ValueError, match=r"a.cells is bound to Cells\(name='cells'\) and Global"):
-        _port(Cells(), WallTemperature).merged(_port(Global("cells"), _Value))
