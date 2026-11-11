@@ -4,9 +4,11 @@
 """multiRun couples the slabs of ``cases/coupled_slabs`` as each variant of its coupling says.
 
 ``cases/coupled_slabs_variants/<name>`` is laid over the case. Every scheme and
-acceleration reaches the steady profile of ``test_coupled_slabs``; the
-slowest (parallel, constant 0.7) contracts by ~0.73 per pass, so a relative
-change of 1e-12 (3e-10 K) leaves at most ~1e-9 K; 1e-8 K bounds every variant.
+acceleration reaches the steady profile of ``test_coupled_slabs`` within 1e-8 K
+(limit 1e-12) but the slowest, parallel with constant relaxation 0.7: its error
+contracts by ~0.81 per pass, so it stops at a relative change of 1e-10 (at ~400 K,
+4e-8 K) within its 100 passes and leaves at most 0.81 / 0.19 times that, ~1.7e-7 K
+(measured 7.3e-8 K); 2e-7 K bounds it.
 """
 
 from pathlib import Path
@@ -29,10 +31,16 @@ def _case(variant: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None
 
 
 @pytest.mark.parametrize(
-    "variant", ["serial-aitken", "serial-constant", "parallel-aitken", "parallel-constant"]
+    ("variant", "atol_k"),
+    [
+        ("serial-aitken", 1e-8),
+        ("serial-constant", 1e-8),
+        ("parallel-aitken", 1e-8),
+        ("parallel-constant", 2e-7),
+    ],
 )
 def test_coupled_slabs_reaches_the_steady_profile(
-    variant: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    variant: str, atol_k: float, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _case(variant, tmp_path, monkeypatch)
 
@@ -43,7 +51,7 @@ def test_coupled_slabs_reaches_the_steady_profile(
             regions[region].fields["T"],
             expected,
             rtol=0,
-            atol=1e-8,
+            atol=atol_k,
             err_msg=f"coupled_slabs {variant} region {region}",
         )
 
