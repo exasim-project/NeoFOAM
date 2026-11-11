@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run a heatConductionNeoN case (``single|multi|geometry``), print the ``#RESULT`` JSON line.
+"""Run a heatConductionNeoN case (``single|multi|geometry|fields``); print ``#RESULT`` JSON.
 
 A subprocess: Kokkos and ``Foam::Time`` are per process, and NeoN must be finalized
 after its objects are gone.
@@ -15,12 +15,12 @@ import numpy as np
 
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import coupling
+from neofoam.framework.coupling import Cells, Patch, coupling
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.solver.heatConductionNeoN import heatConductionNeoN
 from neofoam.solver.heatConductionNeoN import run as run_single
 from neofoam.solver.multiRun import run as run_multi
-from neofoam.solver.neon_runtime import NeoNGeometry
+from neofoam.solver.neon_runtime import NeoNFields, NeoNGeometry
 
 RESULT_PREFIX = "#RESULT "
 
@@ -92,9 +92,28 @@ def _geometry() -> dict[str, Any]:
     }
 
 
+def _fields() -> dict[str, Any]:
+    """What NeoNFields reads of T, before and after it writes a patch and the cells."""
+    ctx = heatConductionNeoN.instantiate(argv=["heatConductionNeoN"]).initialize()
+    fields = NeoNFields(ctx.models["neon_runtime"], ctx.fields)
+    read = {
+        "outer": fields.read("T", Patch("outer")).tolist(),
+        "cells": fields.read("T", Cells()).tolist(),
+    }
+    fields.write("T", Patch("interface"), [301.0, 302.0, 303.0, 304.0, 305.0])
+    fields.write("T", Cells(), np.arange(30.0))
+    written = {
+        "interface": fields.read("T", Patch("interface")).tolist(),
+        "cells": fields.read("T", Cells()).tolist(),
+    }
+    return {"read": read, "written": written}
+
+
 def main(mode: str) -> dict[str, Any]:
     if mode == "geometry":
         return _geometry()
+    if mode == "fields":
+        return _fields()
     if mode == "single":
         return {"regions": {"case": _region(run_single(["heatConductionNeoN"]))}}
     regions = run_multi()

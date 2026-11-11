@@ -172,7 +172,8 @@ class NeoNFields:
     """The :class:`~neofoam.framework.coupling.FieldAccess` of a NeoN run's volume fields.
 
     A patch reads its boundary values and is written as fixed values; the cells
-    read and write the internal values.
+    read and write the internal values. A patch it writes is ``calculated`` in
+    ``0/<field>``: a boundary correction re-applies any other condition.
     """
 
     def __init__(self, runtime: Any, fields: Mapping[str, Any]) -> None:
