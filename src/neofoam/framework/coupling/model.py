@@ -208,7 +208,7 @@ def _coupling_op(
     ports: Sequence[CoupledPort],
     geometries: Mapping[str, Geometry],
 ) -> IterativeOp:
-    """The loop of ``loop``; on several MPI processes the region's communicator builds it."""
+    """The op of ``loop``; on several MPI processes the region's communicator builds it."""
     if coupling.comm is None:
         return CouplingLoopOp(coupling, loop, ports, geometries)
     return coupling.comm.coupling_op(coupling, loop, ports, geometries)

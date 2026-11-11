@@ -226,7 +226,7 @@ class RegionComm:
         ports: Sequence[CoupledPort],
         geometries: Mapping[str, Geometry],
     ) -> IterativeOp:
-        """The loop of ``loop`` here: the coupling op on the root, a follower elsewhere."""
+        """The op of ``loop`` here: the coupling op on the root, a follower elsewhere."""
         parts = [_Port(self, port, geometries[port.name]) for port in ports]
         if self.is_root:
             return _RootOp(coupling, loop, parts, self)
