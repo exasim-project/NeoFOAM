@@ -158,7 +158,7 @@ class SolverRuntime:
         contributions = [m for m in ctx.models.values() if isinstance(m, GraphContribution)]
         if self.coupling is not None and not contributions:
             raise RuntimeError(
-                f"region {self.region} is coupled in regionCoupling.yaml, but solver "
+                f"region {self.region} is coupled in coupling.yaml, but solver "
                 f"{self.name} added no coupling model; add "
                 "ctx.models['coupling'] = Participant(self.coupling, geometry) in initialize"
             )
