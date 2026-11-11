@@ -240,34 +240,16 @@ itself never named the model operations.
 Contributed loops: ``wraps``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Some changes to the graph are known only once the case is read: a
-boundary condition that needs the solution of its field repeated inside a
-loop, for example. The model (e.g. a region's coupling model) returns a
-wrapping loop, a loop operation that declares where it goes
-(``OperationMetadata(wraps=Placement(...))``), among its model operations,
-which the runtime resolves with the solver's graph:
-
-.. code-block:: python
-
-    ctx = runtime.initialize()                       # state only
-    builder, model_ops = runtime.execution_graph(ctx=ctx)
-    operations = DAGResolver().resolve(builder, model_ops).operations
-
-Without operation names (``Placement()``) the loop wraps the whole body of the
-top scope: the body of the time loop, or of the innermost wrapping loop placed
-there before. With them (``Placement(operations=("solve_T",))``) the resolver
-picks, in the scope holding them, those operations and (with ``downstream``,
-the default) everything downstream of them over ``depends_on`` / ``before``, and
-moves them into the loop, which takes the place of the last of them; the other
-operations of the scope stay outside, so an operation such as the old-time
-rotation at the start of the step runs once. Loops are placed in the order
-given, outer first; unknown names, operations in more than one scope, or a loop
-that would hold one placed before it raise ``ValueError``.
-
-A coupled boundary condition (``@coupled``) adds itself to its region's
-coupling model, whose coupling op (``CouplingOp``, one per region) is such a
-loop, placed at the top; its loop test exchanges the sides' data with the other regions
-(see :doc:`region-coupling`).
+A model can contribute a loop known only once the case is read (e.g. a
+region's coupling op): a loop operation that declares where it goes,
+``OperationMetadata(wraps=Placement(...))``, resolved with the solver's graph.
+``Placement()`` wraps the whole body of the top scope (the time loop, or the
+innermost loop placed there before). ``Placement(operations=("solve_T",))``
+moves those operations and everything downstream of them over ``depends_on`` /
+``before`` into the loop, which takes the place of the last of them; the other
+operations of the scope stay outside. Loops are placed outer first; unknown
+names, operations in more than one scope, or a loop that would hold one placed
+before it raise ``ValueError``. See :doc:`region-coupling`.
 
 Trade-offs
 ----------

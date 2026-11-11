@@ -9,8 +9,7 @@ the linked reference pages for the full API.
 ``io/``
     Binds config classes to files (``BaseConfig`` + ``@IOStrategy``), writes and
     deep-merges case files, and exposes the frontend-agnostic config-introspection
-    surface (``schema.py``). ``load``/``save`` take an optional ``region``, which
-    reads a multi-region case's ``constant/<region>/...`` (OpenFOAM.org layout).
+    surface (``schema.py``).
 
 ``fields/``
     Boundary-condition types, ``FieldValue`` scalar/vector values, and the
@@ -33,12 +32,10 @@ the linked reference pages for the full API.
     - ``graph/`` — operation-graph sort, resolution, validation, and
       visualization, and the loops that wrap fields (``wrapping``). See
       :mod:`neofoam.framework.graph`.
-    - ``coupling/`` — ``@coupled`` boundary conditions, the ``Exchange`` of a
-      side with its ``CouplingMapping`` (identity, nearest-neighbor), a ``CouplingOp`` per
-      region, the leader's ``CouplingController``, the point-to-point
-      ``CommChannel`` between regions, a thread per region (``run_regions``),
-      and the strategies (constant/Aitken relaxation, relative
-      convergence), each a ``PluginSystem`` family. See :mod:`neofoam.framework.coupling`.
+    - ``coupling/`` — ``@coupled`` boundary conditions, the ``Link`` of two
+      patches, a ``CouplingOp`` per region and node, the ``CommChannel`` between
+      regions and the mapping, acceleration and convergence families. See
+      :mod:`neofoam.framework.coupling`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 
@@ -51,11 +48,10 @@ the linked reference pages for the full API.
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
 
 ``solver/multiRun/``
-    Several solvers, one per region, in one case (OpenFOAM.org ``foamMultiRun``
-    layout): ``system/controlDict.yaml`` lists ``regionSolvers`` and each region
-    reads ``constant/<region>/``, ``0/<region>/``. A launcher: every region runs
-    its own graph and time loop on its own thread; ``system/regionCoupling.yaml``
-    lists the ``exchanges`` between patches, whose data goes through a comm channel.
+    Several solvers, one per region, in one case: ``system/controlDict.yaml``
+    lists ``regionSolvers``, each region reads ``<region>/``, and every region
+    runs on its own thread; ``system/regionCoupling.yaml`` lists the
+    ``exchanges`` and ``couplings``.
 
 ``turbulence/``
     The momentum-transport plugin family: the bundled models (``models/``) and
