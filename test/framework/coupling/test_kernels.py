@@ -26,10 +26,12 @@ from neofoam.framework.coupling import (
     kernels,
 )
 from neofoam.framework.coupling.kernels import nearest_neighbor
+from neofoam.framework.coupling.location import Geometry
 
 
-def _points(coordinates: Any) -> Any:
-    return None if coordinates is None else np.array(coordinates)
+def _points(coordinates: Any) -> Geometry:
+    """The geometry of a port with ``coordinates`` (``None``: without points)."""
+    return Geometry() if coordinates is None else Geometry.of(coordinates, None)
 
 
 def _passes(relaxation: ConstantRelaxation, count: int) -> list[float]:
@@ -167,12 +169,12 @@ def test_nearest_neighbor_never_holds_the_distances_of_all_pairs() -> None:
     assert peak < 64 * 2**20, f"peak {peak / 2**20:.0f} MiB"
 
 
-def test_nearest_neighbor_mapping_needs_the_points_of_both_sides() -> None:
-    with pytest.raises(ValueError, match="the receiving side has none: give its patch coordinates"):
+def test_nearest_neighbor_mapping_needs_the_points_of_both_ports() -> None:
+    with pytest.raises(ValueError, match="the receiving port has none: give its mesh geometry"):
         NearestNeighborMapping().bind(_points([[0.0]]), _points(None))
-    with pytest.raises(ValueError, match="the sending side has none"):
+    with pytest.raises(ValueError, match="the sending port has none"):
         NearestNeighborMapping().bind(_points(None), _points([[0.0]]))
-    with pytest.raises(ValueError, match="neither side has any.*or choose mapping 'identity'"):
+    with pytest.raises(ValueError, match="neither port has any.*or choose mapping 'identity'"):
         NearestNeighborMapping().bind(_points(None), _points(None))
 
 
@@ -196,9 +198,9 @@ def test_identity_mapping_hands_the_data_over_unchanged() -> None:
     assert IdentityMapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0]]))(data) is data
 
 
-def test_identity_mapping_needs_as_many_points_on_both_sides() -> None:
+def test_identity_mapping_needs_as_many_entities_on_both_ports() -> None:
     with pytest.raises(
-        ValueError, match="'identity' needs as many points on both sides: 2 sent, 3"
+        ValueError, match="'identity' needs as many entities on both ports: 2 sent, 3"
     ):
         IdentityMapping().bind(_points([[0.0], [1.0]]), _points([[0.0], [1.0], [2.0]]))
 
@@ -211,12 +213,30 @@ def test_identity_mapping_needs_as_many_points_on_both_sides() -> None:
 def test_relative_convergence_compares_the_change_with_the_limit(
     current: float, converged: bool
 ) -> None:
-    change = SideChange("T", {"T_sink": np.array([100.0])}, {"T_sink": np.array([current])})
+    change = SideChange({"T_sink": np.array([100.0])}, {"T_sink": np.array([current])})
 
-    assert RelativeConvergence(data="T", limit=1e-5)([change]) is converged
+    assert RelativeConvergence(data="T_sink", limit=1e-5)([change]) is converged
 
 
 def test_relative_convergence_ignores_other_fields() -> None:
-    changes: list[Any] = [SideChange("U", {"u": np.array([1.0])}, {"u": np.array([2.0])})]
+    changes: list[Any] = [SideChange({"u": np.array([1.0])}, {"u": np.array([2.0])})]
 
     assert RelativeConvergence(data="T", limit=1e-5)(changes) is True
+
+
+@pytest.mark.parametrize(
+    ("mapping", "sent", "received", "error"),
+    [
+        (NearestNeighborMapping(), "face", "value", "maps face -> face, cell -> cell, not face"),
+        (IdentityMapping(), "cell", "face", "not cell -> face"),
+    ],
+    ids=["nearest-neighbor", "identity"],
+)
+def test_a_mapping_checks_the_entities_it_maps(
+    mapping: Any, sent: str, received: str, error: str
+) -> None:
+    if isinstance(mapping, dict):
+        mapping = cast(Any, CouplingMapping).create(mapping=mapping).mapping
+
+    with pytest.raises(ValueError, match=error):
+        mapping.check(sent, received)

@@ -202,7 +202,7 @@ def test_a_negative_timeout_raises() -> None:
 
 
 def test_the_tags_of_the_coupling_messages() -> None:
-    assert Tag.data("x") == "data:x"
+    assert Tag.data("x", "T_sink,h") == "data:x/T_sink,h"
     assert Tag.side("x") == "side:x"
     assert Tag.node("outer", "decision") == "outer/decision"
     assert Tag.TIME_DT == "time/dt"

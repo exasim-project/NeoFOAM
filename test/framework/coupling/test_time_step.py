@@ -18,7 +18,7 @@ from framework.coupling.regions import comm_channel as comm_channel_of
 from framework.coupling.regions import contexts
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling, Exchange
+from neofoam.framework.coupling import Exchange, coupling
 from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.operations import (
@@ -95,7 +95,7 @@ def _time_loop(
 
 
 def _graph(ctx: Context, builder: StepBuilder, *loops: Operation) -> Operations:
-    time_step = Coupling.of(ctx).time_step(ctx, builder.operations)
+    time_step = coupling(ctx).time_step(ctx, builder.operations)
     assert time_step is not None
     return DAGResolver().resolve(builder, Operations([time_step, *loops])).operations
 
@@ -184,14 +184,14 @@ def test_a_steady_region_has_no_time_step_op() -> None:
     ctx = contexts(["a", "b", "c"], CHAIN)["a"]
 
     assert ctx.time is None
-    assert Coupling.of(ctx).time_step(ctx, _time_loop([1.0], []).operations) is None
+    assert coupling(ctx).time_step(ctx, _time_loop([1.0], []).operations) is None
 
 
 def test_a_region_the_case_does_not_couple_has_no_time_step_op() -> None:
     ctx = contexts(["a", "b", "c"], CHAIN[:1])["c"]
     ctx.time = _Time(1.0)
 
-    assert Coupling.of(ctx).time_step(ctx, _time_loop([1.0], []).operations) is None
+    assert coupling(ctx).time_step(ctx, _time_loop([1.0], []).operations) is None
 
 
 def test_a_transient_coupled_region_without_the_solution_loop_ops_raises() -> None:
@@ -205,7 +205,7 @@ def test_a_transient_coupled_region_without_the_solution_loop_ops_raises() -> No
         match=r"region a steps in time coupled with \['a', 'b', 'c'\], but its graph has no "
         r"\['increment_time'\]",
     ):
-        Coupling.of(ctx).time_step(ctx, builder.operations)
+        coupling(ctx).time_step(ctx, builder.operations)
 
 
 def _coupling_loop(region: str, placement: Placement) -> Operation:
@@ -226,7 +226,7 @@ def test_a_serial_node_holding_the_time_step_raises() -> None:
         match=r"coupling 'coupling' is serial but holds the time step of its regions; make it "
         r"parallel or place it around named operations \(wraps\.a\.operations\)",
     ):
-        Coupling.of(ctx).check_graph(ops)
+        coupling(ctx).check_graph(ops)
 
 
 @pytest.mark.parametrize(
@@ -241,7 +241,7 @@ def test_a_parallel_node_or_one_around_named_operations_may_hold_the_time_step(
     ctx.time = _Time(1.0)
     ops = _graph(ctx, _time_loop([1.0], [], []), _coupling_loop("a", placement))
 
-    Coupling.of(ctx).check_graph(ops)
+    coupling(ctx).check_graph(ops)
 
 
 def test_a_serial_node_around_a_loop_leaves_the_time_step_outside() -> None:
@@ -254,7 +254,7 @@ def test_a_serial_node_around_a_loop_leaves_the_time_step_outside() -> None:
         _coupling_loop("a", Placement(("inner_loop",))),
     )
 
-    Coupling.of(ctx).check_graph(ops)
+    coupling(ctx).check_graph(ops)
     (loop,) = ops.ops
     assert [op.operation_name for op in loop.sub_operations] == [
         "set_time_step",

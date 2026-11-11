@@ -18,6 +18,7 @@ from framework.coupling.regions import (
     RecordingCommChannel,
     Side,
     add_coupled,
+    context,
     contexts,
     couple,
     graph,
@@ -33,13 +34,14 @@ from neofoam.framework.coupling import (
     Array,
     BoundMapping,
     CommChannelClosed,
-    Coupling,
     CouplingMapping,
     CouplingNode,
     CouplingNotConvergedWarning,
     Exchange,
+    FaceData,
     IdentityMapping,
     InProcessCommChannel,
+    coupling,
 )
 from neofoam.framework.coupling.controller import (
     CouplingController,
@@ -53,7 +55,7 @@ from neofoam.framework.types import Placement
 EXCHANGE = Exchange("a-b", (("a", "p"), ("b", "p")), IdentityMapping())
 
 
-class _Data(BaseModel):
+class _Data(FaceData):
     x: Array
 
 
@@ -86,7 +88,7 @@ def _couple(a: _Side, b: _Side, **loop: Any) -> dict[str, CouplingOp]:
     """Couple ``a`` and ``b`` over patch ``p``, run one time step; their coupling ops."""
     regions = contexts(["a", "b"], [EXCHANGE], **loop)
     for side in (a, b):
-        add_coupled(regions[side.name], "p", "x", side.side())
+        add_coupled(regions[side.name], "p", side.side())
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
     return {name: couple(ctx) for name, ctx in regions.items()}
 
@@ -132,12 +134,9 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
     node = CouplingNode("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
     couplings = region_couplings(["a", "b"], [EXCHANGE], InProcessCommChannel(), nodes=[node])
-    regions = {
-        name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
-        for name in ("a", "b")
-    }
+    regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     for side in (a, b):
-        add_coupled(regions[side.name], "p", "x", side.side())
+        add_coupled(regions[side.name], "p", side.side())
 
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
 
@@ -157,17 +156,14 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
         CouplingNode("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
     couplings = region_couplings(["a", "b"], [EXCHANGE], comm_channel, nodes=nodes)
-    regions = {
-        name: Context(fields={}, models={"coupling": Coupling(couplings[name])}, region=name)
-        for name in ("a", "b")
-    }
+    regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     a, b = _Side("a", []), _Side("b", [])
     for side in (a, b):
-        add_coupled(regions[side.name], "p", "x", side.side())
+        add_coupled(regions[side.name], "p", side.side())
 
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
 
-    assert comm_channel.tags.count("data:a-b") == sent
+    assert comm_channel.tags.count("data:a-b/x") == sent
 
 
 @pytest.mark.parametrize(
@@ -263,7 +259,7 @@ def test_coupling_op_reports_its_outcome_and_each_exchange_to_the_execution_obse
 
 def test_coupling_op_wraps_its_region_s_solving_op() -> None:
     regions = contexts(["a", "b"], [EXCHANGE])
-    add_coupled(regions["a"], "p", "x", _Side("a", []).side())
+    add_coupled(regions["a"], "p", _Side("a", []).side())
 
     (loop,) = graph(regions["a"], solve("x", lambda ctx: None)).ops
 
@@ -271,41 +267,40 @@ def test_coupling_op_wraps_its_region_s_solving_op() -> None:
     assert op is couple(regions["a"]) and isinstance(op, CouplingOp)
     assert (loop.operation_name, loop.metadata.wraps) == ("a.coupling", Placement())
     assert [sub.operation_name for sub in loop.sub_operations] == ["solve_x"]
-    (side,) = op.sides
-    assert (side.end, side.field, op.partner(side), op.is_leader) == (
+    (port,) = op.ports
+    assert (port.end, port.names, op.partner(port), op.is_leader) == (
         ("a", "p"),
-        "x",
+        {"x"},
         "b.p",
         False,
     )
-    assert op.exchange_of(side) is EXCHANGE
+    assert op.exchange_of(port) is EXCHANGE
 
 
-def test_a_coupled_region_without_a_side_raises() -> None:
+def test_a_coupled_region_without_a_port_raises() -> None:
     regions = contexts(["a", "b"], [EXCHANGE])
 
-    with pytest.raises(ValueError, match="exchange 'a-b' connects a.p, which has no coupled side"):
-        Coupling.of(regions["a"]).operations()
+    with pytest.raises(ValueError, match="exchange 'a-b' connects a.p, which has no coupled inst"):
+        coupling(regions["a"]).operations()
 
 
-def test_two_sides_on_one_patch_raise() -> None:
+def test_two_instances_on_one_patch_send_a_data_field_once() -> None:
     regions = contexts(["a", "b"], [EXCHANGE])
-    add_coupled(regions["a"], "p", "x", _Side("a", []).side())
-    add_coupled(regions["a"], "p", "y", _Side("a", []).side())
+    add_coupled(regions["a"], "p", _Side("a", []).side())
 
-    with pytest.raises(ValueError, match=r"two coupled sides on patch a\.p"):
-        Coupling.of(regions["a"]).operations()
+    with pytest.raises(ValueError, match=r"two @coupled.sends of x on a\.p"):
+        add_coupled(regions["a"], "p", _Side("a", []).side())
 
 
-def test_an_exchange_without_a_side_raises() -> None:
+def test_an_exchange_without_a_port_raises() -> None:
     exchanges = [EXCHANGE, Exchange("a-b-2", (("a", "q"), ("b", "q")), IdentityMapping())]
     regions = contexts(["a", "b"], exchanges)
-    add_coupled(regions["a"], "p", "x", _Side("a", []).side())
+    add_coupled(regions["a"], "p", _Side("a", []).side())
 
     with pytest.raises(
-        ValueError, match="exchange 'a-b-2' connects a.q, which has no coupled side"
+        ValueError, match="exchange 'a-b-2' connects a.q, which has no coupled instance"
     ):
-        Coupling.of(regions["a"]).operations()
+        coupling(regions["a"]).operations()
 
 
 def test_coupling_op_raises_when_send_returns_something_else() -> None:
@@ -313,7 +308,7 @@ def test_coupling_op_raises_when_send_returns_something_else() -> None:
     a.send = lambda: {"x": np.zeros(1)}  # type: ignore[assignment, return-value]
 
     with pytest.raises(
-        TypeError, match="side a.p declares it sends _Data, but its send\\(\\) returned dict"
+        TypeError, match="a.p declares it sends _Data, but its @coupled.sends returned dict"
     ):
         _couple(a, b)
 
@@ -362,7 +357,7 @@ def test_coupling_op_maps_what_the_partner_sent_onto_the_side_s_points() -> None
     mapping = _Reversed()
     regions = contexts(["a", "b"], [Exchange("a-b", (("a", "p"), ("b", "p")), mapping)])
     for ctx in regions.values():
-        add_coupled(ctx, "p", "x", Side(_Data, _Data, lambda: _Data(x=[1.0, 2.0]), received.append))
+        add_coupled(ctx, "p", Side(_Data, _Data, lambda: _Data(x=[1.0, 2.0]), received.append))
 
     run({name: (ctx, [solve("x", lambda ctx: None)]) for name, ctx in regions.items()})
 
@@ -380,7 +375,7 @@ def test_coupling_op_keeps_a_copy_of_the_data_a_side_sends() -> None:
     regions = contexts(["a", "b"], [EXCHANGE], max_iterations=10)
     for ctx in regions.values():
         ctx.fields["x"] = np.zeros(1)
-        add_coupled(ctx, "p", "x", Side(_Data, _Data, partial(_live, ctx), lambda data: None))
+        add_coupled(ctx, "p", Side(_Data, _Data, partial(_live, ctx), lambda data: None))
 
     def step(ctx: Context) -> None:
         ctx.fields["x"][0] = min(ctx.fields["x"][0] + 1.0, 3.0)
@@ -407,7 +402,7 @@ def test_a_side_sending_data_that_is_not_finite_raises() -> None:
 
     with pytest.raises(
         FloatingPointError,
-        match=r"coupling 'coupling': the x of region a patch p is not finite after pass 2$",
+        match=r"coupling 'coupling': the x of a.p is not finite after pass 2$",
     ):
         _couple(a, b, convergence=[never], max_iterations=10)
 
@@ -422,7 +417,6 @@ def test_a_relative_change_that_is_not_finite_raises() -> None:
 
     with pytest.raises(
         FloatingPointError,
-        match=r"coupling b.coupling: the relative change of the x of region b patch p is not "
-        r"finite in pass 1",
+        match=r"coupling b.coupling: the relative change of the x of b.p is not finite in pass 1",
     ):
         _couple(a, b, convergence=[never], max_iterations=10, acceleration={"a-b": acceleration})

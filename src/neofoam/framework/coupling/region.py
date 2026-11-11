@@ -27,10 +27,11 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class Exchange:
-    """One exchange of a case: its unique name, its two ends ``(region, patch)``, its mapping.
+    """One exchange of a case: its unique name, its two ends ``(region, port)``, its mapping.
 
-    Nearest-neighbor by default, which needs the coordinates of both patches;
-    :class:`~neofoam.framework.coupling.IdentityMapping` for patches sharing their points.
+    The exchange pairs what one port sends with what the other receives, by data
+    model. Nearest-neighbor by default, which needs the points of both ports;
+    :class:`~neofoam.framework.coupling.IdentityMapping` for ports sharing their entities.
     """
 
     name: str
@@ -98,8 +99,8 @@ class RegionCoupling:
         return self.region == self.leader
 
     @property
-    def patches(self) -> tuple[str, ...]:
-        """The patches of this region that an exchange connects."""
+    def ports(self) -> tuple[str, ...]:
+        """The ports of this region that an exchange connects."""
         return tuple(
             dict(exchange.ends)[self.region]
             for exchange in self.exchanges
@@ -110,13 +111,13 @@ class RegionCoupling:
         """The exchanges of ``node`` in this region's group."""
         return tuple(exchange for exchange in self.exchanges if exchange.name in node.exchanges)
 
-    def node_of(self, patch: str) -> CouplingNode:
-        """The node whose exchange connects ``patch`` of this region."""
+    def node_of(self, port: str) -> CouplingNode:
+        """The node whose exchange connects ``port`` of this region."""
         for node in self.nodes:
             for exchange in self.node_exchanges(node):
-                if dict(exchange.ends).get(self.region) == patch:
+                if dict(exchange.ends).get(self.region) == port:
                     return node
-        raise KeyError(f"no coupling node has an exchange on {self.region}.{patch}")
+        raise KeyError(f"no coupling node has an exchange on {self.region}.{port}")
 
     def node_group(self, node: CouplingNode) -> tuple[str, ...]:
         """The regions ``node`` connects with this region, itself included, in stepping order."""
@@ -184,7 +185,7 @@ def check_couplings(
 
 def _check_exchanges(regions: Sequence[str], exchanges: Sequence[Exchange]) -> None:
     named = sorted(
-        {region for exchange in exchanges for region, _patch in exchange.ends} - set(regions)
+        {region for exchange in exchanges for region, _port in exchange.ends} - set(regions)
     )
     if named:
         raise ValueError(
@@ -199,12 +200,12 @@ def _check_exchanges(regions: Sequence[str], exchanges: Sequence[Exchange]) -> N
             )
         first, second = exchange.ends
         if first[0] == second[0]:
-            raise ValueError(f"exchange '{exchange.name}' joins two patches of region {first[0]}")
+            raise ValueError(f"exchange '{exchange.name}' joins two ports of region {first[0]}")
         for end in exchange.ends:
             if end in owner:
                 raise ValueError(
                     f"{end[0]}.{end[1]} is in the exchanges '{owner[end]}' and "
-                    f"'{exchange.name}'; a coupled patch is in one exchange"
+                    f"'{exchange.name}'; a coupled port is in one exchange"
                 )
             owner[end] = exchange.name
 
@@ -264,7 +265,7 @@ def _group(region: str, regions: Sequence[str], exchanges: Sequence[Exchange]) -
     while todo:
         current = todo.pop()
         for exchange in exchanges:
-            ends = {name for name, _patch in exchange.ends}
+            ends = {name for name, _port in exchange.ends}
             if current in ends:
                 todo += sorted(ends - group)
                 group |= ends

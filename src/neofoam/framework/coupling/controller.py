@@ -24,7 +24,7 @@ from .region import CouplingNode
 
 
 def unchanged(changes: list[SideChange]) -> bool:
-    """Converged once no side's data changes by more than round-off between two passes."""
+    """Converged once no stream's data changes by more than round-off between two passes."""
     return all(
         np.allclose(change.current[name], change.previous[name], rtol=1e-12, atol=0.0)
         for change in changes
@@ -36,8 +36,8 @@ def unchanged(changes: list[SideChange]) -> bool:
 class CouplingOutcome:
     """How the coupling loop of one time step ended.
 
-    ``passes`` includes the final one; ``residuals`` is each field's relative change
-    in the last pass (``inf`` where none measured it).
+    ``passes`` includes the final one; ``residuals`` is each data field's relative
+    change in the last pass (``inf`` where none measured it).
     """
 
     passes: int
@@ -62,7 +62,7 @@ def _stacklevel() -> int:
 
 
 def relative_changes(changes: list[SideChange]) -> dict[str, float]:
-    """Each field's largest ``|current - previous| / |current|`` over its sides and arrays.
+    """Each data field's largest ``|current - previous| / |current|`` over its streams.
 
     The absolute change where the current data is zero; a NaN stays NaN.
     """
@@ -73,72 +73,84 @@ def relative_changes(changes: list[SideChange]) -> dict[str, float]:
             delta = float(np.linalg.norm(current - np.asarray(change.previous[name], dtype=float)))
             norm = float(np.linalg.norm(current))
             value = delta / norm if norm > 0 else delta
-            residuals[change.field] = float(np.maximum(residuals.get(change.field, value), value))
+            residuals[name] = float(np.maximum(residuals.get(name, value), value))
     return residuals
 
 
+# (region, port, data key) of what a port sends
+StreamId = tuple[str, str, str]
+
+
 @dataclass(frozen=True)
-class GroupSide:
-    """A side of the leader's node, as its region told the leader at startup."""
+class GroupStream:
+    """What a port of the leader's node sends, as its region told the leader at startup."""
 
     region: str
-    patch: str
-    field: str
+    port: str
+    key: str
+    names: tuple[str, ...]
     partner: End
     exchange: str
 
     @property
-    def end(self) -> End:
-        """The side's end of its exchange."""
-        return (self.region, self.patch)
+    def id(self) -> StreamId:
+        """``(region, port, key)``."""
+        return (self.region, self.port, self.key)
 
 
 class CouplingController:
     """The leader's part of a coupling node: after each pass, whether another runs and which.
 
-    Final pass as :class:`CouplingNode` describes; warns when ``max_iterations`` ends
-    the loop unconverged. A side receives fresh data when the node is serial and
-    its partner steps earlier, else the carried data, relaxed. Not thread safe.
+    Final pass as :class:`CouplingNode` describes; warns when ``max_iterations``
+    ends the loop unconverged. A port
+    receives a stream fresh when the node is serial and its sender steps earlier,
+    else the carried data, relaxed. Not thread safe.
     """
 
-    def __init__(self, sides: Sequence[GroupSide], label: str, node: CouplingNode) -> None:
+    def __init__(
+        self,
+        streams: Sequence[GroupStream],
+        label: str,
+        node: CouplingNode,
+        group: Sequence[str],
+    ) -> None:
         self.label = label
         self.parallel = parallel = node.parallel
-        self._sides = {side.end: side for side in sides}
+        self._streams = {stream.id: stream for stream in streams}
         self._convergence = tuple(node.convergence)
         self._max_iterations = node.max_iterations
         self._acceleration = dict(node.acceleration)
-        self._check_convergence()
-        rank: dict[str, int] = {}
-        for side in self._sides.values():
-            rank.setdefault(side.region, len(rank))
+        rank = {region: index for index, region in enumerate(group)}
+        # whether a stream's receiver takes what it sent in this pass
         self._fresh = {
-            end: not parallel and rank[side.partner[0]] < rank[side.region]
-            for end, side in self._sides.items()
+            stream_id: not parallel and rank[stream.region] < rank[stream.partner[0]]
+            for stream_id, stream in self._streams.items()
         }
         self._outcomes: list[CouplingOutcome] = []
         # nothing counts as converged before a pass measured it
-        self._unmeasured = {side.field: math.inf for side in self._sides.values()}
+        self._unmeasured = {
+            name: math.inf for stream in self._streams.values() for name in stream.names
+        }
+        self._check_convergence()
         self._residuals = dict(self._unmeasured)
         self._final = False
         self._converged_before_final = False
-        self._carried: dict[End, Data] = {}
+        self._carried: dict[StreamId, Data] = {}
 
     def _check_convergence(self) -> None:
-        fields = {side.field for side in self._sides.values()}
+        names = set(self._unmeasured)
         for measure in self._convergence:
             data = measure.data
-            if data is not None and data not in fields:
+            if data is not None and data not in names:
                 raise ValueError(
                     f"coupling {self.label}: convergence {type(measure).__name__} on {data}, "
-                    f"which no side of the node sends (its sides couple "
-                    f"{sorted(fields)})"
+                    f"which no port of the node sends (they send {sorted(names)})"
                 )
 
     @property
-    def sides(self) -> dict[End, GroupSide]:
-        """The node's sides by end, in stepping order."""
-        return dict(self._sides)
+    def streams(self) -> dict[StreamId, GroupStream]:
+        """What the node's ports send, by stream, in stepping order."""
+        return dict(self._streams)
 
     @property
     def final(self) -> bool:
@@ -155,19 +167,21 @@ class CouplingController:
         """Each field's relative change in the last pass; ``inf`` before one measured it."""
         return dict(self._residuals)
 
-    def fresh(self, end: End) -> bool:
-        """Whether the side at ``end`` receives what its partner sent in this pass."""
-        return self._fresh[end]
+    def fresh(self, stream: StreamId) -> bool:
+        """Whether the receiver of ``stream`` takes what it sent in this pass."""
+        return self._fresh[stream]
 
-    def decide(self, current: dict[End, Data], iteration: int) -> Optional[dict[End, Data]]:
-        """Each side's carried data for the next pass, by end; ``None`` at the end."""
-        current = {end: current[end] for end in self._sides}
+    def decide(
+        self, current: dict[StreamId, Data], iteration: int
+    ) -> Optional[dict[StreamId, Data]]:
+        """Each stream's carried data for the next pass; ``None`` at the end."""
+        current = {stream_id: current[stream_id] for stream_id in self._streams}
         if iteration == 0:
             self._carried = current
             return self._start_pass(iteration + 1, final=self._max_iterations <= 1)
         changes = {
-            end: SideChange(side.field, self._carried[end], current[end])
-            for end, side in self._sides.items()
+            stream_id: SideChange(self._carried[stream_id], current[stream_id])
+            for stream_id in self._streams
         }
         self._residuals = {**self._unmeasured, **self._relative_changes(changes, iteration)}
         if self._final:
@@ -180,20 +194,22 @@ class CouplingController:
             return self._start_pass(iteration + 1, final=True)
         return self._start_pass(iteration + 1, final=iteration + 1 >= self._max_iterations)
 
-    def _relative_changes(self, changes: dict[End, SideChange], iteration: int) -> dict[str, float]:
+    def _relative_changes(
+        self, changes: dict[StreamId, SideChange], iteration: int
+    ) -> dict[str, float]:
         """:func:`relative_changes`; raises ``FloatingPointError`` for a non-finite one."""
         residuals: dict[str, float] = {}
-        for (region, patch), change in changes.items():
+        for (region, port, _key), change in changes.items():
             for name, value in relative_changes([change]).items():
                 if not math.isfinite(value):
                     raise FloatingPointError(
-                        f"coupling {self.label}: the relative change of the {name} of region "
-                        f"{region} patch {patch} is not finite in pass {iteration}"
+                        f"coupling {self.label}: the relative change of the {name} of "
+                        f"{region}.{port} is not finite in pass {iteration}"
                     )
                 residuals[name] = float(np.maximum(residuals.get(name, value), value))
         return residuals
 
-    def _converged(self, changes: dict[End, SideChange]) -> bool:
+    def _converged(self, changes: dict[StreamId, SideChange]) -> bool:
         """Whether every measure of the convergence holds (none: :func:`unchanged`)."""
         listed = list(changes.values())
         if not self._convergence:
@@ -219,19 +235,19 @@ class CouplingController:
                 stacklevel=_stacklevel(),
             )
 
-    def _start_pass(self, number: int, final: bool) -> dict[End, Data]:
-        """Start pass ``number`` (from 1): what each side carries, relaxed."""
+    def _start_pass(self, number: int, final: bool) -> dict[StreamId, Data]:
+        """Start pass ``number`` (from 1): what each stream carries, relaxed."""
         if number == 1:
             self._residuals = dict(self._unmeasured)
         self._final = final
-        for exchange, acceleration in self._acceleration.items():
+        for exchange_name, acceleration in self._acceleration.items():
             carried = [
-                end
-                for end, side in self._sides.items()
-                if side.exchange == exchange and not self._fresh[side.partner]
+                stream_id
+                for stream_id, stream in self._streams.items()
+                if stream.exchange == exchange_name and not self._fresh[stream_id]
             ]
             if not carried:
                 continue
-            relaxed = acceleration([self._carried[end] for end in carried], number)
+            relaxed = acceleration([self._carried[stream_id] for stream_id in carried], number)
             self._carried.update(zip(carried, relaxed))
         return dict(self._carried)

@@ -5,12 +5,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from functools import partial
+from dataclasses import dataclass, field
+from functools import cache, partial
 from typing import Any, Callable, Optional, Sequence
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
@@ -20,9 +20,13 @@ from neofoam.framework.coupling import (
     CouplingConvergence,
     CouplingNode,
     Exchange,
+    FaceData,
     InProcessCommChannel,
+    Patch,
+    RegionCoupling,
     SideChange,
     coupled,
+    coupling,
 )
 from neofoam.framework.coupling.loop import CouplingOp
 from neofoam.framework.coupling.region import region_couplings, run_regions
@@ -64,6 +68,28 @@ class _Never(CouplingConvergence):
 never = _Never()
 
 
+@dataclass
+class FakeGeometry:
+    """A region's mesh geometry for the tests: face centres and areas by patch, the cells'."""
+
+    centres: dict[str, Any] = field(default_factory=dict)
+    areas: dict[str, Any] = field(default_factory=dict)
+    cells: Any = None
+    volumes: Any = None
+
+    def face_centres(self, patch: str) -> Any:
+        return self.centres.get(patch)
+
+    def face_areas(self, patch: str) -> Any:
+        return self.areas.get(patch)
+
+    def cell_centres(self) -> Any:
+        return self.cells
+
+    def cell_volumes(self) -> Any:
+        return self.volumes
+
+
 def contexts(
     regions: list[str],
     exchanges: list[Exchange],
@@ -77,45 +103,56 @@ def contexts(
     couplings = region_couplings(
         regions, exchanges, comm_channel or InProcessCommChannel(), nodes=nodes
     )
-    return {
-        region: Context(
-            fields={},
-            models={"coupling": Coupling(couplings.get(region))},
-            region=region,
-        )
-        for region in regions
-    }
+    return {region: context(region, couplings.get(region)) for region in regions}
+
+
+def context(region: str, region_coupling: Optional[RegionCoupling]) -> Context:
+    """The context of ``region``, with its coupling model on a fake geometry."""
+    return Context(
+        fields={},
+        models={"coupling": Coupling(region_coupling, FakeGeometry())},
+        region=region,
+    )
 
 
 @dataclass(frozen=True)
 class Side:
-    """What a ``@coupled`` boundary condition declares: its models, methods and points."""
+    """What a ``@coupled`` instance declares: its models (``None``: it has none) and methods.
 
-    sends: type[BaseModel]
-    receives: type[BaseModel]
+    ``coordinates``: the face centres of its patch in the fake geometry.
+    """
+
+    sends: Optional[type[BaseModel]]
+    receives: Optional[type[BaseModel]]
     send: Callable[[], BaseModel]
     receive: Callable[[Any], None]
     coordinates: Any = None
 
 
-class Value(BaseModel):
-    v: Array
+@cache
+def value_model(data: str) -> type[FaceData]:
+    """A FaceData model of the one Array field ``data``."""
+    model: type[FaceData] = create_model(  # type: ignore[call-overload]
+        f"Value_{data}", __base__=FaceData, **{data: (Array, ...)}
+    )
+    return model
 
 
-def fixed(value: float = 0.0, log: Optional[list[float]] = None) -> Side:
-    """A side of one point that sends ``value`` and appends what it receives to ``log``."""
+def fixed(value: float = 0.0, log: Optional[list[float]] = None, data: str = "v") -> Side:
+    """A side of one face that sends ``value`` as ``data`` and logs what it receives."""
     received = [] if log is None else log
+    model = value_model(data)
     return Side(
-        Value,
-        Value,
-        lambda: Value(v=[value]),
-        lambda d: received.append(float(d.v[0])),
+        model,
+        model,
+        lambda: model.model_validate({data: [value]}),
+        lambda d: received.append(float(getattr(d, data)[0])),
         np.zeros((1, 1)),
     )
 
 
-def add_coupled(ctx: Context, patch: str, field: str, side: Side) -> None:
-    """Add ``side`` on ``patch``, coupling ``field``, as a ``@coupled`` boundary condition does."""
+def add_coupled(ctx: Context, patch: str, side: Side) -> None:
+    """Bind ``side`` to ``Patch(patch)``, as a solver binds its ``@coupled`` instance."""
 
     def send(self: Any) -> Any:
         return side.send()
@@ -123,28 +160,22 @@ def add_coupled(ctx: Context, patch: str, field: str, side: Side) -> None:
     def receive(self: Any, data: Any) -> None:
         side.receive(data)
 
-    def points(self: Any) -> Any:
-        return side.coordinates
-
     send.__annotations__ = {"return": side.sends}
     receive.__annotations__ = {"data": side.receives, "return": None}
-    cls = type(
-        "Side",
-        (),
-        {
-            "send": coupled.sends(send),
-            "receive": coupled.receives(receive),
-            "points": coupled.coordinates(points),
-        },
-    )
-    instance = coupled(cls)()
-    instance.patch, instance.field = patch, field
-    Coupling.of(ctx).add(instance)
+    methods: dict[str, Any] = {}
+    if side.sends is not None:
+        methods["send"] = coupled.sends(send)
+    if side.receives is not None:
+        methods["receive"] = coupled.receives(receive)
+    instance = coupled(type("Side", (), methods))()
+    if side.coordinates is not None:
+        coupling(ctx).geometry.centres[patch] = side.coordinates  # type: ignore[attr-defined]
+    coupling(ctx).add(Patch(patch), instance)
 
 
 def couple(ctx: Context, index: int = 0) -> CouplingOp:
     """The region's coupling op of its ``index`` th node."""
-    op = Coupling.of(ctx).operations()[index].func
+    op = coupling(ctx).operations()[index].func
     assert isinstance(op, CouplingOp)
     return op
 
@@ -168,7 +199,7 @@ def solve(field: str, func: Callable[[Context], None]) -> Operation:
 
 def graph(ctx: Context, *ops: Operation) -> Operations:
     """The resolved graph of the region ``ctx``: ``ops`` and its coupling ops."""
-    couple_ops = Coupling.of(ctx).operations().ops
+    couple_ops = coupling(ctx).operations().ops
     return DAGResolver().resolve(StepBuilder(list(ops)), Operations(couple_ops)).operations
 
 
@@ -182,6 +213,6 @@ def run(regions: dict[str, tuple[Context, list[Operation]]]) -> None:
 
 
 def comm_channel(ctx: Context) -> CommChannel:
-    coupling = Coupling.of(ctx).coupling
-    assert coupling is not None
-    return coupling.comm_channel
+    region = coupling(ctx).coupling
+    assert region is not None
+    return region.comm_channel
