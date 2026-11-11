@@ -1,12 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""heatConductionNeoN solver package.
-
-``laplacianFoam`` on NeoN: heat conduction ``∂T/∂t = ∇·(DT ∇T)``, with the
-coupled patches ``coupledTemperature`` / ``coupledHeatFlux`` of a multi-region
-case (``multiRun``).
-"""
+"""heatConductionNeoN: heat conduction on NeoN, with coupled regions in ``multiRun``."""
 
 from .heatConductionNeoN import heatConductionNeoN, run
 

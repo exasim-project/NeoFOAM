@@ -1,12 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Case configs of heatConductionNeoN: an OpenFOAM case, read through pybFoam.
-
-The mesh (``constant/polyMesh``), ``0/T``, ``system/fvSchemes`` and
-``system/fvSolution`` are read by the NeoN runtime; ``system/controlDict`` and
-``constant/thermalProperties`` by these configs.
-"""
+"""The case configs of heatConductionNeoN; the NeoN runtime reads the rest of the case."""
 
 from pydantic import Field
 
@@ -24,9 +19,6 @@ class ControlDictConfig(TimeControlConfig):
 @IOStrategy(OF("constant/thermalProperties"))
 class ThermalPropertiesConfig(BaseConfig):
     """``constant/thermalProperties`` — constant solid properties (SI units).
-
-    The diffusivity is ``alpha = k / (rho cp)``; the heat flux a coupled patch
-    exchanges is ``k dT/dn``.
 
     Example::
 
