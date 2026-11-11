@@ -24,6 +24,7 @@ from neofoam.framework.coupling import (
     comm_channel_timeout,
     participant_exchanges,
 )
+from neofoam.solver.regions import ControlDictConfig
 
 CASES = Path(__file__).parent / "cases"
 # the cases multiRun's tests share
@@ -325,3 +326,22 @@ def test_the_comm_channel_timeout_is_the_file_s(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any, timeout: Any
 ) -> None:
     assert _timeout(tmp_path, monkeypatch, seconds) == timeout
+
+
+def test_region_solvers_take_a_plain_name_as_one_process() -> None:
+    config = ControlDictConfig.load(case_dir=MULTI_RUN / "region_solvers" / "entries")
+
+    assert config.solvers() == {"left": "a", "right": "b"}
+    assert config.processes() == {"left": 1, "right": 3}
+
+
+def test_region_solvers_default_a_region_to_one_process() -> None:
+    config = ControlDictConfig.load(case_dir=MULTI_RUN / "region_solvers" / "default_processes")
+
+    assert config.processes() == {"left": 1}
+
+
+@pytest.mark.parametrize("name", ["zero_processes", "unknown_entry", "no_solver"])
+def test_region_solvers_reject_an_invalid_entry(name: str) -> None:
+    with pytest.raises(ValidationError):
+        ControlDictConfig.load(case_dir=MULTI_RUN / "region_solvers" / name)

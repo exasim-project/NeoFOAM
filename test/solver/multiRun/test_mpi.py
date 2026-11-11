@@ -1,23 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""What multiRun checks before it runs under MPI, without MPI.
+"""The layout of the regions on MPI ranks and the checks before a run, without MPI.
 
-``regionSolvers`` gives each region its ``processes``; :class:`RegionLayout`
-puts the regions on the ranks of MPI_COMM_WORLD in blocks, in stepping order,
-as OpenFOAM's ``-world`` numbers them. The checks of
-:mod:`neofoam.solver.multiRun.mpi` refuse a case that cannot run on the
-processes it was started on, each with a message that says what to change.
-``test_multiRun_mpi.py`` runs them under ``mpirun``.
+``test_regions_on_processes.py`` runs them under ``mpirun``.
 """
 
-import importlib
 import sys
 from pathlib import Path
 
 import pytest
-import yaml
-from pydantic import ValidationError
 
 from neofoam.framework.solver import Solver
 from neofoam.solver.heatConductionNeoN import heatConductionNeoN
@@ -33,43 +25,6 @@ from neofoam.solver.multiRun.mpi import (
 )
 from neofoam.solver.neon_runtime import neon_takes_a_communicator
 from neofoam.solver.regions import ControlDictConfig
-
-CASES = Path(__file__).parent / "cases"
-MULTI_RUN = importlib.import_module("neofoam.solver.multiRun.multiRun")
-
-
-def _config(tmp_path: Path, regions: dict) -> ControlDictConfig:
-    (tmp_path / "system").mkdir(exist_ok=True)
-    (tmp_path / "system" / "controlDict.yaml").write_text(
-        yaml.safe_dump({"endTime": 1.0, "deltaT": 1.0, "regionSolvers": regions})
-    )
-    return ControlDictConfig.load(case_dir=tmp_path)
-
-
-def test_region_solvers_take_a_plain_name_as_one_process(tmp_path: Path) -> None:
-    config = _config(tmp_path, {"left": "a", "right": {"solver": "b", "processes": 3}})
-
-    assert config.solvers() == {"left": "a", "right": "b"}
-    assert config.processes() == {"left": 1, "right": 3}
-
-
-def test_region_solvers_default_a_region_to_one_process(tmp_path: Path) -> None:
-    config = _config(tmp_path, {"left": {"solver": "a"}})
-
-    assert config.processes() == {"left": 1}
-
-
-@pytest.mark.parametrize(
-    "entry",
-    [
-        {"solver": "a", "processes": 0},
-        {"solver": "a", "processes": 2, "threads": 1},
-        {"processes": 2},
-    ],
-)
-def test_region_solvers_reject_an_invalid_entry(tmp_path: Path, entry: dict) -> None:
-    with pytest.raises(ValidationError):
-        _config(tmp_path, {"left": entry})
 
 
 def test_region_layout_puts_the_regions_on_blocks_of_ranks_in_stepping_order() -> None:
@@ -198,22 +153,3 @@ def test_import_mpi_names_the_extra_without_mpi4py(monkeypatch: pytest.MonkeyPat
 
     with pytest.raises(ImportError, match=r"2 MPI processes, but mpi4py .* neofoam\[mpi\]"):
         import_mpi()
-
-
-def test_run_takes_the_mpi_path_under_mpirun(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    taken: list[str] = []
-    _config(tmp_path, {"left": "x"})
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(MULTI_RUN, "run_mpi", lambda config: taken.append("mpi") or {})
-    monkeypatch.setattr(MULTI_RUN, "run_threads", lambda config: taken.append("threads") or {})
-    monkeypatch.delenv("PMI_SIZE", raising=False)
-    monkeypatch.delenv("MV2_COMM_WORLD_SIZE", raising=False)
-
-    monkeypatch.setenv("OMPI_COMM_WORLD_SIZE", "1")
-    MULTI_RUN.run()
-    monkeypatch.setenv("OMPI_COMM_WORLD_SIZE", "2")
-    MULTI_RUN.run()
-
-    assert taken == ["threads", "mpi"]

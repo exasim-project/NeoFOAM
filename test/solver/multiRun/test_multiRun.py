@@ -110,3 +110,21 @@ def test_run_hands_the_comm_channel_timeout_to_the_comm_channel(
         MULTI_RUN.run()
 
     assert timeouts == [3.0]
+
+
+@pytest.mark.parametrize(("size", "path"), [("1", "threads"), ("2", "mpi")])
+def test_run_takes_the_mpi_path_under_mpirun(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, size: str, path: str
+) -> None:
+    taken: list[str] = []
+    shutil.copytree(CASES / "region_solvers" / "entries", tmp_path / "case")
+    monkeypatch.chdir(tmp_path / "case")
+    monkeypatch.setattr(MULTI_RUN, "run_mpi", lambda config: taken.append("mpi") or {})
+    monkeypatch.setattr(MULTI_RUN, "run_threads", lambda config: taken.append("threads") or {})
+    for variable in ("PMI_SIZE", "MV2_COMM_WORLD_SIZE"):
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setenv("OMPI_COMM_WORLD_SIZE", size)
+
+    MULTI_RUN.run()
+
+    assert taken == [path]
