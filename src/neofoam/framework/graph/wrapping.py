@@ -28,17 +28,7 @@ says which part:
         write                               update_rho
                                         write
 
-  A named loop inside the outermost one (e.g. PIMPLE's ``inner_loop``) is held
-  whole::
-
-    time_loop                       time_loop
-        set_time_step                   set_time_step
-        increment_time                  increment_time
-        inner_loop   ("inner_loop",)    couple
-            solve_U  -------------->        inner_loop
-            solve_p                             solve_U
-        write                                   solve_p
-                                            write
+  A named loop inside the outermost one (e.g. PIMPLE's ``inner_loop``) is held whole.
 
 Loops are placed in the order given, outer first; one that would have to hold a
 loop placed before it raises. An operation marked ``first`` runs only in the first
@@ -268,7 +258,6 @@ def _scope(ops: list[Operation], path: Path) -> list[Operation]:
 def _in_scope(
     ops: list[Operation], path: Path, change: Callable[[list[Operation]], list[Operation]]
 ) -> list[Operation]:
-    """``ops`` with the scope at ``path`` changed by ``change``."""
     if not path:
         return change(ops)
     index, rest = path[0], path[1:]

@@ -22,9 +22,8 @@ class FieldUpdates(dict[str, Any]):
 class LoopEntry(NamedTuple):
     """A running loop, an entry of :attr:`Context.loops`.
 
-    ``iteration`` counts its passes from 0; ``wrapping`` is whether it is a
-    wrapping loop (``OperationMetadata.wraps``); ``final`` is whether its test
-    marked the pass as the last one (:meth:`Context.mark_final`).
+    ``iteration`` counts passes from 0; ``final`` is set by the loop's test
+    (:meth:`Context.mark_final`).
     """
 
     name: Optional[str]
@@ -58,8 +57,7 @@ class Context(BaseModel):
     write_fields: set[str] = Field(default_factory=set)
     # the loops running now, outermost first
     loops: list[LoopEntry] = Field(default_factory=list)
-    # ``final`` operations to run in every pass of their wrapping loops, e.g. to
-    # watch them while debugging
+    # ``final`` operations to run in every pass too, e.g. to watch them while debugging
     run_every_pass: set[str] = Field(default_factory=set)
 
     def mark_final(self, final: bool = True) -> None:

@@ -209,9 +209,8 @@ class SolverSpec:
     ) -> Callable[..., Any]:
         """Decorator to register a solver operation.
 
-        ``first=True`` runs it only in the first pass of the wrapping loops around
-        it (``OperationMetadata.first``), ``final=True`` only in their final pass
-        (``OperationMetadata.final``).
+        ``first=True`` (``final=True``) runs it only in the first (final) pass of the
+        wrapping loops around it.
         """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:

@@ -663,11 +663,7 @@ def _time_step_op() -> Operation:
 def test_resolve_model_op_before_a_builder_op_keeps_the_loop_after_it(
     with_tail: bool, expected: list[str]
 ) -> None:
-    """A model op placed ahead of an op stepped before a loop does not pull the loop ahead.
-
-    The loop stays after every op stepped before it (increment_time): the
-    coupling's time-step op changes the order only by its own insertion.
-    """
+    """A model op sorted before increment_time does not pull the loop ahead of it."""
     builder = _build_pimple_like(with_tail)
     uncoupled = DAGResolver().resolve(builder, Operations())
     coupled = DAGResolver().resolve(builder, Operations([_time_step_op()]))
