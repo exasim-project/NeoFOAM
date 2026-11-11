@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import pytest
-from framework.coupling.regions import contexts
+from framework.coupling.regions import TIMEOUT, contexts
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
@@ -24,13 +24,9 @@ from neofoam.framework.types import Placement
 
 X = Link("x", (("a", "p"), ("b", "p")))
 Y = Link("y", (("a", "q"), ("b", "q")))
-# A receive that should raise at once times out after this instead.
-TIMEOUT = 30.0
 
 
 def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:
-    # a serial outer pass of b waits for a's whole pass, which waits in its inner
-    # node for b
     nodes = [CouplingNode("fsi", ("x",), scheme="serial"), CouplingNode("cht", ("y",))]
 
     with pytest.raises(

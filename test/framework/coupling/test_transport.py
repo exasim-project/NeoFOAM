@@ -15,6 +15,7 @@ from typing import Any, Callable
 
 import numpy as np
 import pytest
+from framework.coupling.regions import TIMEOUT
 
 from neofoam.framework.coupling import (
     CouplingDeadlock,
@@ -25,9 +26,6 @@ from neofoam.framework.coupling import (
 )
 from neofoam.framework.coupling.region import run_regions
 from neofoam.framework.coupling.transport import Tag
-
-# A receive that should raise a deadlock at once times out after this instead.
-TIMEOUT = 30.0
 
 
 def _until_waiting(transport: InProcessTransport, region: str) -> None:

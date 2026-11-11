@@ -3,11 +3,8 @@
 
 """The final pass of a coupling node, as its leader decides it for every region.
 
-Once the node's data converged the leader runs exactly one more pass, the final
-one; the last pass ``max_iterations`` allows is final in advance. The leader
-sends the decision to every region, whose coupling op marks the pass final on
-its loop entry: an operation marked ``final`` (here ``write``) runs in it only.
-Regions ``a``, ``b`` and ``c`` in a row (exchanges a-b and b-c, one node); c leads.
+Regions ``a``, ``b``, ``c`` in a row, one node, c leads; ``write`` is marked
+``final`` and runs in the final pass only.
 """
 
 from __future__ import annotations

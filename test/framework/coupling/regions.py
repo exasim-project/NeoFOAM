@@ -35,6 +35,9 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata
 
+# a receive that should raise at once times out after this instead
+TIMEOUT = 30.0
+
 
 class RecordingTransport(InProcessTransport):
     """An in-process transport that records every message it sends."""
@@ -64,10 +67,7 @@ def contexts(
     transport: Optional[InProcessTransport] = None,
     **node: Any,
 ) -> dict[str, Context]:
-    """A context per region, coupled over ``links`` in ``nodes``.
-
-    Without ``nodes`` one node ``coupling`` with the options ``node`` holds every link.
-    """
+    """A context per region, coupled over ``links`` in ``nodes`` (default: one node of ``node``)."""
     if nodes is None:
         nodes = [CouplingNode("coupling", tuple(link.name for link in links), **node)]
     couplings = region_couplings(regions, links, transport or InProcessTransport(), nodes=nodes)
