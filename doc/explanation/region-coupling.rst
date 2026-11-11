@@ -143,8 +143,7 @@ warns, ``CouplingNotConvergedWarning``). Ops marked ``final`` (such as
 
 **Failures.** A region that fails closes the comm channel, so none waits for it
 forever. A deadlock raises ``CouplingDeadlock`` at once; as a fallback a receive
-raises ``CouplingTimeout`` after ``transportTimeout`` seconds, which the
-environment variable ``NEOFOAM_COUPLING_TIMEOUT`` overrides.
+raises ``CouplingTimeout`` after ``transportTimeout`` seconds.
 
 **Observers.** Every region reports to the execution observer from its own
 thread (``coupling_exchanged``, ``coupling_finished``, its graph), so hooks

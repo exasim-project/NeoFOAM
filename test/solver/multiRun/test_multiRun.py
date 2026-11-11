@@ -66,9 +66,7 @@ def test_couplings_of_a_region_the_case_does_not_run_raises(
         MULTI_RUN.couplings(["a", "b"], InProcessCommChannel())
 
 
-def _timeout(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any = "none", env: Any = None
-) -> Any:
+def _timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any) -> Any:
     """multiRun's comm channel timeout, the chain's ``transportTimeout`` set to ``seconds``.
 
     ``"none"``: no case file; ``"default"``: the file as it is.
@@ -80,10 +78,6 @@ def _timeout(
             config.transportTimeout = seconds
         config.save(case_dir=tmp_path)
     monkeypatch.chdir(tmp_path)
-    if env is None:
-        monkeypatch.delenv(MULTI_RUN.TIMEOUT_VARIABLE, raising=False)
-    else:
-        monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, env)
     return MULTI_RUN.transport_timeout()
 
 
@@ -96,21 +90,6 @@ def test_the_transport_timeout_is_the_file_s(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seconds: Any, timeout: Any
 ) -> None:
     assert _timeout(tmp_path, monkeypatch, seconds) == timeout
-
-
-@pytest.mark.parametrize(("env", "timeout"), [("2.5", 2.5), ("0", None)])
-def test_the_environment_variable_overrides_the_file_s_transport_timeout(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str, timeout: Any
-) -> None:
-    assert _timeout(tmp_path, monkeypatch, 5, env) == timeout
-
-
-@pytest.mark.parametrize("env", ["soon", "-1", "inf"])
-def test_a_broken_environment_variable_raises(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: str
-) -> None:
-    with pytest.raises(ValueError, match="NEOFOAM_COUPLING_TIMEOUT=.*at least 0"):
-        _timeout(tmp_path, monkeypatch, env=env)
 
 
 def test_run_hands_the_transport_timeout_to_the_transport(
@@ -126,8 +105,10 @@ def test_run_hands_the_transport_timeout_to_the_transport(
         raise _Stop
 
     shutil.copytree(CASES.parent / "limitations" / "cases" / "pair", tmp_path / "case")
+    config = RegionCouplingConfig.load(case_dir=tmp_path / "case")
+    config.transportTimeout = 3
+    config.save(case_dir=tmp_path / "case")
     monkeypatch.chdir(tmp_path / "case")
-    monkeypatch.setenv(MULTI_RUN.TIMEOUT_VARIABLE, "3")
     monkeypatch.setattr(MULTI_RUN, "InProcessCommChannel", comm_channel)
 
     with pytest.raises(_Stop):
