@@ -6,6 +6,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 # Every region is an OpenFOAM case of its own: fluid/ and solid/
 for region in fluid solid
 do
+    (cd "$region" && restore0Dir)                   # 0.orig -> 0
     runApplication -s "$region" blockMesh -case "$region"
 done
 

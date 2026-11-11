@@ -119,13 +119,21 @@ def test_heated_plate_written_temperature_restarts_coupled(plate: dict[str, Any]
     assert coupled_entries(written, PATCH_TYPES) == {"interface": "coupledTemperature"}
 
 
+def _tutorial_file(name: Path) -> Path:
+    """The tutorial's file of the case's ``name``: its initial conditions are in ``0.orig``."""
+    region, *rest = name.parts
+    if rest and rest[0] == "0":
+        return TUTORIAL / region / "0.orig" / Path(*rest[1:])
+    return TUTORIAL / name
+
+
 def test_heated_plate_case_files_are_the_tutorials() -> None:
     files = sorted(path.relative_to(CASE) for path in CASE.rglob("*") if path.is_file())
     differ = [
         str(name)
         for name in files
         if str(name) not in CONTROL_DICTS
-        and (TUTORIAL / name).read_bytes() != (CASE / name).read_bytes()
+        and _tutorial_file(name).read_bytes() != (CASE / name).read_bytes()
     ]
 
     assert files and differ == []

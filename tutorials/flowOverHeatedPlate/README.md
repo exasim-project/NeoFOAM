@@ -14,12 +14,12 @@ source <OpenFOAM v2406>/etc/bashrc
 
 `system/controlDict.yaml` holds the times every region steps on and
 `regionSolvers`; `system/regionCoupling.yaml` the numerics of the coupling. The
-`coupled` entries of `0/T` define the coupled patches:
+`coupled` entries of `0.orig/T` (copied to `0/` by `Allrun`) define the coupled patches:
 
 ```c++
-// fluid/0/T: receives the wall temperature, sends the heat flux into the fluid
+// fluid/0.orig/T: receives the wall temperature, sends the heat flux into the fluid
 interface { type fixedValue; coupled coupledTemperature; value uniform 310; }
-// solid/0/T: receives that heat flux, sends its wall temperature
+// solid/0.orig/T: receives that heat flux, sends its wall temperature
 top { type calculated; coupled coupledHeatFlux; value uniform 310; }
 ```
 
