@@ -92,9 +92,9 @@ def test_the_messages_of_each_loop_are_tagged_by_loop() -> None:
     )
 
     tags = set(comm_channel.tags)
-    assert {"outer/sides", "outer/pass", "outer/decision", "side:x"} <= tags
-    assert {"inner/sides", "inner/pass", "inner/decision", "side:y"} <= tags
-    assert not tags & {"sides", "pass", "decision"}
+    assert {"outer/streams", "outer/pass", "outer/decision", "port:x"} <= tags
+    assert {"inner/streams", "inner/pass", "inner/decision", "port:y"} <= tags
+    assert not tags & {"streams", "pass", "decision"}
     for name in ("outer", "inner"):
         controller = couple(regions["b"], ["outer", "inner"].index(name)).controller
         assert controller is not None and controller.outcome is not None

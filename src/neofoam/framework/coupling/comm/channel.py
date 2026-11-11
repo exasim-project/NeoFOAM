@@ -26,12 +26,12 @@ class Tag:
         return f"data:{exchange}/{key}"
 
     @staticmethod
-    def side(exchange: str) -> str:
+    def port(exchange: str) -> str:
         """What a port sends and its geometry, told its partner once."""
-        return f"side:{exchange}"
+        return f"port:{exchange}"
 
     @staticmethod
-    def loop(loop: str, what: Literal["sides", "pass", "decision"]) -> str:
+    def loop(loop: str, what: Literal["streams", "pass", "decision"]) -> str:
         """A region's streams, its pass and the leader's decision, within coupling loop ``loop``."""
         return f"{loop}/{what}"
 
