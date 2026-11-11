@@ -34,8 +34,8 @@ from neofoam.framework.coupling import (
     Exchange,
     FaceData,
 )
+from neofoam.framework.coupling.exchanges import region_couplings
 from neofoam.framework.coupling.iteration._leader import CouplingController, CouplingOutcome
-from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
 

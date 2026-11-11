@@ -19,7 +19,7 @@ from neofoam.framework import execution_observer
 
 from ..comm.channel import Data
 from ..data import End
-from ..region import CouplingNode
+from ..exchanges import CouplingNode
 from ..strategies.convergence import SideChange
 
 

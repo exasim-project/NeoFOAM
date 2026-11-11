@@ -14,7 +14,7 @@ from ..comm.channel import Tag
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
 
-    from ..region import RegionCoupling
+    from ..exchanges import RegionCoupling
 
 
 SET_TIME_STEP = "set_time_step"

@@ -22,10 +22,10 @@ from .comm.channel import (
 from .comm.in_process import InProcessCommChannel
 from .coupled import coupled
 from .data import Array, CellData, CoupledPort, FaceData, ProbeData, Scalar, ValueData
+from .exchanges import CouplingNode, Exchange, RegionCoupling
 from .iteration._leader import CouplingNotConvergedWarning
 from .location import Cells, Geometry, Global, MeshGeometry, Patch
 from .model import Coupling, coupling
-from .region import CouplingNode, Exchange, RegionCoupling
 from .strategies.acceleration import AitkenRelaxation, ConstantRelaxation, CouplingAcceleration
 from .strategies.convergence import CouplingConvergence, RelativeConvergence, SideChange
 from .strategies.mapping import (
