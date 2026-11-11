@@ -50,7 +50,7 @@ class CouplingLoopOp(IterativeOp):
         self.loop = loop
         self.label = f"{coupling.region}.{loop.name}"
         self._coupling = coupling
-        self._comm_channel = coupling.require_transport()
+        self._comm_channel = coupling.require_comm_channel()
         self._exchanges = coupling.loop_exchanges(loop)
         self._group = coupling.loop_group(loop)
         self._leader = self._group[-1]

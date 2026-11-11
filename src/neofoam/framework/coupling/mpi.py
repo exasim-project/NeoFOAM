@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Coupling across MPI processes: :class:`MpiTransport` between regions, :class:`RegionComm` within.
+"""Coupling on MPI processes: :class:`MpiCommChannel` between regions, :class:`RegionComm` within.
 
 Only a region's root, rank 0 of its communicator, talks to other regions: its coupling
 ops run on the whole patches, gathered from its processes and scattered back, while
@@ -37,10 +37,10 @@ _MESSAGE, _CLOSED, _ABORTED = "message", "closed", "aborted"
 _FIRST_PAUSE, _LONGEST_PAUSE = 1e-5, 1e-3
 
 
-class MpiTransport(_Mailbox):
+class MpiCommChannel(_Mailbox):
     """A comm channel between the roots of regions on MPI processes: one MPI tag, a mailbox per tag.
 
-    ``channel`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD); ``roots``
+    ``comm`` spans every process of the run (a ``Dup`` of MPI_COMM_WORLD); ``roots``
     maps each region of the group to its root's rank in it. A deadlock between processes
     shows as a timeout only. Not thread safe.
     """
@@ -49,7 +49,7 @@ class MpiTransport(_Mailbox):
 
     def __init__(
         self,
-        channel: Any,
+        comm: Any,
         roots: Mapping[str, int],
         region: str,
         timeout: Optional[float] = DEFAULT_TIMEOUT,
@@ -57,12 +57,12 @@ class MpiTransport(_Mailbox):
         super().__init__(timeout)
         if region not in roots:
             raise ValueError(f"region {region} has no root among {dict(roots)}")
-        if roots[region] != channel.rank:
+        if roots[region] != comm.rank:
             raise ValueError(
                 f"region {region}'s root is rank {roots[region]}, not this process "
-                f"(rank {channel.rank}); only a region's root talks to the other regions"
+                f"(rank {comm.rank}); only a region's root talks to the other regions"
             )
-        self.channel = channel
+        self.comm = comm
         self.roots = dict(roots)
         self.region = region
         self._sends: list[tuple[str, str, Any]] = []
@@ -130,7 +130,7 @@ class MpiTransport(_Mailbox):
                 self._post(other, kind, payload)
 
     def _post(self, target: str, tag: str, payload: bytes) -> None:
-        request = self.channel.isend(payload, dest=self.roots[target], tag=self.TAG)
+        request = self.comm.isend(payload, dest=self.roots[target], tag=self.TAG)
         self._sends.append((target, tag, request))
         self._pending()
 
@@ -147,8 +147,8 @@ class MpiTransport(_Mailbox):
     def _drain(self) -> bool:
         """Take every message that arrived into the mailboxes; whether one arrived."""
         arrived = False
-        while self.channel.iprobe(tag=self.TAG):
-            source, kind, tag, message = pickle.loads(self.channel.recv(tag=self.TAG))
+        while self.comm.iprobe(tag=self.TAG):
+            source, kind, tag, message = pickle.loads(self.comm.recv(tag=self.TAG))
             if kind == _MESSAGE:
                 self._messages[(source, self.region, tag)].append(message)
             elif kind == _CLOSED:

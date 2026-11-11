@@ -246,7 +246,7 @@ and a NeoN region communicates on that world. Rank 0 refuses a case that does
 not fit the run before it starts; an error on any process aborts every process.
 
 Only a region's root (its rank 0) talks to other regions, over an
-``MpiTransport`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
+``MpiCommChannel`` (``neofoam.framework.coupling.mpi``). Its coupling ops run on
 the whole patches: the root gathers what every process's sides send and
 scatters what they receive; the other processes run a follower op that takes
 the root's decision, and have no comm channel. ``close`` waits at most

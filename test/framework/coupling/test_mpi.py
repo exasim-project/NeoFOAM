@@ -3,8 +3,8 @@
 
 """The MPI comm channel between region roots, and a region's processes (:class:`RegionComm`).
 
-Without MPI the comm channel runs over an in-memory channel (``FakeChannel``, in order per
-pair as MPI); under ``mpirun`` ``mpi_transport_worker.py`` runs each scenario on real
+Without MPI the comm channel runs over an in-memory communicator (``FakeComm``, in order per
+pair as MPI); under ``mpirun`` ``mpi_comm_channel_worker.py`` runs each scenario on real
 processes, in a subprocess with a timeout.
 """
 
@@ -26,10 +26,10 @@ from neofoam.framework.coupling import (
     CommChannelClosed,
     CouplingDeadlock,
     CouplingTimeout,
-    MpiTransport,
+    MpiCommChannel,
 )
 
-WORKER = Path(__file__).parent / "mpi_transport_worker.py"
+WORKER = Path(__file__).parent / "mpi_comm_channel_worker.py"
 # seconds: a hang guard, never reached by a passing test
 HANG = 30.0
 
@@ -42,8 +42,8 @@ class _Request:
         return self._completes
 
 
-class FakeChannel:
-    """One rank's end of an in-memory channel; ``completes=False``: no send ever completes."""
+class FakeComm:
+    """One rank's end of an in-memory communicator; ``completes=False``: no send ever completes."""
 
     def __init__(
         self, rank: int, boxes: dict[int, deque[Any]], lock: threading.Lock, completes: bool
@@ -70,13 +70,13 @@ class FakeChannel:
 
 def _pair(
     timeout: Optional[float] = HANG, completes: bool = True
-) -> tuple[MpiTransport, MpiTransport]:
+) -> tuple[MpiCommChannel, MpiCommChannel]:
     boxes: dict[int, deque[Any]] = {0: deque(), 1: deque()}
     lock = threading.Lock()
     roots = {"a": 0, "b": 1}
     return (
-        MpiTransport(FakeChannel(0, boxes, lock, completes), roots, "a", timeout=timeout),
-        MpiTransport(FakeChannel(1, boxes, lock, completes), roots, "b", timeout=timeout),
+        MpiCommChannel(FakeComm(0, boxes, lock, completes), roots, "a", timeout=timeout),
+        MpiCommChannel(FakeComm(1, boxes, lock, completes), roots, "b", timeout=timeout),
     )
 
 
@@ -100,7 +100,7 @@ def _within(*tasks: Callable[[], None]) -> None:
         raise errors[0]
 
 
-def test_mpi_transport_delivers_by_tag_in_the_order_sent() -> None:
+def test_mpi_comm_channel_delivers_by_tag_in_the_order_sent() -> None:
     a, b = _pair()
     for i in range(6):
         a.send("a", "b", "odd" if i % 2 else "even", {"i": i, "v": np.full(2, float(i))})
@@ -112,7 +112,7 @@ def test_mpi_transport_delivers_by_tag_in_the_order_sent() -> None:
     assert even == [0, 2, 4]
 
 
-def test_mpi_transport_receive_times_out_naming_the_messages_not_received() -> None:
+def test_mpi_comm_channel_receive_times_out_naming_the_messages_not_received() -> None:
     a, b = _pair(timeout=0.05)
     a.send("a", "b", "extra", 1)
     a.send("a", "b", "extra", 2)
@@ -125,14 +125,14 @@ def test_mpi_transport_receive_times_out_naming_the_messages_not_received() -> N
     assert "undelivered messages: a→b 'extra' (2)" in message
 
 
-def test_mpi_transport_refuses_a_message_that_does_not_pickle() -> None:
+def test_mpi_comm_channel_refuses_a_message_that_does_not_pickle() -> None:
     a, _b = _pair()
 
     with pytest.raises(TypeError, match="the message 'f' from region a to region b is not plain"):
         a.send("a", "b", "f", lambda: 1)
 
 
-def test_mpi_transport_receive_from_a_closed_partner_raises_after_what_it_sent() -> None:
+def test_mpi_comm_channel_receive_from_a_closed_partner_raises_after_what_it_sent() -> None:
     a, b = _pair(timeout=None)
     seen: list[Any] = []
 
@@ -151,7 +151,7 @@ def test_mpi_transport_receive_from_a_closed_partner_raises_after_what_it_sent()
     assert seen == ["bye"]
 
 
-def test_mpi_transport_receive_from_an_aborted_partner_raises_transport_closed() -> None:
+def test_mpi_comm_channel_receive_from_an_aborted_partner_raises_comm_channel_closed() -> None:
     a, b = _pair(timeout=None)
     a.abort(["a"])
 
@@ -160,7 +160,7 @@ def test_mpi_transport_receive_from_an_aborted_partner_raises_transport_closed()
     _within(lambda: b.close("b"))
 
 
-def test_mpi_transport_close_times_out_naming_the_roots_that_did_not_close() -> None:
+def test_mpi_comm_channel_close_times_out_naming_the_roots_that_did_not_close() -> None:
     a, _b = _pair(timeout=0.05)
 
     with pytest.raises(CouplingTimeout) as error:
@@ -171,7 +171,7 @@ def test_mpi_transport_close_times_out_naming_the_roots_that_did_not_close() -> 
     assert "sends not complete: none" in message
 
 
-def test_mpi_transport_close_times_out_naming_the_sends_not_complete() -> None:
+def test_mpi_comm_channel_close_times_out_naming_the_sends_not_complete() -> None:
     a, b = _pair(timeout=0.05, completes=False)
     a.send("a", "b", "x", 1)
     b.abort(["b"])
@@ -182,15 +182,15 @@ def test_mpi_transport_close_times_out_naming_the_sends_not_complete() -> None:
     assert "not closed: none; sends not complete: a→b 'x', a→b 'closed'" in str(error.value)
 
 
-def test_mpi_transport_belongs_to_its_root() -> None:
+def test_mpi_comm_channel_belongs_to_its_root() -> None:
     boxes: dict[int, deque[Any]] = {0: deque(), 1: deque()}
-    channel = FakeChannel(1, boxes, threading.Lock(), completes=True)
+    comm = FakeComm(1, boxes, threading.Lock(), completes=True)
 
     with pytest.raises(ValueError, match="only a region's root talks to the other regions"):
-        MpiTransport(channel, {"a": 0, "b": 1}, "a")
+        MpiCommChannel(comm, {"a": 0, "b": 1}, "a")
     with pytest.raises(ValueError, match="at least 0 seconds"):
-        MpiTransport(channel, {"a": 0, "b": 1}, "b", timeout=-1)
-    comm_channel = MpiTransport(channel, {"a": 0, "b": 1}, "b")
+        MpiCommChannel(comm, {"a": 0, "b": 1}, "b", timeout=-1)
+    comm_channel = MpiCommChannel(comm, {"a": 0, "b": 1}, "b")
     with pytest.raises(ValueError, match="the MPI comm channel of region b sends as region a"):
         comm_channel.send("a", "b", "x", 1)
 
@@ -209,7 +209,7 @@ def test_mpi_transport_belongs_to_its_root() -> None:
         ("region_comm", 5),
     ],
 )
-def test_mpi_transport_under_mpirun(scenario: str, processes: int) -> None:
+def test_mpi_comm_channel_under_mpirun(scenario: str, processes: int) -> None:
     run = subprocess.run(
         [str(mpirun()), "-np", str(processes), sys.executable, str(WORKER), scenario],
         capture_output=True,

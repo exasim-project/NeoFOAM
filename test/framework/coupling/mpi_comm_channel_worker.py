@@ -18,7 +18,7 @@ from neofoam.framework.coupling import (
     CommChannelClosed,
     CouplingDeadlock,
     CouplingTimeout,
-    MpiTransport,
+    MpiCommChannel,
 )
 from neofoam.framework.coupling.mpi import RegionComm
 
@@ -26,9 +26,9 @@ WORLD = MPI.COMM_WORLD
 ROOTS = {"a": 0, "b": 1}
 
 
-def _comm_channel(timeout: float = 30.0) -> tuple[MpiTransport, str]:
+def _comm_channel(timeout: float = 30.0) -> tuple[MpiCommChannel, str]:
     region = "a" if WORLD.rank == 0 else "b"
-    return MpiTransport(WORLD.Dup(), ROOTS, region, timeout=timeout), region
+    return MpiCommChannel(WORLD.Dup(), ROOTS, region, timeout=timeout), region
 
 
 def _raises(error: type[BaseException], call: Any) -> str:
@@ -136,7 +136,7 @@ def pickle() -> None:
 def refusals() -> None:
     """A comm channel is its root's: another rank, or another region's send, is refused."""
     other = "b" if WORLD.rank == 0 else "a"
-    message = _raises(ValueError, lambda: MpiTransport(WORLD, ROOTS, other))
+    message = _raises(ValueError, lambda: MpiCommChannel(WORLD, ROOTS, other))
     assert "only a region's root talks to the other regions" in message
     comm_channel, region = _comm_channel()
     message = _raises(ValueError, lambda: comm_channel.send(other, region, "x", 1))

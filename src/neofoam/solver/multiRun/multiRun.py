@@ -19,7 +19,7 @@ from neofoam.framework.coupling import (
     CommChannel,
     CouplingConfig,
     InProcessCommChannel,
-    MpiTransport,
+    MpiCommChannel,
     ParticipantExchanges,
     comm_channel_timeout,
     run_participants,
@@ -111,11 +111,11 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
     if problems:
         abort_all(world, problems[0])
     region = layout.region_of(world.rank)
-    # a channel of its own: no other message meets the coupling's
-    channel = world.Dup()
+    # a communicator of its own: no other message meets the coupling's
+    coupling_comm = world.Dup()
     comm = world.Split(layout.index(region), key=world.rank)
     try:
-        coupling = mpi_coupling(planned, layout, channel, comm, timeout)
+        coupling = mpi_coupling(planned, layout, coupling_comm, comm, timeout)
         runtime = specs[region].instantiate(
             argv=layout.argv(region), region=region, coupling=coupling
         )
@@ -134,19 +134,19 @@ def run_mpi(config: ControlDictConfig) -> dict[str, Context]:
 def mpi_coupling(
     planned: Optional[ParticipantExchanges],
     layout: RegionLayout,
-    channel: Any,
+    coupling_comm: Any,
     comm: Any,
     timeout: Optional[float],
 ) -> Optional[ParticipantExchanges]:
     """The coupling of a region on MPI processes, from ``planned``; ``None`` if not coupled.
 
-    Only the region's root gets a comm channel, over ``channel``.
+    Only the region's root gets a comm channel, over ``coupling_comm``.
     """
     if planned is None:
         return None
     comm_channel = None
     if comm.rank == 0:
         roots = {other: layout.first(other) for other in planned.group}
-        comm_channel = MpiTransport(channel, roots, planned.region, timeout=timeout)
+        comm_channel = MpiCommChannel(coupling_comm, roots, planned.region, timeout=timeout)
     region_comm = RegionComm(comm) if comm.size > 1 else None
     return dataclasses.replace(planned, comm_channel=comm_channel, comm=region_comm)

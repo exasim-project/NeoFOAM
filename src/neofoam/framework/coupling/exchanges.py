@@ -93,7 +93,7 @@ class ParticipantExchanges:
     field_ports: tuple[FieldPort, ...] = ()
     comm: Optional[RegionComm] = None
 
-    def require_transport(self) -> CommChannel:
+    def require_comm_channel(self) -> CommChannel:
         """The comm channel; ``ValueError`` on an MPI process that is not its region's root."""
         if self.comm_channel is None:
             raise ValueError(f"region {self.region} has no comm channel on this process")

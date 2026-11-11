@@ -55,7 +55,7 @@ class TimeStep:
         region, leader, comm_channel = (
             coupling.region,
             coupling.leader,
-            coupling.require_transport(),
+            coupling.require_comm_channel(),
         )
         asked = ctx.time.delta_t
         if region != leader:
