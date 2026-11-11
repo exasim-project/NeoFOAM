@@ -133,7 +133,7 @@ class Leader:
         self.label = label
         self._name = node.name
         self._group = tuple(group)
-        self.parallel = parallel = node.parallel
+        parallel = node.parallel
         self._streams = {stream.id: stream for stream in streams}
         self._convergence = tuple(node.convergence)
         self._max_iterations = node.max_iterations

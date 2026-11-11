@@ -141,7 +141,9 @@ def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: b
     run({side.name: (regions[side.name], [solve("x", side.solve)]) for side in (a, b)})
 
     controller = _controller({name: couple(ctx) for name, ctx in regions.items()})
-    assert controller.parallel is parallel
+    # serial: b receives what a, stepping first, sent in this pass; parallel: neither fresh
+    assert [controller.fresh(stream) for stream in controller.streams] == [not parallel, False]
+    assert not hasattr(controller, "parallel")
     assert controller.outcomes[-1].converged
     assert ("receive_b 0.0" in log) is parallel
 
