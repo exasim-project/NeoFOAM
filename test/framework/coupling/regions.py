@@ -16,12 +16,12 @@ from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
     CommChannel,
-    Coupling,
     CouplingConvergence,
     CouplingLoop,
     Exchange,
     FaceData,
     InProcessCommChannel,
+    Participant,
     Patch,
     RegionCoupling,
     SideChange,
@@ -111,7 +111,7 @@ def context(region: str, region_coupling: Optional[RegionCoupling]) -> Context:
     """The context of ``region``, with its coupling model on a fake geometry."""
     return Context(
         fields={},
-        models={"coupling": Coupling(region_coupling, FakeGeometry())},
+        models={"coupling": Participant(region_coupling, FakeGeometry())},
         region=region,
     )
 

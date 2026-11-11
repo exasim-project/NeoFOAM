@@ -160,7 +160,7 @@ class SolverRuntime:
             raise RuntimeError(
                 f"region {self.region} is coupled in regionCoupling.yaml, but solver "
                 f"{self.name} added no coupling model; add "
-                "ctx.models['coupling'] = Coupling(self.coupling, geometry) in initialize"
+                "ctx.models['coupling'] = Participant(self.coupling, geometry) in initialize"
             )
         return contributions
 

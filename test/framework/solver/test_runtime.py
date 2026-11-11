@@ -131,7 +131,7 @@ def test_a_coupled_region_whose_solver_added_no_coupling_model_raises() -> None:
     with pytest.raises(
         RuntimeError,
         match=r"region left is coupled in regionCoupling.yaml, but solver uncoupling added no "
-        r"coupling model; add ctx.models\['coupling'\] = Coupling\(self.coupling, geometry\) "
+        r"coupling model; add ctx.models\['coupling'\] = Participant\(self.coupling, geometry\) "
         r"in initialize",
     ):
         runtime.resolve_operations(ctx)
