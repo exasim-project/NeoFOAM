@@ -47,21 +47,9 @@ def test_a_serial_node_may_enclose_a_node_sharing_one_region() -> None:
 
 
 def test_a_node_is_serial_by_default() -> None:
-    couplings = region_couplings(["a", "b"], [X, Y], InProcessTransport())
+    node = CouplingNode("n", ("x", "y"))
 
-    (node,) = couplings["a"].nodes
-    assert (node.name, node.scheme, node.parallel) == ("coupling", "serial", False)
-
-
-def test_the_default_node_holds_every_exchange() -> None:
-    couplings = region_couplings(["a", "b"], [X, Y], InProcessTransport())
-
-    (node,) = couplings["a"].nodes
-    assert (node.name, node.exchanges, node.placement_of("a")) == (
-        "coupling",
-        ("x", "y"),
-        Placement(),
-    )
+    assert (node.scheme, node.parallel, node.placement_of("a")) == ("serial", False, Placement())
 
 
 @pytest.mark.parametrize(
@@ -149,19 +137,19 @@ def test_unconnected_groups_of_exchanges_get_a_leader_each() -> None:
 )
 def test_region_couplings_check_the_links(link: Link, error: str) -> None:
     with pytest.raises(ValueError, match=error):
-        region_couplings(["a", "b"], [link], InProcessTransport())
+        region_couplings(["a", "b"], [link], InProcessTransport(), [CouplingNode("n", ("x",))])
 
 
 def test_a_patch_is_in_one_exchange() -> None:
     links = [Link("x", (("a", "p"), ("b", "p"))), Link("y", (("a", "p"), ("b", "q")))]
 
     with pytest.raises(ValueError, match="a.p is in the exchanges 'x' and 'y'"):
-        region_couplings(["a", "b"], links, InProcessTransport())
+        region_couplings(["a", "b"], links, InProcessTransport(), [CouplingNode("n", ("x", "y"))])
 
 
 def test_a_region_no_exchange_names_is_not_coupled() -> None:
     couplings = region_couplings(
-        ["a", "b", "c"], [Link("x", (("a", "p"), ("b", "p")))], InProcessTransport()
+        ["a", "b", "c"], [X], InProcessTransport(), [CouplingNode("n", ("x",))]
     )
 
     assert list(couplings) == ["a", "b"]

@@ -20,7 +20,7 @@ import pytest
 
 from framework.solver.region_counter import counter
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import InProcessTransport, Link
+from neofoam.framework.coupling import CouplingNode, InProcessTransport, Link
 from neofoam.framework.coupling.region import region_couplings
 from neofoam.framework.initialization.depends import Depends
 from neofoam.framework.operations import Operation, Operations, SequentialOp, StepBuilder
@@ -121,7 +121,8 @@ def test_a_region_the_case_does_not_couple_resolves_without_a_coupling_model() -
 
 def test_a_coupled_region_whose_solver_added_no_coupling_model_raises() -> None:
     link = Link("x", (("left", "p"), ("right", "p")))
-    coupling = region_couplings(["left", "right"], [link], InProcessTransport())["left"]
+    nodes = [CouplingNode("n", ("x",))]
+    coupling = region_couplings(["left", "right"], [link], InProcessTransport(), nodes)["left"]
     runtime = uncoupling.instantiate(region="left", coupling=coupling)
     ctx = runtime.initialize()
 

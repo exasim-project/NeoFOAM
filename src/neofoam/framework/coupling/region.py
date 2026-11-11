@@ -22,7 +22,7 @@ from __future__ import annotations
 import contextvars
 import threading
 from dataclasses import dataclass, field
-from typing import Callable, Literal, Mapping, Optional, Sequence, TypeVar
+from typing import Callable, Literal, Mapping, Sequence, TypeVar
 
 from neofoam.framework.types import Placement
 
@@ -136,15 +136,13 @@ def region_couplings(
     regions: Sequence[str],
     links: Sequence[Link],
     transport: Transport,
-    nodes: Optional[Sequence[CouplingNode]] = None,
+    nodes: Sequence[CouplingNode],
 ) -> dict[str, RegionCoupling]:
     """The coupling of every region ``links`` connect, by region; ``regions`` in stepping order.
 
-    ``nodes`` lists the coupling nodes, outer to inner; without them one node
-    ``coupling`` holds every exchange. Raises ``ValueError`` as :func:`check_couplings`.
+    ``nodes`` lists the coupling nodes, outer to inner. Raises ``ValueError`` as
+    :func:`check_couplings`.
     """
-    if nodes is None:
-        nodes = [CouplingNode("coupling", tuple(link.name for link in links))]
     check_couplings(regions, links, nodes)
     couplings: dict[str, RegionCoupling] = {}
     for region in regions:
