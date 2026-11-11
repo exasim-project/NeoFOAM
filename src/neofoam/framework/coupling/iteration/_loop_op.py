@@ -232,8 +232,8 @@ class CouplingLoopOp(IterativeOp):
                 other[(region, port)],
                 exchange_name[(region, port)],
             )
-            for region, (_path, streams) in received.items()
-            for port, key, names in streams
+            for region in self._group
+            for port, key, names in received[region][1]
         ]
 
     def _decide(
