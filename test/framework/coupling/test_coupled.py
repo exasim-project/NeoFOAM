@@ -100,8 +100,8 @@ def _region(name: str) -> Context:
 CHT = Exchange("cht", (("solid", "right"), ("fluid", "wall")), NearestNeighborMapping())
 
 
-def _pair(exchange: Exchange = CHT, **node: Any) -> dict[str, Context]:
-    regions = contexts(["solid", "fluid"], [exchange], **{"max_iterations": 1, **node})
+def _pair(exchange: Exchange = CHT, **loop: Any) -> dict[str, Context]:
+    regions = contexts(["solid", "fluid"], [exchange], **{"max_iterations": 1, **loop})
     for ctx in regions.values():
         ctx.fields["T"] = np.array([1.0, 2.0])
     return regions

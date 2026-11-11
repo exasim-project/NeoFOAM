@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""What each region knows of a case's coupling, the checks of exchanges and nodes."""
+"""What each region knows of a case's coupling, the checks of exchanges and loops."""
 
 from __future__ import annotations
 
@@ -26,74 +26,74 @@ X = Exchange("x", (("a", "p"), ("b", "p")))
 Y = Exchange("y", (("a", "q"), ("b", "q")))
 
 
-def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:
-    nodes = [CouplingLoop("fsi", ("x",), scheme="serial"), CouplingLoop("cht", ("y",))]
+def test_a_serial_loop_enclosing_a_loop_of_two_of_its_regions_raises() -> None:
+    loops = [CouplingLoop("fsi", ("x",), scheme="serial"), CouplingLoop("cht", ("y",))]
 
     with pytest.raises(
         ValueError,
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
         r"well; .* make 'fsi' parallel",
     ):
-        participant_exchanges(["a", "b"], [X, Y], InProcessCommChannel(), nodes=nodes)
+        participant_exchanges(["a", "b"], [X, Y], InProcessCommChannel(), loops=loops)
 
 
-def test_a_serial_node_may_enclose_a_node_sharing_one_region() -> None:
+def test_a_serial_loop_may_enclose_a_loop_sharing_one_region() -> None:
     exchanges = [X, Exchange("z", (("b", "q"), ("c", "q")))]
-    nodes = [CouplingLoop("ab", ("x",), scheme="serial"), CouplingLoop("bc", ("z",))]
+    loops = [CouplingLoop("ab", ("x",), scheme="serial"), CouplingLoop("bc", ("z",))]
 
     couplings = participant_exchanges(
-        ["a", "b", "c"], exchanges, InProcessCommChannel(), nodes=nodes
+        ["a", "b", "c"], exchanges, InProcessCommChannel(), loops=loops
     )
 
-    assert [node.scheme for node in couplings["b"].nodes] == ["serial", "serial"]
+    assert [loop.scheme for loop in couplings["b"].loops] == ["serial", "serial"]
 
 
-def test_a_node_is_serial_by_default() -> None:
-    node = CouplingLoop("n", ("x", "y"))
+def test_a_loop_is_serial_by_default() -> None:
+    loop = CouplingLoop("n", ("x", "y"))
 
-    assert (node.scheme, node.parallel, node.placement_of("a")) == ("serial", False, Placement())
+    assert (loop.scheme, loop.parallel, loop.placement_of("a")) == ("serial", False, Placement())
 
 
 @pytest.mark.parametrize(
-    ("nodes", "error"),
+    ("loops", "error"),
     [
         (
             [CouplingLoop("n", ("x",)), CouplingLoop("n", ("y",))],
-            "two coupling nodes are named 'n'",
+            "two coupling loops are named 'n'",
         ),
         (
             [CouplingLoop("n", ("x", "y")), CouplingLoop("m", ("y",))],
-            "exchange 'y' is in the coupling nodes 'n' and 'm'",
+            "exchange 'y' is in the coupling loops 'n' and 'm'",
         ),
-        ([CouplingLoop("n", ("x",))], r"the exchanges \['y'\] are in no coupling node"),
+        ([CouplingLoop("n", ("x",))], r"the exchanges \['y'\] are in no coupling loop"),
         (
             [CouplingLoop("n", ("x", "w"))],
-            "coupling node 'n' names the exchange 'w', which does not exist",
+            "coupling loop 'n' names the exchange 'w', which does not exist",
         ),
         (
             [CouplingLoop("n", ("x", "y"), placement={"c": Placement()})],
-            r"coupling node 'n' places its op in the regions \['c'\], which it does not couple",
+            r"coupling loop 'n' places its op in the regions \['c'\], which it does not couple",
         ),
         (
             [
                 CouplingLoop("n", ("x",), acceleration={"y": lambda s, i: s}),
                 CouplingLoop("m", ("y",)),
             ],
-            r"coupling node 'n' accelerates the exchanges \['y'\], which are not its own",
+            r"coupling loop 'n' accelerates the exchanges \['y'\], which are not its own",
         ),
     ],
     ids=[
-        "duplicate node name",
-        "exchange in two nodes",
-        "exchange in no node",
+        "duplicate loop name",
+        "exchange in two loops",
+        "exchange in no loop",
         "unknown exchange",
         "unknown region in placement",
         "acceleration of another exchange",
     ],
 )
-def test_participant_exchanges_check_the_nodes(nodes: list[CouplingLoop], error: str) -> None:
+def test_participant_exchanges_check_the_loops(loops: list[CouplingLoop], error: str) -> None:
     with pytest.raises(ValueError, match=error):
-        participant_exchanges(["a", "b", "c"], [X, Y], InProcessCommChannel(), nodes=nodes)
+        participant_exchanges(["a", "b", "c"], [X, Y], InProcessCommChannel(), loops=loops)
 
 
 def test_two_exchanges_of_one_name_raise() -> None:
@@ -103,7 +103,7 @@ def test_two_exchanges_of_one_name_raise() -> None:
         ValueError, match="two exchanges are named 'x'; an exchange's name is unique"
     ):
         participant_exchanges(
-            ["a", "b"], [X, twin], InProcessCommChannel(), nodes=[CouplingLoop("n", ("x",))]
+            ["a", "b"], [X, twin], InProcessCommChannel(), loops=[CouplingLoop("n", ("x",))]
         )
 
 

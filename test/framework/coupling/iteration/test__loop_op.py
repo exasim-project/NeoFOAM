@@ -130,11 +130,11 @@ def test_coupling_op_parallel_sides_receive_what_the_other_sent_in_the_pass_befo
 
 
 @pytest.mark.parametrize("parallel", [False, True], ids=["serial", "parallel"])
-def test_coupling_op_default_controller_takes_the_scheme_of_the_node(parallel: bool) -> None:
+def test_coupling_op_default_controller_takes_the_scheme_of_the_loop(parallel: bool) -> None:
     log: list[str] = []
     a, b = _Side("a", log, fixed=1.0), _Side("b", log, fixed=2.0)
-    node = CouplingLoop("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
-    couplings = participant_exchanges(["a", "b"], [EXCHANGE], InProcessCommChannel(), nodes=[node])
+    loop = CouplingLoop("coupling", ("a-b",), scheme="parallel" if parallel else "serial")
+    couplings = participant_exchanges(["a", "b"], [EXCHANGE], InProcessCommChannel(), loops=[loop])
     regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     for side in (a, b):
         add_coupled(regions[side.name], "p", side.side())
@@ -155,10 +155,10 @@ def test_coupling_op_sends_data_only_where_the_partner_receives_it_fresh(
     scheme: Literal["serial", "parallel"], sent: int
 ) -> None:
     comm_channel = RecordingCommChannel()
-    nodes = [
+    loops = [
         CouplingLoop("coupling", ("a-b",), scheme=scheme, convergence=(never,), max_iterations=2)
     ]
-    couplings = participant_exchanges(["a", "b"], [EXCHANGE], comm_channel, nodes=nodes)
+    couplings = participant_exchanges(["a", "b"], [EXCHANGE], comm_channel, loops=loops)
     regions = {name: context(name, couplings[name]) for name in ("a", "b")}
     a, b = _Side("a", []), _Side("b", [])
     for side in (a, b):

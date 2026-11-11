@@ -209,14 +209,14 @@ def test_a_transient_coupled_region_without_the_solution_loop_ops_raises() -> No
 
 
 def _coupling_loop(region: str, placement: Placement) -> Operation:
-    """A loop standing in for the coupling op of the region's node ``coupling``."""
+    """A loop standing in for the coupling op of the region's coupling loop ``coupling``."""
     return Operation(
         func=IterativeOp(_Passes(1)),
         metadata=OperationMetadata(op_name=f"{region}.coupling", wraps=placement),
     )
 
 
-def test_a_serial_node_holding_the_time_step_raises() -> None:
+def test_a_serial_loop_holding_the_time_step_raises() -> None:
     ctx = contexts(["a", "b", "c"], CHAIN, scheme="serial")["a"]
     ctx.time = _Time(1.0)
     ops = _graph(ctx, _time_loop([1.0], [], []), _coupling_loop("a", Placement()))
@@ -234,7 +234,7 @@ def test_a_serial_node_holding_the_time_step_raises() -> None:
     [("parallel", Placement()), ("serial", Placement(("solve",)))],
     ids=["parallel at the top", "serial around solve"],
 )
-def test_a_parallel_node_or_one_around_named_operations_may_hold_the_time_step(
+def test_a_parallel_loop_or_one_around_named_operations_may_hold_the_time_step(
     scheme: Literal["serial", "parallel"], placement: Placement
 ) -> None:
     ctx = contexts(["a", "b", "c"], CHAIN, scheme=scheme)["a"]
@@ -244,8 +244,8 @@ def test_a_parallel_node_or_one_around_named_operations_may_hold_the_time_step(
     coupling(ctx).check_graph(ops)
 
 
-def test_a_serial_node_around_a_loop_leaves_the_time_step_outside() -> None:
-    """A serial node may wrap the PIMPLE-like loop whole: the time step stays outside."""
+def test_a_serial_loop_around_a_loop_leaves_the_time_step_outside() -> None:
+    """A serial loop may wrap the PIMPLE-like loop whole: the time step stays outside."""
     ctx = contexts(["a", "b", "c"], CHAIN, scheme="serial")["a"]
     ctx.time = _Time(1.0)
     ops = _graph(

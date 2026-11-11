@@ -24,7 +24,7 @@ class SideChange(NamedTuple):
 
 @PluginSystem.register(discriminator_variable="convergence", discriminator="type")
 class CouplingConvergence(BaseModel):
-    """Whether a node converged, from every stream's change in the last pass; a plugin family.
+    """Whether a coupling loop converged, by each stream's change in the last pass; a plugin family.
 
     ``data`` names the data field a measure compares (``T``), ``None`` for all of them.
     """

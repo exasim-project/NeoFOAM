@@ -84,39 +84,39 @@ class Participant:
         return coupling.region
 
     def operations(self) -> Operations:
-        """The region's coupling ops, one per node, outer to inner; built once."""
+        """The region's coupling ops, one per loop, outer to inner; built once."""
         if self._operations is None:
             coupling = self.coupling
             self._operations = Operations() if coupling is None else self._build(coupling)
         return self._operations
 
     def _build(self, coupling: ParticipantExchanges) -> Operations:
-        by_node = self._by_node(coupling)
+        by_loop = self._by_loop(coupling)
         geometries = {port.name: port.location.geometry(self.geometry) for port in self.ports}
         ops: list[Operation] = []
-        for node in coupling.nodes:
-            couple = CouplingLoopOp(coupling, node, by_node[node.name], geometries)
+        for loop in coupling.loops:
+            couple = CouplingLoopOp(coupling, loop, by_loop[loop.name], geometries)
             metadata = OperationMetadata(
-                op_name=couple.label, wraps=node.placement_of(coupling.region)
+                op_name=couple.label, wraps=loop.placement_of(coupling.region)
             )
             ops.append(Operation(func=couple, metadata=metadata))
         return Operations(ops)
 
-    def _by_node(self, coupling: ParticipantExchanges) -> dict[str, list[CoupledPort]]:
-        """The ports by node; ``ValueError`` when a data field is in two nodes."""
-        by_node: dict[str, list[CoupledPort]] = {node.name: [] for node in coupling.nodes}
-        in_node: dict[str, str] = {}
+    def _by_loop(self, coupling: ParticipantExchanges) -> dict[str, list[CoupledPort]]:
+        """The ports by loop; ``ValueError`` when a data field is in two loops."""
+        by_loop: dict[str, list[CoupledPort]] = {loop.name: [] for loop in coupling.loops}
+        in_loop: dict[str, str] = {}
         for port in self.ports:
-            name = coupling.node_of(port.name).name
+            name = coupling.loop_of(port.name).name
             for data in sorted(port.names):
-                if in_node.setdefault(data, name) != name:
+                if in_loop.setdefault(data, name) != name:
                     raise ValueError(
-                        f"the data {data} of region {coupling.region} is coupled in the nodes "
-                        f"'{in_node[data]}' and '{name}' ({port.label}); a region's data field "
-                        "is in at most one coupling node"
+                        f"the data {data} of region {coupling.region} is coupled in the coupling "
+                        f"loops '{in_loop[data]}' and '{name}' ({port.label}); a region's data "
+                        "field is in at most one coupling loop"
                     )
-            by_node[name].append(port)
-        return by_node
+            by_loop[name].append(port)
+        return by_loop
 
     def graph_operations(self, ctx: Context, graph: Sequence[Operation]) -> Operations:
         """The region's coupling ops and, in a transient case, its time-step op."""
@@ -153,14 +153,14 @@ class Participant:
         )
 
     def check_graph(self, graph: Iterable[Operation]) -> None:
-        """Raise ``ValueError`` when a serial node holds the time step in the resolved ``graph``."""
+        """Raise ``ValueError`` when a serial loop holds the time step in the resolved ``graph``."""
         coupling = self.coupling
         if coupling is None:
             return
         serial = {
-            f"{coupling.region}.{node.name}": node.name
-            for node in coupling.nodes
-            if not node.parallel
+            f"{coupling.region}.{loop.name}": loop.name
+            for loop in coupling.loops
+            if not loop.parallel
         }
         holder = serial_holder(graph, f"{coupling.region}.time_step", serial)
         if holder is not None:

@@ -121,8 +121,8 @@ def test_a_region_the_case_does_not_couple_resolves_without_a_coupling_model() -
 
 def test_a_coupled_region_whose_solver_added_no_coupling_model_raises() -> None:
     exchange = Exchange("x", (("left", "p"), ("right", "p")))
-    nodes = [CouplingLoop("n", ("x",))]
-    coupling = participant_exchanges(["left", "right"], [exchange], InProcessCommChannel(), nodes)[
+    loops = [CouplingLoop("n", ("x",))]
+    coupling = participant_exchanges(["left", "right"], [exchange], InProcessCommChannel(), loops)[
         "left"
     ]
     runtime = uncoupling.instantiate(region="left", coupling=coupling)
