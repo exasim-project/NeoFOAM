@@ -21,8 +21,8 @@ from neofoam.framework.coupling import (
     SideChange,
 )
 from neofoam.framework.coupling.iteration._leader import (
-    CouplingController,
     GroupStream,
+    Leader,
     relative_changes,
 )
 
@@ -51,7 +51,7 @@ def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_buil
         match=r"coupling b.coupling: convergence RelativeConvergence on T, which no port of the "
         r"node sends \(they send \['x'\]\)",
     ):
-        CouplingController(
+        Leader(
             _group(),
             "b.coupling",
             CouplingLoop(
@@ -62,7 +62,7 @@ def test_a_convergence_on_a_field_no_side_sends_raises_as_the_controller_is_buil
 
 
 def test_a_field_reports_an_infinite_residual_until_a_pass_measured_it() -> None:
-    controller = CouplingController(
+    controller = Leader(
         _group(), "b.coupling", CouplingLoop("coupling", ("a-b",), convergence=(never,)), ("a", "b")
     )
     assert controller.residuals == {"x": math.inf}
@@ -109,7 +109,7 @@ def test_an_acceleration_relaxes_only_the_streams_of_its_exchange() -> None:
         return [{"v": data["v"] / 2} for data in sent]
 
     node = CouplingLoop("n", ("x", "y"), scheme="parallel", acceleration={"x": halve})
-    controller = CouplingController(_streams(), "b.n", node, ("a", "b"))
+    controller = Leader(_streams(), "b.n", node, ("a", "b"))
 
     carried = controller.decide(_data(1.0, 2.0, 10.0, 20.0), 0)
 
@@ -130,7 +130,7 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
     node = CouplingLoop(
         "n", ("x", "y"), convergence=(_Verdict(name="first"), _Verdict(name="second"))
     )
-    controller = CouplingController(_streams(), "b.n", node, ("a", "b"))
+    controller = Leader(_streams(), "b.n", node, ("a", "b"))
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 1) is not None
 
@@ -143,7 +143,7 @@ def test_a_node_converges_once_every_measure_of_its_convergence_holds() -> None:
 
 
 def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> None:
-    controller = CouplingController(_streams(), "b.n", CouplingLoop("n", ("x", "y")), ("a", "b"))
+    controller = Leader(_streams(), "b.n", CouplingLoop("n", ("x", "y")), ("a", "b"))
 
     assert controller.decide(_data(1.0, 2.0, 3.0, 4.0), 0) is not None
     assert controller.decide(_data(1.0, 2.0, 3.0, 5.0), 1) is not None
@@ -154,7 +154,7 @@ def test_a_node_without_convergence_converges_once_the_data_is_unchanged() -> No
 
 def test_the_controller_tells_which_pass_is_final() -> None:
     node = CouplingLoop("coupling", ("a-b",), convergence=(never,), max_iterations=2)
-    controller = CouplingController([], "c.coupling", node, ("c",))
+    controller = Leader([], "c.coupling", node, ("c",))
 
     assert controller.decide({}, 0) == {} and not controller.final
     assert controller.decide({}, 1) == {} and controller.final
@@ -167,7 +167,7 @@ def test_the_controller_tells_which_pass_is_final() -> None:
 
 def test_explicit_coupling_runs_one_pass_without_a_not_converged_warning() -> None:
     node = CouplingLoop("coupling", ("a-b",), convergence=(never,), max_iterations=1)
-    controller = CouplingController(_group(), "b.coupling", node, ("a", "b"))
+    controller = Leader(_group(), "b.coupling", node, ("a", "b"))
     data = {("a", "p", "x"): {"x": np.ones(1)}, ("b", "p", "x"): {"x": np.ones(1)}}
 
     assert controller.decide(data, 0) is not None and controller.final
@@ -182,6 +182,6 @@ def test_a_stream_is_received_fresh_when_its_sender_steps_earlier_in_a_serial_no
     """``b`` only receives (it sends nothing): its rank comes from the node's group."""
     streams = [GroupStream("a", "p", "x", ("x",), ("b", "p"), "a-b")]
 
-    controller = CouplingController(streams, "b.n", CouplingLoop("n", ("a-b",)), ("a", "b"))
+    controller = Leader(streams, "b.n", CouplingLoop("n", ("a-b",)), ("a", "b"))
 
     assert controller.fresh(("a", "p", "x"))

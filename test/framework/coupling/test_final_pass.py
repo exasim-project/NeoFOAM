@@ -35,7 +35,7 @@ from neofoam.framework.coupling import (
     FaceData,
 )
 from neofoam.framework.coupling.exchanges import region_couplings
-from neofoam.framework.coupling.iteration._leader import CouplingController, CouplingOutcome
+from neofoam.framework.coupling.iteration._leader import CouplingOutcome, Leader
 from neofoam.framework.operations import Operation, SequentialOp
 from neofoam.framework.types import OperationMetadata
 
@@ -80,7 +80,7 @@ class _Region:
 
 def _couple(
     scheme: Literal["serial", "parallel"] = "serial", **node: Any
-) -> tuple[dict[str, _Region], CouplingController]:
+) -> tuple[dict[str, _Region], Leader]:
     """Couple a, b and c in one node and run one time step; the regions and c's controller."""
     regions = contexts(list(PATCHES), EXCHANGES, scheme=scheme, **node)
     tests = {name: _Region(name, fixed) for name, fixed in zip(PATCHES, (1.0, 2.0, 3.0))}
