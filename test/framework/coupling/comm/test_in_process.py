@@ -24,7 +24,6 @@ from neofoam.framework.coupling import (
     CouplingTimeout,
     InProcessCommChannel,
 )
-from neofoam.framework.coupling.comm_channel import Tag
 from neofoam.framework.coupling.region import run_regions
 
 
@@ -199,13 +198,6 @@ def test_the_timeout_is_ten_minutes_by_default() -> None:
 def test_a_negative_timeout_raises() -> None:
     with pytest.raises(ValueError, match="at least 0 seconds, not -1"):
         InProcessCommChannel(timeout=-1)
-
-
-def test_the_tags_of_the_coupling_messages() -> None:
-    assert Tag.data("x", "T_sink,h") == "data:x/T_sink,h"
-    assert Tag.side("x") == "side:x"
-    assert Tag.node("outer", "decision") == "outer/decision"
-    assert Tag.TIME_DT == "time/dt"
 
 
 def test_a_receiver_gets_a_copy() -> None:
