@@ -218,7 +218,9 @@ leaves its values to the coupling:
 ``q = k dT/dn`` into its region (``WallHeatFlux``); ``coupledHeatFlux`` takes
 that flux as an explicit source in the cells of its faces and sends its wall
 temperature (``WallTemperature``, both in ``neofoam.solver.regions``). The
-points are the face centres, so the faces need not match. Each region is an
+solver binds each to ``Patch(name)``; ``NeoNGeometry``
+(``neofoam.solver.neon_runtime``) gives the face centres, so the faces need not
+match, and ``NeoNFields`` the field ports' access. Each region is an
 OpenFOAM case of its own under ``<region>/``, beside the case's
 ``system/controlDict.yaml`` and ``system/regionCoupling.yaml``.
 ``tutorials/heatConductionNeoN/coupledBlocks`` couples two blocks through 3

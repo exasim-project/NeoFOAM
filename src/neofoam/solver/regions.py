@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import Mapping, Optional
 
 import pybFoam as pyf
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
-from neofoam.framework.coupling import Array
+from neofoam.framework.coupling import Array, FaceData
 from neofoam.io import YAML, IOStrategy
 
 __all__ = [
@@ -51,13 +51,13 @@ def region_case_dir(region: Optional[str]) -> Path:
     return Path(region) if region is not None else Path(".")
 
 
-class WallTemperature(BaseModel):
+class WallTemperature(FaceData):
     """What a Neumann side sends: its wall temperature per face."""
 
     T: Array
 
 
-class WallHeatFlux(BaseModel):
+class WallHeatFlux(FaceData):
     """What a Dirichlet side sends: the heat flux per face area into its region."""
 
     q: Array

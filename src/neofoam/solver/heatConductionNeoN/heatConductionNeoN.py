@@ -19,12 +19,17 @@ A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
 from typing import Any, Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import Coupling
+from neofoam.framework.coupling import Coupling, Patch, coupling
 from neofoam.framework.operations import IterativeOp, Operation, Operations, StepBuilder
 from neofoam.framework.solver import Solver, core_model
 from neofoam.framework.types import OperationMetadata
 from neofoam.solver.incompressibleFluidNeoN.models.solution_loop import SolutionLoopPredicate
-from neofoam.solver.neon_runtime import NeoNControlConfig, ensure_neon_initialized
+from neofoam.solver.neon_runtime import (
+    NeoNControlConfig,
+    NeoNFields,
+    NeoNGeometry,
+    ensure_neon_initialized,
+)
 from neofoam.solver.regions import region_case_dir
 
 from .configs import ControlDictConfig, ThermalPropertiesConfig
@@ -45,8 +50,14 @@ def initialize(self: Any) -> Context:
     init = create_init(self.region, list(self.argv))
     ctx = init.run()
     self.core_models = init.core_models
-    ctx.models["coupling"] = Coupling(self.coupling)
-    ctx.models["conduction"].patches = coupled_patches("T", ctx, region_case_dir(self.region))
+    runtime = ctx.models["neon_runtime"]
+    ctx.models["coupling"] = Coupling(
+        self.coupling, NeoNGeometry(runtime), NeoNFields(runtime, ctx.fields)
+    )
+    patches = coupled_patches("T", ctx, region_case_dir(self.region))
+    for patch, bc in patches.items():
+        coupling(ctx).add(Patch(patch), bc)
+    ctx.models["conduction"].patches = list(patches.values())
     return ctx
 
 

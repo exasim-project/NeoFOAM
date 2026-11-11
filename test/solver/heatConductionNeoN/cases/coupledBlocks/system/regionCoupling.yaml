@@ -4,7 +4,7 @@
 # node wraps each region's solve_T, so the time step stays outside it.
 exchanges:
   - name: interface
-    sides: {left: interface, right: interface}
+    ports: {left: interface, right: interface}
     mapping: nearest-neighbor
 couplings:
   - name: coupling
@@ -14,6 +14,7 @@ couplings:
       - {name: interface, acceleration: {type: aitken, relaxation: 0.5}}
     convergence:
       - {type: relative, data: T, limit: 1.0e-10}
+      - {type: relative, data: q, limit: 1.0e-10}
     wraps:
       left: {operations: [solve_T]}
       right: {operations: [solve_T]}
