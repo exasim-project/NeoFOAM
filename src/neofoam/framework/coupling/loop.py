@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, Any, Literal, Optional, Sequence
 from neofoam.framework import execution_observer
 from neofoam.framework.operations import IterativeOp
 
+from .comm_channel import Data, Tag
 from .controller import CouplingController, GroupSide
 from .data import End, ExchangeSide, _check_received, _sent
 from .kernels import BoundMapping
-from .transport import Data, Tag
 
 if TYPE_CHECKING:
     from neofoam.framework.context import Context
@@ -56,7 +56,7 @@ class CouplingOp(IterativeOp):
         self.node = node
         self.label = f"{coupling.region}.{node.name}"
         self._coupling = coupling
-        self._transport = coupling.transport
+        self._comm_channel = coupling.comm_channel
         self._links = coupling.node_links(node)
         self._group = coupling.node_group(node)
         self._leader = self._group[-1]
@@ -148,10 +148,10 @@ class CouplingOp(IterativeOp):
         )
 
     def _send(self, target: str, tag: str, message: Any) -> None:
-        self._transport.send(self.region, target, tag, message)
+        self._comm_channel.send(self.region, target, tag, message)
 
     def _receive(self, source: str, tag: str) -> Any:
-        return self._transport.receive(source, self.region, tag)
+        return self._comm_channel.receive(source, self.region, tag)
 
     def _connect(self, loops: _Loops) -> None:
         """Tell each partner its side and the leader the region's sides and loops; check them."""

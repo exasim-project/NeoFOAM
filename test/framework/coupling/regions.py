@@ -15,13 +15,13 @@ from pydantic import BaseModel
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
+    CommChannel,
     Coupling,
     CouplingConvergence,
     CouplingNode,
-    InProcessTransport,
+    InProcessCommChannel,
     Link,
     SideChange,
-    Transport,
     coupled,
 )
 from neofoam.framework.coupling.loop import CouplingOp
@@ -40,8 +40,8 @@ from neofoam.framework.types import OperationMetadata
 TIMEOUT = 30.0
 
 
-class RecordingTransport(InProcessTransport):
-    """An in-process transport that records every message it sends."""
+class RecordingCommChannel(InProcessCommChannel):
+    """An in-process comm channel that records every message it sends."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -68,13 +68,15 @@ def contexts(
     regions: list[str],
     links: list[Link],
     nodes: Optional[Sequence[CouplingNode]] = None,
-    transport: Optional[InProcessTransport] = None,
+    comm_channel: Optional[InProcessCommChannel] = None,
     **node: Any,
 ) -> dict[str, Context]:
     """A context per region, coupled over ``links`` in ``nodes`` (default: one node of ``node``)."""
     if nodes is None:
         nodes = [CouplingNode("coupling", tuple(link.name for link in links), **node)]
-    couplings = region_couplings(regions, links, transport or InProcessTransport(), nodes=nodes)
+    couplings = region_couplings(
+        regions, links, comm_channel or InProcessCommChannel(), nodes=nodes
+    )
     return {
         region: Context(
             fields={},
@@ -175,11 +177,11 @@ def run(regions: dict[str, tuple[Context, list[Operation]]]) -> None:
     (ctx, _ops), *_rest = regions.values()
     run_regions(
         {name: partial(graph(ctx, *ops).run, ctx) for name, (ctx, ops) in regions.items()},
-        transport(ctx),
+        comm_channel(ctx),
     )
 
 
-def transport(ctx: Context) -> Transport:
+def comm_channel(ctx: Context) -> CommChannel:
     coupling = Coupling.of(ctx).coupling
     assert coupling is not None
-    return coupling.transport
+    return coupling.comm_channel

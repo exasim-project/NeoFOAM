@@ -10,14 +10,14 @@ from framework.coupling.regions import TIMEOUT, contexts
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
+    CommChannelClosed,
     Coupling,
     CouplingDeadlock,
     CouplingNode,
-    InProcessTransport,
+    InProcessCommChannel,
     Link,
     NearestNeighborMapping,
     RegionCoupling,
-    TransportClosed,
 )
 from neofoam.framework.coupling.region import region_couplings, run_regions
 from neofoam.framework.types import Placement
@@ -34,14 +34,14 @@ def test_a_serial_node_enclosing_a_node_of_two_of_its_regions_raises() -> None:
         match=r"coupling 'fsi' is serial but encloses 'cht', which couples \['a', 'b'\] as "
         r"well; .* make 'fsi' parallel",
     ):
-        region_couplings(["a", "b"], [X, Y], InProcessTransport(), nodes=nodes)
+        region_couplings(["a", "b"], [X, Y], InProcessCommChannel(), nodes=nodes)
 
 
 def test_a_serial_node_may_enclose_a_node_sharing_one_region() -> None:
     links = [X, Link("z", (("b", "q"), ("c", "q")))]
     nodes = [CouplingNode("ab", ("x",), scheme="serial"), CouplingNode("bc", ("z",))]
 
-    couplings = region_couplings(["a", "b", "c"], links, InProcessTransport(), nodes=nodes)
+    couplings = region_couplings(["a", "b", "c"], links, InProcessCommChannel(), nodes=nodes)
 
     assert [node.scheme for node in couplings["b"].nodes] == ["serial", "serial"]
 
@@ -91,7 +91,7 @@ def test_a_node_is_serial_by_default() -> None:
 )
 def test_region_couplings_check_the_nodes(nodes: list[CouplingNode], error: str) -> None:
     with pytest.raises(ValueError, match=error):
-        region_couplings(["a", "b", "c"], [X, Y], InProcessTransport(), nodes=nodes)
+        region_couplings(["a", "b", "c"], [X, Y], InProcessCommChannel(), nodes=nodes)
 
 
 def test_two_exchanges_of_one_name_raise() -> None:
@@ -101,7 +101,7 @@ def test_two_exchanges_of_one_name_raise() -> None:
         ValueError, match="two exchanges are named 'x'; an exchange's name is unique"
     ):
         region_couplings(
-            ["a", "b"], [X, twin], InProcessTransport(), nodes=[CouplingNode("n", ("x",))]
+            ["a", "b"], [X, twin], InProcessCommChannel(), nodes=[CouplingNode("n", ("x",))]
         )
 
 
@@ -137,48 +137,48 @@ def test_unconnected_groups_of_exchanges_get_a_leader_each() -> None:
 )
 def test_region_couplings_check_the_links(link: Link, error: str) -> None:
     with pytest.raises(ValueError, match=error):
-        region_couplings(["a", "b"], [link], InProcessTransport(), [CouplingNode("n", ("x",))])
+        region_couplings(["a", "b"], [link], InProcessCommChannel(), [CouplingNode("n", ("x",))])
 
 
 def test_a_patch_is_in_one_exchange() -> None:
     links = [Link("x", (("a", "p"), ("b", "p"))), Link("y", (("a", "p"), ("b", "q")))]
 
     with pytest.raises(ValueError, match="a.p is in the exchanges 'x' and 'y'"):
-        region_couplings(["a", "b"], links, InProcessTransport(), [CouplingNode("n", ("x", "y"))])
+        region_couplings(["a", "b"], links, InProcessCommChannel(), [CouplingNode("n", ("x", "y"))])
 
 
 def test_a_region_no_exchange_names_is_not_coupled() -> None:
     couplings = region_couplings(
-        ["a", "b", "c"], [X], InProcessTransport(), [CouplingNode("n", ("x",))]
+        ["a", "b", "c"], [X], InProcessCommChannel(), [CouplingNode("n", ("x",))]
     )
 
     assert list(couplings) == ["a", "b"]
 
 
 def test_run_regions_raises_the_deadlock() -> None:
-    transport = InProcessTransport()
+    comm_channel = InProcessCommChannel()
 
     with pytest.raises(CouplingDeadlock, match="a waits for 'x' from b"):
         run_regions(
             {
-                "a": lambda: transport.receive("b", "a", "x"),
-                "b": lambda: transport.receive("a", "b", "y"),
+                "a": lambda: comm_channel.receive("b", "a", "x"),
+                "b": lambda: comm_channel.receive("a", "b", "y"),
             },
-            transport,
+            comm_channel,
         )
 
 
-def test_run_regions_raises_the_error_before_a_transport_closed_of_another_region() -> None:
-    transport = InProcessTransport(timeout=TIMEOUT)
+def test_run_regions_raises_the_error_before_a_comm_channel_closed_of_another_region() -> None:
+    comm_channel = InProcessCommChannel(timeout=TIMEOUT)
 
     def closed() -> None:
-        raise TransportClosed("a follows")
+        raise CommChannelClosed("a follows")
 
     def deadlock() -> None:
         # returns only once a failed: b's error comes second
-        with pytest.raises(TransportClosed):
-            transport.receive("a", "b", "x")
+        with pytest.raises(CommChannelClosed):
+            comm_channel.receive("a", "b", "x")
         raise CouplingDeadlock("b deadlocked")
 
     with pytest.raises(CouplingDeadlock, match="b deadlocked"):
-        run_regions({"a": closed, "b": deadlock}, transport)
+        run_regions({"a": closed, "b": deadlock}, comm_channel)

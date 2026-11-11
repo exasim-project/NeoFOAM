@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The :class:`Transport` between coupled regions, the only thing they share."""
+"""The :class:`CommChannel` between coupled regions, the only thing they share."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from typing import Any, Iterable, Literal, Optional, Protocol
 # What a side sends, by field name: one value (or row) per point of its patch.
 Data = dict[str, Any]
 
-# Seconds a receive of an InProcessTransport waits by default.
+# Seconds a receive of an InProcessCommChannel waits by default.
 DEFAULT_TIMEOUT = 600.0
 
 
@@ -39,23 +39,23 @@ class Tag:
         return f"{node}/{what}"
 
 
-class CouplingTransportError(RuntimeError):
+class CommChannelError(RuntimeError):
     """A message between coupled regions cannot arrive."""
 
 
-class TransportClosed(CouplingTransportError):
+class CommChannelClosed(CommChannelError):
     """A region waits for a message from a region that left the coupling."""
 
 
-class CouplingDeadlock(CouplingTransportError):
+class CouplingDeadlock(CommChannelError):
     """Every running region waits for a message no region will send."""
 
 
-class CouplingTimeout(CouplingTransportError):
-    """A region waited for a message longer than the transport's timeout."""
+class CouplingTimeout(CommChannelError):
+    """A region waited for a message longer than the comm channel's timeout."""
 
 
-class Transport(Protocol):
+class CommChannel(Protocol):
     """Messages between the regions of a coupled case, by ``(source, target, tag)``.
 
     Point to point, as MPI: messages of one ``(source, target, tag)`` arrive in
@@ -68,8 +68,8 @@ class Transport(Protocol):
     def receive(self, source: str, target: str, tag: str) -> Any:
         """The next message ``source`` sent ``target`` under ``tag``; blocks until it is there.
 
-        Raises :class:`TransportClosed` when ``source`` left and no such message
-        waits, or another :class:`CouplingTransportError` when it cannot come.
+        Raises :class:`CommChannelClosed` when ``source`` left and no such message
+        waits, or another :class:`CommChannelError` when it cannot come.
         """
 
     def close(self, region: str) -> None:
@@ -82,8 +82,8 @@ class Transport(Protocol):
         """A region failed: every region of ``regions`` leaves the coupling."""
 
 
-class InProcessTransport:
-    """A transport between regions running in threads of one process: a mailbox per tag.
+class InProcessCommChannel:
+    """A comm channel between regions running in threads of one process: a mailbox per tag.
 
     Messages are pickled, as between processes: the receiver gets its own copy.
     Once :meth:`start` named the running regions, a receive raises
@@ -92,14 +92,14 @@ class InProcessTransport:
 
     Example::
 
-        transport = InProcessTransport()
-        transport.send("left", "right", "interface", {"T": np.ones(3)})
-        transport.receive("left", "right", "interface")    # in right's thread
+        comm_channel = InProcessCommChannel()
+        comm_channel.send("left", "right", "interface", {"T": np.ones(3)})
+        comm_channel.receive("left", "right", "interface")    # in right's thread
     """
 
     def __init__(self, timeout: Optional[float] = DEFAULT_TIMEOUT) -> None:
         if timeout is not None and timeout < 0:
-            raise ValueError(f"a transport timeout is at least 0 seconds, not {timeout}")
+            raise ValueError(f"a comm channel timeout is at least 0 seconds, not {timeout}")
         self.timeout = timeout or None
         self._messages: dict[tuple[str, str, str], deque[Any]] = defaultdict(deque)
         self._closed: set[str] = set()
@@ -140,7 +140,7 @@ class InProcessTransport:
                     if self._deadlock is not None:
                         raise CouplingDeadlock(self._deadlock)
                     if source in self._aborted:
-                        raise TransportClosed(
+                        raise CommChannelClosed(
                             f"region {target} waits for '{tag}' from region {source}, "
                             "which left the coupling"
                         )
@@ -166,7 +166,7 @@ class InProcessTransport:
                         raise CouplingTimeout(
                             self._report(
                                 f"a coupling timeout: region {target} waited {self.timeout:g} s "
-                                f"for '{tag}' from region {source} (transportTimeout)"
+                                f"for '{tag}' from region {source} (commChannelTimeout)"
                             )
                         )
                     self._changed.wait(left)
