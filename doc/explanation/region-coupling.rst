@@ -214,7 +214,7 @@ Extension points
    * - acceleration
      - a ``CouplingAcceleration``: ``__call__(carried data, iteration) -> data``.
    * - convergence
-     - a ``CouplingConvergence``: ``__call__(list of SideChange) -> bool``.
+     - a ``CouplingConvergence``: ``__call__(list of StreamChange) -> bool``.
    * - comm channel
      - a ``CommChannel`` (a Protocol): ``send`` (never blocks), ``receive``
        (blocks; in order per tag), ``close``, ``start``, ``abort``.
