@@ -14,6 +14,10 @@ Description
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+// Included explicitly rather than relying on the generated NeoFOAM.hpp: that header is
+// produced by a `file(GLOB_RECURSE ... *.hpp)` in include/CMakeLists.txt WITHOUT
+// CONFIGURE_DEPENDS, so a newly added header is invisible until someone re-runs cmake.
+#include "NeoFOAM/algorithms/velocityDamping.hpp"
 
 #include "fvCFD.H"
 #include "simpleControl.H"
@@ -80,6 +84,71 @@ int main(int argc, char* argv[])
         );
         NeoN::scalar cumulativeContErr = 0.0;
 
+        // ---- fvOptions: velocityDampingConstraint ------------------------------------------
+        // NeoFOAM has no fvOptions layer. Rather than let a case that ships
+        // system/fvOptions run silently without its constraints, read the one
+        // constraint this solver supports and apply it through PDE::setPostRelaxConstraint.
+        // Anything else in the file is reported as unsupported instead of ignored.
+        NeoN::scalar dampingUMax = -1.0;
+        NeoN::scalar dampingC = 1.0;
+        {
+            Foam::IOobject fvOptionsHeader(
+                "fvOptions",
+                runTime.system(),
+                mesh,
+                Foam::IOobject::READ_IF_PRESENT,
+                Foam::IOobject::NO_WRITE
+            );
+
+            if (fvOptionsHeader.typeHeaderOk<Foam::IOdictionary>(false))
+            {
+                Foam::IOdictionary fvOptionsDict(fvOptionsHeader);
+                for (const Foam::entry& e : fvOptionsDict)
+                {
+                    if (!e.isDict()) continue;
+                    const Foam::dictionary& sub = e.dict();
+                    const Foam::word type = sub.getOrDefault<Foam::word>("type", Foam::word::null);
+
+                    if (type != "velocityDampingConstraint")
+                    {
+                        NeoN::Logging::warn(
+                            "fvOptions '{}' has type '{}', which NeoFOAM does not implement -- "
+                            "it is NOT applied (OpenFOAM would apply it).",
+                            std::string(e.keyword()),
+                            std::string(type)
+                        );
+                        continue;
+                    }
+
+                    // fv::option puts coefficients in <type>Coeffs when present, else the
+                    // dict itself.
+                    const Foam::dictionary& coeffs =
+                        sub.optionalSubDict(type + "Coeffs", Foam::keyType::LITERAL);
+
+                    const Foam::word mode = sub.getOrDefault<Foam::word>("selectionMode", "all");
+                    if (mode != "all")
+                    {
+                        NeoN::Logging::warn(
+                            "fvOptions '{}': selectionMode '{}' is not supported (only 'all'); "
+                            "the constraint is NOT applied.",
+                            std::string(e.keyword()),
+                            std::string(mode)
+                        );
+                        continue;
+                    }
+
+                    dampingUMax = coeffs.get<Foam::scalar>("UMax");
+                    dampingC = coeffs.getOrDefault<Foam::scalar>("C", 1.0);
+                    NeoN::Logging::info(
+                        "fvOptions '{}': velocityDampingConstraint active, UMax = {}, C = {}",
+                        std::string(e.keyword()),
+                        dampingUMax,
+                        dampingC
+                    );
+                }
+            }
+        }
+
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
@@ -95,6 +164,27 @@ int main(int argc, char* argv[])
 
             // simpleFoam/UEqn.H: UEqn.relax()
             UEqn.relax();
+
+            // simpleFoam/UEqn.H: fvOptions.constrain(UEqn), applied to the relaxed system before
+            // -grad(p) is added and before the solve. Registered per step because UEqn is
+            // rebuilt each iteration.
+            if (dampingUMax > 0.0)
+            {
+                UEqn.setPostRelaxConstraint(
+                    [&](auto& ls)
+                    {
+                        Foam::label nDamped = static_cast<Foam::label>(
+                            nf::applyVelocityDamping(ls, U, dampingUMax, dampingC)
+                        );
+                        Foam::reduce(nDamped, Foam::sumOp<Foam::label>());
+                        NeoN::Logging::info(
+                            "velocityDampingConstraint damped {} cells, with max limit {}",
+                            nDamped,
+                            dampingUMax
+                        );
+                    }
+                );
+            }
 
             if (simple.momentumPredictor())
             {
