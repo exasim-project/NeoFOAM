@@ -249,7 +249,7 @@ There is no Neumann side on OpenFOAM: pybFoam binds no setter for a
 ``fixedGradient`` or ``mixed`` patch. Neither OpenFOAM's ``fixedValue`` nor
 NeoN's ``calculated`` writes the ``coupled`` entry, so both solvers wrap their
 field writer's hook (``keep_coupled_entries`` in ``neofoam.solver.regions``)
-and a written time restarts coupled. A serial node wraps the fluid's whole
+and a written time restarts coupled. A serial loop wraps the fluid's whole
 PIMPLE loop (``wraps: {fluid: {operations: [inner_loop]}}``): ``T`` drives the
 flow.
 
