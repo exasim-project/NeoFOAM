@@ -17,11 +17,11 @@ from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import (
     Array,
-    Coupling,
     FaceData,
     Global,
+    Participant,
+    ParticipantExchanges,
     Patch,
-    RegionCoupling,
     Scalar,
     ValueData,
     coupled,
@@ -139,7 +139,7 @@ def _value_class(name: str) -> type[ProbePatch]:
 
 
 def add_patches(
-    ctx: Context, config: ProbeConfig, region_coupling: Optional[RegionCoupling]
+    ctx: Context, config: ProbeConfig, region_coupling: Optional[ParticipantExchanges]
 ) -> None:
     """The region's field, its coupling model and a coupled patch per patch of ``gains``."""
     ctx.fields[config.field] = np.zeros(1)
@@ -147,7 +147,7 @@ def add_patches(
         probe=config,
         received={},
         history=[],
-        coupling=Coupling(region_coupling, ProbeGeometry(config.coordinates)),
+        coupling=Participant(region_coupling, ProbeGeometry(config.coordinates)),
     )
     ctx.models["patches"] = []
     received: dict[str, str] = {}

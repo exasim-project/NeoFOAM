@@ -16,7 +16,7 @@ import pytest
 from neofoam.framework.coupling import (
     AitkenRelaxation,
     InProcessCommChannel,
-    RegionCoupling,
+    ParticipantExchanges,
     RelativeConvergence,
 )
 from neofoam.framework.types import Placement
@@ -32,7 +32,7 @@ def _couplings(case: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> A
     """multiRun's coupling of the regions a, b and c in a copy of ``case``."""
     shutil.copytree(case, tmp_path / "case")
     monkeypatch.chdir(tmp_path / "case")
-    result: dict[str, RegionCoupling] = MULTI_RUN.couplings(REGIONS, InProcessCommChannel())
+    result: dict[str, ParticipantExchanges] = MULTI_RUN.couplings(REGIONS, InProcessCommChannel())
     return result
 
 

@@ -8,9 +8,10 @@ Serial with Aitken around each ``solve_T``; tolerance as in ``test_coupled_slabs
 
 import numpy as np
 import pytest
-from framework.coupling.regions import couple
+from framework.coupling.regions import Outcomes, couple
 
 from neofoam.framework.context import Context
+from neofoam.framework.execution_observer import observe
 from neofoam.solver.multiRun import run
 from solver.multiRun.case_files import copy_case
 from solver.multiRun.slab_solver import CoupledHeatFlux, CoupledTemperature
@@ -22,11 +23,17 @@ EXPECTED = {
 
 
 @pytest.fixture(scope="module")
-def regions(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Context]:
+def case(tmp_path_factory: pytest.TempPathFactory) -> tuple[dict[str, Context], Outcomes]:
     run_dir = copy_case("dirichlet_neumann_slabs", tmp_path_factory.mktemp("slabs") / "case")
-    with pytest.MonkeyPatch.context() as monkeypatch:
+    outcomes = Outcomes()
+    with pytest.MonkeyPatch.context() as monkeypatch, observe(outcomes):
         monkeypatch.chdir(run_dir)
-        return run()
+        return run(), outcomes
+
+
+@pytest.fixture(scope="module")
+def regions(case: tuple[dict[str, Context], Outcomes]) -> dict[str, Context]:
+    return case[0]
 
 
 @pytest.mark.parametrize("region", ["left", "right"])
@@ -50,9 +57,13 @@ def test_dirichlet_neumann_slabs_couple_a_heat_flux_with_a_temperature_side(
 
 
 def test_dirichlet_neumann_slabs_converge_in_a_few_aitken_passes(
-    regions: dict[str, Context],
+    case: tuple[dict[str, Context], Outcomes],
 ) -> None:
+    regions, outcomes = case
     controller = couple(regions["right"]).controller
     assert controller is not None
 
-    assert [(o.passes, o.converged) for o in controller.outcomes] == [(5, True), (5, True)]
+    assert [(o.passes, o.converged) for o in outcomes.of(controller.label)] == [
+        (5, True),
+        (5, True),
+    ]

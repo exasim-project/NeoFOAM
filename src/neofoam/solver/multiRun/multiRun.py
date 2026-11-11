@@ -13,9 +13,10 @@ from pathlib import Path
 from typing import Optional
 
 from neofoam.framework.context import Context
-from neofoam.framework.coupling import CommChannel, InProcessCommChannel, RegionCoupling
-from neofoam.framework.coupling.comm_channel import DEFAULT_TIMEOUT
-from neofoam.framework.coupling.region import region_couplings, run_regions
+from neofoam.framework.coupling import CommChannel, InProcessCommChannel, ParticipantExchanges
+from neofoam.framework.coupling.comm.channel import DEFAULT_TIMEOUT
+from neofoam.framework.coupling.exchanges import participant_exchanges
+from neofoam.framework.coupling.run import run_participants
 from neofoam.framework.solver import Solver
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.solver.regions import ControlDictConfig
@@ -34,12 +35,12 @@ def comm_channel_timeout() -> Optional[float]:
     return RegionCouplingConfig.load().commChannelTimeout or None
 
 
-def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, RegionCoupling]:
+def couplings(regions: list[str], comm_channel: CommChannel) -> dict[str, ParticipantExchanges]:
     """Each region's coupling from ``system/regionCoupling.yaml``; none without it."""
     if not RegionCouplingConfig.get_default_path().exists():
         return {}
     config = RegionCouplingConfig.load()
-    return region_couplings(
+    return participant_exchanges(
         regions,
         config.coupling_exchanges(),
         comm_channel,
@@ -64,4 +65,6 @@ def run() -> dict[str, Context]:
         region: resolve_solver(name).instantiate(region=region, coupling=coupling.get(region))
         for region, name in config.regionSolvers.items()
     }
-    return run_regions({region: runtime.run for region, runtime in runtimes.items()}, comm_channel)
+    return run_participants(
+        {region: runtime.run for region, runtime in runtimes.items()}, comm_channel
+    )
