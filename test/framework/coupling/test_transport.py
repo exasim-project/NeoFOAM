@@ -228,9 +228,8 @@ def test_a_node_sends_no_other_tag() -> None:
         Tag.node("outer", "data")  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("pickle", [False, True])
-def test_a_receiver_gets_a_copy(pickle: bool) -> None:
-    transport = InProcessTransport(pickle=pickle)
+def test_a_receiver_gets_a_copy() -> None:
+    transport = InProcessTransport()
     sent = {"T": np.ones(3), "h": 2.0}
 
     transport.send("a", "b", "x", sent)
@@ -240,16 +239,8 @@ def test_a_receiver_gets_a_copy(pickle: bool) -> None:
     assert received is not sent and sent["T"][0] == 1.0 and received["h"] == 2.0
 
 
-def test_a_pickling_transport_raises_for_a_message_that_is_not_plain_data() -> None:
-    transport = InProcessTransport(pickle=True)
+def test_a_message_that_is_not_plain_data_raises() -> None:
+    transport = InProcessTransport()
 
     with pytest.raises(TypeError, match="the message 'x' from region a to region b is not plain"):
-        transport.send("a", "b", "x", {"f": lambda: None})
-
-
-def test_a_transport_pickles_as_its_class_default_says(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(InProcessTransport, "PICKLE", False)
-    assert not InProcessTransport().pickle
-    assert InProcessTransport(pickle=True).pickle
-    # not plain, but a deep copy can copy it
-    InProcessTransport().send("a", "b", "x", SimpleNamespace(f=lambda: None))
+        transport.send("a", "b", "x", SimpleNamespace(f=lambda: None))
