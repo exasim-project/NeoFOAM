@@ -16,6 +16,7 @@ A patch of ``0/T`` is coupled when its ``coupled`` entry names the condition::
     }
 """
 
+from pathlib import Path
 from typing import Any, Mapping, Optional
 
 import numpy as np
@@ -23,7 +24,7 @@ from pybFoam import fvc
 
 from neofoam.framework.context import Context
 from neofoam.framework.coupling import Coupling, coupled
-from neofoam.solver.regions import WallHeatFlux, WallTemperature
+from neofoam.solver.regions import WallHeatFlux, WallTemperature, coupled_entries
 
 from .models.boussinesq import BoussinesqConfig, boussinesq
 
@@ -112,6 +113,12 @@ COUPLED_PATCHES: dict[str, type[FoamPatch]] = {
 
 #: the ``type`` of a coupled patch of each condition, for ``coupled_entries``
 PATCH_TYPES = {"coupledTemperature": "fixedValue"}
+
+
+def start_entries(case_dir: Path, time_name: str) -> dict[str, str]:
+    """The coupled entries of ``T`` at the start time; none for a fluid without ``T``."""
+    path = case_dir / time_name / "T"
+    return coupled_entries(path, PATCH_TYPES) if path.is_file() else {}
 
 
 def coupled_patches(field: str, ctx: Context, entries: Mapping[str, str]) -> list[FoamPatch]:

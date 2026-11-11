@@ -26,6 +26,7 @@ from neofoam.solver.incompressibleFluid.coupled_patches import (
     PATCH_TYPES,
     CoupledTemperature,
     _boussinesq_config,
+    start_entries,
 )
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 from neofoam.solver.regions import coupled_entries
@@ -173,3 +174,16 @@ def test_coupled_entries_of_the_fluid_are_fixed_value_patches() -> None:
 def test_coupled_entries_of_the_fluid_reject_a_calculated_patch() -> None:
     with pytest.raises(ValueError, match="has type calculated; a coupledTemperature patch is "):
         coupled_entries(ENTRIES / "coupled", PATCH_TYPES)
+
+
+def test_start_entries_of_a_fluid_with_a_coupled_T_name_its_patches(tmp_path: Path) -> None:
+    (tmp_path / "0").mkdir()
+    shutil.copy(CASE.parent / "heatedPlate" / "fluid" / "0" / "T", tmp_path / "0" / "T")
+
+    assert start_entries(tmp_path, "0") == {"interface": "coupledTemperature"}
+
+
+def test_start_entries_of_a_fluid_without_T_are_none(tmp_path: Path) -> None:
+    (tmp_path / "0").mkdir()
+
+    assert start_entries(tmp_path, "0") == {}
