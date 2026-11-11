@@ -70,13 +70,13 @@ def test_affine_pair_regions_couple_through_their_coupling_ops(regions: Regions)
         ("b.coupling", True),
     ]
     assert a_op.controller is None and b_op.controller is not None
-    (a_side,), (b_side,) = a_op.ports, b_op.ports
-    assert [(port.end, port.names) for port in (a_side, b_side)] == [
+    (a_port,), (b_port,) = a_op.ports, b_op.ports
+    assert [(port.end, port.names) for port in (a_port, b_port)] == [
         (("a", "interface"), {"x"}),
         (("b", "interface"), {"x"}),
     ]
-    assert (a_op.partner(a_side), b_op.partner(b_side)) == ("b.interface", "a.interface")
-    exchange = a_op.exchange_of(a_side)
+    assert (a_op.partner(a_port), b_op.partner(b_port)) == ("b.interface", "a.interface")
+    exchange = a_op.exchange_of(a_port)
     assert (exchange.name, type(exchange.mapping)) == ("a-b", NearestNeighborMapping)
 
 
