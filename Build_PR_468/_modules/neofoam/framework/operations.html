@@ -764,11 +764,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Run the operation on ``ctx``.</span>
 
-<span class="sd">        An operation marked ``first`` (``OperationMetadata.first``) is skipped</span>
-<span class="sd">        unless every wrapping loop running around it is in its first pass; one</span>
-<span class="sd">        marked ``final`` (``OperationMetadata.final``) unless every one is in its</span>
-<span class="sd">        final pass, or ``ctx.run_every_pass`` names it. Raises ``ValueError`` when</span>
-<span class="sd">        ``ctx.run_every_pass`` names an operation not marked ``final``.</span>
+<span class="sd">        A ``first`` operation is skipped unless every wrapping loop around it is in</span>
+<span class="sd">        its first pass, a ``final`` one unless every one is in its final pass or</span>
+<span class="sd">        ``ctx.run_every_pass`` names it.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">first</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span> <span class="ow">or</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_every_pass</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skipped</span><span class="p">(</span>
             <span class="n">ctx</span>
@@ -812,14 +810,14 @@
         <span class="n">wrapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">wraps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">loops</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">loops</span>
         <span class="n">index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">loops</span><span class="p">)</span>
-        <span class="n">loops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">LoopEntry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">wrapping</span><span class="p">))</span>
+        <span class="n">loops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">LoopEntry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">wrapping</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">:</span>
                     <span class="n">op</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
                 <span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">loops</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">LoopEntry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="n">wrapping</span><span class="p">)</span>
+                <span class="n">loops</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">LoopEntry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">iteration</span><span class="p">,</span> <span class="n">wrapping</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="k">del</span> <span class="n">loops</span><span class="p">[</span><span class="n">index</span><span class="p">:]</span></div>
 
@@ -833,14 +831,8 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="check_run_every_pass">
-<a class="viewcode-back" href="../../../reference/api/neofoam.framework.operations.html#neofoam.framework.operations.check_run_every_pass">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">check_run_every_pass</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Raise ``ValueError`` unless every name of ``names`` is an operation of ``ops`` marked final.</span>
-
-<span class="sd">    ``ops`` is a graph (loops with the operations inside them), ``names`` a</span>
-<span class="sd">    ``Context.run_every_pass``.</span>
-<span class="sd">    """</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_run_every_pass</span><span class="p">(</span><span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">],</span> <span class="n">names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` unless each of ``names`` is a ``final`` operation of ``ops``."""</span>
     <span class="n">found</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Operation</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">scope</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -858,8 +850,7 @@
                 <span class="sa">f</span><span class="s2">"its operations marked final: </span><span class="si">{</span><span class="n">final</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">found</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">final</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_not_final</span><span class="p">(</span><span class="n">found</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span></div>
-
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">_not_final</span><span class="p">(</span><span class="n">found</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
 
 
 <div class="viewcode-block" id="Operations">
@@ -913,14 +904,9 @@
 <div class="viewcode-block" id="Operations.run">
 <a class="viewcode-back" href="../../../reference/api/neofoam.framework.operations.html#neofoam.framework.operations.Operations.run">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Run the operations on ``ctx``.</span>
-
-<span class="sd">        Raises ``ValueError`` first when ``ctx.run_every_pass`` names an operation</span>
-<span class="sd">        that is not one of them, or not marked ``final``</span>
-<span class="sd">        (:func:`check_run_every_pass`).</span>
-<span class="sd">        """</span>
+<span class="w">        </span><span class="sd">"""Run the operations on ``ctx``; ``ValueError`` if ``ctx.run_every_pass`` is invalid."""</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_every_pass</span><span class="p">:</span>
-            <span class="n">check_run_every_pass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_every_pass</span><span class="p">)</span>
+            <span class="n">_check_run_every_pass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">run_every_pass</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">operation</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ops</span><span class="p">:</span>
             <span class="n">operation</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span></div>
 

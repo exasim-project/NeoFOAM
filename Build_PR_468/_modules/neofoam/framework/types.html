@@ -732,15 +732,12 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Placement</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Where the resolver places a wrapping loop (``OperationMetadata.wraps``).</span>
 
-<span class="sd">    Without ``operations`` the loop wraps the whole body of the top scope: the body</span>
-<span class="sd">    of the outermost loop, or of the innermost wrapping loop placed there before.</span>
-<span class="sd">    With them it wraps the operations of that name and, if ``downstream``, every</span>
-<span class="sd">    operation downstream of them in their scope. A name may be a loop inside the</span>
-<span class="sd">    outermost one (e.g. ``inner_loop``), which the loop then holds whole.</span>
+<span class="sd">    Without ``operations`` the loop wraps the whole time-step body; with them, the</span>
+<span class="sd">    named operations and everything downstream of them in their scope</span>
+<span class="sd">    (:mod:`~neofoam.framework.graph.wrapping`).</span>
 <span class="sd">    """</span>
 
-    <span class="n">operations</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">downstream</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+    <span class="n">operations</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -767,17 +764,9 @@
     <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">before</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">domain_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="c1"># set on a loop contributed by a model or boundary condition: a wrapping loop,</span>
-    <span class="c1"># which the resolver places around operations of the graph (graph.wrapping)</span>
-    <span class="n">wraps</span><span class="p">:</span> <span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="c1"># runs once per pass of the loop that holds the wrapping loops: only while every</span>
-    <span class="c1"># wrapping loop around it is in its first pass (``Context.loops``), e.g. the</span>
-    <span class="c1"># start of a time step inside a coupling loop</span>
-    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="c1"># runs once per pass of the loop that holds the wrapping loops, in their last</span>
-    <span class="c1"># pass: only while every wrapping loop around it is in its final pass</span>
-    <span class="c1"># (``Context.loops``), e.g. writing the results of a coupled time step</span>
-    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">wraps</span><span class="p">:</span> <span class="n">Placement</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># a wrapping loop: where the resolver places it</span>
+    <span class="n">first</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># run only in the first pass of the wrapping loops around it</span>
+    <span class="n">final</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># run only in their final pass</span>
 
     <span class="c1"># DAG visualization properties</span>
     <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"box"</span>
@@ -805,7 +794,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""``[&lt;domain&gt;.]&lt;op&gt;``: the op_name with its model domain."""</span>
+<span class="w">        </span><span class="sd">"""``[&lt;domain&gt;.]&lt;op&gt;``."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain_name</span><span class="p">:</span>
